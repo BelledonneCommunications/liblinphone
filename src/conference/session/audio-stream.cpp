@@ -377,6 +377,19 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	auto expectedStreamType =
 	    (targetState == CallSession::State::IncomingEarlyMedia) ? MS_SND_CARD_STREAM_RING : MS_SND_CARD_STREAM_VOICE;
 
+	auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+	if (conference) {
+		if (conference->getCurrentParams()->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) {
+			if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
+				lInfo() << "MS2Audiostream::render End2End encrypted local conference";
+				setEktMode(MS_EKT_TRANSFER);
+			} else {
+				lInfo() << "MS2Audiostram::render End2End encrypted remote conference";
+				setEktMode(MS_EKT_ENABLED);
+			}
+		}
+	}
+
 	if (basicChangesHandled) {
 		if (getState() == Running) {
 
@@ -616,7 +629,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (getMediaSession().isPlayingRingbackTone()) setupRingbackPlayer();
 
 	std::shared_ptr<ParticipantDevice> device = nullptr;
-	auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+	conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 	if (conference) {
 		device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
 	}

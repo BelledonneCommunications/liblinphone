@@ -383,6 +383,15 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	if (conference) {
 		auto screenSharingDevice = conference->getScreenSharingDevice();
 		if (screenSharingDevice) isConferenceScreenSharing = screenSharingDevice->screenSharingEnabled();
+		if (conference->getCurrentParams()->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) {
+			if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
+				lInfo() << "MS2Videostream::render End2End encrypted local conference";
+				setEktMode(MS_EKT_TRANSFER);
+			} else {
+				lInfo() << "MS2Videostream::render End2End encrypted remote conference";
+				setEktMode(MS_EKT_ENABLED);
+			}
+		}
 	}
 
 	// Main output display mode depend of participant screen sharing state.

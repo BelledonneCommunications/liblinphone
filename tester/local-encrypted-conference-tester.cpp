@@ -112,7 +112,7 @@ static void cipher_transport_ekt_xml_composing_parsing_test() {
 
 static void create_simple_end_to_end_encrypted_conference() {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
-	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }

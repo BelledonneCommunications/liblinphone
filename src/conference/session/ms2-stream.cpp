@@ -114,6 +114,14 @@ void MS2Stream::setEkt(const MSEKTParametersSet *ekt_params) const {
 	}
 }
 
+void MS2Stream::setEktMode(MSEKTMode ekt_mode) const {
+	MediaStream *ms = getMediaStream();
+	if (ms) {
+		ms_media_stream_sessions_set_ekt_mode(&ms->sessions, ekt_mode);
+		if (ekt_mode == MS_EKT_TRANSFER) rtp_session_enable_transfer_mode(ms->sessions.rtp_session, TRUE);
+	}
+}
+
 void MS2Stream::removeFromBundle() {
 	if (mRtpBundle) {
 		lInfo() << "Session " << mSessions.rtp_session << " of stream " << *this << " removed from rtp bundle "
