@@ -28,6 +28,15 @@
 
 namespace LinphoneTest {
 
+void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
+	stats *stat = get_stats((LinphoneCore *)linphone_participant_device_get_user_data(participant_device));
+	if (is_muted) {
+		stat->number_of_LinphoneParticipantDeviceMuted++;
+	} else {
+		stat->number_of_LinphoneParticipantDeviceUnmuted++;
+	}
+}
+
 void create_transfer_conference_base(time_t start_time,
                                      int duration,
                                      LinphoneConferenceParticipantListType participant_list_type,
@@ -89,7 +98,7 @@ void create_transfer_conference_base(time_t start_time,
 					                           "vga");
 				}
 
-				linphone_core_set_conference_max_thumbnails(mgr->lc, 0);
+				linphone_core_set_conference_max_thumbnails(mgr->lc, 2);
 			}
 
 			if (mgr != focus.getCMgr()) {
@@ -341,6 +350,39 @@ void create_transfer_conference_base(time_t start_time,
 				}
 				BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), initialSubject);
 			}
+		}
+
+		// Check to verify that muting is correctly notified
+		LinphoneConference *laure_conf =
+		    linphone_call_get_conference(linphone_core_get_current_call(laure.getCMgr()->lc));
+		if (BC_ASSERT_PTR_NOT_NULL(laure_conf)) {
+			bctbx_list_t *participant_devices = linphone_conference_get_participant_device_list(laure_conf);
+
+			for (bctbx_list_t *it = participant_devices; it != NULL; it = it->next) {
+				LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)it->data;
+				linphone_participant_device_set_user_data(d, laure.getCMgr()->lc);
+				LinphoneParticipantDeviceCbs *cbs =
+				    linphone_factory_create_participant_device_cbs(linphone_factory_get());
+				linphone_participant_device_cbs_set_is_muted(cbs, on_muted_notified);
+				linphone_participant_device_add_callbacks(d, cbs);
+				linphone_participant_device_cbs_unref(cbs);
+			}
+			bctbx_list_free_with_data(participant_devices, (bctbx_list_free_func)linphone_participant_device_unref);
+
+			linphone_core_enable_mic(pauline.getCMgr()->lc, FALSE);
+			CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(5), [&laure] {
+				return laure.getCMgr()->stat.number_of_LinphoneParticipantDeviceMuted == 1;
+			});
+
+			linphone_core_enable_mic(pauline.getCMgr()->lc, TRUE);
+			CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(5), [&laure] {
+				return laure.getCMgr()->stat.number_of_LinphoneParticipantDeviceUnmuted == 1;
+			});
+
+			linphone_core_enable_mic(laure.getCMgr()->lc, FALSE);
+			CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(5), [&laure] {
+				return laure.getCMgr()->stat.number_of_LinphoneParticipantDeviceMuted == 2;
+			});
 		}
 
 		// terminate all calls

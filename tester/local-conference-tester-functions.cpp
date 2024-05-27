@@ -10702,6 +10702,8 @@ void change_active_speaker_base(bool transfer_mode) {
 		if (transfer_mode) {
 			// Focus is in full packet mode: transfer packet not payload
 			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
+			linphone_config_set_int(focus_config, "sound", "conference_mode",
+			                        static_cast<int>(MSConferenceModeRouterFullPacket));
 			linphone_config_set_int(focus_config, "video", "conference_mode",
 			                        static_cast<int>(MSConferenceModeRouterFullPacket));
 		}
