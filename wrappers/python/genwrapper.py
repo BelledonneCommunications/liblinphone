@@ -38,17 +38,27 @@ class PythonTranslator(object):
         self.langTranslator = AbsApi.Translator.get('Python')
         self.forbidden_keywords = ['type', 'file', 'list', 'from', 'id', 'filter', 'dir', 'max', 'range', 'min']
 
-    def translate_c_type(self, _ctype):
+    def translate_c_type(self, _ctype, ctypedef = False):
         if isinstance(_ctype, AbsApi.ClassType):
+            if _ctype.isconst:
+                return 'const ' + _ctype.name + '*'
             return _ctype.name + '*'
         elif isinstance(_ctype, AbsApi.BaseType):
+            if _ctype.name == 'boolean':
+                if ctypedef:
+                    return "unsigned char"
+                else:
+                    return "bint"
             return self.langTranslator.translate_base_type(_ctype)
         elif isinstance(_ctype, AbsApi.ListType):
             if _ctype.isconst:
                 return 'const bctbx_list_t*'
             return 'bctbx_list_t*'
         elif isinstance(_ctype, AbsApi.EnumType):
-            return 'int'
+            if (ctypedef):
+                return _ctype.name
+            else:
+                return _ctype.name[8:] # To remove Linphone
 
     def translate_arg_name(self, _name):
         return self.nameTranslator.translate_arg_name(_name)
@@ -116,10 +126,12 @@ class PythonTranslator(object):
 
         cCallbackDict['c_name'] = _cclass.name.to_c() + _ccallback.name.to_camel_case() + 'Cb'
         cCallbackDict['c_params'] = ''
+        cCallbackDict['c_return_type'] = self.translate_c_type(_ccallback.returnType)
+
         for arg in _ccallback.args:
             if arg is not _ccallback.args[0]:
                 cCallbackDict['c_params'] += ', '
-            cCallbackDict['c_params'] += self.translate_c_type(arg.type) + ' ' + self.translate_arg_name(arg.name.to_c())
+            cCallbackDict['c_params'] += self.translate_c_type(arg.type, ctypedef=True) + ' ' + self.translate_arg_name(arg.name.to_c())
 
         return cCallbackDict
 
@@ -127,7 +139,7 @@ class PythonTranslator(object):
         cCallbackMethodDict = {}
 
         listenedClass = _ccallback.find_first_ancestor_by_type(AbsApi.Interface).listenedClass
-        cCallbackMethodDict['c_prototype'] = 'void '
+        cCallbackMethodDict['c_prototype'] = self.translate_c_type(_ccallback.returnType) + ' '
         cCallbackMethodDict['c_prototype'] += listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_' + _ccallback.name.to_snake_case()[3:]
         cCallbackMethodDict['c_prototype'] += '(' + _cclass.name.to_c() + '* cbs'
         cCallbackMethodDict['c_prototype'] += ', ' + _cclass.name.to_c() + _ccallback.name.to_camel_case() + 'Cb cb'
@@ -150,6 +162,19 @@ class PythonTranslator(object):
         cMethodDict['c_prototype'] = "{return} {name}({params})".format(**methodElems)
 
         return cMethodDict
+
+    def translate_c_enum(self, _enum):
+        enumDict = {}
+        enumDict['c_enum_name'] = _enum.name.to_camel_case(fullName=True)
+        enumDict['c_enum_values'] = ""
+
+        values = ""
+        for enumValue in _enum.enumerators:
+            values += enumValue.name.to_camel_case(fullName=True) + ", "
+
+        enumDict['c_enum_values'] = values[:-2]
+
+        return enumDict
 
     def translate_enum(self, _enum):
         enumDict = {}
@@ -275,6 +300,8 @@ class PythonTranslator(object):
         callbackDict['python_name'] = _obj.name.translate(self.nameTranslator)
         callbackDict['callback_var_name'] = _method.name.to_snake_case()
         callbackDict['callback_internal_name'] = _method.name.to_snake_case() + '_cb'
+        callbackDict['callback_return_type'] = self.translate_c_type(_method.returnType)
+        callbackDict['callback_has_return'] = callbackDict['callback_return_type'] != "void"
 
         listenedClass = _method.find_first_ancestor_by_type(AbsApi.Interface).listenedClass
         callbackDict['callback_setter'] = listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_' + _method.name.to_snake_case()[3:]
@@ -300,7 +327,7 @@ class PythonTranslator(object):
             else:
                 callbackDict['first_python_param_name'] = paramDict['python_param_name']
             callbackDict['computed_params'] += paramDict['python_param_name']
-            callbackDict['c_params'] += self.translate_c_type(arg.type) + ' ' + self.translate_arg_name(arg.name.to_c())
+            callbackDict['c_params'] += self.translate_c_type(arg.type, ctypedef=True) + ' ' + self.translate_arg_name(arg.name.to_c())
 
             paramDict['param_c_type'] = translated_arg_type
             paramDict['is_obj_list'] = 'bctbx_list_t*' in translated_arg_type and isinstance(arg.type.containedTypeDesc, AbsApi.ClassType)
@@ -356,6 +383,7 @@ class PythonTranslator(object):
             getterDict['is_return_bool'] = translated_type == 'bint'
             getterDict['is_return_string'] = getter.returnType.name == 'string'
             getterDict['is_return_void_ptr'] = translated_type == 'void*'
+            getterDict['is_return_const'] = getter.returnType.isconst
             getterDict['constructor'] = getter.returnAllocatedObject
             getterDict['is_const'] = getter.returnType.isconst
             getterDict['is_simple_return'] = not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list'] and not getterDict['is_return_obj'] and not getterDict['is_return_bool'] and not getterDict['is_return_string'] and not getterDict['is_return_void_ptr']
@@ -421,6 +449,7 @@ class PythonTranslator(object):
         methodDict['has_return_obj'] = isinstance(_method.returnType, AbsApi.ClassType)
         methodDict['has_return_bool'] = translated_type == 'bint'
         methodDict['has_return_string'] = _method.returnType.name == 'string'
+        methodDict['is_return_const'] = _method.returnType.isconst
         methodDict['has_return_void_vptr'] = translated_type == 'void*'
         methodDict['has_simple_return'] = methodDict['has_return'] and not methodDict['has_return_obj_list'] and not methodDict['has_return_string_list'] and not methodDict['has_return_obj'] and not methodDict['has_return_bool'] and not methodDict['has_return_string'] and not methodDict['has_return_void_vptr']
         methodDict['constructor'] = _method.returnAllocatedObject
@@ -533,6 +562,7 @@ class PythonTranslator(object):
 class Pylinphone(object):
     def __init__(self, parser):
         self.c_classes = []
+        self.c_enums = []
         self.c_callbacks = []
         self.c_methods = []
         self.enums = []
@@ -549,6 +579,7 @@ class Pylinphone(object):
                 self.c_methods.append(translator.translate_c_callback_method(_interface, method))
 
         for _enum in parser.namespace.enums:
+            self.c_enums.append(translator.translate_c_enum(_enum))
             self.enums.append(translator.translate_enum(_enum))
 
         for _class in parser.namespace.classes:

@@ -122,8 +122,12 @@ cdef extern from "linphone/core.h":
     {{/is_factory}}
 
     {{/c_classes}}
+    {{#c_enums}}
+    ctypedef enum {{c_enum_name}}: {{c_enum_values}}
+    {{/c_enums}}
+
     {{#c_callbacks}}
-    ctypedef void(*{{c_name}})({{c_params}})
+    ctypedef {{c_return_type}}(*{{c_name}})({{c_params}})
 
     {{/c_callbacks}}
     {{#c_methods}}
@@ -205,7 +209,7 @@ cdef class {{python_name}}:
 
     {{#callbacks}}
     @staticmethod
-    cdef void {{callback_internal_name}}({{c_params}}) noexcept:
+    cdef {{callback_return_type}} {{callback_internal_name}}({{c_params}}) noexcept:
         {{#params}}
         {{#is_obj_list}}
         bctbx_list = BctbxList.from_ptr({{python_param_name}})
@@ -229,8 +233,10 @@ cdef class {{python_name}}:
         {{#is_multi_listener}}
         callbacks = {{first_python_param_name}}_obj.current_callbacks
         {{/is_multi_listener}}
+
         if callbacks.{{callback_var_name}} is not None:
             callbacks.{{callback_var_name}}({{computed_params}})
+        {{#callback_has_return}}return NULL{{/callback_has_return}} # This is a workaround
 
     @property
     def {{callback_var_name}}(self):
@@ -276,7 +282,7 @@ cdef class {{python_name}}:
         return <object>{{c_name}}(self.native_ptr)
         {{/is_return_void_ptr}}
         {{#is_return_string}}
-        cdef char *return_s = {{c_name}}(self.native_ptr)
+        cdef {{#is_return_const}}const {{/is_return_const}}char *return_s = {{c_name}}(self.native_ptr)
         if return_s == NULL:
             return None
         return return_s
@@ -377,7 +383,7 @@ cdef class {{python_name}}:
         return True if ret == 1 else False
         {{/has_return_bool}}
         {{#has_return_string}}
-        cdef char *return_s = ret
+        cdef {{#is_return_const}}const {{/is_return_const}}char *return_s = ret
         if return_s == NULL:
             return None
         return return_s
