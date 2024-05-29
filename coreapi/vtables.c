@@ -211,6 +211,14 @@ void linphone_core_notify_call_id_updated(LinphoneCore *lc, const char *previous
 	NOTIFY_IF_EXIST(call_id_updated, lc, previous, current);
 	cleanup_dead_vtable_refs(lc);
 }
+
+void linphone_core_notify_message_waiting_indication_changed(LinphoneCore *lc,
+                                                             LinphoneEvent *lev,
+                                                             const LinphoneMessageWaitingIndication *mwi) {
+	NOTIFY_IF_EXIST(message_waiting_indication_changed, lc, lev, mwi);
+	cleanup_dead_vtable_refs(lc);
+}
+
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif

@@ -33,6 +33,14 @@ extern "C" {
  */
 
 /**
+ * Instantiate a new message waiting indication with values from source.
+ * @param mwi The #LinphoneMessageWaitingIndication object to be cloned. @notnil
+ * @return The newly created #LinphoneMessageWaitingIndication object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneMessageWaitingIndication *
+linphone_message_waiting_indication_clone(const LinphoneMessageWaitingIndication *mwi);
+
+/**
  * Take a ref on a #LinphoneMessageWaitingIndication.
  * @param mwi #LinphoneMessageWaitingIndication object @notnil
  * @return the same #LinphoneMessageWaitingIndication object @notnil
@@ -63,6 +71,14 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_message_waiting_indication_get_account_address(const LinphoneMessageWaitingIndication *mwi);
 
 /**
+ * Set the address of the message account concerned by this message waiting indication.
+ * @param mwi the #LinphoneMessageWaitingIndication object. @notnil
+ * @param address The address of the message account concerned by this message waiting indication. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_message_waiting_indication_set_account_address(LinphoneMessageWaitingIndication *mwi,
+                                                                             LinphoneAddress *address);
+
+/**
  * Get the message waiting indication summaries
  * @param mwi the #LinphoneMessageWaitingIndication @notnil
  * @return The message waiting indication summaries. \bctbx_list{LinphoneMessageWaitingIndicationSummary} @maybenil
@@ -74,11 +90,19 @@ linphone_message_waiting_indication_get_summaries(const LinphoneMessageWaitingIn
  * Get the message waiting indication summary for a given context class.
  * @param mwi the #LinphoneMessageWaitingIndication @notnil
  * @param contextClass the #LinphoneMessageWaitingIndicationContextClass for which we want to get the summary.
- * @return The #MessageWaitingIndicationSummary for the given context class. @maybenil
+ * @return The #LinphoneMessageWaitingIndicationSummary for the given context class. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneMessageWaitingIndicationSummary *
 linphone_message_waiting_indication_get_summary(const LinphoneMessageWaitingIndication *mwi,
                                                 LinphoneMessageWaitingIndicationContextClass contextClass);
+
+/**
+ * Get a #LinphoneContent object to put in a NOTIFY message from a #LinphoneMessageWaitingIndication object.
+ * @param mwi The #LinphoneMessageWaitingIndication object. @notnil
+ * @return The #LinphoneContent to put in a NOTIFY message. @notnil @tobefreed
+ */
+LINPHONE_PUBLIC LinphoneContent *
+linphone_message_waiting_indication_to_content(const LinphoneMessageWaitingIndication *mwi);
 
 /**
  * Take a ref on a #LinphoneMessageWaitingIndicationSummary.

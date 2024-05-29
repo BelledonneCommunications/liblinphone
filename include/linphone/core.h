@@ -302,6 +302,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsDefaultAccountChangedCb default_account_changed;
 	LinphoneCoreCbsAccountAddedCb account_added;
 	LinphoneCoreCbsAccountRemovedCb account_removed;
+	LinphoneCoreCbsMessageWaitingIndicationChangedCb message_waiting_indication_changed;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -1341,6 +1342,23 @@ LINPHONE_PUBLIC LinphoneCoreCbsAccountRemovedCb linphone_core_cbs_get_account_re
  */
 LINPHONE_PUBLIC LinphoneCoreCbsAccountRegistrationStateChangedCb
 linphone_core_cbs_get_account_registration_state_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the message waiting indication changed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The message waiting indication changed callback to be used.
+ */
+LINPHONE_PUBLIC void
+linphone_core_cbs_set_message_waiting_indication_changed(LinphoneCoreCbs *cbs,
+                                                         LinphoneCoreCbsMessageWaitingIndicationChangedCb cb);
+
+/**
+ * Gets the message waiting indication changed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The current message waiting indication changed callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsMessageWaitingIndicationChangedCb
+linphone_core_cbs_get_message_waiting_indication_changed(LinphoneCoreCbs *cbs);
 
 /**
  * @}

@@ -39,10 +39,11 @@ public:
 	                                uint32_t nbNew,
 	                                uint32_t nbOldUrgent = 0,
 	                                uint32_t nbNewUrgent = 0);
-	MessageWaitingIndicationSummary(const MessageWaitingIndicationSummary &other) = delete;
+	MessageWaitingIndicationSummary(const MessageWaitingIndicationSummary &other);
 	virtual ~MessageWaitingIndicationSummary() = default;
 
 	MessageWaitingIndicationSummary *clone() const override;
+	virtual std::string toString() const override;
 
 	// Getters
 	LinphoneMessageWaitingIndicationContextClass getContextClass() const;

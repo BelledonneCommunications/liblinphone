@@ -38,12 +38,20 @@ namespace Mwi {
 MessageWaitingIndication::MessageWaitingIndication() {
 }
 
+MessageWaitingIndication::MessageWaitingIndication(const MessageWaitingIndication &other) : HybridObject(other) {
+	mHasMessageWaiting = other.mHasMessageWaiting;
+	mAccountAddress = other.mAccountAddress ? other.mAccountAddress->clone()->toSharedPtr() : nullptr;
+	for (auto summary : other.mSummaries) {
+		addSummary(summary->clone()->toSharedPtr());
+	}
+}
+
 MessageWaitingIndication::~MessageWaitingIndication() {
 	if (mBctbxSummaries) bctbx_list_free(mBctbxSummaries);
 }
 
 MessageWaitingIndication *MessageWaitingIndication::clone() const {
-	return nullptr;
+	return new MessageWaitingIndication(*this);
 }
 
 // -----------------------------------------------------------------------------
@@ -82,6 +90,21 @@ void MessageWaitingIndication::setAccountAddress(std::shared_ptr<Address> accoun
 void MessageWaitingIndication::addSummary(const std::shared_ptr<MessageWaitingIndicationSummary> summary) {
 	mSummaries.push_back(summary);
 	mBctbxSummaries = bctbx_list_append(mBctbxSummaries, summary->toC());
+}
+
+std::shared_ptr<Content> MessageWaitingIndication::toContent() const {
+	std::stringstream bodyStream;
+	bodyStream << "Messages-Waiting: " << (mHasMessageWaiting ? "yes" : "no") << "\r\n";
+	if (mAccountAddress) {
+		bodyStream << "Message-Account: " << mAccountAddress->asStringUriOnly() << "\r\n";
+	}
+	for (auto summary : mSummaries) {
+		bodyStream << summary->toString() << "\r\n";
+	}
+	auto ct = ContentType::Mwi;
+	const std::string body = bodyStream.str();
+	auto content = new Content(std::move(ct), body);
+	return content->toSharedPtr();
 }
 
 // -----------------------------------------------------------------------------

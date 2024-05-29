@@ -36,7 +36,7 @@ class LINPHONE_PUBLIC MessageWaitingIndication
     : public bellesip::HybridObject<LinphoneMessageWaitingIndication, MessageWaitingIndication> {
 public:
 	MessageWaitingIndication();
-	MessageWaitingIndication(const MessageWaitingIndication &other) = delete;
+	MessageWaitingIndication(const MessageWaitingIndication &other);
 	virtual ~MessageWaitingIndication();
 
 	MessageWaitingIndication *clone() const override;
@@ -58,6 +58,7 @@ public:
 
 	// Other
 	void addSummary(const std::shared_ptr<MessageWaitingIndicationSummary> summary);
+	std::shared_ptr<Content> toContent() const;
 	static std::shared_ptr<MessageWaitingIndication> parse(const Content &content);
 
 private:

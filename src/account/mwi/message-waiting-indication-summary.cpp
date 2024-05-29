@@ -43,8 +43,50 @@ MessageWaitingIndicationSummary::MessageWaitingIndicationSummary(
 	mNbNewUrgent = nbNewUrgent;
 }
 
+MessageWaitingIndicationSummary::MessageWaitingIndicationSummary(const MessageWaitingIndicationSummary &other)
+    : HybridObject(other) {
+	mContextClass = other.mContextClass;
+	mNbOld = other.mNbOld;
+	mNbNew = other.mNbNew;
+	mNbOldUrgent = other.mNbOldUrgent;
+	mNbNewUrgent = other.mNbNewUrgent;
+}
+
 MessageWaitingIndicationSummary *MessageWaitingIndicationSummary::clone() const {
-	return nullptr;
+	return new MessageWaitingIndicationSummary(*this);
+}
+
+std::string MessageWaitingIndicationSummary::toString() const {
+	std::stringstream ss;
+	switch (mContextClass) {
+		case LinphoneMessageWaitingIndicationFax:
+			ss << "Fax-Message";
+			break;
+		case LinphoneMessageWaitingIndicationMultimedia:
+			ss << "Multimedia-Message";
+			break;
+		case LinphoneMessageWaitingIndicationNone:
+			ss << "None";
+			break;
+		case LinphoneMessageWaitingIndicationPager:
+			ss << "Pager-Message";
+			break;
+		case LinphoneMessageWaitingIndicationText:
+			ss << "Text-Message";
+			break;
+		case LinphoneMessageWaitingIndicationVoice:
+			ss << "Voice-Message";
+			break;
+		default:
+			return std::string();
+	}
+
+	ss << ": " << mNbNew << "/" << mNbOld;
+	if (mNbNewUrgent > 0 || mNbOldUrgent > 0) {
+		ss << " (" << mNbNewUrgent << "/" << mNbOldUrgent << ")";
+	}
+	
+	return ss.str();
 }
 
 // -----------------------------------------------------------------------------

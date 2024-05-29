@@ -784,6 +784,16 @@ LinphoneCoreCbsAccountRemovedCb linphone_core_cbs_get_account_removed(LinphoneCo
 	return cbs->vtable->account_removed;
 }
 
+void linphone_core_cbs_set_message_waiting_indication_changed(LinphoneCoreCbs *cbs,
+                                                              LinphoneCoreCbsMessageWaitingIndicationChangedCb cb) {
+	cbs->vtable->message_waiting_indication_changed = cb;
+}
+
+LinphoneCoreCbsMessageWaitingIndicationChangedCb
+linphone_core_cbs_get_message_waiting_indication_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->message_waiting_indication_changed;
+}
+
 void lc_callback_obj_init(LCCallbackObj *obj, LinphoneCoreCbFunc func, void *ud) {
 	obj->_func = func;
 	obj->_user_data = ud;

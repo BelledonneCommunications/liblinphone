@@ -940,6 +940,11 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		/*out of dialog notify */
 		lev = linphone_event_new_subscribe_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
 		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
+
+		if (Utils::iequals(eventname, "message-summary")) {
+			lInfo() << "Set out-of-dialog MWI event as internal";
+			linphone_event_set_internal(lev, true);
+		}
 	}
 	linphone_event_ref(lev);
 	{

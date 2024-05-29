@@ -670,6 +670,16 @@ typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *c
                                                                  const char *message);
 
 /**
+ * Callback notifying that a Message Waiting Indication state has changed.
+ * @param core The #LinphoneCore object. @notnil
+ * @param lev The #LinphoneEvent object notifying the MWI. @notnil
+ * @param mwi The #LinphoneMessageWaitingIndication object that is notified. @notnil
+ */
+typedef void (*LinphoneCoreCbsMessageWaitingIndicationChangedCb)(LinphoneCore *core,
+                                                                 LinphoneEvent *lev,
+                                                                 const LinphoneMessageWaitingIndication *mwi);
+
+/**
  * @}
  **/
 

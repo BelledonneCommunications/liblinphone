@@ -27,6 +27,11 @@
 using namespace LinphonePrivate;
 using namespace Mwi;
 
+LinphoneMessageWaitingIndication *
+linphone_message_waiting_indication_clone(const LinphoneMessageWaitingIndication *mwi) {
+	return MessageWaitingIndication::toCpp(mwi)->clone()->toC();
+}
+
 LinphoneMessageWaitingIndication *linphone_message_waiting_indication_ref(LinphoneMessageWaitingIndication *mwi) {
 	MessageWaitingIndication::toCpp(mwi)->ref();
 	return mwi;
@@ -47,6 +52,12 @@ linphone_message_waiting_indication_get_account_address(const LinphoneMessageWai
 	           : NULL;
 }
 
+void linphone_message_waiting_indication_set_account_address(LinphoneMessageWaitingIndication *mwi,
+                                                             LinphoneAddress *address) {
+	MessageWaitingIndication::toCpp(mwi)->setAccountAddress(address ? Address::toCpp(address)->getSharedFromThis()
+	                                                                : NULL);
+}
+
 const bctbx_list_t *linphone_message_waiting_indication_get_summaries(const LinphoneMessageWaitingIndication *mwi) {
 	return MessageWaitingIndication::toCpp(mwi)->mBctbxSummaries;
 }
@@ -55,6 +66,10 @@ const LinphoneMessageWaitingIndicationSummary *
 linphone_message_waiting_indication_get_summary(const LinphoneMessageWaitingIndication *mwi,
                                                 LinphoneMessageWaitingIndicationContextClass contextClass) {
 	return MessageWaitingIndication::toCpp(mwi)->getSummary(contextClass)->toC();
+}
+
+LinphoneContent *linphone_message_waiting_indication_to_content(const LinphoneMessageWaitingIndication *mwi) {
+	return MessageWaitingIndication::toCpp(mwi)->toContent()->toC();
 }
 
 LinphoneMessageWaitingIndicationSummary *

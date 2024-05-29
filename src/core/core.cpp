@@ -1573,31 +1573,30 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId(const std::string &
 void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, const Content *content) {
 	shared_ptr<Address> accountAddr = nullptr;
 
+	if (!content) {
+		lWarning() << "MWI NOTIFY without body, doing nothing";
+		return;
+	}
+
 	// Try to get the account that has subscribed for this event.
 	for (auto account : getAccounts()) {
 		if (account->getMwiEvent() != event) continue;
 		accountAddr = account->getAccountParams()->getIdentityAddress();
 	}
 	if (!accountAddr) {
-		lWarning() << "Received NOTIFY for an unknown MWI subscribe event";
-		return;
-	}
-
-	if (!content) {
-		lWarning() << "MWI NOTIFY without body, doing nothing";
-		return;
+		lWarning() << "Received NOTIFY for an unknown MWI subscribe event, maybe an out-of-dialog notify. "
+		           << "Will try to find the account for the address contained in the body of the notification.";
 	}
 
 	shared_ptr<Mwi::MessageWaitingIndication> mwi = Mwi::MessageWaitingIndication::parse(*content);
 	if (mwi) {
+		if (!accountAddr) accountAddr = mwi->getAccountAddress();
 		auto account = findAccountByIdentityAddress(accountAddr);
-		if (!account) {
-			lInfo() << "No account found for the account address of the MWI, cannot notify it";
-			return;
+		if (account) {
+			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, account,
+			                                  linphone_account_cbs_get_message_waiting_indication_changed, mwi->toC());
 		}
-
-		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, account, linphone_account_cbs_get_message_waiting_indication_changed,
-		                                  mwi->toC());
+		linphone_core_notify_message_waiting_indication_changed(event->getCore()->getCCore(), event->toC(), mwi->toC());
 	} else {
 		lWarning() << "Wrongly formatted MWI notification";
 	}

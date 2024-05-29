@@ -97,6 +97,31 @@ static void parse_mwi_without_account_address() {
 	BC_ASSERT_PTR_NULL(account_address);
 }
 
+static void mwi_to_content() {
+	const string str = "Messages-Waiting: yes\r\n"
+	                   "Message-Account: sip:alice@vmail.example.com\r\n"
+	                   "Voice-Message: 4/8 (1/2)\r\n";
+
+	shared_ptr<const Mwi::MessageWaitingIndication> mwi = Mwi::Parser::getInstance()->parseMessageSummary(str);
+	if (!BC_ASSERT_PTR_NOT_NULL(mwi)) return;
+
+	shared_ptr<Mwi::MessageWaitingIndication> newMwi = mwi->clone()->toSharedPtr();
+	shared_ptr<Address> newAddress = newMwi->getAccountAddress()->clone()->toSharedPtr();
+	newAddress->setUsername("bob");
+	newMwi->setAccountAddress(newAddress);
+	shared_ptr<Content> content = newMwi->toContent();
+
+	auto contentType = content->getContentType().asString();
+	auto expectedContentType = ContentType::Mwi.asString();
+	auto contentBody = content->getBodyAsUtf8String();
+	const string expectedBody = "Messages-Waiting: yes\r\n"
+	                           "Message-Account: sip:bob@vmail.example.com\r\n"
+	                           "Voice-Message: 4/8 (1/2)\r\n";
+
+	BC_ASSERT_STRING_EQUAL(contentType.c_str(), expectedContentType.c_str());
+	BC_ASSERT_STRING_EQUAL(contentBody.c_str(), expectedBody.c_str());
+}
+
 static void mwi_changed_on_account(LinphoneAccount *account, const LinphoneMessageWaitingIndication *mwi) {
 	LinphoneCore *lc = linphone_account_get_core(account);
 	lInfo() << "MWI changed for user id [" << linphone_account_params_get_identity(linphone_account_get_params(account))
@@ -231,6 +256,7 @@ static test_t mwi_tests[] = {
     TEST_NO_TAG("Parse minimal MWI", parse_minimal_mwi),
     TEST_NO_TAG("Parse normal MWI", parse_normal_mwi),
     TEST_NO_TAG("Parse mwi without account address", parse_mwi_without_account_address),
+    TEST_NO_TAG("MWI to content", mwi_to_content),
     TEST_NO_TAG("MWI notified on account", mwi_notified_on_account),
 };
 
