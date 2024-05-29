@@ -1490,8 +1490,17 @@ void RemoteConference::onParticipantDeviceScreenSharingChanged(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
     const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = getMainSession();
-	if ((device->getSession() == session) && isIn() && device->screenSharingEnabled()) {
-		notifyActiveSpeakerParticipantDevice(device);
+	if ((device->getSession() == session) && isIn()) {
+		if (device->screenSharingEnabled()) {
+			notifyActiveSpeakerParticipantDevice(device);
+		} else {
+			if (displayedSpeaker != 0) {
+				auto displayedDevice = findParticipantDeviceBySsrc(displayedSpeaker, LinphoneStreamTypeVideo);
+				if (displayedDevice) {
+					notifyActiveSpeakerParticipantDevice(displayedDevice);
+				}
+			}
+		}
 	}
 	const auto ms = static_pointer_cast<MediaSession>(session);
 	ConferenceLayout confLayout = ms->getMediaParams()->getConferenceVideoLayout();
