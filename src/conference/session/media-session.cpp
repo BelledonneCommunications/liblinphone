@@ -1250,7 +1250,7 @@ std::string MediaSessionPrivate::getLocalIpFromRemote(const std::string &remoteA
 	                                 SOCK_DGRAM, remoteAddr.c_str(), anyport);
 	if (res) {
 		char ipaddress[LINPHONE_IPADDR_SIZE] = {};
-		if (bctbx_get_local_ip_for(res->ai_family, remoteAddr.c_str(), anyport, ipaddress, sizeof(ipaddress)) == 0) {
+		if (bctbx_get_local_ip_for(AF_UNSPEC, remoteAddr.c_str(), anyport, ipaddress, sizeof(ipaddress)) == 0) {
 			ret = ipaddress;
 		}
 		bctbx_freeaddrinfo(res);
