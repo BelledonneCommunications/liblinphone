@@ -1584,9 +1584,7 @@ void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, 
 	shared_ptr<Address> accountAddr = nullptr;
 
 	// Try to get the account that has subscribed for this event.
-	for (const bctbx_list_t *it = linphone_core_get_account_list(getCCore()); it; it = bctbx_list_next(it)) {
-		shared_ptr<Account> account =
-		    Account::getSharedFromThis(reinterpret_cast<LinphoneAccount *>(bctbx_list_get_data(it)));
+	for (auto account : getAccounts()) {
 		if (account->getMwiEvent() != event) continue;
 		accountAddr = account->getAccountParams()->getIdentityAddress();
 	}

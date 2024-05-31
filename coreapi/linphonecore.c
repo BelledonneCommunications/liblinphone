@@ -3112,9 +3112,9 @@ void linphone_core_set_push_notification_config(LinphoneCore *core, LinphonePush
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
 	linphone_push_notification_config_set_param(core->push_config, param);
 	linphone_push_notification_config_set_prid(core->push_config, prid);
-	bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(core);
-	for (; accounts != NULL; accounts = accounts->next) {
-		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+
+	for (auto cppAccount : L_GET_CPP_PTR_FROM_C_OBJECT(core)->getAccounts()) {
+		LinphoneAccount *account = cppAccount->toC();
 		LinphoneAccountParams *newParams = linphone_account_params_clone(linphone_account_get_params(account));
 		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(newParams);
 		linphone_push_notification_config_set_param(push_cfg, param);
@@ -3133,9 +3133,7 @@ void linphone_core_enable_push_notification(LinphoneCore *core, bool_t enable) {
 	if (core->push_notification_enabled != enable) {
 		linphone_config_set_int(core->config, "net", "push_notification", enable);
 		core->push_notification_enabled = enable;
-		bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(core);
-		for (; accounts != NULL; accounts = accounts->next) {
-			Account *account = Account::toCpp((LinphoneAccount *)accounts->data);
+		for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(core)->getAccounts()) {
 			if (account->getAccountParams()->isPushNotificationAvailable()) {
 				account->setNeedToRegister(true);
 			}
@@ -4042,12 +4040,10 @@ static bool_t transports_unchanged(const LinphoneSipTransports *tr1, const Linph
 }
 
 static void __linphone_core_invalidate_registers(LinphoneCore *lc) {
-	const bctbx_list_t *elem = linphone_core_get_account_list(lc);
-	for (; elem != NULL; elem = elem->next) {
-		LinphoneAccount *acc = (LinphoneAccount *)elem->data;
-		if (linphone_account_params_get_register_enabled(linphone_account_get_params(acc))) {
+	for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+		if (account->getAccountParams()->getRegisterEnabled()) {
 			/*this will force a re-registration at next iterate*/
-			Account::toCpp(acc)->setNeedToRegister(true);
+			account->setNeedToRegister(true);
 		}
 	}
 }
@@ -5514,23 +5510,16 @@ LinphoneConsolidatedPresence linphone_core_get_consolidated_presence(const Linph
 }
 
 void linphone_core_set_consolidated_presence(LinphoneCore *lc, LinphoneConsolidatedPresence presence) {
-	const bctbx_list_t *account_list;
-	const bctbx_list_t *item;
-	LinphoneAccount *account;
 	LinphonePresenceModel *model;
 	LinphonePresenceActivity *activity = NULL;
 
-	account_list = linphone_core_get_account_list(lc);
 	if (presence == LinphoneConsolidatedPresenceOffline) {
-		for (item = account_list; item != NULL; item = bctbx_list_next(item)) {
-			account = (LinphoneAccount *)bctbx_list_get_data(item);
-			const LinphoneAccountParams *params = linphone_account_get_params(account);
-			if ((account != NULL) && linphone_account_params_get_publish_enabled(params)) {
+		for (auto cppAccount : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+			if (cppAccount->getAccountParams()->getPublishEnabled()) {
 				/* Unpublish when going offline before changing the presence model. */
-				LinphoneAccountParams *new_params = linphone_account_params_clone(params);
-				linphone_account_params_enable_publish(new_params, FALSE);
-				linphone_account_set_params(account, new_params);
-				linphone_account_params_unref(new_params);
+				auto new_params = cppAccount->getAccountParams()->clone()->toSharedPtr();
+				new_params->setPublishEnabled(false);
+				cppAccount->setAccountParams(new_params);
 			}
 		}
 	}
@@ -5561,15 +5550,12 @@ void linphone_core_set_consolidated_presence(LinphoneCore *lc, LinphoneConsolida
 	linphone_presence_model_unref(model);
 
 	if (presence != LinphoneConsolidatedPresenceOffline) {
-		for (item = account_list; item != NULL; item = bctbx_list_next(item)) {
-			account = (LinphoneAccount *)bctbx_list_get_data(item);
-			const LinphoneAccountParams *params = linphone_account_get_params(account);
-			if ((account != NULL) && !linphone_account_params_get_publish_enabled(params)) {
+		for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+			if (!account->getAccountParams()->getPublishEnabled()) {
 				/* When going online or busy, publish after changing the presence model. */
-				LinphoneAccountParams *new_params = linphone_account_params_clone(params);
-				linphone_account_params_enable_publish(new_params, TRUE);
-				linphone_account_set_params(account, new_params);
-				linphone_account_params_unref(new_params);
+				auto newParams = account->getAccountParams()->clone()->toSharedPtr();
+				newParams->setPublishEnabled(true);
+				account->setAccountParams(newParams);
 			}
 		}
 	}
@@ -6320,10 +6306,8 @@ void linphone_core_clear_call_logs(LinphoneCore *lc) {
 int linphone_core_get_missed_calls_count(LinphoneCore *lc) {
 	int missed_calls = lc->missed_calls;
 
-	bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(lc);
-	for (; accounts != NULL; accounts = accounts->next) {
-		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		missed_calls += linphone_account_get_missed_calls_count(account);
+	for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+		missed_calls += account->getMissedCallsCount();
 	}
 
 	return missed_calls;
@@ -6332,10 +6316,8 @@ int linphone_core_get_missed_calls_count(LinphoneCore *lc) {
 void linphone_core_reset_missed_calls_count(LinphoneCore *lc) {
 	lc->missed_calls = 0;
 
-	bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(lc);
-	for (; accounts != NULL; accounts = accounts->next) {
-		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		linphone_account_reset_missed_calls_count(account);
+	for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+		account->resetMissedCallsCount();
 	}
 }
 
@@ -7300,7 +7282,6 @@ void net_config_uninit(LinphoneCore *lc) {
 }
 
 void sip_config_uninit(LinphoneCore *lc) {
-	const bctbx_list_t *elem;
 	int i;
 	sip_config_t *config = &lc->sip_conf;
 	bool_t still_registered = TRUE;
@@ -7317,17 +7298,17 @@ void sip_config_uninit(LinphoneCore *lc) {
 	if (lc->sip_network_state.global_state) {
 		bool_t need_to_unregister = FALSE;
 
-		for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = bctbx_list_next(elem)) {
-			LinphoneAccount *acc = (LinphoneAccount *)(elem->data);
-			Account::toCpp(acc)->unpublish(); /* to unpublish without changing the stored flag enable_publish */
-			LinphoneNatPolicy *policy = linphone_account_params_get_nat_policy(linphone_account_get_params(acc));
+		for (auto acc : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+			acc->unpublish(); /* to unpublish without changing the stored flag enable_publish */
+			LinphoneNatPolicy *policy = linphone_account_params_get_nat_policy(linphone_account_get_params(acc->toC()));
 			if (policy) NatPolicy::toCpp(policy)->release();
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP
 			 * server.*/
-			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc)) &&
-			    !linphone_account_params_get_remote_push_notification_allowed(linphone_account_get_params(acc))) {
-				Account::toCpp(acc)->unregister(); /* to unregister without changing the stored flag enable_register */
+			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc->toC())) &&
+			    !linphone_account_params_get_remote_push_notification_allowed(
+			        linphone_account_get_params(acc->toC()))) {
+				acc->unregister(); /* to unregister without changing the stored flag enable_register */
 				need_to_unregister = TRUE;
 			}
 		}
@@ -7338,12 +7319,12 @@ void sip_config_uninit(LinphoneCore *lc) {
 			for (i = 0; i < 20 && still_registered; i++) {
 				still_registered = FALSE;
 				lc->sal->iterate();
-				for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = bctbx_list_next(elem)) {
-					LinphoneAccount *acc = (LinphoneAccount *)(elem->data);
-					if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc)) &&
+				for (auto acc : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+					if (!linphone_account_params_get_push_notification_allowed(
+					        linphone_account_get_params(acc->toC())) &&
 					    !linphone_account_params_get_remote_push_notification_allowed(
-					        linphone_account_get_params(acc))) {
-						LinphoneRegistrationState state = linphone_account_get_state(acc);
+					        linphone_account_get_params(acc->toC()))) {
+						LinphoneRegistrationState state = linphone_account_get_state(acc->toC());
 						still_registered = (state == LinphoneRegistrationOk || state == LinphoneRegistrationProgress);
 					}
 				}
@@ -8085,8 +8066,6 @@ static void stop_refreshing_account(bool_t is_sip_reachable, LinphoneAccount *ac
 }
 
 static void set_sip_network_reachable(LinphoneCore *lc, bool_t is_sip_reachable, time_t curtime) {
-	// second get the list of available proxies
-	const bctbx_list_t *elem = NULL;
 
 	if (is_sip_reachable) {
 		// Update DNS servers even if network was reachable and is still is, a change might have occured
@@ -8101,13 +8080,12 @@ static void set_sip_network_reachable(LinphoneCore *lc, bool_t is_sip_reachable,
 	}
 
 	ms_message("SIP network reachability state is now [%s]", is_sip_reachable ? "UP" : "DOWN");
-	for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = elem->next) {
-		LinphoneAccount *account = (LinphoneAccount *)elem->data;
-		stop_refreshing_account(is_sip_reachable, account);
+	auto coreCpp = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	for (auto account : coreCpp->getAccounts()) {
+		stop_refreshing_account(is_sip_reachable, account->toC());
 	}
-	for (elem = linphone_core_get_deleted_account_list(lc); elem != NULL; elem = elem->next) {
-		LinphoneAccount *deleted_account = (LinphoneAccount *)elem->data;
-		stop_refreshing_account(is_sip_reachable, deleted_account);
+	for (auto account : coreCpp->getDeletedAccounts()) {
+		stop_refreshing_account(is_sip_reachable, account->toC());
 	}
 
 	lc->netup_time = curtime;
@@ -8135,17 +8113,14 @@ static void set_media_network_reachable(LinphoneCore *lc, bool_t is_media_reacha
 
 void linphone_core_refresh_registers(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
-	const bctbx_list_t *elem;
 	if (!lc->sip_network_state.global_state) {
 		ms_warning("Refresh register operation not available (network unreachable)");
 		return;
 	}
-	elem = linphone_core_get_account_list(lc);
-	for (; elem != NULL; elem = elem->next) {
-		LinphoneAccount *account = (LinphoneAccount *)elem->data;
-		const LinphoneAccountParams *params = linphone_account_get_params(account);
+	for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+		const LinphoneAccountParams *params = linphone_account_get_params(account->toC());
 		if (linphone_account_params_register_enabled(params) && linphone_account_params_get_expires(params) > 0) {
-			linphone_account_refresh_register(account);
+			account->refreshRegister();
 		}
 	}
 }
