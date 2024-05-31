@@ -32,6 +32,17 @@ This changelog file was started on October 2019. Previous changes were more or l
 ### Removed
 - Removed old & deprecated VideoPolicy object.
 
+## [5.3.55] 2024-05-31
+
+### Fixed
+- Fix a design issue complicating audio route selection on iOS. This version introcuces for iOS
+  a new LinphoneAudioDevice instance with a specific "follows system routing" capability
+  (see linphone_audio_device_get_follows_system_routing_policy()).
+  This LinphoneAudioDevice becomes the default one when upgrading, and simply follows the system routing policy
+  when handling calls. Indeed, it is not possible to know prior to a call whether a bluetooth device is available, so 
+  the best approach is to let the system device.
+  Application can of course later override the audio route by setting other LinphoneAudioDevice representing speaker or bluetooth outputs.
+
 ## [5.3.0] 2023-12-18
 
 ### Added
