@@ -25,76 +25,34 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-AudioDevice::AudioDevice(MSSndCard *soundCard) : soundCard(ms_snd_card_ref(soundCard)) {
+AudioDevice::AudioDevice(MSSndCard *soundCard) : mSoundCard(ms_snd_card_ref(soundCard)) {
 	const char *id = ms_snd_card_get_string_id(soundCard);
-	deviceId = id;
+	mDeviceId = id;
 
 	const char *name = ms_snd_card_get_name(soundCard);
-	deviceName = name;
+	mDeviceName = name;
 
 	unsigned int cap = ms_snd_card_get_capabilities(soundCard);
 	if (cap & MS_SND_CARD_CAP_CAPTURE && cap & MS_SND_CARD_CAP_PLAYBACK) {
-		capabilities =
+		mCapabilities =
 		    static_cast<Capabilities>(static_cast<int>(Capabilities::Record) | static_cast<int>(Capabilities::Play));
 	} else if (cap & MS_SND_CARD_CAP_CAPTURE) {
-		capabilities = Capabilities::Record;
+		mCapabilities = Capabilities::Record;
 	} else if (cap & MS_SND_CARD_CAP_PLAYBACK) {
-		capabilities = Capabilities::Play;
+		mCapabilities = Capabilities::Play;
 	}
 
-	driverName = ms_snd_card_get_driver_type(soundCard);
-
-	MSSndCardDeviceType type = ms_snd_card_get_device_type(soundCard);
-	switch (type) {
-		case MS_SND_CARD_DEVICE_TYPE_MICROPHONE:
-			deviceType = AudioDevice::Type::Microphone;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_EARPIECE:
-			deviceType = AudioDevice::Type::Earpiece;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_SPEAKER:
-			deviceType = AudioDevice::Type::Speaker;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH:
-			deviceType = AudioDevice::Type::Bluetooth;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH_A2DP:
-			deviceType = AudioDevice::Type::BluetoothA2DP;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_TELEPHONY:
-			deviceType = AudioDevice::Type::Telephony;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_AUX_LINE:
-			deviceType = AudioDevice::Type::AuxLine;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_GENERIC_USB:
-			deviceType = AudioDevice::Type::GenericUsb;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_HEADSET:
-			deviceType = AudioDevice::Type::Headset;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_HEADPHONES:
-			deviceType = AudioDevice::Type::Headphones;
-			break;
-		case MS_SND_CARD_DEVICE_TYPE_HEARING_AID:
-			deviceType = AudioDevice::Type::HearingAid;
-			break;
-		default:
-		case MS_SND_CARD_DEVICE_TYPE_UNKNOWN:
-			deviceType = AudioDevice::Type::Unknown;
-			lWarning() << "Device [" << deviceName << "] type is unknown";
-			break;
-	}
+	mDriverName = ms_snd_card_get_driver_type(soundCard);
 }
 
 AudioDevice::~AudioDevice() {
-	ms_snd_card_unref(soundCard);
+	ms_snd_card_unref(mSoundCard);
 }
 
 bool AudioDevice::operator==(const AudioDevice &device) const {
-	return ((soundCard == device.getSoundCard()) && (deviceId.compare(device.getId()) == 0) &&
-	        (deviceName.compare(device.getDeviceName()) == 0) && (driverName.compare(device.getDriverName()) == 0) &&
-	        (capabilities == device.getCapabilities()) && (deviceType == device.getType()));
+	return ((mSoundCard == device.getSoundCard()) && (mDeviceId.compare(device.getId()) == 0) &&
+	        (mDeviceName.compare(device.getDeviceName()) == 0) && (mDriverName.compare(device.getDriverName()) == 0) &&
+	        (mCapabilities == device.getCapabilities()) && (getType() == device.getType()));
 }
 
 bool AudioDevice::operator!=(const AudioDevice &device) const {
@@ -102,33 +60,80 @@ bool AudioDevice::operator!=(const AudioDevice &device) const {
 }
 
 MSSndCard *AudioDevice::getSoundCard() const {
-	return soundCard;
+	return mSoundCard;
 }
 
 const string &AudioDevice::getId() const {
-	return deviceId;
+	return mDeviceId;
 }
 
 const string &AudioDevice::getDeviceName() const {
-	return deviceName;
+	return mDeviceName;
 }
 
 const string &AudioDevice::getDriverName() const {
-	return driverName;
+	return mDriverName;
 }
 
 const AudioDevice::Capabilities &AudioDevice::getCapabilities() const {
-	return capabilities;
+	return mCapabilities;
 }
 
 const AudioDevice::Type &AudioDevice::getType() const {
-	return deviceType;
+	MSSndCardDeviceType type = ms_snd_card_get_device_type(mSoundCard);
+	switch (type) {
+		case MS_SND_CARD_DEVICE_TYPE_MICROPHONE:
+			mDeviceType = AudioDevice::Type::Microphone;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_EARPIECE:
+			mDeviceType = AudioDevice::Type::Earpiece;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_SPEAKER:
+			mDeviceType = AudioDevice::Type::Speaker;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH:
+			mDeviceType = AudioDevice::Type::Bluetooth;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH_A2DP:
+			mDeviceType = AudioDevice::Type::BluetoothA2DP;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_TELEPHONY:
+			mDeviceType = AudioDevice::Type::Telephony;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_AUX_LINE:
+			mDeviceType = AudioDevice::Type::AuxLine;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_GENERIC_USB:
+			mDeviceType = AudioDevice::Type::GenericUsb;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_HEADSET:
+			mDeviceType = AudioDevice::Type::Headset;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_HEADPHONES:
+			mDeviceType = AudioDevice::Type::Headphones;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_HEARING_AID:
+			mDeviceType = AudioDevice::Type::HearingAid;
+			break;
+		case MS_SND_CARD_DEVICE_TYPE_UNKNOWN:
+			mDeviceType = AudioDevice::Type::Unknown;
+			break;
+		default:
+			lWarning() << "AudioDevice(): unmatched device type";
+			mDeviceType = AudioDevice::Type::Unknown;
+			break;
+	}
+	return mDeviceType;
+}
+
+bool AudioDevice::followsSystemRoutingPolicy() const {
+	return !!(ms_snd_card_get_capabilities(mSoundCard) & MS_SND_CARD_CAP_FOLLOWS_SYSTEM_POLICY);
 }
 
 string AudioDevice::toString() const {
 	std::ostringstream ss;
-	ss << deviceName << ": driver [" << driverName << "], type [";
-	switch (deviceType) {
+	ss << mDeviceName << ": driver [" << mDriverName << "], type [";
+	switch (getType()) {
 		case AudioDevice::Type::Microphone:
 			ss << "Microphone";
 			break;

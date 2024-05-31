@@ -59,6 +59,7 @@ public:
 	const std::string &getDriverName() const;
 	const Capabilities &getCapabilities() const;
 	const Type &getType() const;
+	bool followsSystemRoutingPolicy() const;
 
 	std::string toString() const override;
 
@@ -71,12 +72,12 @@ public:
 	bool operator!=(const AudioDevice &device) const;
 
 private:
-	MSSndCard *soundCard;
-	std::string deviceId;
-	std::string deviceName;
-	std::string driverName;
-	Capabilities capabilities;
-	Type deviceType;
+	MSSndCard *mSoundCard;
+	std::string mDeviceId;
+	std::string mDeviceName;
+	std::string mDriverName;
+	Capabilities mCapabilities;
+	mutable Type mDeviceType = Unknown;
 };
 
 LINPHONE_END_NAMESPACE

@@ -58,6 +58,10 @@ bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audioDevi
 	return static_cast<bool_t>(linphone_audio_device_get_capabilities(audioDevice) & capability);
 }
 
+bool_t linphone_audio_device_get_follows_system_routing_policy(const LinphoneAudioDevice *audio_device) {
+	return AudioDevice::toCpp(audio_device)->followsSystemRoutingPolicy();
+}
+
 LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevice *audioDevice) {
 	if (audioDevice) {
 		AudioDevice::toCpp(audioDevice)->ref();
