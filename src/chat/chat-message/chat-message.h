@@ -23,10 +23,12 @@
 
 #include <list>
 
-#include "linphone/api/c-types.h"
-#include "linphone/enums/chat-message-enums.h"
+#include <belle-sip/mainloop.h>
 
 #include "core/core-accessor.h"
+#include "core/core-listener.h"
+#include "linphone/api/c-types.h"
+#include "linphone/enums/chat-message-enums.h"
 #include "object/object.h"
 
 // =============================================================================
@@ -47,7 +49,7 @@ class ChatMessageListener;
 class ConferenceScheduler;
 class ChatMessageReaction;
 
-class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
+class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor, public CoreListener {
 	friend class ServerConference;
 	friend class ClientConference;
 	friend class ChatRoom;
@@ -67,6 +69,9 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
 
+	// Retry to send message expire value of the timer in seconds
+	static constexpr unsigned int resendTimerExpiresS = 10;
+
 	enum class State {
 		Idle = LinphoneChatMessageStateIdle,
 		InProgress = LinphoneChatMessageStateInProgress,
@@ -76,7 +81,9 @@ public:
 		FileTransferDone = LinphoneChatMessageStateFileTransferDone,
 		DeliveredToUser = LinphoneChatMessageStateDeliveredToUser,
 		Displayed = LinphoneChatMessageStateDisplayed,
-		FileTransferInProgress
+		PendingDelivery = LinphoneChatMessageStatePendingDelivery,
+		FileTransferInProgress = LinphoneChatMessageStateFileTransferInProgress,
+		FileTransferCancelling = LinphoneChatMessageStateFileTransferCancelling
 	};
 
 	// casting to int to get rid of the enum compare warning.
@@ -156,6 +163,7 @@ public:
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState(State state) const;
 	std::list<ParticipantImdnState> getParticipantsState() const;
+	ChatMessage::State getParticipantState(const std::shared_ptr<Address> &address) const;
 
 	const Content &getInternalContent() const;
 	void setInternalContent(const Content &content);
@@ -167,11 +175,25 @@ public:
 	void addListener(std::shared_ptr<ChatMessageListener> listener);
 	void removeListener(std::shared_ptr<ChatMessageListener> listener);
 
+	// Core listener
+	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable);
+	void onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+	                                       LinphoneRegistrationState state,
+	                                       const std::string &message);
+
 protected:
 	explicit ChatMessage(ChatMessagePrivate &p);
 
 private:
 	ChatMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction);
+
+	belle_sip_source_t *mResendTimer = nullptr;
+
+	belle_sip_source_t *getResendTimer() const;
+	void createResendTimer();
+	static int resendTimerExpired(void *data, unsigned int revents);
+	int handleAutomaticResend();
+	void stopResendTimer();
 
 	L_DECLARE_PRIVATE(ChatMessage);
 	L_DISABLE_COPY(ChatMessage);

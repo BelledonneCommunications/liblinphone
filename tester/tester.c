@@ -4079,7 +4079,6 @@ void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCall
 }
 
 bool_t liblinphone_tester_chat_message_msg_update_stats(stats *counters, LinphoneChatMessageState state) {
-	bool_t notHandled = FALSE;
 	switch (state) {
 		case LinphoneChatMessageStateIdle:
 			break;
@@ -4088,6 +4087,9 @@ bool_t liblinphone_tester_chat_message_msg_update_stats(stats *counters, Linphon
 			break;
 		case LinphoneChatMessageStateNotDelivered:
 			counters->number_of_LinphoneMessageNotDelivered++;
+			break;
+		case LinphoneChatMessageStatePendingDelivery:
+			counters->number_of_LinphoneMessagePendingDelivery++;
 			break;
 		case LinphoneChatMessageStateInProgress:
 			counters->number_of_LinphoneMessageInProgress++;
@@ -4104,14 +4106,14 @@ bool_t liblinphone_tester_chat_message_msg_update_stats(stats *counters, Linphon
 		case LinphoneChatMessageStateDisplayed:
 			counters->number_of_LinphoneMessageDisplayed++;
 			break;
+		case LinphoneChatMessageStateFileTransferCancelling:
+			counters->number_of_LinphoneMessageFileTransferCancelling++;
+			break;
 		case LinphoneChatMessageStateFileTransferInProgress:
 			counters->number_of_LinphoneMessageFileTransferInProgress++;
 			break;
-		default: {
-			notHandled = TRUE;
-		}
 	}
-	return notHandled;
+	return FALSE;
 }
 
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {

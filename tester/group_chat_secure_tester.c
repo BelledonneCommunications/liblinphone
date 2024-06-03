@@ -919,7 +919,7 @@ static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const int 
 	// Pauline is offline and tries to send a chat message
 	message = _send_message(paulineOneToOneCr, "Help me, Obi-Wan Kenobi. You’re my only hope.");
 	linphone_chat_message_send(message);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageNotDelivered, 1,
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessagePendingDelivery, 1,
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_FALSE(
 	    wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));

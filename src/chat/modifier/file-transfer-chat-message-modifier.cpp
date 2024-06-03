@@ -461,7 +461,13 @@ void FileTransferChatMessageModifier::processIoErrorUpload(BCTBX_UNUSED(const be
 	lError() << "I/O Error during file upload of message [" << message << "]";
 	if (!message) return;
 	const auto &meAddress = message->getChatRoom()->getMe()->getAddress();
-	message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::NotDelivered, ::ms_time(nullptr));
+	if (meAddress) {
+		ChatMessage::State nextState = ChatMessage::State::PendingDelivery;
+		if (message->getParticipantState(meAddress) == ChatMessage::State::FileTransferCancelling) {
+			nextState = ChatMessage::State::NotDelivered;
+		}
+		message->getPrivate()->setParticipantState(meAddress, nextState, ::ms_time(nullptr));
+	}
 	releaseHttpRequest();
 }
 
@@ -1055,9 +1061,17 @@ void FileTransferChatMessageModifier::cancelFileTransfer() {
 	}
 
 	if (!belle_http_request_is_cancelled(httpRequest)) {
+		shared_ptr<ChatMessage> message = chatMessage.lock();
+		const auto &chatRoom = message->getChatRoom();
+		if (message && chatRoom) {
+			const auto meAddress = chatRoom->getMe()->getAddress();
+			if (meAddress) {
+				message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferCancelling,
+				                                           ::ms_time(nullptr));
+			}
+		}
 		if (currentFileContentToTransfer) {
 			string filePath = currentFileContentToTransfer->getFilePathSys();
-			shared_ptr<ChatMessage> message = chatMessage.lock();
 			if (!filePath.empty()) {
 				lInfo() << "Canceling file transfer using file: " << filePath;
 

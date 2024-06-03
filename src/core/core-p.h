@@ -58,6 +58,7 @@ public:
 	};
 	CorePrivate();
 	void init();
+	bool listenerAlreadyRegistered(CoreListener *listener) const;
 	void registerListener(CoreListener *listener);
 	void unregisterListener(CoreListener *listener);
 	void uninit();

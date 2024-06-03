@@ -549,14 +549,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_start_file_downlo
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_download_file(LinphoneChatMessage *message);
 
 /**
- * Resend a chat message if it is in the 'not delivered' state for whatever reason.
- * @param message #LinphoneChatMessage object. @notnil
- * @deprecated 13/10/2017 Use linphone_chat_message_send instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_resend(LinphoneChatMessage *message);
-
-/**
  * Set the path to the file to read from or write to during the file transfer.
  * @param message #LinphoneChatMessage object. @notnil
  * @param filepath The path to the file to use for the file transfer. @notnil

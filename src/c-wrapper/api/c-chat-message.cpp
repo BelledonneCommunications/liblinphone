@@ -364,16 +364,6 @@ void linphone_chat_message_send(LinphoneChatMessage *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
-void linphone_chat_message_resend(LinphoneChatMessage *msg) {
-	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
-}
-
-void linphone_chat_message_resend_2(LinphoneChatMessage *msg) {
-	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
-}
-
 LinphoneStatus linphone_chat_message_put_char(LinphoneChatMessage *msg, uint32_t character) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
 	return ((LinphoneStatus)L_GET_CPP_PTR_FROM_C_OBJECT(msg)->putCharacter(character));
@@ -599,6 +589,8 @@ const char *linphone_chat_message_state_to_string(const LinphoneChatMessageState
 			return "LinphoneChatMessageStateInProgress";
 		case LinphoneChatMessageStateDelivered:
 			return "LinphoneChatMessageStateDelivered";
+		case LinphoneChatMessageStatePendingDelivery:
+			return "LinphoneChatMessageStatePendingDelivery";
 		case LinphoneChatMessageStateNotDelivered:
 			return "LinphoneChatMessageStateNotDelivered";
 		case LinphoneChatMessageStateFileTransferError:
@@ -611,6 +603,8 @@ const char *linphone_chat_message_state_to_string(const LinphoneChatMessageState
 			return "LinphoneChatMessageStateDisplayed";
 		case LinphoneChatMessageStateFileTransferInProgress:
 			return "LinphoneChatMessageStateFileTransferInProgress";
+		case LinphoneChatMessageStateFileTransferCancelling:
+			return "LinphoneChatMessageStateFileTransferCancelling";
 	}
 	return NULL;
 }

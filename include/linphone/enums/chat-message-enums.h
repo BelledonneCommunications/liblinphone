@@ -40,6 +40,8 @@ typedef enum _LinphoneChatMessageState {
 	LinphoneChatMessageStateDisplayed = 7, /**< Message successfully displayed to the remote user */
 	LinphoneChatMessageStateFileTransferInProgress =
 	    8, /**< File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
+	LinphoneChatMessageStatePendingDelivery = 9,         /**< Message is pending delivery */
+	LinphoneChatMessageStateFileTransferCancelling = 10, /**< The user cancelled the file transfer */
 } LinphoneChatMessageState;
 
 /**

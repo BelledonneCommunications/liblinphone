@@ -53,11 +53,57 @@
 #include "logger/logger.h"
 #include "object/object-p.h"
 #include "sip-tools/sip-headers.h"
+#include "utils/fsm-integrity-checker.h"
+
 // =============================================================================
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+static FsmIntegrityChecker<ChatMessage::State> chatMessageFsmChecker{
+    {{ChatMessage::State::Idle,
+      {ChatMessage::State::PendingDelivery, ChatMessage::State::InProgress, ChatMessage::State::Delivered,
+       ChatMessage::State::NotDelivered, ChatMessage::State::DeliveredToUser, ChatMessage::State::Displayed,
+       ChatMessage::State::FileTransferInProgress, ChatMessage::State::FileTransferError,
+       ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::InProgress,
+      {ChatMessage::State::Delivered, ChatMessage::State::NotDelivered, ChatMessage::State::DeliveredToUser,
+       ChatMessage::State::Displayed, ChatMessage::State::FileTransferInProgress, ChatMessage::State::FileTransferError,
+       ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::Delivered,
+      {ChatMessage::State::InProgress, ChatMessage::State::NotDelivered, ChatMessage::State::DeliveredToUser,
+       ChatMessage::State::Displayed, ChatMessage::State::FileTransferInProgress, ChatMessage::State::FileTransferError,
+       ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::PendingDelivery,
+      {ChatMessage::State::Idle, ChatMessage::State::InProgress, ChatMessage::State::Delivered,
+       ChatMessage::State::DeliveredToUser, ChatMessage::State::Displayed, ChatMessage::State::FileTransferInProgress,
+       ChatMessage::State::FileTransferError, ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::NotDelivered,
+      {ChatMessage::State::Idle, ChatMessage::State::InProgress, ChatMessage::State::Delivered,
+       ChatMessage::State::DeliveredToUser, ChatMessage::State::Displayed, ChatMessage::State::FileTransferInProgress,
+       ChatMessage::State::FileTransferError, ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::DeliveredToUser,
+      {ChatMessage::State::InProgress, ChatMessage::State::Displayed, ChatMessage::State::FileTransferInProgress,
+       ChatMessage::State::FileTransferError, ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::Displayed,
+      {ChatMessage::State::InProgress, ChatMessage::State::FileTransferInProgress,
+       ChatMessage::State::FileTransferError, ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::FileTransferCancelling,
+      {ChatMessage::State::NotDelivered, ChatMessage::State::FileTransferError}},
+     {ChatMessage::State::FileTransferInProgress,
+      {ChatMessage::State::PendingDelivery, ChatMessage::State::InProgress, ChatMessage::State::NotDelivered,
+       ChatMessage::State::Delivered, ChatMessage::State::DeliveredToUser, ChatMessage::State::Displayed,
+       ChatMessage::State::FileTransferError, ChatMessage::State::FileTransferCancelling,
+       ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::FileTransferError,
+      {ChatMessage::State::InProgress, ChatMessage::State::NotDelivered, ChatMessage::State::Delivered,
+       ChatMessage::State::DeliveredToUser, ChatMessage::State::Displayed, ChatMessage::State::FileTransferInProgress,
+       ChatMessage::State::FileTransferDone}},
+     {ChatMessage::State::FileTransferDone,
+      {ChatMessage::State::InProgress, ChatMessage::State::NotDelivered, ChatMessage::State::Delivered,
+       ChatMessage::State::PendingDelivery, ChatMessage::State::DeliveredToUser, ChatMessage::State::Displayed,
+       ChatMessage::State::FileTransferInProgress, ChatMessage::State::FileTransferError}}}};
 
 ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction dir)
     : fileTransferChatMessageModifier(chatRoom->getCore()->getHttpClient().getProvider()) {
@@ -71,6 +117,7 @@ ChatMessagePrivate::~ChatMessagePrivate() {
 		salOp->unref();
 	}
 	if (salCustomHeaders) sal_custom_header_unref(salCustomHeaders);
+	if (errorInfo) linphone_error_info_unref(errorInfo);
 }
 
 void ChatMessagePrivate::setStorageId(long long id) {
@@ -120,21 +167,14 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	const shared_ptr<ChatMessage> &sharedMessage = q->getSharedFromThis();
 	const bool isBasicChatRoom =
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
-	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
-	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
-	ChatMessage::State currentState = ChatMessage::State::Idle;
-	if (isBasicChatRoom) {
-		currentState = q->getState();
-	} else if (eventLog) {
-		currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
-	}
+	ChatMessage::State currentState = q->getParticipantState(participantAddress);
 
-	if (!isValidStateTransition(currentState, newState)) {
+	if (!chatMessageFsmChecker.isValid(currentState, newState)) {
 		if (isBasicChatRoom) {
 			const auto &conferenceAddress = chatRoom->getConferenceAddress();
 			const auto conferenceAddressStr =
 			    conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
-			lWarning() << "Chat message " << sharedMessage << ": Invalid transaction of basic chat room "
+			lWarning() << "Chat message " << sharedMessage << ": Invalid transaction of message in basic chat room "
 			           << conferenceAddressStr << " from state " << Utils::toString(currentState) << " to state "
 			           << Utils::toString(newState);
 		} else {
@@ -147,7 +187,6 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 
 	auto me = chatRoom->getMe();
 	const auto isMe = participantAddress->weakEqual(*me->getAddress());
-
 	// Send IMDN if the participant whose state changes is me
 	if (isMe) {
 		switch (newState) {
@@ -167,6 +206,8 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		}
 	}
 
+	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
 	if (!q->isValid() && (eventLog || (newState == ChatMessage::State::NotDelivered))) {
 		if (newState == ChatMessage::State::NotDelivered) {
 			setState(newState);
@@ -275,15 +316,29 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	}
 }
 
+void ChatMessagePrivate::setAutomaticallyResent(bool enable) {
+	mAutomaticallyResent = enable;
+}
+
 void ChatMessagePrivate::setState(ChatMessage::State newState) {
 	L_Q();
 
 	// 1. Check valid transition.
-	if (!isValidStateTransition(state, newState)) return;
+	if (!chatMessageFsmChecker.isValid(state, newState)) return;
 
 	const shared_ptr<ChatMessage> &sharedMessage = q->getSharedFromThis();
 	const auto &chatRoom = q->getChatRoom();
 	auto me = chatRoom->getMe();
+	bool hasBeenAutomaticallyResent = mAutomaticallyResent;
+	// If the message was automatically resent because of a previous failure, then wait that it reaches a state such as
+	// Delivered, NotDelivered, DeliveredToUser or Displayed before resetting the flag In fact, it may happen that the
+	// message goes from the NotDelivered state to InProgress and finally coming back to NotDelivered in some cases and
+	// we want to avoid the message to enter an infinite loop
+	if (mAutomaticallyResent &&
+	    ((newState == ChatMessage::State::PendingDelivery) || (newState == ChatMessage::State::Delivered) ||
+	     (newState == ChatMessage::State::DeliveredToUser) || (newState == ChatMessage::State::Displayed))) {
+		setAutomaticallyResent(false);
+	}
 
 	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << sharedMessage << " of chat room "
@@ -291,15 +346,6 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 	        << " to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
-
-	if (state == ChatMessage::State::NotDelivered) {
-		if (salOp) {
-			salOp->setUserPointer(nullptr);
-			salOp->unref();
-			salOp = nullptr;
-		}
-		restoreFileTransferContentAsFileContent();
-	}
 
 	if (direction == ChatMessage::Direction::Outgoing) {
 		// Delivered state isn't triggered by IMDN, so participants state won't be set unless we manually do so here
@@ -366,8 +412,33 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 
 	// 5. Update in database if necessary.
 	if (state != ChatMessage::State::InProgress && state != ChatMessage::State::FileTransferError &&
-	    state != ChatMessage::State::FileTransferInProgress) {
+	    state != ChatMessage::State::FileTransferInProgress && state != ChatMessage::State::FileTransferCancelling) {
 		updateInDb();
+	}
+
+	bool needResend = false;
+	if ((state == ChatMessage::State::PendingDelivery) || (state == ChatMessage::State::NotDelivered)) {
+		if (salOp) {
+			const LinphoneErrorInfo *error_info = q->getErrorInfo();
+			if (error_info) {
+				LinphoneReason reason = linphone_error_info_get_reason(error_info);
+				needResend = ((reason == LinphoneReasonIOError) || (reason == LinphoneReasonNoResponse));
+			}
+			salOp->setUserPointer(nullptr);
+			salOp->unref();
+			salOp = nullptr;
+		}
+		restoreFileTransferContentAsFileContent();
+	}
+
+	if (state == ChatMessage::State::PendingDelivery) {
+		chatRoom->getCore()->getPrivate()->registerListener(q);
+		if ((direction == ChatMessage::Direction::Outgoing) && !hasBeenAutomaticallyResent && needResend &&
+		    !q->getResendTimer()) {
+			lInfo() << "Message [" << q << "]  will be automatically resent due to failure in "
+			        << ChatMessage::resendTimerExpiresS << "s";
+			q->createResendTimer();
+		}
 	}
 }
 
@@ -1176,7 +1247,7 @@ void ChatMessagePrivate::send() {
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
 	int errorCode = 0;
-	bool isResend = state == ChatMessage::State::NotDelivered;
+	bool isResend = ((state == ChatMessage::State::PendingDelivery) || (state == ChatMessage::State::NotDelivered));
 	// Remove the sent flag so the message will be sent by the OP in case of resend
 	currentSendStep &= ~ChatMessagePrivate::Step::Sent;
 
@@ -1502,14 +1573,6 @@ bool ChatMessagePrivate::isImdnControlledState(ChatMessage::State state) {
 	        state == ChatMessage::State::NotDelivered);
 }
 
-bool ChatMessagePrivate::isValidStateTransition(ChatMessage::State currentState, ChatMessage::State newState) {
-	if (newState == currentState) return false;
-
-	return !((currentState == ChatMessage::State::Displayed || currentState == ChatMessage::State::DeliveredToUser) &&
-	         (newState == ChatMessage::State::DeliveredToUser || newState == ChatMessage::State::Delivered ||
-	          newState == ChatMessage::State::NotDelivered));
-}
-
 // -----------------------------------------------------------------------------
 
 ChatMessage::ChatMessage(const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction)
@@ -1522,6 +1585,13 @@ ChatMessage::ChatMessage(ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getP
 ChatMessage::~ChatMessage() {
 	fileUploadEndBackgroundTask();
 	deleteChatMessageFromCache();
+	stopResendTimer();
+	std::shared_ptr<Core> core = nullptr;
+	try {
+		core = getCore();
+		core->getPrivate()->unregisterListener(this);
+	} catch (const bad_weak_ptr &) {
+	}
 }
 
 bool ChatMessage::isValid() const {
@@ -1801,6 +1871,24 @@ list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState(ChatMessage::
 	return result;
 }
 
+ChatMessage::State ChatMessage::getParticipantState(const shared_ptr<Address> &address) const {
+	const auto &chatRoom = getChatRoom();
+	ChatMessage::State participantState = ChatMessage::State::Idle;
+	if (!chatRoom) {
+		return participantState;
+	}
+	const bool isBasicChatRoom =
+	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
+	if (isBasicChatRoom) {
+		participantState = getState();
+	} else if (eventLog) {
+		participantState = mainDb->getChatMessageParticipantState(eventLog, address);
+	}
+	return participantState;
+}
+
 // -----------------------------------------------------------------------------
 
 const LinphoneErrorInfo *ChatMessage::getErrorInfo() const {
@@ -1951,6 +2039,77 @@ void ChatMessage::removeListener(shared_ptr<ChatMessageListener> listener) {
 	d->listeners.remove(listener);
 }
 
+belle_sip_source_t *ChatMessage::getResendTimer() const {
+	return mResendTimer;
+}
+
+void ChatMessage::createResendTimer() {
+	try {
+		if (mResendTimer) {
+			stopResendTimer();
+		}
+		mResendTimer = getCore()->getCCore()->sal->createTimer(
+		    resendTimerExpired, this, ChatMessage::resendTimerExpiresS * 1000, "resend message timeout");
+	} catch (const bad_weak_ptr &) {
+		lError() << "Unable to create resend timer for chat message [" << this << "]";
+	}
+}
+
+int ChatMessage::resendTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
+	ChatMessage *msg = static_cast<ChatMessage *>(data);
+	return msg->handleAutomaticResend();
+}
+
+int ChatMessage::handleAutomaticResend() {
+	L_D();
+	lInfo() << "Message [" << this << "] is automatically resent right now";
+	d->setAutomaticallyResent(true);
+	send();
+	stopResendTimer();
+	return 0;
+}
+
+void ChatMessage::stopResendTimer() {
+	if (mResendTimer) {
+		try {
+			auto core = getCore()->getCCore();
+			if (core && core->sal) core->sal->cancelTimer(mResendTimer);
+		} catch (const bad_weak_ptr &) {
+		}
+		belle_sip_object_unref(mResendTimer);
+		mResendTimer = nullptr;
+	}
+}
+
+void ChatMessage::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
+	try {
+		if ((getState() == State::PendingDelivery) && sipNetworkReachable) {
+			// Try to resend message if the account has correctly registered
+			auto account = getCore()->findAccountByIdentityAddress(getLocalAddress());
+			if (account && (account->getState() == LinphoneRegistrationOk)) {
+				lInfo() << "Attempt again to send message " << this << " because the network is again up and running";
+				handleAutomaticResend();
+			}
+		}
+	} catch (const bad_weak_ptr &) {
+	}
+}
+
+void ChatMessage::onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+                                                    LinphoneRegistrationState state,
+                                                    BCTBX_UNUSED(const string &message)) {
+	try {
+		if ((getState() != State::PendingDelivery) || (state != LinphoneRegistrationState::LinphoneRegistrationOk))
+			return;
+		auto messageAccount = getCore()->findAccountByIdentityAddress(getLocalAddress());
+		if ((messageAccount == account) && (state == LinphoneRegistrationOk)) {
+			lInfo() << "Attempt again to send message " << this << " because the core registered again";
+			handleAutomaticResend();
+		}
+	} catch (const bad_weak_ptr &) {
+	}
+}
+
 std::ostream &operator<<(std::ostream &lhs, ChatMessage::State e) {
 	switch (e) {
 		case ChatMessage::State::Idle:
@@ -1961,6 +2120,9 @@ std::ostream &operator<<(std::ostream &lhs, ChatMessage::State e) {
 			break;
 		case ChatMessage::State::Delivered:
 			lhs << "Delivered";
+			break;
+		case ChatMessage::State::PendingDelivery:
+			lhs << "PendingDelivery";
 			break;
 		case ChatMessage::State::NotDelivered:
 			lhs << "NotDelivered";
@@ -1976,6 +2138,9 @@ std::ostream &operator<<(std::ostream &lhs, ChatMessage::State e) {
 			break;
 		case ChatMessage::State::Displayed:
 			lhs << "Displayed";
+			break;
+		case ChatMessage::State::FileTransferCancelling:
+			lhs << "FileTransferCancelling";
 			break;
 		case ChatMessage::State::FileTransferInProgress:
 			lhs << "FileTransferInProgress";

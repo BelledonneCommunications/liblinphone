@@ -235,7 +235,12 @@ void CorePrivate::init() {
 #endif
 }
 
+bool CorePrivate::listenerAlreadyRegistered(CoreListener *listener) const {
+	return (std::find(listeners.cbegin(), listeners.cend(), listener) != listeners.cend());
+}
+
 void CorePrivate::registerListener(CoreListener *listener) {
+	if (listenerAlreadyRegistered(listener)) return;
 	listeners.push_back(listener);
 }
 

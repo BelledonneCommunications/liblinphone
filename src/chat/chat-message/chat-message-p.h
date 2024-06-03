@@ -244,10 +244,11 @@ public:
 	void storeInDb();
 	void updateInDb();
 
-	static bool isValidStateTransition(ChatMessage::State currentState, ChatMessage::State newState);
 	static bool isImdnControlledState(ChatMessage::State state);
 
 	void restoreFileTransferContentAsFileContent();
+
+	void setAutomaticallyResent(bool enable);
 
 	long long storageId = -1;
 
@@ -256,6 +257,7 @@ protected:
 	bool negativeDeliveryNotificationRequired = true;
 	bool positiveDeliveryNotificationRequired = true;
 	bool toBeStored = true;
+	bool mAutomaticallyResent = false;
 	std::string contentEncoding;
 
 private:
@@ -320,6 +322,7 @@ private:
 	mutable bool contentsNotLoadedFromDatabase = false;
 
 	std::list<std::shared_ptr<ChatMessageListener>> listeners;
+
 	L_DECLARE_PUBLIC(ChatMessage);
 };
 

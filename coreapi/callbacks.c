@@ -869,14 +869,20 @@ static void notify_refer(SalOp *op, SalReferStatus status) {
 		sessionRef->terminate(); // Automatically terminate the call as the transfer is complete
 }
 
-static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus status) {
+static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus status, const SalErrorInfo *errorInfo) {
 	switch (status) {
 		case SalMessageDeliveryInProgress:
 			return LinphoneChatMessageStateInProgress;
 		case SalMessageDeliveryDone:
 			return LinphoneChatMessageStateDelivered;
 		case SalMessageDeliveryFailed:
-			return LinphoneChatMessageStateNotDelivered;
+			const auto reason = errorInfo->reason;
+			if (reason == SalReasonIOError) {
+				// Retry delivery later on
+				return LinphoneChatMessageStatePendingDelivery;
+			} else {
+				return LinphoneChatMessageStateNotDelivered;
+			}
 	}
 	return LinphoneChatMessageStateIdle;
 }
@@ -895,9 +901,9 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) 
 	auto chatRoom = msg->getChatRoom();
 	// Check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
 	if (chatRoom) {
-		L_GET_PRIVATE(msg)->setParticipantState(chatRoom->getMe()->getAddress(),
-		                                        (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(status),
-		                                        ::ms_time(NULL));
+		L_GET_PRIVATE(msg)->setParticipantState(
+		    chatRoom->getMe()->getAddress(),
+		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(status, op->getErrorInfo()), ::ms_time(NULL));
 	}
 }
 

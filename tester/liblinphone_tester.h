@@ -364,10 +364,12 @@ typedef struct _stats {
 	int number_of_LinphoneMessageExtBodyReceived;
 	int number_of_LinphoneMessageInProgress;
 	int number_of_LinphoneMessageDelivered;
+	int number_of_LinphoneMessagePendingDelivery;
 	int number_of_LinphoneMessageNotDelivered;
 	int number_of_LinphoneMessageUndecryptable;
 	int number_of_LinphoneMessageFileTransferDone;
 	int number_of_LinphoneMessageFileTransferError;
+	int number_of_LinphoneMessageFileTransferCancelling;
 	int number_of_LinphoneMessageFileTransferInProgress;
 	int number_of_LinphoneMessageDeliveredToUser;
 	int number_of_LinphoneMessageDisplayed;
