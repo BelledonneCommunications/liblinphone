@@ -89,6 +89,19 @@ static void simple_account_creation(void) {
 	ms_free(local_rc);
 }
 
+void simple_account_params_creation(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+
+	LinphoneAccountParams *params = linphone_core_create_account_params(marie->lc);
+	linphone_account_params_set_custom_contact(params, NULL);
+
+	BC_ASSERT_PTR_NULL(linphone_account_params_get_custom_contact(params));
+
+	linphone_account_params_unref(params);
+
+	linphone_core_manager_destroy(marie);
+}
+
 void registration_state_changed_on_account(LinphoneAccount *account,
                                            LinphoneRegistrationState state,
                                            BCTBX_UNUSED(const char *message)) {
@@ -235,6 +248,7 @@ static void account_dependency_to_self(void) {
 
 test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
+    TEST_NO_TAG("Simple account params creation", simple_account_params_creation),
     TEST_NO_TAG("Account dependency to self", account_dependency_to_self),
     TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
     TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport)};

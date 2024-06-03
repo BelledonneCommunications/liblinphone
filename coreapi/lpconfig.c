@@ -68,7 +68,7 @@
 #define RENAME_REQUIRES_NONEXISTENT_NEW_PATH 1
 #endif
 
-#define lp_new0(type, n) (type *)calloc(sizeof(type), n)
+#define lp_new0(type, n) (type *)calloc(n, sizeof(type))
 
 #include "linphone/lpconfig.h"
 #include "lpc2xml.h"
