@@ -28,6 +28,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+/* Utility class to convert from C++ std::list of HybridObject, to bctbx_list_t and vice versa.
+ The bctbx_list_t contains the C pointer (obtained with toC())*/
 template <typename _T>
 class ListHolder {
 public:
@@ -45,6 +47,44 @@ public:
 	// Assign a C list. This replaces the STL list.
 	void setCList(const bctbx_list_t *clist) {
 		mList = _T::getCppListFromCList(clist);
+	}
+	~ListHolder() {
+		if (mCList) bctbx_list_free(mCList);
+	}
+
+private:
+	mutable bctbx_list_t *mCList = nullptr;
+};
+
+/* template specialisation for std::string */
+template <>
+class ListHolder<std::string> {
+public:
+	// The STL list is a public member, directly accessible.
+	std::list<std::string> mList;
+	// Return a C list of <const char *> from the STL list.
+	const bctbx_list_t *getCList() const {
+		if (mCList) bctbx_list_free(mCList);
+		bctbx_list_t *elem = nullptr, *head = nullptr;
+		for (auto &str : mList) {
+			if (!head) {
+				head = elem = bctbx_list_new((void *)str.c_str());
+			} else {
+				bctbx_list_t *newElem = bctbx_list_new((void *)str.c_str());
+				elem->next = newElem;
+				newElem->prev = elem;
+				elem = newElem;
+			}
+		}
+		mCList = head;
+		return mCList;
+	}
+	// Assign a C list. This replaces the STL list.
+	void setCList(const bctbx_list_t *clist) {
+		mList.clear();
+		for (const bctbx_list_t *elem = clist; elem != nullptr; elem = elem->next) {
+			mList.push_back((const char *)elem->data);
+		}
 	}
 	~ListHolder() {
 		if (mCList) bctbx_list_free(mCList);
