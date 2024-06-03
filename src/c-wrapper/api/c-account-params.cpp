@@ -436,11 +436,13 @@ const char *linphone_account_params_get_custom_param(const LinphoneAccountParams
 }
 
 void linphone_account_params_set_custom_contact(LinphoneAccountParams *params, LinphoneAddress *contact) {
-	AccountParams::toCpp(params)->setCustomContact(Address::toCpp(contact)->getSharedFromThis());
+	AccountParams::toCpp(params)->setCustomContact(contact != nullptr ? Address::toCpp(contact)->getSharedFromThis()
+	                                                                  : nullptr);
 }
 
 const LinphoneAddress *linphone_account_params_get_custom_contact(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getCustomContact()->toC();
+	const auto customContact = AccountParams::toCpp(params)->getCustomContact();
+	return customContact != nullptr ? customContact->toC() : nullptr;
 }
 
 void linphone_account_params_set_lime_server_url(LinphoneAccountParams *params, const char *url) {
