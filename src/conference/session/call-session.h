@@ -212,6 +212,11 @@ inline std::ostream &operator<<(std::ostream &str, CallSession::State state) {
 	return str;
 }
 
+inline std::ostream &operator<<(std::ostream &str, const CallSession &callSession) {
+	str << "CallSession [" << &callSession << "]";
+	return str;
+}
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CALL_SESSION_H_

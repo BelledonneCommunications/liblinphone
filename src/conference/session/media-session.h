@@ -216,6 +216,11 @@ private:
 	                                                const bool isThumbnail = false) const;
 };
 
+inline std::ostream &operator<<(std::ostream &str, const MediaSession &callSession) {
+	str << "MediaSession [" << &callSession << "]";
+	return str;
+}
+
 /**
  * Convert enum LinphoneSrtpSuite into enum MSCryptoSuite
  * Enums definitions are not perferctly matching

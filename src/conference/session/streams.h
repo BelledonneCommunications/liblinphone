@@ -342,7 +342,9 @@ class StreamsGroup : public MediaDescriptionRenderer {
 	friend class MS2VideoStream;
 
 public:
-	StreamsGroup(MediaSession &session);
+	explicit StreamsGroup(MediaSession &session);
+	StreamsGroup(const StreamsGroup &session) = delete;
+	StreamsGroup(StreamsGroup &&session) = delete;
 	~StreamsGroup();
 	/**
 	 * Create the streams according to the specified local and remote description.

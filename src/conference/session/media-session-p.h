@@ -209,6 +209,10 @@ public:
 	const std::string &getMediaLocalIp() const;
 	std::unique_ptr<LogContextualizer> getLogContextualizer() const;
 
+	MediaSessionPrivate(const MediaSessionPrivate &) = delete;
+	MediaSessionPrivate(MediaSessionPrivate &&) = delete;
+	MediaSessionPrivate() = default;
+
 private:
 	/* IceServiceListener methods:*/
 	virtual void onGatheringFinished(IceService &service) override;

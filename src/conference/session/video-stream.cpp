@@ -235,8 +235,8 @@ void MS2VideoStream::startZrtp() {
 	// If the bundle has been accepted by the remote party, there is no need to start the ZRTP video stream if it is not
 	// the transport owner as all traffic will go through the transport owner of the bundle
 	if (!isTransportOwner()) {
-		lWarning() << "Do not start video stream " << this
-		           << " because it isn't the transport owner of the bundle of session " << getMediaSession();
+		lWarning() << "Do not start video stream " << *this << " because it isn't the transport owner of the bundle of "
+		           << getGroup();
 		return;
 	}
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is
