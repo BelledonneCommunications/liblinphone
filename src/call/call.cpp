@@ -1007,7 +1007,7 @@ const string &Call::getAuthenticationToken() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationToken();
 }
 
-void Call::forgeHalfAuthenticationToken(bool localHalfAuthToken) {
+void Call::forgeHalfAuthenticationToken(bool localHalfAuthToken) const {
 	const string &authToken = getAuthenticationToken();
 	if (authToken.empty()) return; // ZRTP disabled
 	LinphoneCallStats *stats = getStats(LinphoneStreamTypeAudio);
@@ -1046,22 +1046,34 @@ void Call::forgeHalfAuthenticationToken(bool localHalfAuthToken) {
 	}
 }
 
-const string &Call::forgeLocalAuthenticationToken() {
+const string &Call::forgeLocalAuthenticationToken() const {
 	if (mLocalAuthToken.empty()) {
 		forgeHalfAuthenticationToken(true);
 	}
 	return mLocalAuthToken;
 }
 
-const string &Call::forgeRemoteAuthenticationToken() {
+const string &Call::forgeRemoteAuthenticationToken() const {
 	if (mRemoteAuthToken.empty()) {
 		forgeHalfAuthenticationToken(false);
 	}
 	return mRemoteAuthToken;
 }
 
-const list<string> &Call::getIncorrectAuthenticationTokens() const {
-	return static_pointer_cast<const MediaSession>(getActiveSession())->getIncorrectAuthenticationTokens();
+void Call::storeAndSortRemoteAuthToken(const string &remoteAuthToken) const {
+	static_pointer_cast<MediaSession>(getActiveSession())->storeAndSortRemoteAuthToken(remoteAuthToken);
+}
+
+const list<string> &Call::getRemoteAuthenticationTokens() const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getRemoteAuthenticationTokens();
+}
+
+const bctbx_list_t *Call::getCListRemoteAuthenticationTokens() const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getCListRemoteAuthenticationTokens();
+}
+
+void Call::skipZrtpAuthentication() {
+	static_pointer_cast<MediaSession>(getActiveSession())->skipZrtpAuthentication();
 }
 
 bool Call::getAuthenticationTokenVerified() const {
@@ -1263,9 +1275,9 @@ bool Call::mediaInProgress() const {
 }
 
 void Call::checkAuthenticationTokenSelected(const string &selectedValue) {
-	auto retmoteHalfAuthToken = forgeRemoteAuthenticationToken();
+	auto remoteHalfAuthToken = forgeRemoteAuthenticationToken();
 	static_pointer_cast<MediaSession>(getActiveSession())
-	    ->checkAuthenticationTokenSelected(selectedValue, retmoteHalfAuthToken);
+	    ->checkAuthenticationTokenSelected(selectedValue, remoteHalfAuthToken);
 }
 
 void Call::setAuthenticationTokenVerified(bool value) {

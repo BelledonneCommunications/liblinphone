@@ -740,6 +740,21 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 
 void ToneManager::notifySecurityAlert(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 	notifyToneIndication(LinphoneReasonSasCheckRequired);
+	if (mSecurityAlertTimer) stopSecurityAlert();
+	mSecurityAlertTimer = getCore().createTimer(
+	    [this]() -> bool {
+		    notifyToneIndication(LinphoneReasonSasCheckRequired);
+		    return true;
+	    },
+	    10000, "Security alert");
+}
+
+void ToneManager::stopSecurityAlert() {
+	stopTone();
+	if (mSecurityAlertTimer) {
+		getCore().destroyTimer(mSecurityAlertTimer);
+		mSecurityAlertTimer = nullptr;
+	}
 }
 
 LINPHONE_END_NAMESPACE

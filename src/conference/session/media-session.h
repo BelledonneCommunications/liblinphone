@@ -119,7 +119,9 @@ public:
 	bool getAllMuted() const;
 	LinphoneCallStats *getAudioStats() const;
 	const std::string &getAuthenticationToken() const;
-	const std::list<std::string> &getIncorrectAuthenticationTokens() const;
+	void storeAndSortRemoteAuthToken(const std::string &remoteAuthToken) const;
+	const std::list<std::string> &getRemoteAuthenticationTokens() const;
+	const bctbx_list_t *getCListRemoteAuthenticationTokens() const;
 	bool getAuthenticationTokenVerified() const;
 	bool getZrtpCacheMismatch() const;
 	float getAverageQuality() const;
@@ -148,8 +150,9 @@ public:
 	LinphoneCallStats *getVideoStats() const;
 	bool mediaInProgress() const;
 	void checkAuthenticationTokenSelected(const std::string &selectedValue, const std::string &halfAuthToken);
+	void skipZrtpAuthentication();
 	void setAuthenticationTokenVerified(bool value);
-	void setAuthenticationTokenCheckFailed(bool value);
+	void setAuthenticationTokenCheckDone(bool value);
 	void setMicrophoneVolumeGain(float value);
 	void setNativeVideoWindowId(void *id,
 	                            const std::string label = "",

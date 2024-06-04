@@ -52,6 +52,7 @@ public:
 	void notifyState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
 
 	void notifySecurityAlert(const std::shared_ptr<CallSession> &session);
+	void stopSecurityAlert();
 
 	/* Below are a few accessors required by other parts of liblinphone.*/
 	void playDtmf(char dtmf, int duration);
@@ -119,6 +120,7 @@ private:
 	std::shared_ptr<CallSession> mSessionRingingBack;
 	std::shared_ptr<CallSession> mSessionPaused;
 	belle_sip_source_t *mRingStreamTimer = nullptr;
+	belle_sip_source_t *mSecurityAlertTimer = nullptr;
 	bool mDtmfStreamStarted = false;
 };
 

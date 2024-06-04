@@ -228,6 +228,7 @@ public:
 	void notifyDtmfReceived(char dtmf);
 	void notifyRemoteRecording(bool isRecording);
 	void notifyEncryptionChanged(bool activated, const std::string &authToken);
+	void notifyAuthenticationTokenVerified(bool verified);
 	void notifyVideoDisplayErrorOccurred(int errorCode);
 
 protected:

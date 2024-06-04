@@ -2595,6 +2595,16 @@ void CallSession::notifyEncryptionChanged(bool activated, const std::string &aut
 	}
 }
 
+void CallSession::notifyAuthenticationTokenVerified(bool verified) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onAuthenticationTokenVerified(getSharedFromThis(), verified);
+	}
+}
+
 void CallSession::notifyVideoDisplayErrorOccurred(int errorCode) {
 	L_D();
 	// Copy list of listeners as the callback might delete one

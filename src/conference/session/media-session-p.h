@@ -306,6 +306,7 @@ private:
 	void addSecurityEventInChatrooms(const std::shared_ptr<Address> &faultyDevice,
 	                                 ConferenceSecurityEvent::SecurityEventType securityEventType);
 	void propagateEncryptionChanged();
+	void skipZrtpAuthentication();
 
 	void executeBackgroundTasks(bool oneSecondElapsed);
 

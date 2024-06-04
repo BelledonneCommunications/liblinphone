@@ -367,10 +367,11 @@ void StreamsGroup::authTokensReady(const list<string> &&incorrectAuthTokens,
                                    const string &authToken,
                                    bool verified,
                                    bool cacheMismatch) {
-	mIncorrectAuthTokens = incorrectAuthTokens;
+	mRemoteAuthTokens.mList = incorrectAuthTokens;
 	mAuthToken = authToken;
 	mAuthTokenVerified = verified;
 	mZrtpCacheMismatch = cacheMismatch;
+	mAuthTokenCheckDone = verified;
 	lInfo() << "Authentication token is " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified")
 	        << " " << (mZrtpCacheMismatch ? "and cache mismatch" : "") << ")";
 }

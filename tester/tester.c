@@ -4818,20 +4818,18 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 				bctbx_free(auth_token);
 				linphone_call_stats_unref(stats);
 
-				bctbx_list_t *caller_remote_tokens = linphone_call_get_remote_authentication_tokens(caller_call);
-				bctbx_list_t *callee_remote_tokens = linphone_call_get_remote_authentication_tokens(callee_call);
 				bool_t auth_token_found = FALSE;
-				for (const bctbx_list_t *it = caller_remote_tokens; it; it = it->next) {
+				for (const bctbx_list_t *it = linphone_call_get_remote_authentication_tokens(caller_call); it;
+				     it = it->next) {
 					if (strcmp(callee_local_token, it->data) == 0) auth_token_found = TRUE;
 				}
 				BC_ASSERT_TRUE(auth_token_found);
 				auth_token_found = FALSE;
-				for (const bctbx_list_t *it = callee_remote_tokens; it; it = it->next) {
+				for (const bctbx_list_t *it = linphone_call_get_remote_authentication_tokens(callee_call); it;
+				     it = it->next) {
 					if (strcmp(caller_local_token, it->data) == 0) auth_token_found = TRUE;
 				}
 				BC_ASSERT_TRUE(auth_token_found);
-				bctbx_list_free_with_data(caller_remote_tokens, bctbx_free);
-				bctbx_list_free_with_data(callee_remote_tokens, bctbx_free);
 			}
 		}
 

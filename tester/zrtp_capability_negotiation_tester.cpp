@@ -167,9 +167,6 @@ static void zrtp_cipher_call_with_capability_negotiations(void) {
 }
 
 static void zrtp_cipher_call_with_capability_negotiations_aes256(void) {
-	//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
-	//	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_aes256_rc");
-
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
@@ -184,9 +181,6 @@ static void zrtp_cipher_call_with_capability_negotiations_aes256(void) {
 }
 
 static void zrtp_call_with_different_cipher_suites_and_capability_negotiations(void) {
-	//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
-	//	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
-
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
@@ -202,8 +196,6 @@ static void zrtp_call_with_different_cipher_suites_and_capability_negotiations(v
 }
 
 static void zrtp_cipher_call_with_capability_negotiations_default_keys_on_callee(void) {
-	//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
-
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
 	LpConfig *lpm = linphone_core_get_config(marie->lc);

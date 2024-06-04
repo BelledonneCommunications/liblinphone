@@ -24,6 +24,9 @@
  * _T must be an HybridObject; so that conversion from C++ type to C type is done automatically.
  */
 
+#ifndef _L_LIST_HOLDER_H_
+#define _L_LIST_HOLDER_H_
+
 #include "logger/logger.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -143,3 +146,5 @@ private:
 };
 
 LINPHONE_END_NAMESPACE
+
+#endif // _L_LIST_HOLDER_H_

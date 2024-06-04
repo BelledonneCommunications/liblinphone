@@ -30,6 +30,7 @@
 
 #include "mediastreamer2/msmire.h"
 
+#include "c-wrapper/list-holder.h"
 #include "media-description-renderer.h"
 #include "port-config.h"
 #include "tester_utils.h"
@@ -503,20 +504,30 @@ public:
 	const std::string &getAuthenticationToken() const {
 		return mAuthToken;
 	}
-	const std::list<std::string> &getIncorrectAuthenticationTokens() const {
-		return mIncorrectAuthTokens;
+	void storeAndSortRemoteAuthToken(const std::string &remoteAuthToken) const {
+		mRemoteAuthTokens.mList.push_back(remoteAuthToken);
+		mRemoteAuthTokens.mList.sort();
+	}
+	const std::list<std::string> &getRemoteAuthenticationTokens() const {
+		return mRemoteAuthTokens.mList;
+	}
+	const bctbx_list_t *getCListRemoteAuthenticationTokens() const {
+		return mRemoteAuthTokens.getCList();
 	}
 	bool getAuthenticationTokenVerified() const {
 		return mAuthTokenVerified;
 	}
-	bool getAuthenticationTokenCheckFailed() const {
-		return mAuthTokenCheckFailed;
+	bool getAuthenticationTokenCheckDone() const {
+		return mAuthTokenCheckDone;
 	}
-	void setAuthenticationTokenCheckFailed(bool value) {
-		mAuthTokenCheckFailed = value;
+	void setAuthenticationTokenCheckDone(bool value) {
+		mAuthTokenCheckDone = value;
 	}
 	bool getZrtpCacheMismatch() const {
 		return mZrtpCacheMismatch;
+	}
+	void setZrtpCacheMismatch(bool value) {
+		mZrtpCacheMismatch = value;
 	}
 	const OfferAnswerContext &getCurrentOfferAnswerContext() const {
 		return mCurrentOfferAnswerState;
@@ -586,7 +597,7 @@ private:
 	int mAudioBandwidth = 0;
 	// Zrtp auth token
 	std::string mAuthToken;
-	std::list<std::string> mIncorrectAuthTokens;
+	mutable ListHolder<std::string> mRemoteAuthTokens;
 	belle_sip_source_t *mBandwidthReportTimer = nullptr;
 	std::list<std::function<void()>> mPostRenderHooks;
 	OfferAnswerContext mCurrentOfferAnswerState;
@@ -594,7 +605,7 @@ private:
 	MixerSession *mMixerSession = nullptr;
 	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
-	bool mAuthTokenCheckFailed = false;
+	bool mAuthTokenCheckDone = false;
 	bool mZrtpCacheMismatch = false;
 	bool mFinished = false;
 };

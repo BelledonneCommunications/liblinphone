@@ -664,7 +664,9 @@ void MediaSessionPrivate::telephoneEventReceived(int event) {
 }
 
 void MediaSessionPrivate::terminated() {
+	L_Q();
 	stopStreams();
+	q->getCore()->getPrivate()->getToneManager().stopSecurityAlert();
 	CallSessionPrivate::terminated();
 }
 
@@ -3298,7 +3300,8 @@ void MediaSessionPrivate::updateStreams(std::shared_ptr<SalMediaDescription> &ne
 		return;
 	}
 
-	if (q->getStreamsGroup().getAuthenticationTokenCheckFailed()) {
+	if (q->getStreamsGroup().getAuthenticationTokenCheckDone() &&
+	    !q->getStreamsGroup().getAuthenticationTokenVerified()) {
 		lError() << "updateStreams() The ZRTP authentication token check failed, unable to update the streams";
 		return;
 	}
@@ -3377,6 +3380,9 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 
 	string authToken = getStreamsGroup().getAuthenticationToken();
 	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	bool isInRemoteConference = conference && !isInLocalConference;
+	bool isInConference = (isInLocalConference || isInRemoteConference);
 	// If the media session is part of a conference, the client has no way to check the token, hence do not pass it on
 	// to the application
 	string callbackAuthToken = (conference) ? std::string() : authToken;
@@ -3385,6 +3391,8 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 		getStreamsGroup().setAuthTokenVerified(true);
 	}
 	bool authTokenVerified = getStreamsGroup().getAuthenticationTokenVerified();
+	bool cacheMismatch = getStreamsGroup().getZrtpCacheMismatch();
+	bool zrtpCheckDone = getStreamsGroup().getAuthenticationTokenCheckDone();
 	if (!getStreamsGroup().allStreamsEncrypted()) {
 		lInfo() << "Some streams are not encrypted";
 		getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
@@ -3393,8 +3401,11 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
+			if (!isInConference) {
+				q->getCore()->getPrivate()->getToneManager().stopSecurityAlert();
+			}
 			auto encryptionEngine = q->getCore()->getEncryptionEngine();
-			if (encryptionEngine && authTokenVerified) {
+			if (encryptionEngine && authTokenVerified && !cacheMismatch) {
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
 				if (remoteAddress) {
 					char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
@@ -3415,9 +3426,15 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 					lError() << "EncryptionEngine cannot be notified of verified status because remote contact address "
 					            "is unknown.";
 				}
+				q->notifyEncryptionChanged(true, callbackAuthToken);
 			} else {
 				// ZRTP is enabled and we need to check the SAS, a security alert tones
-				q->getCore()->getPrivate()->getToneManager().notifySecurityAlert(q->getSharedFromThis());
+				if (!isInConference) {
+					q->getCore()->getPrivate()->getToneManager().notifySecurityAlert(q->getSharedFromThis());
+				}
+				if (!zrtpCheckDone) {
+					q->notifyEncryptionChanged(true, callbackAuthToken);
+				}
 			}
 		} else {
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */
@@ -3429,7 +3446,9 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 		            : (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS)
 		                ? "DTLS"
 		                : "Unknown mechanism");
-		q->notifyEncryptionChanged(true, callbackAuthToken);
+		if (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) {
+			q->notifyEncryptionChanged(true, callbackAuthToken);
+		}
 
 		Stream *videoStream = getStreamsGroup().lookupMainStream(SalVideo);
 		if (isEncryptionMandatory() && videoStream && videoStream->getState() == Stream::Running) {
@@ -3438,6 +3457,11 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 			if (vc) vc->sendVfu();
 		}
 	}
+}
+
+void MediaSessionPrivate::skipZrtpAuthentication() {
+	L_Q();
+	q->getCore()->getPrivate()->getToneManager().stopSecurityAlert();
 }
 
 MSWebCam *MediaSessionPrivate::getVideoDevice() const {
@@ -3627,6 +3651,7 @@ void MediaSessionPrivate::terminate() {
 		q->stopRecording();
 	}
 	stopStreams();
+	q->getCore()->getPrivate()->getToneManager().stopSecurityAlert();
 	localIsTerminator = true;
 	CallSessionPrivate::terminate();
 }
@@ -5062,9 +5087,19 @@ const string &MediaSession::getAuthenticationToken() const {
 	return d->getStreamsGroup().getAuthenticationToken();
 }
 
-const list<string> &MediaSession::getIncorrectAuthenticationTokens() const {
+void MediaSession::storeAndSortRemoteAuthToken(const string &remoteAuthToken) const {
 	L_D();
-	return d->getStreamsGroup().getIncorrectAuthenticationTokens();
+	return d->getStreamsGroup().storeAndSortRemoteAuthToken(remoteAuthToken);
+}
+
+const list<string> &MediaSession::getRemoteAuthenticationTokens() const {
+	L_D();
+	return d->getStreamsGroup().getRemoteAuthenticationTokens();
+}
+
+const bctbx_list_t *MediaSession::getCListRemoteAuthenticationTokens() const {
+	L_D();
+	return d->getStreamsGroup().getCListRemoteAuthenticationTokens();
 }
 
 bool MediaSession::getAuthenticationTokenVerified() const {
@@ -5486,22 +5521,32 @@ void MediaSession::setAuthenticationTokenVerified(bool value) {
 			encryptionEngine->authenticationRejected(peerDeviceId);
 			ms_free(peerDeviceId);
 		}
+	} else {
+		d->getStreamsGroup().setZrtpCacheMismatch(false);
 	}
 	d->propagateEncryptionChanged();
 }
 
-void MediaSession::setAuthenticationTokenCheckFailed(bool value) {
+void MediaSession::setAuthenticationTokenCheckDone(bool value) {
 	L_D();
-	d->getStreamsGroup().setAuthenticationTokenCheckFailed(value);
+	d->getStreamsGroup().setAuthenticationTokenCheckDone(value);
 }
 
 void MediaSession::checkAuthenticationTokenSelected(const string &selectedValue, const string &halfAuthToken) {
 	L_D();
+	string lowerSelectedValue = selectedValue;
+	std::transform(lowerSelectedValue.begin(), lowerSelectedValue.end(), lowerSelectedValue.begin(),
+	               [](unsigned char c) { return tolower(c); });
 	bool value = (selectedValue.compare(halfAuthToken) == 0) ? true : false;
-	d->listener->onAuthenticationTokenVerified(getSharedFromThis(), value);
+	notifyAuthenticationTokenVerified(value);
+	setAuthenticationTokenCheckDone(true);
 	setAuthenticationTokenVerified(value);
-	setAuthenticationTokenCheckFailed(!value);
 	if (!value) d->stopStreams();
+}
+
+void MediaSession::skipZrtpAuthentication() {
+	L_D();
+	d->skipZrtpAuthentication();
 }
 
 void MediaSession::setParams(const MediaSessionParams *msp) {

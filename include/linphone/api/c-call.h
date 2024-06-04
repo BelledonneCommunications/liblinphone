@@ -286,21 +286,21 @@ LINPHONE_PUBLIC const char *linphone_call_get_remote_contact(LinphoneCall *call)
  * @param call The #LinphoneCall object @notnil
  * @return the authentication token to verify or NULL if ZRTP isn't enabled. @maybenil
  **/
-LINPHONE_PUBLIC const char *linphone_call_get_authentication_token(LinphoneCall *call);
+LINPHONE_PUBLIC const char *linphone_call_get_authentication_token(const LinphoneCall *call);
 
 /**
  * Returns the local ZRTP authentication token to verify by the remote.
  * @param call The #LinphoneCall object @notnil
  * @return the local authentication token to verify or NULL if ZRTP isn't enabled. @maybenil
  **/
-LINPHONE_PUBLIC const char *linphone_call_get_local_authentication_token(LinphoneCall *call);
+LINPHONE_PUBLIC const char *linphone_call_get_local_authentication_token(const LinphoneCall *call);
 
 /**
  * Returns a list of 4 remote ZRTP authentication tokens. The user needs to select one.
  * @param call The #LinphoneCall object @notnil
- * @return the authentication tokens to verify or NULL if ZRTP isn't enabled. \bctbx_list{char *} @maybenil @tobefreed
+ * @return the authentication tokens to verify or NULL if ZRTP isn't enabled. \bctbx_list{char *} @maybenil
  **/
-LINPHONE_PUBLIC bctbx_list_t *linphone_call_get_remote_authentication_tokens(LinphoneCall *call);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_call_get_remote_authentication_tokens(const LinphoneCall *call);
 
 /**
  * Returns whether ZRTP authentication token is verified.
@@ -310,6 +310,12 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_call_get_remote_authentication_tokens(Lin
  * @return TRUE if authentication token is verifed, false otherwise.
  **/
 LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_verified(const LinphoneCall *call);
+
+/**
+ * If the user skips the ZRTP authentication check, stop the security alert.
+ * @param call The #LinphoneCall object @notnil
+ */
+LINPHONE_PUBLIC void linphone_call_skip_zrtp_authentication(LinphoneCall *call);
 
 /**
  * Verify that the half ZRTP short authentication string (SAS) selected by the user is correct, and set the verification

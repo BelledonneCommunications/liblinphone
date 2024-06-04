@@ -316,28 +316,34 @@ const char *linphone_call_get_remote_contact(LinphoneCall *call) {
 	return L_STRING_TO_C(Call::toCpp(call)->getRemoteContact());
 }
 
-const char *linphone_call_get_authentication_token(LinphoneCall *call) {
+const char *linphone_call_get_authentication_token(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	return L_STRING_TO_C(Call::toCpp(call)->getAuthenticationToken());
 }
 
-const char *linphone_call_get_local_authentication_token(LinphoneCall *call) {
+const char *linphone_call_get_local_authentication_token(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	return L_STRING_TO_C(Call::toCpp(call)->forgeLocalAuthenticationToken());
 }
 
-bctbx_list_t *linphone_call_get_remote_authentication_tokens(LinphoneCall *call) {
+const bctbx_list_t *linphone_call_get_remote_authentication_tokens(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
-	Call *callCpp = Call::toCpp(call);
-	auto remoteTokens = callCpp->getIncorrectAuthenticationTokens();
-	remoteTokens.push_back(Call::toCpp(call)->forgeRemoteAuthenticationToken());
-	remoteTokens.sort();
-	return L_GET_C_LIST_FROM_CPP_LIST(remoteTokens);
+	const Call *callCpp = Call::toCpp(call);
+	auto remoteTokens = callCpp->getRemoteAuthenticationTokens();
+	if (remoteTokens.size() == 3) {
+		callCpp->storeAndSortRemoteAuthToken(callCpp->forgeRemoteAuthenticationToken());
+	}
+	return callCpp->getCListRemoteAuthenticationTokens();
 }
 
 bool_t linphone_call_get_authentication_token_verified(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getAuthenticationTokenVerified();
+}
+
+void linphone_call_skip_zrtp_authentication(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
+	Call::toCpp(call)->skipZrtpAuthentication();
 }
 
 void linphone_call_check_authentication_token_selected(LinphoneCall *call, const char *selected_value) {
