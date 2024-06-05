@@ -111,6 +111,13 @@ cdef extern from "linphone/tunnel.h":
 cdef extern from "linphone/core_utils.h":
     pass
 
+# Force this header file to be included in generated C file
+cdef extern from "linphone/api/c-api.h":
+    pass
+
+cdef extern from "linphone/chat.h":
+    pass
+
 cdef extern from "linphone/core.h":
     {{#c_classes}}
     ctypedef struct {{c_class_name}}:

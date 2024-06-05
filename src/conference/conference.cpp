@@ -582,8 +582,8 @@ const std::shared_ptr<Address> &Conference::getConferenceAddress() const {
 }
 
 void Conference::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {
-	if ((getState() == ConferenceInterface::State::Instantiated) ||
-	    (getState() == ConferenceInterface::State::CreationPending)) {
+	const auto state = getState();
+	if ((state == ConferenceInterface::State::Instantiated) || (state == ConferenceInterface::State::CreationPending)) {
 		if (!conferenceAddress || !conferenceAddress->isValid()) {
 			lError() << "Cannot set the conference address to " << *conferenceAddress;
 			shared_ptr<CallSession> session = getMe()->getSession();
@@ -599,7 +599,7 @@ void Conference::setConferenceAddress(const std::shared_ptr<Address> &conference
 		setState(ConferenceInterface::State::CreationPending);
 		lInfo() << "Conference " << this << " has been given the address " << *conferenceAddress;
 	} else {
-		lDebug() << "Cannot set the conference address of the Conference in state " << getState() << " to "
+		lDebug() << "Cannot set the conference address of the Conference in state " << state << " to "
 		         << *conferenceAddress;
 		return;
 	}
@@ -1383,8 +1383,8 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomPartic
 #endif // _MSC_VER
 void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::SecurityLevel &level) const {
 #ifdef HAVE_DB_STORAGE
-	if ((getState() == ConferenceInterface::State::CreationPending) ||
-	    (getState() == ConferenceInterface::State::Created)) {
+	const auto state = getState();
+	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
 
 		if (info) {
@@ -1412,8 +1412,8 @@ void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::Sec
 #endif // _MSC_VER
 void Conference::updateSubjectInConferenceInfo(const std::string &subject) const {
 #ifdef HAVE_DB_STORAGE
-	if ((getState() == ConferenceInterface::State::CreationPending) ||
-	    (getState() == ConferenceInterface::State::Created)) {
+	const auto state = getState();
+	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
 
 		if (info) {
@@ -1441,8 +1441,8 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 #endif // _MSC_VER
 void Conference::updateParticipantRoleInConferenceInfo(const std::shared_ptr<Participant> &participant) const {
 #ifdef HAVE_DB_STORAGE
-	if ((getState() == ConferenceInterface::State::CreationPending) ||
-	    (getState() == ConferenceInterface::State::Created)) {
+	const auto state = getState();
+	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
 
 		if (info) {
@@ -1513,8 +1513,8 @@ void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Partici
 	}
 
 #ifdef HAVE_DB_STORAGE
-	if ((getState() == ConferenceInterface::State::CreationPending) ||
-	    (getState() == ConferenceInterface::State::Created)) {
+	const auto state = getState();
+	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
 		if (info) {
 			bool update = updateParticipantInfoInConferenceInfo(info, participant);

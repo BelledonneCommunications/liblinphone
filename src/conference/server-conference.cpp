@@ -100,6 +100,8 @@ void ServerConference::initFromDb(BCTBX_UNUSED(const std::shared_ptr<Participant
 		createEventHandler(chatRoom.get());
 #endif // HAVE_ADVANCED_IM
 	}
+
+	setState(ConferenceInterface::State::Instantiated);
 	const auto &conferenceAddress = mConfParams->getConferenceAddress();
 	if (conferenceAddress) {
 		setConferenceAddress(conferenceAddress);

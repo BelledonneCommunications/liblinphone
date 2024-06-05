@@ -311,18 +311,19 @@ void ClientConferenceListEventHandler::addHandler(std::shared_ptr<ClientConferen
 bool ClientConferenceListEventHandler::isHandlerInSameDomainAsCore(const ConferenceId &conferenceId) const {
 	// Ensure that conference and conference factory are in the same domain
 	const std::shared_ptr<Address> &localAddress = conferenceId.getLocalAddress();
-	const auto conferenceFactoryUri = Core::getConferenceFactoryAddress(getCore(), localAddress);
 
+	const auto conferenceFactoryUri = Core::getConferenceFactoryAddress(getCore(), localAddress);
 	if (!conferenceFactoryUri) {
-		bctbx_debug("Account with local address [%s] hasn't a conference factory URI defined.",
-		            localAddress->asStringUriOnly().c_str());
+		lDebug() << "Account with local address [" << localAddress->getUri()
+		         << "] hasn't a conference factory URI defined.";
 		return false;
 	}
 
 	const std::shared_ptr<Address> &peerAddress = conferenceId.getPeerAddress();
 	if (peerAddress->getDomain() != conferenceFactoryUri->getDomain()) {
-		bctbx_debug("Peer address [%s] is not in the same domain as the conference factory URI [%s]",
-		            peerAddress->asStringUriOnly().c_str(), conferenceFactoryUri->asStringUriOnly.c_str());
+		lDebug() << "Peer address [" << peerAddress->getUri()
+		         << "] is not in the same domain as the conference factory URI [" << conferenceFactoryUri->getUri()
+		         << "]";
 		return false;
 	}
 

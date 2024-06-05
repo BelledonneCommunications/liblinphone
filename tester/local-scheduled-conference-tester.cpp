@@ -3404,9 +3404,13 @@ void uninvited_participant_rejoins(void) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 
-			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, start_time,
+			// Try search in the databse removing the gr parameter
+			LinphoneAddress *confAddr2 = linphone_address_clone(confAddr);
+			linphone_address_remove_uri_param(confAddr2, "gr");
+			check_conference_info_in_db(mgr, NULL, confAddr2, marie.getCMgr()->identity, participants_info, start_time,
 			                            duration, initialSubject, description, 0, LinphoneConferenceInfoStateNew,
 			                            security_level, FALSE);
+			linphone_address_unref(confAddr2);
 
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
