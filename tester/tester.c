@@ -3644,14 +3644,13 @@ void _check_friend_result_list_2(LinphoneCore *lc,
 	}
 
 	const LinphoneFriend *lf = linphone_search_result_get_friend(sr);
-	if (lf || linphone_search_result_get_address(sr)) {
-		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ? linphone_search_result_get_address(sr)
-		                                                                     : linphone_friend_get_address(lf);
-
+	const LinphoneAddress *search_result_address = linphone_search_result_get_address(sr);
+	if (lf || search_result_address) {
+		const LinphoneAddress *la = (search_result_address) ? search_result_address : linphone_friend_get_address(lf);
 		if (uri) { // Check on address
 			if (la) {
 				char *fa = linphone_address_as_string_uri_only(la);
-				BC_ASSERT_STRING_EQUAL(fa, uri);
+				BC_ASSERT_TRUE(strcasecmp(fa, uri) == 0);
 				free(fa);
 				assertError = false;
 			} else if (phone) {

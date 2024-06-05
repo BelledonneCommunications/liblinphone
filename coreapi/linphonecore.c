@@ -4484,17 +4484,39 @@ LinphoneAddress *linphone_core_interpret_url_2(LinphoneCore *lc, const char *url
 	LinphoneAccount *account = linphone_core_get_default_account(lc);
 	LinphoneAddress *result = NULL;
 
-	if (apply_international_prefix && linphone_account_is_phone_number(account, url)) {
-		char *normalized_number = linphone_account_normalize_phone_number(account, url);
+	LinphoneAddress *addr = linphone_address_new(url);
+	char *url_lowercase = NULL;
+	if (addr) {
+		// If the URL is actually a valid address, then lowercase only its username
+		char *username_lowercase = ms_strdup(linphone_address_get_username(addr));
+		// Convert uppercase letters to lowercase
+		for (size_t i = 0; i < strlen(username_lowercase); i++) {
+			username_lowercase[i] = (char)tolower(username_lowercase[i]);
+		}
+		linphone_address_set_username(addr, username_lowercase);
+		url_lowercase = linphone_address_as_string(addr);
+		ms_free(username_lowercase);
+		linphone_address_unref(addr);
+	} else {
+		url_lowercase = ms_strdup(url);
+		// Convert uppercase letters to lowercase
+		for (size_t i = 0; i < strlen(url_lowercase); i++) {
+			url_lowercase[i] = (char)tolower(url_lowercase[i]);
+		}
+	}
+
+	if (apply_international_prefix && linphone_account_is_phone_number(account, url_lowercase)) {
+		char *normalized_number = linphone_account_normalize_phone_number(account, url_lowercase);
 		if (normalized_number) {
 			result = linphone_account_normalize_sip_uri(account, normalized_number);
 			ms_free(normalized_number);
 		} else {
-			result = linphone_account_normalize_sip_uri(account, url);
+			result = linphone_account_normalize_sip_uri(account, url_lowercase);
 		}
 	} else {
-		result = linphone_account_normalize_sip_uri(account, url);
+		result = linphone_account_normalize_sip_uri(account, url_lowercase);
 	}
+	ms_free(url_lowercase);
 
 	return result;
 }
