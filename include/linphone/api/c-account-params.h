@@ -639,6 +639,13 @@ LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_
                                                                                         const LinphoneAddress *address);
 
 /**
+ * Set the CCMP server address.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @param url The URL of the CCMP server. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_ccmp_server_url(LinphoneAccountParams *params, const char *url);
+
+/**
  * If enabled, the proxy will be used as the only route.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to enable, FALSE otherwise.
@@ -693,6 +700,13 @@ linphone_account_params_get_conference_factory_address(const LinphoneAccountPara
  */
 LINPHONE_PUBLIC const LinphoneAddress *
 linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params);
+
+/**
+ * Get the CCMP server address.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @return The URL of the CCMP server. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_account_params_get_ccmp_server_url(const LinphoneAccountParams *params);
 
 /**
  * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates for VOIP

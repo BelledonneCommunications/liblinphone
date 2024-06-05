@@ -361,7 +361,6 @@ void Call::onCallSessionSetReleased(BCTBX_UNUSED(const shared_ptr<CallSession> &
 
 void Call::onCallSessionSetTerminated(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
 	LinphoneCore *core = getCore()->getCCore();
-
 	if (getSharedFromThis() == getCore()->getCurrentCall()) {
 		lInfo() << "Resetting the current call";
 		getCore()->getPrivate()->setCurrentCall(nullptr);

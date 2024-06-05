@@ -2224,7 +2224,7 @@ static void one_to_one_chatroom_exhumed_while_offline(void) {
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
 		LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *confAddrStr = confAddr ? linphone_address_as_string(confAddr) : ms_strdup("<unknwon-address>");
+		char *confAddrStr = confAddr ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Check that the chat room is correctly created on Pauline's side and that the participants are added
 		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(

@@ -89,12 +89,10 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
 
-		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "conference_scheduling", "protocol",
-		                        (int)LinphoneConferenceSchedulerTypeDB);
-
 		stats focus_stat = focus.getStats();
 
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(focus.getLc());
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_db_conference_scheduler(
+		    focus.getLc(), linphone_core_get_default_account(focus.getLc()));
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -158,7 +156,7 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 			           conference_address_str, linphone_core_get_identity(lise.getLc()));
 
 			LinphoneParticipantRole role = LinphoneParticipantRoleListener;
-			stats focus_stat = focus.getStats();
+			focus_stat = focus.getStats();
 			linphone_conference_info_set_subject(conf_info, subject);
 			linphone_conference_info_set_description(conf_info, description);
 			LinphoneParticipantInfo *lise_participant_info =
@@ -198,7 +196,8 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 				linphone_participant_info_unref(pauline_participant_info);
 			}
 
-			conference_scheduler = linphone_core_create_conference_scheduler(focus.getLc());
+			conference_scheduler = linphone_core_create_db_conference_scheduler(
+			    focus.getLc(), linphone_core_get_default_account(focus.getLc()));
 			LinphoneConferenceSchedulerCbs *cbs =
 			    linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 			linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
@@ -230,7 +229,9 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 			ms_message("%s is trying to cancel conference %s", linphone_core_get_identity(focus.getLc()),
 			           conference_address_str);
 
-			conference_scheduler = linphone_core_create_conference_scheduler(focus.getLc());
+			focus_stat = focus.getStats();
+			conference_scheduler = linphone_core_create_db_conference_scheduler(
+			    focus.getLc(), linphone_core_get_default_account(focus.getLc()));
 			LinphoneConferenceSchedulerCbs *cbs =
 			    linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 			linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
@@ -360,7 +361,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 		std::list<LinphoneCoreManager *> participants{pauline.getCMgr(), laure.getCMgr()};
 
 		char *uid = NULL;
@@ -1301,7 +1302,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 			linphone_conference_info_unref(info);
 		}
 
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 		ms_message("%s is trying to update conference %s - adding %s and removing %s",
 		           linphone_core_get_identity(marie.getLc()), conference_address_str,
 		           linphone_core_get_identity(michelle.getLc()), linphone_core_get_identity(laure.getLc()));
@@ -1584,7 +1585,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 			participant_stats.push_back(mgr->stat);
 		}
 
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 		ms_message("%s is trying to change duration of conference %s", linphone_core_get_identity(marie.getLc()),
 		           conference_address_str);
 		LinphoneConferenceInfo *conf_info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);

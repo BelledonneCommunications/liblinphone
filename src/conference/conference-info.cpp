@@ -133,16 +133,16 @@ void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo>
 		mParticipants.push_back(newInfo);
 		if (logActivity) {
 			lInfo() << "Participant with address " << *address << " has been added to conference info " << this
-			        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
-			        << ") with role " << newInfo->getRole();
+			        << " (address " << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ") with role "
+			        << newInfo->getRole();
 		} else {
 			lDebug() << "Participant with address " << *address << " has been added to conference info " << this
-			         << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
-			         << ") with role " << newInfo->getRole();
+			         << " (address " << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ") with role "
+			         << newInfo->getRole();
 		}
 	} else {
 		lInfo() << "Participant with address " << *address << " is already in the list of conference info " << this
-		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		        << " (address " << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ")";
 		if (isOrganizer) {
 			// Update the organizer parameters
 			participant->addParameters(participantInfo->getAllParameters());
@@ -164,13 +164,13 @@ void ConferenceInfo::removeParticipant(const std::shared_ptr<const Address> &par
 	if (hasParticipant(participant)) {
 		if (logActivity) {
 			lInfo() << "Participant with address " << *participant << " has been removed from conference info " << this
-			        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+			        << " (address " << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ")";
 		}
 		auto it = findParticipantIt(participant);
 		mParticipants.erase(it);
 	} else {
 		lDebug() << "Unable to remove participant with address " << *participant << " in conference info " << this
-		         << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		         << " (address " << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ")";
 	}
 }
 
@@ -178,13 +178,13 @@ void ConferenceInfo::updateParticipant(const std::shared_ptr<const ParticipantIn
 	const auto &address = participantInfo->getAddress();
 	if (hasParticipant(address)) {
 		lInfo() << "Updating participant with address " << *address << " in conference info " << this << " (address "
-		        << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		        << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ")";
 		removeParticipant(participantInfo, false);
 		addParticipant(participantInfo, false);
 	} else {
 		lError() << "Unable to update informations of participant with address " << *participantInfo->getAddress()
 		         << " in conference info " << this << " (address "
-		         << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
+		         << (getUri() ? getUri()->toString() : std::string("sip:unknown"))
 		         << ") because he/she has not been found in the list of participants";
 	}
 }
@@ -206,7 +206,7 @@ ConferenceInfo::findParticipant(const std::shared_ptr<const Address> &address) c
 		return *it;
 	};
 	lDebug() << "Unable to find participant with address " << *address << " in conference info " << this << " (address "
-	         << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+	         << (getUri() ? getUri()->toString() : std::string("sip:unknown")) << ")";
 	return nullptr;
 }
 
@@ -276,6 +276,22 @@ void ConferenceInfo::setUtf8IcsUid(const std::string &uid) {
 
 void ConferenceInfo::setIcsUid(const std::string &uid) {
 	mIcsUid = Utils::trim(uid);
+}
+
+const std::string ConferenceInfo::getUtf8CcmpUri() const {
+	return Utils::localeToUtf8(mCcmpUri);
+}
+
+const std::string &ConferenceInfo::getCcmpUri() const {
+	return mCcmpUri;
+}
+
+void ConferenceInfo::setUtf8CcmpUri(const std::string &uid) {
+	mCcmpUri = Utils::trim(Utils::utf8ToLocale(uid));
+}
+
+void ConferenceInfo::setCcmpUri(const std::string &uid) {
+	mCcmpUri = Utils::trim(uid);
 }
 
 const string ConferenceInfo::getUtf8Description() const {

@@ -223,6 +223,7 @@ extern void liblinphone_tester_clear_accounts(void);
 
 extern const char *flexisip_tester_dns_server;
 extern bctbx_list_t *flexisip_tester_dns_ip_addresses;
+extern const char *ccmp_server_url;
 extern const char *test_domain;
 extern const char *auth_domain;
 extern const char *test_username;
@@ -989,6 +990,9 @@ LinphoneParticipantInfo *add_participant_info_to_list(bctbx_list_t **participant
                                                       const LinphoneAddress *address,
                                                       LinphoneParticipantRole role,
                                                       int sequence);
+void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state);
+void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
+                                           const bctbx_list_t *failed_addresses);
 int find_matching_participant_info(const LinphoneParticipantInfo *info1, const LinphoneParticipantInfo *info2);
 void check_conference_info_against_db(LinphoneCoreManager *mgr,
                                       LinphoneAddress *confAddr,

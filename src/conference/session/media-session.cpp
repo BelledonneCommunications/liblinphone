@@ -160,38 +160,29 @@ LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() cons
 
 bool MediaSessionPrivate::tryEnterConference() {
 	L_Q();
-
-	if (getOp() && getOp()->getContactAddress()) {
-		const auto contactAddress = q->getContactAddress();
-		const auto &confId = getConferenceId();
-		if (!confId.empty() && isInConference() && !contactAddress->hasParam("isfocus")) {
-			q->updateContactAddressInOp();
-			const auto updatedContactAddress = q->getContactAddress();
-			ConferenceId serverConferenceId = ConferenceId(updatedContactAddress, updatedContactAddress);
-			shared_ptr<Conference> conference = q->getCore()->findConference(serverConferenceId, false);
-			// If the call conference ID is not an empty string but no conference is linked to the call means that it
-			// was added to the conference after the INVITE session was started but before its completition
-			if (conference) {
-				if (state == CallSession::State::Paused) {
-					// Resume call as it was added to conference
-					lInfo() << "Media session (local address " << *q->getLocalAddress() << " remote address "
-					        << *q->getRemoteAddress() << ") was added to conference "
-					        << *conference->getConferenceAddress()
-					        << " while the call was being paused. Resuming the session.";
-					q->resume();
-				} else {
-					// Send update to notify that the call enters conference
-					MediaSessionParams *newParams = q->getMediaParams()->clone();
-					lInfo() << "Media session (local address " << *q->getLocalAddress() << " remote address "
-					        << *q->getRemoteAddress() << ") was added to conference "
-					        << *conference->getConferenceAddress()
-					        << " while the call was establishing. Sending update to notify remote participant.";
-					q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
-					delete newParams;
-				}
-				return true;
-			}
+	q->updateContactAddressInOp();
+	const auto updatedContactAddress = q->getContactAddress();
+	ConferenceId serverConferenceId = ConferenceId(updatedContactAddress, updatedContactAddress);
+	shared_ptr<Conference> conference = q->getCore()->findConference(serverConferenceId, false);
+	// If the call conference ID is not an empty string but no conference is linked to the call means that it was added
+	// to the conference after the INVITE session was started but before its completition
+	if (conference) {
+		if (state == CallSession::State::Paused) {
+			// Resume call as it was added to conference
+			lInfo() << "Media session (local address " << *q->getLocalAddress() << " remote address "
+			        << *q->getRemoteAddress() << ") was added to conference " << *conference->getConferenceAddress()
+			        << " while the call was being paused. Resuming the session.";
+			q->resume();
+		} else {
+			// Send update to notify that the call enters conference
+			MediaSessionParams *newParams = q->getMediaParams()->clone();
+			lInfo() << "Media session (local address " << *q->getLocalAddress() << " remote address "
+			        << *q->getRemoteAddress() << ") was added to conference " << *conference->getConferenceAddress()
+			        << " while the call was establishing. Sending update to notify remote participant.";
+			q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
+			delete newParams;
 		}
+		return true;
 	}
 	return false;
 }
@@ -406,21 +397,28 @@ void MediaSessionPrivate::accepted() {
 					}
 				}
 
-				// If the call was added to a conference after the last INVITE session was started, the reINVITE to
-				// enter conference must be sent only if capability negotiation reINVITE was not sent
-				if (!capabilityNegotiationReInviteSent) {
-					// Add to conference if it was added after last INVITE message sequence started
-					// It occurs if the local participant calls the remote participant and the call is added to the
-					// conference when it is in state OutgoingInit, OutgoingProgress or OutgoingRinging
-					q->getCore()->doLater([this]() {
-						/* This has to be done outside of the accepted callback, because after the callback the SIP ACK
-						 * is going to be sent. Despite it is not forbidden by RFC3261, it is preferable for the sake of
-						 * clarity that the ACK for the current transaction is sent before the new INVITE that will be
-						 * sent by tryEnterConference(). Some implementations (eg FreeSwitch) reply "500 Overlapped
-						 * request" otherwise ( which is in fact a misunderstanding of RFC3261).
-						 */
-						tryEnterConference();
-					});
+				if (getOp() && getOp()->getContactAddress()) {
+					const auto contactAddress = q->getContactAddress();
+					const auto &confId = getConferenceId();
+					if (!confId.empty() && isInConference() && !contactAddress->hasParam("isfocus")) {
+						// If the call was added to a conference after the last INVITE session was started, the reINVITE
+						// to enter conference must be sent only if capability negotiation reINVITE was not sent
+						if (!capabilityNegotiationReInviteSent) {
+							// Add to conference if it was added after last INVITE message sequence started
+							// It occurs if the local participant calls the remote participant and the call is added to
+							// the conference when it is in state OutgoingInit, OutgoingProgress or OutgoingRinging
+							q->getCore()->doLater([this]() {
+								/* This has to be done outside of the accepted callback, because after the callback the
+								 * SIP ACK is going to be sent. Despite it is not forbidden by RFC3261, it is preferable
+								 * for the sake of clarity that the ACK for the current transaction is sent before the
+								 * new INVITE that will be sent by tryEnterConference(). Some implementations (eg
+								 * FreeSwitch) reply "500 Overlapped request" otherwise ( which is in fact a
+								 * misunderstanding of RFC3261).
+								 */
+								tryEnterConference();
+							});
+						}
+					}
 				}
 				bundleModeAccepted = q->getCurrentParams()->rtpBundleEnabled();
 			}
@@ -1775,7 +1773,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 
 	if (!success) {
 		lInfo() << "Don't put video stream for device in conference with address "
-		        << (dev ? dev->getAddress()->toString() : "<unknown>") << " on local offer for CallSession [" << q
+		        << (dev ? dev->getAddress()->toString() : "sip:unknown") << " on local offer for CallSession [" << q
 		        << "] because no valid payload has been found or device is not valid (pointer " << dev << ")";
 		cfg.dir = SalStreamInactive;
 		newStream.disable();
@@ -2603,7 +2601,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 			if (videoDir == SalStreamInactive) {
 				lWarning() << *q << "Video may have been enable in the local media parameters but device "
 				           << ((participantDevice) ? participantDevice->getAddress()->toString()
-				                                   : std::string("<unknown>"))
+				                                   : std::string("sip:unknown"))
 				           << " may not be able to send video streams or an old video stream is just being copied";
 				enableVideoStream = false;
 			}
@@ -2745,8 +2743,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		localDesc = nullptr;
 	}
 	forceStreamsDirAccordingToState(md);
-	lInfo() << "makeLocalMediaDescription: address = "
-	        << (localDesc ? localDesc->addr : std::string("<unknown-address>"));
+	lInfo() << "makeLocalMediaDescription: address = " << (localDesc ? localDesc->addr : std::string("sip:unknown"));
 	if (op) {
 		lInfo() << "Local media description assigned to op " << op;
 		op->setLocalMediaDescription(localDesc);

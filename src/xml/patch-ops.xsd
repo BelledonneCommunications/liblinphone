@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE schema [
+<!ENTITY ncname "\i\c*">
+<!ENTITY qname  "(&ncname;:)?&ncname;">
+<!ENTITY aname  "@&qname;">
+<!ENTITY pos    "\[\d+\]">
+<!ENTITY attr   "\[&aname;='(.)*'\]|\[&aname;=&quot;(.)*&quot;\]">
+<!ENTITY valueq "\[(&qname;|\.)=&quot;(.)*&quot;\]">
+<!ENTITY value  "\[(&qname;|\.)='(.)*'\]|&valueq;">
+<!ENTITY cond   "&attr;|&value;|&pos;">
+<!ENTITY step   "(&qname;|\*)(&cond;)*">
+<!ENTITY piq    "processing-instruction\((&quot;&ncname;&quot;)\)">
+<!ENTITY pi     "processing-instruction\(('&ncname;')?\)|&piq;">
+<!ENTITY id     "id\(('&ncname;')?\)|id\((&quot;&ncname;&quot;)?\)">
+<!ENTITY com    "comment\(\)">
+<!ENTITY text   "text\(\)">
+<!ENTITY nspa   "namespace::&ncname;">
+<!ENTITY cnodes "(&text;(&pos;)?)|(&com;(&pos;)?)|((&pi;)(&pos;)?)">
+<!ENTITY child  "&cnodes;|&step;">
+<!ENTITY last   "(&child;|&aname;|&nspa;)">
+]>
+<!-- RFC5261 -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+	<xsd:simpleType name="xpath">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(/)?((&id;)((/&step;)*(/&last;))?|(&step;/)*(&last;))"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="xpath-add">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(/)?((&id;)((/&step;)*(/&child;))?|(&step;/)*(&child;))"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="pos">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="before"/>
+			<xsd:enumeration value="after"/>
+			<xsd:enumeration value="prepend"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="type">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="&aname;|&nspa;"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:complexType name="add">
+		<xsd:complexContent mixed="true">
+			<xsd:restriction base="xsd:anyType">
+				<xsd:sequence>
+					<xsd:any processContents="lax" namespace="##any" minOccurs="0" maxOccurs="unbounded"/>
+				</xsd:sequence>
+				<xsd:attribute name="sel" type="xpath-add" use="required"/>
+				<xsd:attribute name="pos" type="pos"/>
+				<xsd:attribute name="type" type="type"/>
+			</xsd:restriction>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="replace">
+		<xsd:complexContent mixed="true">
+			<xsd:restriction base="xsd:anyType">
+				<xsd:sequence>
+					<xsd:any processContents="lax" namespace="##any" minOccurs="0" maxOccurs="1"/>
+				</xsd:sequence>
+				<xsd:attribute name="sel" type="xpath" use="required"/>
+			</xsd:restriction>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:simpleType name="ws">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="before"/>
+			<xsd:enumeration value="after"/>
+			<xsd:enumeration value="both"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:complexType name="remove">
+		<xsd:attribute name="sel" type="xpath" use="required"/>
+		<xsd:attribute name="ws" type="ws"/>
+	</xsd:complexType>
+
+</xsd:schema>

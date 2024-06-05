@@ -866,6 +866,8 @@ namespace xsd
         {
         }
 
+        sequence &operator=(const sequence &) = default;
+
       public:
         void
         assign (size_type n, const T& x)

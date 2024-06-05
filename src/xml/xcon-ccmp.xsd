@@ -1,0 +1,738 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RFC6503 -->
+
+<xs:schema targetNamespace="urn:ietf:params:xml:ns:xcon-ccmp" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:ietf:params:xml:ns:xcon-ccmp" xmlns:tns="urn:ietf:params:xml:ns:xcon-ccmp" xmlns:dm="urn:ietf:params:xml:ns:xcon-conference-info" xmlns:info="urn:ietf:params:xml:ns:conference-info" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+
+	<xs:import namespace="urn:ietf:params:xml:ns:xcon-conference-info" schemaLocation="xcon-conference-info.xsd"/>
+	<xs:import namespace="urn:ietf:params:xml:ns:conference-info" schemaLocation="conference-info.xsd"/>
+
+	<xs:element name="ccmpRequest" type="ccmp-request-type" />
+	<xs:element name="ccmpResponse" type="ccmp-response-type" />
+
+	<!-- CCMP request definition -->
+
+	<xs:complexType name="ccmp-request-type">
+		<xs:sequence>
+			<xs:element name="ccmpRequest" type="ccmp-request-message-type" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- ccmp-request-message-type -->
+
+	<xs:complexType name="ccmp-request-message-type">
+		<xs:sequence>
+			<xs:element name="subject" type="subject-type" minOccurs="0" maxOccurs="1" />
+			<xs:element name="confUserID" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:element name="confObjID" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:element name="operation" type="operationType" minOccurs="0" maxOccurs="1" />
+			<xs:element name="conference-password" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- CCMP response definition -->
+
+	<xs:complexType name="ccmp-response-type">
+		<xs:sequence>
+			<xs:element name="ccmpResponse" type="ccmp-response-message-type" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- ccmp-response-message-type -->
+
+	<xs:complexType name="ccmp-response-message-type">
+		<xs:sequence>
+			<xs:element name="confUserID" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="confObjID" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:element name="operation" type="operationType" minOccurs="0" maxOccurs="1" />
+			<xs:element name="response-code" type="response-codeType" minOccurs="1" maxOccurs="1" />
+			<xs:element name="response-string" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:element name="version" type="xs:positiveInteger" minOccurs="0" maxOccurs="1" />
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- CCMP REQUESTS -->
+
+	<!-- blueprintsRequest -->
+
+	<xs:complexType name="ccmp-blueprints-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="blueprintsRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- blueprintsRequestType -->
+
+	<xs:element name="blueprintsRequest" type="blueprintsRequestType"/>
+
+	<xs:complexType name="blueprintsRequestType">
+		<xs:sequence>
+			<xs:element name="xpathFilter" type="xs:string" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!--  blueprintRequest -->
+
+	<xs:complexType name="ccmp-blueprint-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="blueprintRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- blueprintRequestType -->
+
+	<xs:element name="blueprintRequest" type="blueprintRequestType" />
+
+	<xs:complexType name="blueprintRequestType">
+		<xs:sequence>
+			<xs:element name="blueprintInfo" type="info:conference-type" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- confsRequest -->
+
+	<xs:complexType name="ccmp-confs-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="confsRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- confsRequestType -->
+
+	<xs:element name="confsRequest" type="confsRequestType" />
+	<xs:complexType name="confsRequestType">
+		<xs:sequence>
+			<xs:element name="xpathFilter" type="xs:string" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- confRequest -->
+
+	<xs:complexType name="ccmp-conf-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="confRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- confRequestType -->
+
+	<xs:element name="confRequest" type="confRequestType" />
+
+	<xs:complexType name="confRequestType">
+		<xs:sequence>
+			<xs:element name="confInfo" type="info:conference-type" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- usersRequest -->
+
+	<xs:complexType name="ccmp-users-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="usersRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- usersRequestType -->
+
+	<xs:element name="usersRequest" type="usersRequestType" />
+
+	<xs:complexType name="usersRequestType">
+		<xs:sequence>
+			<xs:element name="usersInfo" type="info:users-type" minOccurs="0" />
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- userRequest -->
+
+	<xs:complexType name="ccmp-user-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="userRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- userRequestType -->
+
+	<xs:element name="userRequest" type="userRequestType" />
+
+	<xs:complexType name="userRequestType">
+		<xs:sequence>
+			<xs:element name="userInfo" type="info:user-type" minOccurs="0" />
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarsByValRequest -->
+
+	<xs:complexType name="ccmp-sidebarsByVal-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarsByValRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarsByValRequestType -->
+
+	<xs:element name="sidebarsByValRequest"
+	type="sidebarsByValRequestType" />
+
+	<xs:complexType name="sidebarsByValRequestType">
+		<xs:sequence>
+			<xs:element name="xpathFilter" type="xs:string" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarsByRefRequest -->
+
+	<xs:complexType name="ccmp-sidebarsByRef-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarsByRefRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarsByRefRequestType -->
+
+	<xs:element name="sidebarsByRefRequest"
+	type="sidebarsByRefRequestType" />
+
+	<xs:complexType name="sidebarsByRefRequestType">
+		<xs:sequence>
+			<xs:element name="xpathFilter" type="xs:string" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarByValRequest -->
+
+	<xs:complexType name="ccmp-sidebarByVal-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarByValRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarByValRequestType -->
+
+	<xs:element name="sidebarByValRequest"
+	type="sidebarByValRequestType"/>
+
+	<xs:complexType name="sidebarByValRequestType">
+		<xs:sequence>
+			<xs:element name="sidebarByValInfo" type="info:conference-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarByRefRequest -->
+
+	<xs:complexType name="ccmp-sidebarByRef-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarByRefRequest" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarByRefRequestType -->
+
+	<xs:element name="sidebarByRefRequest" type="sidebarByRefRequestType" />
+
+	<xs:complexType name="sidebarByRefRequestType">
+		<xs:sequence>
+			<xs:element name="sidebarByRefInfo" type="info:conference-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- extendedRequest -->
+
+	<xs:complexType name="ccmp-extended-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+				<xs:sequence>
+					<xs:element ref="extendedRequest"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- extendedRequestType -->
+
+	<xs:element name="extendedRequest" type="extendedRequestType"/>
+
+	<xs:complexType name="extendedRequestType">
+		<xs:sequence>
+			<xs:element name="extensionName" type="xs:string" minOccurs="1"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- optionsRequest -->
+
+	<xs:complexType name="ccmp-options-request-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-request-message-type">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+
+	<!-- CCMP RESPONSES -->
+
+	<!-- blueprintsResponse -->
+
+	<xs:complexType name="ccmp-blueprints-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="blueprintsResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- blueprintsResponseType -->
+
+	<xs:element name="blueprintsResponse" type="blueprintsResponseType"/>
+
+	<xs:complexType name="blueprintsResponseType">
+		<xs:sequence>
+			<xs:element name="blueprintsInfo" type="info:uris-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- blueprintResponse -->
+
+	<xs:complexType name="ccmp-blueprint-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="blueprintResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- blueprintResponseType -->
+
+	<xs:element name="blueprintResponse" type="blueprintResponseType"/>
+
+	<xs:complexType name="blueprintResponseType">
+		<xs:sequence>
+			<xs:element name="blueprintInfo" type="info:conference-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- confsResponse -->
+
+	<xs:complexType name="ccmp-confs-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="confsResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- confsResponseType -->
+
+	<xs:element name="confsResponse" type="confsResponseType" />
+
+	<xs:complexType name="confsResponseType">
+		<xs:sequence>
+			<xs:element name="confsInfo" type="info:uris-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- confResponse -->
+
+	<xs:complexType name="ccmp-conf-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="confResponse"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- confResponseType -->
+
+	<xs:element name="confResponse" type="confResponseType" />
+
+	<xs:complexType name="confResponseType">
+		<xs:sequence>
+			<xs:element name="confInfo" type="info:conference-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- usersResponse -->
+
+	<xs:complexType name="ccmp-users-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="usersResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- usersResponseType -->
+
+	<xs:element name="usersResponse" type="usersResponseType" />
+
+	<xs:complexType name="usersResponseType">
+		<xs:sequence>
+			<xs:element name="usersInfo" type="info:users-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- userResponse -->
+
+	<xs:complexType name="ccmp-user-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="userResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- userResponseType -->
+
+	<xs:element name="userResponse" type="userResponseType" />
+
+	<xs:complexType name="userResponseType">
+		<xs:sequence>
+			<xs:element name="userInfo" type="info:user-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarsByValResponse -->
+
+	<xs:complexType name="ccmp-sidebarsByVal-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarsByValResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarsByValResponseType -->
+
+	<xs:element name="sidebarsByValResponse"
+	type="sidebarsByValResponseType" />
+
+	<xs:complexType name="sidebarsByValResponseType">
+		<xs:sequence>
+			<xs:element name="sidebarsByValInfo" type="info:sidebars-by-val-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarsByRefResponse -->
+
+	<xs:complexType name="ccmp-sidebarsByRef-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarsByRefResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarsByRefResponseType -->
+
+	<xs:element name="sidebarsByRefResponse"
+	type="sidebarsByRefResponseType" />
+
+	<xs:complexType name="sidebarsByRefResponseType">
+		<xs:sequence>
+			<xs:element name="sidebarsByRefInfo" type="info:uris-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarByValResponse -->
+
+	<xs:complexType name="ccmp-sidebarByVal-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="sidebarByValResponse" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarByValResponseType -->
+
+	<xs:element name="sidebarByValResponse"
+	type="sidebarByValResponseType" />
+
+	<xs:complexType name="sidebarByValResponseType">
+		<xs:sequence>
+			<xs:element name="sidebarByValInfo" type="info:conference-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- sidebarByRefResponse -->
+
+	<xs:complexType name="ccmp-sidebarByRef-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence> <xs:element ref="sidebarByRefResponse" /> </xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- sidebarByRefResponseType -->
+
+	<xs:element name="sidebarByRefResponse"
+	type="sidebarByRefResponseType" />
+
+	<xs:complexType name="sidebarByRefResponseType">
+		<xs:sequence>
+			<xs:element name="sidebarByRefInfo" type="info:conference-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- extendedResponse -->
+
+	<xs:complexType name="ccmp-extended-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence>
+					<xs:element ref="extendedResponse"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- extendedResponseType -->
+
+	<xs:element name="extendedResponse" type="extendedResponseType"/>
+
+	<xs:complexType name="extendedResponseType">
+		<xs:sequence>
+			<xs:element name="extensionName" type="xs:string" minOccurs="1"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- optionsResponse -->
+
+	<xs:complexType name="ccmp-options-response-message-type">
+		<xs:complexContent>
+			<xs:extension base="tns:ccmp-response-message-type">
+				<xs:sequence> <xs:element ref="optionsResponse"/> </xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<!-- optionsResponseType -->
+
+	<xs:element name="optionsResponse" type="optionsResponseType" />
+	<xs:complexType name="optionsResponseType">
+		<xs:sequence>
+			<xs:element name="options" type="options-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- CCMP ELEMENT TYPES -->
+
+	<!-- response-codeType-->
+
+	<xs:simpleType name="response-codeType">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:pattern value="[0-9][0-9][0-9]" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- operationType -->
+
+	<xs:simpleType name="operationType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="retrieve"/>
+			<xs:enumeration value="create"/>
+			<xs:enumeration value="update"/>
+			<xs:enumeration value="delete"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- subject-type -->
+
+	<xs:complexType name="subject-type">
+		<xs:sequence>
+			<xs:element name="username" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:element name="password" type="xs:string" minOccurs="0" maxOccurs="1" />
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- options-type -->
+
+	<xs:complexType name="options-type">
+		<xs:sequence>
+			<xs:element name="standard-message-list" type="standard-message-list-type" minOccurs="1"/>
+			<xs:element name="extended-message-list" type="extended-message-list-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- standard-message-list-type -->
+
+	<xs:complexType name="standard-message-list-type">
+		<xs:sequence>
+			<xs:element name="standard-message" type="standard-message-type" minOccurs="1" maxOccurs="10"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- standard-message-type -->
+
+	<xs:complexType name="standard-message-type">
+		<xs:sequence>
+			<xs:element name="name" type="standard-message-name-type" minOccurs="1"/>
+			<xs:element name="operations" type="operations-type" minOccurs="0"/>
+			<xs:element name="schema-def" type="xs:string" minOccurs="0"/>
+			<xs:element name="description" type="xs:string" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- standard-message-name-type -->
+
+	<xs:simpleType name="standard-message-name-type">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="confsRequest"/>
+			<xs:enumeration value="confRequest"/>
+			<xs:enumeration value="blueprintsRequest"/>
+			<xs:enumeration value="blueprintRequest"/>
+			<xs:enumeration value="usersRequest"/>
+			<xs:enumeration value="userRequest"/>
+			<xs:enumeration value="sidebarsByValRequest"/>
+			<xs:enumeration value="sidebarByValRequest"/>
+			<xs:enumeration value="sidebarsByRefRequest"/>
+			<xs:enumeration value="sidebarByRefRequest"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- operations-type -->
+
+	<xs:complexType name="operations-type">
+		<xs:sequence>
+			<xs:element name="operation" type="operationType" minOccurs="1" maxOccurs="4"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- extended-message-list-type -->
+
+	<xs:complexType name="extended-message-list-type">
+		<xs:sequence>
+			<xs:element name="extended-message" type="extended-message-type" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- extended-message-type -->
+
+	<xs:complexType name="extended-message-type">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="operations" type="operations-type" minOccurs="0"/>
+			<xs:element name="schema-def" type="xs:string" />
+			<xs:element name="description" type="xs:string" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+</xs:schema>

@@ -47,7 +47,7 @@ if(HAVE_DLOPEN)
 	list(APPEND LINK_LIBS dl)
 endif()
 
-if(ENABLE_ADVANCED_IM)
+if(XercesC_FOUND)
 	list(APPEND LINK_LIBS ${XercesC_TARGET})
 	if (APPLE AND NOT IOS)
 		list(APPEND APPLE_LIBS "-framework CoreServices")
@@ -167,6 +167,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-info.h
 	conference/conference-scheduler.h
 	conference/sip-conference-scheduler.h
+	conference/ccmp-conference-scheduler.h
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
@@ -294,10 +295,15 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/general-internal.h
 	utils/payload-type-handler.h
 	utils/if-addrs.h
+	utils/xml-utils.h
 	variant/variant.h
 	variant/variant-impl.h
 	vcard/vcard.h
 	vcard/vcard-context.h
+	xml/patch-ops.h
+	xml/conference-info.h
+	xml/xcon-conference-info.h
+	xml/xcon-ccmp.h
 	http/http-client.h
 )
 
@@ -312,7 +318,6 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/client-conference-event-handler-base.h
 		conference/handlers/client-conference-event-handler.h
 		conference/handlers/client-conference-list-event-handler.h
-		xml/conference-info.h
 		xml/conference-info-linphone-extension.h
 		xml/ekt-linphone-extension.h
 		xml/imdn.h
@@ -472,6 +477,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference.cpp
 	conference/conference-interface.cpp
 	conference/sip-conference-scheduler.cpp
+	conference/ccmp-conference-scheduler.cpp
 	conference/notify-conference-listener.cpp
 	conference/server-conference.cpp
 	conference/params/call-session-params.cpp
@@ -587,9 +593,14 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/payload-type-handler.cpp
 	utils/utils.cpp
 	utils/if-addrs.cpp
+	utils/xml-utils.cpp
 	utils/version.cpp
 	vcard/vcard.cpp
 	vcard/vcard-context.cpp
+	xml/patch-ops.cpp
+	xml/conference-info.cpp
+	xml/xcon-conference-info.cpp
+	xml/xcon-ccmp.cpp
 	http/http-client.cpp
 )
 
@@ -637,7 +648,6 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/server-conference-list-event-handler.cpp
 		conference/handlers/client-conference-event-handler.cpp
 		conference/handlers/client-conference-list-event-handler.cpp
-		xml/conference-info.cpp
 		xml/conference-info-linphone-extension.cpp
 		xml/ekt-linphone-extension.cpp
 		xml/imdn.cpp
@@ -725,6 +735,7 @@ if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.
 		OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10.0.0")
 		OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
 	set_property(SOURCE
+		xml/xcon-conference-info.cpp
 		xml/conference-info.cpp
 		xml/ekt-linphone-extension.cpp
 		xml/resource-lists.cpp

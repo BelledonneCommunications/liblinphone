@@ -244,8 +244,8 @@ static void build_ics() {
 	BC_ASSERT_STRING_EQUAL(confStr.c_str(), expectedIcs.c_str());
 }
 
-static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
-                                                  const bctbx_list_t *failed_addresses) {
+static void conference_scheduler_invitations_sent_no_error(LinphoneConferenceScheduler *scheduler,
+                                                           const bctbx_list_t *failed_addresses) {
 	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 	BC_ASSERT_PTR_NULL(failed_addresses);
@@ -311,7 +311,7 @@ static void send_conference_invitations(bool_t enable_encryption,
 	if (add_participant_in_error) {
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent_with_error);
 	} else {
-		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent_no_error);
 	}
 	linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
 	linphone_conference_scheduler_cbs_unref(cbs);

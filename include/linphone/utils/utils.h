@@ -266,6 +266,8 @@ private:
 LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
 std::string getSipFragAddress(const Content &content);
 std::string getResourceLists(const std::list<Address> &addresses);
+std::string getXconId(const std::shared_ptr<Address> &address);
+std::shared_ptr<Address> getSipAddress(const std::string &str, const std::string &scheme);
 ConferenceInfo::participant_list_t parseResourceLists(const Content &content);
 ConferenceInfo::participant_list_t parseResourceLists(std::optional<std::reference_wrapper<const Content>> content);
 std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp(SalCallOp *op, bool remote);

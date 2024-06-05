@@ -75,6 +75,7 @@ public:
 	void setConferenceFactoryUri(const std::string &conferenceFactoryUri);
 	void setConferenceFactoryAddress(const std::shared_ptr<const Address> factoryAddress);
 	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress);
+	void setCcmpServerUrl(const std::string ccmpServerAddress);
 	void setFileTranferServer(const std::string &fileTransferServer);
 	void setPrivacy(LinphonePrivacyMask privacy);
 	void setAvpfMode(LinphoneAVPFMode avpfMode);
@@ -125,6 +126,9 @@ public:
 	const std::string &getIdKey() const;
 	const std::shared_ptr<Address> &getConferenceFactoryAddress() const;
 	const std::shared_ptr<Address> &getAudioVideoConferenceFactoryAddress() const;
+	const char *getCcmpServerUrlCstr() const;
+	const std::string &getCcmpServerUrl() const;
+	const std::string &getCcmpUserId() const;
 	const std::string &getFileTransferServer() const;
 	const std::string &getIdentity() const;
 	const char *getDomainCstr() const;
@@ -187,6 +191,7 @@ private:
 
 	mutable char *mConferenceFactoryAddressCstr = nullptr;
 	mutable char *mMwiServerAddressCstr = nullptr;
+	mutable char *mCcmpServerUrlCstr = nullptr;
 
 	std::string mInternationalPrefix;
 	std::string mInternationalPrefixIsoCountryCode;
@@ -203,6 +208,8 @@ private:
 	std::string mLimeAlgo;
 	std::string mIdentity;
 	std::string mPictureUri;
+	std::string mCcmpServerUrl;
+	mutable std::string mCcmpUserId;
 
 	std::list<std::shared_ptr<Address>> mRoutes;
 	bctbx_list_t *mRoutesCString = nullptr;

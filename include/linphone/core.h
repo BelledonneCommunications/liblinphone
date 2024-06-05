@@ -4873,8 +4873,67 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(
  * conference information invitation as an ICS object through chat.
  * @param core The #LinphoneCore. @notnil
  * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ * @deprecated 23/07/2024 Use linphone_core_create_conference_scheduler_2() or
+ * linphone_core_create_conference_scheduler_with_type() instead.
  */
-LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConferenceScheduler *
+linphone_core_create_conference_scheduler(LinphoneCore *core);
+
+/**
+ * Create a conference scheduler that can be used to create remote conferences for now or later and then send conference
+ * info as an ICS through chat.
+ * A SipConferenceScheduler is created if the #LinphoneAccount has not defined the URL of the CCMP server, other it will
+ * create a CCMPConferenceServer
+ * @param core The #LinphoneCore. @notnil
+ * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
+ * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_2(LinphoneCore *core,
+                                                                                         LinphoneAccount *account);
+
+/**
+ * Create a conference scheduler that can be used to create remote conferences for now or later and then send conference
+ * info as an ICS through chat by specifying its type.
+ * @param core The #LinphoneCore. @notnil
+ * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
+ * @param scheduling_type The type of the #LinphoneConferenceScheduler.
+ * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_with_type(
+    LinphoneCore *core, LinphoneAccount *account, LinphoneConferenceSchedulerType scheduling_type);
+
+/**
+ * Create a SIP conference scheduler that can be used to create remote conferences for now or later and then send
+ * conference info as an ICS through chat. A SipConferenceScheduler creates a conference on a server by using a SIP
+ * dialog
+ * @param core The #LinphoneCore. @notnil
+ * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
+ * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_sip_conference_scheduler(LinphoneCore *core,
+                                                                                           LinphoneAccount *account);
+
+/**
+ * Create a database conference scheduler that can be used to create remote conferences for now or later and then send
+ * conference info as an ICS through chat. The DBConferenceScheduler only creates a conference info to be stored in the
+ * database of the linphone core
+ * @param core The #LinphoneCore. @notnil
+ * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
+ * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_db_conference_scheduler(LinphoneCore *core,
+                                                                                          LinphoneAccount *account);
+
+/**
+ * Create a SIP conference scheduler that can be used to create remote conferences for now or later and then send
+ * conference info as an ICS through chat. A CCMPConferenceScheduler creates a conference on a server by using the CCMP
+ * protocol
+ * @param core The #LinphoneCore. @notnil
+ * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
+ * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_ccmp_conference_scheduler(LinphoneCore *core,
+                                                                                            LinphoneAccount *account);
 
 /**
  * Find a conference.
@@ -7229,6 +7288,16 @@ LINPHONE_PUBLIC long linphone_core_get_conference_cleanup_period(const LinphoneC
 /**
  * Retrieve the conference information linked to the provided URI if any.
  * @param core #LinphoneCore object. @notnil
+ * @param uri Uri of the conference as provided by the CCMP server backend. @notnil
+ * @return The #LinphoneConferenceInfo found if any, NULL otherwise. @tobefreed @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_core_find_conference_information_from_ccmp_uri(LinphoneCore *core,
+                                                                                                const char *uri);
+
+/**
+ * Retrieve the conference information linked to the provided URI if any.
+ * @param core #LinphoneCore object. @notnil
  * @param uri #LinphoneAddress of the uri. @notnil
  * @return The #LinphoneConferenceInfo found if any, NULL otherwise. @tobefreed @maybenil
  * @ingroup conference
@@ -7256,6 +7325,18 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(Linp
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_2(LinphoneCore *core,
                                                                               bctbx_list_t *capabilities);
 #endif
+
+/**
+ * Retrieve the list of conference information on DB where the address passed as argument is either the organizer or a
+ * participant.
+ * @param core #LinphoneCore object. @notnil
+ * @param uri #LinphoneAddress of the participant. @notnil
+ * @return The list of conference infos \bctbx_list{LinphoneConferenceInfo} where the address passed as argument is
+ * either the organizer or a participant. @tobefreed @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_informations_with_participant(LinphoneCore *core,
+                                                                                         LinphoneAddress *uri);
 
 /**
  * Retrieve the list of future conference information on DB.

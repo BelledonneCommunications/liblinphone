@@ -51,7 +51,8 @@ def generate(name):
 		"--generate-ostream",
 		"--generate-detach",
 		"--generate-polymorphic",
-		"--std", "c++11",
+		"--polymorphic-type-all",
+		"--std", "c++17",
 		"--type-naming", "java",
 		"--function-naming", "java",
 		"--hxx-suffix", ".h",
@@ -64,7 +65,7 @@ def generate(name):
 		"--cxx-prologue-file", prologue_file,
 		"--cxx-epilogue-file", epilogue_file,
 		"--epilogue-file", epilogue_file,
-		"--root-element-first",
+		"--type-regex", "%(?:[^ ]* )?([^,-]+)-([^,-]+)-([^,-]+)-([^,-]+)-?([^,-]*)%\\u$1\\u$2\\u$3\\u$4\\u$5%",
 		"--type-regex", "%(?:[^ ]* )?([^,-]+)-([^,-]+)-([^,-]+)-?([^,-]*)%\\u$1\\u$2\\u$3\\u$4%",
 		"--type-regex", "%(?:[^ ]* )?([^,-]+)-([^,-]+)-?([^,-]*)%\\u$1\\u$2\\u$3%",
 		"--type-regex", "%(?:[^ ]* )?([^,-]+)-?([^,-]*)%\\u$1\\u$2%",
@@ -104,6 +105,9 @@ def generate(name):
 		"--namespace-map", "http://www.linphone.org/xsds/imdn.xsd=LinphonePrivate::Xsd::LinphoneImdn",
 		"--namespace-map", "urn:ietf:params:xml:ns:resource-lists=LinphonePrivate::Xsd::ResourceLists",
 		"--namespace-map", "urn:ietf:params:xml:ns:rlmi=LinphonePrivate::Xsd::Rlmi",
+		"--namespace-map", "urn:ietf:params:xml:ns:patch-ops=LinphonePrivate::Xsd::PatchOps",
+		"--namespace-map", "urn:ietf:params:xml:ns:xcon-conference-info=LinphonePrivate::Xsd::XconConferenceInfo",
+		"--namespace-map", "urn:ietf:params:xml:ns:xcon-ccmp=LinphonePrivate::Xsd::XconCcmp",
 		source_file
 		], shell=False)
 	p.communicate()
@@ -127,6 +131,9 @@ def main(argv = None):
 	generate("linphone-imdn")
 	generate("resource-lists")
 	generate("rlmi")
+	generate("patch-ops")
+	generate("xcon-conference-info")
+	generate("xcon-ccmp")
 
 if __name__ == "__main__":
 	sys.exit(main())

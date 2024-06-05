@@ -32,7 +32,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SIPConferenceScheduler::SIPConferenceScheduler(const shared_ptr<Core> &core) : ConferenceScheduler(core) {
+SIPConferenceScheduler::SIPConferenceScheduler(const shared_ptr<Core> &core, const std::shared_ptr<Account> &account)
+    : ConferenceScheduler(core, account) {
 }
 
 SIPConferenceScheduler::~SIPConferenceScheduler() {
@@ -94,7 +95,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		lError() << "[Conference Scheduler] [" << this
 		         << "] The session to update the conference information of conference "
 		         << (conferenceAddress && conferenceAddress->isValid() ? conferenceAddress->toString()
-		                                                               : std::string("<unknown-address>"))
+		                                                               : std::string("sip:unknown"))
 		         << " did not succesfully establish hence it is likely that the request wasn't taken into account by "
 		            "the server";
 		setState(State::Error);
@@ -147,9 +148,9 @@ void SIPConferenceScheduler::onCallSessionStateChanged(const shared_ptr<CallSess
 			setState(State::Error);
 			break;
 		case CallSession::State::StreamsRunning: {
-			const LinphoneErrorInfo *errorCode = session->getErrorInfo();
+			const LinphoneErrorInfo *errorInfo = session->getErrorInfo();
 			const std::shared_ptr<Address> address = session->getRemoteAddress();
-			processResponse(errorCode, address);
+			processResponse(errorInfo, address);
 			break;
 		}
 		default:
@@ -157,7 +158,7 @@ void SIPConferenceScheduler::onCallSessionStateChanged(const shared_ptr<CallSess
 	}
 }
 
-void SIPConferenceScheduler::processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorCode),
+void SIPConferenceScheduler::processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorInfo),
                                              BCTBX_UNUSED(const std::shared_ptr<Address> conferenceAddress)) {
 	mSession->terminate();
 }

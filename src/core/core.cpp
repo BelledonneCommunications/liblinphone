@@ -2528,20 +2528,21 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 	linphone_core_notify_account_removed(getCCore(), account->toC());
 
 	account->setDeletionDate(ms_time(NULL));
-	if (account->getState() == LinphoneRegistrationOk) {
+
+	if (getCCore()->state == LinphoneGlobalOn) {
+		// Update the associated linphone specs on the core
 		auto params = account->getAccountParams()->clone()->toSharedPtr();
-		params->setRegisterEnabled(FALSE);
+		params->setRegisterEnabled(false);
+		params->setConferenceFactoryAddress(nullptr);
 		account->setAccountParams(params);
+	}
+
+	if (account->getState() == LinphoneRegistrationOk) {
 		account->update();
 	} else if (account->getState() != LinphoneRegistrationNone) {
 		account->setState(LinphoneRegistrationNone, "Registration disabled");
 	}
 	Account::writeAllToConfigFile(getSharedFromThis());
-
-	// Update the associated linphone specs on the core
-	auto params = account->getAccountParams()->clone()->toSharedPtr();
-	params->setConferenceFactoryAddress(nullptr);
-	account->setAccountParams(params);
 }
 
 void Core::removeDeletedAccount(const std::shared_ptr<Account> &account) {
@@ -2564,7 +2565,7 @@ void Core::removeDependentAccount(const std::shared_ptr<Account> &account) {
 			lInfo() << "Updating dependent account [" << accountInList
 			        << "] caused by removal of 'master' account idkey[" << accountIdKey << "]";
 			accountInList->setDependency(NULL);
-			account->setNeedToRegister(true);
+			account->setNeedToRegister(account->getAccountParams()->getRegisterEnabled());
 			accountInList->update();
 		}
 	}

@@ -1519,6 +1519,7 @@ static void tls_client_rejected_due_to_unmatched_subject(void) {
 	}
 }
 
+#ifdef HAVE_DEPRECATED_TESTS
 static void on_eof(LinphonePlayer *player) {
 	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
 	LinphoneCoreManager *marie = (LinphoneCoreManager *)linphone_player_cbs_get_user_data(cbs);
@@ -1589,6 +1590,7 @@ end:
 	ms_free(recordpath);
 	ms_free(hellopath);
 }
+#endif // HAVE_DEPRECATED_TESTS
 
 static void register_without_regid(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
@@ -2108,6 +2110,7 @@ end:
 	bctbx_list_free(lcs);
 }
 
+#ifdef HAVE_DEPRECATED_TESTS
 static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_t invalid_oid) {
 	if (!transport_supported(LinphoneTransportTls)) return;
 
@@ -2267,6 +2270,7 @@ void use_jwe_auth_with_malformed_token(void) {
 	    "lJlZeZkXl597jtBXN3fH5vdccRvoxVFHT0DfZcEA.Km01D704Zl-J18hQJ05dEA";
 	deal_with_jwe_auth_module(jwe, TRUE, FALSE);
 }
+#endif // HAVE_DEPRECATED_TESTS
 
 test_t flexisip_tests[] = {
     TEST_NO_TAG("Subscribe forking", subscribe_forking), TEST_NO_TAG("Message forking", message_forking),
@@ -2306,7 +2310,9 @@ test_t flexisip_tests[] = {
                 tls_client_auth_bad_certificate),
     TEST_NO_TAG("TLS authentication - client rejected due to unmatched certificate subject",
                 tls_client_rejected_due_to_unmatched_subject),
+#ifdef HAVE_DEPRECATED_TESTS
     TEST_NO_TAG("Transcoder", transcoder_tester),
+#endif // HAVE_DEPRECATED_TESTS
     TEST_NO_TAG("Removing old tport on flexisip for the same client", test_removing_old_tport),
     TEST_NO_TAG("Protection against transport address re-assignation",
                 test_protection_against_transport_address_reassignation),
@@ -2320,12 +2326,15 @@ test_t flexisip_tests[] = {
                 sequential_forking_with_insertion_of_higher_priority),
     TEST_NO_TAG("Sequential forking with fallback route", sequential_forking_with_fallback_route),
     TEST_NO_TAG("Registered contact does not have regid param", register_without_regid),
+#ifdef HAVE_DEPRECATED_TESTS
     TEST_NO_TAG("Use JweAuth module", use_jwe_auth_module),
     TEST_NO_TAG("Use JweAuth module with invalid oid", use_jwe_auth_module_with_invalid_oid),
     TEST_NO_TAG("Use JweAuth module with expired exp", use_jwe_auth_module_with_expired_exp),
     TEST_NO_TAG("Use JweAuth module with no exp", use_jwe_auth_module_with_no_exp),
     TEST_NO_TAG("Use JweAuth module with invalid attr", use_jwe_auth_module_with_invalid_attr),
-    TEST_NO_TAG("Use JweAuth module with malformed token", use_jwe_auth_with_malformed_token)};
+    TEST_NO_TAG("Use JweAuth module with malformed token", use_jwe_auth_with_malformed_token)
+#endif // HAVE_DEPRECATED_TESTS
+};
 
 test_suite_t flexisip_test_suite = {"Flexisip",
                                     NULL,

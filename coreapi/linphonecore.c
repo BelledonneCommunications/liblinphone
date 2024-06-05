@@ -101,6 +101,7 @@
 #include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/handlers/server-conference-list-event-handler.h"
 #endif
+#include "conference/ccmp-conference-scheduler.h"
 #include "conference/conference-info.h"
 #include "conference/conference-scheduler.h"
 #include "conference/db-conference-scheduler.h"
@@ -9342,24 +9343,50 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 }
 
 LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core) {
-	// TODO add other protocols to create a scheduled conference on server
+	return linphone_core_create_conference_scheduler_2(core, NULL);
+}
+
+LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_2(LinphoneCore *core, LinphoneAccount *account) {
 	CoreLogContextualizer logContextualizer(core);
-	LinphoneConfig *config = linphone_core_get_config(core);
-	LinphoneConferenceSchedulerType scheduling_type = (LinphoneConferenceSchedulerType)linphone_config_get_int(
-	    config, "conference_scheduling", "protocol", LinphoneConferenceSchedulerTypeSIP);
+	LinphoneConferenceSchedulerType scheduling_type = LinphoneConferenceSchedulerTypeSIP;
+	if (account && linphone_account_params_get_ccmp_server_url(linphone_account_get_params(account))) {
+		scheduling_type = LinphoneConferenceSchedulerTypeCCMP;
+	}
+	return linphone_core_create_conference_scheduler_with_type(core, account, scheduling_type);
+}
+
+LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_with_type(
+    LinphoneCore *core, LinphoneAccount *account, LinphoneConferenceSchedulerType scheduling_type) {
+	auto cppCore = L_GET_CPP_PTR_FROM_C_OBJECT(core);
+	auto cppAccount = account ? Account::toCpp(account)->getSharedFromThis() : nullptr;
 	switch (scheduling_type) {
 		case LinphoneConferenceSchedulerTypeDB:
 #ifdef HAVE_DB_STORAGE
-			return (new LinphonePrivate::DBConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
+			return (new LinphonePrivate::DBConferenceScheduler(cppCore, cppAccount))->toC();
 #else
 			return NULL;
 #endif // HAVE_DB_STORAGE
 		case LinphoneConferenceSchedulerTypeCCMP:
-			return NULL;
+			return (new LinphonePrivate::CCMPConferenceScheduler(cppCore, cppAccount))->toC();
 		case LinphoneConferenceSchedulerTypeSIP:
-			return (new LinphonePrivate::SIPConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
+			return (new LinphonePrivate::SIPConferenceScheduler(cppCore, cppAccount))->toC();
 	}
 	return NULL;
+}
+
+LinphoneConferenceScheduler *linphone_core_create_sip_conference_scheduler(LinphoneCore *core,
+                                                                           LinphoneAccount *account) {
+	return linphone_core_create_conference_scheduler_with_type(core, account, LinphoneConferenceSchedulerTypeSIP);
+}
+
+LinphoneConferenceScheduler *linphone_core_create_db_conference_scheduler(LinphoneCore *core,
+                                                                          LinphoneAccount *account) {
+	return linphone_core_create_conference_scheduler_with_type(core, account, LinphoneConferenceSchedulerTypeDB);
+}
+
+LinphoneConferenceScheduler *linphone_core_create_ccmp_conference_scheduler(LinphoneCore *core,
+                                                                            LinphoneAccount *account) {
+	return linphone_core_create_conference_scheduler_with_type(core, account, LinphoneConferenceSchedulerTypeCCMP);
 }
 
 LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
@@ -9697,6 +9724,31 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
+LinphoneConferenceInfo *linphone_core_find_conference_information_from_ccmp_uri(LinphoneCore *core, const char *uri) {
+	CoreLogContextualizer logContextualizer(core);
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	auto confInfo = mainDb->getConferenceInfoFromCcmpUri(L_C_TO_STRING(uri));
+
+	if (confInfo != nullptr) {
+		// Clone the conference information so that the application can freely change it without modifying the
+		// object stored in the cached of the DB
+		return linphone_conference_info_clone(confInfo->toC());
+	}
+
+	return NULL;
+#else
+	return NULL;
+#endif
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
 	CoreLogContextualizer logContextualizer(core);
 #ifdef HAVE_DB_STORAGE
@@ -9782,6 +9834,31 @@ bctbx_list_t *linphone_core_get_conference_information_list_after_time_2(Linphon
 	return get_conference_information_list(core, time, capabilities);
 }
 #endif
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+bctbx_list_t *linphone_core_get_conference_informations_with_participant(LinphoneCore *core, LinphoneAddress *uri) {
+	CoreLogContextualizer logContextualizer(core);
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	const auto uri_addr = uri ? LinphonePrivate::Address::getSharedFromThis(uri) : nullptr;
+	auto list = mainDb->getConferenceInfosWithParticipant(uri_addr);
+
+	bctbx_list_t *results = NULL;
+	for (auto &conf : list) {
+		results = bctbx_list_append(results, linphone_conference_info_ref(conf->toC()));
+	}
+
+	return results;
+#else
+	return NULL;
+#endif
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info) {
 	CoreLogContextualizer logContextualizer(core);

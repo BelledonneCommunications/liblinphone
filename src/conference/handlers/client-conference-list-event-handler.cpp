@@ -347,6 +347,12 @@ void ClientConferenceListEventHandler::removeHandler(std::shared_ptr<ClientConfe
 		return;
 	}
 
+	lInfo() << __func__ << " searched handler " << handler << " handler id " << handler->getConferenceId();
+	for (const auto &[id, handler2] : handlers) {
+		lInfo() << __func__ << " id " << id << " handler " << handler2.lock() << " handler id "
+		        << handler2.lock()->getConferenceId();
+	}
+
 	auto it = handlers.find(conferenceId);
 	if (it != handlers.end()) {
 		handler->setManagedByListEventhandler(false);

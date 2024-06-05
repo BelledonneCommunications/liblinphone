@@ -210,6 +210,20 @@ LINPHONE_PUBLIC const char *linphone_conference_info_get_subject(const LinphoneC
 LINPHONE_PUBLIC void linphone_conference_info_set_subject(LinphoneConferenceInfo *conference_info, const char *subject);
 
 /**
+ * Set the CCMP URI of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param uri The URI of the conference in the CCMP server. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_info_set_ccmp_uri(LinphoneConferenceInfo *conference_info, const char *uri);
+
+/**
+ * Retrieve the CCMP URI of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return The URI of the conference stored in the CCMP server. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_info_get_ccmp_uri(const LinphoneConferenceInfo *conference_info);
+
+/**
  * Retrieve the description of the conference.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The description of the conference. @maybenil

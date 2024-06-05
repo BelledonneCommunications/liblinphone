@@ -115,7 +115,8 @@ static void create_conference_on_unresponsive_server(void) {
 		stats marie_stat = marie.getStats();
 
 		// Marie creates a conference scheduler
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_sip_conference_scheduler(
+		    marie.getLc(), linphone_core_get_default_account(marie.getLc()));
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -228,12 +229,10 @@ static void create_simple_conference_db_conference_scheduler_base(bool_t server_
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
 
-		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "conference_scheduling", "protocol",
-		                        (int)LinphoneConferenceSchedulerTypeDB);
-
 		stats focus_stat = focus.getStats();
 
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(focus.getLc());
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_db_conference_scheduler(
+		    focus.getLc(), linphone_core_get_default_account(focus.getLc()));
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -532,12 +531,11 @@ static void schedule_simple_conference_db_conference_scheduler(void) {
 		}
 
 		linphone_core_set_conference_cleanup_period(focus.getLc(), 5);
-		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "conference_scheduling", "protocol",
-		                        (int)LinphoneConferenceSchedulerTypeDB);
 
 		stats focus_stat = focus.getStats();
 
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(focus.getLc());
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_db_conference_scheduler(
+		    focus.getLc(), linphone_core_get_default_account(focus.getLc()));
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -878,7 +876,7 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 1,
@@ -1369,7 +1367,7 @@ void conference_with_screen_sharing_enabled_since_the_start(void) {
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 4,
@@ -1773,7 +1771,7 @@ void conference_with_two_participant_having_screen_sharing_enabled_since_the_sta
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -2202,7 +2200,7 @@ void conference_with_screen_sharing_participant_only(void) {
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -2648,7 +2646,7 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -3026,7 +3024,7 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 		                                description, TRUE, security_level, TRUE, FALSE);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -3386,7 +3384,7 @@ static void create_simple_conference_with_update_deferred(void) {
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -4359,7 +4357,7 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 1,

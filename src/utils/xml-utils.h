@@ -18,29 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_DB_CONFERENCE_SCHEDULER_H_
-#define _L_DB_CONFERENCE_SCHEDULER_H_
+#ifndef _L_XML_UTILS_H_
+#define _L_XML_UTILS_H_
 
-#include "conference/conference-scheduler.h"
+#include "linphone/types.h"
+#include "xml/conference-info.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LINPHONE_PUBLIC DBConferenceScheduler : public ConferenceScheduler {
-public:
-	DBConferenceScheduler(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account = nullptr);
-	virtual ~DBConferenceScheduler() = default;
-
-	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-	                                      const std::shared_ptr<Address> &creator) override;
-
-	virtual void processResponse(const LinphoneErrorInfo *errorInfo,
-	                             const std::shared_ptr<Address> conferenceAddress) override;
-
-private:
-};
+namespace XmlUtils {
+Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
+} // namespace XmlUtils
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_DB_CONFERENCE_SCHEDULER_H_
+#endif // ifndef _L_XML_UTILS_H_

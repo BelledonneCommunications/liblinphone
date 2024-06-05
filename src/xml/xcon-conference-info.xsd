@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RFC6502 -->
+<xs:schema targetNamespace="urn:ietf:params:xml:ns:xcon-conference-info" xmlns="urn:ietf:params:xml:ns:xcon-conference-info" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+	<xs:import namespace="urn:ietf:params:xml:ns:conference-info" schemaLocation="conference-info.xsd"/>
+	<xs:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="http://www.w3.org/2001/03/xml.xsd"/>
+
+	<!-- include patch-ops type definitions -->
+	<xs:include schemaLocation="patch-ops.xsd"/>
+
+	<!-- partial updates -->
+	<xs:element name="conference-info-diff">
+		<xs:complexType>
+			<xs:sequence minOccurs="0" maxOccurs="unbounded">
+				<xs:choice>
+
+					<!-- add some content -->
+					<xs:element name="add">
+						<xs:complexType mixed="true">
+							<xs:complexContent>
+								<xs:extension base="add">
+									<xs:anyAttribute processContents="lax"/>
+								</xs:extension>
+							</xs:complexContent>
+						</xs:complexType>
+					</xs:element>
+
+					<!-- remove some content -->
+					<xs:element name="remove">
+						<xs:complexType>
+							<xs:complexContent>
+								<xs:extension base="remove">
+									<xs:anyAttribute processContents="lax"/>
+								</xs:extension>
+							</xs:complexContent>
+						</xs:complexType>
+					</xs:element>
+
+					<!-- replace some content -->
+					<xs:element name="replace">
+						<xs:complexType mixed="true">
+							<xs:complexContent>
+								<xs:extension base="replace">
+									<xs:anyAttribute processContents="lax"/>
+								</xs:extension>
+							</xs:complexContent>
+						</xs:complexType>
+					</xs:element>
+
+					<!-- allow extension elements from other namespaces -->
+					<xs:any namespace="##other" processContents="lax"/>
+				</xs:choice>
+			</xs:sequence>
+			<xs:attribute name="entity" type="xs:anyURI" use="required"/>
+			<xs:anyAttribute processContents="lax"/>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="mixing-mode" type="mixing-mode-type"/>
+	<xs:element name="codecs" type="codecs-type"/>
+	<xs:element name="conference-password" type="xs:string"/>
+	<xs:element name="controls" type="controls-type"/>
+	<xs:element name="language" type="xs:language"/>
+	<xs:element name="allow-sidebars" type="xs:boolean"/>
+	<xs:element name="cloning-parent" type="xs:anyURI"/>
+	<xs:element name="sidebar-parent" type="xs:anyURI"/>
+	<xs:element name="conference-time" type="conference-time-type"/>
+	<xs:element name="allow-conference-event-subscription" type="xs:boolean"/>
+	<xs:element name="to-mixer" type="mixer-type"/>
+	<xs:element name="provide-anonymity" type="provide-anonymity-type"/>
+	<xs:element name="allow-refer-users-dynamically" type="xs:boolean"/>
+	<xs:element name="allow-invite-users-dynamically" type="xs:boolean"/>
+	<xs:element name="allow-remove-users-dynamically" type="xs:boolean"/>
+	<xs:element name="from-mixer" type="mixer-type"/>
+	<xs:element name="join-handling" type="join-handling-type"/>
+	<xs:element name="user-admission-policy" type="user-admission-policy-type"/>
+	<xs:element name="allowed-users-list" type="allowed-users-list-type"/>
+	<xs:element name="deny-users-list" type="deny-users-list-type"/>
+	<xs:element name="floor-information" type="floor-information-type"/>
+
+	<!-- CONFERENCE TIME -->
+
+	<xs:complexType name="conference-time-type">
+		<xs:sequence>
+			<xs:element name="entry" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="base" type="xs:string" minOccurs="1"/>
+						<xs:element name="mixing-start-offset" minOccurs="0">
+							<xs:complexType>
+								<xs:simpleContent>
+										<xs:extension base="time-type">
+											<xs:attribute name="required-participant" type="role-type" use="required"/>
+											 <xs:anyAttribute namespace="##any" processContents="lax"/>
+										</xs:extension>
+								</xs:simpleContent>
+							</xs:complexType>
+						</xs:element>
+						 <xs:element name="mixing-end-offset" minOccurs="0">
+							<xs:complexType>
+									<xs:simpleContent>
+											<xs:extension base="time-type">
+												<xs:attribute name="required-participant" type="role-type" use="required"/>
+												<xs:anyAttribute namespace="##any" processContents="lax"/>
+											</xs:extension>
+									</xs:simpleContent>
+							</xs:complexType>
+						 </xs:element>
+						 <xs:element name="can-join-after-offset" type="time-type" minOccurs="0"/>
+						 <xs:element name="must-join-before-offset" type="time-type" minOccurs="0"/>
+						 <xs:element name="request-user" type="time-type" minOccurs="0"/>
+						 <xs:element name="notify-end-of-conference" type="xs:nonNegativeInteger" minOccurs="0"/>
+						 <xs:element name="allowed-extend-mixing-end-offset" type="xs:boolean" minOccurs="0"/>
+						 <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- TIME TYPE -->
+
+	<xs:simpleType name="time-type">
+		<xs:restriction base="xs:dateTime">
+			<xs:pattern value=".+T.+Z.*"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- ROLE-TYPE -->
+
+	<xs:simpleType name="role-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="none"/>
+			<xs:pattern value="administrator"/>
+			<xs:pattern value="moderator"/>
+			<xs:pattern value="user"/>
+			<xs:pattern value="observer"/>
+			<xs:pattern value="participant"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- MIXING MODE TYPE -->
+
+	<xs:simpleType name="mixing-mode-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="moderator-controlled"/>
+			<xs:pattern value="FCFS"/>
+			<xs:pattern value="automatic"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- CODECS TYPE -->
+	<xs:complexType name="codecs-type">
+		<xs:sequence>
+			<xs:element name="codec" type="codec-type"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="decision" type="decision-type" use="required"/>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- CODEC TYPE -->
+
+	<xs:complexType name="codec-type">
+		<xs:sequence>
+			<xs:element name="subtype" type="xs:string" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attribute name="policy" type="policy-type" use="required"/>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- DECISION TYPE -->
+
+	<xs:simpleType name="decision-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="automatic"/>
+			<xs:pattern value="moderator-controlled"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- POLICY TYPE -->
+
+	<xs:simpleType name="policy-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="allowed"/>
+			<xs:pattern value="disallowed"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- CONTROL TYPE -->
+	<xs:complexType name="controls-type">
+		<xs:sequence>
+			<xs:element name="mute" type="xs:boolean" minOccurs="0"/>
+			<xs:element name="pause-video" type="xs:boolean" minOccurs="0"/>
+			<xs:element name="gain" type="gain-type" minOccurs="0"/>
+			<xs:element name="video-layout" type="video-layout-type" default="single-view" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- GAIN TYPE -->
+
+	<xs:simpleType name="gain-type">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="-127"/>
+			<xs:maxInclusive value="127"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+
+	<!-- VIDEO LAYOUT TYPE -->
+
+	<xs:simpleType name="video-layout-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="single-view"/>
+			<xs:pattern value="dual-view"/>
+			<xs:pattern value="dual-view-crop"/>
+			<xs:pattern value="dual-view-2x1"/>
+			<xs:pattern value="dual-view-2x1-crop"/>
+			<xs:pattern value="quad-view"/>
+			<xs:pattern value="multiple-3x3"/>
+			<xs:pattern value="multiple-4x4"/>
+			<xs:pattern value="multiple-5x1"/>
+			<xs:pattern value="automatic"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- FLOOR INFORMATION TYPE -->
+	<xs:complexType name="floor-information-type">
+		<xs:sequence>
+			<xs:element name="conference-ID" type="xs:unsignedLong" minOccurs="0"/>
+			<xs:element name="allow-floor-events" type="xs:boolean" default="false" minOccurs="0"/>
+			<xs:element name="floor-request-handling" type="floor-request-handling-type" minOccurs="0"/>
+			<xs:element name="conference-floor-policy" type="conference-floor-policy" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- FLOOR REQUEST TYPE -->
+
+	<xs:simpleType name="floor-request-handling-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="block"/>
+			<xs:pattern value="confirm"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- CONFERENCE FLOOR POLICY -->
+
+	<xs:complexType name="conference-floor-policy">
+		<xs:sequence>
+			<xs:element name="floor" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						 <xs:element name="media-label" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+						 <xs:element name="algorithm" type="algorithm-type" minOccurs="0"/>
+						 <xs:element name="max-floor-users" type="xs:nonNegativeInteger" minOccurs="0"/>
+						 <xs:element name="moderator-id" type="xs:nonNegativeInteger" minOccurs="0"/>
+						<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:attribute name="id" type="xs:string" use="required"/>
+					<xs:anyAttribute namespace="##any" processContents="lax"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- ALGORITHM TYPE -->
+
+	<xs:simpleType name="algorithm-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="moderator-controlled"/>
+			<xs:pattern value="FCFS"/>
+			<xs:pattern value="random"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- USER ADMISSION POLICY TYPE -->
+
+	<xs:simpleType name="user-admission-policy-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="closedAuthenticated"/>
+			<xs:pattern value="openAuthenticated"/>
+			<xs:pattern value="anonymous"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- JOIN HANDLING TYPE -->
+
+	<xs:simpleType name="join-handling-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="block"/>
+			<xs:pattern value="confirm"/>
+			<xs:pattern value="allow"/>
+			<xs:pattern value="authenticate"/>
+			<xs:pattern value="directed-operator"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- DENY USER LIST TYPE -->
+
+	<xs:complexType name="deny-users-list-type">
+		<xs:sequence>
+			<xs:element name="target" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="uri" use="required" type="xs:anyURI"/>
+					<xs:anyAttribute namespace="##any" processContents="lax"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- ALLOWED USERS LIST TYPE -->
+
+	<xs:complexType name="allowed-users-list-type">
+		<xs:sequence>
+			<xs:element name="target" type="target-type" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="persistent-list" type="persistent-list-type" minOccurs="0"/>
+				<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- PERSISTENT LIST TYPE -->
+
+	<xs:complexType name="persistent-list-type">
+		<xs:sequence>
+			<xs:element name="user" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="email" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+						<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:attribute name="name" use="required" type="xs:anyURI"/>
+					<xs:attribute name="nickname" use="required" type="xs:string"/>
+					<xs:attribute name="id" use="required" type="xs:string"/>
+					<xs:anyAttribute namespace="##any" processContents="lax"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- TARGET TYPE -->
+
+	<xs:complexType name="target-type">
+		<xs:attribute name="uri" use="required" type="xs:anyURI"/>
+		<xs:attribute name="method" use="required" type="method-type"/>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- METHOD TYPE -->
+
+	<xs:simpleType name="method-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="dial-in"/>
+			<xs:pattern value="dial-out"/>
+			<xs:pattern value="refer"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- ANONYMITY TYPE -->
+
+	<xs:simpleType name="provide-anonymity-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="private"/>
+			<xs:pattern value="semi-private"/>
+			<xs:pattern value="hidden"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- MIXER TYPE -->
+
+	<xs:complexType name="mixer-type">
+		<xs:sequence>
+			<xs:element name="floor">
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:boolean">
+							<xs:attribute name="id" type="xs:string" use="required"/>
+							<xs:anyAttribute namespace="##any" processContents="lax"/>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="controls" type="controls-type" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="name" type="mixer-name-type" use="required"/>
+		<xs:anyAttribute namespace="##any" processContents="lax"/>
+	</xs:complexType>
+
+	<!-- MIXER NAME TYPE -->
+
+	<xs:simpleType name="mixer-name-type">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="VideoIn"/>
+			<xs:pattern value="VideoOut"/>
+			<xs:pattern value="AudioOut"/>
+			<xs:pattern value="AudioIn"/>
+			<xs:pattern value=".+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+</xs:schema>

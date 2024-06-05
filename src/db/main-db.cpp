@@ -597,10 +597,11 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const int audioEnabled = conferenceInfo->getCapability(LinphoneStreamTypeAudio) ? 1 : 0;
 	const int videoEnabled = conferenceInfo->getCapability(LinphoneStreamTypeVideo) ? 1 : 0;
 	const int chatEnabled = conferenceInfo->getCapability(LinphoneStreamTypeText) ? 1 : 0;
+	const auto &ccmpUri = conferenceInfo->getCcmpUri();
 	const auto &organizer = conferenceInfo->getOrganizer();
 	const auto &organizerAddress = organizer->getAddress();
 	const long long &organizerSipAddressId = insertSipAddress(organizerAddress);
-	const long long &uriSipAddressid = insertSipAddress(conferenceUri);
+	const long long &uriSipAddressId = insertSipAddress(conferenceUri);
 	const auto &dateTime = conferenceInfo->getDateTime();
 	auto startTime = dbSession.getTimeWithSociIndicator(dateTime);
 	const unsigned int duration = conferenceInfo->getDuration();
@@ -611,7 +612,7 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const string &uid = conferenceInfo->getIcsUid();
 	const unsigned int security_level = static_cast<unsigned int>(conferenceInfo->getSecurityLevel());
 
-	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
+	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressId);
 	ConferenceInfo::participant_list_t dbParticipantList;
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
@@ -622,25 +623,26 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 
 		*dbSession.getBackendSession()
 		    << "UPDATE conference_info SET audio = :audioEnabled, video = :videoEnabled, chat = :chatEnabled, "
-		       "organizer_sip_address_id = :organizerSipAddressId, start_time = :startTime, duration = :duration, "
-		       "subject = :subject, description = :description, state = :state, ics_sequence = :sequence, ics_uid = "
-		       ":uid, security_level = :security_level WHERE id = :conferenceInfoId",
-		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(organizerSipAddressId),
-		    soci::use(startTime.first, startTime.second), soci::use(duration), soci::use(subject),
-		    soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid), soci::use(security_level),
-		    soci::use(conferenceInfoId);
+		       "  ccmp_uri = :ccmpUri,"
+		       "  organizer_sip_address_id = :organizerSipAddressId,"
+		       "  start_time = :startTime,"
+		       "  duration = :duration,"
+		       "  subject = :subject,"
+		       "  description = :description,"
+		       "  state = :state,"
+		       "  ics_sequence = :sequence,"
+		       "  ics_uid = :uid,"
+		       "  security_level = :security_level"
+		       " WHERE id = :conferenceInfoId",
+		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(ccmpUri),
+		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
+		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
+		    soci::use(security_level), soci::use(conferenceInfoId);
 	} else {
 		lInfo() << "Insert new conference info in database.";
 
 		*dbSession.getBackendSession()
-		    << "INSERT INTO conference_info (audio, video, chat, organizer_sip_address_id, uri_sip_address_id, "
-		       "start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level) VALUES "
-		       "(:audioEnabled, :videoEnabled, :chatEnabled, :organizerSipAddressId, :uriSipAddressid, :startTime, "
-		       ":duration, :subject, :description, :state, :sequence, :uid, :security_level)",
-		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(organizerSipAddressId),
-		    soci::use(uriSipAddressid), soci::use(startTime.first, startTime.second), soci::use(duration),
-		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
-		    soci::use(security_level);
+		    << "INSERT INTO conference_info (audio, video, chat, ccmp_uri, organizer_sip_address_id, uri_sip_address_id, start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level) VALUES (:audioEnabled, :videoEnabled, :chatEnabled, :ccmpUri, :organizerSipAddressId, :uriSipAddressId, :startTime, :duration, :subject, :description, :state, :sequence, :uid, :security_level)", soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(ccmpUri),  soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid), soci::use(security_level);
 
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
@@ -687,15 +689,15 @@ void MainDbPrivate::insertOrUpdateConferenceInfoParticipantParams(
 	soci::session *session = dbSession.getBackendSession();
 	ParticipantInfo::participant_params_t paramsCopy = params;
 
-	static const string organizerParamsQuery = "SELECT id, name FROM conference_info_participant_params WHERE "
-	                                           "conference_info_participant_id = :participantId ";
-	soci::rowset<soci::row> organizerParamsRows =
-	    (session->prepare << organizerParamsQuery, soci::use(conferenceInfoParticipantId));
+	static const string participantParamsQuery = "SELECT id, name FROM conference_info_participant_params WHERE "
+	                                             "conference_info_participant_id = :participantId ";
+	soci::rowset<soci::row> participantParamsRows =
+	    (session->prepare << participantParamsQuery, soci::use(conferenceInfoParticipantId));
 
 	// Update existing keys
-	for (const auto &organizerParamsRow : organizerParamsRows) {
-		const long long &id = dbSession.resolveId(organizerParamsRow, 0);
-		const auto name = organizerParamsRow.get<string>(1);
+	for (const auto &participantParamsRow : participantParamsRows) {
+		const long long &id = dbSession.resolveId(participantParamsRow, 0);
+		const auto name = participantParamsRow.get<string>(1);
 		if (auto el = paramsCopy.find(name); el != paramsCopy.end()) {
 			*session << "UPDATE conference_info_participant_params SET  value = :value WHERE id = :id",
 			    soci::use(el->second), soci::use(id);
@@ -786,8 +788,8 @@ long long MainDbPrivate::insertOrUpdateConferenceCall(const std::shared_ptr<Call
 	if (conferenceInfo != nullptr) {
 		const auto &conferenceAddress = conferenceInfo->getUri();
 		if (conferenceAddress) {
-			const long long &uriSipAddressid = insertSipAddress(conferenceAddress);
-			conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
+			const long long &uriSipAddressId = insertSipAddress(conferenceAddress);
+			conferenceInfoId = selectConferenceInfoId(uriSipAddressId);
 			if (conferenceInfoId < 0) {
 				conferenceInfoId = insertConferenceInfo(conferenceInfo, nullptr);
 			}
@@ -2130,6 +2132,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setCapability(LinphoneStreamTypeAudio, (row.get<int>(11) == 0) ? false : true);
 	conferenceInfo->setCapability(LinphoneStreamTypeVideo, (row.get<int>(12) == 0) ? false : true);
 	conferenceInfo->setCapability(LinphoneStreamTypeText, (row.get<int>(13) == 0) ? false : true);
+	conferenceInfo->setCcmpUri(row.get<string>(14));
 
 	// For backward compability purposes, get the organizer from conference_info table and set the sequence number
 	// to that of the conference info stored in the db It may be overridden if the conference organizer has been
@@ -2738,6 +2741,12 @@ void MainDbPrivate::updateSchema() {
 	} catch (const soci::soci_error &e) {
 		lDebug() << "Caught exception " << e.what()
 		         << ": Column 'security_level' already exists in table 'conference_info'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN ccmp_uri VARCHAR(255) DEFAULT ''";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'ccmp_uri' already exists in table 'conference_info'";
 	}
 
 	*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device_clone ("
@@ -6552,12 +6561,11 @@ shared_ptr<EventLog> MainDb::searchChatMessagesByText(const ConferenceId &confer
 std::list<std::shared_ptr<ConferenceInfo>>
 MainDb::getConferenceInfos(time_t afterThisTime, const std::list<LinphoneStreamType> capabilities) {
 #ifdef HAVE_DB_STORAGE
-	string query =
-	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat"
-	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
-	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
-	    "conference_info.uri_sip_address_id = uri_sip_address.id";
+	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+	               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, "
+	               "video, chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS "
+	               "uri_sip_address WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
+	               "conference_info.uri_sip_address_id = uri_sip_address.id";
 	if (afterThisTime > -1) query += " AND start_time >= :startTime";
 
 	const auto capabilitiesQuery = getConferenceInfoTypeQuery(capabilities);
@@ -6629,21 +6637,19 @@ std::string MainDb::getConferenceInfoTypeQuery(const std::list<LinphoneStreamTyp
 	return capabilitiesQuery;
 }
 
-std::list<std::shared_ptr<ConferenceInfo>>
-MainDb::getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress,
-                                          const std::list<LinphoneStreamType> capabilities) {
+std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfosWithParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &address), BCTBX_UNUSED(const std::list<LinphoneStreamType> capabilities)) {
 #ifdef HAVE_DB_STORAGE
+	// In order to ensure the compatibility with SQLite3 and MySQL, we have ot define two variable sipAddressId and
+	// sipAddressId2 that have the same value. The SOCI backend of SQLite3 understands that it will only need one
+	// argument if we define only one variable name. Nonetheless MySQL needs two. Even though the MySQL backend doesn't
+	// complain when the twi variables have the sale nale (e.g. sipAddressId), SQLite3 does
 	string query =
-	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat"
-	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
-	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id"
-	    " AND conference_info.uri_sip_address_id = uri_sip_address.id"
-	    " AND (conference_info.organizer_sip_address_id = :sipAddressId"
-	    " OR :sipAddressId IN ("
-	    " SELECT participant_sip_address_id FROM conference_info_participant WHERE"
-	    " conference_info_id = conference_info.id"
-	    " ))";
+	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value, start_time, duration, subject, "
+	    "description, state, ics_sequence, ics_uid, security_level, audio, video, chat, ccmp_uri FROM conference_info, "
+	    "sip_address AS organizer_sip_address, sip_address AS uri_sip_address WHERE "
+	    "conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = "
+	    "uri_sip_address.id AND (conference_info.organizer_sip_address_id = :sipAddressId OR :sipAddressId2 IN (SELECT "
+	    "participant_sip_address_id FROM conference_info_participant WHERE conference_info_id = conference_info.id))";
 
 	const auto capabilitiesQuery = getConferenceInfoTypeQuery(capabilities);
 	if (!capabilitiesQuery.empty()) {
@@ -6651,24 +6657,30 @@ MainDb::getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localA
 	}
 	query += " ORDER BY start_time";
 
-	DurationLogger durationLogger("Get conference infos for account.");
+	DurationLogger durationLogger("Get conference infos for address " + address->toString());
 
 	return L_DB_TRANSACTION {
 		L_D();
 
 		list<shared_ptr<ConferenceInfo>> conferenceInfos;
 
-		const long long &sipAddressId = d->selectSipAddressId(localAddress, true);
+		const long long &sipAddressId = d->selectSipAddressId(address, true);
 
-		soci::session *session = d->dbSession.getBackendSession();
-		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(sipAddressId));
+		if (sipAddressId != -1) {
+			soci::session *session = d->dbSession.getBackendSession();
+			soci::rowset<soci::row> rows =
+			    (session->prepare << query, soci::use(sipAddressId), soci::use(sipAddressId));
 
-		for (const auto &row : rows) {
-			auto confInfo = d->selectConferenceInfo(row);
-			conferenceInfos.push_back(confInfo);
+			for (const auto &row : rows) {
+				auto confInfo = d->selectConferenceInfo(row);
+				conferenceInfos.push_back(confInfo);
+			}
+
+			tr.commit();
+		} else {
+			lError() << "Unable search conference informations with a participant or organizer with address "
+			         << *address << " because it cannot be found in the database";
 		}
-
-		tr.commit();
 
 		return conferenceInfos;
 	};
@@ -6681,11 +6693,10 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceIn
 #ifdef HAVE_DB_STORAGE
 	static const string query =
 	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat"
-	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
-	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
-	    "conference_info.uri_sip_address_id = uri_sip_address.id"
-	    "  AND conference_info.id = :conferenceInfoId";
+	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, "
+	    "chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address "
+	    "WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
+	    "conference_info.uri_sip_address_id = uri_sip_address.id AND conference_info.id = :conferenceInfoId";
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -6708,12 +6719,42 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceIn
 #endif
 }
 
+std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromCcmpUri(const std::string &uri) {
+#ifdef HAVE_DB_STORAGE
+	if (isInitialized() && !uri.empty()) {
+		string query =
+		    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+		    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, "
+		    "chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address "
+		    "WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
+		    "conference_info.uri_sip_address_id = uri_sip_address.id AND conference_info.ccmp_uri = '" +
+		    uri + "'";
+
+		return L_DB_TRANSACTION {
+			L_D();
+			shared_ptr<ConferenceInfo> confInfo = nullptr;
+			soci::session *session = d->dbSession.getBackendSession();
+			soci::rowset<soci::row> rows = (session->prepare << query);
+			const auto &row = rows.begin();
+			if (row != rows.end()) {
+				confInfo = d->selectConferenceInfo(*row);
+			}
+
+			tr.commit();
+
+			return confInfo;
+		};
+	}
+#endif
+	return nullptr;
+}
+
 std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shared_ptr<Address> &uri) {
 #ifdef HAVE_DB_STORAGE
 	if (isInitialized() && uri) {
 		string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 		               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, "
-		               "audio, video, chat"
+		               "audio, video, chat, ccmp_uri"
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"

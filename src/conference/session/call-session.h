@@ -125,6 +125,8 @@ public:
 	LinphoneStatus declineNotAnswered(LinphoneReason reason);
 	virtual LinphoneStatus deferUpdate();
 	bool hasTransferPending();
+	bool sdpFoundInLocalBody() const;
+	bool sdpFoundInRemoteBody() const;
 	bool isCapabilityNegotiationEnabled() const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 	virtual void initiateIncoming();

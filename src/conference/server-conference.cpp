@@ -1350,9 +1350,15 @@ shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<Part
 			currentParams->addCustomContactParameter("text", std::string());
 		}
 		currentParams->getPrivate()->enableToneIndications(mConfParams->audioEnabled() || mConfParams->videoEnabled());
+		currentParams->getPrivate()->setInConference(TRUE);
+		const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
+		const string &confId = conferenceAddress->getUriParamValue("conf-id");
+		if (!confId.empty()) {
+			currentParams->getPrivate()->setConferenceId(confId);
+		}
 		session = participant->createSession(*this, currentParams, true, this);
 		delete currentParams;
-		session->configure(LinphoneCallOutgoing, nullptr, nullptr, getConferenceAddress(), device->getAddress());
+		session->configure(LinphoneCallOutgoing, nullptr, nullptr, conferenceAddress, device->getAddress());
 		device->setSession(session);
 		session->initiateOutgoing();
 		session->getPrivate()->createOp();
@@ -1367,7 +1373,8 @@ void ServerConference::inviteDevice(const shared_ptr<ParticipantDevice> &device)
 }
 
 void ServerConference::byeDevice(const std::shared_ptr<ParticipantDevice> &device) {
-	lInfo() << "Conference " << *getConferenceAddress() << ": Asking device '" << *device->getAddress() << "' to leave";
+	const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
+	lInfo() << "Conference " << conferenceAddress << ": Asking device '" << *device->getAddress() << "' to leave";
 	setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 	MediaSessionParams csp;
 	csp.enableAudio(mConfParams->audioEnabled());
@@ -1382,6 +1389,11 @@ void ServerConference::byeDevice(const std::shared_ptr<ParticipantDevice> &devic
 		}
 	}
 	csp.getPrivate()->enableToneIndications(mConfParams->audioEnabled() || mConfParams->videoEnabled());
+	csp.getPrivate()->setInConference(TRUE);
+	const string &confId = conferenceAddress->getUriParamValue("conf-id");
+	if (!confId.empty()) {
+		csp.getPrivate()->setConferenceId(confId);
+	}
 	shared_ptr<CallSession> session = makeSession(device, &csp);
 	switch (session->getState()) {
 		case CallSession::State::OutgoingInit:

@@ -241,7 +241,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		msg = nullptr;
 
 		// Marie deletes the chat room
-		char *confAddrStr = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *confAddrStr = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 		ms_message("%s deletes chat room %s", linphone_core_get_identity(marie.getLc()), confAddrStr);
 		ms_free(confAddrStr);
 

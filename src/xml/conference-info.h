@@ -36,34 +36,30 @@
 // Begin prologue.
 //
 #if __clang__ || __GNUC__ >= 4
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wfloat-equal"
-	#pragma GCC diagnostic ignored "-Wsign-conversion"
-	#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
 #endif
 #if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif
-#if __GNUC__ >=7
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#if __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #endif
 //
 // End prologue.
 
 #include <xsd/cxx/config.hxx>
 
-#if (XSD_INT_VERSION != 4000000L)
-#error XSD runtime version mismatch
-#endif
-
 #include <xsd/cxx/pre.hxx>
 
 #include <xsd/cxx/xml/char-utf8.hxx>
 
-#include <xsd/cxx/tree/exceptions.hxx>
 #include <xsd/cxx/tree/elements.hxx>
+#include <xsd/cxx/tree/exceptions.hxx>
 #include <xsd/cxx/tree/types.hxx>
 
 #include <xsd/cxx/xml/error-handler.hxx>
@@ -71,243 +67,235 @@
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
 
 #include <xsd/cxx/tree/parsing.hxx>
-#include <xsd/cxx/tree/parsing/byte.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-byte.hxx>
-#include <xsd/cxx/tree/parsing/short.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-short.hxx>
-#include <xsd/cxx/tree/parsing/int.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-int.hxx>
-#include <xsd/cxx/tree/parsing/long.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-long.hxx>
 #include <xsd/cxx/tree/parsing/boolean.hxx>
-#include <xsd/cxx/tree/parsing/float.hxx>
-#include <xsd/cxx/tree/parsing/double.hxx>
+#include <xsd/cxx/tree/parsing/byte.hxx>
 #include <xsd/cxx/tree/parsing/decimal.hxx>
+#include <xsd/cxx/tree/parsing/double.hxx>
+#include <xsd/cxx/tree/parsing/float.hxx>
+#include <xsd/cxx/tree/parsing/int.hxx>
+#include <xsd/cxx/tree/parsing/long.hxx>
+#include <xsd/cxx/tree/parsing/short.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-byte.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-int.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-long.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-short.hxx>
 
-#include <xsd/cxx/xml/dom/serialization-header.hxx>
 #include <xsd/cxx/tree/serialization.hxx>
-#include <xsd/cxx/tree/serialization/byte.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-byte.hxx>
-#include <xsd/cxx/tree/serialization/short.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-short.hxx>
-#include <xsd/cxx/tree/serialization/int.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-int.hxx>
-#include <xsd/cxx/tree/serialization/long.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-long.hxx>
 #include <xsd/cxx/tree/serialization/boolean.hxx>
-#include <xsd/cxx/tree/serialization/float.hxx>
-#include <xsd/cxx/tree/serialization/double.hxx>
+#include <xsd/cxx/tree/serialization/byte.hxx>
 #include <xsd/cxx/tree/serialization/decimal.hxx>
+#include <xsd/cxx/tree/serialization/double.hxx>
+#include <xsd/cxx/tree/serialization/float.hxx>
+#include <xsd/cxx/tree/serialization/int.hxx>
+#include <xsd/cxx/tree/serialization/long.hxx>
+#include <xsd/cxx/tree/serialization/short.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-byte.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-int.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-long.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-short.hxx>
+#include <xsd/cxx/xml/dom/serialization-header.hxx>
 
 #include <xsd/cxx/tree/std-ostream-operators.hxx>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace XmlSchema
-    {
-      // anyType and anySimpleType.
-      //
-      typedef ::xsd::cxx::tree::type Type;
-      typedef ::xsd::cxx::tree::simple_type< char, Type > SimpleType;
-      typedef ::xsd::cxx::tree::type Container;
+namespace LinphonePrivate {
+namespace Xsd {
+namespace XmlSchema {
+// anyType and anySimpleType.
+//
+typedef ::xsd::cxx::tree::type Type;
+typedef ::xsd::cxx::tree::simple_type<char, Type> SimpleType;
+typedef ::xsd::cxx::tree::type Container;
 
-      // 8-bit
-      //
-      typedef signed char Byte;
-      typedef unsigned char UnsignedByte;
+// 8-bit
+//
+typedef signed char Byte;
+typedef unsigned char UnsignedByte;
 
-      // 16-bit
-      //
-      typedef short Short;
-      typedef unsigned short UnsignedShort;
+// 16-bit
+//
+typedef short Short;
+typedef unsigned short UnsignedShort;
 
-      // 32-bit
-      //
-      typedef int Int;
-      typedef unsigned int UnsignedInt;
+// 32-bit
+//
+typedef int Int;
+typedef unsigned int UnsignedInt;
 
-      // 64-bit
-      //
-      typedef long long Long;
-      typedef unsigned long long UnsignedLong;
+// 64-bit
+//
+typedef long long Long;
+typedef unsigned long long UnsignedLong;
 
-      // Supposed to be arbitrary-length integral types.
-      //
-      typedef long long Integer;
-      typedef long long NonPositiveInteger;
-      typedef unsigned long long NonNegativeInteger;
-      typedef unsigned long long PositiveInteger;
-      typedef long long NegativeInteger;
+// Supposed to be arbitrary-length integral types.
+//
+typedef long long Integer;
+typedef long long NonPositiveInteger;
+typedef unsigned long long NonNegativeInteger;
+typedef unsigned long long PositiveInteger;
+typedef long long NegativeInteger;
 
-      // Boolean.
-      //
-      typedef bool Boolean;
+// Boolean.
+//
+typedef bool Boolean;
 
-      // Floating-point types.
-      //
-      typedef float Float;
-      typedef double Double;
-      typedef double Decimal;
+// Floating-point types.
+//
+typedef float Float;
+typedef double Double;
+typedef double Decimal;
 
-      // String types.
-      //
-      typedef ::xsd::cxx::tree::string< char, SimpleType > String;
-      typedef ::xsd::cxx::tree::normalized_string< char, String > NormalizedString;
-      typedef ::xsd::cxx::tree::token< char, NormalizedString > Token;
-      typedef ::xsd::cxx::tree::name< char, Token > Name;
-      typedef ::xsd::cxx::tree::nmtoken< char, Token > Nmtoken;
-      typedef ::xsd::cxx::tree::nmtokens< char, SimpleType, Nmtoken > Nmtokens;
-      typedef ::xsd::cxx::tree::ncname< char, Name > Ncname;
-      typedef ::xsd::cxx::tree::language< char, Token > Language;
+// String types.
+//
+typedef ::xsd::cxx::tree::string<char, SimpleType> String;
+typedef ::xsd::cxx::tree::normalized_string<char, String> NormalizedString;
+typedef ::xsd::cxx::tree::token<char, NormalizedString> Token;
+typedef ::xsd::cxx::tree::name<char, Token> Name;
+typedef ::xsd::cxx::tree::nmtoken<char, Token> Nmtoken;
+typedef ::xsd::cxx::tree::nmtokens<char, SimpleType, Nmtoken> Nmtokens;
+typedef ::xsd::cxx::tree::ncname<char, Name> Ncname;
+typedef ::xsd::cxx::tree::language<char, Token> Language;
 
-      // ID/IDREF.
-      //
-      typedef ::xsd::cxx::tree::id< char, Ncname > Id;
-      typedef ::xsd::cxx::tree::idref< char, Ncname, Type > Idref;
-      typedef ::xsd::cxx::tree::idrefs< char, SimpleType, Idref > Idrefs;
+// ID/IDREF.
+//
+typedef ::xsd::cxx::tree::id<char, Ncname> Id;
+typedef ::xsd::cxx::tree::idref<char, Ncname, Type> Idref;
+typedef ::xsd::cxx::tree::idrefs<char, SimpleType, Idref> Idrefs;
 
-      // URI.
-      //
-      typedef ::xsd::cxx::tree::uri< char, SimpleType > Uri;
+// URI.
+//
+typedef ::xsd::cxx::tree::uri<char, SimpleType> Uri;
 
-      // Qualified name.
-      //
-      typedef ::xsd::cxx::tree::qname< char, SimpleType, Uri, Ncname > Qname;
+// Qualified name.
+//
+typedef ::xsd::cxx::tree::qname<char, SimpleType, Uri, Ncname> Qname;
 
-      // Binary.
-      //
-      typedef ::xsd::cxx::tree::buffer< char > Buffer;
-      typedef ::xsd::cxx::tree::base64_binary< char, SimpleType > Base64Binary;
-      typedef ::xsd::cxx::tree::hex_binary< char, SimpleType > HexBinary;
+// Binary.
+//
+typedef ::xsd::cxx::tree::buffer<char> Buffer;
+typedef ::xsd::cxx::tree::base64_binary<char, SimpleType> Base64Binary;
+typedef ::xsd::cxx::tree::hex_binary<char, SimpleType> HexBinary;
 
-      // Date/time.
-      //
-      typedef ::xsd::cxx::tree::time_zone TimeZone;
-      typedef ::xsd::cxx::tree::date< char, SimpleType > Date;
-      typedef ::xsd::cxx::tree::date_time< char, SimpleType > DateTime;
-      typedef ::xsd::cxx::tree::duration< char, SimpleType > Duration;
-      typedef ::xsd::cxx::tree::gday< char, SimpleType > Gday;
-      typedef ::xsd::cxx::tree::gmonth< char, SimpleType > Gmonth;
-      typedef ::xsd::cxx::tree::gmonth_day< char, SimpleType > GmonthDay;
-      typedef ::xsd::cxx::tree::gyear< char, SimpleType > Gyear;
-      typedef ::xsd::cxx::tree::gyear_month< char, SimpleType > GyearMonth;
-      typedef ::xsd::cxx::tree::time< char, SimpleType > Time;
+// Date/time.
+//
+typedef ::xsd::cxx::tree::time_zone TimeZone;
+typedef ::xsd::cxx::tree::date<char, SimpleType> Date;
+typedef ::xsd::cxx::tree::date_time<char, SimpleType> DateTime;
+typedef ::xsd::cxx::tree::duration<char, SimpleType> Duration;
+typedef ::xsd::cxx::tree::gday<char, SimpleType> Gday;
+typedef ::xsd::cxx::tree::gmonth<char, SimpleType> Gmonth;
+typedef ::xsd::cxx::tree::gmonth_day<char, SimpleType> GmonthDay;
+typedef ::xsd::cxx::tree::gyear<char, SimpleType> Gyear;
+typedef ::xsd::cxx::tree::gyear_month<char, SimpleType> GyearMonth;
+typedef ::xsd::cxx::tree::time<char, SimpleType> Time;
 
-      // Entity.
-      //
-      typedef ::xsd::cxx::tree::entity< char, Ncname > Entity;
-      typedef ::xsd::cxx::tree::entities< char, SimpleType, Entity > Entities;
+// Entity.
+//
+typedef ::xsd::cxx::tree::entity<char, Ncname> Entity;
+typedef ::xsd::cxx::tree::entities<char, SimpleType, Entity> Entities;
 
-      typedef ::xsd::cxx::tree::content_order ContentOrder;
-      // Namespace information and list stream. Used in
-      // serialization functions.
-      //
-      typedef ::xsd::cxx::xml::dom::namespace_info< char > NamespaceInfo;
-      typedef ::xsd::cxx::xml::dom::namespace_infomap< char > NamespaceInfomap;
-      typedef ::xsd::cxx::tree::list_stream< char > ListStream;
-      typedef ::xsd::cxx::tree::as_double< Double > AsDouble;
-      typedef ::xsd::cxx::tree::as_decimal< Decimal > AsDecimal;
-      typedef ::xsd::cxx::tree::facet Facet;
+typedef ::xsd::cxx::tree::content_order ContentOrder;
+// Namespace information and list stream. Used in
+// serialization functions.
+//
+typedef ::xsd::cxx::xml::dom::namespace_info<char> NamespaceInfo;
+typedef ::xsd::cxx::xml::dom::namespace_infomap<char> NamespaceInfomap;
+typedef ::xsd::cxx::tree::list_stream<char> ListStream;
+typedef ::xsd::cxx::tree::as_double<Double> AsDouble;
+typedef ::xsd::cxx::tree::as_decimal<Decimal> AsDecimal;
+typedef ::xsd::cxx::tree::facet Facet;
 
-      // Flags and properties.
-      //
-      typedef ::xsd::cxx::tree::flags Flags;
-      typedef ::xsd::cxx::tree::properties< char > Properties;
+// Flags and properties.
+//
+typedef ::xsd::cxx::tree::flags Flags;
+typedef ::xsd::cxx::tree::properties<char> Properties;
 
-      // Parsing/serialization diagnostics.
-      //
-      typedef ::xsd::cxx::tree::severity Severity;
-      typedef ::xsd::cxx::tree::error< char > Error;
-      typedef ::xsd::cxx::tree::diagnostics< char > Diagnostics;
+// Parsing/serialization diagnostics.
+//
+typedef ::xsd::cxx::tree::severity Severity;
+typedef ::xsd::cxx::tree::error<char> Error;
+typedef ::xsd::cxx::tree::diagnostics<char> Diagnostics;
 
-      // Exceptions.
-      //
-      typedef ::xsd::cxx::tree::exception< char > Exception;
-      typedef ::xsd::cxx::tree::bounds< char > Bounds;
-      typedef ::xsd::cxx::tree::duplicate_id< char > DuplicateId;
-      typedef ::xsd::cxx::tree::parsing< char > Parsing;
-      typedef ::xsd::cxx::tree::expected_element< char > ExpectedElement;
-      typedef ::xsd::cxx::tree::unexpected_element< char > UnexpectedElement;
-      typedef ::xsd::cxx::tree::expected_attribute< char > ExpectedAttribute;
-      typedef ::xsd::cxx::tree::unexpected_enumerator< char > UnexpectedEnumerator;
-      typedef ::xsd::cxx::tree::expected_text_content< char > ExpectedTextContent;
-      typedef ::xsd::cxx::tree::no_prefix_mapping< char > NoPrefixMapping;
-      typedef ::xsd::cxx::tree::no_type_info< char > NoTypeInfo;
-      typedef ::xsd::cxx::tree::not_derived< char > NotDerived;
-      typedef ::xsd::cxx::tree::serialization< char > Serialization;
+// Exceptions.
+//
+typedef ::xsd::cxx::tree::exception<char> Exception;
+typedef ::xsd::cxx::tree::bounds<char> Bounds;
+typedef ::xsd::cxx::tree::duplicate_id<char> DuplicateId;
+typedef ::xsd::cxx::tree::parsing<char> Parsing;
+typedef ::xsd::cxx::tree::expected_element<char> ExpectedElement;
+typedef ::xsd::cxx::tree::unexpected_element<char> UnexpectedElement;
+typedef ::xsd::cxx::tree::expected_attribute<char> ExpectedAttribute;
+typedef ::xsd::cxx::tree::unexpected_enumerator<char> UnexpectedEnumerator;
+typedef ::xsd::cxx::tree::expected_text_content<char> ExpectedTextContent;
+typedef ::xsd::cxx::tree::no_prefix_mapping<char> NoPrefixMapping;
+typedef ::xsd::cxx::tree::no_type_info<char> NoTypeInfo;
+typedef ::xsd::cxx::tree::not_derived<char> NotDerived;
+typedef ::xsd::cxx::tree::serialization<char> Serialization;
 
-      // Error handler callback interface.
-      //
-      typedef ::xsd::cxx::xml::error_handler< char > ErrorHandler;
+// Error handler callback interface.
+//
+typedef ::xsd::cxx::xml::error_handler<char> ErrorHandler;
 
-      // DOM interaction.
-      //
-      namespace dom
-      {
-        // Automatic pointer for DOMDocument.
-        //
-        using ::xsd::cxx::xml::dom::unique_ptr;
+// DOM interaction.
+//
+namespace dom {
+// Automatic pointer for DOMDocument.
+//
+using ::xsd::cxx::xml::dom::unique_ptr;
 
 #ifndef XSD_CXX_TREE_TREE_NODE_KEY__LINPHONEPRIVATE__XSD__XMLSCHEMA
 #define XSD_CXX_TREE_TREE_NODE_KEY__LINPHONEPRIVATE__XSD__XMLSCHEMA
-        // DOM user data key for back pointers to tree nodes.
-        //
-        const XMLCh* const treeNodeKey = ::xsd::cxx::tree::user_data_keys::node;
+// DOM user data key for back pointers to tree nodes.
+//
+const XMLCh *const treeNodeKey = ::xsd::cxx::tree::user_data_keys::node;
 #endif
-      }
-    }
-  }
-}
+} // namespace dom
+} // namespace XmlSchema
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 // Forward declarations.
 //
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ConferenceInfo
-    {
-      class ConferenceType;
-      class StateType;
-      class ConferenceDescriptionType;
-      class HostType;
-      class ConferenceStateType;
-      class ConferenceMediaType;
-      class ConferenceMediumType;
-      class UrisType;
-      class UriType;
-      class KeywordsType;
-      class UsersType;
-      class UserType;
-      class UserRolesType;
-      class UserLanguagesType;
-      class EndpointType;
-      class EndpointStatusType;
-      class JoiningType;
-      class DisconnectionType;
-      class ExecutionType;
-      class CallType;
-      class SipDialogIdType;
-      class MediaType;
-      class MediaStatusType;
-      class SidebarsByValType;
-    }
-  }
-}
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ConferenceInfo {
+class ConferenceType;
+class StateType;
+class ConferenceDescriptionType;
+class HostType;
+class ConferenceStateType;
+class ConferenceMediaType;
+class ConferenceMediumType;
+class UrisType;
+class UriType;
+class KeywordsType;
+class UsersType;
+class UserType;
+class UserRolesType;
+class UserLanguagesType;
+class EndpointType;
+class EndpointStatusType;
+class JoiningType;
+class DisconnectionType;
+class ExecutionType;
+class CallType;
+class SipDialogIdType;
+class MediaType;
+class MediaStatusType;
+class SidebarsByValType;
+} // namespace ConferenceInfo
+} // namespace Xsd
+} // namespace LinphonePrivate
 
-
-#include <memory>    // ::std::unique_ptr
-#include <limits>    // std::numeric_limits
 #include <algorithm> // std::binary_search
+#include <limits>    // std::numeric_limits
+#include <memory>    // ::std::unique_ptr
 #include <utility>   // std::move
 
 #include <xsd/cxx/xml/char-utf8.hxx>
 
-#include <xsd/cxx/tree/exceptions.hxx>
-#include <xsd/cxx/tree/elements.hxx>
 #include <xsd/cxx/tree/containers.hxx>
+#include <xsd/cxx/tree/elements.hxx>
+#include <xsd/cxx/tree/exceptions.hxx>
 #include <xsd/cxx/tree/list.hxx>
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
@@ -316,3374 +304,2736 @@ namespace LinphonePrivate
 
 #include "xml.h"
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ConferenceInfo
-    {
-      class ConferenceType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // conference-description
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceDescriptionType ConferenceDescriptionType;
-        typedef ::xsd::cxx::tree::optional< ConferenceDescriptionType > ConferenceDescriptionOptional;
-        typedef ::xsd::cxx::tree::traits< ConferenceDescriptionType, char > ConferenceDescriptionTraits;
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ConferenceInfo {
+class ConferenceType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// conference-description
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceDescriptionType ConferenceDescriptionType;
+	typedef ::xsd::cxx::tree::optional<ConferenceDescriptionType> ConferenceDescriptionOptional;
+	typedef ::xsd::cxx::tree::traits<ConferenceDescriptionType, char> ConferenceDescriptionTraits;
 
-        const ConferenceDescriptionOptional&
-        getConferenceDescription () const;
+	const ConferenceDescriptionOptional &getConferenceDescription() const;
 
-        ConferenceDescriptionOptional&
-        getConferenceDescription ();
+	ConferenceDescriptionOptional &getConferenceDescription();
 
-        void
-        setConferenceDescription (const ConferenceDescriptionType& x);
+	void setConferenceDescription(const ConferenceDescriptionType &x);
 
-        void
-        setConferenceDescription (const ConferenceDescriptionOptional& x);
+	void setConferenceDescription(const ConferenceDescriptionOptional &x);
 
-        void
-        setConferenceDescription (::std::unique_ptr< ConferenceDescriptionType > p);
+	void setConferenceDescription(::std::unique_ptr<ConferenceDescriptionType> p);
 
-        // host-info
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::HostType HostInfoType;
-        typedef ::xsd::cxx::tree::optional< HostInfoType > HostInfoOptional;
-        typedef ::xsd::cxx::tree::traits< HostInfoType, char > HostInfoTraits;
+	// host-info
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::HostType HostInfoType;
+	typedef ::xsd::cxx::tree::optional<HostInfoType> HostInfoOptional;
+	typedef ::xsd::cxx::tree::traits<HostInfoType, char> HostInfoTraits;
 
-        const HostInfoOptional&
-        getHostInfo () const;
+	const HostInfoOptional &getHostInfo() const;
 
-        HostInfoOptional&
-        getHostInfo ();
+	HostInfoOptional &getHostInfo();
 
-        void
-        setHostInfo (const HostInfoType& x);
+	void setHostInfo(const HostInfoType &x);
 
-        void
-        setHostInfo (const HostInfoOptional& x);
+	void setHostInfo(const HostInfoOptional &x);
 
-        void
-        setHostInfo (::std::unique_ptr< HostInfoType > p);
+	void setHostInfo(::std::unique_ptr<HostInfoType> p);
 
-        // conference-state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceStateType ConferenceStateType;
-        typedef ::xsd::cxx::tree::optional< ConferenceStateType > ConferenceStateOptional;
-        typedef ::xsd::cxx::tree::traits< ConferenceStateType, char > ConferenceStateTraits;
+	// conference-state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceStateType ConferenceStateType;
+	typedef ::xsd::cxx::tree::optional<ConferenceStateType> ConferenceStateOptional;
+	typedef ::xsd::cxx::tree::traits<ConferenceStateType, char> ConferenceStateTraits;
 
-        const ConferenceStateOptional&
-        getConferenceState () const;
+	const ConferenceStateOptional &getConferenceState() const;
 
-        ConferenceStateOptional&
-        getConferenceState ();
+	ConferenceStateOptional &getConferenceState();
 
-        void
-        setConferenceState (const ConferenceStateType& x);
+	void setConferenceState(const ConferenceStateType &x);
 
-        void
-        setConferenceState (const ConferenceStateOptional& x);
+	void setConferenceState(const ConferenceStateOptional &x);
 
-        void
-        setConferenceState (::std::unique_ptr< ConferenceStateType > p);
+	void setConferenceState(::std::unique_ptr<ConferenceStateType> p);
 
-        // users
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UsersType UsersType;
-        typedef ::xsd::cxx::tree::optional< UsersType > UsersOptional;
-        typedef ::xsd::cxx::tree::traits< UsersType, char > UsersTraits;
+	// users
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UsersType UsersType;
+	typedef ::xsd::cxx::tree::optional<UsersType> UsersOptional;
+	typedef ::xsd::cxx::tree::traits<UsersType, char> UsersTraits;
 
-        const UsersOptional&
-        getUsers () const;
+	const UsersOptional &getUsers() const;
 
-        UsersOptional&
-        getUsers ();
+	UsersOptional &getUsers();
 
-        void
-        setUsers (const UsersType& x);
+	void setUsers(const UsersType &x);
 
-        void
-        setUsers (const UsersOptional& x);
+	void setUsers(const UsersOptional &x);
 
-        void
-        setUsers (::std::unique_ptr< UsersType > p);
+	void setUsers(::std::unique_ptr<UsersType> p);
 
-        // sidebars-by-ref
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType SidebarsByRefType;
-        typedef ::xsd::cxx::tree::optional< SidebarsByRefType > SidebarsByRefOptional;
-        typedef ::xsd::cxx::tree::traits< SidebarsByRefType, char > SidebarsByRefTraits;
+	// sidebars-by-ref
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType SidebarsByRefType;
+	typedef ::xsd::cxx::tree::optional<SidebarsByRefType> SidebarsByRefOptional;
+	typedef ::xsd::cxx::tree::traits<SidebarsByRefType, char> SidebarsByRefTraits;
 
-        const SidebarsByRefOptional&
-        getSidebarsByRef () const;
+	const SidebarsByRefOptional &getSidebarsByRef() const;
 
-        SidebarsByRefOptional&
-        getSidebarsByRef ();
+	SidebarsByRefOptional &getSidebarsByRef();
 
-        void
-        setSidebarsByRef (const SidebarsByRefType& x);
+	void setSidebarsByRef(const SidebarsByRefType &x);
 
-        void
-        setSidebarsByRef (const SidebarsByRefOptional& x);
+	void setSidebarsByRef(const SidebarsByRefOptional &x);
 
-        void
-        setSidebarsByRef (::std::unique_ptr< SidebarsByRefType > p);
+	void setSidebarsByRef(::std::unique_ptr<SidebarsByRefType> p);
 
-        // sidebars-by-val
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::SidebarsByValType SidebarsByValType;
-        typedef ::xsd::cxx::tree::optional< SidebarsByValType > SidebarsByValOptional;
-        typedef ::xsd::cxx::tree::traits< SidebarsByValType, char > SidebarsByValTraits;
+	// sidebars-by-val
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::SidebarsByValType SidebarsByValType;
+	typedef ::xsd::cxx::tree::optional<SidebarsByValType> SidebarsByValOptional;
+	typedef ::xsd::cxx::tree::traits<SidebarsByValType, char> SidebarsByValTraits;
 
-        const SidebarsByValOptional&
-        getSidebarsByVal () const;
+	const SidebarsByValOptional &getSidebarsByVal() const;
 
-        SidebarsByValOptional&
-        getSidebarsByVal ();
+	SidebarsByValOptional &getSidebarsByVal();
 
-        void
-        setSidebarsByVal (const SidebarsByValType& x);
+	void setSidebarsByVal(const SidebarsByValType &x);
 
-        void
-        setSidebarsByVal (const SidebarsByValOptional& x);
+	void setSidebarsByVal(const SidebarsByValOptional &x);
 
-        void
-        setSidebarsByVal (::std::unique_ptr< SidebarsByValType > p);
+	void setSidebarsByVal(::std::unique_ptr<SidebarsByValType> p);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        const AnySequence&
-        getAny () const;
+	const AnySequence &getAny() const;
 
-        AnySequence&
-        getAny ();
+	AnySequence &getAny();
 
-        void
-        setAny (const AnySequence& s);
+	void setAny(const AnySequence &s);
 
-        // entity
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri EntityType;
-        typedef ::xsd::cxx::tree::traits< EntityType, char > EntityTraits;
+	// entity
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri EntityType;
+	typedef ::xsd::cxx::tree::traits<EntityType, char> EntityTraits;
 
-        const EntityType&
-        getEntity () const;
+	const EntityType &getEntity() const;
 
-        EntityType&
-        getEntity ();
+	EntityType &getEntity();
 
-        void
-        setEntity (const EntityType& x);
+	void setEntity(const EntityType &x);
 
-        void
-        setEntity (::std::unique_ptr< EntityType > p);
+	void setEntity(::std::unique_ptr<EntityType> p);
 
-        ::std::unique_ptr< EntityType >
-        setDetachEntity ();
+	::std::unique_ptr<EntityType> setDetachEntity();
 
-        // state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
-        typedef ::xsd::cxx::tree::traits< StateType, char > StateTraits;
+	// state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
+	typedef ::xsd::cxx::tree::traits<StateType, char> StateTraits;
 
-        const StateType&
-        getState () const;
+	const StateType &getState() const;
 
-        StateType&
-        getState ();
+	StateType &getState();
 
-        void
-        setState (const StateType& x);
+	void setState(const StateType &x);
 
-        void
-        setState (::std::unique_ptr< StateType > p);
+	void setState(::std::unique_ptr<StateType> p);
 
-        ::std::unique_ptr< StateType >
-        setDetachState ();
+	::std::unique_ptr<StateType> setDetachState();
 
-        static const StateType&
-        getStateDefaultValue ();
+	static const StateType &getStateDefaultValue();
 
-        // version
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::UnsignedInt VersionType;
-        typedef ::xsd::cxx::tree::optional< VersionType > VersionOptional;
-        typedef ::xsd::cxx::tree::traits< VersionType, char > VersionTraits;
+	// version
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::UnsignedInt VersionType;
+	typedef ::xsd::cxx::tree::optional<VersionType> VersionOptional;
+	typedef ::xsd::cxx::tree::traits<VersionType, char> VersionTraits;
 
-        const VersionOptional&
-        getVersion () const;
+	const VersionOptional &getVersion() const;
 
-        VersionOptional&
-        getVersion ();
+	VersionOptional &getVersion();
 
-        void
-        setVersion (const VersionType& x);
+	void setVersion(const VersionType &x);
 
-        void
-        setVersion (const VersionOptional& x);
+	void setVersion(const VersionOptional &x);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	AnyAttributeSet &getAnyAttribute();
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	::xercesc::DOMDocument &getDomDocument();
 
-        // Constructors.
-        //
-        ConferenceType (const EntityType&);
+	// Constructors.
+	//
+	ConferenceType(const EntityType &);
 
-        ConferenceType (const ::xercesc::DOMElement& e,
-                        ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                        ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ConferenceType(const ::xercesc::DOMElement &e,
+	               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	               ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        ConferenceType (const ConferenceType& x,
-                        ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                        ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ConferenceType(const ConferenceType &x,
+	               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	               ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual ConferenceType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	virtual ConferenceType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                               ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        ConferenceType&
-        operator= (const ConferenceType& x);
+	ConferenceType &operator=(const ConferenceType &x);
 
-        virtual 
-        ~ConferenceType ();
+	virtual ~ConferenceType();
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        ConferenceDescriptionOptional conference_description_;
-        HostInfoOptional host_info_;
-        ConferenceStateOptional conference_state_;
-        UsersOptional users_;
-        SidebarsByRefOptional sidebars_by_ref_;
-        SidebarsByValOptional sidebars_by_val_;
-        AnySequence any_;
-        ::xsd::cxx::tree::one< EntityType > entity_;
-        ::xsd::cxx::tree::one< StateType > state_;
-        static const StateType state_default_value_;
-        VersionOptional version_;
-        AnyAttributeSet any_attribute_;
-      };
+	ConferenceDescriptionOptional conference_description_;
+	HostInfoOptional host_info_;
+	ConferenceStateOptional conference_state_;
+	UsersOptional users_;
+	SidebarsByRefOptional sidebars_by_ref_;
+	SidebarsByValOptional sidebars_by_val_;
+	AnySequence any_;
+	::xsd::cxx::tree::one<EntityType> entity_;
+	::xsd::cxx::tree::one<StateType> state_;
+	static const StateType state_default_value_;
+	VersionOptional version_;
+	AnyAttributeSet any_attribute_;
+};
 
-      class StateType: public ::LinphonePrivate::Xsd::XmlSchema::String
-      {
-        public:
-        enum Value
-        {
-          full,
-          partial,
-          deleted
-        };
+class StateType : public ::LinphonePrivate::Xsd::XmlSchema::String {
+public:
+	enum Value { full, partial, deleted };
 
-        StateType (Value v);
+	StateType(Value v);
 
-        StateType (const char* v);
+	StateType(const char *v);
 
-        StateType (const ::std::string& v);
+	StateType(const ::std::string &v);
 
-        StateType (const ::LinphonePrivate::Xsd::XmlSchema::String& v);
+	StateType(const ::LinphonePrivate::Xsd::XmlSchema::String &v);
 
-        StateType (const ::xercesc::DOMElement& e,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	StateType(const ::xercesc::DOMElement &e,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        StateType (const ::xercesc::DOMAttr& a,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	StateType(const ::xercesc::DOMAttr &a,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        StateType (const ::std::string& s,
-                   const ::xercesc::DOMElement* e,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	StateType(const ::std::string &s,
+	          const ::xercesc::DOMElement *e,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        StateType (const StateType& x,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	StateType(const StateType &x,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual StateType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+#ifdef XSD_CXX11
+	StateType &operator=(const StateType &) = default;
+#endif
 
-        StateType&
-        operator= (Value v);
+	virtual StateType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        virtual
-        operator Value () const
-        {
-          return _xsd_StateType_convert ();
-        }
+	StateType &operator=(Value v);
 
-        protected:
-        Value
-        _xsd_StateType_convert () const;
+	virtual operator Value() const {
+		return _xsd_StateType_convert();
+	}
 
-        public:
-        static const char* const _xsd_StateType_literals_[3];
-        static const Value _xsd_StateType_indexes_[3];
-      };
+protected:
+	Value _xsd_StateType_convert() const;
 
-      class ConferenceDescriptionType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+public:
+	static const char *const _xsd_StateType_literals_[3];
+	static const Value _xsd_StateType_indexes_[3];
+};
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+class ConferenceDescriptionType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        DisplayTextOptional&
-        getDisplayText ();
+	const DisplayTextOptional &getDisplayText() const;
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	DisplayTextOptional &getDisplayText();
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	void setDisplayText(const DisplayTextType &x);
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	void setDisplayText(const DisplayTextOptional &x);
 
-        // subject
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String SubjectType;
-        typedef ::xsd::cxx::tree::optional< SubjectType > SubjectOptional;
-        typedef ::xsd::cxx::tree::traits< SubjectType, char > SubjectTraits;
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        const SubjectOptional&
-        getSubject () const;
+	// subject
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String SubjectType;
+	typedef ::xsd::cxx::tree::optional<SubjectType> SubjectOptional;
+	typedef ::xsd::cxx::tree::traits<SubjectType, char> SubjectTraits;
 
-        SubjectOptional&
-        getSubject ();
+	const SubjectOptional &getSubject() const;
 
-        void
-        setSubject (const SubjectType& x);
+	SubjectOptional &getSubject();
 
-        void
-        setSubject (const SubjectOptional& x);
+	void setSubject(const SubjectType &x);
 
-        void
-        setSubject (::std::unique_ptr< SubjectType > p);
+	void setSubject(const SubjectOptional &x);
 
-        // free-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String FreeTextType;
-        typedef ::xsd::cxx::tree::optional< FreeTextType > FreeTextOptional;
-        typedef ::xsd::cxx::tree::traits< FreeTextType, char > FreeTextTraits;
+	void setSubject(::std::unique_ptr<SubjectType> p);
 
-        const FreeTextOptional&
-        getFreeText () const;
+	// free-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String FreeTextType;
+	typedef ::xsd::cxx::tree::optional<FreeTextType> FreeTextOptional;
+	typedef ::xsd::cxx::tree::traits<FreeTextType, char> FreeTextTraits;
 
-        FreeTextOptional&
-        getFreeText ();
+	const FreeTextOptional &getFreeText() const;
 
-        void
-        setFreeText (const FreeTextType& x);
+	FreeTextOptional &getFreeText();
 
-        void
-        setFreeText (const FreeTextOptional& x);
+	void setFreeText(const FreeTextType &x);
 
-        void
-        setFreeText (::std::unique_ptr< FreeTextType > p);
+	void setFreeText(const FreeTextOptional &x);
 
-        // keywords
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::KeywordsType KeywordsType;
-        typedef ::xsd::cxx::tree::optional< KeywordsType > KeywordsOptional;
-        typedef ::xsd::cxx::tree::traits< KeywordsType, char > KeywordsTraits;
+	void setFreeText(::std::unique_ptr<FreeTextType> p);
 
-        const KeywordsOptional&
-        getKeywords () const;
+	// keywords
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::KeywordsType KeywordsType;
+	typedef ::xsd::cxx::tree::optional<KeywordsType> KeywordsOptional;
+	typedef ::xsd::cxx::tree::traits<KeywordsType, char> KeywordsTraits;
 
-        KeywordsOptional&
-        getKeywords ();
+	const KeywordsOptional &getKeywords() const;
 
-        void
-        setKeywords (const KeywordsType& x);
+	KeywordsOptional &getKeywords();
 
-        void
-        setKeywords (const KeywordsOptional& x);
+	void setKeywords(const KeywordsType &x);
 
-        void
-        setKeywords (::std::unique_ptr< KeywordsType > p);
+	void setKeywords(const KeywordsOptional &x);
 
-        // conf-uris
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType ConfUrisType;
-        typedef ::xsd::cxx::tree::optional< ConfUrisType > ConfUrisOptional;
-        typedef ::xsd::cxx::tree::traits< ConfUrisType, char > ConfUrisTraits;
+	void setKeywords(::std::unique_ptr<KeywordsType> p);
 
-        const ConfUrisOptional&
-        getConfUris () const;
+	// conf-uris
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType ConfUrisType;
+	typedef ::xsd::cxx::tree::optional<ConfUrisType> ConfUrisOptional;
+	typedef ::xsd::cxx::tree::traits<ConfUrisType, char> ConfUrisTraits;
 
-        ConfUrisOptional&
-        getConfUris ();
+	const ConfUrisOptional &getConfUris() const;
 
-        void
-        setConfUris (const ConfUrisType& x);
+	ConfUrisOptional &getConfUris();
 
-        void
-        setConfUris (const ConfUrisOptional& x);
+	void setConfUris(const ConfUrisType &x);
 
-        void
-        setConfUris (::std::unique_ptr< ConfUrisType > p);
+	void setConfUris(const ConfUrisOptional &x);
 
-        // service-uris
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType ServiceUrisType;
-        typedef ::xsd::cxx::tree::optional< ServiceUrisType > ServiceUrisOptional;
-        typedef ::xsd::cxx::tree::traits< ServiceUrisType, char > ServiceUrisTraits;
+	void setConfUris(::std::unique_ptr<ConfUrisType> p);
 
-        const ServiceUrisOptional&
-        getServiceUris () const;
+	// service-uris
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType ServiceUrisType;
+	typedef ::xsd::cxx::tree::optional<ServiceUrisType> ServiceUrisOptional;
+	typedef ::xsd::cxx::tree::traits<ServiceUrisType, char> ServiceUrisTraits;
 
-        ServiceUrisOptional&
-        getServiceUris ();
+	const ServiceUrisOptional &getServiceUris() const;
 
-        void
-        setServiceUris (const ServiceUrisType& x);
+	ServiceUrisOptional &getServiceUris();
 
-        void
-        setServiceUris (const ServiceUrisOptional& x);
+	void setServiceUris(const ServiceUrisType &x);
 
-        void
-        setServiceUris (::std::unique_ptr< ServiceUrisType > p);
+	void setServiceUris(const ServiceUrisOptional &x);
 
-        // maximum-user-count
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::UnsignedInt MaximumUserCountType;
-        typedef ::xsd::cxx::tree::optional< MaximumUserCountType > MaximumUserCountOptional;
-        typedef ::xsd::cxx::tree::traits< MaximumUserCountType, char > MaximumUserCountTraits;
+	void setServiceUris(::std::unique_ptr<ServiceUrisType> p);
 
-        const MaximumUserCountOptional&
-        getMaximumUserCount () const;
+	// maximum-user-count
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::UnsignedInt MaximumUserCountType;
+	typedef ::xsd::cxx::tree::optional<MaximumUserCountType> MaximumUserCountOptional;
+	typedef ::xsd::cxx::tree::traits<MaximumUserCountType, char> MaximumUserCountTraits;
 
-        MaximumUserCountOptional&
-        getMaximumUserCount ();
+	const MaximumUserCountOptional &getMaximumUserCount() const;
 
-        void
-        setMaximumUserCount (const MaximumUserCountType& x);
+	MaximumUserCountOptional &getMaximumUserCount();
 
-        void
-        setMaximumUserCount (const MaximumUserCountOptional& x);
+	void setMaximumUserCount(const MaximumUserCountType &x);
 
-        // available-media
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceMediaType AvailableMediaType;
-        typedef ::xsd::cxx::tree::optional< AvailableMediaType > AvailableMediaOptional;
-        typedef ::xsd::cxx::tree::traits< AvailableMediaType, char > AvailableMediaTraits;
+	void setMaximumUserCount(const MaximumUserCountOptional &x);
 
-        const AvailableMediaOptional&
-        getAvailableMedia () const;
+	// available-media
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceMediaType AvailableMediaType;
+	typedef ::xsd::cxx::tree::optional<AvailableMediaType> AvailableMediaOptional;
+	typedef ::xsd::cxx::tree::traits<AvailableMediaType, char> AvailableMediaTraits;
 
-        AvailableMediaOptional&
-        getAvailableMedia ();
+	const AvailableMediaOptional &getAvailableMedia() const;
 
-        void
-        setAvailableMedia (const AvailableMediaType& x);
+	AvailableMediaOptional &getAvailableMedia();
 
-        void
-        setAvailableMedia (const AvailableMediaOptional& x);
+	void setAvailableMedia(const AvailableMediaType &x);
 
-        void
-        setAvailableMedia (::std::unique_ptr< AvailableMediaType > p);
+	void setAvailableMedia(const AvailableMediaOptional &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setAvailableMedia(::std::unique_ptr<AvailableMediaType> p);
 
-        const AnySequence&
-        getAny () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        AnySequence&
-        getAny ();
+	const AnySequence &getAny() const;
 
-        void
-        setAny (const AnySequence& s);
+	AnySequence &getAny();
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setAny(const AnySequence &s);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	AnyAttributeSet &getAnyAttribute();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        // Constructors.
-        //
-        ConferenceDescriptionType ();
+	::xercesc::DOMDocument &getDomDocument();
 
-        ConferenceDescriptionType (const ::xercesc::DOMElement& e,
-                                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	ConferenceDescriptionType();
 
-        ConferenceDescriptionType (const ConferenceDescriptionType& x,
-                                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ConferenceDescriptionType(const ::xercesc::DOMElement &e,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual ConferenceDescriptionType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ConferenceDescriptionType(const ConferenceDescriptionType &x,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        ConferenceDescriptionType&
-        operator= (const ConferenceDescriptionType& x);
+	virtual ConferenceDescriptionType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        virtual 
-        ~ConferenceDescriptionType ();
+	ConferenceDescriptionType &operator=(const ConferenceDescriptionType &x);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	virtual ~ConferenceDescriptionType();
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        DisplayTextOptional display_text_;
-        SubjectOptional subject_;
-        FreeTextOptional free_text_;
-        KeywordsOptional keywords_;
-        ConfUrisOptional conf_uris_;
-        ServiceUrisOptional service_uris_;
-        MaximumUserCountOptional maximum_user_count_;
-        AvailableMediaOptional available_media_;
-        AnySequence any_;
-        AnyAttributeSet any_attribute_;
-      };
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-      class HostType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	DisplayTextOptional display_text_;
+	SubjectOptional subject_;
+	FreeTextOptional free_text_;
+	KeywordsOptional keywords_;
+	ConfUrisOptional conf_uris_;
+	ServiceUrisOptional service_uris_;
+	MaximumUserCountOptional maximum_user_count_;
+	AvailableMediaOptional available_media_;
+	AnySequence any_;
+	AnyAttributeSet any_attribute_;
+};
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+class HostType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        DisplayTextOptional&
-        getDisplayText ();
+	const DisplayTextOptional &getDisplayText() const;
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	DisplayTextOptional &getDisplayText();
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	void setDisplayText(const DisplayTextType &x);
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	void setDisplayText(const DisplayTextOptional &x);
 
-        // web-page
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri WebPageType;
-        typedef ::xsd::cxx::tree::optional< WebPageType > WebPageOptional;
-        typedef ::xsd::cxx::tree::traits< WebPageType, char > WebPageTraits;
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        const WebPageOptional&
-        getWebPage () const;
+	// web-page
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri WebPageType;
+	typedef ::xsd::cxx::tree::optional<WebPageType> WebPageOptional;
+	typedef ::xsd::cxx::tree::traits<WebPageType, char> WebPageTraits;
 
-        WebPageOptional&
-        getWebPage ();
+	const WebPageOptional &getWebPage() const;
 
-        void
-        setWebPage (const WebPageType& x);
+	WebPageOptional &getWebPage();
 
-        void
-        setWebPage (const WebPageOptional& x);
+	void setWebPage(const WebPageType &x);
 
-        void
-        setWebPage (::std::unique_ptr< WebPageType > p);
+	void setWebPage(const WebPageOptional &x);
 
-        // uris
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType UrisType;
-        typedef ::xsd::cxx::tree::optional< UrisType > UrisOptional;
-        typedef ::xsd::cxx::tree::traits< UrisType, char > UrisTraits;
+	void setWebPage(::std::unique_ptr<WebPageType> p);
 
-        const UrisOptional&
-        getUris () const;
+	// uris
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType UrisType;
+	typedef ::xsd::cxx::tree::optional<UrisType> UrisOptional;
+	typedef ::xsd::cxx::tree::traits<UrisType, char> UrisTraits;
 
-        UrisOptional&
-        getUris ();
+	const UrisOptional &getUris() const;
 
-        void
-        setUris (const UrisType& x);
+	UrisOptional &getUris();
 
-        void
-        setUris (const UrisOptional& x);
+	void setUris(const UrisType &x);
 
-        void
-        setUris (::std::unique_ptr< UrisType > p);
+	void setUris(const UrisOptional &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setUris(::std::unique_ptr<UrisType> p);
 
-        const AnySequence&
-        getAny () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        AnySequence&
-        getAny ();
+	const AnySequence &getAny() const;
 
-        void
-        setAny (const AnySequence& s);
+	AnySequence &getAny();
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setAny(const AnySequence &s);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	AnyAttributeSet &getAnyAttribute();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        // Constructors.
-        //
-        HostType ();
+	::xercesc::DOMDocument &getDomDocument();
 
-        HostType (const ::xercesc::DOMElement& e,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	HostType();
 
-        HostType (const HostType& x,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	HostType(const ::xercesc::DOMElement &e,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual HostType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	HostType(const HostType &x,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        HostType&
-        operator= (const HostType& x);
+	virtual HostType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        virtual 
-        ~HostType ();
+	HostType &operator=(const HostType &x);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	virtual ~HostType();
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        DisplayTextOptional display_text_;
-        WebPageOptional web_page_;
-        UrisOptional uris_;
-        AnySequence any_;
-        AnyAttributeSet any_attribute_;
-      };
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-      class ConferenceStateType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // user-count
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::UnsignedInt UserCountType;
-        typedef ::xsd::cxx::tree::optional< UserCountType > UserCountOptional;
-        typedef ::xsd::cxx::tree::traits< UserCountType, char > UserCountTraits;
+	DisplayTextOptional display_text_;
+	WebPageOptional web_page_;
+	UrisOptional uris_;
+	AnySequence any_;
+	AnyAttributeSet any_attribute_;
+};
 
-        const UserCountOptional&
-        getUserCount () const;
+class ConferenceStateType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// user-count
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::UnsignedInt UserCountType;
+	typedef ::xsd::cxx::tree::optional<UserCountType> UserCountOptional;
+	typedef ::xsd::cxx::tree::traits<UserCountType, char> UserCountTraits;
 
-        UserCountOptional&
-        getUserCount ();
+	const UserCountOptional &getUserCount() const;
 
-        void
-        setUserCount (const UserCountType& x);
+	UserCountOptional &getUserCount();
 
-        void
-        setUserCount (const UserCountOptional& x);
+	void setUserCount(const UserCountType &x);
 
-        // active
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Boolean ActiveType;
-        typedef ::xsd::cxx::tree::optional< ActiveType > ActiveOptional;
-        typedef ::xsd::cxx::tree::traits< ActiveType, char > ActiveTraits;
+	void setUserCount(const UserCountOptional &x);
 
-        const ActiveOptional&
-        getActive () const;
+	// active
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Boolean ActiveType;
+	typedef ::xsd::cxx::tree::optional<ActiveType> ActiveOptional;
+	typedef ::xsd::cxx::tree::traits<ActiveType, char> ActiveTraits;
 
-        ActiveOptional&
-        getActive ();
+	const ActiveOptional &getActive() const;
 
-        void
-        setActive (const ActiveType& x);
+	ActiveOptional &getActive();
 
-        void
-        setActive (const ActiveOptional& x);
+	void setActive(const ActiveType &x);
 
-        // locked
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Boolean LockedType;
-        typedef ::xsd::cxx::tree::optional< LockedType > LockedOptional;
-        typedef ::xsd::cxx::tree::traits< LockedType, char > LockedTraits;
+	void setActive(const ActiveOptional &x);
 
-        const LockedOptional&
-        getLocked () const;
+	// locked
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Boolean LockedType;
+	typedef ::xsd::cxx::tree::optional<LockedType> LockedOptional;
+	typedef ::xsd::cxx::tree::traits<LockedType, char> LockedTraits;
 
-        LockedOptional&
-        getLocked ();
+	const LockedOptional &getLocked() const;
 
-        void
-        setLocked (const LockedType& x);
+	LockedOptional &getLocked();
 
-        void
-        setLocked (const LockedOptional& x);
+	void setLocked(const LockedType &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setLocked(const LockedOptional &x);
 
-        const AnySequence&
-        getAny () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        AnySequence&
-        getAny ();
+	const AnySequence &getAny() const;
 
-        void
-        setAny (const AnySequence& s);
+	AnySequence &getAny();
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setAny(const AnySequence &s);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	AnyAttributeSet &getAnyAttribute();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        // Constructors.
-        //
-        ConferenceStateType ();
+	::xercesc::DOMDocument &getDomDocument();
 
-        ConferenceStateType (const ::xercesc::DOMElement& e,
-                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                             ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	ConferenceStateType();
 
-        ConferenceStateType (const ConferenceStateType& x,
-                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                             ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ConferenceStateType(const ::xercesc::DOMElement &e,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual ConferenceStateType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ConferenceStateType(const ConferenceStateType &x,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        ConferenceStateType&
-        operator= (const ConferenceStateType& x);
+	virtual ConferenceStateType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                    ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        virtual 
-        ~ConferenceStateType ();
+	ConferenceStateType &operator=(const ConferenceStateType &x);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	virtual ~ConferenceStateType();
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        UserCountOptional user_count_;
-        ActiveOptional active_;
-        LockedOptional locked_;
-        AnySequence any_;
-        AnyAttributeSet any_attribute_;
-      };
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-      class ConferenceMediaType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // entry
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceMediumType EntryType;
-        typedef ::xsd::cxx::tree::sequence< EntryType > EntrySequence;
-        typedef EntrySequence::iterator EntryIterator;
-        typedef EntrySequence::const_iterator EntryConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntryType, char > EntryTraits;
+	UserCountOptional user_count_;
+	ActiveOptional active_;
+	LockedOptional locked_;
+	AnySequence any_;
+	AnyAttributeSet any_attribute_;
+};
 
-        const EntrySequence&
-        getEntry () const;
+class ConferenceMediaType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// entry
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceMediumType EntryType;
+	typedef ::xsd::cxx::tree::sequence<EntryType> EntrySequence;
+	typedef EntrySequence::iterator EntryIterator;
+	typedef EntrySequence::const_iterator EntryConstIterator;
+	typedef ::xsd::cxx::tree::traits<EntryType, char> EntryTraits;
 
-        EntrySequence&
-        getEntry ();
+	const EntrySequence &getEntry() const;
 
-        void
-        setEntry (const EntrySequence& s);
+	EntrySequence &getEntry();
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setEntry(const EntrySequence &s);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	AnyAttributeSet &getAnyAttribute();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        // Constructors.
-        //
-        ConferenceMediaType ();
+	::xercesc::DOMDocument &getDomDocument();
 
-        ConferenceMediaType (const ::xercesc::DOMElement& e,
-                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                             ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	ConferenceMediaType();
 
-        ConferenceMediaType (const ConferenceMediaType& x,
-                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                             ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ConferenceMediaType(const ::xercesc::DOMElement &e,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual ConferenceMediaType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ConferenceMediaType(const ConferenceMediaType &x,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                    ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        ConferenceMediaType&
-        operator= (const ConferenceMediaType& x);
+	virtual ConferenceMediaType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                    ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        virtual 
-        ~ConferenceMediaType ();
+	ConferenceMediaType &operator=(const ConferenceMediaType &x);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	virtual ~ConferenceMediaType();
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        EntrySequence entry_;
-        AnyAttributeSet any_attribute_;
-      };
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-      class ConferenceMediumType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	EntrySequence entry_;
+	AnyAttributeSet any_attribute_;
+};
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+class ConferenceMediumType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        DisplayTextOptional&
-        getDisplayText ();
+	const DisplayTextOptional &getDisplayText() const;
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	DisplayTextOptional &getDisplayText();
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	void setDisplayText(const DisplayTextType &x);
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	void setDisplayText(const DisplayTextOptional &x);
 
-        // type
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String TypeType;
-        typedef ::xsd::cxx::tree::traits< TypeType, char > TypeTraits;
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        const TypeType&
-        getType () const;
+	// type
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String TypeType;
+	typedef ::xsd::cxx::tree::traits<TypeType, char> TypeTraits;
 
-        TypeType&
-        getType ();
+	const TypeType &getType() const;
 
-        void
-        setType (const TypeType& x);
+	TypeType &getType();
 
-        void
-        setType (::std::unique_ptr< TypeType > p);
+	void setType(const TypeType &x);
 
-        ::std::unique_ptr< TypeType >
-        setDetachType ();
+	void setType(::std::unique_ptr<TypeType> p);
 
-        // status
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::MediaStatusType StatusType;
-        typedef ::xsd::cxx::tree::optional< StatusType > StatusOptional;
-        typedef ::xsd::cxx::tree::traits< StatusType, char > StatusTraits;
+	::std::unique_ptr<TypeType> setDetachType();
 
-        const StatusOptional&
-        getStatus () const;
+	// status
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::MediaStatusType StatusType;
+	typedef ::xsd::cxx::tree::optional<StatusType> StatusOptional;
+	typedef ::xsd::cxx::tree::traits<StatusType, char> StatusTraits;
 
-        StatusOptional&
-        getStatus ();
+	const StatusOptional &getStatus() const;
 
-        void
-        setStatus (const StatusType& x);
+	StatusOptional &getStatus();
 
-        void
-        setStatus (const StatusOptional& x);
+	void setStatus(const StatusType &x);
 
-        void
-        setStatus (::std::unique_ptr< StatusType > p);
+	void setStatus(const StatusOptional &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setStatus(::std::unique_ptr<StatusType> p);
 
-        const AnySequence&
-        getAny () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        AnySequence&
-        getAny ();
+	const AnySequence &getAny() const;
 
-        void
-        setAny (const AnySequence& s);
+	AnySequence &getAny();
 
-        // label
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String LabelType;
-        typedef ::xsd::cxx::tree::traits< LabelType, char > LabelTraits;
+	void setAny(const AnySequence &s);
 
-        const LabelType&
-        getLabel () const;
+	// label
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String LabelType;
+	typedef ::xsd::cxx::tree::traits<LabelType, char> LabelTraits;
 
-        LabelType&
-        getLabel ();
+	const LabelType &getLabel() const;
 
-        void
-        setLabel (const LabelType& x);
+	LabelType &getLabel();
 
-        void
-        setLabel (::std::unique_ptr< LabelType > p);
+	void setLabel(const LabelType &x);
 
-        ::std::unique_ptr< LabelType >
-        setDetachLabel ();
+	void setLabel(::std::unique_ptr<LabelType> p);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	::std::unique_ptr<LabelType> setDetachLabel();
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	AnyAttributeSet &getAnyAttribute();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        // Constructors.
-        //
-        ConferenceMediumType (const TypeType&,
-                              const LabelType&);
+	::xercesc::DOMDocument &getDomDocument();
 
-        ConferenceMediumType (const ::xercesc::DOMElement& e,
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                              ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	ConferenceMediumType(const TypeType &, const LabelType &);
 
-        ConferenceMediumType (const ConferenceMediumType& x,
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                              ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ConferenceMediumType(::std::unique_ptr<TypeType>, const LabelType &);
 
-        virtual ConferenceMediumType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ConferenceMediumType(const ::xercesc::DOMElement &e,
+	                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                     ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        ConferenceMediumType&
-        operator= (const ConferenceMediumType& x);
+	ConferenceMediumType(const ConferenceMediumType &x,
+	                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                     ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~ConferenceMediumType ();
+	virtual ConferenceMediumType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                     ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	ConferenceMediumType &operator=(const ConferenceMediumType &x);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual ~ConferenceMediumType();
 
-        DisplayTextOptional display_text_;
-        ::xsd::cxx::tree::one< TypeType > type_;
-        StatusOptional status_;
-        AnySequence any_;
-        ::xsd::cxx::tree::one< LabelType > label_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-      class UrisType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // entry
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UriType EntryType;
-        typedef ::xsd::cxx::tree::sequence< EntryType > EntrySequence;
-        typedef EntrySequence::iterator EntryIterator;
-        typedef EntrySequence::const_iterator EntryConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntryType, char > EntryTraits;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const EntrySequence&
-        getEntry () const;
+	DisplayTextOptional display_text_;
+	::xsd::cxx::tree::one<TypeType> type_;
+	StatusOptional status_;
+	AnySequence any_;
+	::xsd::cxx::tree::one<LabelType> label_;
+	AnyAttributeSet any_attribute_;
+};
 
-        EntrySequence&
-        getEntry ();
+class UrisType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// entry
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UriType EntryType;
+	typedef ::xsd::cxx::tree::sequence<EntryType> EntrySequence;
+	typedef EntrySequence::iterator EntryIterator;
+	typedef EntrySequence::const_iterator EntryConstIterator;
+	typedef ::xsd::cxx::tree::traits<EntryType, char> EntryTraits;
 
-        void
-        setEntry (const EntrySequence& s);
+	const EntrySequence &getEntry() const;
 
-        // state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
-        typedef ::xsd::cxx::tree::traits< StateType, char > StateTraits;
+	EntrySequence &getEntry();
 
-        const StateType&
-        getState () const;
+	void setEntry(const EntrySequence &s);
 
-        StateType&
-        getState ();
+	// state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
+	typedef ::xsd::cxx::tree::traits<StateType, char> StateTraits;
 
-        void
-        setState (const StateType& x);
+	const StateType &getState() const;
 
-        void
-        setState (::std::unique_ptr< StateType > p);
+	StateType &getState();
 
-        ::std::unique_ptr< StateType >
-        setDetachState ();
+	void setState(const StateType &x);
 
-        static const StateType&
-        getStateDefaultValue ();
+	void setState(::std::unique_ptr<StateType> p);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	::std::unique_ptr<StateType> setDetachState();
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	static const StateType &getStateDefaultValue();
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	AnyAttributeSet &getAnyAttribute();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Constructors.
-        //
-        UrisType ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        UrisType (const ::xercesc::DOMElement& e,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::xercesc::DOMDocument &getDomDocument();
 
-        UrisType (const UrisType& x,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	UrisType();
 
-        virtual UrisType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	UrisType(const ::xercesc::DOMElement &e,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        UrisType&
-        operator= (const UrisType& x);
+	UrisType(const UrisType &x,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~UrisType ();
+	virtual UrisType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	UrisType &operator=(const UrisType &x);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual ~UrisType();
 
-        EntrySequence entry_;
-        ::xsd::cxx::tree::one< StateType > state_;
-        static const StateType state_default_value_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-      class UriType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // uri
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri UriType1;
-        typedef ::xsd::cxx::tree::traits< UriType1, char > UriTraits;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const UriType1&
-        getUri () const;
+	EntrySequence entry_;
+	::xsd::cxx::tree::one<StateType> state_;
+	static const StateType state_default_value_;
+	AnyAttributeSet any_attribute_;
+};
 
-        UriType1&
-        getUri ();
+class UriType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// uri
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri UriType1;
+	typedef ::xsd::cxx::tree::traits<UriType1, char> UriTraits;
 
-        void
-        setUri (const UriType1& x);
+	const UriType1 &getUri() const;
 
-        void
-        setUri (::std::unique_ptr< UriType1 > p);
+	UriType1 &getUri();
 
-        ::std::unique_ptr< UriType1 >
-        setDetachUri ();
+	void setUri(const UriType1 &x);
 
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	void setUri(::std::unique_ptr<UriType1> p);
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+	::std::unique_ptr<UriType1> setDetachUri();
 
-        DisplayTextOptional&
-        getDisplayText ();
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	const DisplayTextOptional &getDisplayText() const;
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	DisplayTextOptional &getDisplayText();
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	void setDisplayText(const DisplayTextType &x);
 
-        // purpose
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String PurposeType;
-        typedef ::xsd::cxx::tree::optional< PurposeType > PurposeOptional;
-        typedef ::xsd::cxx::tree::traits< PurposeType, char > PurposeTraits;
+	void setDisplayText(const DisplayTextOptional &x);
 
-        const PurposeOptional&
-        getPurpose () const;
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        PurposeOptional&
-        getPurpose ();
+	// purpose
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String PurposeType;
+	typedef ::xsd::cxx::tree::optional<PurposeType> PurposeOptional;
+	typedef ::xsd::cxx::tree::traits<PurposeType, char> PurposeTraits;
 
-        void
-        setPurpose (const PurposeType& x);
+	const PurposeOptional &getPurpose() const;
 
-        void
-        setPurpose (const PurposeOptional& x);
+	PurposeOptional &getPurpose();
 
-        void
-        setPurpose (::std::unique_ptr< PurposeType > p);
+	void setPurpose(const PurposeType &x);
 
-        // modified
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType ModifiedType;
-        typedef ::xsd::cxx::tree::optional< ModifiedType > ModifiedOptional;
-        typedef ::xsd::cxx::tree::traits< ModifiedType, char > ModifiedTraits;
+	void setPurpose(const PurposeOptional &x);
 
-        const ModifiedOptional&
-        getModified () const;
+	void setPurpose(::std::unique_ptr<PurposeType> p);
 
-        ModifiedOptional&
-        getModified ();
+	// modified
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType ModifiedType;
+	typedef ::xsd::cxx::tree::optional<ModifiedType> ModifiedOptional;
+	typedef ::xsd::cxx::tree::traits<ModifiedType, char> ModifiedTraits;
 
-        void
-        setModified (const ModifiedType& x);
+	const ModifiedOptional &getModified() const;
 
-        void
-        setModified (const ModifiedOptional& x);
+	ModifiedOptional &getModified();
 
-        void
-        setModified (::std::unique_ptr< ModifiedType > p);
+	void setModified(const ModifiedType &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setModified(const ModifiedOptional &x);
 
-        const AnySequence&
-        getAny () const;
+	void setModified(::std::unique_ptr<ModifiedType> p);
 
-        AnySequence&
-        getAny ();
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        void
-        setAny (const AnySequence& s);
+	const AnySequence &getAny() const;
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	AnySequence &getAny();
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setAny(const AnySequence &s);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	AnyAttributeSet &getAnyAttribute();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Constructors.
-        //
-        UriType (const UriType1&);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        UriType (const ::xercesc::DOMElement& e,
-                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                 ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::xercesc::DOMDocument &getDomDocument();
 
-        UriType (const UriType& x,
-                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                 ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	UriType(const UriType1 &);
 
-        virtual UriType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	UriType(::std::unique_ptr<UriType1>);
 
-        UriType&
-        operator= (const UriType& x);
+	UriType(const ::xercesc::DOMElement &e,
+	        ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	        ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~UriType ();
+	UriType(const UriType &x,
+	        ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	        ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	virtual UriType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                        ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	UriType &operator=(const UriType &x);
 
-        ::xsd::cxx::tree::one< UriType1 > uri_;
-        DisplayTextOptional display_text_;
-        PurposeOptional purpose_;
-        ModifiedOptional modified_;
-        AnySequence any_;
-        AnyAttributeSet any_attribute_;
-      };
+	virtual ~UriType();
 
-      class KeywordsType: public ::LinphonePrivate::Xsd::XmlSchema::SimpleType,
-        public ::xsd::cxx::tree::list< ::LinphonePrivate::Xsd::XmlSchema::String, char >
-      {
-        public:
-        KeywordsType ();
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        KeywordsType (size_type n, const ::LinphonePrivate::Xsd::XmlSchema::String& x);
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        template < typename I >
-        KeywordsType (const I& begin, const I& end)
-        : ::xsd::cxx::tree::list< ::LinphonePrivate::Xsd::XmlSchema::String, char > (begin, end, this)
-        {
-        }
+	::xsd::cxx::tree::one<UriType1> uri_;
+	DisplayTextOptional display_text_;
+	PurposeOptional purpose_;
+	ModifiedOptional modified_;
+	AnySequence any_;
+	AnyAttributeSet any_attribute_;
+};
 
-        KeywordsType (const ::xercesc::DOMElement& e,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+class KeywordsType : public ::LinphonePrivate::Xsd::XmlSchema::SimpleType,
+                     public ::xsd::cxx::tree::list<::LinphonePrivate::Xsd::XmlSchema::String, char> {
+public:
+	KeywordsType();
 
-        KeywordsType (const ::xercesc::DOMAttr& a,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	KeywordsType(size_type n, const ::LinphonePrivate::Xsd::XmlSchema::String &x);
 
-        KeywordsType (const ::std::string& s,
-                      const ::xercesc::DOMElement* e,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	template <typename I>
+	KeywordsType(const I &begin, const I &end)
+	    : ::xsd::cxx::tree::list<::LinphonePrivate::Xsd::XmlSchema::String, char>(begin, end, this) {
+	}
 
-        KeywordsType (const KeywordsType& x,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	KeywordsType(const ::xercesc::DOMElement &e,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual KeywordsType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	KeywordsType(const ::xercesc::DOMAttr &a,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~KeywordsType ();
-      };
+	KeywordsType(const ::std::string &s,
+	             const ::xercesc::DOMElement *e,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-      class UsersType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // user
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UserType UserType;
-        typedef ::xsd::cxx::tree::sequence< UserType > UserSequence;
-        typedef UserSequence::iterator UserIterator;
-        typedef UserSequence::const_iterator UserConstIterator;
-        typedef ::xsd::cxx::tree::traits< UserType, char > UserTraits;
+	KeywordsType(const KeywordsType &x,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        const UserSequence&
-        getUser () const;
+#ifdef XSD_CXX11
+	KeywordsType &operator=(const KeywordsType &) = default;
+#endif
 
-        UserSequence&
-        getUser ();
+	virtual KeywordsType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        void
-        setUser (const UserSequence& s);
+	virtual ~KeywordsType();
+};
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+class UsersType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// user
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UserType UserType;
+	typedef ::xsd::cxx::tree::sequence<UserType> UserSequence;
+	typedef UserSequence::iterator UserIterator;
+	typedef UserSequence::const_iterator UserConstIterator;
+	typedef ::xsd::cxx::tree::traits<UserType, char> UserTraits;
 
-        const AnySequence&
-        getAny () const;
+	const UserSequence &getUser() const;
 
-        AnySequence&
-        getAny ();
+	UserSequence &getUser();
 
-        void
-        setAny (const AnySequence& s);
+	void setUser(const UserSequence &s);
 
-        // state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
-        typedef ::xsd::cxx::tree::traits< StateType, char > StateTraits;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        const StateType&
-        getState () const;
+	const AnySequence &getAny() const;
 
-        StateType&
-        getState ();
+	AnySequence &getAny();
 
-        void
-        setState (const StateType& x);
+	void setAny(const AnySequence &s);
 
-        void
-        setState (::std::unique_ptr< StateType > p);
+	// state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
+	typedef ::xsd::cxx::tree::traits<StateType, char> StateTraits;
 
-        ::std::unique_ptr< StateType >
-        setDetachState ();
+	const StateType &getState() const;
 
-        static const StateType&
-        getStateDefaultValue ();
+	StateType &getState();
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setState(const StateType &x);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setState(::std::unique_ptr<StateType> p);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	::std::unique_ptr<StateType> setDetachState();
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	static const StateType &getStateDefaultValue();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // Constructors.
-        //
-        UsersType ();
+	AnyAttributeSet &getAnyAttribute();
 
-        UsersType (const ::xercesc::DOMElement& e,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        UsersType (const UsersType& x,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        virtual UsersType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	::xercesc::DOMDocument &getDomDocument();
 
-        UsersType&
-        operator= (const UsersType& x);
+	// Constructors.
+	//
+	UsersType();
 
-        virtual 
-        ~UsersType ();
+	UsersType(const ::xercesc::DOMElement &e,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	UsersType(const UsersType &x,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual UsersType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        UserSequence user_;
-        AnySequence any_;
-        ::xsd::cxx::tree::one< StateType > state_;
-        static const StateType state_default_value_;
-        AnyAttributeSet any_attribute_;
-      };
+	UsersType &operator=(const UsersType &x);
 
-      class UserType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	virtual ~UsersType();
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        DisplayTextOptional&
-        getDisplayText ();
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	UserSequence user_;
+	AnySequence any_;
+	::xsd::cxx::tree::one<StateType> state_;
+	static const StateType state_default_value_;
+	AnyAttributeSet any_attribute_;
+};
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+class UserType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	const DisplayTextOptional &getDisplayText() const;
 
-        // associated-aors
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType AssociatedAorsType;
-        typedef ::xsd::cxx::tree::optional< AssociatedAorsType > AssociatedAorsOptional;
-        typedef ::xsd::cxx::tree::traits< AssociatedAorsType, char > AssociatedAorsTraits;
+	DisplayTextOptional &getDisplayText();
 
-        const AssociatedAorsOptional&
-        getAssociatedAors () const;
+	void setDisplayText(const DisplayTextType &x);
 
-        AssociatedAorsOptional&
-        getAssociatedAors ();
+	void setDisplayText(const DisplayTextOptional &x);
 
-        void
-        setAssociatedAors (const AssociatedAorsType& x);
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        void
-        setAssociatedAors (const AssociatedAorsOptional& x);
+	// associated-aors
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UrisType AssociatedAorsType;
+	typedef ::xsd::cxx::tree::optional<AssociatedAorsType> AssociatedAorsOptional;
+	typedef ::xsd::cxx::tree::traits<AssociatedAorsType, char> AssociatedAorsTraits;
 
-        void
-        setAssociatedAors (::std::unique_ptr< AssociatedAorsType > p);
+	const AssociatedAorsOptional &getAssociatedAors() const;
 
-        // roles
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UserRolesType RolesType;
-        typedef ::xsd::cxx::tree::optional< RolesType > RolesOptional;
-        typedef ::xsd::cxx::tree::traits< RolesType, char > RolesTraits;
+	AssociatedAorsOptional &getAssociatedAors();
 
-        const RolesOptional&
-        getRoles () const;
+	void setAssociatedAors(const AssociatedAorsType &x);
 
-        RolesOptional&
-        getRoles ();
+	void setAssociatedAors(const AssociatedAorsOptional &x);
 
-        void
-        setRoles (const RolesType& x);
+	void setAssociatedAors(::std::unique_ptr<AssociatedAorsType> p);
 
-        void
-        setRoles (const RolesOptional& x);
+	// roles
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UserRolesType RolesType;
+	typedef ::xsd::cxx::tree::optional<RolesType> RolesOptional;
+	typedef ::xsd::cxx::tree::traits<RolesType, char> RolesTraits;
 
-        void
-        setRoles (::std::unique_ptr< RolesType > p);
+	const RolesOptional &getRoles() const;
 
-        // languages
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::UserLanguagesType LanguagesType;
-        typedef ::xsd::cxx::tree::optional< LanguagesType > LanguagesOptional;
-        typedef ::xsd::cxx::tree::traits< LanguagesType, char > LanguagesTraits;
+	RolesOptional &getRoles();
 
-        const LanguagesOptional&
-        getLanguages () const;
+	void setRoles(const RolesType &x);
 
-        LanguagesOptional&
-        getLanguages ();
+	void setRoles(const RolesOptional &x);
 
-        void
-        setLanguages (const LanguagesType& x);
+	void setRoles(::std::unique_ptr<RolesType> p);
 
-        void
-        setLanguages (const LanguagesOptional& x);
+	// languages
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::UserLanguagesType LanguagesType;
+	typedef ::xsd::cxx::tree::optional<LanguagesType> LanguagesOptional;
+	typedef ::xsd::cxx::tree::traits<LanguagesType, char> LanguagesTraits;
 
-        void
-        setLanguages (::std::unique_ptr< LanguagesType > p);
+	const LanguagesOptional &getLanguages() const;
 
-        // cascaded-focus
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri CascadedFocusType;
-        typedef ::xsd::cxx::tree::optional< CascadedFocusType > CascadedFocusOptional;
-        typedef ::xsd::cxx::tree::traits< CascadedFocusType, char > CascadedFocusTraits;
+	LanguagesOptional &getLanguages();
 
-        const CascadedFocusOptional&
-        getCascadedFocus () const;
+	void setLanguages(const LanguagesType &x);
 
-        CascadedFocusOptional&
-        getCascadedFocus ();
+	void setLanguages(const LanguagesOptional &x);
 
-        void
-        setCascadedFocus (const CascadedFocusType& x);
+	void setLanguages(::std::unique_ptr<LanguagesType> p);
 
-        void
-        setCascadedFocus (const CascadedFocusOptional& x);
+	// cascaded-focus
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri CascadedFocusType;
+	typedef ::xsd::cxx::tree::optional<CascadedFocusType> CascadedFocusOptional;
+	typedef ::xsd::cxx::tree::traits<CascadedFocusType, char> CascadedFocusTraits;
 
-        void
-        setCascadedFocus (::std::unique_ptr< CascadedFocusType > p);
+	const CascadedFocusOptional &getCascadedFocus() const;
 
-        // endpoint
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::EndpointType EndpointType;
-        typedef ::xsd::cxx::tree::sequence< EndpointType > EndpointSequence;
-        typedef EndpointSequence::iterator EndpointIterator;
-        typedef EndpointSequence::const_iterator EndpointConstIterator;
-        typedef ::xsd::cxx::tree::traits< EndpointType, char > EndpointTraits;
+	CascadedFocusOptional &getCascadedFocus();
 
-        const EndpointSequence&
-        getEndpoint () const;
+	void setCascadedFocus(const CascadedFocusType &x);
 
-        EndpointSequence&
-        getEndpoint ();
+	void setCascadedFocus(const CascadedFocusOptional &x);
 
-        void
-        setEndpoint (const EndpointSequence& s);
+	void setCascadedFocus(::std::unique_ptr<CascadedFocusType> p);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	// endpoint
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::EndpointType EndpointType;
+	typedef ::xsd::cxx::tree::sequence<EndpointType> EndpointSequence;
+	typedef EndpointSequence::iterator EndpointIterator;
+	typedef EndpointSequence::const_iterator EndpointConstIterator;
+	typedef ::xsd::cxx::tree::traits<EndpointType, char> EndpointTraits;
 
-        const AnySequence&
-        getAny () const;
+	const EndpointSequence &getEndpoint() const;
 
-        AnySequence&
-        getAny ();
+	EndpointSequence &getEndpoint();
 
-        void
-        setAny (const AnySequence& s);
+	void setEndpoint(const EndpointSequence &s);
 
-        // entity
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri EntityType;
-        typedef ::xsd::cxx::tree::optional< EntityType > EntityOptional;
-        typedef ::xsd::cxx::tree::traits< EntityType, char > EntityTraits;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        const EntityOptional&
-        getEntity () const;
+	const AnySequence &getAny() const;
 
-        EntityOptional&
-        getEntity ();
+	AnySequence &getAny();
 
-        void
-        setEntity (const EntityType& x);
+	void setAny(const AnySequence &s);
 
-        void
-        setEntity (const EntityOptional& x);
+	// entity
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri EntityType;
+	typedef ::xsd::cxx::tree::optional<EntityType> EntityOptional;
+	typedef ::xsd::cxx::tree::traits<EntityType, char> EntityTraits;
 
-        void
-        setEntity (::std::unique_ptr< EntityType > p);
+	const EntityOptional &getEntity() const;
 
-        // state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
-        typedef ::xsd::cxx::tree::traits< StateType, char > StateTraits;
+	EntityOptional &getEntity();
 
-        const StateType&
-        getState () const;
+	void setEntity(const EntityType &x);
 
-        StateType&
-        getState ();
+	void setEntity(const EntityOptional &x);
 
-        void
-        setState (const StateType& x);
+	void setEntity(::std::unique_ptr<EntityType> p);
 
-        void
-        setState (::std::unique_ptr< StateType > p);
+	// state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
+	typedef ::xsd::cxx::tree::traits<StateType, char> StateTraits;
 
-        ::std::unique_ptr< StateType >
-        setDetachState ();
+	const StateType &getState() const;
 
-        static const StateType&
-        getStateDefaultValue ();
+	StateType &getState();
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setState(const StateType &x);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setState(::std::unique_ptr<StateType> p);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	::std::unique_ptr<StateType> setDetachState();
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	static const StateType &getStateDefaultValue();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // Constructors.
-        //
-        UserType ();
+	AnyAttributeSet &getAnyAttribute();
 
-        UserType (const ::xercesc::DOMElement& e,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        UserType (const UserType& x,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        virtual UserType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	::xercesc::DOMDocument &getDomDocument();
 
-        UserType&
-        operator= (const UserType& x);
+	// Constructors.
+	//
+	UserType();
 
-        virtual 
-        ~UserType ();
+	UserType(const ::xercesc::DOMElement &e,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	UserType(const UserType &x,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual UserType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        DisplayTextOptional display_text_;
-        AssociatedAorsOptional associated_aors_;
-        RolesOptional roles_;
-        LanguagesOptional languages_;
-        CascadedFocusOptional cascaded_focus_;
-        EndpointSequence endpoint_;
-        AnySequence any_;
-        EntityOptional entity_;
-        ::xsd::cxx::tree::one< StateType > state_;
-        static const StateType state_default_value_;
-        AnyAttributeSet any_attribute_;
-      };
+	UserType &operator=(const UserType &x);
 
-      class UserRolesType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // entry
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String EntryType;
-        typedef ::xsd::cxx::tree::sequence< EntryType > EntrySequence;
-        typedef EntrySequence::iterator EntryIterator;
-        typedef EntrySequence::const_iterator EntryConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntryType, char > EntryTraits;
+	virtual ~UserType();
 
-        const EntrySequence&
-        getEntry () const;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        EntrySequence&
-        getEntry ();
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        void
-        setEntry (const EntrySequence& s);
+	DisplayTextOptional display_text_;
+	AssociatedAorsOptional associated_aors_;
+	RolesOptional roles_;
+	LanguagesOptional languages_;
+	CascadedFocusOptional cascaded_focus_;
+	EndpointSequence endpoint_;
+	AnySequence any_;
+	EntityOptional entity_;
+	::xsd::cxx::tree::one<StateType> state_;
+	static const StateType state_default_value_;
+	AnyAttributeSet any_attribute_;
+};
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+class UserRolesType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// entry
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String EntryType;
+	typedef ::xsd::cxx::tree::sequence<EntryType> EntrySequence;
+	typedef EntrySequence::iterator EntryIterator;
+	typedef EntrySequence::const_iterator EntryConstIterator;
+	typedef ::xsd::cxx::tree::traits<EntryType, char> EntryTraits;
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	const EntrySequence &getEntry() const;
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	EntrySequence &getEntry();
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	void setEntry(const EntrySequence &s);
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // Constructors.
-        //
-        UserRolesType ();
+	AnyAttributeSet &getAnyAttribute();
 
-        UserRolesType (const ::xercesc::DOMElement& e,
-                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                       ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        UserRolesType (const UserRolesType& x,
-                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                       ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        virtual UserRolesType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	::xercesc::DOMDocument &getDomDocument();
 
-        UserRolesType&
-        operator= (const UserRolesType& x);
+	// Constructors.
+	//
+	UserRolesType();
 
-        virtual 
-        ~UserRolesType ();
+	UserRolesType(const ::xercesc::DOMElement &e,
+	              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	UserRolesType(const UserRolesType &x,
+	              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual UserRolesType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        EntrySequence entry_;
-        AnyAttributeSet any_attribute_;
-      };
+	UserRolesType &operator=(const UserRolesType &x);
 
-      class UserLanguagesType: public ::LinphonePrivate::Xsd::XmlSchema::SimpleType,
-        public ::xsd::cxx::tree::list< ::LinphonePrivate::Xsd::XmlSchema::Language, char >
-      {
-        public:
-        UserLanguagesType ();
+	virtual ~UserRolesType();
 
-        UserLanguagesType (size_type n, const ::LinphonePrivate::Xsd::XmlSchema::Language& x);
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        template < typename I >
-        UserLanguagesType (const I& begin, const I& end)
-        : ::xsd::cxx::tree::list< ::LinphonePrivate::Xsd::XmlSchema::Language, char > (begin, end, this)
-        {
-        }
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        UserLanguagesType (const ::xercesc::DOMElement& e,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	EntrySequence entry_;
+	AnyAttributeSet any_attribute_;
+};
 
-        UserLanguagesType (const ::xercesc::DOMAttr& a,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+class UserLanguagesType : public ::LinphonePrivate::Xsd::XmlSchema::SimpleType,
+                          public ::xsd::cxx::tree::list<::LinphonePrivate::Xsd::XmlSchema::Language, char> {
+public:
+	UserLanguagesType();
 
-        UserLanguagesType (const ::std::string& s,
-                           const ::xercesc::DOMElement* e,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	UserLanguagesType(size_type n, const ::LinphonePrivate::Xsd::XmlSchema::Language &x);
 
-        UserLanguagesType (const UserLanguagesType& x,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	template <typename I>
+	UserLanguagesType(const I &begin, const I &end)
+	    : ::xsd::cxx::tree::list<::LinphonePrivate::Xsd::XmlSchema::Language, char>(begin, end, this) {
+	}
 
-        virtual UserLanguagesType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	UserLanguagesType(const ::xercesc::DOMElement &e,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~UserLanguagesType ();
-      };
+	UserLanguagesType(const ::xercesc::DOMAttr &a,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-      class EndpointType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	UserLanguagesType(const ::std::string &s,
+	                  const ::xercesc::DOMElement *e,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+	UserLanguagesType(const UserLanguagesType &x,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisplayTextOptional&
-        getDisplayText ();
+#ifdef XSD_CXX11
+	UserLanguagesType &operator=(const UserLanguagesType &) = default;
+#endif
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	virtual UserLanguagesType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	virtual ~UserLanguagesType();
+};
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+class EndpointType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        // referred
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType ReferredType;
-        typedef ::xsd::cxx::tree::optional< ReferredType > ReferredOptional;
-        typedef ::xsd::cxx::tree::traits< ReferredType, char > ReferredTraits;
+	const DisplayTextOptional &getDisplayText() const;
 
-        const ReferredOptional&
-        getReferred () const;
+	DisplayTextOptional &getDisplayText();
 
-        ReferredOptional&
-        getReferred ();
+	void setDisplayText(const DisplayTextType &x);
 
-        void
-        setReferred (const ReferredType& x);
+	void setDisplayText(const DisplayTextOptional &x);
 
-        void
-        setReferred (const ReferredOptional& x);
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        void
-        setReferred (::std::unique_ptr< ReferredType > p);
+	// referred
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType ReferredType;
+	typedef ::xsd::cxx::tree::optional<ReferredType> ReferredOptional;
+	typedef ::xsd::cxx::tree::traits<ReferredType, char> ReferredTraits;
 
-        // status
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::EndpointStatusType StatusType;
-        typedef ::xsd::cxx::tree::optional< StatusType > StatusOptional;
-        typedef ::xsd::cxx::tree::traits< StatusType, char > StatusTraits;
+	const ReferredOptional &getReferred() const;
 
-        const StatusOptional&
-        getStatus () const;
+	ReferredOptional &getReferred();
 
-        StatusOptional&
-        getStatus ();
+	void setReferred(const ReferredType &x);
 
-        void
-        setStatus (const StatusType& x);
+	void setReferred(const ReferredOptional &x);
 
-        void
-        setStatus (const StatusOptional& x);
+	void setReferred(::std::unique_ptr<ReferredType> p);
 
-        void
-        setStatus (::std::unique_ptr< StatusType > p);
+	// status
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::EndpointStatusType StatusType;
+	typedef ::xsd::cxx::tree::optional<StatusType> StatusOptional;
+	typedef ::xsd::cxx::tree::traits<StatusType, char> StatusTraits;
 
-        // joining-method
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::JoiningType JoiningMethodType;
-        typedef ::xsd::cxx::tree::optional< JoiningMethodType > JoiningMethodOptional;
-        typedef ::xsd::cxx::tree::traits< JoiningMethodType, char > JoiningMethodTraits;
+	const StatusOptional &getStatus() const;
 
-        const JoiningMethodOptional&
-        getJoiningMethod () const;
+	StatusOptional &getStatus();
 
-        JoiningMethodOptional&
-        getJoiningMethod ();
+	void setStatus(const StatusType &x);
 
-        void
-        setJoiningMethod (const JoiningMethodType& x);
+	void setStatus(const StatusOptional &x);
 
-        void
-        setJoiningMethod (const JoiningMethodOptional& x);
+	void setStatus(::std::unique_ptr<StatusType> p);
 
-        void
-        setJoiningMethod (::std::unique_ptr< JoiningMethodType > p);
+	// joining-method
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::JoiningType JoiningMethodType;
+	typedef ::xsd::cxx::tree::optional<JoiningMethodType> JoiningMethodOptional;
+	typedef ::xsd::cxx::tree::traits<JoiningMethodType, char> JoiningMethodTraits;
 
-        // joining-info
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType JoiningInfoType;
-        typedef ::xsd::cxx::tree::optional< JoiningInfoType > JoiningInfoOptional;
-        typedef ::xsd::cxx::tree::traits< JoiningInfoType, char > JoiningInfoTraits;
+	const JoiningMethodOptional &getJoiningMethod() const;
 
-        const JoiningInfoOptional&
-        getJoiningInfo () const;
+	JoiningMethodOptional &getJoiningMethod();
 
-        JoiningInfoOptional&
-        getJoiningInfo ();
+	void setJoiningMethod(const JoiningMethodType &x);
 
-        void
-        setJoiningInfo (const JoiningInfoType& x);
+	void setJoiningMethod(const JoiningMethodOptional &x);
 
-        void
-        setJoiningInfo (const JoiningInfoOptional& x);
+	void setJoiningMethod(::std::unique_ptr<JoiningMethodType> p);
 
-        void
-        setJoiningInfo (::std::unique_ptr< JoiningInfoType > p);
+	// joining-info
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType JoiningInfoType;
+	typedef ::xsd::cxx::tree::optional<JoiningInfoType> JoiningInfoOptional;
+	typedef ::xsd::cxx::tree::traits<JoiningInfoType, char> JoiningInfoTraits;
 
-        // disconnection-method
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::DisconnectionType DisconnectionMethodType;
-        typedef ::xsd::cxx::tree::optional< DisconnectionMethodType > DisconnectionMethodOptional;
-        typedef ::xsd::cxx::tree::traits< DisconnectionMethodType, char > DisconnectionMethodTraits;
+	const JoiningInfoOptional &getJoiningInfo() const;
 
-        const DisconnectionMethodOptional&
-        getDisconnectionMethod () const;
+	JoiningInfoOptional &getJoiningInfo();
 
-        DisconnectionMethodOptional&
-        getDisconnectionMethod ();
+	void setJoiningInfo(const JoiningInfoType &x);
 
-        void
-        setDisconnectionMethod (const DisconnectionMethodType& x);
+	void setJoiningInfo(const JoiningInfoOptional &x);
 
-        void
-        setDisconnectionMethod (const DisconnectionMethodOptional& x);
+	void setJoiningInfo(::std::unique_ptr<JoiningInfoType> p);
 
-        void
-        setDisconnectionMethod (::std::unique_ptr< DisconnectionMethodType > p);
+	// disconnection-method
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::DisconnectionType DisconnectionMethodType;
+	typedef ::xsd::cxx::tree::optional<DisconnectionMethodType> DisconnectionMethodOptional;
+	typedef ::xsd::cxx::tree::traits<DisconnectionMethodType, char> DisconnectionMethodTraits;
 
-        // disconnection-info
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType DisconnectionInfoType;
-        typedef ::xsd::cxx::tree::optional< DisconnectionInfoType > DisconnectionInfoOptional;
-        typedef ::xsd::cxx::tree::traits< DisconnectionInfoType, char > DisconnectionInfoTraits;
+	const DisconnectionMethodOptional &getDisconnectionMethod() const;
 
-        const DisconnectionInfoOptional&
-        getDisconnectionInfo () const;
+	DisconnectionMethodOptional &getDisconnectionMethod();
 
-        DisconnectionInfoOptional&
-        getDisconnectionInfo ();
+	void setDisconnectionMethod(const DisconnectionMethodType &x);
 
-        void
-        setDisconnectionInfo (const DisconnectionInfoType& x);
+	void setDisconnectionMethod(const DisconnectionMethodOptional &x);
 
-        void
-        setDisconnectionInfo (const DisconnectionInfoOptional& x);
+	void setDisconnectionMethod(::std::unique_ptr<DisconnectionMethodType> p);
 
-        void
-        setDisconnectionInfo (::std::unique_ptr< DisconnectionInfoType > p);
+	// disconnection-info
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ExecutionType DisconnectionInfoType;
+	typedef ::xsd::cxx::tree::optional<DisconnectionInfoType> DisconnectionInfoOptional;
+	typedef ::xsd::cxx::tree::traits<DisconnectionInfoType, char> DisconnectionInfoTraits;
 
-        // media
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::MediaType MediaType;
-        typedef ::xsd::cxx::tree::sequence< MediaType > MediaSequence;
-        typedef MediaSequence::iterator MediaIterator;
-        typedef MediaSequence::const_iterator MediaConstIterator;
-        typedef ::xsd::cxx::tree::traits< MediaType, char > MediaTraits;
+	const DisconnectionInfoOptional &getDisconnectionInfo() const;
 
-        const MediaSequence&
-        getMedia () const;
+	DisconnectionInfoOptional &getDisconnectionInfo();
 
-        MediaSequence&
-        getMedia ();
+	void setDisconnectionInfo(const DisconnectionInfoType &x);
 
-        void
-        setMedia (const MediaSequence& s);
+	void setDisconnectionInfo(const DisconnectionInfoOptional &x);
 
-        // call-info
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::CallType CallInfoType;
-        typedef ::xsd::cxx::tree::optional< CallInfoType > CallInfoOptional;
-        typedef ::xsd::cxx::tree::traits< CallInfoType, char > CallInfoTraits;
+	void setDisconnectionInfo(::std::unique_ptr<DisconnectionInfoType> p);
 
-        const CallInfoOptional&
-        getCallInfo () const;
+	// media
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::MediaType MediaType;
+	typedef ::xsd::cxx::tree::sequence<MediaType> MediaSequence;
+	typedef MediaSequence::iterator MediaIterator;
+	typedef MediaSequence::const_iterator MediaConstIterator;
+	typedef ::xsd::cxx::tree::traits<MediaType, char> MediaTraits;
 
-        CallInfoOptional&
-        getCallInfo ();
+	const MediaSequence &getMedia() const;
 
-        void
-        setCallInfo (const CallInfoType& x);
+	MediaSequence &getMedia();
 
-        void
-        setCallInfo (const CallInfoOptional& x);
+	void setMedia(const MediaSequence &s);
 
-        void
-        setCallInfo (::std::unique_ptr< CallInfoType > p);
+	// call-info
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::CallType CallInfoType;
+	typedef ::xsd::cxx::tree::optional<CallInfoType> CallInfoOptional;
+	typedef ::xsd::cxx::tree::traits<CallInfoType, char> CallInfoTraits;
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	const CallInfoOptional &getCallInfo() const;
 
-        const AnySequence&
-        getAny () const;
+	CallInfoOptional &getCallInfo();
 
-        AnySequence&
-        getAny ();
+	void setCallInfo(const CallInfoType &x);
 
-        void
-        setAny (const AnySequence& s);
+	void setCallInfo(const CallInfoOptional &x);
 
-        // entity
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String EntityType;
-        typedef ::xsd::cxx::tree::optional< EntityType > EntityOptional;
-        typedef ::xsd::cxx::tree::traits< EntityType, char > EntityTraits;
+	void setCallInfo(::std::unique_ptr<CallInfoType> p);
 
-        const EntityOptional&
-        getEntity () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        EntityOptional&
-        getEntity ();
+	const AnySequence &getAny() const;
 
-        void
-        setEntity (const EntityType& x);
+	AnySequence &getAny();
 
-        void
-        setEntity (const EntityOptional& x);
+	void setAny(const AnySequence &s);
 
-        void
-        setEntity (::std::unique_ptr< EntityType > p);
+	// entity
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String EntityType;
+	typedef ::xsd::cxx::tree::optional<EntityType> EntityOptional;
+	typedef ::xsd::cxx::tree::traits<EntityType, char> EntityTraits;
 
-        // state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
-        typedef ::xsd::cxx::tree::traits< StateType, char > StateTraits;
+	const EntityOptional &getEntity() const;
 
-        const StateType&
-        getState () const;
+	EntityOptional &getEntity();
 
-        StateType&
-        getState ();
+	void setEntity(const EntityType &x);
 
-        void
-        setState (const StateType& x);
+	void setEntity(const EntityOptional &x);
 
-        void
-        setState (::std::unique_ptr< StateType > p);
+	void setEntity(::std::unique_ptr<EntityType> p);
 
-        ::std::unique_ptr< StateType >
-        setDetachState ();
+	// state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
+	typedef ::xsd::cxx::tree::traits<StateType, char> StateTraits;
 
-        static const StateType&
-        getStateDefaultValue ();
+	const StateType &getState() const;
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	StateType &getState();
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setState(const StateType &x);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	void setState(::std::unique_ptr<StateType> p);
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	::std::unique_ptr<StateType> setDetachState();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	static const StateType &getStateDefaultValue();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        // Constructors.
-        //
-        EndpointType ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        EndpointType (const ::xercesc::DOMElement& e,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	AnyAttributeSet &getAnyAttribute();
 
-        EndpointType (const EndpointType& x,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        virtual EndpointType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        EndpointType&
-        operator= (const EndpointType& x);
+	::xercesc::DOMDocument &getDomDocument();
 
-        virtual 
-        ~EndpointType ();
+	// Constructors.
+	//
+	EndpointType();
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	EndpointType(const ::xercesc::DOMElement &e,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	EndpointType(const EndpointType &x,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisplayTextOptional display_text_;
-        ReferredOptional referred_;
-        StatusOptional status_;
-        JoiningMethodOptional joining_method_;
-        JoiningInfoOptional joining_info_;
-        DisconnectionMethodOptional disconnection_method_;
-        DisconnectionInfoOptional disconnection_info_;
-        MediaSequence media_;
-        CallInfoOptional call_info_;
-        AnySequence any_;
-        EntityOptional entity_;
-        ::xsd::cxx::tree::one< StateType > state_;
-        static const StateType state_default_value_;
-        AnyAttributeSet any_attribute_;
-      };
+	virtual EndpointType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-      class EndpointStatusType: public ::LinphonePrivate::Xsd::XmlSchema::String
-      {
-        public:
-        enum Value
-        {
-          pending,
-          dialing_out,
-          dialing_in,
-          alerting,
-          on_hold,
-          connected,
-          muted_via_focus,
-          disconnecting,
-          disconnected
-        };
+	EndpointType &operator=(const EndpointType &x);
 
-        EndpointStatusType (Value v);
+	virtual ~EndpointType();
 
-        EndpointStatusType (const char* v);
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        EndpointStatusType (const ::std::string& v);
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        EndpointStatusType (const ::LinphonePrivate::Xsd::XmlSchema::String& v);
+	DisplayTextOptional display_text_;
+	ReferredOptional referred_;
+	StatusOptional status_;
+	JoiningMethodOptional joining_method_;
+	JoiningInfoOptional joining_info_;
+	DisconnectionMethodOptional disconnection_method_;
+	DisconnectionInfoOptional disconnection_info_;
+	MediaSequence media_;
+	CallInfoOptional call_info_;
+	AnySequence any_;
+	EntityOptional entity_;
+	::xsd::cxx::tree::one<StateType> state_;
+	static const StateType state_default_value_;
+	AnyAttributeSet any_attribute_;
+};
 
-        EndpointStatusType (const ::xercesc::DOMElement& e,
-                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                            ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+class EndpointStatusType : public ::LinphonePrivate::Xsd::XmlSchema::String {
+public:
+	enum Value {
+		pending,
+		dialing_out,
+		dialing_in,
+		alerting,
+		on_hold,
+		connected,
+		muted_via_focus,
+		disconnecting,
+		disconnected
+	};
 
-        EndpointStatusType (const ::xercesc::DOMAttr& a,
-                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                            ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	EndpointStatusType(Value v);
 
-        EndpointStatusType (const ::std::string& s,
-                            const ::xercesc::DOMElement* e,
-                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                            ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	EndpointStatusType(const char *v);
 
-        EndpointStatusType (const EndpointStatusType& x,
-                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                            ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	EndpointStatusType(const ::std::string &v);
 
-        virtual EndpointStatusType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	EndpointStatusType(const ::LinphonePrivate::Xsd::XmlSchema::String &v);
 
-        EndpointStatusType&
-        operator= (Value v);
+	EndpointStatusType(const ::xercesc::DOMElement &e,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual
-        operator Value () const
-        {
-          return _xsd_EndpointStatusType_convert ();
-        }
+	EndpointStatusType(const ::xercesc::DOMAttr &a,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        protected:
-        Value
-        _xsd_EndpointStatusType_convert () const;
+	EndpointStatusType(const ::std::string &s,
+	                   const ::xercesc::DOMElement *e,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        public:
-        static const char* const _xsd_EndpointStatusType_literals_[9];
-        static const Value _xsd_EndpointStatusType_indexes_[9];
-      };
+	EndpointStatusType(const EndpointStatusType &x,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                   ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-      class JoiningType: public ::LinphonePrivate::Xsd::XmlSchema::String
-      {
-        public:
-        enum Value
-        {
-          dialed_in,
-          dialed_out,
-          focus_owner
-        };
+#ifdef XSD_CXX11
+	EndpointStatusType &operator=(const EndpointStatusType &) = default;
+#endif
 
-        JoiningType (Value v);
+	virtual EndpointStatusType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                   ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        JoiningType (const char* v);
+	EndpointStatusType &operator=(Value v);
 
-        JoiningType (const ::std::string& v);
+	virtual operator Value() const {
+		return _xsd_EndpointStatusType_convert();
+	}
 
-        JoiningType (const ::LinphonePrivate::Xsd::XmlSchema::String& v);
+protected:
+	Value _xsd_EndpointStatusType_convert() const;
 
-        JoiningType (const ::xercesc::DOMElement& e,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+public:
+	static const char *const _xsd_EndpointStatusType_literals_[9];
+	static const Value _xsd_EndpointStatusType_indexes_[9];
+};
 
-        JoiningType (const ::xercesc::DOMAttr& a,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+class JoiningType : public ::LinphonePrivate::Xsd::XmlSchema::String {
+public:
+	enum Value { dialed_in, dialed_out, focus_owner };
 
-        JoiningType (const ::std::string& s,
-                     const ::xercesc::DOMElement* e,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	JoiningType(Value v);
 
-        JoiningType (const JoiningType& x,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	JoiningType(const char *v);
 
-        virtual JoiningType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	JoiningType(const ::std::string &v);
 
-        JoiningType&
-        operator= (Value v);
+	JoiningType(const ::LinphonePrivate::Xsd::XmlSchema::String &v);
 
-        virtual
-        operator Value () const
-        {
-          return _xsd_JoiningType_convert ();
-        }
+	JoiningType(const ::xercesc::DOMElement &e,
+	            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        protected:
-        Value
-        _xsd_JoiningType_convert () const;
+	JoiningType(const ::xercesc::DOMAttr &a,
+	            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        public:
-        static const char* const _xsd_JoiningType_literals_[3];
-        static const Value _xsd_JoiningType_indexes_[3];
-      };
+	JoiningType(const ::std::string &s,
+	            const ::xercesc::DOMElement *e,
+	            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-      class DisconnectionType: public ::LinphonePrivate::Xsd::XmlSchema::String
-      {
-        public:
-        enum Value
-        {
-          departed,
-          booted,
-          failed,
-          busy
-        };
+	JoiningType(const JoiningType &x,
+	            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisconnectionType (Value v);
+#ifdef XSD_CXX11
+	JoiningType &operator=(const JoiningType &) = default;
+#endif
 
-        DisconnectionType (const char* v);
+	virtual JoiningType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        DisconnectionType (const ::std::string& v);
+	JoiningType &operator=(Value v);
 
-        DisconnectionType (const ::LinphonePrivate::Xsd::XmlSchema::String& v);
+	virtual operator Value() const {
+		return _xsd_JoiningType_convert();
+	}
 
-        DisconnectionType (const ::xercesc::DOMElement& e,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+protected:
+	Value _xsd_JoiningType_convert() const;
 
-        DisconnectionType (const ::xercesc::DOMAttr& a,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+public:
+	static const char *const _xsd_JoiningType_literals_[3];
+	static const Value _xsd_JoiningType_indexes_[3];
+};
 
-        DisconnectionType (const ::std::string& s,
-                           const ::xercesc::DOMElement* e,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+class DisconnectionType : public ::LinphonePrivate::Xsd::XmlSchema::String {
+public:
+	enum Value { departed, booted, failed, busy };
 
-        DisconnectionType (const DisconnectionType& x,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	DisconnectionType(Value v);
 
-        virtual DisconnectionType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	DisconnectionType(const char *v);
 
-        DisconnectionType&
-        operator= (Value v);
+	DisconnectionType(const ::std::string &v);
 
-        virtual
-        operator Value () const
-        {
-          return _xsd_DisconnectionType_convert ();
-        }
+	DisconnectionType(const ::LinphonePrivate::Xsd::XmlSchema::String &v);
 
-        protected:
-        Value
-        _xsd_DisconnectionType_convert () const;
+	DisconnectionType(const ::xercesc::DOMElement &e,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        public:
-        static const char* const _xsd_DisconnectionType_literals_[4];
-        static const Value _xsd_DisconnectionType_indexes_[4];
-      };
+	DisconnectionType(const ::xercesc::DOMAttr &a,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-      class ExecutionType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // when
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::DateTime WhenType;
-        typedef ::xsd::cxx::tree::optional< WhenType > WhenOptional;
-        typedef ::xsd::cxx::tree::traits< WhenType, char > WhenTraits;
+	DisconnectionType(const ::std::string &s,
+	                  const ::xercesc::DOMElement *e,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        const WhenOptional&
-        getWhen () const;
+	DisconnectionType(const DisconnectionType &x,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        WhenOptional&
-        getWhen ();
+#ifdef XSD_CXX11
+	DisconnectionType &operator=(const DisconnectionType &) = default;
+#endif
 
-        void
-        setWhen (const WhenType& x);
+	virtual DisconnectionType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        void
-        setWhen (const WhenOptional& x);
+	DisconnectionType &operator=(Value v);
 
-        void
-        setWhen (::std::unique_ptr< WhenType > p);
+	virtual operator Value() const {
+		return _xsd_DisconnectionType_convert();
+	}
 
-        // reason
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String ReasonType;
-        typedef ::xsd::cxx::tree::optional< ReasonType > ReasonOptional;
-        typedef ::xsd::cxx::tree::traits< ReasonType, char > ReasonTraits;
+protected:
+	Value _xsd_DisconnectionType_convert() const;
 
-        const ReasonOptional&
-        getReason () const;
+public:
+	static const char *const _xsd_DisconnectionType_literals_[4];
+	static const Value _xsd_DisconnectionType_indexes_[4];
+};
 
-        ReasonOptional&
-        getReason ();
+class ExecutionType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// when
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::DateTime WhenType;
+	typedef ::xsd::cxx::tree::optional<WhenType> WhenOptional;
+	typedef ::xsd::cxx::tree::traits<WhenType, char> WhenTraits;
 
-        void
-        setReason (const ReasonType& x);
+	const WhenOptional &getWhen() const;
 
-        void
-        setReason (const ReasonOptional& x);
+	WhenOptional &getWhen();
 
-        void
-        setReason (::std::unique_ptr< ReasonType > p);
+	void setWhen(const WhenType &x);
 
-        // by
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri ByType;
-        typedef ::xsd::cxx::tree::optional< ByType > ByOptional;
-        typedef ::xsd::cxx::tree::traits< ByType, char > ByTraits;
+	void setWhen(const WhenOptional &x);
 
-        const ByOptional&
-        getBy () const;
+	void setWhen(::std::unique_ptr<WhenType> p);
 
-        ByOptional&
-        getBy ();
+	// reason
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String ReasonType;
+	typedef ::xsd::cxx::tree::optional<ReasonType> ReasonOptional;
+	typedef ::xsd::cxx::tree::traits<ReasonType, char> ReasonTraits;
 
-        void
-        setBy (const ByType& x);
+	const ReasonOptional &getReason() const;
 
-        void
-        setBy (const ByOptional& x);
+	ReasonOptional &getReason();
 
-        void
-        setBy (::std::unique_ptr< ByType > p);
+	void setReason(const ReasonType &x);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setReason(const ReasonOptional &x);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setReason(::std::unique_ptr<ReasonType> p);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	// by
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri ByType;
+	typedef ::xsd::cxx::tree::optional<ByType> ByOptional;
+	typedef ::xsd::cxx::tree::traits<ByType, char> ByTraits;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	const ByOptional &getBy() const;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	ByOptional &getBy();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setBy(const ByType &x);
 
-        // Constructors.
-        //
-        ExecutionType ();
+	void setBy(const ByOptional &x);
 
-        ExecutionType (const ::xercesc::DOMElement& e,
-                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                       ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setBy(::std::unique_ptr<ByType> p);
 
-        ExecutionType (const ExecutionType& x,
-                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                       ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        virtual ExecutionType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        ExecutionType&
-        operator= (const ExecutionType& x);
+	AnyAttributeSet &getAnyAttribute();
 
-        virtual 
-        ~ExecutionType ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	::xercesc::DOMDocument &getDomDocument();
 
-        WhenOptional when_;
-        ReasonOptional reason_;
-        ByOptional by_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Constructors.
+	//
+	ExecutionType();
 
-      class CallType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // sip
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::SipDialogIdType SipType;
-        typedef ::xsd::cxx::tree::optional< SipType > SipOptional;
-        typedef ::xsd::cxx::tree::traits< SipType, char > SipTraits;
+	ExecutionType(const ::xercesc::DOMElement &e,
+	              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        const SipOptional&
-        getSip () const;
+	ExecutionType(const ExecutionType &x,
+	              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        SipOptional&
-        getSip ();
+	virtual ExecutionType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        void
-        setSip (const SipType& x);
+	ExecutionType &operator=(const ExecutionType &x);
 
-        void
-        setSip (const SipOptional& x);
+	virtual ~ExecutionType();
 
-        void
-        setSip (::std::unique_ptr< SipType > p);
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const AnySequence&
-        getAny () const;
+	WhenOptional when_;
+	ReasonOptional reason_;
+	ByOptional by_;
+	AnyAttributeSet any_attribute_;
+};
 
-        AnySequence&
-        getAny ();
+class CallType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// sip
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::SipDialogIdType SipType;
+	typedef ::xsd::cxx::tree::optional<SipType> SipOptional;
+	typedef ::xsd::cxx::tree::traits<SipType, char> SipTraits;
 
-        void
-        setAny (const AnySequence& s);
+	const SipOptional &getSip() const;
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	SipOptional &getSip();
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setSip(const SipType &x);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	void setSip(const SipOptional &x);
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	void setSip(::std::unique_ptr<SipType> p);
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	const AnySequence &getAny() const;
 
-        // Constructors.
-        //
-        CallType ();
+	AnySequence &getAny();
 
-        CallType (const ::xercesc::DOMElement& e,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAny(const AnySequence &s);
 
-        CallType (const CallType& x,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        virtual CallType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        CallType&
-        operator= (const CallType& x);
+	AnyAttributeSet &getAnyAttribute();
 
-        virtual 
-        ~CallType ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	::xercesc::DOMDocument &getDomDocument();
 
-        SipOptional sip_;
-        AnySequence any_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Constructors.
+	//
+	CallType();
 
-      class SipDialogIdType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	CallType(const ::xercesc::DOMElement &e,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+	CallType(const CallType &x,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisplayTextOptional&
-        getDisplayText ();
+	virtual CallType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	CallType &operator=(const CallType &x);
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	virtual ~CallType();
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        // call-id
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String CallIdType;
-        typedef ::xsd::cxx::tree::traits< CallIdType, char > CallIdTraits;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const CallIdType&
-        getCallId () const;
+	SipOptional sip_;
+	AnySequence any_;
+	AnyAttributeSet any_attribute_;
+};
 
-        CallIdType&
-        getCallId ();
+class SipDialogIdType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        void
-        setCallId (const CallIdType& x);
+	const DisplayTextOptional &getDisplayText() const;
 
-        void
-        setCallId (::std::unique_ptr< CallIdType > p);
+	DisplayTextOptional &getDisplayText();
 
-        ::std::unique_ptr< CallIdType >
-        setDetachCall_id ();
+	void setDisplayText(const DisplayTextType &x);
 
-        // from-tag
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String FromTagType;
-        typedef ::xsd::cxx::tree::traits< FromTagType, char > FromTagTraits;
+	void setDisplayText(const DisplayTextOptional &x);
 
-        const FromTagType&
-        getFromTag () const;
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        FromTagType&
-        getFromTag ();
+	// call-id
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String CallIdType;
+	typedef ::xsd::cxx::tree::traits<CallIdType, char> CallIdTraits;
 
-        void
-        setFromTag (const FromTagType& x);
+	const CallIdType &getCallId() const;
 
-        void
-        setFromTag (::std::unique_ptr< FromTagType > p);
+	CallIdType &getCallId();
 
-        ::std::unique_ptr< FromTagType >
-        setDetachFrom_tag ();
+	void setCallId(const CallIdType &x);
 
-        // to-tag
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String ToTagType;
-        typedef ::xsd::cxx::tree::traits< ToTagType, char > ToTagTraits;
+	void setCallId(::std::unique_ptr<CallIdType> p);
 
-        const ToTagType&
-        getToTag () const;
+	::std::unique_ptr<CallIdType> setDetachCall_id();
 
-        ToTagType&
-        getToTag ();
+	// from-tag
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String FromTagType;
+	typedef ::xsd::cxx::tree::traits<FromTagType, char> FromTagTraits;
 
-        void
-        setToTag (const ToTagType& x);
+	const FromTagType &getFromTag() const;
 
-        void
-        setToTag (::std::unique_ptr< ToTagType > p);
+	FromTagType &getFromTag();
 
-        ::std::unique_ptr< ToTagType >
-        setDetachTo_tag ();
+	void setFromTag(const FromTagType &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setFromTag(::std::unique_ptr<FromTagType> p);
 
-        const AnySequence&
-        getAny () const;
+	::std::unique_ptr<FromTagType> setDetachFrom_tag();
 
-        AnySequence&
-        getAny ();
+	// to-tag
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String ToTagType;
+	typedef ::xsd::cxx::tree::traits<ToTagType, char> ToTagTraits;
 
-        void
-        setAny (const AnySequence& s);
+	const ToTagType &getToTag() const;
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	ToTagType &getToTag();
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setToTag(const ToTagType &x);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	void setToTag(::std::unique_ptr<ToTagType> p);
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	::std::unique_ptr<ToTagType> setDetachTo_tag();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	const AnySequence &getAny() const;
 
-        // Constructors.
-        //
-        SipDialogIdType (const CallIdType&,
-                         const FromTagType&,
-                         const ToTagType&);
+	AnySequence &getAny();
 
-        SipDialogIdType (const ::xercesc::DOMElement& e,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAny(const AnySequence &s);
 
-        SipDialogIdType (const SipDialogIdType& x,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        virtual SipDialogIdType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        SipDialogIdType&
-        operator= (const SipDialogIdType& x);
+	AnyAttributeSet &getAnyAttribute();
 
-        virtual 
-        ~SipDialogIdType ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	::xercesc::DOMDocument &getDomDocument();
 
-        DisplayTextOptional display_text_;
-        ::xsd::cxx::tree::one< CallIdType > call_id_;
-        ::xsd::cxx::tree::one< FromTagType > from_tag_;
-        ::xsd::cxx::tree::one< ToTagType > to_tag_;
-        AnySequence any_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Constructors.
+	//
+	SipDialogIdType(const CallIdType &, const FromTagType &, const ToTagType &);
 
-      class MediaType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-text
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
-        typedef ::xsd::cxx::tree::optional< DisplayTextType > DisplayTextOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayTextType, char > DisplayTextTraits;
+	SipDialogIdType(::std::unique_ptr<CallIdType>, ::std::unique_ptr<FromTagType>, ::std::unique_ptr<ToTagType>);
 
-        const DisplayTextOptional&
-        getDisplayText () const;
+	SipDialogIdType(const ::xercesc::DOMElement &e,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisplayTextOptional&
-        getDisplayText ();
+	SipDialogIdType(const SipDialogIdType &x,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        void
-        setDisplayText (const DisplayTextType& x);
+	virtual SipDialogIdType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        void
-        setDisplayText (const DisplayTextOptional& x);
+	SipDialogIdType &operator=(const SipDialogIdType &x);
 
-        void
-        setDisplayText (::std::unique_ptr< DisplayTextType > p);
+	virtual ~SipDialogIdType();
 
-        // type
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String TypeType;
-        typedef ::xsd::cxx::tree::optional< TypeType > TypeOptional;
-        typedef ::xsd::cxx::tree::traits< TypeType, char > TypeTraits;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        const TypeOptional&
-        getType () const;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        TypeOptional&
-        getType ();
+	DisplayTextOptional display_text_;
+	::xsd::cxx::tree::one<CallIdType> call_id_;
+	::xsd::cxx::tree::one<FromTagType> from_tag_;
+	::xsd::cxx::tree::one<ToTagType> to_tag_;
+	AnySequence any_;
+	AnyAttributeSet any_attribute_;
+};
 
-        void
-        setType (const TypeType& x);
+class MediaType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-text
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String DisplayTextType;
+	typedef ::xsd::cxx::tree::optional<DisplayTextType> DisplayTextOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayTextType, char> DisplayTextTraits;
 
-        void
-        setType (const TypeOptional& x);
+	const DisplayTextOptional &getDisplayText() const;
 
-        void
-        setType (::std::unique_ptr< TypeType > p);
+	DisplayTextOptional &getDisplayText();
 
-        // label
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String LabelType;
-        typedef ::xsd::cxx::tree::optional< LabelType > LabelOptional;
-        typedef ::xsd::cxx::tree::traits< LabelType, char > LabelTraits;
+	void setDisplayText(const DisplayTextType &x);
 
-        const LabelOptional&
-        getLabel () const;
+	void setDisplayText(const DisplayTextOptional &x);
 
-        LabelOptional&
-        getLabel ();
+	void setDisplayText(::std::unique_ptr<DisplayTextType> p);
 
-        void
-        setLabel (const LabelType& x);
+	// type
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String TypeType;
+	typedef ::xsd::cxx::tree::optional<TypeType> TypeOptional;
+	typedef ::xsd::cxx::tree::traits<TypeType, char> TypeTraits;
 
-        void
-        setLabel (const LabelOptional& x);
+	const TypeOptional &getType() const;
 
-        void
-        setLabel (::std::unique_ptr< LabelType > p);
+	TypeOptional &getType();
 
-        // src-id
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String SrcIdType;
-        typedef ::xsd::cxx::tree::optional< SrcIdType > SrcIdOptional;
-        typedef ::xsd::cxx::tree::traits< SrcIdType, char > SrcIdTraits;
+	void setType(const TypeType &x);
 
-        const SrcIdOptional&
-        getSrcId () const;
+	void setType(const TypeOptional &x);
 
-        SrcIdOptional&
-        getSrcId ();
+	void setType(::std::unique_ptr<TypeType> p);
 
-        void
-        setSrcId (const SrcIdType& x);
+	// label
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String LabelType;
+	typedef ::xsd::cxx::tree::optional<LabelType> LabelOptional;
+	typedef ::xsd::cxx::tree::traits<LabelType, char> LabelTraits;
 
-        void
-        setSrcId (const SrcIdOptional& x);
+	const LabelOptional &getLabel() const;
 
-        void
-        setSrcId (::std::unique_ptr< SrcIdType > p);
+	LabelOptional &getLabel();
 
-        // status
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::MediaStatusType StatusType;
-        typedef ::xsd::cxx::tree::optional< StatusType > StatusOptional;
-        typedef ::xsd::cxx::tree::traits< StatusType, char > StatusTraits;
+	void setLabel(const LabelType &x);
 
-        const StatusOptional&
-        getStatus () const;
+	void setLabel(const LabelOptional &x);
 
-        StatusOptional&
-        getStatus ();
+	void setLabel(::std::unique_ptr<LabelType> p);
 
-        void
-        setStatus (const StatusType& x);
+	// src-id
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String SrcIdType;
+	typedef ::xsd::cxx::tree::optional<SrcIdType> SrcIdOptional;
+	typedef ::xsd::cxx::tree::traits<SrcIdType, char> SrcIdTraits;
 
-        void
-        setStatus (const StatusOptional& x);
+	const SrcIdOptional &getSrcId() const;
 
-        void
-        setStatus (::std::unique_ptr< StatusType > p);
+	SrcIdOptional &getSrcId();
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setSrcId(const SrcIdType &x);
 
-        const AnySequence&
-        getAny () const;
+	void setSrcId(const SrcIdOptional &x);
 
-        AnySequence&
-        getAny ();
+	void setSrcId(::std::unique_ptr<SrcIdType> p);
 
-        void
-        setAny (const AnySequence& s);
+	// status
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::MediaStatusType StatusType;
+	typedef ::xsd::cxx::tree::optional<StatusType> StatusOptional;
+	typedef ::xsd::cxx::tree::traits<StatusType, char> StatusTraits;
 
-        // id
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String IdType;
-        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
+	const StatusOptional &getStatus() const;
 
-        const IdType&
-        getId () const;
+	StatusOptional &getStatus();
 
-        IdType&
-        getId ();
+	void setStatus(const StatusType &x);
 
-        void
-        setId (const IdType& x);
+	void setStatus(const StatusOptional &x);
 
-        void
-        setId (::std::unique_ptr< IdType > p);
+	void setStatus(::std::unique_ptr<StatusType> p);
 
-        ::std::unique_ptr< IdType >
-        setDetachId ();
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	const AnySequence &getAny() const;
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	AnySequence &getAny();
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	void setAny(const AnySequence &s);
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	// id
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String IdType;
+	typedef ::xsd::cxx::tree::traits<IdType, char> IdTraits;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	const IdType &getId() const;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	IdType &getId();
 
-        // Constructors.
-        //
-        MediaType (const IdType&);
+	void setId(const IdType &x);
 
-        MediaType (const ::xercesc::DOMElement& e,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setId(::std::unique_ptr<IdType> p);
 
-        MediaType (const MediaType& x,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::std::unique_ptr<IdType> setDetachId();
 
-        virtual MediaType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        MediaType&
-        operator= (const MediaType& x);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        virtual 
-        ~MediaType ();
+	AnyAttributeSet &getAnyAttribute();
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        DisplayTextOptional display_text_;
-        TypeOptional type_;
-        LabelOptional label_;
-        SrcIdOptional src_id_;
-        StatusOptional status_;
-        AnySequence any_;
-        ::xsd::cxx::tree::one< IdType > id_;
-        AnyAttributeSet any_attribute_;
-      };
+	::xercesc::DOMDocument &getDomDocument();
 
-      class MediaStatusType: public ::LinphonePrivate::Xsd::XmlSchema::String
-      {
-        public:
-        enum Value
-        {
-          recvonly,
-          sendonly,
-          sendrecv,
-          inactive
-        };
+	// Constructors.
+	//
+	MediaType(const IdType &);
 
-        MediaStatusType (Value v);
+	MediaType(const ::xercesc::DOMElement &e,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        MediaStatusType (const char* v);
+	MediaType(const MediaType &x,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        MediaStatusType (const ::std::string& v);
+	virtual MediaType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        MediaStatusType (const ::LinphonePrivate::Xsd::XmlSchema::String& v);
+	MediaType &operator=(const MediaType &x);
 
-        MediaStatusType (const ::xercesc::DOMElement& e,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	virtual ~MediaType();
 
-        MediaStatusType (const ::xercesc::DOMAttr& a,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        MediaStatusType (const ::std::string& s,
-                         const ::xercesc::DOMElement* e,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        MediaStatusType (const MediaStatusType& x,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	DisplayTextOptional display_text_;
+	TypeOptional type_;
+	LabelOptional label_;
+	SrcIdOptional src_id_;
+	StatusOptional status_;
+	AnySequence any_;
+	::xsd::cxx::tree::one<IdType> id_;
+	AnyAttributeSet any_attribute_;
+};
 
-        virtual MediaStatusType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+class MediaStatusType : public ::LinphonePrivate::Xsd::XmlSchema::String {
+public:
+	enum Value { recvonly, sendonly, sendrecv, inactive };
 
-        MediaStatusType&
-        operator= (Value v);
+	MediaStatusType(Value v);
 
-        virtual
-        operator Value () const
-        {
-          return _xsd_MediaStatusType_convert ();
-        }
+	MediaStatusType(const char *v);
 
-        protected:
-        Value
-        _xsd_MediaStatusType_convert () const;
+	MediaStatusType(const ::std::string &v);
 
-        public:
-        static const char* const _xsd_MediaStatusType_literals_[4];
-        static const Value _xsd_MediaStatusType_indexes_[4];
-      };
+	MediaStatusType(const ::LinphonePrivate::Xsd::XmlSchema::String &v);
 
-      class SidebarsByValType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // entry
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType EntryType;
-        typedef ::xsd::cxx::tree::sequence< EntryType > EntrySequence;
-        typedef EntrySequence::iterator EntryIterator;
-        typedef EntrySequence::const_iterator EntryConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntryType, char > EntryTraits;
+	MediaStatusType(const ::xercesc::DOMElement &e,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        const EntrySequence&
-        getEntry () const;
+	MediaStatusType(const ::xercesc::DOMAttr &a,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        EntrySequence&
-        getEntry ();
+	MediaStatusType(const ::std::string &s,
+	                const ::xercesc::DOMElement *e,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        void
-        setEntry (const EntrySequence& s);
+	MediaStatusType(const MediaStatusType &x,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        // state
-        //
-        typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
-        typedef ::xsd::cxx::tree::traits< StateType, char > StateTraits;
+#ifdef XSD_CXX11
+	MediaStatusType &operator=(const MediaStatusType &) = default;
+#endif
 
-        const StateType&
-        getState () const;
+	virtual MediaStatusType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        StateType&
-        getState ();
+	MediaStatusType &operator=(Value v);
 
-        void
-        setState (const StateType& x);
+	virtual operator Value() const {
+		return _xsd_MediaStatusType_convert();
+	}
 
-        void
-        setState (::std::unique_ptr< StateType > p);
+protected:
+	Value _xsd_MediaStatusType_convert() const;
 
-        ::std::unique_ptr< StateType >
-        setDetachState ();
+public:
+	static const char *const _xsd_MediaStatusType_literals_[4];
+	static const Value _xsd_MediaStatusType_indexes_[4];
+};
 
-        static const StateType&
-        getStateDefaultValue ();
+class SidebarsByValType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// entry
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType EntryType;
+	typedef ::xsd::cxx::tree::sequence<EntryType> EntrySequence;
+	typedef EntrySequence::iterator EntryIterator;
+	typedef EntrySequence::const_iterator EntryConstIterator;
+	typedef ::xsd::cxx::tree::traits<EntryType, char> EntryTraits;
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	const EntrySequence &getEntry() const;
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	EntrySequence &getEntry();
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	void setEntry(const EntrySequence &s);
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	// state
+	//
+	typedef ::LinphonePrivate::Xsd::ConferenceInfo::StateType StateType;
+	typedef ::xsd::cxx::tree::traits<StateType, char> StateTraits;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	const StateType &getState() const;
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	StateType &getState();
 
-        // Constructors.
-        //
-        SidebarsByValType ();
+	void setState(const StateType &x);
 
-        SidebarsByValType (const ::xercesc::DOMElement& e,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setState(::std::unique_ptr<StateType> p);
 
-        SidebarsByValType (const SidebarsByValType& x,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::std::unique_ptr<StateType> setDetachState();
 
-        virtual SidebarsByValType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	static const StateType &getStateDefaultValue();
 
-        SidebarsByValType&
-        operator= (const SidebarsByValType& x);
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        virtual 
-        ~SidebarsByValType ();
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	AnyAttributeSet &getAnyAttribute();
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        EntrySequence entry_;
-        ::xsd::cxx::tree::one< StateType > state_;
-        static const StateType state_default_value_;
-        AnyAttributeSet any_attribute_;
-      };
-    }
-  }
-}
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
+
+	::xercesc::DOMDocument &getDomDocument();
+
+	// Constructors.
+	//
+	SidebarsByValType();
+
+	SidebarsByValType(const ::xercesc::DOMElement &e,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	SidebarsByValType(const SidebarsByValType &x,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	virtual SidebarsByValType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                  ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
+
+	SidebarsByValType &operator=(const SidebarsByValType &x);
+
+	virtual ~SidebarsByValType();
+
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
+
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
+
+	EntrySequence entry_;
+	::xsd::cxx::tree::one<StateType> state_;
+	static const StateType state_default_value_;
+	AnyAttributeSet any_attribute_;
+};
+} // namespace ConferenceInfo
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <iosfwd>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ConferenceInfo
-    {
-      ::std::ostream&
-      operator<< (::std::ostream&, const ConferenceType&);
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ConferenceInfo {
+::std::ostream &operator<<(::std::ostream &, const ConferenceType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, StateType::Value);
+::std::ostream &operator<<(::std::ostream &, StateType::Value);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const StateType&);
+::std::ostream &operator<<(::std::ostream &, const StateType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ConferenceDescriptionType&);
+::std::ostream &operator<<(::std::ostream &, const ConferenceDescriptionType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const HostType&);
+::std::ostream &operator<<(::std::ostream &, const HostType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ConferenceStateType&);
+::std::ostream &operator<<(::std::ostream &, const ConferenceStateType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ConferenceMediaType&);
+::std::ostream &operator<<(::std::ostream &, const ConferenceMediaType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ConferenceMediumType&);
+::std::ostream &operator<<(::std::ostream &, const ConferenceMediumType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const UrisType&);
+::std::ostream &operator<<(::std::ostream &, const UrisType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const UriType&);
+::std::ostream &operator<<(::std::ostream &, const UriType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const KeywordsType&);
+::std::ostream &operator<<(::std::ostream &, const KeywordsType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const UsersType&);
+::std::ostream &operator<<(::std::ostream &, const UsersType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const UserType&);
+::std::ostream &operator<<(::std::ostream &, const UserType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const UserRolesType&);
+::std::ostream &operator<<(::std::ostream &, const UserRolesType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const UserLanguagesType&);
+::std::ostream &operator<<(::std::ostream &, const UserLanguagesType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const EndpointType&);
+::std::ostream &operator<<(::std::ostream &, const EndpointType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, EndpointStatusType::Value);
+::std::ostream &operator<<(::std::ostream &, EndpointStatusType::Value);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const EndpointStatusType&);
+::std::ostream &operator<<(::std::ostream &, const EndpointStatusType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, JoiningType::Value);
+::std::ostream &operator<<(::std::ostream &, JoiningType::Value);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const JoiningType&);
+::std::ostream &operator<<(::std::ostream &, const JoiningType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, DisconnectionType::Value);
+::std::ostream &operator<<(::std::ostream &, DisconnectionType::Value);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const DisconnectionType&);
+::std::ostream &operator<<(::std::ostream &, const DisconnectionType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ExecutionType&);
+::std::ostream &operator<<(::std::ostream &, const ExecutionType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const CallType&);
+::std::ostream &operator<<(::std::ostream &, const CallType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const SipDialogIdType&);
+::std::ostream &operator<<(::std::ostream &, const SipDialogIdType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const MediaType&);
+::std::ostream &operator<<(::std::ostream &, const MediaType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, MediaStatusType::Value);
+::std::ostream &operator<<(::std::ostream &, MediaStatusType::Value);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const MediaStatusType&);
+::std::ostream &operator<<(::std::ostream &, const MediaStatusType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const SidebarsByValType&);
-    }
-  }
-}
+::std::ostream &operator<<(::std::ostream &, const SidebarsByValType &);
+} // namespace ConferenceInfo
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <iosfwd>
 
-#include <xercesc/sax/InputSource.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMErrorHandler.hpp>
+#include <xercesc/sax/InputSource.hpp>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ConferenceInfo
-    {
-      // Parse a URI or a local file.
-      //
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ConferenceInfo {
+// Parse a URI or a local file.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (const ::std::string& uri,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (const ::std::string& uri,
-                           ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (const ::std::string& uri,
-                           ::xercesc::DOMErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    const ::std::string &uri,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      // Parse std::istream.
-      //
+// Parse std::istream.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::std::istream& is,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::std::istream& is,
-                           ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::std::istream& is,
-                           ::xercesc::DOMErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::std::istream &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::std::istream& is,
-                           const ::std::string& id,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::std::istream& is,
-                           const ::std::string& id,
-                           ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::std::istream& is,
-                           const ::std::string& id,
-                           ::xercesc::DOMErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      // Parse xercesc::InputSource.
-      //
+// Parse xercesc::InputSource.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::xercesc::InputSource& is,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::xercesc::InputSource& is,
-                           ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::xercesc::InputSource& is,
-                           ::xercesc::DOMErrorHandler& eh,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::xercesc::InputSource &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      // Parse xercesc::DOMDocument.
-      //
+// Parse xercesc::DOMDocument.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (const ::xercesc::DOMDocument& d,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    const ::xercesc::DOMDocument &d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType >
-      parseConferenceInfo (::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d,
-                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                           const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
-    }
-  }
-}
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType> parseConferenceInfo(
+    ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+} // namespace ConferenceInfo
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <iosfwd>
 
@@ -3693,216 +3043,168 @@ namespace LinphonePrivate
 
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ConferenceInfo
-    {
-      // Serialize to std::ostream.
-      //
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ConferenceInfo {
+// Serialize to std::ostream.
+//
 
-      void
-      serializeConferenceInfo (::std::ostream& os,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               const ::std::string& e = "UTF-8",
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::std::ostream &os,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             const ::std::string &e = "UTF-8",
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeConferenceInfo (::std::ostream& os,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               const ::std::string& e = "UTF-8",
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::std::ostream &os,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             const ::std::string &e = "UTF-8",
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeConferenceInfo (::std::ostream& os,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               ::xercesc::DOMErrorHandler& eh,
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               const ::std::string& e = "UTF-8",
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::std::ostream &os,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             ::xercesc::DOMErrorHandler &eh,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             const ::std::string &e = "UTF-8",
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      // Serialize to xercesc::XMLFormatTarget.
-      //
+// Serialize to xercesc::XMLFormatTarget.
+//
 
-      void
-      serializeConferenceInfo (::xercesc::XMLFormatTarget& ft,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               const ::std::string& e = "UTF-8",
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::xercesc::XMLFormatTarget &ft,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             const ::std::string &e = "UTF-8",
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeConferenceInfo (::xercesc::XMLFormatTarget& ft,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               const ::std::string& e = "UTF-8",
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::xercesc::XMLFormatTarget &ft,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             const ::std::string &e = "UTF-8",
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeConferenceInfo (::xercesc::XMLFormatTarget& ft,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               ::xercesc::DOMErrorHandler& eh,
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               const ::std::string& e = "UTF-8",
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::xercesc::XMLFormatTarget &ft,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             ::xercesc::DOMErrorHandler &eh,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             const ::std::string &e = "UTF-8",
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      // Serialize to an existing xercesc::DOMDocument.
-      //
+// Serialize to an existing xercesc::DOMDocument.
+//
 
-      void
-      serializeConferenceInfo (::xercesc::DOMDocument& d,
-                               const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x,
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeConferenceInfo(::xercesc::DOMDocument &d,
+                             const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      // Serialize to a new xercesc::DOMDocument.
-      //
+// Serialize to a new xercesc::DOMDocument.
+//
 
-      ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument >
-      serializeConferenceInfo (const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType& x, 
-                               const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument>
+serializeConferenceInfo(const ::LinphonePrivate::Xsd::ConferenceInfo::ConferenceType &x,
+                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                            ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                        ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ConferenceType&);
+void operator<<(::xercesc::DOMElement &, const ConferenceType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const StateType&);
+void operator<<(::xercesc::DOMElement &, const StateType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const StateType&);
+void operator<<(::xercesc::DOMAttr &, const StateType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const StateType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const StateType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ConferenceDescriptionType&);
+void operator<<(::xercesc::DOMElement &, const ConferenceDescriptionType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const HostType&);
+void operator<<(::xercesc::DOMElement &, const HostType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ConferenceStateType&);
+void operator<<(::xercesc::DOMElement &, const ConferenceStateType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ConferenceMediaType&);
+void operator<<(::xercesc::DOMElement &, const ConferenceMediaType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ConferenceMediumType&);
+void operator<<(::xercesc::DOMElement &, const ConferenceMediumType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const UrisType&);
+void operator<<(::xercesc::DOMElement &, const UrisType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const UriType&);
+void operator<<(::xercesc::DOMElement &, const UriType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const KeywordsType&);
+void operator<<(::xercesc::DOMElement &, const KeywordsType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const KeywordsType&);
+void operator<<(::xercesc::DOMAttr &, const KeywordsType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const KeywordsType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const KeywordsType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const UsersType&);
+void operator<<(::xercesc::DOMElement &, const UsersType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const UserType&);
+void operator<<(::xercesc::DOMElement &, const UserType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const UserRolesType&);
+void operator<<(::xercesc::DOMElement &, const UserRolesType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const UserLanguagesType&);
+void operator<<(::xercesc::DOMElement &, const UserLanguagesType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const UserLanguagesType&);
+void operator<<(::xercesc::DOMAttr &, const UserLanguagesType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const UserLanguagesType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const UserLanguagesType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const EndpointType&);
+void operator<<(::xercesc::DOMElement &, const EndpointType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const EndpointStatusType&);
+void operator<<(::xercesc::DOMElement &, const EndpointStatusType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const EndpointStatusType&);
+void operator<<(::xercesc::DOMAttr &, const EndpointStatusType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const EndpointStatusType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const EndpointStatusType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const JoiningType&);
+void operator<<(::xercesc::DOMElement &, const JoiningType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const JoiningType&);
+void operator<<(::xercesc::DOMAttr &, const JoiningType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const JoiningType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const JoiningType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const DisconnectionType&);
+void operator<<(::xercesc::DOMElement &, const DisconnectionType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const DisconnectionType&);
+void operator<<(::xercesc::DOMAttr &, const DisconnectionType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const DisconnectionType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const DisconnectionType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ExecutionType&);
+void operator<<(::xercesc::DOMElement &, const ExecutionType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const CallType&);
+void operator<<(::xercesc::DOMElement &, const CallType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const SipDialogIdType&);
+void operator<<(::xercesc::DOMElement &, const SipDialogIdType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const MediaType&);
+void operator<<(::xercesc::DOMElement &, const MediaType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const MediaStatusType&);
+void operator<<(::xercesc::DOMElement &, const MediaStatusType &);
 
-      void
-      operator<< (::xercesc::DOMAttr&, const MediaStatusType&);
+void operator<<(::xercesc::DOMAttr &, const MediaStatusType &);
 
-      void
-      operator<< (::LinphonePrivate::Xsd::XmlSchema::ListStream&,
-                  const MediaStatusType&);
+void operator<<(::LinphonePrivate::Xsd::XmlSchema::ListStream &, const MediaStatusType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const SidebarsByValType&);
-    }
-  }
-}
+void operator<<(::xercesc::DOMElement &, const SidebarsByValType &);
+} // namespace ConferenceInfo
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <xsd/cxx/post.hxx>
 
 // Begin epilogue.
 //
 #if __GNUC__ >= 7
-	#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 #if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1)
-	#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 #if __clang__ || __GNUC__ >= 4
-	#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 //
 // End epilogue.

@@ -140,6 +140,9 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 		mAudioVideoConferenceFactoryAddress = Address::create(audioVideoConferenceFactoryUri);
 	}
 
+	mCcmpServerUrl = lc ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_server_url", "") : "";
+	mCcmpUserId = lc ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_user_id", "") : "";
+
 	if (lc && lc->push_config) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	} else {
@@ -269,6 +272,10 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	if (!audioVideoConferenceFactoryUri.empty()) {
 		mAudioVideoConferenceFactoryAddress = Address::create(audioVideoConferenceFactoryUri);
 	}
+
+	mCcmpServerUrl = linphone_config_get_string(config, key, "ccmp_server_url", "");
+	mCcmpUserId = linphone_config_get_default_string(config, key, "ccmp_user_id", "");
+
 	mRtpBundleEnabled = !!linphone_config_get_bool(config, key, "rtp_bundle", linphone_core_rtp_bundle_enabled(lc));
 	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
 
@@ -331,6 +338,9 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 		mAudioVideoConferenceFactoryAddress = nullptr;
 	}
 
+	mCcmpServerUrl = other.mCcmpServerUrl;
+	mCcmpUserId = other.mCcmpUserId;
+
 	mFileTransferServer = other.mFileTransferServer;
 
 	setRoutes(other.mRoutes);
@@ -379,6 +389,10 @@ AccountParams::~AccountParams() {
 	if (mMwiServerAddressCstr) {
 		ms_free(mMwiServerAddressCstr);
 		mMwiServerAddressCstr = nullptr;
+	}
+	if (mCcmpServerUrlCstr) {
+		ms_free(mCcmpServerUrlCstr);
+		mCcmpServerUrlCstr = nullptr;
 	}
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mRoutesCString) {
@@ -538,6 +552,10 @@ void AccountParams::setAudioVideoConferenceFactoryAddress(
 	if (audioVideoConferenceFactoryAddress != nullptr) {
 		mAudioVideoConferenceFactoryAddress = audioVideoConferenceFactoryAddress->clone()->toSharedPtr();
 	}
+}
+
+void AccountParams::setCcmpServerUrl(const std::string ccmpServerUrl) {
+	mCcmpServerUrl = ccmpServerUrl;
 }
 
 void AccountParams::setFileTranferServer(const std::string &fileTransferServer) {
@@ -771,6 +789,28 @@ const std::shared_ptr<Address> &AccountParams::getConferenceFactoryAddress() con
 
 const std::shared_ptr<Address> &AccountParams::getAudioVideoConferenceFactoryAddress() const {
 	return mAudioVideoConferenceFactoryAddress;
+}
+
+const std::string &AccountParams::getCcmpUserId() const {
+	if (mCcmpUserId.empty()) {
+		mCcmpUserId = Utils::getXconId(mIdentityAddress);
+	}
+	return mCcmpUserId;
+}
+
+const char *AccountParams::getCcmpServerUrlCstr() const {
+	if (mCcmpServerUrlCstr) {
+		ms_free(mCcmpServerUrlCstr);
+		mCcmpServerUrlCstr = nullptr;
+	}
+	if (!mCcmpServerUrl.empty()) {
+		mCcmpServerUrlCstr = ms_strdup(mCcmpServerUrl.c_str());
+	}
+	return mCcmpServerUrlCstr;
+}
+
+const std::string &AccountParams::getCcmpServerUrl() const {
+	return mCcmpServerUrl;
 }
 
 const std::string &AccountParams::getFileTransferServer() const {
@@ -1036,6 +1076,14 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", factory_address);
 		ms_free(factory_address);
 	}
+
+	if (!mCcmpServerUrl.empty()) {
+		linphone_config_set_string(config, key, "ccmp_server_url", mCcmpServerUrl.c_str());
+	}
+	if (!mCcmpUserId.empty()) {
+		linphone_config_set_string(config, key, "ccmp_user_id", mCcmpUserId.c_str());
+	}
+
 	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);
 	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleAssumption);
 

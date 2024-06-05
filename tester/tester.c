@@ -104,10 +104,11 @@ const MSAudioDiffParams audio_cmp_params = {10, 200};
 
 /* Default test server infrastructure. You may change to sandbox infrastructure to test changes to the infrastructure
  * first. */
-const char *flexisip_tester_dns_server = "fs-test-8.linphone.org";
+const char *flexisip_tester_dns_server = "fs-test-9.linphone.org";
 // const char *flexisip_tester_dns_server = "fs-test-sandbox-2.linphone.org";
 
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
+const char *ccmp_server_url = "http://fs-test-9.linphone.org:3333/xml/";
 const char *test_domain = "sipopen.example.org";
 const char *auth_domain = "sip.example.org";
 const char *test_username = "liblinphone_tester";
@@ -673,7 +674,7 @@ static void conference_state_changed(LinphoneConference *conference, LinphoneCon
 	if (address) {
 		address_str = linphone_address_as_string(address);
 	} else {
-		address_str = ms_strdup("<unknown-address>");
+		address_str = ms_strdup("sip:unknown");
 	}
 	char *newStateStr = linphone_conference_state_to_string(newState);
 	ms_message("Conference %p [%s] state changed: %s", conference, address_str, newStateStr);
@@ -2944,7 +2945,7 @@ void linphone_core_manager_delete_chat_room(LinphoneCoreManager *mgr, LinphoneCh
 	if (cr) {
 		const LinphoneAddress *cr_conference_address = linphone_chat_room_get_conference_address(cr);
 		char *cr_conference_address_str =
-		    cr_conference_address ? linphone_address_as_string(cr_conference_address) : ms_strdup("<unknown-address>");
+		    cr_conference_address ? linphone_address_as_string(cr_conference_address) : ms_strdup("sip:unknown");
 		ms_message("Core %s is trying to delete chat room %p (address %s)", linphone_core_get_identity(mgr->lc), cr,
 		           cr_conference_address_str);
 		ms_free(cr_conference_address_str);
@@ -5713,6 +5714,34 @@ LinphoneParticipantInfo *add_participant_info_to_list(bctbx_list_t **participant
 	return ret;
 }
 
+void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler,
+                                        LinphoneConferenceSchedulerState state) {
+	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
+	switch (state) {
+		case LinphoneConferenceSchedulerStateIdle:
+			stat->number_of_ConferenceSchedulerStateIdle++;
+			break;
+		case LinphoneConferenceSchedulerStateAllocationPending:
+			stat->number_of_ConferenceSchedulerStateAllocationPending++;
+			break;
+		case LinphoneConferenceSchedulerStateReady:
+			stat->number_of_ConferenceSchedulerStateReady++;
+			break;
+		case LinphoneConferenceSchedulerStateError:
+			stat->number_of_ConferenceSchedulerStateError++;
+			break;
+		case LinphoneConferenceSchedulerStateUpdating:
+			stat->number_of_ConferenceSchedulerStateUpdating++;
+			break;
+	}
+}
+
+void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
+                                           BCTBX_UNUSED(const bctbx_list_t *failed_addresses)) {
+	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
+	stat->number_of_ConferenceSchedulerInvitationsSent++;
+}
+
 void check_conference_info_in_db(LinphoneCoreManager *mgr,
                                  const char *uid,
                                  LinphoneAddress *confAddr,
@@ -5791,6 +5820,7 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 	if (info1 && info2) {
 		BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_conference_info_get_organizer(info1),
 		                                           linphone_conference_info_get_organizer(info2)));
+
 		BC_ASSERT_TRUE(
 		    linphone_address_equal(linphone_conference_info_get_uri(info1), linphone_conference_info_get_uri(info2)));
 

@@ -337,6 +337,7 @@ const LinphoneAddress *linphone_account_params_get_conference_factory_address(co
 	const auto &address = AccountParams::toCpp(params)->getConferenceFactoryAddress();
 	return address != nullptr ? address->toC() : nullptr;
 }
+
 void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
                                                                         const LinphoneAddress *address) {
 	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(
@@ -347,6 +348,14 @@ const LinphoneAddress *
 linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
 	const auto &address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
 	return address != nullptr ? address->toC() : nullptr;
+}
+
+void linphone_account_params_set_ccmp_server_url(LinphoneAccountParams *params, const char *url) {
+	AccountParams::toCpp(params)->setCcmpServerUrl(L_C_TO_STRING(url));
+}
+
+const char *linphone_account_params_get_ccmp_server_url(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getCcmpServerUrlCstr();
 }
 
 void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow) {

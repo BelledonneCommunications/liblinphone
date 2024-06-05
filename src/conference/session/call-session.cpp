@@ -229,7 +229,9 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 			case CallSession::State::Connected:
 				log->setStatus(LinphoneCallSuccess);
 				log->setConnectedTime(ms_time(nullptr));
-				q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallConnected, log, nullptr);
+				if (q->sdpFoundInRemoteBody() || q->sdpFoundInLocalBody()) {
+					q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallConnected, log, nullptr);
+				}
 				break;
 			default:
 				break;
@@ -1029,7 +1031,7 @@ void CallSessionPrivate::setContactOp() {
 		op->setContactAddress(contactAddress->getImpl());
 	} else {
 		lWarning() << "Unable to set contact address for session " << q << " to "
-		           << ((contactAddress) ? contactAddress->toString() : std::string("<unknown>"))
+		           << ((contactAddress) ? contactAddress->toString() : std::string("sip:unknown"))
 		           << " as it is not valid";
 	}
 }
@@ -1069,7 +1071,11 @@ void CallSessionPrivate::completeLog() {
 			q->getCore()->getCCore()->missed_calls++;
 		}
 	}
-	q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, log, nullptr);
+	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
+	bool reportCallEndedEvent = !conference || conference->supportsMedia();
+	if (reportCallEndedEvent) {
+		q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, log, nullptr);
+	}
 }
 
 void CallSessionPrivate::createOpTo(const std::shared_ptr<Address> &to) {
@@ -1409,7 +1415,7 @@ void CallSession::configure(LinphoneCallDir direction,
 	}
 
 	assignAccount(account);
-	if (direction == LinphoneCallIncoming) {
+	if ((direction == LinphoneCallIncoming) && sdpFoundInRemoteBody()) {
 		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 	}
 }
@@ -1565,6 +1571,30 @@ const std::list<LinphoneMediaEncryption> CallSession::getSupportedEncryptions() 
 	return getCore()->getSupportedMediaEncryptions();
 }
 
+bool CallSession::sdpFoundInRemoteBody() const {
+	L_D();
+	if (!d->op) return false;
+	const list<Content> &contents = d->op->getRemoteBodies();
+	for (auto &content : contents) {
+		if (content.getContentType() == ContentType::Sdp) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CallSession::sdpFoundInLocalBody() const {
+	L_D();
+	if (!d->op) return false;
+	const list<Content> &contents = d->op->getLocalBodies();
+	for (auto &content : contents) {
+		if (content.getContentType() == ContentType::Sdp) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool CallSession::isCapabilityNegotiationEnabled() const {
 	if (getParams()) {
 		return getParams()->getPrivate()->capabilityNegotiationEnabled();
@@ -1715,7 +1745,9 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 	} else {
 		d->log->setCallId(d->op->getCallId()); /* Must be known at that time */
 		d->setState(CallSession::State::OutgoingProgress, "Outgoing call in progress");
-		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
+		if (sdpFoundInLocalBody()) {
+			getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
+		}
 	}
 	return result;
 }

@@ -330,6 +330,8 @@ public:
 
 	virtual const std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 
+	bool supportsMedia() const;
+
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
 	                    const std::shared_ptr<Address> &myAddress,

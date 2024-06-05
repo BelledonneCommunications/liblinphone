@@ -169,8 +169,7 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 	ChatMessage::State currentState = q->getParticipantState(participantAddress);
 	const auto &conferenceAddress = chatRoom->getConferenceAddress();
-	const auto conferenceAddressStr =
-	    conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
+	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown");
 
 	if (!chatMessageFsmChecker.isValid(currentState, newState)) {
 		if (isBasicChatRoom) {
@@ -1327,7 +1326,7 @@ void ChatMessagePrivate::send() {
 		/* Sending out of call */
 		salOp = op = new SalMessageOp(core->getCCore()->sal.get());
 		if (!fromAddress) {
-			lError() << "The from address of ChatMessage [" << q << "] is unknwon";
+			lError() << "The from address of ChatMessage [" << q << "] is unknown";
 			return;
 		}
 		const auto fromAddr = fromAddress->toC();

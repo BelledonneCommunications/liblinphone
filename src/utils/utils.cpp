@@ -390,6 +390,37 @@ std::string Utils::getResourceLists(const std::list<Address> &addresses) {
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
+std::shared_ptr<Address> Utils::getSipAddress(const std::string &str, const std::string &scheme) {
+	std::shared_ptr<Address> address = nullptr;
+	const auto schemeBeginIt = str.find(scheme + ":");
+	if (schemeBeginIt == std::string::npos) {
+		lError() << "Unable to create CCMP XCON ID because the core is unable to find the scheme [" << scheme
+		         << "] of the identity address [" << *address << "]";
+	} else {
+		auto addressStr = str;
+		addressStr.replace(schemeBeginIt, scheme.size(), "sip");
+		address = Address::create(addressStr);
+	}
+	return address;
+}
+
+std::string Utils::getXconId(const std::shared_ptr<Address> &address) {
+	// CCMP user ID can only be made up by only 40 different characters
+	// (https://www.rfc-editor.org/rfc/rfc6501#section-4.6.5) We are therefore taking the identity and transform invalid
+	// characters into valid ones in a way that the resulting string is unique for any given mIdentity string
+	auto id = address->asStringUriOnly();
+	const auto scheme = address->getScheme();
+	const auto schemeBeginIt = id.find(scheme + ":");
+	if (schemeBeginIt == std::string::npos) {
+		lError() << "Unable to create CCMP XCON ID because the core is unable to find the scheme [" << scheme
+		         << "] of the identity address [" << *address << "]";
+		id.clear();
+	} else {
+		id.replace(schemeBeginIt, scheme.size(), "xcon-userid");
+	}
+	return id;
+}
+
 // -----------------------------------------------------------------------------
 
 ConferenceInfo::participant_list_t

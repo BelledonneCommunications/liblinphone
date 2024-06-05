@@ -36,6 +36,7 @@
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "server-conference-event-handler.h"
+#include "utils/xml-utils.h"
 
 #include <xsd/cxx/xml/dom/serialization-source.hxx>
 
@@ -269,17 +270,17 @@ void ServerConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneM
 	ConferenceMediaType mediaType;
 	ConferenceMediumType audio("audio", "1");
 	audio.setDisplayText("audio");
-	audio.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
+	audio.setStatus(XmlUtils::mediaDirectionToMediaStatus(audioDirection));
 	mediaType.getEntry().push_back(audio);
 
 	ConferenceMediumType video("video", "2");
 	video.setDisplayText("video");
-	video.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	video.setStatus(XmlUtils::mediaDirectionToMediaStatus(videoDirection));
 	mediaType.getEntry().push_back(video);
 
 	ConferenceMediumType text("text", "3");
 	text.setDisplayText("text");
-	text.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
+	text.setStatus(XmlUtils::mediaDirectionToMediaStatus(textDirection));
 	mediaType.getEntry().push_back(text);
 	confDescr.setAvailableMedia(mediaType);
 }
@@ -394,7 +395,7 @@ void ServerConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Pa
 	if (!device->getLabel(LinphoneStreamTypeAudio).empty()) {
 		audio.setLabel(device->getLabel(LinphoneStreamTypeAudio));
 	}
-	audio.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
+	audio.setStatus(XmlUtils::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
 	const auto isScreenSharing = device->screenSharingEnabled();
@@ -411,7 +412,7 @@ void ServerConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Pa
 			video.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeVideo)));
 		}
 	}
-	video.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	video.setStatus(XmlUtils::mediaDirectionToMediaStatus(videoDirection));
 	if (isScreenSharing) {
 		const auto streamData = StreamData("slides");
 		auto &videoDOMDoc = video.getDomDocument();
@@ -427,7 +428,7 @@ void ServerConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Pa
 	MediaType text = MediaType("3");
 	text.setDisplayText("text");
 	text.setType("text");
-	text.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
+	text.setStatus(XmlUtils::mediaDirectionToMediaStatus(textDirection));
 	endpoint.getMedia().push_back(text);
 
 	MediaType screenSharing = MediaType("4");
@@ -443,7 +444,7 @@ void ServerConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Pa
 			screenSharing.setSrcId(std::to_string(device->getThumbnailStreamSsrc()));
 		}
 	}
-	screenSharing.setStatus(ServerConferenceEventHandler::mediaDirectionToMediaStatus(thumbnailVideoDirection));
+	screenSharing.setStatus(XmlUtils::mediaDirectionToMediaStatus(thumbnailVideoDirection));
 	const auto streamData = StreamData("thumbnail");
 	auto &screenSharingDOMDoc = screenSharing.getDomDocument();
 	::xercesc::DOMElement *e(screenSharingDOMDoc.createElementNS(
@@ -582,8 +583,8 @@ string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::sha
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -634,8 +635,8 @@ string ServerConferenceEventHandler::createNotifyParticipantAdminStatusChanged(c
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -657,8 +658,8 @@ string ServerConferenceEventHandler::createNotifyParticipantRemoved(const std::s
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -671,23 +672,6 @@ string ServerConferenceEventHandler::createNotifyParticipantRemoved(const std::s
 	return createNotify(confInfo);
 }
 
-MediaStatusType ServerConferenceEventHandler::mediaDirectionToMediaStatus(LinphoneMediaDirection direction) {
-	switch (direction) {
-		case LinphoneMediaDirectionInactive:
-			return MediaStatusType::inactive;
-		case LinphoneMediaDirectionSendOnly:
-			return MediaStatusType::sendonly;
-		case LinphoneMediaDirectionRecvOnly:
-			return MediaStatusType::recvonly;
-		case LinphoneMediaDirectionSendRecv:
-			return MediaStatusType::sendrecv;
-		case LinphoneMediaDirectionInvalid:
-			lError() << "LinphoneMediaDirectionInvalid shall not be used";
-			return MediaStatusType::inactive;
-	}
-	return MediaStatusType::sendrecv;
-}
-
 string ServerConferenceEventHandler::createNotifyParticipantDeviceAdded(const std::shared_ptr<Address> &pAddress,
                                                                         const std::shared_ptr<Address> &dAddress) {
 	auto conf = getConference();
@@ -695,8 +679,8 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceAdded(const st
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -742,8 +726,8 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceRemoved(const 
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -812,8 +796,8 @@ ServerConferenceEventHandler::createNotifyParticipantDeviceDataChanged(const std
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -935,8 +919,8 @@ string ServerConferenceEventHandler::createNotifySubjectChanged(const string &su
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	confDescr.setSubject(subject);
@@ -952,7 +936,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralMode(const EventLog::T
 	}
 
 	const auto &conferenceAddress = conf->getConferenceAddress();
-	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("<unknown>");
+	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:unknown");
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	std::string keywordList;
@@ -996,7 +980,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralLifetime(const long &l
 	}
 
 	const auto &conferenceAddress = conf->getConferenceAddress();
-	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("<unknown>");
+	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:unknown");
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	if (lifetime != 0) {
@@ -1044,8 +1028,8 @@ string ServerConferenceEventHandler::createNotifyAvailableMediaChanged(
 		return std::string();
 	}
 
-	string entity = (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly()
-	                                              : std::string("<unknown-conference-address>"));
+	string entity =
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
@@ -1125,7 +1109,7 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 
 	const auto &conferenceAddress = conf->getConferenceAddress();
 	const std::string conferenceAddressString =
-	    conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("<unknown>");
+	    conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:unknown");
 
 	shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 	if (!participant) {

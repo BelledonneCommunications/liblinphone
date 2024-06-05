@@ -369,7 +369,7 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 	auto core = getCCore();
 	if (mState != state ||
 	    state == LinphoneRegistrationOk) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
-		const auto identity = (mParams) ? mParams->getIdentityAddress()->toString() : std::string();
+		const auto identity = (mParams) ? mParams->getIdentityAddress()->toString() : std::string("sip:");
 		if (!mParams) lWarning() << "AccountParams not set for Account [" << this << "]";
 		lInfo() << "Account [" << this << "] for identity [" << identity << "] moving from state ["
 		        << linphone_registration_state_to_string(mState) << "] to ["
@@ -986,7 +986,7 @@ list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos(const std::list<Lin
 
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-	return mainDb->getConferenceInfosForLocalAddress(localAddress, capabilities);
+	return mainDb->getConferenceInfosWithParticipant(localAddress, capabilities);
 }
 
 void Account::writeAllToConfigFile(const std::shared_ptr<Core> core) {

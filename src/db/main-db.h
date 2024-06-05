@@ -236,10 +236,10 @@ public:
 	std::list<std::shared_ptr<ConferenceInfo>>
 	getConferenceInfos(time_t afterThisTime = -1, const std::list<LinphoneStreamType> capabilities = {});
 	std::list<std::shared_ptr<ConferenceInfo>>
-	getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress,
-	                                  const std::list<LinphoneStreamType> capabilities = {});
+	getConferenceInfosWithParticipant(const std::shared_ptr<Address> &address, const std::list<LinphoneStreamType> capabilities = {});
 	std::shared_ptr<ConferenceInfo> getConferenceInfo(long long conferenceInfoId);
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
+	std::shared_ptr<ConferenceInfo> getConferenceInfoFromCcmpUri(const std::string &uri);
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void deleteConferenceInfo(long long dbConferenceId);
 	void deleteConferenceInfo(const std::shared_ptr<Address> &address);

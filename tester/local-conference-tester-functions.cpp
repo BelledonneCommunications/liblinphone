@@ -49,34 +49,6 @@ void setup_conference_info_cbs(LinphoneCoreManager *mgr) {
 
 namespace LinphoneTest {
 
-void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler,
-                                        LinphoneConferenceSchedulerState state) {
-	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
-	switch (state) {
-		case LinphoneConferenceSchedulerStateIdle:
-			stat->number_of_ConferenceSchedulerStateIdle++;
-			break;
-		case LinphoneConferenceSchedulerStateAllocationPending:
-			stat->number_of_ConferenceSchedulerStateAllocationPending++;
-			break;
-		case LinphoneConferenceSchedulerStateReady:
-			stat->number_of_ConferenceSchedulerStateReady++;
-			break;
-		case LinphoneConferenceSchedulerStateError:
-			stat->number_of_ConferenceSchedulerStateError++;
-			break;
-		case LinphoneConferenceSchedulerStateUpdating:
-			stat->number_of_ConferenceSchedulerStateUpdating++;
-			break;
-	}
-}
-
-void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
-                                           BCTBX_UNUSED(const bctbx_list_t *failed_addresses)) {
-	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
-	stat->number_of_ConferenceSchedulerInvitationsSent++;
-}
-
 std::map<LinphoneCoreManager *, LinphoneParticipantInfo *>
 fill_memmber_list(std::list<LinphoneCoreManager *> members,
                   std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList,
@@ -168,6 +140,33 @@ static bool are_participants_camera_streams_requested(LinphoneCoreManager *mgr, 
 	}
 
 	return (nb_thumbnails <= max_thumbnails);
+}
+
+static bool check_conference_info_by_participant(LinphoneCoreManager *mgr,
+                                                 std::list<LinphoneCoreManager *> members,
+                                                 size_t expected_infos,
+                                                 LinphoneAddress *conference_address) {
+	bool_t found_in_all_participants = TRUE;
+	for (const auto &member : members) {
+		bool_t found = FALSE;
+		bctbx_list_t *infos = linphone_core_get_conference_informations_with_participant(mgr->lc, member->identity);
+		size_t nb_infos = bctbx_list_size(infos);
+		if (expected_infos <= 0) {
+			BC_ASSERT_GREATER_STRICT(nb_infos, 0, size_t, "%zu");
+		} else {
+			BC_ASSERT_EQUAL(nb_infos, expected_infos, size_t, "%zu");
+		}
+		for (bctbx_list_t *info_it = infos; info_it; info_it = bctbx_list_next(info_it)) {
+			LinphoneConferenceInfo *info = (LinphoneConferenceInfo *)bctbx_list_get_data(info_it);
+			if (linphone_address_equal(linphone_conference_info_get_uri(info), conference_address)) {
+				check_conference_info_against_db(mgr, conference_address, info);
+				found = TRUE;
+			}
+		}
+		bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+		found_in_all_participants &= found;
+	}
+	return found_in_all_participants;
 }
 
 LinphoneAddress *
@@ -464,6 +463,11 @@ create_conference_on_server(Focus &focus,
 		                            participants_info, start_time, duration, subject, description, 0,
 		                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, enable_video,
 		                            enable_chat);
+		std::list<LinphoneCoreManager *> members{organizer.getCMgr()};
+		for (const auto &[mgr, participant_info] : requested_participants) {
+			members.push_back(mgr);
+		}
+		BC_ASSERT_TRUE(check_conference_info_by_participant(organizer.getCMgr(), members, 0, conference_address));
 	}
 
 	BC_ASSERT_EQUAL(organizer.getStats().number_of_LinphoneConferenceStateTerminationPending,
@@ -474,7 +478,7 @@ create_conference_on_server(Focus &focus,
 	                organizer_stat.number_of_LinphoneConferenceStateDeleted, int, "%d");
 
 	conference_address_str =
-	    (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("<unknown>");
+	    (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("sip:unknown");
 	ms_message("%s is creating conference %s on server %s", linphone_core_get_identity(organizer.getLc()),
 	           conference_address_str, linphone_core_get_identity(focus.getLc()));
 	ms_free(conference_address_str);
@@ -1294,7 +1298,7 @@ void create_conference_base(time_t start_time,
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, enable_video, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -1363,7 +1367,7 @@ void create_conference_base(time_t start_time,
 				}
 			}
 			char *conference_address2_str =
-			    (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("<unknown>");
+			    (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("sip:unknown");
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address2_str);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr2, new_params, NULL, nullptr);
 			linphone_call_params_unref(new_params);
@@ -1465,6 +1469,10 @@ void create_conference_base(time_t start_time,
 		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
 		wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs, focus.getCMgr(),
 		                            memberList, confAddr, enable_video);
+
+		for (const auto &mgr : conferenceMgrs) {
+			BC_ASSERT_TRUE(check_conference_info_by_participant(mgr, members, 0, confAddr));
+		}
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
@@ -3752,7 +3760,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -5810,7 +5818,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 		    create_conference_on_server(focus, marie, participantList1, start_time1, end_time1, subject1, description1,
 		                                TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr1);
-		char *conference1_address_str = (confAddr1) ? linphone_address_as_string(confAddr1) : ms_strdup("<unknown>");
+		char *conference1_address_str = (confAddr1) ? linphone_address_as_string(confAddr1) : ms_strdup("sip:unknown");
 		BC_ASSERT_PTR_NOT_NULL(confAddr1);
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -5971,7 +5979,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 		    create_conference_on_server(focus, confCreator2, participantList2, start_time2, end_time2, subject2,
 		                                description2, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr2);
-		char *conference2_address_str = (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("<unknown>");
+		char *conference2_address_str = (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		if (same_organizer) {
@@ -9082,6 +9090,10 @@ void create_conference_dial_out_base(bool_t send_ics,
 			wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs,
 			                            focus.getCMgr(), memberList, confAddr, enable_video);
 
+			for (const auto &mgr : conferenceMgrs) {
+				BC_ASSERT_TRUE(check_conference_info_by_participant(mgr, members, 1, confAddr));
+			}
+
 			// wait bit more to detect side effect if any
 			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(15), [] {
 				return false;
@@ -9598,7 +9610,7 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		                                description, TRUE, security_level, TRUE, FALSE);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,

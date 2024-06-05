@@ -33,7 +33,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-DBConferenceScheduler::DBConferenceScheduler(const shared_ptr<Core> &core) : ConferenceScheduler(core) {
+DBConferenceScheduler::DBConferenceScheduler(const shared_ptr<Core> &core, const std::shared_ptr<Account> &account)
+    : ConferenceScheduler(core, account) {
 }
 
 void DBConferenceScheduler::createOrUpdateConference(
@@ -54,7 +55,7 @@ void DBConferenceScheduler::createOrUpdateConference(
 	setConferenceAddress(conferenceAddress);
 }
 
-void DBConferenceScheduler::processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorCode),
+void DBConferenceScheduler::processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorInfo),
                                             BCTBX_UNUSED(const std::shared_ptr<Address> conferenceAddress)) {
 }
 

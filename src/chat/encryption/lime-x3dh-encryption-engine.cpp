@@ -280,7 +280,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	auto conferenceAddress = chatRoom->getConferenceAddress();
-	auto conferenceAddressStr = conferenceAddress ? conferenceAddress->asString() : std::string("<unknown>");
+	auto conferenceAddressStr = conferenceAddress ? conferenceAddress->asString() : std::string("sip:unknown");
 
 	// Check if chatroom is encrypted or not
 	if (chatRoomParams->getChatParams()->isEncrypted()) {

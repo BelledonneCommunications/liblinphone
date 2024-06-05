@@ -221,7 +221,7 @@ std::shared_ptr<ConferenceInfo> &CallLog::getConferenceInfo() {
 		// Try to find the conference info based on the to address
 		// We enter this branch of the if-else statement only if the call cannot be started right away, for example when
 		// ICE candidates need to be gathered first
-		setConferenceInfo(db->getConferenceInfoFromURI(mTo));
+		setConferenceInfo(db->getConferenceInfoFromURI(getRemoteAddress()));
 	}
 #endif // HAVE_DB_STORAGE
 

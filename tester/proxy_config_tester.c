@@ -512,10 +512,11 @@ static void dependent_proxy_dependency_removal(void) {
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 
 	linphone_core_remove_proxy_config(marie->lc, master);
+	const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+	BC_ASSERT_EQUAL(bctbx_list_size(accounts), 1, size_t, "%zu");
 
 	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
-
-	BC_ASSERT_EQUAL((int)bctbx_list_size(proxyConfigs), 1, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 1, size_t, "%zu");
 
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 

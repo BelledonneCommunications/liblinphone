@@ -425,6 +425,8 @@ public:
 	//
 	Ephemeral(const ModeType &, const LifetimeType &);
 
+	Ephemeral(::std::unique_ptr<ModeType>, ::std::unique_ptr<LifetimeType>);
+
 	Ephemeral(const ::xercesc::DOMElement &e,
 	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
 	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
@@ -507,6 +509,8 @@ public:
 	//
 	ServiceDescription(const ServiceIdType &, const VersionType &);
 
+	ServiceDescription(::std::unique_ptr<ServiceIdType>, ::std::unique_ptr<VersionType>);
+
 	ServiceDescription(const ::xercesc::DOMElement &e,
 	                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
 	                   ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
@@ -573,6 +577,8 @@ public:
 	// Constructors.
 	//
 	CryptoSecurityLevel(const LevelType &);
+
+	CryptoSecurityLevel(::std::unique_ptr<LevelType>);
 
 	CryptoSecurityLevel(const ::xercesc::DOMElement &e,
 	                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
@@ -702,6 +708,8 @@ public:
 	// Constructors.
 	//
 	StreamData(const StreamContentType &);
+
+	StreamData(::std::unique_ptr<StreamContentType>);
 
 	StreamData(const ::xercesc::DOMElement &e,
 	           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
@@ -858,6 +866,392 @@ namespace ConferenceInfoLinphoneExtension {
     ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
     const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse a URI or a local file.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    const ::std::string &uri,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse std::istream.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::std::istream &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::InputSource.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::xercesc::InputSource &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    const ::xercesc::DOMDocument &d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription> parseServiceDescription(
+    ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse a URI or a local file.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    const ::std::string &uri,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse std::istream.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::std::istream &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::InputSource.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::xercesc::InputSource &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    const ::xercesc::DOMDocument &d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel>
+parseCryptoSecurityLevel(
+    ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse a URI or a local file.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    const ::std::string &uri,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse std::istream.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::std::istream &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::InputSource.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::xercesc::InputSource &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    const ::xercesc::DOMDocument &d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes> parseConferenceTimes(
+    ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse a URI or a local file.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    const ::std::string &uri,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse std::istream.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::std::istream &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::InputSource.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::xercesc::InputSource &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    const ::xercesc::DOMDocument &d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+
+::std::unique_ptr<::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData> parseStreamData(
+    ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 } // namespace ConferenceInfoLinphoneExtension
 } // namespace Xsd
 } // namespace LinphonePrivate
@@ -952,6 +1346,278 @@ serializeEphemeral(const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension
                    const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
                        ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to std::ostream.
+//
+
+void serializeServiceDescription(::std::ostream &os,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                     ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                 const ::std::string &e = "UTF-8",
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeServiceDescription(::std::ostream &os,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                                 const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                     ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                 const ::std::string &e = "UTF-8",
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeServiceDescription(::std::ostream &os,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 ::xercesc::DOMErrorHandler &eh,
+                                 const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                     ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                 const ::std::string &e = "UTF-8",
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to xercesc::XMLFormatTarget.
+//
+
+void serializeServiceDescription(::xercesc::XMLFormatTarget &ft,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                     ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                 const ::std::string &e = "UTF-8",
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeServiceDescription(::xercesc::XMLFormatTarget &ft,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                                 const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                     ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                 const ::std::string &e = "UTF-8",
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeServiceDescription(::xercesc::XMLFormatTarget &ft,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 ::xercesc::DOMErrorHandler &eh,
+                                 const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                     ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                 const ::std::string &e = "UTF-8",
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to an existing xercesc::DOMDocument.
+//
+
+void serializeServiceDescription(::xercesc::DOMDocument &d,
+                                 const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                                 ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to a new xercesc::DOMDocument.
+//
+
+::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument>
+serializeServiceDescription(const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ServiceDescription &x,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to std::ostream.
+//
+
+void serializeCryptoSecurityLevel(::std::ostream &os,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                      ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                  const ::std::string &e = "UTF-8",
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeCryptoSecurityLevel(::std::ostream &os,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                                  const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                      ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                  const ::std::string &e = "UTF-8",
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeCryptoSecurityLevel(::std::ostream &os,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  ::xercesc::DOMErrorHandler &eh,
+                                  const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                      ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                  const ::std::string &e = "UTF-8",
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to xercesc::XMLFormatTarget.
+//
+
+void serializeCryptoSecurityLevel(::xercesc::XMLFormatTarget &ft,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                      ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                  const ::std::string &e = "UTF-8",
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeCryptoSecurityLevel(::xercesc::XMLFormatTarget &ft,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                                  const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                      ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                  const ::std::string &e = "UTF-8",
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeCryptoSecurityLevel(::xercesc::XMLFormatTarget &ft,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  ::xercesc::DOMErrorHandler &eh,
+                                  const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                      ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                                  const ::std::string &e = "UTF-8",
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to an existing xercesc::DOMDocument.
+//
+
+void serializeCryptoSecurityLevel(::xercesc::DOMDocument &d,
+                                  const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to a new xercesc::DOMDocument.
+//
+
+::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument>
+serializeCryptoSecurityLevel(const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::CryptoSecurityLevel &x,
+                             const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                 ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to std::ostream.
+//
+
+void serializeConferenceTimes(::std::ostream &os,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                  ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                              const ::std::string &e = "UTF-8",
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeConferenceTimes(::std::ostream &os,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                  ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                              const ::std::string &e = "UTF-8",
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeConferenceTimes(::std::ostream &os,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              ::xercesc::DOMErrorHandler &eh,
+                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                  ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                              const ::std::string &e = "UTF-8",
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to xercesc::XMLFormatTarget.
+//
+
+void serializeConferenceTimes(::xercesc::XMLFormatTarget &ft,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                  ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                              const ::std::string &e = "UTF-8",
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeConferenceTimes(::xercesc::XMLFormatTarget &ft,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                  ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                              const ::std::string &e = "UTF-8",
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeConferenceTimes(::xercesc::XMLFormatTarget &ft,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              ::xercesc::DOMErrorHandler &eh,
+                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                  ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                              const ::std::string &e = "UTF-8",
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to an existing xercesc::DOMDocument.
+//
+
+void serializeConferenceTimes(::xercesc::DOMDocument &d,
+                              const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to a new xercesc::DOMDocument.
+//
+
+::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument>
+serializeConferenceTimes(const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTimes &x,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to std::ostream.
+//
+
+void serializeStreamData(::std::ostream &os,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         const ::std::string &e = "UTF-8",
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeStreamData(::std::ostream &os,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         const ::std::string &e = "UTF-8",
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeStreamData(::std::ostream &os,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         ::xercesc::DOMErrorHandler &eh,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         const ::std::string &e = "UTF-8",
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to xercesc::XMLFormatTarget.
+//
+
+void serializeStreamData(::xercesc::XMLFormatTarget &ft,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         const ::std::string &e = "UTF-8",
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeStreamData(::xercesc::XMLFormatTarget &ft,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         const ::std::string &e = "UTF-8",
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+void serializeStreamData(::xercesc::XMLFormatTarget &ft,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         ::xercesc::DOMErrorHandler &eh,
+                         const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                             ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                         const ::std::string &e = "UTF-8",
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to an existing xercesc::DOMDocument.
+//
+
+void serializeStreamData(::xercesc::DOMDocument &d,
+                         const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+
+// Serialize to a new xercesc::DOMDocument.
+//
+
+::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument>
+serializeStreamData(const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::StreamData &x,
+                    const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                        ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
 void operator<<(::xercesc::DOMElement &, const Ephemeral &);
 

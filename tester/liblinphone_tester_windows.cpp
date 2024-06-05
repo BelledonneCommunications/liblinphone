@@ -139,7 +139,7 @@ void NativeTester::initialize(const Platform::Array<Platform::String ^> ^ pParam
 
 	_args = (char **)malloc(sizeof(char **) * (parameters->Length + 1));
 	int countArgs = 0;
-	for (int i = 0; i < parameters->Length; ++i) {
+	for (unsigned int i = 0; i < parameters->Length; ++i) {
 		std::wstring parameter = parameters[i]->Data();
 		if (parameter.length() > 0) {
 			int length = (int)wcstombs(NULL, parameter.c_str(), 256) + 1;

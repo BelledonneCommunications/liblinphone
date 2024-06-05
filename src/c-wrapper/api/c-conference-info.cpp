@@ -155,6 +155,14 @@ unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceI
 	return ConferenceInfo::toCpp(conference_info)->getIcsSequence();
 }
 
+void linphone_conference_info_set_ccmp_uri(LinphoneConferenceInfo *conference_info, const char *uri) {
+	ConferenceInfo::toCpp(conference_info)->setCcmpUri(L_C_TO_STRING(uri));
+}
+
+const char *linphone_conference_info_get_ccmp_uri(const LinphoneConferenceInfo *conference_info) {
+	return L_STRING_TO_C(ConferenceInfo::toCpp(conference_info)->getCcmpUri());
+}
+
 void linphone_conference_info_set_ics_uid(LinphoneConferenceInfo *conference_info, const char *uid) {
 	return ConferenceInfo::toCpp(conference_info)->setIcsUid(L_C_TO_STRING(uid));
 }

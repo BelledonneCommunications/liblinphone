@@ -3084,7 +3084,7 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-	char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+	char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
@@ -5848,7 +5848,11 @@ static void exhume_one_to_one_chat_room_1(void) {
 		BC_ASSERT_EQUAL(pauline_messages, 2, int, "%d");
 
 		if (exhumedConfAddr) {
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+			const char *conf_id = linphone_address_get_uri_param(confAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(conf_id);
+			const char *exhumed_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(exhumed_conf_id);
+			BC_ASSERT_STRING_NOT_EQUAL(conf_id, exhumed_conf_id);
 			marieOneToOneCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats,
 			                                                       exhumedConfAddr, "one to one", 1, FALSE);
 			BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr);
@@ -5968,10 +5972,13 @@ static void exhume_one_to_one_chat_room_2(void) {
 		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
 
 		if (exhumedConfAddr) {
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+			const char *conf_id = linphone_address_get_uri_param(confAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(conf_id);
+			const char *exhumed_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(exhumed_conf_id);
+			BC_ASSERT_STRING_NOT_EQUAL(conf_id, exhumed_conf_id);
 			LinphoneAddress *paulineNewConfAddr =
 			    linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, paulineNewConfAddr));
 			BC_ASSERT_TRUE(linphone_address_weak_equal(exhumedConfAddr, paulineNewConfAddr));
 			if (paulineNewConfAddr) linphone_address_unref(paulineNewConfAddr);
 
@@ -6075,7 +6082,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
 	BC_ASSERT_PTR_NOT_NULL(confAddr);
-	conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+	conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr,
 	                                                         initialSubject, 1, FALSE);
 
@@ -6401,7 +6408,11 @@ static void exhume_one_to_one_chat_room_4(void) {
 		                             liblinphone_tester_sip_timeout));
 
 		if (exhumedConfAddr) {
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+			const char *conf_id = linphone_address_get_uri_param(confAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(conf_id);
+			const char *exhumed_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(exhumed_conf_id);
+			BC_ASSERT_STRING_NOT_EQUAL(conf_id, exhumed_conf_id);
 			marieOneToOneCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats,
 			                                                       exhumedConfAddr, "one to one", 1, FALSE);
 			BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr);
@@ -6823,6 +6834,7 @@ static void group_chat_room_complex_participant_removal_scenario(void) {
 	check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 
 	// Restart Laure core
+	ms_message("%s restarts core", linphone_core_get_identity(laure->lc));
 	linphone_core_set_network_reachable(laure->lc, FALSE);
 	LinphoneAddress *laureAddr = linphone_address_clone(laure->identity);
 	coresList = bctbx_list_remove(coresList, laure->lc);
@@ -6859,6 +6871,10 @@ static void group_chat_room_complex_participant_removal_scenario(void) {
 	                              initialLaureStats.number_of_LinphoneChatRoomStateTerminated + 1, 3000));
 
 	// Marie adds Laure to the chat room
+	char *conference_addr_str = linphone_address_as_string(confAddr);
+	ms_message("%s adds %s to chat room %s", linphone_core_get_identity(marie->lc),
+	           linphone_core_get_identity(laure->lc), conference_addr_str);
+	bctbx_free(conference_addr_str);
 	participantsAddresses = bctbx_list_append(participantsAddresses, laureAddr);
 	linphone_chat_room_add_participants(marieCr, participantsAddresses);
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);

@@ -52,7 +52,7 @@ public:
 		Updating = LinphoneConferenceSchedulerStateUpdating
 	};
 
-	ConferenceScheduler(const std::shared_ptr<Core> &core);
+	ConferenceScheduler(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account = nullptr);
 	virtual ~ConferenceScheduler() = default;
 
 	void onChatMessageStateChanged(const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
@@ -68,7 +68,7 @@ public:
 	void sendInvitations(std::shared_ptr<ConferenceParams> conferenceParams);
 
 	const std::shared_ptr<Account> getAccount() const;
-	void setAccount(std::shared_ptr<Account> account);
+	void setAccount(const std::shared_ptr<Account> &account);
 
 protected:
 	void setState(State newState);

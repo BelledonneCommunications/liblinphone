@@ -1054,8 +1054,8 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 			case CallSession::State::End:
 				lInfo() << "Ending conference " << this << "(" << conferenceAddressStr
 				        << ") because focus call (local address "
-				        << (session ? session->getLocalAddress()->toString() : "<unknown>") << " remote address "
-				        << (session ? session->getRemoteAddress()->toString() : "<unknown>") << ") has ended";
+				        << (session ? session->getLocalAddress()->toString() : "sip:unknown") << " remote address "
+				        << (session ? session->getRemoteAddress()->toString() : "sip:unknown") << ") has ended";
 				endConference();
 				break;
 			default:

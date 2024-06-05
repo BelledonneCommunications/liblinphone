@@ -36,34 +36,30 @@
 // Begin prologue.
 //
 #if __clang__ || __GNUC__ >= 4
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wfloat-equal"
-	#pragma GCC diagnostic ignored "-Wsign-conversion"
-	#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
 #endif
 #if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif
-#if __GNUC__ >=7
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#if __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #endif
 //
 // End prologue.
 
 #include <xsd/cxx/config.hxx>
 
-#if (XSD_INT_VERSION != 4000000L)
-#error XSD runtime version mismatch
-#endif
-
 #include <xsd/cxx/pre.hxx>
 
 #include <xsd/cxx/xml/char-utf8.hxx>
 
-#include <xsd/cxx/tree/exceptions.hxx>
 #include <xsd/cxx/tree/elements.hxx>
+#include <xsd/cxx/tree/exceptions.hxx>
 #include <xsd/cxx/tree/types.hxx>
 
 #include <xsd/cxx/xml/error-handler.hxx>
@@ -71,227 +67,219 @@
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
 
 #include <xsd/cxx/tree/parsing.hxx>
-#include <xsd/cxx/tree/parsing/byte.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-byte.hxx>
-#include <xsd/cxx/tree/parsing/short.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-short.hxx>
-#include <xsd/cxx/tree/parsing/int.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-int.hxx>
-#include <xsd/cxx/tree/parsing/long.hxx>
-#include <xsd/cxx/tree/parsing/unsigned-long.hxx>
 #include <xsd/cxx/tree/parsing/boolean.hxx>
-#include <xsd/cxx/tree/parsing/float.hxx>
-#include <xsd/cxx/tree/parsing/double.hxx>
+#include <xsd/cxx/tree/parsing/byte.hxx>
 #include <xsd/cxx/tree/parsing/decimal.hxx>
+#include <xsd/cxx/tree/parsing/double.hxx>
+#include <xsd/cxx/tree/parsing/float.hxx>
+#include <xsd/cxx/tree/parsing/int.hxx>
+#include <xsd/cxx/tree/parsing/long.hxx>
+#include <xsd/cxx/tree/parsing/short.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-byte.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-int.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-long.hxx>
+#include <xsd/cxx/tree/parsing/unsigned-short.hxx>
 
-#include <xsd/cxx/xml/dom/serialization-header.hxx>
 #include <xsd/cxx/tree/serialization.hxx>
-#include <xsd/cxx/tree/serialization/byte.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-byte.hxx>
-#include <xsd/cxx/tree/serialization/short.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-short.hxx>
-#include <xsd/cxx/tree/serialization/int.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-int.hxx>
-#include <xsd/cxx/tree/serialization/long.hxx>
-#include <xsd/cxx/tree/serialization/unsigned-long.hxx>
 #include <xsd/cxx/tree/serialization/boolean.hxx>
-#include <xsd/cxx/tree/serialization/float.hxx>
-#include <xsd/cxx/tree/serialization/double.hxx>
+#include <xsd/cxx/tree/serialization/byte.hxx>
 #include <xsd/cxx/tree/serialization/decimal.hxx>
+#include <xsd/cxx/tree/serialization/double.hxx>
+#include <xsd/cxx/tree/serialization/float.hxx>
+#include <xsd/cxx/tree/serialization/int.hxx>
+#include <xsd/cxx/tree/serialization/long.hxx>
+#include <xsd/cxx/tree/serialization/short.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-byte.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-int.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-long.hxx>
+#include <xsd/cxx/tree/serialization/unsigned-short.hxx>
+#include <xsd/cxx/xml/dom/serialization-header.hxx>
 
 #include <xsd/cxx/tree/std-ostream-operators.hxx>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace XmlSchema
-    {
-      // anyType and anySimpleType.
-      //
-      typedef ::xsd::cxx::tree::type Type;
-      typedef ::xsd::cxx::tree::simple_type< char, Type > SimpleType;
-      typedef ::xsd::cxx::tree::type Container;
+namespace LinphonePrivate {
+namespace Xsd {
+namespace XmlSchema {
+// anyType and anySimpleType.
+//
+typedef ::xsd::cxx::tree::type Type;
+typedef ::xsd::cxx::tree::simple_type<char, Type> SimpleType;
+typedef ::xsd::cxx::tree::type Container;
 
-      // 8-bit
-      //
-      typedef signed char Byte;
-      typedef unsigned char UnsignedByte;
+// 8-bit
+//
+typedef signed char Byte;
+typedef unsigned char UnsignedByte;
 
-      // 16-bit
-      //
-      typedef short Short;
-      typedef unsigned short UnsignedShort;
+// 16-bit
+//
+typedef short Short;
+typedef unsigned short UnsignedShort;
 
-      // 32-bit
-      //
-      typedef int Int;
-      typedef unsigned int UnsignedInt;
+// 32-bit
+//
+typedef int Int;
+typedef unsigned int UnsignedInt;
 
-      // 64-bit
-      //
-      typedef long long Long;
-      typedef unsigned long long UnsignedLong;
+// 64-bit
+//
+typedef long long Long;
+typedef unsigned long long UnsignedLong;
 
-      // Supposed to be arbitrary-length integral types.
-      //
-      typedef long long Integer;
-      typedef long long NonPositiveInteger;
-      typedef unsigned long long NonNegativeInteger;
-      typedef unsigned long long PositiveInteger;
-      typedef long long NegativeInteger;
+// Supposed to be arbitrary-length integral types.
+//
+typedef long long Integer;
+typedef long long NonPositiveInteger;
+typedef unsigned long long NonNegativeInteger;
+typedef unsigned long long PositiveInteger;
+typedef long long NegativeInteger;
 
-      // Boolean.
-      //
-      typedef bool Boolean;
+// Boolean.
+//
+typedef bool Boolean;
 
-      // Floating-point types.
-      //
-      typedef float Float;
-      typedef double Double;
-      typedef double Decimal;
+// Floating-point types.
+//
+typedef float Float;
+typedef double Double;
+typedef double Decimal;
 
-      // String types.
-      //
-      typedef ::xsd::cxx::tree::string< char, SimpleType > String;
-      typedef ::xsd::cxx::tree::normalized_string< char, String > NormalizedString;
-      typedef ::xsd::cxx::tree::token< char, NormalizedString > Token;
-      typedef ::xsd::cxx::tree::name< char, Token > Name;
-      typedef ::xsd::cxx::tree::nmtoken< char, Token > Nmtoken;
-      typedef ::xsd::cxx::tree::nmtokens< char, SimpleType, Nmtoken > Nmtokens;
-      typedef ::xsd::cxx::tree::ncname< char, Name > Ncname;
-      typedef ::xsd::cxx::tree::language< char, Token > Language;
+// String types.
+//
+typedef ::xsd::cxx::tree::string<char, SimpleType> String;
+typedef ::xsd::cxx::tree::normalized_string<char, String> NormalizedString;
+typedef ::xsd::cxx::tree::token<char, NormalizedString> Token;
+typedef ::xsd::cxx::tree::name<char, Token> Name;
+typedef ::xsd::cxx::tree::nmtoken<char, Token> Nmtoken;
+typedef ::xsd::cxx::tree::nmtokens<char, SimpleType, Nmtoken> Nmtokens;
+typedef ::xsd::cxx::tree::ncname<char, Name> Ncname;
+typedef ::xsd::cxx::tree::language<char, Token> Language;
 
-      // ID/IDREF.
-      //
-      typedef ::xsd::cxx::tree::id< char, Ncname > Id;
-      typedef ::xsd::cxx::tree::idref< char, Ncname, Type > Idref;
-      typedef ::xsd::cxx::tree::idrefs< char, SimpleType, Idref > Idrefs;
+// ID/IDREF.
+//
+typedef ::xsd::cxx::tree::id<char, Ncname> Id;
+typedef ::xsd::cxx::tree::idref<char, Ncname, Type> Idref;
+typedef ::xsd::cxx::tree::idrefs<char, SimpleType, Idref> Idrefs;
 
-      // URI.
-      //
-      typedef ::xsd::cxx::tree::uri< char, SimpleType > Uri;
+// URI.
+//
+typedef ::xsd::cxx::tree::uri<char, SimpleType> Uri;
 
-      // Qualified name.
-      //
-      typedef ::xsd::cxx::tree::qname< char, SimpleType, Uri, Ncname > Qname;
+// Qualified name.
+//
+typedef ::xsd::cxx::tree::qname<char, SimpleType, Uri, Ncname> Qname;
 
-      // Binary.
-      //
-      typedef ::xsd::cxx::tree::buffer< char > Buffer;
-      typedef ::xsd::cxx::tree::base64_binary< char, SimpleType > Base64Binary;
-      typedef ::xsd::cxx::tree::hex_binary< char, SimpleType > HexBinary;
+// Binary.
+//
+typedef ::xsd::cxx::tree::buffer<char> Buffer;
+typedef ::xsd::cxx::tree::base64_binary<char, SimpleType> Base64Binary;
+typedef ::xsd::cxx::tree::hex_binary<char, SimpleType> HexBinary;
 
-      // Date/time.
-      //
-      typedef ::xsd::cxx::tree::time_zone TimeZone;
-      typedef ::xsd::cxx::tree::date< char, SimpleType > Date;
-      typedef ::xsd::cxx::tree::date_time< char, SimpleType > DateTime;
-      typedef ::xsd::cxx::tree::duration< char, SimpleType > Duration;
-      typedef ::xsd::cxx::tree::gday< char, SimpleType > Gday;
-      typedef ::xsd::cxx::tree::gmonth< char, SimpleType > Gmonth;
-      typedef ::xsd::cxx::tree::gmonth_day< char, SimpleType > GmonthDay;
-      typedef ::xsd::cxx::tree::gyear< char, SimpleType > Gyear;
-      typedef ::xsd::cxx::tree::gyear_month< char, SimpleType > GyearMonth;
-      typedef ::xsd::cxx::tree::time< char, SimpleType > Time;
+// Date/time.
+//
+typedef ::xsd::cxx::tree::time_zone TimeZone;
+typedef ::xsd::cxx::tree::date<char, SimpleType> Date;
+typedef ::xsd::cxx::tree::date_time<char, SimpleType> DateTime;
+typedef ::xsd::cxx::tree::duration<char, SimpleType> Duration;
+typedef ::xsd::cxx::tree::gday<char, SimpleType> Gday;
+typedef ::xsd::cxx::tree::gmonth<char, SimpleType> Gmonth;
+typedef ::xsd::cxx::tree::gmonth_day<char, SimpleType> GmonthDay;
+typedef ::xsd::cxx::tree::gyear<char, SimpleType> Gyear;
+typedef ::xsd::cxx::tree::gyear_month<char, SimpleType> GyearMonth;
+typedef ::xsd::cxx::tree::time<char, SimpleType> Time;
 
-      // Entity.
-      //
-      typedef ::xsd::cxx::tree::entity< char, Ncname > Entity;
-      typedef ::xsd::cxx::tree::entities< char, SimpleType, Entity > Entities;
+// Entity.
+//
+typedef ::xsd::cxx::tree::entity<char, Ncname> Entity;
+typedef ::xsd::cxx::tree::entities<char, SimpleType, Entity> Entities;
 
-      typedef ::xsd::cxx::tree::content_order ContentOrder;
-      // Namespace information and list stream. Used in
-      // serialization functions.
-      //
-      typedef ::xsd::cxx::xml::dom::namespace_info< char > NamespaceInfo;
-      typedef ::xsd::cxx::xml::dom::namespace_infomap< char > NamespaceInfomap;
-      typedef ::xsd::cxx::tree::list_stream< char > ListStream;
-      typedef ::xsd::cxx::tree::as_double< Double > AsDouble;
-      typedef ::xsd::cxx::tree::as_decimal< Decimal > AsDecimal;
-      typedef ::xsd::cxx::tree::facet Facet;
+typedef ::xsd::cxx::tree::content_order ContentOrder;
+// Namespace information and list stream. Used in
+// serialization functions.
+//
+typedef ::xsd::cxx::xml::dom::namespace_info<char> NamespaceInfo;
+typedef ::xsd::cxx::xml::dom::namespace_infomap<char> NamespaceInfomap;
+typedef ::xsd::cxx::tree::list_stream<char> ListStream;
+typedef ::xsd::cxx::tree::as_double<Double> AsDouble;
+typedef ::xsd::cxx::tree::as_decimal<Decimal> AsDecimal;
+typedef ::xsd::cxx::tree::facet Facet;
 
-      // Flags and properties.
-      //
-      typedef ::xsd::cxx::tree::flags Flags;
-      typedef ::xsd::cxx::tree::properties< char > Properties;
+// Flags and properties.
+//
+typedef ::xsd::cxx::tree::flags Flags;
+typedef ::xsd::cxx::tree::properties<char> Properties;
 
-      // Parsing/serialization diagnostics.
-      //
-      typedef ::xsd::cxx::tree::severity Severity;
-      typedef ::xsd::cxx::tree::error< char > Error;
-      typedef ::xsd::cxx::tree::diagnostics< char > Diagnostics;
+// Parsing/serialization diagnostics.
+//
+typedef ::xsd::cxx::tree::severity Severity;
+typedef ::xsd::cxx::tree::error<char> Error;
+typedef ::xsd::cxx::tree::diagnostics<char> Diagnostics;
 
-      // Exceptions.
-      //
-      typedef ::xsd::cxx::tree::exception< char > Exception;
-      typedef ::xsd::cxx::tree::bounds< char > Bounds;
-      typedef ::xsd::cxx::tree::duplicate_id< char > DuplicateId;
-      typedef ::xsd::cxx::tree::parsing< char > Parsing;
-      typedef ::xsd::cxx::tree::expected_element< char > ExpectedElement;
-      typedef ::xsd::cxx::tree::unexpected_element< char > UnexpectedElement;
-      typedef ::xsd::cxx::tree::expected_attribute< char > ExpectedAttribute;
-      typedef ::xsd::cxx::tree::unexpected_enumerator< char > UnexpectedEnumerator;
-      typedef ::xsd::cxx::tree::expected_text_content< char > ExpectedTextContent;
-      typedef ::xsd::cxx::tree::no_prefix_mapping< char > NoPrefixMapping;
-      typedef ::xsd::cxx::tree::no_type_info< char > NoTypeInfo;
-      typedef ::xsd::cxx::tree::not_derived< char > NotDerived;
-      typedef ::xsd::cxx::tree::serialization< char > Serialization;
+// Exceptions.
+//
+typedef ::xsd::cxx::tree::exception<char> Exception;
+typedef ::xsd::cxx::tree::bounds<char> Bounds;
+typedef ::xsd::cxx::tree::duplicate_id<char> DuplicateId;
+typedef ::xsd::cxx::tree::parsing<char> Parsing;
+typedef ::xsd::cxx::tree::expected_element<char> ExpectedElement;
+typedef ::xsd::cxx::tree::unexpected_element<char> UnexpectedElement;
+typedef ::xsd::cxx::tree::expected_attribute<char> ExpectedAttribute;
+typedef ::xsd::cxx::tree::unexpected_enumerator<char> UnexpectedEnumerator;
+typedef ::xsd::cxx::tree::expected_text_content<char> ExpectedTextContent;
+typedef ::xsd::cxx::tree::no_prefix_mapping<char> NoPrefixMapping;
+typedef ::xsd::cxx::tree::no_type_info<char> NoTypeInfo;
+typedef ::xsd::cxx::tree::not_derived<char> NotDerived;
+typedef ::xsd::cxx::tree::serialization<char> Serialization;
 
-      // Error handler callback interface.
-      //
-      typedef ::xsd::cxx::xml::error_handler< char > ErrorHandler;
+// Error handler callback interface.
+//
+typedef ::xsd::cxx::xml::error_handler<char> ErrorHandler;
 
-      // DOM interaction.
-      //
-      namespace dom
-      {
-        // Automatic pointer for DOMDocument.
-        //
-        using ::xsd::cxx::xml::dom::unique_ptr;
+// DOM interaction.
+//
+namespace dom {
+// Automatic pointer for DOMDocument.
+//
+using ::xsd::cxx::xml::dom::unique_ptr;
 
 #ifndef XSD_CXX_TREE_TREE_NODE_KEY__LINPHONEPRIVATE__XSD__XMLSCHEMA
 #define XSD_CXX_TREE_TREE_NODE_KEY__LINPHONEPRIVATE__XSD__XMLSCHEMA
-        // DOM user data key for back pointers to tree nodes.
-        //
-        const XMLCh* const treeNodeKey = ::xsd::cxx::tree::user_data_keys::node;
+// DOM user data key for back pointers to tree nodes.
+//
+const XMLCh *const treeNodeKey = ::xsd::cxx::tree::user_data_keys::node;
 #endif
-      }
-    }
-  }
-}
+} // namespace dom
+} // namespace XmlSchema
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 // Forward declarations.
 //
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ResourceLists
-    {
-      class ListType;
-      class EntryType;
-      class EntryRefType;
-      class ExternalType;
-      class DisplayNameType;
-      class List;
-      class DisplayName;
-      class ResourceLists;
-    }
-  }
-}
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ResourceLists {
+class ListType;
+class EntryType;
+class EntryRefType;
+class ExternalType;
+class DisplayNameType;
+class List;
+class DisplayName;
+class ResourceLists;
+} // namespace ResourceLists
+} // namespace Xsd
+} // namespace LinphonePrivate
 
-
-#include <memory>    // ::std::unique_ptr
-#include <limits>    // std::numeric_limits
 #include <algorithm> // std::binary_search
+#include <limits>    // std::numeric_limits
+#include <memory>    // ::std::unique_ptr
 #include <utility>   // std::move
 
 #include <xsd/cxx/xml/char-utf8.hxx>
 
-#include <xsd/cxx/tree/exceptions.hxx>
-#include <xsd/cxx/tree/elements.hxx>
 #include <xsd/cxx/tree/containers.hxx>
+#include <xsd/cxx/tree/elements.hxx>
+#include <xsd/cxx/tree/exceptions.hxx>
 #include <xsd/cxx/tree/list.hxx>
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
@@ -300,879 +288,736 @@ namespace LinphonePrivate
 
 #include "xml.h"
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ResourceLists
-    {
-      class ListType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-name
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType DisplayNameType;
-        typedef ::xsd::cxx::tree::optional< DisplayNameType > DisplayNameOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayNameType, char > DisplayNameTraits;
-
-        const DisplayNameOptional&
-        getDisplayName () const;
-
-        DisplayNameOptional&
-        getDisplayName ();
-
-        void
-        setDisplayName (const DisplayNameType& x);
-
-        void
-        setDisplayName (const DisplayNameOptional& x);
-
-        void
-        setDisplayName (::std::unique_ptr< DisplayNameType > p);
-
-        // list
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::List ListType1;
-        typedef ::xsd::cxx::tree::sequence< ListType1 > ListSequence;
-        typedef ListSequence::iterator ListIterator;
-        typedef ListSequence::const_iterator ListConstIterator;
-        typedef ::xsd::cxx::tree::traits< ListType1, char > ListTraits;
-
-        const ListSequence&
-        getList () const;
-
-        ListSequence&
-        getList ();
-
-        void
-        setList (const ListSequence& s);
-
-        // external
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::ExternalType ExternalType;
-        typedef ::xsd::cxx::tree::sequence< ExternalType > ExternalSequence;
-        typedef ExternalSequence::iterator ExternalIterator;
-        typedef ExternalSequence::const_iterator ExternalConstIterator;
-        typedef ::xsd::cxx::tree::traits< ExternalType, char > ExternalTraits;
-
-        const ExternalSequence&
-        getExternal () const;
-
-        ExternalSequence&
-        getExternal ();
-
-        void
-        setExternal (const ExternalSequence& s);
-
-        // entry
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::EntryType EntryType;
-        typedef ::xsd::cxx::tree::sequence< EntryType > EntrySequence;
-        typedef EntrySequence::iterator EntryIterator;
-        typedef EntrySequence::const_iterator EntryConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntryType, char > EntryTraits;
-
-        const EntrySequence&
-        getEntry () const;
-
-        EntrySequence&
-        getEntry ();
-
-        void
-        setEntry (const EntrySequence& s);
-
-        // entry-ref
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::EntryRefType EntryRefType;
-        typedef ::xsd::cxx::tree::sequence< EntryRefType > EntryRefSequence;
-        typedef EntryRefSequence::iterator EntryRefIterator;
-        typedef EntryRefSequence::const_iterator EntryRefConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntryRefType, char > EntryRefTraits;
-
-        const EntryRefSequence&
-        getEntryRef () const;
-
-        EntryRefSequence&
-        getEntryRef ();
-
-        void
-        setEntryRef (const EntryRefSequence& s);
-
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
-
-        const AnySequence&
-        getAny () const;
-
-        AnySequence&
-        getAny ();
-
-        void
-        setAny (const AnySequence& s);
-
-        // name
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::String NameType;
-        typedef ::xsd::cxx::tree::optional< NameType > NameOptional;
-        typedef ::xsd::cxx::tree::traits< NameType, char > NameTraits;
-
-        const NameOptional&
-        getName () const;
-
-        NameOptional&
-        getName ();
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ResourceLists {
+class ListType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-name
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType DisplayNameType;
+	typedef ::xsd::cxx::tree::optional<DisplayNameType> DisplayNameOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayNameType, char> DisplayNameTraits;
 
-        void
-        setName (const NameType& x);
-
-        void
-        setName (const NameOptional& x);
-
-        void
-        setName (::std::unique_ptr< NameType > p);
-
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	const DisplayNameOptional &getDisplayName() const;
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
-
-        AnyAttributeSet&
-        getAnyAttribute ();
-
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	DisplayNameOptional &getDisplayName();
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	void setDisplayName(const DisplayNameType &x);
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setDisplayName(const DisplayNameOptional &x);
 
-        // Constructors.
-        //
-        ListType ();
+	void setDisplayName(::std::unique_ptr<DisplayNameType> p);
 
-        ListType (const ::xercesc::DOMElement& e,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// list
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::List ListType1;
+	typedef ::xsd::cxx::tree::sequence<ListType1> ListSequence;
+	typedef ListSequence::iterator ListIterator;
+	typedef ListSequence::const_iterator ListConstIterator;
+	typedef ::xsd::cxx::tree::traits<ListType1, char> ListTraits;
 
-        ListType (const ListType& x,
-                  ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                  ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	const ListSequence &getList() const;
 
-        virtual ListType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ListSequence &getList();
 
-        ListType&
-        operator= (const ListType& x);
+	void setList(const ListSequence &s);
 
-        virtual 
-        ~ListType ();
+	// external
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::ExternalType ExternalType;
+	typedef ::xsd::cxx::tree::sequence<ExternalType> ExternalSequence;
+	typedef ExternalSequence::iterator ExternalIterator;
+	typedef ExternalSequence::const_iterator ExternalConstIterator;
+	typedef ::xsd::cxx::tree::traits<ExternalType, char> ExternalTraits;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	const ExternalSequence &getExternal() const;
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	ExternalSequence &getExternal();
 
-        DisplayNameOptional display_name_;
-        ListSequence list_;
-        ExternalSequence external_;
-        EntrySequence entry_;
-        EntryRefSequence entry_ref_;
-        AnySequence any_;
-        NameOptional name_;
-        AnyAttributeSet any_attribute_;
-      };
+	void setExternal(const ExternalSequence &s);
 
-      class EntryType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-name
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayName DisplayNameType;
-        typedef ::xsd::cxx::tree::optional< DisplayNameType > DisplayNameOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayNameType, char > DisplayNameTraits;
+	// entry
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::EntryType EntryType;
+	typedef ::xsd::cxx::tree::sequence<EntryType> EntrySequence;
+	typedef EntrySequence::iterator EntryIterator;
+	typedef EntrySequence::const_iterator EntryConstIterator;
+	typedef ::xsd::cxx::tree::traits<EntryType, char> EntryTraits;
 
-        const DisplayNameOptional&
-        getDisplayName () const;
+	const EntrySequence &getEntry() const;
 
-        DisplayNameOptional&
-        getDisplayName ();
+	EntrySequence &getEntry();
 
-        void
-        setDisplayName (const DisplayNameType& x);
+	void setEntry(const EntrySequence &s);
 
-        void
-        setDisplayName (const DisplayNameOptional& x);
+	// entry-ref
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::EntryRefType EntryRefType;
+	typedef ::xsd::cxx::tree::sequence<EntryRefType> EntryRefSequence;
+	typedef EntryRefSequence::iterator EntryRefIterator;
+	typedef EntryRefSequence::const_iterator EntryRefConstIterator;
+	typedef ::xsd::cxx::tree::traits<EntryRefType, char> EntryRefTraits;
 
-        void
-        setDisplayName (::std::unique_ptr< DisplayNameType > p);
+	const EntryRefSequence &getEntryRef() const;
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	EntryRefSequence &getEntryRef();
 
-        const AnySequence&
-        getAny () const;
+	void setEntryRef(const EntryRefSequence &s);
 
-        AnySequence&
-        getAny ();
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        void
-        setAny (const AnySequence& s);
+	const AnySequence &getAny() const;
 
-        // uri
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri UriType;
-        typedef ::xsd::cxx::tree::traits< UriType, char > UriTraits;
+	AnySequence &getAny();
 
-        const UriType&
-        getUri () const;
+	void setAny(const AnySequence &s);
 
-        UriType&
-        getUri ();
+	// name
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::String NameType;
+	typedef ::xsd::cxx::tree::optional<NameType> NameOptional;
+	typedef ::xsd::cxx::tree::traits<NameType, char> NameTraits;
 
-        void
-        setUri (const UriType& x);
+	const NameOptional &getName() const;
 
-        void
-        setUri (::std::unique_ptr< UriType > p);
+	NameOptional &getName();
 
-        ::std::unique_ptr< UriType >
-        setDetachUri ();
+	void setName(const NameType &x);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setName(const NameOptional &x);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	void setName(::std::unique_ptr<NameType> p);
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	AnyAttributeSet &getAnyAttribute();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Constructors.
-        //
-        EntryType (const UriType&);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        EntryType (const ::xercesc::DOMElement& e,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::xercesc::DOMDocument &getDomDocument();
 
-        EntryType (const EntryType& x,
-                   ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                   ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	ListType();
 
-        virtual EntryType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ListType(const ::xercesc::DOMElement &e,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        EntryType&
-        operator= (const EntryType& x);
+	ListType(const ListType &x,
+	         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~EntryType ();
+	virtual ListType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                         ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	ListType &operator=(const ListType &x);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual ~ListType();
 
-        DisplayNameOptional display_name_;
-        AnySequence any_;
-        ::xsd::cxx::tree::one< UriType > uri_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-      class EntryRefType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-name
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType DisplayNameType;
-        typedef ::xsd::cxx::tree::optional< DisplayNameType > DisplayNameOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayNameType, char > DisplayNameTraits;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const DisplayNameOptional&
-        getDisplayName () const;
+	DisplayNameOptional display_name_;
+	ListSequence list_;
+	ExternalSequence external_;
+	EntrySequence entry_;
+	EntryRefSequence entry_ref_;
+	AnySequence any_;
+	NameOptional name_;
+	AnyAttributeSet any_attribute_;
+};
 
-        DisplayNameOptional&
-        getDisplayName ();
+class EntryType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-name
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayName DisplayNameType;
+	typedef ::xsd::cxx::tree::optional<DisplayNameType> DisplayNameOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayNameType, char> DisplayNameTraits;
 
-        void
-        setDisplayName (const DisplayNameType& x);
+	const DisplayNameOptional &getDisplayName() const;
 
-        void
-        setDisplayName (const DisplayNameOptional& x);
+	DisplayNameOptional &getDisplayName();
 
-        void
-        setDisplayName (::std::unique_ptr< DisplayNameType > p);
+	void setDisplayName(const DisplayNameType &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setDisplayName(const DisplayNameOptional &x);
 
-        const AnySequence&
-        getAny () const;
+	void setDisplayName(::std::unique_ptr<DisplayNameType> p);
 
-        AnySequence&
-        getAny ();
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        void
-        setAny (const AnySequence& s);
+	const AnySequence &getAny() const;
 
-        // ref
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri RefType;
-        typedef ::xsd::cxx::tree::traits< RefType, char > RefTraits;
+	AnySequence &getAny();
 
-        const RefType&
-        getRef () const;
+	void setAny(const AnySequence &s);
 
-        RefType&
-        getRef ();
+	// uri
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri UriType;
+	typedef ::xsd::cxx::tree::traits<UriType, char> UriTraits;
 
-        void
-        setRef (const RefType& x);
+	const UriType &getUri() const;
 
-        void
-        setRef (::std::unique_ptr< RefType > p);
+	UriType &getUri();
 
-        ::std::unique_ptr< RefType >
-        setDetachRef ();
+	void setUri(const UriType &x);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setUri(::std::unique_ptr<UriType> p);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	::std::unique_ptr<UriType> setDetachUri();
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	AnyAttributeSet &getAnyAttribute();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Constructors.
-        //
-        EntryRefType (const RefType&);
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        EntryRefType (const ::xercesc::DOMElement& e,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::xercesc::DOMDocument &getDomDocument();
 
-        EntryRefType (const EntryRefType& x,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	EntryType(const UriType &);
 
-        virtual EntryRefType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	EntryType(const ::xercesc::DOMElement &e,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        EntryRefType&
-        operator= (const EntryRefType& x);
+	EntryType(const EntryType &x,
+	          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~EntryRefType ();
+	virtual EntryType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                          ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	EntryType &operator=(const EntryType &x);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual ~EntryType();
 
-        DisplayNameOptional display_name_;
-        AnySequence any_;
-        ::xsd::cxx::tree::one< RefType > ref_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-      class ExternalType: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // display-name
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType DisplayNameType;
-        typedef ::xsd::cxx::tree::optional< DisplayNameType > DisplayNameOptional;
-        typedef ::xsd::cxx::tree::traits< DisplayNameType, char > DisplayNameTraits;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const DisplayNameOptional&
-        getDisplayName () const;
+	DisplayNameOptional display_name_;
+	AnySequence any_;
+	::xsd::cxx::tree::one<UriType> uri_;
+	AnyAttributeSet any_attribute_;
+};
 
-        DisplayNameOptional&
-        getDisplayName ();
+class EntryRefType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-name
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType DisplayNameType;
+	typedef ::xsd::cxx::tree::optional<DisplayNameType> DisplayNameOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayNameType, char> DisplayNameTraits;
 
-        void
-        setDisplayName (const DisplayNameType& x);
+	const DisplayNameOptional &getDisplayName() const;
 
-        void
-        setDisplayName (const DisplayNameOptional& x);
+	DisplayNameOptional &getDisplayName();
 
-        void
-        setDisplayName (::std::unique_ptr< DisplayNameType > p);
+	void setDisplayName(const DisplayNameType &x);
 
-        // any
-        //
-        typedef ::xsd::cxx::tree::element_sequence AnySequence;
-        typedef AnySequence::iterator AnyIterator;
-        typedef AnySequence::const_iterator AnyConstIterator;
+	void setDisplayName(const DisplayNameOptional &x);
 
-        const AnySequence&
-        getAny () const;
+	void setDisplayName(::std::unique_ptr<DisplayNameType> p);
 
-        AnySequence&
-        getAny ();
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        void
-        setAny (const AnySequence& s);
+	const AnySequence &getAny() const;
 
-        // anchor
-        //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri AnchorType;
-        typedef ::xsd::cxx::tree::optional< AnchorType > AnchorOptional;
-        typedef ::xsd::cxx::tree::traits< AnchorType, char > AnchorTraits;
+	AnySequence &getAny();
 
-        const AnchorOptional&
-        getAnchor () const;
+	void setAny(const AnySequence &s);
 
-        AnchorOptional&
-        getAnchor ();
+	// ref
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri RefType;
+	typedef ::xsd::cxx::tree::traits<RefType, char> RefTraits;
 
-        void
-        setAnchor (const AnchorType& x);
+	const RefType &getRef() const;
 
-        void
-        setAnchor (const AnchorOptional& x);
+	RefType &getRef();
 
-        void
-        setAnchor (::std::unique_ptr< AnchorType > p);
+	void setRef(const RefType &x);
 
-        // any_attribute
-        //
-        typedef ::xsd::cxx::tree::attribute_set< char > AnyAttributeSet;
-        typedef AnyAttributeSet::iterator AnyAttributeIterator;
-        typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
+	void setRef(::std::unique_ptr<RefType> p);
 
-        const AnyAttributeSet&
-        getAnyAttribute () const;
+	::std::unique_ptr<RefType> setDetachRef();
 
-        AnyAttributeSet&
-        getAnyAttribute ();
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        void
-        setAnyAttribute (const AnyAttributeSet& s);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        // DOMDocument for wildcard content.
-        //
-        const ::xercesc::DOMDocument&
-        getDomDocument () const;
+	AnyAttributeSet &getAnyAttribute();
 
-        ::xercesc::DOMDocument&
-        getDomDocument ();
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-        // Constructors.
-        //
-        ExternalType ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        ExternalType (const ::xercesc::DOMElement& e,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	::xercesc::DOMDocument &getDomDocument();
 
-        ExternalType (const ExternalType& x,
-                      ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                      ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// Constructors.
+	//
+	EntryRefType(const RefType &);
 
-        virtual ExternalType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	EntryRefType(const ::xercesc::DOMElement &e,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        ExternalType&
-        operator= (const ExternalType& x);
+	EntryRefType(const EntryRefType &x,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        virtual 
-        ~ExternalType ();
+	virtual EntryRefType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	EntryRefType &operator=(const EntryRefType &x);
 
-        protected:
-        ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > dom_document_;
+	virtual ~EntryRefType();
 
-        DisplayNameOptional display_name_;
-        AnySequence any_;
-        AnchorOptional anchor_;
-        AnyAttributeSet any_attribute_;
-      };
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-      class DisplayNameType: public ::LinphonePrivate::Xsd::XmlSchema::String
-      {
-        public:
-        // lang
-        //
-        typedef ::namespace_::Lang LangType;
-        typedef ::xsd::cxx::tree::optional< LangType > LangOptional;
-        typedef ::xsd::cxx::tree::traits< LangType, char > LangTraits;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        const LangOptional&
-        getLang () const;
+	DisplayNameOptional display_name_;
+	AnySequence any_;
+	::xsd::cxx::tree::one<RefType> ref_;
+	AnyAttributeSet any_attribute_;
+};
 
-        LangOptional&
-        getLang ();
+class ExternalType : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// display-name
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType DisplayNameType;
+	typedef ::xsd::cxx::tree::optional<DisplayNameType> DisplayNameOptional;
+	typedef ::xsd::cxx::tree::traits<DisplayNameType, char> DisplayNameTraits;
 
-        void
-        setLang (const LangType& x);
+	const DisplayNameOptional &getDisplayName() const;
 
-        void
-        setLang (const LangOptional& x);
+	DisplayNameOptional &getDisplayName();
 
-        void
-        setLang (::std::unique_ptr< LangType > p);
+	void setDisplayName(const DisplayNameType &x);
 
-        // Constructors.
-        //
-        DisplayNameType ();
+	void setDisplayName(const DisplayNameOptional &x);
 
-        DisplayNameType (const char*);
+	void setDisplayName(::std::unique_ptr<DisplayNameType> p);
 
-        DisplayNameType (const ::std::string&);
+	// any
+	//
+	typedef ::xsd::cxx::tree::element_sequence AnySequence;
+	typedef AnySequence::iterator AnyIterator;
+	typedef AnySequence::const_iterator AnyConstIterator;
 
-        DisplayNameType (const ::LinphonePrivate::Xsd::XmlSchema::String&);
+	const AnySequence &getAny() const;
 
-        DisplayNameType (const ::xercesc::DOMElement& e,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	AnySequence &getAny();
 
-        DisplayNameType (const DisplayNameType& x,
-                         ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                         ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setAny(const AnySequence &s);
 
-        virtual DisplayNameType*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	// anchor
+	//
+	typedef ::LinphonePrivate::Xsd::XmlSchema::Uri AnchorType;
+	typedef ::xsd::cxx::tree::optional<AnchorType> AnchorOptional;
+	typedef ::xsd::cxx::tree::traits<AnchorType, char> AnchorTraits;
 
-        DisplayNameType&
-        operator= (const DisplayNameType& x);
+	const AnchorOptional &getAnchor() const;
 
-        virtual 
-        ~DisplayNameType ();
+	AnchorOptional &getAnchor();
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	void setAnchor(const AnchorType &x);
 
-        protected:
-        LangOptional lang_;
-      };
+	void setAnchor(const AnchorOptional &x);
 
-      class List: public ::LinphonePrivate::Xsd::ResourceLists::ListType
-      {
-        public:
-        // Constructors.
-        //
-        List ();
+	void setAnchor(::std::unique_ptr<AnchorType> p);
 
-        List (const ::xercesc::DOMElement& e,
-              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-              ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	// any_attribute
+	//
+	typedef ::xsd::cxx::tree::attribute_set<char> AnyAttributeSet;
+	typedef AnyAttributeSet::iterator AnyAttributeIterator;
+	typedef AnyAttributeSet::const_iterator AnyAttributeConstIterator;
 
-        List (const List& x,
-              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-              ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	const AnyAttributeSet &getAnyAttribute() const;
 
-        virtual List*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	AnyAttributeSet &getAnyAttribute();
 
-        virtual 
-        ~List ();
-      };
+	void setAnyAttribute(const AnyAttributeSet &s);
 
-      class DisplayName: public ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType
-      {
-        public:
-        // Constructors.
-        //
-        DisplayName ();
+	// DOMDocument for wildcard content.
+	//
+	const ::xercesc::DOMDocument &getDomDocument() const;
 
-        DisplayName (const char*);
+	::xercesc::DOMDocument &getDomDocument();
 
-        DisplayName (const ::std::string&);
+	// Constructors.
+	//
+	ExternalType();
 
-        DisplayName (const ::LinphonePrivate::Xsd::XmlSchema::String&);
+	ExternalType(const ::xercesc::DOMElement &e,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisplayName (const ::xercesc::DOMElement& e,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	ExternalType(const ExternalType &x,
+	             ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
 
-        DisplayName (const DisplayName& x,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	virtual ExternalType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                             ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
 
-        virtual DisplayName*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	ExternalType &operator=(const ExternalType &x);
 
-        virtual 
-        ~DisplayName ();
-      };
+	virtual ~ExternalType();
 
-      class ResourceLists: public ::LinphonePrivate::Xsd::XmlSchema::Type
-      {
-        public:
-        // list
-        //
-        typedef ::LinphonePrivate::Xsd::ResourceLists::ListType ListType;
-        typedef ::xsd::cxx::tree::sequence< ListType > ListSequence;
-        typedef ListSequence::iterator ListIterator;
-        typedef ListSequence::const_iterator ListConstIterator;
-        typedef ::xsd::cxx::tree::traits< ListType, char > ListTraits;
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
-        const ListSequence&
-        getList () const;
+protected:
+	::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> dom_document_;
 
-        ListSequence&
-        getList ();
+	DisplayNameOptional display_name_;
+	AnySequence any_;
+	AnchorOptional anchor_;
+	AnyAttributeSet any_attribute_;
+};
 
-        void
-        setList (const ListSequence& s);
+class DisplayNameType : public ::LinphonePrivate::Xsd::XmlSchema::String {
+public:
+	// lang
+	//
+	typedef ::namespace_::Lang LangType;
+	typedef ::xsd::cxx::tree::optional<LangType> LangOptional;
+	typedef ::xsd::cxx::tree::traits<LangType, char> LangTraits;
 
-        // Constructors.
-        //
-        ResourceLists ();
+	const LangOptional &getLang() const;
 
-        ResourceLists (const ::xercesc::DOMElement& e,
-                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                       ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	LangOptional &getLang();
 
-        ResourceLists (const ResourceLists& x,
-                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                       ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0);
+	void setLang(const LangType &x);
 
-        virtual ResourceLists*
-        _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                ::LinphonePrivate::Xsd::XmlSchema::Container* c = 0) const;
+	void setLang(const LangOptional &x);
 
-        ResourceLists&
-        operator= (const ResourceLists& x);
+	void setLang(::std::unique_ptr<LangType> p);
 
-        virtual 
-        ~ResourceLists ();
+	// Constructors.
+	//
+	DisplayNameType();
 
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::LinphonePrivate::Xsd::XmlSchema::Flags);
+	DisplayNameType(const char *);
 
-        protected:
-        ListSequence list_;
-      };
-    }
-  }
-}
+	DisplayNameType(const ::std::string &);
+
+	DisplayNameType(const ::LinphonePrivate::Xsd::XmlSchema::String &);
+
+	DisplayNameType(const ::xercesc::DOMElement &e,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	DisplayNameType(const DisplayNameType &x,
+	                ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	virtual DisplayNameType *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                                ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
+
+	DisplayNameType &operator=(const DisplayNameType &x);
+
+	virtual ~DisplayNameType();
+
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
+
+protected:
+	LangOptional lang_;
+};
+
+class List : public ::LinphonePrivate::Xsd::ResourceLists::ListType {
+public:
+	// Constructors.
+	//
+	List();
+
+	List(const ::xercesc::DOMElement &e,
+	     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	     ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	List(const List &x,
+	     ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	     ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	virtual List *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                     ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
+
+#ifdef XSD_CXX11
+	List &operator=(const List &) = default;
+#endif
+
+	virtual ~List();
+};
+
+class DisplayName : public ::LinphonePrivate::Xsd::ResourceLists::DisplayNameType {
+public:
+	// Constructors.
+	//
+	DisplayName();
+
+	DisplayName(const char *);
+
+	DisplayName(const ::std::string &);
+
+	DisplayName(const ::LinphonePrivate::Xsd::XmlSchema::String &);
+
+	DisplayName(const ::xercesc::DOMElement &e,
+	            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	DisplayName(const DisplayName &x,
+	            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	virtual DisplayName *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                            ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
+
+#ifdef XSD_CXX11
+	DisplayName &operator=(const DisplayName &) = default;
+#endif
+
+	virtual ~DisplayName();
+};
+
+class ResourceLists : public ::LinphonePrivate::Xsd::XmlSchema::Type {
+public:
+	// list
+	//
+	typedef ::LinphonePrivate::Xsd::ResourceLists::ListType ListType;
+	typedef ::xsd::cxx::tree::sequence<ListType> ListSequence;
+	typedef ListSequence::iterator ListIterator;
+	typedef ListSequence::const_iterator ListConstIterator;
+	typedef ::xsd::cxx::tree::traits<ListType, char> ListTraits;
+
+	const ListSequence &getList() const;
+
+	ListSequence &getList();
+
+	void setList(const ListSequence &s);
+
+	// Constructors.
+	//
+	ResourceLists();
+
+	ResourceLists(const ::xercesc::DOMElement &e,
+	              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	ResourceLists(const ResourceLists &x,
+	              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0);
+
+	virtual ResourceLists *_clone(::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+	                              ::LinphonePrivate::Xsd::XmlSchema::Container *c = 0) const;
+
+	ResourceLists &operator=(const ResourceLists &x);
+
+	virtual ~ResourceLists();
+
+	// Implementation.
+	//
+protected:
+	void parse(::xsd::cxx::xml::dom::parser<char> &, ::LinphonePrivate::Xsd::XmlSchema::Flags);
+
+protected:
+	ListSequence list_;
+};
+} // namespace ResourceLists
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <iosfwd>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ResourceLists
-    {
-      ::std::ostream&
-      operator<< (::std::ostream&, const ListType&);
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ResourceLists {
+::std::ostream &operator<<(::std::ostream &, const ListType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const EntryType&);
+::std::ostream &operator<<(::std::ostream &, const EntryType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const EntryRefType&);
+::std::ostream &operator<<(::std::ostream &, const EntryRefType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ExternalType&);
+::std::ostream &operator<<(::std::ostream &, const ExternalType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const DisplayNameType&);
+::std::ostream &operator<<(::std::ostream &, const DisplayNameType &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const List&);
+::std::ostream &operator<<(::std::ostream &, const List &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const DisplayName&);
+::std::ostream &operator<<(::std::ostream &, const DisplayName &);
 
-      ::std::ostream&
-      operator<< (::std::ostream&, const ResourceLists&);
-    }
-  }
-}
+::std::ostream &operator<<(::std::ostream &, const ResourceLists &);
+} // namespace ResourceLists
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <iosfwd>
 
-#include <xercesc/sax/InputSource.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMErrorHandler.hpp>
+#include <xercesc/sax/InputSource.hpp>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ResourceLists
-    {
-      // Parse a URI or a local file.
-      //
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ResourceLists {
+// Parse a URI or a local file.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (const ::std::string& uri,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (const ::std::string& uri,
-                          ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    const ::std::string &uri,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (const ::std::string& uri,
-                          ::xercesc::DOMErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    const ::std::string &uri,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      // Parse std::istream.
-      //
+// Parse std::istream.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::std::istream& is,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::std::istream& is,
-                          ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::std::istream &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::std::istream& is,
-                          ::xercesc::DOMErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::std::istream &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::std::istream& is,
-                          const ::std::string& id,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::std::istream& is,
-                          const ::std::string& id,
-                          ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::std::istream& is,
-                          const ::std::string& id,
-                          ::xercesc::DOMErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::std::istream &is,
+    const ::std::string &id,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      // Parse xercesc::InputSource.
-      //
+// Parse xercesc::InputSource.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::xercesc::InputSource& is,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::xercesc::InputSource& is,
-                          ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::xercesc::InputSource &is,
+    ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::xercesc::InputSource& is,
-                          ::xercesc::DOMErrorHandler& eh,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::xercesc::InputSource &is,
+    ::xercesc::DOMErrorHandler &eh,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      // Parse xercesc::DOMDocument.
-      //
+// Parse xercesc::DOMDocument.
+//
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (const ::xercesc::DOMDocument& d,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    const ::xercesc::DOMDocument &d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ResourceLists::ResourceLists >
-      parseResourceLists (::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d,
-                          ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
-                          const ::LinphonePrivate::Xsd::XmlSchema::Properties& p = ::LinphonePrivate::Xsd::XmlSchema::Properties ());
-    }
-  }
-}
+::std::unique_ptr<::LinphonePrivate::Xsd::ResourceLists::ResourceLists> parseResourceLists(
+    ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument> d,
+    ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
+    const ::LinphonePrivate::Xsd::XmlSchema::Properties &p = ::LinphonePrivate::Xsd::XmlSchema::Properties());
+} // namespace ResourceLists
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <iosfwd>
 
@@ -1182,119 +1027,108 @@ namespace LinphonePrivate
 
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
 
-namespace LinphonePrivate
-{
-  namespace Xsd
-  {
-    namespace ResourceLists
-    {
-      void
-      operator<< (::xercesc::DOMElement&, const ListType&);
+namespace LinphonePrivate {
+namespace Xsd {
+namespace ResourceLists {
+void operator<<(::xercesc::DOMElement &, const ListType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const EntryType&);
+void operator<<(::xercesc::DOMElement &, const EntryType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const EntryRefType&);
+void operator<<(::xercesc::DOMElement &, const EntryRefType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ExternalType&);
+void operator<<(::xercesc::DOMElement &, const ExternalType &);
 
-      // Serialize to std::ostream.
-      //
+// Serialize to std::ostream.
+//
 
-      void
-      serializeResourceLists (::std::ostream& os,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              const ::std::string& e = "UTF-8",
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::std::ostream &os,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            const ::std::string &e = "UTF-8",
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeResourceLists (::std::ostream& os,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              const ::std::string& e = "UTF-8",
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::std::ostream &os,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            const ::std::string &e = "UTF-8",
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeResourceLists (::std::ostream& os,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              ::xercesc::DOMErrorHandler& eh,
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              const ::std::string& e = "UTF-8",
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::std::ostream &os,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            ::xercesc::DOMErrorHandler &eh,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            const ::std::string &e = "UTF-8",
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      // Serialize to xercesc::XMLFormatTarget.
-      //
+// Serialize to xercesc::XMLFormatTarget.
+//
 
-      void
-      serializeResourceLists (::xercesc::XMLFormatTarget& ft,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              const ::std::string& e = "UTF-8",
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::xercesc::XMLFormatTarget &ft,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            const ::std::string &e = "UTF-8",
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeResourceLists (::xercesc::XMLFormatTarget& ft,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& eh,
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              const ::std::string& e = "UTF-8",
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::xercesc::XMLFormatTarget &ft,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler &eh,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            const ::std::string &e = "UTF-8",
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      serializeResourceLists (::xercesc::XMLFormatTarget& ft,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              ::xercesc::DOMErrorHandler& eh,
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              const ::std::string& e = "UTF-8",
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::xercesc::XMLFormatTarget &ft,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            ::xercesc::DOMErrorHandler &eh,
+                            const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                                ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                            const ::std::string &e = "UTF-8",
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      // Serialize to an existing xercesc::DOMDocument.
-      //
+// Serialize to an existing xercesc::DOMDocument.
+//
 
-      void
-      serializeResourceLists (::xercesc::DOMDocument& d,
-                              const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x,
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+void serializeResourceLists(::xercesc::DOMDocument &d,
+                            const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                            ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      // Serialize to a new xercesc::DOMDocument.
-      //
+// Serialize to a new xercesc::DOMDocument.
+//
 
-      ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument >
-      serializeResourceLists (const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists& x, 
-                              const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m = ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap (),
-                              ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
+::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr<::xercesc::DOMDocument>
+serializeResourceLists(const ::LinphonePrivate::Xsd::ResourceLists::ResourceLists &x,
+                       const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap &m =
+                           ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap(),
+                       ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0);
 
-      void
-      operator<< (::xercesc::DOMElement&, const DisplayNameType&);
+void operator<<(::xercesc::DOMElement &, const DisplayNameType &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const List&);
+void operator<<(::xercesc::DOMElement &, const List &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const DisplayName&);
+void operator<<(::xercesc::DOMElement &, const DisplayName &);
 
-      void
-      operator<< (::xercesc::DOMElement&, const ResourceLists&);
-    }
-  }
-}
+void operator<<(::xercesc::DOMElement &, const ResourceLists &);
+} // namespace ResourceLists
+} // namespace Xsd
+} // namespace LinphonePrivate
 
 #include <xsd/cxx/post.hxx>
 
 // Begin epilogue.
 //
 #if __GNUC__ >= 7
-	#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 #if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1)
-	#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 #if __clang__ || __GNUC__ >= 4
-	#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 //
 // End epilogue.

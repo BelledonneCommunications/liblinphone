@@ -52,8 +52,7 @@ Participant::Participant(std::shared_ptr<Address> address) : addr(address) {
 }
 
 Participant::~Participant() {
-	bctbx_debug("Destroying participant [%p] (address: %s)", this,
-	            (addr) ? addr->toString().c_str() : "<unknown address>");
+	bctbx_debug("Destroying participant [%p] (address: %s)", this, (addr) ? addr->toString().c_str() : "sip:unknown");
 }
 
 void Participant::configure(const std::shared_ptr<Conference> conference,

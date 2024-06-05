@@ -57,7 +57,6 @@ class LINPHONE_PUBLIC ServerConferenceEventHandler : public std::enable_shared_f
 	friend class Tester;
 #endif
 public:
-	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
 	ServerConferenceEventHandler(std::shared_ptr<Conference> conf, ConferenceListener *listener = nullptr);
 
 	void publishStateChanged(const std::shared_ptr<EventPublish> &ev, LinphonePublishState state);

@@ -530,6 +530,7 @@ ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
 		});
 		if (pIt == participantList.end()) {
 			auto participantInfo = ParticipantInfo::create(pAddress);
+			participantInfo->setRole(p->getRole());
 			participantList.push_back(participantInfo);
 		}
 	}
@@ -869,8 +870,8 @@ shared_ptr<Participant> Conference::findParticipant(const shared_ptr<const CallS
 	}
 
 	lWarning() << "Unable to find participant in conference "
-	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
-	           << " (" << this << ") with session " << session;
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " ("
+	           << this << ") with session " << session;
 	return nullptr;
 }
 
@@ -882,8 +883,8 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<const 
 	}
 
 	lWarning() << "Unable to find participant in conference "
-	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
-	           << " (" << this << ") with address " << *addr;
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " ("
+	           << this << ") with address " << *addr;
 	return nullptr;
 }
 
@@ -898,8 +899,8 @@ Conference::findInvitedParticipant(const std::shared_ptr<const Address> &partici
 	}
 
 	lWarning() << "Unable to find invited participant in conference "
-	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
-	           << " (" << this << ") with address " << *participantAddress;
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " ("
+	           << this << ") with address " << *participantAddress;
 	return nullptr;
 }
 
@@ -911,8 +912,8 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const Lin
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
-	         << " with " << std::string(linphone_stream_type_to_string(type)) << " label " << label;
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " with "
+	         << std::string(linphone_stream_type_to_string(type)) << " label " << label;
 
 	return nullptr;
 }
@@ -926,7 +927,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceBySsrc(uint32_t s
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"))
 	         << " with ssrc " << ssrc;
 
 	return nullptr;
@@ -944,7 +945,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::share
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown-address>"))
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"))
 	         << " with device address " << *dAddr << " belonging to participant " << *pAddr;
 
 	return nullptr;
@@ -960,7 +961,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const shared_ptr
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown-address>"))
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"))
 	         << " with call session " << session;
 
 	return nullptr;
@@ -1805,6 +1806,10 @@ bool Conference::isSubscriptionUnderWay() const {
 std::shared_ptr<Player> Conference::getPlayer() const {
 	lWarning() << "Getting a player is not available for this conference.";
 	return nullptr;
+}
+
+bool Conference::supportsMedia() const {
+	return ((mConfParams->audioEnabled() || mConfParams->videoEnabled()));
 }
 
 void Conference::setChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom) {

@@ -106,6 +106,11 @@ public:
 	unsigned int getIcsSequence() const;
 	void setIcsSequence(unsigned int icsSequence);
 
+	const std::string &getCcmpUri() const;
+	const std::string getUtf8CcmpUri() const;
+	void setCcmpUri(const std::string &uid);
+	void setUtf8CcmpUri(const std::string &uid);
+
 	const std::string &getIcsUid() const;
 	const std::string getUtf8IcsUid() const;
 	void setIcsUid(const std::string &uid);
@@ -136,6 +141,7 @@ private:
 	void updateParticipantAddresses() const;
 	participant_list_t::const_iterator findParticipantIt(const std::shared_ptr<const Address> &address) const;
 
+	mutable std::string mCcmpUri = "";
 	organizer_t mOrganizer;
 	mutable std::shared_ptr<Address> mOrganizerAddress;
 	participant_list_t mParticipants;

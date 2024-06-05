@@ -32,7 +32,7 @@ class CallSession;
 
 class LINPHONE_PUBLIC SIPConferenceScheduler : public CallSessionListener, public ConferenceScheduler {
 public:
-	SIPConferenceScheduler(const std::shared_ptr<Core> &core);
+	SIPConferenceScheduler(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account = nullptr);
 	virtual ~SIPConferenceScheduler();
 
 	virtual void onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) override;
@@ -41,7 +41,7 @@ public:
 	                                       const std::string &message) override;
 	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
 	                                      const std::shared_ptr<Address> &creator) override;
-	virtual void processResponse(const LinphoneErrorInfo *errorCode,
+	virtual void processResponse(const LinphoneErrorInfo *errorInfo,
 	                             const std::shared_ptr<Address> conferenceAddress) override;
 
 private:

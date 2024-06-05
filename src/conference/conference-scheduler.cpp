@@ -37,16 +37,17 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ConferenceScheduler::ConferenceScheduler(const shared_ptr<Core> &core) : CoreAccessor(core) {
+ConferenceScheduler::ConferenceScheduler(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account)
+    : CoreAccessor(core) {
 	mState = State::Idle;
-	mAccount = core->getDefaultAccount();
+	mAccount = account ? account : core->getDefaultAccount();
 }
 
 const std::shared_ptr<Account> ConferenceScheduler::getAccount() const {
 	return mAccount.lock();
 }
 
-void ConferenceScheduler::setAccount(std::shared_ptr<Account> account) {
+void ConferenceScheduler::setAccount(const std::shared_ptr<Account> &account) {
 	if ((mState == State::Idle) || (mState == State::AllocationPending) || (mState == State::Error)) {
 		mAccount = account;
 	} else {

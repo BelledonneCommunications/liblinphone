@@ -3983,7 +3983,14 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 		BC_ASSERT_EQUAL(pauline_messages, 2, int, "%d");
 
 		if (exhumedConfAddr) {
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+			const char *old_conf_id = linphone_address_get_uri_param(confAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(old_conf_id);
+			const char *new_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(new_conf_id);
+			if (old_conf_id && new_conf_id) {
+				BC_ASSERT_STRING_NOT_EQUAL(old_conf_id, new_conf_id);
+			}
+			BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
 			marieOneToOneCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats,
 			                                                       exhumedConfAddr, "one to one", 1, TRUE);
 			BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr);
@@ -4095,10 +4102,25 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(const int cu
 		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
 
 		if (exhumedConfAddr) {
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+			const char *old_conf_id = linphone_address_get_uri_param(confAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(old_conf_id);
+			const char *new_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(new_conf_id);
+			if (old_conf_id && new_conf_id) {
+				BC_ASSERT_STRING_NOT_EQUAL(old_conf_id, new_conf_id);
+			}
+			BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
 			LinphoneAddress *paulineNewConfAddr =
 			    linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
-			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, paulineNewConfAddr));
+			const char *pauline_new_conf_id = linphone_address_get_uri_param(paulineNewConfAddr, "conf-id");
+			BC_ASSERT_PTR_NOT_NULL(pauline_new_conf_id);
+			if (old_conf_id && pauline_new_conf_id) {
+				BC_ASSERT_STRING_NOT_EQUAL(old_conf_id, pauline_new_conf_id);
+			}
+			BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, paulineNewConfAddr));
+			if (new_conf_id && pauline_new_conf_id) {
+				BC_ASSERT_STRING_EQUAL(new_conf_id, pauline_new_conf_id);
+			}
 			BC_ASSERT_TRUE(linphone_address_weak_equal(exhumedConfAddr, paulineNewConfAddr));
 			if (paulineNewConfAddr) linphone_address_unref(paulineNewConfAddr);
 
