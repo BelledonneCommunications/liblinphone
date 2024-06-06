@@ -1218,7 +1218,6 @@ void ChatMessagePrivate::send() {
 	}
 
 	const auto toAddr = toAddress->toC();
-	const auto fromAddr = fromAddress->toC();
 	if (linphone_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
 		lcall = linphone_core_get_call_by_remote_address2(core->getCCore(), toAddr);
 		if (lcall) {
@@ -1246,6 +1245,11 @@ void ChatMessagePrivate::send() {
 	if (!op) {
 		/* Sending out of call */
 		salOp = op = new SalMessageOp(core->getCCore()->sal.get());
+		if (!fromAddress) {
+			lError() << "The from address of ChatMessage [" << q << "] is unknwon";
+			return;
+		}
+		const auto fromAddr = fromAddress->toC();
 		linphone_configure_op_2(core->getCCore(), op, fromAddr, toAddr, getSalCustomHeaders(),
 		                        !!linphone_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0));
 		op->setUserPointer(q); /* If out of call, directly store msg */
