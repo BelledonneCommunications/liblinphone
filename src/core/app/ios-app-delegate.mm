@@ -25,6 +25,11 @@
 #include "push-notification/push-notification-config.h"
 #include "call/call.h"
 
+#define DISPATCH_ASYNC_MAIN(blockName) {\
+	if ([NSThread isMainThread]) {blockName();}\
+	else {dispatch_async(dispatch_get_main_queue(), blockName);}\
+}
+
 @implementation IosObject
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core {
@@ -131,10 +136,12 @@
 	voipRegistry = [[PKPushRegistry alloc] initWithQueue:pushAndAppDelegateDispatchQueue];
 	voipRegistry.delegate = self;
 	voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
-		
-	ms_message("[APNs] register for push notif");
-	[[UIApplication sharedApplication] registerForRemoteNotifications];
-
+	
+	DISPATCH_ASYNC_MAIN(^{
+		ms_message("[APNs] register for push notif");
+		[[UIApplication sharedApplication] registerForRemoteNotifications];
+	});
+	
 	linphone_push_notification_config_set_bundle_identifier(core->getCCore()->push_config, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
@@ -263,7 +270,7 @@
 
 	ms_message("[PushKit] Processing remote notification on queue: %s", dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL));
 	linphone_core_start(lc);
-	// support only for calls
+	// support only for calls	
 	NSDictionary *aps = [userInfo objectForKey:@"aps"];
 	NSString *callId = [aps objectForKey:@"call-id"] ?: @"";
 
