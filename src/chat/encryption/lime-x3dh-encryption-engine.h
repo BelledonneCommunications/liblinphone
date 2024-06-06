@@ -25,7 +25,6 @@
 #include "belle-sip/http-listener.h"
 #include "core/core-listener.h"
 #include "encryption-engine.h"
-#include "lime-x3dh-server-engine.h"
 #include "lime/lime.hpp"
 
 // =============================================================================

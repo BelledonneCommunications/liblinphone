@@ -53,6 +53,7 @@
 #ifdef HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
 #endif // HAVE_LIME_X3DH
+#include "chat/encryption/lime-x3dh-server-engine.h"
 #include "conference/conference.h"
 #include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/handlers/server-conference-list-event-handler.h"

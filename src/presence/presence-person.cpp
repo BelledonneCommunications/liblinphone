@@ -25,7 +25,9 @@
 #include "presence/presence-activity.h"
 #include "presence/presence-model.h"
 #include "presence/presence-note.h"
+#ifdef HAVE_XML2
 #include "xml/xml-parsing-context.h"
+#endif // HAVE_XML2
 
 // =============================================================================
 

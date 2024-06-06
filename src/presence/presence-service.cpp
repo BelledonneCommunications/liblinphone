@@ -18,14 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
 #include <cmath>
+
+#include <bctoolbox/defs.h>
 
 #include "friend/friend.h"
 #include "presence/presence-model.h"
 #include "presence/presence-note.h"
 #include "presence/presence-service.h"
+#ifdef HAVE_XML2
 #include "xml/xml-parsing-context.h"
+#endif // HAVE_XML2
 
 // =============================================================================
 

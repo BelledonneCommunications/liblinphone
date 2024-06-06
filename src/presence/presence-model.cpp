@@ -18,8 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
 #include <numeric>
+
+#include <bctoolbox/defs.h>
 
 #include "friend/friend.h"
 #include "linphone/types.h"
@@ -28,7 +29,9 @@
 #include "presence-note.h"
 #include "presence-person.h"
 #include "presence-service.h"
+#ifdef HAVE_XML2
 #include "xml/xml-parsing-context.h"
+#endif // HAVE_XML2
 
 #include "private.h" // TODO: To remove if possible
 

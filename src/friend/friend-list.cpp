@@ -21,18 +21,18 @@
 #include <fstream>
 #include <set>
 
+#include "bctoolbox/list.h"
 #include <bctoolbox/defs.h>
 
-#include "bctoolbox/list.h"
-#include "core/core-p.h"
 #include "friend-list.h"
-#include "friend.h"
 
 #include "c-wrapper/internal/c-tools.h"
 #include "content/content.h"
+#include "core/core-p.h"
 #include "core/core.h"
 #include "db/main-db.h"
 #include "event/event.h"
+#include "friend.h"
 #include "http/http-client.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
@@ -44,7 +44,9 @@
 #include "vcard/carddav-context.h"
 #include "vcard/vcard-context.h"
 #include "vcard/vcard.h"
+#ifdef HAVE_XML2
 #include "xml/xml-parsing-context.h"
+#endif // HAVE_XML2
 
 // =============================================================================
 

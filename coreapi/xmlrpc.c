@@ -21,13 +21,12 @@
 #include <string.h>
 
 #ifdef HAVE_XML2
+#include "xml/xml-parsing-context.h"
 #include <libxml/tree.h>
 #include <libxml/xmlwriter.h>
-#endif
+#endif // HAVE_XML2
 
 #include "bctoolbox/defs.h"
-
-#include "xml/xml-parsing-context.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "http/http-client.h"

@@ -42,6 +42,11 @@ class AbstractChatRoom;
 class ChatMessage;
 class Account;
 
+class LimeX3dhUtils {
+public:
+	static bool isMessageEncrypted(const Content &internalContent);
+};
+
 using EncryptionParameter = std::pair<std::string, std::string>;
 
 class EncryptionEngine : public CoreAccessor {

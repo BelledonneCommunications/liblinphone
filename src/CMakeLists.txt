@@ -442,6 +442,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/chat-room.cpp
 	chat/chat-room/chat-params.cpp
+	chat/encryption/encryption-engine.cpp
 	chat/encryption/legacy-encryption-engine.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp

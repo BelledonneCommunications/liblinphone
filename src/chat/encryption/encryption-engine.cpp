@@ -18,25 +18,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_LIME_X3DH_SERVER_ENGINE_H_
-#define _L_LIME_X3DH_SERVER_ENGINE_H_
+#include <string>
 
-#include "core/core-listener.h"
+#include "content/content-type.h"
+#include "content/content.h"
+#include "content/header/header-param.h"
 #include "encryption-engine.h"
 
-// =============================================================================
+using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LimeX3dhEncryptionServerEngine : public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
-public:
-	LimeX3dhEncryptionServerEngine(const std::shared_ptr<Core> core);
-	~LimeX3dhEncryptionServerEngine();
-	ChatMessageModifier::Result processOutgoingMessage(const std::shared_ptr<ChatMessage> &message,
-	                                                   int &errorCode) override;
-	EncryptionEngine::EngineType getEngineType() override;
-};
+bool LimeX3dhUtils::isMessageEncrypted(const Content &internalContent) {
+	const ContentType &incomingContentType = internalContent.getContentType();
+	ContentType expectedContentType = ContentType::Encrypted;
+
+	if (incomingContentType == expectedContentType) {
+		string protocol = incomingContentType.getParameter("protocol").getValue();
+		if (protocol == "\"application/lime\"") {
+			return true;
+		} else if (protocol.empty()) {
+			lWarning() << "Accepting possible legacy lime message.";
+			return true;
+		}
+	}
+
+	return false;
+}
 
 LINPHONE_END_NAMESPACE
-
-#endif // _L_LIME_X3DH_SERVER_ENGINE_H_
