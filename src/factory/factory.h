@@ -223,7 +223,20 @@ public:
 	bool isCacheDirSet() const;
 	void setCacheDir(const std::string &path);
 
-	void setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
+	/**
+	 * Set the Encrypted Virtual Filesystem encryption
+	 *
+	 * @param[in] 	encryptionModule 	The selected encryption module according to the mapping defined in c-factory.h.
+	 * One of: LINPHONE_VFS_ENCRYPTION_UNSET, LINPHONE_VFS_ENCRYPTION_PLAIN, LINPHONE_VFS_ENCRYPTION_DUMMY,
+	 * LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256
+	 * @param[in]	secret			The secret key to be provided to the EVFS on file opening
+	 * @param[in]	secretSize		Size of the secret key buffer
+	 *
+	 * @return	true if everything went well. False in case of error:
+	 * 		- the encryption module is unknown
+	 * 		- unable to open a pre-existing check file with the given key.
+	 */
+	bool setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
 
 	std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
 	std::shared_ptr<ConferenceInfo> createConferenceInfoFromIcalendarContent(LinphoneContent *content) const;

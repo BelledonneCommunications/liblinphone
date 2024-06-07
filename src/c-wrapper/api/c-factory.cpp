@@ -476,11 +476,11 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->isImdnAvailable();
 }
 
-void linphone_factory_set_vfs_encryption(LinphoneFactory *factory,
-                                         const uint16_t encryptionModule,
-                                         const uint8_t *secret,
-                                         const size_t secretSize) {
-	return Factory::toCpp(factory)->setVfsEncryption(encryptionModule, secret, secretSize);
+bool_t linphone_factory_set_vfs_encryption(LinphoneFactory *factory,
+                                           const uint16_t encryptionModule,
+                                           const uint8_t *secret,
+                                           const size_t secretSize) {
+	return Factory::toCpp(factory)->setVfsEncryption(encryptionModule, secret, secretSize) ? TRUE : FALSE;
 }
 
 LinphoneDigestAuthenticationPolicy *

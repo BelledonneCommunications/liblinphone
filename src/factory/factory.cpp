@@ -47,7 +47,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "bctoolbox/crypto.h"
+#include "bctoolbox/crypto.hh"
 #include "bctoolbox/defs.h"
 #include "bctoolbox/vfs_encrypted.hh"
 
@@ -713,32 +713,32 @@ bool_t Factory::isImdnAvailable() const {
 #endif
 }
 
-void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
+bool Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
 
 	/* Check encryptionMpdule is valid */
 	auto module = bctoolbox::EncryptionSuite::unset;
 	switch (encryptionModule) {
 		case LINPHONE_VFS_ENCRYPTION_UNSET: // do not use the encrypted VFS
-			bctbx_warning("linphone_factory_set_vfs_encryption : disable encryption");
+			lWarning() << "Factory::SetVFSEncryption : disable encryption";
 			bctbx_vfs_set_default(bctbx_vfs_get_standard());
 			bctoolbox::VfsEncryption::openCallbackSet(nullptr);
-			return;
+			return true;
 		case LINPHONE_VFS_ENCRYPTION_PLAIN: // use the encrypted VFS but write plain files
-			bctbx_warning("linphone_factory_set_vfs_encryption : encryptionModule set to plain text");
+			lWarning() << "Factory::SetVFSEncryption : encryptionModule set to plain text";
 			module = bctoolbox::EncryptionSuite::plain;
 			break;
 		case LINPHONE_VFS_ENCRYPTION_DUMMY:
-			bctbx_warning("linphone_factory_set_vfs_encryption : encryptionModule set to dummy: use this setting for "
-			              "testing only");
+			lWarning()
+			    << "Factory::SetVFSEncryption : encryptionModule set to dummy: use this setting for testing only";
 			module = bctoolbox::EncryptionSuite::dummy;
 			break;
 		case LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256:
-			bctbx_message("linphone_factory_set_vfs_encryption : encryptionModule set to AES256GCM_SHA256");
+			lInfo() << "Factory::SetVFSEncryption : encryptionModule set to AES256GCM_SHA256";
 			module = bctoolbox::EncryptionSuite::aes256gcm128_sha256;
 			break;
 		default:
-			bctbx_error("linphone_factory_set_vfs_encryption : encryptionModule %04x unknown", encryptionModule);
-			return;
+			lError() << "Factory::SetVFSEncryption : encryptionModule " << std::hex << encryptionModule << " unknown";
+			return false;
 	}
 
 	/* save the key */
@@ -761,6 +761,40 @@ void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *s
 			settings.secretMaterialSet(*mEvfsMasterKey);
 		}
 	});
+
+	// not secret continuity check when plain is used
+	if (module == bctoolbox::EncryptionSuite::plain) return true;
+
+	// Check secret continuity mechanism:
+	// in order to detect early - and be specific - an EVFS master key change (the EVFS master key is kept in the OS
+	// keychain which may change it) check that a dedicated file exists:
+	//  - if not create it (encrypted with current master key)
+	//  - if it exists, open it. If we succeed, our key seems valid.
+	if (!isDataDirSet()) {
+		lWarning()
+		    << "Factory::SetVFSEncryption cannot check the secret key continuity as data dir is not set in factory";
+		return true;
+	}
+	std::string filePath(mDataDir);
+	filePath.append("/EVFScheck.").append(encryptionSuiteString(module));
+	if (bctbx_file_exist(filePath.c_str()) == 0) {
+		auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.c_str(), "r");
+		if (fp == NULL) {
+			lError() << "Factory::SetVFSEncryptionError: secret key continuity check failure, unable to open "
+			         << filePath;
+			return false;
+		}
+		bctbx_file_close(fp);
+		return true;
+	} else { // the file does not exists yet, create it and write something random in it
+		lInfo() << "Factory::SetVFSEncryption: secret key continuity file " << filePath << " created";
+		auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.c_str(), "w");
+		std::vector<uint8_t> randomContent(64);
+		bctoolbox::RNG::cRandomize(randomContent.data(), randomContent.size());
+		bctbx_file_write(fp, randomContent.data(), randomContent.size(), 0);
+		bctbx_file_close(fp);
+		return true;
+	}
 }
 
 LinphoneDigestAuthenticationPolicy *Factory::createDigestAuthenticationPolicy() const {

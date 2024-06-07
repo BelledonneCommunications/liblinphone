@@ -995,11 +995,14 @@ linphone_factory_create_core_with_config_2(const LinphoneFactory *factory,
  * @param[in]	secret			the secret material used to encrypt the files, can be NULL for the _PLAIN module
  * @maybenil
  * @param[in]	secretSize		size of the secret
+ *
+ * @return true if everything went well, false if it appears that the given secret is unable to decrypt existing
+ * configuration
  */
-LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption(LinphoneFactory *factory,
-                                                         const uint16_t encryptionModule,
-                                                         const uint8_t *secret,
-                                                         const size_t secretSize);
+LINPHONE_PUBLIC bool_t linphone_factory_set_vfs_encryption(LinphoneFactory *factory,
+                                                           const uint16_t encryptionModule,
+                                                           const uint8_t *secret,
+                                                           const size_t secretSize);
 
 /**
  * Create a #LinphoneDigestAuthenticationPolicy object.

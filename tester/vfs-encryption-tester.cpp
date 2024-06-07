@@ -598,7 +598,7 @@ end:
 	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
 }
 
-static void file_transfer_test() {
+static void file_transfer_test(void) {
 	char random_id[8];
 	char *id;
 	belle_sip_random_token(random_id, sizeof random_id);
@@ -613,9 +613,37 @@ static void file_transfer_test() {
 	file_transfer_test(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false, "evfs_file_transfer");
 	bctbx_free(id);
 }
-test_t vfs_encryption_tests[] = {
-    TEST_ONE_TAG("Register user", register_user_test, "CRYPTO"), TEST_ONE_TAG("ZRTP call", zrtp_call_test, "CRYPTO"),
-    TEST_ONE_TAG("Migration", migration_test, "CRYPTO"), TEST_ONE_TAG("File transfer", file_transfer_test, "CRYPTO")};
+
+static void secret_key_continuity_test(void) {
+	// Set the factory data dir
+	linphone_factory_set_data_dir(linphone_factory_get(), bc_tester_get_writable_dir_prefix());
+	std::string EVFSCheckFilepath(bc_tester_get_writable_dir_prefix());
+	EVFSCheckFilepath.append("/EVFScheck.AES256GCM_SHA256");
+	unlink(EVFSCheckFilepath.c_str());
+	// Set the VFS encryption
+	uint8_t evfs_key[32] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
+	                        0xf0, 0x11, 0x22, 0x33, 0x44, 0x5a, 0xa5, 0x5F, 0xaF, 0x52, 0xa4,
+	                        0xa6, 0x58, 0xaa, 0x5c, 0xae, 0x50, 0xa1, 0x52, 0xa3, 0x54};
+	BC_ASSERT_TRUE(linphone_factory_set_vfs_encryption(linphone_factory_get(),
+	                                                   LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, evfs_key, 32));
+	// Try to set it again with a different key
+	evfs_key[0] ^= 0xFF;
+	BC_ASSERT_FALSE(linphone_factory_set_vfs_encryption(linphone_factory_get(),
+	                                                    LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, evfs_key, 32));
+	// Try again with the original key
+	evfs_key[0] ^= 0xFF;
+	BC_ASSERT_TRUE(linphone_factory_set_vfs_encryption(linphone_factory_get(),
+	                                                   LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, evfs_key, 32));
+	unlink(EVFSCheckFilepath.c_str());
+
+	// reset VFS encryption
+	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
+}
+
+test_t vfs_encryption_tests[] = {TEST_NO_TAG("Register user", register_user_test),
+                                 TEST_NO_TAG("ZRTP call", zrtp_call_test), TEST_NO_TAG("Migration", migration_test),
+                                 TEST_NO_TAG("File transfer", file_transfer_test),
+                                 TEST_NO_TAG("Secret Key Continuity", secret_key_continuity_test)};
 
 test_suite_t vfs_encryption_test_suite = {"VFS encryption",
                                           NULL,
