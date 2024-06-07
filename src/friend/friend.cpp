@@ -454,8 +454,8 @@ const list<shared_ptr<FriendDevice>> Friend::getDevicesForAddress(BCTBX_UNUSED(c
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
 	if (mainDb) {
 		devicesList = mainDb->getDevices(Address::create(address));
-		lInfo() << "[Friend] Found [" << devicesList.size() << "] devices for address [" << address.asStringUriOnly()
-		        << "]";
+		lDebug() << "[Friend] Found [" << devicesList.size() << "] devices for address [" << address.asStringUriOnly()
+		         << "]";
 
 		const auto *encryptionEngine = getCore()->getEncryptionEngine();
 		if (encryptionEngine != nullptr) {

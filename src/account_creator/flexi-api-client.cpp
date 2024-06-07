@@ -520,7 +520,8 @@ void FlexiAPIClient::prepareAndSendRootRequest(string path, string type, string 
 
 	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
 	                                belle_sip_header_content_type_create("application", contentSubtype.c_str()),
-	                                belle_sip_header_accept_create("application", contentSubtype.c_str()), NULL);
+	                                belle_sip_header_accept_create("application", contentSubtype.c_str()),
+	                                belle_sip_header_create("X-Linphone-Provisioning", "1"), NULL);
 	if (!req) {
 		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]";
 		return;

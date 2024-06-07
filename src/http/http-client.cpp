@@ -74,6 +74,10 @@ HttpRequest::HttpRequest(HttpClient &client, const std::string &method, const st
 	auto uriParsed = belle_generic_uri_parse(uri.c_str());
 	if (!uriParsed) return;
 	mRequest = belle_http_request_create(method.c_str(), uriParsed, nullptr);
+
+	const char *core_user_agent = linphone_core_get_user_agent(client.getCore()->getCCore());
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(mRequest), belle_sip_header_create("User-Agent", core_user_agent));
+
 	belle_sip_object_ref(mRequest);
 }
 
@@ -96,6 +100,13 @@ HttpResponse::HttpResponse(Status status, belle_http_response_t *response) {
 
 int HttpResponse::getStatusCode() const {
 	return mResponse ? belle_http_response_get_status_code(mResponse) : 0;
+}
+
+std::string HttpResponse::getReason() const {
+	if (mResponse) {
+		return belle_http_response_get_reason_phrase(mResponse);
+	}
+	return std::string();
 }
 
 std::string HttpResponse::getHeaderValue(const std::string &headerName) const {

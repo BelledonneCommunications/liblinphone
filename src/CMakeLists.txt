@@ -104,7 +104,10 @@ add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
+	account/account-device.h
 	account/account-params.h
+	account-manager-services/account-manager-services.h
+	account-manager-services/account-manager-services-request.h
 	account/mwi/message-waiting-indication.h
 	account/mwi/message-waiting-indication-summary.h
 	account/mwi/parser/mwi-parser.h
@@ -350,6 +353,7 @@ endif()
 
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	account/account.cpp
+	account/account-device.cpp
 	account/account-params.cpp
 	account/mwi/message-waiting-indication.cpp
 	account/mwi/message-waiting-indication-summary.cpp
@@ -358,6 +362,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	account_creator/service.cpp
 	account_creator/main.cpp
 	account_creator/connector_xmlrpc.cpp
+	account-manager-services/account-manager-services.cpp
+	account-manager-services/account-manager-services-request.cpp
 	address/address.cpp
 	address/address-parser.cpp
 	alert/alert.cpp
@@ -367,7 +373,11 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/c-wrapper.cpp
 	c-wrapper/api/c-digest-authentication-policy.cpp
 	c-wrapper/api/c-account.cpp
+	c-wrapper/api/c-account-manager-services.cpp
+	c-wrapper/api/c-account-manager-services-request.cpp
+	c-wrapper/api/c-account-manager-services-request-cbs.cpp
 	c-wrapper/api/c-account-cbs.cpp
+	c-wrapper/api/c-account-device.cpp
 	c-wrapper/api/c-account-params.cpp
 	c-wrapper/api/c-address.cpp
 	c-wrapper/api/c-alert-cbs.cpp

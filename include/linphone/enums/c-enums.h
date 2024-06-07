@@ -151,4 +151,36 @@ typedef enum _LinphoneSecurityLevel {
 	LinphoneSecurityLevelPointToPointEncrypted = 4         /**< Point-to-point encrypted */
 } LinphoneSecurityLevel;
 
+/**
+ * List of all supported #LinphoneAccountManagerServicesRequest requests,
+ * allowing to know which one triggered either a callback from the #LinphoneAccountManagerServicesRequestCbs.
+ * @ingroup account_creator
+ */
+typedef enum _LinphoneAccountManagerServicesRequestType {
+	LinphoneAccountManagerServicesRequestTypeSendAccountCreationTokenByPush =
+	    0, /**< Asks the account manager to send us an account creation token by push notification */
+	LinphoneAccountManagerServicesRequestTypeAccountCreationRequestToken =
+	    1, /**< Asks the account manager to create a request token to be validated in a web browser (captcha) and that
+	          can later be used to create an account creation token */
+	LinphoneAccountManagerServicesRequestTypeAccountCreationTokenFromAccountCreationRequestToken =
+	    2, /**< Asks the account manager to consume the account creation request token to create an account creation
+	          token */
+	LinphoneAccountManagerServicesRequestTypeCreateAccountUsingToken =
+	    3, /**< Uses an account creation token to create the account */
+	LinphoneAccountManagerServicesRequestTypeSendPhoneNumberLinkingCodeBySms =
+	    4, /**< Asks for a code to be sent by SMS to a given phone number to link that phone number with an account */
+	LinphoneAccountManagerServicesRequestTypeLinkPhoneNumberUsingCode =
+	    5, /**< Uses the code received by SMS to confirm the link between an account and a phone number */
+	LinphoneAccountManagerServicesRequestTypeSendEmailLinkingCodeByEmail =
+	    6, /**< Asks for a code to be sent by email to a given email address to link that address with an account */
+	LinphoneAccountManagerServicesRequestTypeLinkEmailUsingCode =
+	    7, /**< Uses the code received by email to confirm the link between an account and an email address */
+	LinphoneAccountManagerServicesRequestTypeGetDevicesList = 8, /**< Gets the list of devices for account */
+	LinphoneAccountManagerServicesRequestTypeDeleteDevice = 9,   /**< Removes an account device */
+
+	LinphoneAccountManagerServicesRequestTypeGetCreationTokenAsAdmin = 100,
+	LinphoneAccountManagerServicesRequestTypeGetAccountInfoAsAdmin = 101,
+	LinphoneAccountManagerServicesRequestTypeDeleteAccountAsAdmin = 102
+} LinphoneAccountManagerServicesRequestType;
+
 #endif

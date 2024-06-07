@@ -24,6 +24,7 @@
 // TODO: Remove me in the future.
 #include "linphone/api/c-types.h"
 #include "linphone/callbacks.h"
+#include "linphone/enums/c-enums.h"
 
 // =============================================================================
 
@@ -53,6 +54,45 @@ typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *ac
  */
 typedef void (*LinphoneAccountCbsMessageWaitingIndicationChangedCb)(LinphoneAccount *account,
                                                                     const LinphoneMessageWaitingIndication *mwi);
+
+/**
+ * @}
+ **/
+
+/**
+ * @addtogroup account_creator
+ * @{
+ **/
+
+/**
+ * Callback for notifying a request was successful.
+ * @param request #LinphoneAccountManagerServicesRequest object. @notnil
+ * @param data any relevant data depending on the request (for example SIP identity for account creation). @maybenil
+ */
+typedef void (*LinphoneAccountManagerServicesRequestCbsOnSuccessfulRequestCb)(
+    const LinphoneAccountManagerServicesRequest *request, const char *data);
+
+/**
+ * Callback for notifying a request has failed.
+ * @param request #LinphoneAccountManagerServicesRequest object. @notnil
+ * @param status_code The error status code.
+ * @param error_message An error message, if any. @maybenil
+ * @param parameter_errors A #LinphoneDictionary with parameter specific errors, if any. @maybenil
+ */
+typedef void (*LinphoneAccountManagerServicesRequestCbsOnRequestErrorCb)(
+    const LinphoneAccountManagerServicesRequest *request,
+    int status_code,
+    const char *error_message,
+    const LinphoneDictionary *parameter_errors);
+
+/**
+ * Callback for notifying when the #LinphoneAccountManagerServicesRequestGetDevicesList request has results available.
+ * @param request #LinphoneAccountManagerServicesRequest object. @notnil
+ * @param devices_list the \bctbx_list{LinphoneAccountDevice} of fetched devices. @notnil
+ */
+typedef void (*LinphoneAccountManagerServicesRequestCbsOnDevicesListFetchedCb)(
+    const LinphoneAccountManagerServicesRequest *request, const bctbx_list_t *devices_list);
+
 /**
  * @}
  **/

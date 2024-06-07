@@ -87,3 +87,8 @@ bctbx_list_t *linphone_dial_plan_get_all_list() {
 bool_t linphone_dial_plan_is_generic(const LinphoneDialPlan *ccc) {
 	return DialPlan::toCpp(ccc)->isGeneric();
 }
+
+char *linphone_dial_plan_format_phone_number(const LinphoneDialPlan *dp, const char *phone_number, bool_t escape_plus) {
+	string result = DialPlan::toCpp(dp)->formatPhoneNumber(L_C_TO_STRING(phone_number), !!escape_plus);
+	return ms_strdup(L_STRING_TO_C(result));
+}

@@ -55,6 +55,9 @@ public:
 	const std::string &getFlag() const;
 	bool isGeneric() const;
 
+	std::string flattenPhoneNumber(const std::string &number) const;
+	std::string formatPhoneNumber(const std::string &phoneNumber, bool escapePlus) const;
+
 	static const std::shared_ptr<DialPlan> MostCommon;
 
 	static int lookupCccFromE164(const std::string &e164);

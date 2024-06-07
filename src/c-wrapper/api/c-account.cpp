@@ -323,16 +323,14 @@ static char *linphone_account_flatten_phone_number(const char *number) {
 	return result;
 }
 
-static char *replace_icp_with_plus(char *phone, const char *icp) {
-	return (strstr(phone, icp) == phone) ? ms_strdup_printf("+%s", phone + strlen(icp)) : ms_strdup(phone);
-}
-
 char *linphone_account_normalize_phone_number(const LinphoneAccount *account, const char *username) {
 	AccountLogContextualizer logContextualizer(account);
-	char *result = NULL;
-	std::shared_ptr<DialPlan> dialplan;
-	char *nationnal_significant_number = NULL;
-	int ccc = -1;
+
+	if (!linphone_account_is_phone_number(account, username)) {
+		lWarning() << "Username [" << username << "] isn't a phone number, can't normalize it";
+		return NULL;
+	}
+
 	const char *dial_prefix;
 	bool_t dial_escape_plus;
 
@@ -347,84 +345,63 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		linphone_account_params_unref(accountParams);
 	}
 
-	if (linphone_account_is_phone_number(account, username)) {
-		char *flatten = linphone_account_flatten_phone_number(username);
-		ms_debug("Flattened number is '%s' for '%s'", flatten, username);
+	char *flatten = linphone_account_flatten_phone_number(username);
+	lDebug() << "Flattened number is [" << flatten << "] for [" << username << "]";
 
-		ccc = DialPlan::lookupCccFromE164(flatten);
-		if (ccc > -1) { /*e164 like phone number*/
-			dialplan = DialPlan::findByCcc(ccc);
-			nationnal_significant_number = strstr(flatten, dialplan->getCountryCallingCode().c_str());
-			if (nationnal_significant_number) {
-				nationnal_significant_number += strlen(dialplan->getCountryCallingCode().c_str());
-			}
-		} else if (flatten[0] == '+') {
-			ms_message("Unknown ccc for e164 like number [%s]", flatten);
-			goto end;
-		} else {
-			if (dial_prefix) {
-				dialplan = DialPlan::findByCcc(dial_prefix); // copy dial plan;
-			} else {
-				dialplan = DialPlan::MostCommon;
-			}
-
-			if (dial_prefix) {
-				const char *country_calling_code = dialplan->getCountryCallingCode().c_str();
-				if (strcmp(dial_prefix, country_calling_code) != 0) {
-					// probably generic dialplan, preserving proxy dial prefix
-					dialplan->setCountryCallingCode(dial_prefix);
-					country_calling_code = dial_prefix;
-				}
-
-				// If phone number starts by international prefix but without +, add it
-				if (strstr(flatten, country_calling_code) == flatten &&
-				    strlen(flatten) > strlen(country_calling_code)) {
-					ms_warning("Phone number seems to start by international prefix but without '+', adding it");
-					char *e164 = ms_strdup_printf("+%s", flatten);
-					result = linphone_account_normalize_phone_number(account, e164);
-					ms_free(e164);
-					goto end;
-				}
-
-				/*it does not make sens to try replace icp with + if we are not sure from the country we are (I.E
-				 * dial_prefix==NULL)*/
-				if (strstr(flatten, dialplan->getInternationalCallPrefix().c_str()) == flatten) {
-					char *e164 = replace_icp_with_plus(flatten, dialplan->getInternationalCallPrefix().c_str());
-					result = linphone_account_normalize_phone_number(account, e164);
-					ms_free(e164);
-					goto end;
-				}
-			}
-			nationnal_significant_number = flatten;
-		}
-		ms_debug("Using dial plan '%s'", dialplan->getCountry().c_str());
-
-		/*if proxy has a dial prefix, modify phonenumber accordingly*/
-		if (dialplan->getCountryCallingCode().c_str()[0] != '\0') {
-			/* the number already starts with + or international prefix*/
-			/*0. keep at most national number significant digits */
-			char *nationnal_significant_number_start =
-			    nationnal_significant_number +
-			    MAX(0, (int)strlen(nationnal_significant_number) - (int)dialplan->getNationalNumberLength());
-			ms_debug("Prefix not present. Keeping at most %d digits: %s", dialplan->getNationalNumberLength(),
-			         nationnal_significant_number_start);
-
-			/*1. First prepend international calling prefix or +*/
-			/*2. Second add prefix*/
-			/*3. Finally add user digits */
-			result = ms_strdup_printf("%s%s%s", dial_escape_plus ? dialplan->getInternationalCallPrefix().c_str() : "+",
-			                          dialplan->getCountryCallingCode().c_str(), nationnal_significant_number_start);
-			ms_debug("Prepended prefix resulted in %s", result);
-		}
-
-	end:
-		if (result == NULL) {
-			result = flatten;
-		} else {
+	int ccc = -1;
+	if (strlen(flatten) > 2 && flatten[0] == '0' && flatten[1] == '0') {
+		std::string copy = std::string(flatten).substr(2);
+		std::string zeroReplacedByPlus = std::string("+" + copy);
+		ccc = DialPlan::lookupCccFromE164(zeroReplacedByPlus.c_str());
+		lDebug() << "Flattened number started by 00, replaced it by + to lookup CCC";
+		if (ccc > -1) {
+			// If a dialplan was found using this, remove the + in the flatenned number
 			ms_free(flatten);
+			flatten = ms_strdup(zeroReplacedByPlus.substr(1).c_str());
 		}
+	} else {
+		ccc = DialPlan::lookupCccFromE164(flatten);
 	}
-	return result;
+	lDebug() << "CCC from flattened number is [" << ccc << "]";
+	std::shared_ptr<DialPlan> dialplan;
+
+	if (ccc > -1) {
+		dialplan = DialPlan::findByCcc(ccc);
+		lDebug() << "Using dial plan [" << dialplan->getCountry() << "]";
+		if (dialplan == DialPlan::MostCommon && dial_prefix) {
+			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << dial_prefix << "]";
+			dialplan->setCountryCallingCode(dial_prefix);
+		}
+		std::string formattedNumber = dialplan->formatPhoneNumber(flatten, dial_escape_plus);
+
+		ms_free(flatten);
+		if (formattedNumber.empty()) return NULL;
+		return ms_strdup(formattedNumber.c_str());
+	} else {
+		if (flatten[0] == '+') {
+			lDebug() << "Unknown ccc for e164 like number [" << flatten << "]";
+			return flatten;
+		}
+
+		if (dial_prefix) {
+			dialplan = DialPlan::findByCcc(dial_prefix);
+		} else {
+			dialplan = DialPlan::MostCommon;
+		}
+		if (dialplan == DialPlan::MostCommon && dial_prefix) {
+			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << dial_prefix << "]";
+			dialplan->setCountryCallingCode(dial_prefix);
+		}
+
+		lDebug() << "Using dial plan [" << dialplan->getCountry() << "]";
+		std::string formattedNumber = dialplan->formatPhoneNumber(flatten, dial_escape_plus);
+
+		ms_free(flatten);
+		if (formattedNumber.empty()) return NULL;
+		return ms_strdup(formattedNumber.c_str());
+	}
+
+	return flatten;
 }
 
 static LinphoneAddress *_destroy_addr_if_not_sip(LinphoneAddress *addr) {

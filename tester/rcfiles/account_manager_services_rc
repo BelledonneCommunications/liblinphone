@@ -1,0 +1,16 @@
+[account_creator]
+url=http://subscribe.example.org/flexiapi/api/
+
+#set random port in order to avoid port conflicts with other tests running in parallel
+#and receive unsollicited SIP messages.
+[sip]
+sip_port=-1
+sip_tcp_port=-1
+sip_tls_port=-1
+
+[storage]
+call_logs_db_uri=null
+friends_db_uri=null
+
+[tester]
+test_env=1

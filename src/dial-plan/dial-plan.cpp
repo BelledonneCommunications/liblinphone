@@ -314,6 +314,63 @@ shared_ptr<DialPlan> DialPlan::findByCcc(const string &ccc) {
 	return MostCommon;
 }
 
+string DialPlan::flattenPhoneNumber(const string &number) const {
+	char *unescaped_phone_number = belle_sip_username_unescape_unnecessary_characters(number.c_str());
+	char *result = reinterpret_cast<char *>(ms_malloc0(strlen(unescaped_phone_number) + 1));
+	char *w = result;
+	const char *r;
+
+	for (r = unescaped_phone_number; *r != '\0'; ++r) {
+		if (*r == '+' || isdigit(*r)) {
+			*w++ = *r;
+		}
+	}
+
+	*w++ = '\0';
+	belle_sip_free(unescaped_phone_number);
+	string cppResult = string(result);
+	ms_free(result);
+	return cppResult;
+}
+
+string DialPlan::formatPhoneNumber(const string &phoneNumber, bool escapePlus) const {
+	if (!countryCallingCode.empty()) {
+		string flatten = flattenPhoneNumber(phoneNumber);
+		lDebug() << "[DialPlan] Flattened number for [" << phoneNumber << "] is: [" << flatten << "]";
+
+		// if flatten starts by +, return flatten
+		if (flatten.rfind("+", 0) == 0) {
+			flatten = flatten.substr(1);
+			lDebug() << "[DialPlan] Flattened number started by +, removing it: [" << flatten << "]";
+		}
+
+		size_t countryCallingCodePos = flatten.find(countryCallingCode);
+		// if flatten starts with country calling code (but isn't equal to it!), remove it first
+		if (countryCallingCodePos == 0 && flatten.length() != countryCallingCode.length()) {
+			flatten = flatten.substr(countryCallingCodePos + countryCallingCode.length());
+			lDebug() << "[DialPlan] Flattened number started by [" << countryCallingCode << "], removing it: ["
+			         << flatten << "]";
+		}
+
+		// Keep at most national number significant digits
+		size_t length = flatten.length();
+		if (length > (size_t)nationalNumberLength) {
+			flatten = flatten.substr(length - (size_t)nationalNumberLength, length);
+			lDebug() << "[DialPlan] Keeping the last [" << nationalNumberLength << "] digits: [" << flatten << "]";
+		}
+
+		// Prepend international calling prefix or +
+		string prefix = escapePlus ? internationalCallPrefix : "+";
+		// Add country calling code followed by phone number digits
+		string result = string(prefix + countryCallingCode + flatten);
+		lDebug() << "[DialPlan] Result is [" << result << "]";
+
+		return result;
+	}
+
+	return phoneNumber;
+}
+
 const list<shared_ptr<DialPlan>> &DialPlan::getAllDialPlans() {
 	return sDialPlans;
 }

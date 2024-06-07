@@ -73,4 +73,16 @@ void Dictionary::setProperty(const std::string &name, LinphoneBuffer *value) {
 	PropertyContainer::setProperty(name, Variant(value));
 }
 
+const list<string> Dictionary::getKeys() const {
+	list<string> keys;
+
+	auto &properties = PropertyContainer::getProperties();
+	auto it = properties.begin();
+	for (; it != properties.end(); ++it) {
+		keys.push_back(it->first);
+	}
+
+	return keys;
+}
+
 LINPHONE_END_NAMESPACE

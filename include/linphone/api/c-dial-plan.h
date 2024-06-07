@@ -129,6 +129,17 @@ LINPHONE_PUBLIC const LinphoneDialPlan *linphone_dial_plan_by_ccc_as_int(int ccc
  **/
 LINPHONE_PUBLIC bool_t linphone_dial_plan_is_generic(const LinphoneDialPlan *ccc);
 
+/**
+ * Formats a phone number using dial plan informations.
+ * @param dp the #LinphoneDialPlan to use. @notnil
+ * @param phone_number the phone number to format. @notnil
+ * @param escape_plus whether or not to use + or international calling prefix
+ * @return the formatted phone number, or the original phone number if couldn't be formatted for some reason. @notnil
+ * @tobefreed
+ */
+LINPHONE_PUBLIC char *
+linphone_dial_plan_format_phone_number(const LinphoneDialPlan *dp, const char *phone_number, bool_t escape_plus);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

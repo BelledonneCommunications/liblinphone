@@ -661,7 +661,7 @@ LINPHONE_PUBLIC LinphoneDictionary *linphone_config_section_to_dict(const Linpho
  * Overwrites existing keys, creates non-existing keys.
  * @param config The #LinphoneConfig object @notnil
  * @param section The section to dump as dictionary @notnil
- * @param dict the dictionnary to load into the section @notnil
+ * @param dict the dictionary to load into the section @notnil
  * @donotwrap LinphoneDictionary can't be wrapped
  */
 LINPHONE_PUBLIC void

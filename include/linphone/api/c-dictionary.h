@@ -153,6 +153,13 @@ LINPHONE_PUBLIC void linphone_dictionary_clear(LinphoneDictionary *dict);
  * @return The #LinphoneStatus of the operation.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_dictionary_has_key(const LinphoneDictionary *dict, const char *key);
+
+/**
+ * Returns the list of keys present in the dictionary.
+ * @param dict The #LinphoneDictionary object. @notnil
+ * @return the \bctbx_list{const char *} of keys inside the dictionary. @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_dictionary_get_keys(const LinphoneDictionary *dict);
 /**
  * @}
  */

@@ -570,7 +570,8 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&session_timers_test_suite, 110);
 	liblinphone_tester_add_suite_with_default_time(&presence_test_suite, 77);
 	liblinphone_tester_add_suite_with_default_time(&presence_server_test_suite, 339);
-	liblinphone_tester_add_suite_with_default_time(&account_creator_xmlrpc_test_suite, 140);
+	// liblinphone_tester_add_suite_with_default_time(&account_creator_xmlrpc_test_suite, 140);
+	liblinphone_tester_add_suite_with_default_time(&account_manager_services_test_suite, 0);
 	liblinphone_tester_add_suite_with_default_time(&account_creator_local_test_suite, 3);
 #ifdef HAVE_FLEXIAPI
 	liblinphone_tester_add_suite_with_default_time(&flexiapiclient_suite, 4);

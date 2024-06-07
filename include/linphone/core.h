@@ -6690,6 +6690,14 @@ LINPHONE_PUBLIC LinphoneAccountCreator *linphone_core_create_account_creator(Lin
                                                                              const char *xmlrpc_url);
 
 /**
+ * Creates a #LinphoneAccountManagerServices.
+ * @param core The #LinphoneCore to use @notnil
+ * @return The new #LinphoneAccountManagerServices object. @notnil
+ * @ingroup account_creator
+ **/
+LINPHONE_PUBLIC LinphoneAccountManagerServices *linphone_core_create_account_manager_services(LinphoneCore *core);
+
+/**
  * Create a #LinphoneXmlRpcSession for a given url.
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
  * @param url The URL to the XML-RPC server. Must be NON NULL. @notnil

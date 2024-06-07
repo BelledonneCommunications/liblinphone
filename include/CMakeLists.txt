@@ -69,6 +69,10 @@ set(ROOT_HEADER_FILES
 set(C_API_HEADER_FILES
 	c-account.h
 	c-account-cbs.h
+	c-account-device.h
+	c-account-manager-services.h
+	c-account-manager-services-request.h
+	c-account-manager-services-request-cbs.h
 	c-account-params.h
 	c-address.h
 	c-audio-device.h

@@ -137,6 +137,7 @@ set(DB_FILES
 set(RC_FILES
 	rcfiles/account_creator_rc
 	rcfiles/account_creator_flexiapi_rc
+	rcfiles/account_manager_services_rc
 	rcfiles/assistant_create.rc
 	rcfiles/berthe_rc
 	rcfiles/carddav_rc
@@ -246,6 +247,7 @@ set(SOURCE_FILES_C
 	account_tester.c
 	account_creator_local_tester.c
 	account_creator_xmlrpc_tester.c
+	account_manager_services_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c

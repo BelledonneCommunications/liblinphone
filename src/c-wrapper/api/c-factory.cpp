@@ -429,6 +429,11 @@ LinphoneAccountCbs *linphone_factory_create_account_cbs(LinphoneFactory *factory
 	return Factory::toCpp(factory)->createAccountCbs();
 }
 
+LinphoneAccountManagerServicesRequestCbs *
+linphone_factory_create_account_manager_services_request_cbs(LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createAccountManagerServicesRequestCbs();
+}
+
 LinphoneAlertCbs *linphone_factory_create_alert_cbs(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createAlertCbs();
 }

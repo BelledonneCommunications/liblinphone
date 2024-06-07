@@ -420,6 +420,19 @@ LINPHONE_PUBLIC void linphone_call_restart_main_audio_stream(LinphoneCall *call)
 
 LINPHONE_PUBLIC int linphone_core_get_number_of_duplicated_messages(const LinphoneCore *core);
 
+LINPHONE_PUBLIC void linphone_core_set_push_notification_config(LinphoneCore *core,
+                                                                LinphonePushNotificationConfig *config);
+
+LINPHONE_PUBLIC LinphoneAccountManagerServicesRequest *
+linphone_account_manager_services_create_get_account_creation_token_as_admin_request(
+    LinphoneAccountManagerServices *ams);
+LINPHONE_PUBLIC LinphoneAccountManagerServicesRequest *
+linphone_account_manager_services_create_get_account_info_as_admin_request(LinphoneAccountManagerServices *ams,
+                                                                           int account_id);
+LINPHONE_PUBLIC LinphoneAccountManagerServicesRequest *
+linphone_account_manager_services_create_delete_account_as_admin_request(LinphoneAccountManagerServices *ams,
+                                                                         int account_id);
+
 #ifdef __cplusplus
 }
 #endif

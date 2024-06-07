@@ -68,6 +68,7 @@
 #include "conference/conference.h"
 #include "conference/server-conference.h"
 #include "content/file-transfer-content.h"
+#include "linphone/api/c-account-manager-services.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
@@ -9819,4 +9820,8 @@ char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const Lin
 #else
 	return NULL;
 #endif // HAVE_ADVANCED_IM
+}
+
+LinphoneAccountManagerServices *linphone_core_create_account_manager_services(LinphoneCore *core) {
+	return _linphone_account_manager_services_new(core);
 }

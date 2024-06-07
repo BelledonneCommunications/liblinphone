@@ -188,7 +188,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	    ->then([&code, &fetched, &confirmationKey, &id](LinphonePrivate::FlexiAPIClient::Response response) {
 		    code = response.code;
 		    fetched = 1;
-		    confirmationKey = response.json()["confirmation_key"].asString();
+		    confirmationKey = response.json()["provisioning_token"].asString();
 		    id = response.json()["id"].asInt();
 	    });
 

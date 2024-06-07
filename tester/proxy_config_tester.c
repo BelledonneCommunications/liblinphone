@@ -75,7 +75,7 @@ static void phone_normalization_with_proxy(void) {
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+3301234567891"), "+33234567891");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+33 (0) 1 23 45 67 89"), "+33123456789");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+90 (903) 1234567"), "+909031234567");
-	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0033123456789"), "0033123456789");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0033123456789"), "+33123456789");
 
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "123456789"), "+33123456789");
@@ -355,16 +355,17 @@ static void dependent_proxy_config(void) {
 
 	const LinphoneAddress *marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
 	LinphoneAddress *marie_dependent_cfg_contact = get_raw_contact_address(marie_dependent_cfg);
-
-	if (!BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) ==
-	                    LinphoneProxyConfigAddressEqual)) {
-		char *tmp1, *tmp2;
-		tmp1 = linphone_address_as_string(marie_cfg_contact);
-		tmp2 = linphone_address_as_string(marie_dependent_cfg_contact);
-		bctbx_error("Contact addresses do differ: %s <> %s", tmp1, tmp2);
-		bctbx_free(tmp1), bctbx_free(tmp2);
+	if (BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg_contact)) {
+		if (!BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) ==
+		                    LinphoneProxyConfigAddressEqual)) {
+			char *tmp1, *tmp2;
+			tmp1 = linphone_address_as_string(marie_cfg_contact);
+			tmp2 = linphone_address_as_string(marie_dependent_cfg_contact);
+			bctbx_error("Contact addresses do differ: %s <> %s", tmp1, tmp2);
+			bctbx_free(tmp1), bctbx_free(tmp2);
+		}
+		linphone_address_unref(marie_dependent_cfg_contact);
 	}
-	linphone_address_unref(marie_dependent_cfg_contact);
 
 	// Cut link for dependent proxy config, then call its identity address and check that we receive the call
 	//(which would be received through the 'master' proxy config server)
@@ -526,9 +527,11 @@ static void dependent_proxy_dependency_with_core_reloaded(void) {
 	linphone_proxy_config_unref(marie_cfg);
 	linphone_proxy_config_unref(marie_dependent_cfg);
 
-	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) ==
-	               LinphoneProxyConfigAddressEqual);
-	linphone_address_unref(marie_dependent_cfg_contact);
+	if (BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg_contact)) {
+		BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) ==
+		               LinphoneProxyConfigAddressEqual);
+		linphone_address_unref(marie_dependent_cfg_contact);
+	}
 
 	// Cut link for dependent proxy config, then call its identity address and check that we receive the call
 	//(which would be received through the 'master' proxy config server)
@@ -583,9 +586,11 @@ static void dependent_proxy_dependency_with_core_reloaded(void) {
 	marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
 	marie_dependent_cfg_contact = get_raw_contact_address(marie_dependent_cfg);
 
-	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) ==
-	               LinphoneProxyConfigAddressEqual);
-	linphone_address_unref(marie_dependent_cfg_contact);
+	if (BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg_contact)) {
+		BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) ==
+		               LinphoneProxyConfigAddressEqual);
+		linphone_address_unref(marie_dependent_cfg_contact);
+	}
 
 	// Cut link for dependent proxy config, then call its identity address and check that we receive the call
 	//(which would be received through the 'master' proxy config server)

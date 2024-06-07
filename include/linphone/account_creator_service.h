@@ -30,6 +30,7 @@ extern "C" {
 /**
  * Function to set custom server request.
  * @param creator #LinphoneAccountCreator object
+ * @deprecated 11/06/2024 use #LinphoneAccountManagerServices instead
  */
 typedef LinphoneAccountCreatorStatus (*LinphoneAccountCreatorRequestFunc)(LinphoneAccountCreator *creator);
 
@@ -147,7 +148,7 @@ linphone_account_creator_service_get_create_push_account_cb(const LinphoneAccoun
  * @donotwrap
  **/
 LINPHONE_PUBLIC void linphone_account_creator_service_set_create_push_account_cb(LinphoneAccountCreatorService *service,
-																			LinphoneAccountCreatorRequestFunc cb);
+                                                                                 LinphoneAccountCreatorRequestFunc cb);
 
 /**
  * Get the is account exist request.
@@ -372,8 +373,9 @@ LINPHONE_PUBLIC void linphone_account_creator_service_set_send_token_cb(Linphone
  * @param service #LinphoneAccountCreatorService object.
  * @return The request token cb to be used.
  * @donotwrap
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_account_creation_request_token_cb(const LinphoneAccountCreatorService *service);
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc
+linphone_account_creator_service_get_account_creation_request_token_cb(const LinphoneAccountCreatorService *service);
 
 /**
  * Set the account creation request token request.
@@ -381,15 +383,19 @@ LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_servi
  * @param cb The request token cb to be used.
  * @donotwrap
  **/
-LINPHONE_PUBLIC void linphone_account_creator_service_set_account_creation_request_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
+LINPHONE_PUBLIC void
+linphone_account_creator_service_set_account_creation_request_token_cb(LinphoneAccountCreatorService *service,
+                                                                       LinphoneAccountCreatorRequestFunc cb);
 
 /**
  * Get the account creation token request.
  * @param service #LinphoneAccountCreatorService object.
  * @return The request token cb to be used.
  * @donotwrap
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_account_creation_token_using_request_token_cb(const LinphoneAccountCreatorService *service);
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc
+linphone_account_creator_service_get_account_creation_token_using_request_token_cb(
+    const LinphoneAccountCreatorService *service);
 
 /**
  * Set the account creation token request.
@@ -397,7 +403,8 @@ LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_servi
  * @param cb The request token cb to be used.
  * @donotwrap
  **/
-LINPHONE_PUBLIC void linphone_account_creator_service_set_account_creation_token_using_request_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
+LINPHONE_PUBLIC void linphone_account_creator_service_set_account_creation_token_using_request_token_cb(
+    LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
 
 /**
  * Get the create account with token request.

@@ -650,6 +650,10 @@ LinphoneAccountCbs *Factory::createAccountCbs() const {
 	return linphone_account_cbs_new();
 }
 
+LinphoneAccountManagerServicesRequestCbs *Factory::createAccountManagerServicesRequestCbs() const {
+	return _linphone_account_manager_services_request_cbs_new();
+}
+
 LinphoneLoggingServiceCbs *Factory::createLoggingServiceCbs() const {
 	return linphone_logging_service_cbs_new();
 }

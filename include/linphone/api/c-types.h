@@ -110,6 +110,30 @@ typedef struct _LinphoneAccountParams LinphoneAccountParams;
  */
 typedef struct _LinphoneAccountCbs LinphoneAccountCbs;
 
+/**
+ * Object that replaces #LinphoneAccountCreator.
+ * @ingroup account_creator
+ */
+typedef struct _LinphoneAccountManagerServices LinphoneAccountManagerServices;
+
+/**
+ * Request object created by #LinphoneAccountManagerServices.
+ * @ingroup account_creator
+ */
+typedef struct _LinphoneAccountManagerServicesRequest LinphoneAccountManagerServicesRequest;
+
+/**
+ * An object to handle the callbacks for #LinphoneAccountManagerServicesRequest object.
+ * @ingroup account_creator
+ */
+typedef struct _LinphoneAccountManagerServicesRequestCbs LinphoneAccountManagerServicesRequestCbs;
+
+/**
+ * Object that represents a device that at least once was connected to a given account.
+ * @ingroup account
+ */
+typedef struct _LinphoneAccountDevice LinphoneAccountDevice;
+
 // -----------------------------------------------------------------------------
 // Address.
 // -----------------------------------------------------------------------------

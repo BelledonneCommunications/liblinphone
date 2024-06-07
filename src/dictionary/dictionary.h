@@ -52,6 +52,8 @@ public:
 
 	LinphoneBuffer *getLinphoneBuffer(const std::string &name) const;
 	void setProperty(const std::string &name, LinphoneBuffer *value);
+
+	const std::list<std::string> getKeys() const;
 };
 
 LINPHONE_END_NAMESPACE

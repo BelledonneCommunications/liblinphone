@@ -31,7 +31,7 @@ LinphoneDictionary *linphone_dictionary_clone(const LinphoneDictionary *src) {
 		LinphoneDictionary *dict = Dictionary::toCpp(src)->clone()->toC();
 		return dict;
 	}
-	return NULL;
+	return nullptr;
 }
 
 LinphoneDictionary *linphone_dictionary_ref(LinphoneDictionary *dict) {
@@ -96,4 +96,13 @@ LinphoneStatus linphone_dictionary_has_key(const LinphoneDictionary *dict, const
 		return 1;
 	}
 	return 0;
+}
+
+bctbx_list_t *linphone_dictionary_get_keys(const LinphoneDictionary *dict) {
+	std::list<std::string> keys = Dictionary::toCpp(dict)->getKeys();
+	bctbx_list_t *result = nullptr;
+	for (auto i = keys.begin(); i != keys.end(); ++i) {
+		result = bctbx_list_append(result, ms_strdup(i->c_str()));
+	}
+	return result;
 }

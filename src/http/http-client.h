@@ -59,6 +59,7 @@ public:
 	Status getStatus();
 	// Return the http response code.
 	int getStatusCode() const;
+	std::string getReason() const;
 	std::string getHeaderValue(const std::string &headerName) const;
 	const Content &getBody() const;
 

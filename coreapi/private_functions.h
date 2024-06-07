@@ -44,6 +44,8 @@ extern "C" {
 
 LinphoneCallCbs *_linphone_call_cbs_new(void);
 LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
+LinphoneAccountManagerServices *_linphone_account_manager_services_new(LinphoneCore *lc);
+LinphoneAccountManagerServicesRequestCbs *_linphone_account_manager_services_request_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
@@ -762,8 +764,6 @@ OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt
 
 LINPHONE_PUBLIC void
 linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
-LINPHONE_PUBLIC void linphone_core_set_push_notification_config(LinphoneCore *core,
-                                                                LinphonePushNotificationConfig *config);
 
 LINPHONE_PUBLIC const MSCryptoSuite *linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc);
 const MSCryptoSuite *linphone_core_get_all_supported_srtp_crypto_suites(LinphoneCore *lc);

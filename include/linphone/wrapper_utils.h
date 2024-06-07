@@ -56,6 +56,25 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_account_get_callbacks_list(const Li
 LINPHONE_PUBLIC void linphone_account_set_current_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs);
 
 /**
+ * @brief Gets the list of listener in the account.
+ * @param request #LinphoneAccountManagerServicesRequest object. @notnil
+ * @return The list of #LinphoneAccountManagerServicesRequestCbs. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t *
+linphone_account_manager_services_request_get_callbacks_list(const LinphoneAccountManagerServicesRequest *request);
+
+/**
+ * Sets the current LinphoneAccountManagerServicesRequestCbs.
+ * @param request #LinphoneAccountManagerServicesRequest object. @notnil
+ * @param cbs The #LinphoneAccountManagerServicesRequestCbs object. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void
+linphone_account_manager_services_set_current_callbacks(LinphoneAccountManagerServicesRequest *request,
+                                                        LinphoneAccountManagerServicesRequestCbs *cbs);
+
+/**
  * @brief Gets the list of listener in the core.
  * @param core The #LinphoneCore. @notnil
  * @return The list of #LinphoneCoreCbs. @maybenil
