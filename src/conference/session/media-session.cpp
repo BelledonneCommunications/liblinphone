@@ -5534,9 +5534,6 @@ void MediaSession::setAuthenticationTokenCheckDone(bool value) {
 
 void MediaSession::checkAuthenticationTokenSelected(const string &selectedValue, const string &halfAuthToken) {
 	L_D();
-	string lowerSelectedValue = selectedValue;
-	std::transform(lowerSelectedValue.begin(), lowerSelectedValue.end(), lowerSelectedValue.begin(),
-	               [](unsigned char c) { return tolower(c); });
 	bool value = (selectedValue.compare(halfAuthToken) == 0) ? true : false;
 	notifyAuthenticationTokenVerified(value);
 	setAuthenticationTokenCheckDone(true);

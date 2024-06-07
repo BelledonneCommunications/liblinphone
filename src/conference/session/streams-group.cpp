@@ -367,8 +367,14 @@ void StreamsGroup::authTokensReady(const list<string> &&incorrectAuthTokens,
                                    const string &authToken,
                                    bool verified,
                                    bool cacheMismatch) {
-	mRemoteAuthTokens.mList = incorrectAuthTokens;
+	for (auto it = incorrectAuthTokens.begin(); it != incorrectAuthTokens.end(); it++) {
+		string upperCaseIncorrectAuthToken = string(it->data());
+		transform(upperCaseIncorrectAuthToken.begin(), upperCaseIncorrectAuthToken.end(),
+		          upperCaseIncorrectAuthToken.begin(), ::toupper);
+		mRemoteAuthTokens.mList.push_back(upperCaseIncorrectAuthToken);
+	}
 	mAuthToken = authToken;
+	transform(mAuthToken.begin(), mAuthToken.end(), mAuthToken.begin(), ::toupper);
 	mAuthTokenVerified = verified;
 	mZrtpCacheMismatch = cacheMismatch;
 	mAuthTokenCheckDone = verified;
