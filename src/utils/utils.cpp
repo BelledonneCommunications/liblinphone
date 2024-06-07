@@ -494,4 +494,9 @@ std::string Utils::computeHa1ForAlgorithm(const std::string &userId,
 	return "";
 }
 
+std::ostream &operator<<(std::ostream &ostr, LinphoneGlobalState state) {
+	ostr << linphone_global_state_to_string(state);
+	return ostr;
+}
+
 LINPHONE_END_NAMESPACE

@@ -123,6 +123,7 @@
 // For migration purpose.
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
+#include "utils/fsm-integrity-checker.h"
 #include "utils/payload-type-handler.h"
 
 #ifdef HAVE_ZLIB
@@ -2602,9 +2603,22 @@ static void linphone_core_free_payload_types(LinphoneCore *lc) {
 	lc->default_text_codecs = NULL;
 }
 
+static FsmIntegrityChecker<LinphoneGlobalState> coreFsmChecker{
+    {{LinphoneGlobalOff, {LinphoneGlobalReady}},
+     {LinphoneGlobalReady, {LinphoneGlobalStartup, LinphoneGlobalShutdown}},
+     {LinphoneGlobalStartup, {LinphoneGlobalConfiguring, LinphoneGlobalOn}},
+     {LinphoneGlobalConfiguring, {LinphoneGlobalOn, LinphoneGlobalShutdown}},
+     {LinphoneGlobalOn, {LinphoneGlobalShutdown}},
+     {LinphoneGlobalShutdown, {LinphoneGlobalOff}}}};
+
 void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	if (gstate == lc->state) {
+		lError() << "Ignored stalled state notification for " << gstate;
+		return;
+	}
 	ms_message("Switching LinphoneCore [%p] from state %s to %s", lc, linphone_global_state_to_string(lc->state),
 	           linphone_global_state_to_string(gstate));
+	if (!coreFsmChecker.isValid(lc->state, gstate)) lFatal() << "Bad core state transition.";
 	lc->state = gstate;
 	linphone_core_notify_global_state_changed(lc, gstate, message);
 }
@@ -2682,6 +2696,16 @@ void linphone_core_load_config_from_xml(LinphoneCore *lc, const char *xml_uri) {
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
 	linphone_core_notify_configuring_status(lc, state, message);
 
+	if (lc->provisioning_http_listener) {
+		belle_sip_object_unref(lc->provisioning_http_listener);
+		lc->provisioning_http_listener = NULL;
+	}
+
+	if (lc->state == LinphoneGlobalShutdown) {
+		/* We are aborting the provisioning, just notify the configuring status and give up */
+		return;
+	}
+
 	if (state == LinphoneConfiguringSuccessful) {
 		if (linphone_core_is_provisioning_transient(lc)) {
 			linphone_core_set_provisioning_uri(lc, NULL);
@@ -2720,11 +2744,6 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		}
 
 		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
-	}
-
-	if (lc->provisioning_http_listener) {
-		belle_sip_object_unref(lc->provisioning_http_listener);
-		lc->provisioning_http_listener = NULL;
 	}
 
 	_linphone_core_apply_transports(lc); // This will create SIP sockets.

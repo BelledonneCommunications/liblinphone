@@ -82,6 +82,19 @@ static void remote_provisioning_https(void) {
 	}
 }
 
+static void aborted_provisioning_https(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_remote_https_rc", FALSE);
+		/** immediately call linphohne_core_stop() without letting the remote provisioning to complete */
+		linphone_core_stop_async(marie->lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(marie->lc), LinphoneGlobalShutdown, int, "%i");
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringFailed, 1));
+		/* now should move to Off state */
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneGlobalOff, 1));
+		linphone_core_manager_destroy(marie);
+	}
+}
+
 static void remote_provisioning_not_found(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_remote_404_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringFailed, 1));
@@ -453,6 +466,7 @@ test_t remote_provisioning_tests[] = {
     TEST_NO_TAG("Remote provisioning skipped", remote_provisioning_skipped),
     TEST_NO_TAG("Remote provisioning successful behind http", remote_provisioning_http),
     TEST_NO_TAG("Remote provisioning successful behind https", remote_provisioning_https),
+    TEST_NO_TAG("Remote provisioning aborted", aborted_provisioning_https),
     TEST_NO_TAG("Remote provisioning 404 not found", remote_provisioning_not_found),
     TEST_NO_TAG("Remote provisioning invalid", remote_provisioning_invalid),
     TEST_NO_TAG("Remote provisioning transient successful", remote_provisioning_transient),

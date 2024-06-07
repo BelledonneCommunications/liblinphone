@@ -275,6 +275,7 @@ std::string computeHa1ForAlgorithm(const std::string &userId,
 } // namespace Utils
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version);
+LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, LinphoneGlobalState state);
 
 LINPHONE_END_NAMESPACE
 
