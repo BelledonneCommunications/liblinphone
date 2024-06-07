@@ -3135,6 +3135,15 @@ int linphone_core_manager_get_mean_audio_up_bw(const LinphoneCoreManager *mgr) {
 }
 
 void liblinphone_tester_before_each(void) {
+	const char *mediastreamer2_plugin_dir = MEDIASTREAMER2_LOCAL_PLUGINS_LOCATION;
+	if (bctbx_file_exist(mediastreamer2_plugin_dir) == 0) {
+		linphone_factory_set_msplugins_dir(linphone_factory_get(), mediastreamer2_plugin_dir);
+	}
+	const char *liblinphone_plugin_dir = LIBLINPHONE_LOCAL_PLUGINS_LOCATION;
+	if (bctbx_file_exist(liblinphone_plugin_dir) == 0) {
+		linphone_factory_set_liblinphone_plugins_dir(linphone_factory_get(), liblinphone_plugin_dir);
+	}
+
 	if (!liblinphone_tester_leak_detector_disabled) {
 		belle_sip_object_enable_leak_detector(TRUE);
 		leaked_objects_count = belle_sip_object_get_object_count();

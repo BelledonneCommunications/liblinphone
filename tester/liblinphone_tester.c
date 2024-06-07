@@ -130,9 +130,6 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		liblinphone_tester_add_grammar_loader_path(SDP_LOCAL_GRAMMAR_LOCATION);
 		liblinphone_tester_add_grammar_loader_path(LIBLINPHONE_LOCAL_GRAMMARS_LOCATION);
 
-		linphone_factory_set_msplugins_dir(linphone_factory_get(), MEDIASTREAMER2_LOCAL_PLUGINS_LOCATION);
-		linphone_factory_set_liblinphone_plugins_dir(linphone_factory_get(), LIBLINPHONE_LOCAL_PLUGINS_LOCATION);
-
 #ifdef HAVE_SOCI
 		liblinphone_tester_add_soci_search_path(SOCI_LOCAL_PLUGINS_LOCATION);
 #endif
