@@ -62,24 +62,11 @@ ClientConference::ClientConference(const shared_ptr<Core> &core,
 }
 
 ClientConference::~ClientConference() {
-	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
-		terminate();
-	} else if (mConfParams->chatEnabled()) {
-		setCallSessionListener(nullptr);
-	}
+	terminate();
 
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
-}
-
-void ClientConference::setCallSessionListener(CallSessionListener *listener) {
-	shared_ptr<CallSession> session = (mFocus) ? mFocus->getSession() : nullptr;
-	if (session) session->addListener(listener);
-	for (const auto &participant : getParticipants()) {
-		session = participant->getSession();
-		if (session) session->addListener(listener);
-	}
 }
 
 void ClientConference::createFocus(const std::shared_ptr<Address> focusAddr,
@@ -2173,36 +2160,49 @@ int ClientConference::getParticipantDeviceVolume(const std::shared_ptr<Participa
 }
 
 int ClientConference::terminate() {
-	auto savedState = mState;
-	auto session = getMainSession();
-	shared_ptr<Call> sessionCall = nullptr;
-	if (session) {
-		auto op = session->getPrivate()->getOp();
-		sessionCall = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
-	}
+	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
+		auto savedState = mState;
+		auto session = getMainSession();
+		shared_ptr<Call> sessionCall = nullptr;
+		if (session) {
+			auto op = session->getPrivate()->getOp();
+			sessionCall = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
+		}
 
-	switch (savedState) {
-		case ConferenceInterface::State::Created:
-		case ConferenceInterface::State::CreationPending:
-		case ConferenceInterface::State::CreationFailed:
-			if (sessionCall) {
-				// Conference will be deleted by terminating the session
-				session->terminate();
-				return 0;
-			}
-			break;
-		default:
-			break;
-	}
+		switch (savedState) {
+			case ConferenceInterface::State::Created:
+			case ConferenceInterface::State::CreationPending:
+			case ConferenceInterface::State::CreationFailed:
+				if (sessionCall) {
+					// Conference will be deleted by terminating the session
+					session->terminate();
+					return 0;
+				}
+				break;
+			default:
+				break;
+		}
 
-	if (mState == ConferenceInterface::State::Terminated) {
-		setState(ConferenceInterface::State::Deleted);
-	} else if (mState != ConferenceInterface::State::Deleted) {
-		setState(ConferenceInterface::State::TerminationPending);
-		if (!sessionCall) {
+		if (mState == ConferenceInterface::State::Terminated) {
 			setState(ConferenceInterface::State::Deleted);
+		} else if (mState != ConferenceInterface::State::Deleted) {
+			setState(ConferenceInterface::State::TerminationPending);
+			if (!sessionCall) {
+				setState(ConferenceInterface::State::Deleted);
+			}
 		}
 	}
+
+	if (mConfParams->chatEnabled()) {
+		shared_ptr<CallSession> session = (mFocus) ? mFocus->getSession() : nullptr;
+		if (session) session->removeListener(this);
+		for (const auto &participant : getParticipants()) {
+			session = participant->getSession();
+			if (session) session->removeListener(this);
+		}
+		setChatRoom(nullptr);
+	}
+
 	return 0;
 }
 

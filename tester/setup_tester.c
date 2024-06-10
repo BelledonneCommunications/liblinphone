@@ -2777,8 +2777,7 @@ static void async_search_friend_in_sources(void) {
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		// The result has only lowercase characters
-		_check_friend_result_list(manager->lc, resultList, 0, "sip:charles@sip.test.org;id=abcdef",
-		                          NULL); //"sip:charles@sip.test.org;id=abcdef"
+		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL); //"sip:charles@sip.test.org;id=ABCDEF"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 	linphone_magic_search_reset_search_cache(magicSearch);

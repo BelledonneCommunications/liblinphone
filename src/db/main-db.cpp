@@ -5521,7 +5521,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 		ChatRoomWeakCompareMap chatRoomsMap;
 
 		shared_ptr<Core> core = getCore();
-		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 
 		soci::session *session = d->dbSession.getBackendSession();
 
@@ -5593,6 +5592,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				params->getChatParams()->enableEphemeral(!!row.get<int>(10, 0));
 				params->setConferenceAddress(conferenceId.getPeerAddress());
 
+				bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 				std::shared_ptr<Conference> conference = nullptr;
 				if (!serverMode) {
 					if (!me) {

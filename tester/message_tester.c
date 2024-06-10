@@ -2740,7 +2740,7 @@ void crash_during_file_transfer(void) {
 
 static void text_status_after_destroying_chat_room(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:flexisip-tester@sip.linphone.org>");
 	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(chatroom, "hello");
 	linphone_chat_message_send(msg);
 	linphone_core_delete_chat_room(marie->lc, chatroom);
@@ -2752,7 +2752,7 @@ static void text_status_after_destroying_chat_room(void) {
 
 static void file_transfer_not_sent_if_invalid_url(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:flexisip-tester@sip.linphone.org>");
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
@@ -2765,7 +2765,7 @@ static void file_transfer_not_sent_if_invalid_url(void) {
 
 void file_transfer_io_error_base(char *server_url) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:flexisip-tester@sip.linphone.org>");
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
@@ -2788,7 +2788,7 @@ static void file_transfer_not_sent_if_url_moved_permanently(void) {
 
 static void file_transfer_success_after_destroying_chatroom(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:flexisip-tester@sip.linphone.org>");
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
 	linphone_chat_message_cbs_set_msg_state_changed(linphone_chat_message_get_callbacks(msg),
 	                                                liblinphone_tester_chat_message_msg_state_changed);

@@ -3659,7 +3659,12 @@ void _check_friend_result_list_2(LinphoneCore *lc,
 		if (uri) { // Check on address
 			if (la) {
 				char *fa = linphone_address_as_string_uri_only(la);
-				BC_ASSERT_TRUE(strcasecmp(fa, uri) == 0);
+				bool ldap_available = !!linphone_core_ldap_available(lc);
+				if (ldap_available) {
+					BC_ASSERT_TRUE(strcasecmp(fa, uri) == 0);
+				} else {
+					BC_ASSERT_STRING_EQUAL(fa, uri);
+				}
 				free(fa);
 				assertError = false;
 			} else if (phone) {

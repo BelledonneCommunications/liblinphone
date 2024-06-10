@@ -216,7 +216,6 @@ private:
 	virtual void createEventHandler(ConferenceListener *confListener = nullptr,
 	                                bool addToListEventHandler = false) override;
 	void initializeHandlers(ConferenceListener *confListener, bool addToListEventHandler);
-	void setCallSessionListener(CallSessionListener *listener);
 
 	virtual bool sessionParamsAllowThumbnails() const override;
 

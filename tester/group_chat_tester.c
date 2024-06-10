@@ -8399,10 +8399,19 @@ static void group_chat_room_device_unregistered(void) {
 	                              initialPaulineStats.number_of_chat_room_participants_removed + 1, 3000));
 
 	// to avoid automatic re-subscription of chatroom  while disabling network
+	ms_message("%s enters background", linphone_core_get_identity(marie->lc));
 	linphone_core_enter_background(marie->lc);
+	ms_message("%s enters background", linphone_core_get_identity(pauline->lc));
 	linphone_core_enter_background(pauline->lc);
+	ms_message("%s enters background", linphone_core_get_identity(laure->lc));
 	linphone_core_enter_background(laure->lc);
 	wait_for_list(coresList, NULL, 1, 3000);
+	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateDeleted,
+	                             initialMarieStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateDeleted,
+	                             initialPaulineStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateDeleted,
+	                             initialLaureStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
 
 	// to force re-re-connection to restarted flexisip
 	linphone_core_set_network_reachable(marie->lc, FALSE);
@@ -8418,17 +8427,21 @@ static void group_chat_room_device_unregistered(void) {
 	linphone_proxy_config_enable_register(proxyConfig, TRUE);
 	linphone_proxy_config_done(proxyConfig);
 
+	ms_message("%s enters foreground", linphone_core_get_identity(marie->lc));
 	linphone_core_enter_foreground(marie->lc);
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneRegistrationOk,
 	                             initialMarieStats.number_of_LinphoneRegistrationOk + 1,
 	                             liblinphone_tester_sip_timeout));
+
+	ms_message("%s enters foreground", linphone_core_get_identity(pauline->lc));
 	linphone_core_enter_foreground(pauline->lc);
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneRegistrationOk,
 	                             initialPaulineStats.number_of_LinphoneRegistrationOk + 1,
 	                             liblinphone_tester_sip_timeout));
 
+	ms_message("%s enters foreground", linphone_core_get_identity(laure->lc));
 	linphone_core_enter_foreground(laure->lc);
 	linphone_core_set_network_reachable(laure->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneRegistrationOk,

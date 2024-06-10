@@ -295,14 +295,12 @@ CorePrivate::searchChatRoom(const shared_ptr<ConferenceParams> &params,
 		}
 
 		std::shared_ptr<Address> curLocalAddress = chatRoom->getLocalAddress();
-
 		const auto curLocalAddressWithoutGruu = curLocalAddress->getUriWithoutGruu();
 		const auto localAddressWithoutGruu =
 		    (localAddress && localAddress->isValid()) ? localAddress->getUriWithoutGruu() : Address();
 		if (localAddressWithoutGruu.isValid() && (localAddressWithoutGruu != curLocalAddressWithoutGruu)) continue;
 
 		std::shared_ptr<Address> curRemoteAddress = chatRoom->getPeerAddress();
-
 		const auto curRemoteAddressWithoutGruu = curRemoteAddress->getUriWithoutGruu();
 		const auto remoteAddressWithoutGruu =
 		    (remoteAddress && remoteAddress->isValid()) ? remoteAddress->getUriWithoutGruu() : Address();

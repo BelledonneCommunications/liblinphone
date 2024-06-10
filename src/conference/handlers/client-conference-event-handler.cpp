@@ -756,11 +756,12 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 }
 
 void ClientConferenceEventHandler::requestFullState() {
+	auto conference = getConference();
 	lInfo() << "Requesting full state for conference "
-	        << (getConference()->getConferenceAddress() ? getConference()->getConferenceAddress()->toString()
+	        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
 	                                                    : std::string("<unknown conference address>"));
 	unsubscribe();
-	getConference()->setLastNotify(0);
+	conference->setLastNotify(0);
 	subscribe(getConferenceId());
 	fullStateRequested = true;
 }
@@ -786,8 +787,9 @@ bool ClientConferenceEventHandler::notAlreadySubscribed() const {
 }
 
 bool ClientConferenceEventHandler::needToSubscribe() const {
+	auto conference = getConference();
 	return notAlreadySubscribed() && !managedByListEventhandler &&
-	       (getConference()->getState() != ConferenceInterface::State::CreationFailed);
+	       (conference && (conference->getState() != ConferenceInterface::State::CreationFailed));
 }
 
 bool ClientConferenceEventHandler::subscribe() {
