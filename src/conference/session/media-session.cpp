@@ -3446,7 +3446,7 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 		            : (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS)
 		                ? "DTLS"
 		                : "Unknown mechanism");
-		if (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) {
+		if (q->getCurrentParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
 			q->notifyEncryptionChanged(true, callbackAuthToken);
 		}
 
