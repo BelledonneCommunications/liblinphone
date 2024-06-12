@@ -904,10 +904,12 @@ bool ChatRoom::getIsMuted() const {
 	return mIsMuted;
 }
 
-void ChatRoom::setIsMuted(const bool muted) {
+void ChatRoom::setIsMuted(const bool muted, const bool updateDb) {
 	if (muted != mIsMuted) {
 		mIsMuted = muted;
-		getCore()->getPrivate()->mainDb->updateChatRoomMutedState(getConferenceId(), muted);
+		if (updateDb) {
+			getCore()->getPrivate()->mainDb->updateChatRoomMutedState(getConferenceId(), muted);
+		}
 	}
 }
 

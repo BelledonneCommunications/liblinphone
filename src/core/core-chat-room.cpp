@@ -1009,6 +1009,8 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 		}
 	} else {
 		/* Server mode but chatroom not found. */
+		lError() << "The core has been configured as a conference server, therefore the chatroom must be created "
+		            "beforehand.";
 		reason = LinphoneReasonNotFound;
 	}
 

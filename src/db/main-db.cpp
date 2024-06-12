@@ -5657,7 +5657,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			chatRoom->setCreationTime(creationTime);
 			chatRoom->setLastUpdateTime(lastUpdateTime);
 			chatRoom->setIsEmpty(lastMessageId == 0);
-			chatRoom->setIsMuted(muted);
+			chatRoom->setIsMuted(muted, false);
 
 			bctbx_debug("Found chat room in DB: (peer=[%s] local=[%s])",
 			            conferenceId.getPeerAddress()->toStringUriOnlyOrdered().c_str(),

@@ -191,7 +191,7 @@ public:
 	virtual std::shared_ptr<Call> getCall() const = 0;
 
 	virtual bool getIsMuted() const = 0;
-	virtual void setIsMuted(const bool muted) = 0;
+	virtual void setIsMuted(const bool muted, const bool updateDb = true) = 0;
 
 	virtual void setCreationTime(time_t creationTime) = 0;
 	virtual void setLastUpdateTime(time_t lastUpdateTime) = 0;

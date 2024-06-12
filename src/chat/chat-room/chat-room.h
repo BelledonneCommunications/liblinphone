@@ -130,7 +130,7 @@ public:
 	std::shared_ptr<Call> getCall() const override;
 
 	virtual bool getIsMuted() const override;
-	virtual void setIsMuted(const bool muted) override;
+	virtual void setIsMuted(const bool muted, const bool updateDb = true) override;
 
 	inline void setCreationTime(time_t creationTime) override {
 		this->creationTime = creationTime;

@@ -38,6 +38,7 @@
 #include "linphone/call_params.h"
 #include "linphone/call_stats.h"
 #include "linphone/callbacks.h"
+#include "linphone/chat.h"
 #include "linphone/defs.h"
 #include "linphone/enums/c-enums.h"
 #include "linphone/error_info.h"

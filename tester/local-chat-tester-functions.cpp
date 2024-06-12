@@ -508,6 +508,10 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom->toC()), 4, int, "%d");
 		}
 
+		// Michelle2 mutes all chat rooms
+		for (auto chatRoom : michelle2.getCore().getChatRooms()) {
+			chatRoom->setIsMuted(true);
+		}
 		michelle2ContactString = linphone_address_as_string(michelle2Contact);
 		ms_message("%s is restarting its core", michelle2ContactString);
 		ms_free(michelle2ContactString);
