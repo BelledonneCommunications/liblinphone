@@ -270,6 +270,8 @@ private:
 
 	bool hasAdminLeft() const;
 
+	void cleanup();
+
 	void onParticipantDeviceLeft(const std::shared_ptr<ParticipantDevice> &device);
 
 	virtual bool sessionParamsAllowThumbnails() const override;

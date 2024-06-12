@@ -1328,7 +1328,12 @@ CallSession::~CallSession() {
 void CallSession::addListener(CallSessionListener *listener) {
 	L_D();
 	if (listener) {
-		d->listeners.push_back(listener);
+		// Avoid adding twice the same listener
+		// This should never happen but just in case....
+		const auto it = std::find(d->listeners.cbegin(), d->listeners.cend(), listener);
+		if (it == d->listeners.cend()) {
+			d->listeners.push_back(listener);
+		}
 	}
 }
 

@@ -64,24 +64,7 @@ ServerConference::~ServerConference() {
 	if ((mState != ConferenceInterface::State::Terminated) && (mState != ConferenceInterface::State::Deleted)) {
 		terminate();
 	}
-	if (mMixerSession) {
-		mMixerSession.reset();
-	}
-	try {
-#ifdef HAVE_ADVANCED_IM
-		if (getCore()->getPrivate()->serverListEventHandler) {
-			getCore()->getPrivate()->serverListEventHandler->removeHandler(eventHandler);
-		}
-#endif // HAVE_ADVANCED_IM
-		getCore()->getPrivate()->unregisterListener(this);
-	} catch (const bad_weak_ptr &) {
-		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
-	}
-#ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
-		eventHandler.reset();
-	}
-#endif // HAVE_ADVANCED_IM
+	cleanup();
 }
 
 void ServerConference::initFromDb(BCTBX_UNUSED(const std::shared_ptr<Participant> &me),
@@ -747,29 +730,17 @@ void ServerConference::confirmCreation() {
 			account = getCore()->getDefaultAccount();
 		}
 
-		char confId[ServerConference::sConfIdLength];
 		if (account) {
 			std::shared_ptr<Address> conferenceAddress = account->getContactAddress()->clone()->toSharedPtr();
+			char confId[ServerConference::sConfIdLength];
 			belle_sip_random_token(confId, sizeof(confId));
 			conferenceAddress->setUriParam("conf-id", confId);
 			setConferenceAddress(conferenceAddress);
-
-#ifdef HAVE_ADVANCED_IM
-			const auto &chatRoom = getChatRoom();
-			if (mConfParams->chatEnabled() && chatRoom) {
-				/* Application (conference server) callback to register the name.
-				 * In response, the conference server will call setConferenceAddress().
-				 * It has the possibility to change the conference address.
-				 */
-				LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ChatRoom, chatRoom,
-				                                         linphone_chat_room_cbs_get_conference_address_generation);
-			}
-#endif // HAVE_ADVANCED_IM
-			const auto &actualConferenceAddress = getConferenceAddress();
-			setConferenceId(ConferenceId(actualConferenceAddress, actualConferenceAddress));
 		}
+
 		const_cast<CallSessionParamsPrivate *>(L_GET_PRIVATE(session->getParams()))->setInConference(true);
-		session->getPrivate()->setConferenceId(confId);
+		const auto &actualConferenceAddress = getConferenceAddress();
+		session->getPrivate()->setConferenceId(actualConferenceAddress->getUriParamValue("conf-id"));
 		/* We have to call initiateIncoming() and startIncomingNotification() in order to perform the first
 		 * offer/answer, and make sure that the caller has compatible SDP offer. However, ICE creates problem here
 		 * because the gathering is asynchronous, and is useless anyway because the MediaSession here will anyway
@@ -804,6 +775,7 @@ void ServerConference::confirmCreation() {
 				linphone_error_info_unref(errorInfo);
 				return;
 			}
+			setState(ConferenceInterface::State::Created);
 		}
 #endif // HAVE_ADVANCED_IM
 
@@ -893,6 +865,17 @@ std::shared_ptr<ConferenceInfo> ServerConference::createConferenceInfo() const {
 void ServerConference::finalizeCreation() {
 	const auto chatEnabled = mConfParams->chatEnabled();
 	if ((getState() == ConferenceInterface::State::CreationPending) || chatEnabled) {
+#ifdef HAVE_ADVANCED_IM
+			const auto &chatRoom = getChatRoom();
+			if (chatEnabled && chatRoom) {
+				/* Application (conference server) callback to register the name.
+				 * In response, the conference server will call setConferenceAddress().
+				 * It has the possibility to change the conference address.
+				 */
+				LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ChatRoom, chatRoom,
+				                                         linphone_chat_room_cbs_get_conference_address_generation);
+			}
+#endif // HAVE_ADVANCED_IM
 		const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 		shared_ptr<CallSession> session = mMe->getSession();
@@ -926,7 +909,6 @@ void ServerConference::finalizeCreation() {
 					auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 					getCore()->getPrivate()->serverListEventHandler->addHandler(eventHandler);
 					serverGroupChatRoom->setJoiningPendingAfterCreation(true);
-					setState(ConferenceInterface::State::Created);
 					getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 				}
 #endif // HAVE_ADVANCED_IM
@@ -2105,16 +2087,6 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 
 	auto op = session->getPrivate()->getOp();
 	shared_ptr<Call> call = getCore()->getCallByCallId(op->getCallId());
-	if (call) {
-		if (linphone_call_get_conference(call->toC()) != toC()) {
-			const auto &remoteAddress = call->getRemoteAddress();
-			lError() << "Call (local address " << *call->getLocalAddress() << " remote address "
-			         << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") is not part of conference "
-			         << *getConferenceAddress();
-			return -1;
-		}
-	}
-
 	CallSession::State sessionState = session->getState();
 
 	const std::shared_ptr<Address> &remoteAddress = session->getRemoteAddress();
@@ -2379,7 +2351,36 @@ void ServerConference::setSubject(const std::string &subject) {
 	}
 }
 
+void ServerConference::cleanup() {
+	if (mMixerSession) {
+		mMixerSession.reset();
+	}
+	// Detach conference from the session if not already done
+	for (const auto &device : getParticipantDevices()){
+		auto session = device->getSession();
+		if (session) {
+			session->removeListener(this);
+		}
+	}
+	try {
+#ifdef HAVE_ADVANCED_IM
+		if (getCore()->getPrivate()->serverListEventHandler) {
+			getCore()->getPrivate()->serverListEventHandler->removeHandler(eventHandler);
+		}
+#endif // HAVE_ADVANCED_IM
+		getCore()->getPrivate()->unregisterListener(this);
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	}
+#ifdef HAVE_ADVANCED_IM
+	if (eventHandler) {
+		eventHandler.reset();
+	}
+#endif // HAVE_ADVANCED_IM
+}
+
 void ServerConference::onConferenceTerminated(const std::shared_ptr<Address> &addr) {
+	cleanup();
 	Conference::onConferenceTerminated(addr);
 }
 
@@ -3020,16 +3021,17 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				}
 			} break;
 			case CallSession::State::End:
-			case CallSession::State::Error:
+			case CallSession::State::Error: {
 				lInfo() << "Removing terminated call (local address " << *session->getLocalAddress()
 				        << " remote address " << *remoteAddress << ") from conference " << this << " ("
 				        << conferenceAddressStr << ")";
-				if (session->getErrorInfo() &&
-				    (linphone_error_info_get_reason(session->getErrorInfo()) == LinphoneReasonBusy)) {
+				const auto &sessionErrorInfo = session->getErrorInfo();
+				if (sessionErrorInfo && (linphone_error_info_get_reason(sessionErrorInfo) == LinphoneReasonBusy)) {
 					removeParticipantDevice(session);
 				} else {
 					removeParticipant(session, false);
 				}
+							}
 				break;
 			default:
 				break;

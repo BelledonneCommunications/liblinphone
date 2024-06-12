@@ -60,7 +60,7 @@ public:
 	virtual void setConferenceFactoryAddress(const std::shared_ptr<const Address> &address) override {
 		mUseDefaultFactoryAddress = false;
 		// Setting to nullptr means that we want to host a conference on the local device
-		mFactoryAddress = address->clone()->toSharedPtr();
+		mFactoryAddress = address ? address->clone()->toSharedPtr() : nullptr;
 	};
 
 	const std::shared_ptr<Address> &getConferenceFactoryAddress() const {

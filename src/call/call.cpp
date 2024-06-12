@@ -188,7 +188,7 @@ void Call::initiateIncoming() {
 bool Call::initiateOutgoing(const string &subject, const std::shared_ptr<const Content> content) {
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing(subject, content);
-	// initiateIncoming creates the Streams (through makeLocalMediaDescription())
+	// initiateOutgoing creates the Streams (through makeLocalMediaDescription())
 	// the configuration of sound devices must be done after streams are created.
 	configureSoundCardsFromCore(static_cast<const MediaSessionParams *>(getActiveSession()->getParams()));
 
