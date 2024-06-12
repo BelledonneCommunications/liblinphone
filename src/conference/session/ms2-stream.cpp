@@ -91,11 +91,9 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params)
     : Stream(sg, params), mVideoMonitor(getMediaSession()), mNetworkMonitor(getMediaSession()),
       mBandwidthMonitor(getMediaSession()) {
 	memset(&mSessions, 0, sizeof(mSessions));
-	mStats = _linphone_call_stats_new();
-	_linphone_call_stats_set_type(mStats, (LinphoneStreamType)getType());
-	_linphone_call_stats_set_received_rtcp(mStats, nullptr);
-	_linphone_call_stats_set_sent_rtcp(mStats, nullptr);
-	_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateNotActivated);
+	mStats = CallStats::create();
+	mStats->setType((LinphoneStreamType)getType());
+	mStats->setIceState(LinphoneIceStateNotActivated);
 	/* Install the BandwithControllerService, that olds the ms2 MSBandwidthController, which is needed to manage
 	 * the audio and the video stream together, when in a conference only.
 	 * For individual calls, the MSBandwidthController of the LinphoneCore is used.
@@ -1294,7 +1292,7 @@ RtpProfile *MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> &m
 void MS2Stream::updateStats() {
 	if (mSessions.rtp_session) {
 		const rtp_stats_t *rtpStats = rtp_session_get_stats(mSessions.rtp_session);
-		if (rtpStats) _linphone_call_stats_set_rtp_stats(mStats, rtpStats);
+		if (rtpStats) mStats->setRtpStats(rtpStats);
 	}
 	float quality = media_stream_get_average_quality_rating(getMediaStream());
 	shared_ptr<CallLog> log = getMediaSession().getLog();
@@ -1304,9 +1302,9 @@ void MS2Stream::updateStats() {
 	}
 }
 
-LinphoneCallStats *MS2Stream::getStats() {
+shared_ptr<CallStats> MS2Stream::getStats() const {
 	MediaStream *ms = getMediaStream();
-	if (ms) linphone_call_stats_update(mStats, ms);
+	if (ms) mStats->update(ms);
 	return mStats;
 }
 
@@ -1359,8 +1357,9 @@ void MS2Stream::stop() {
 }
 
 void MS2Stream::notifyStatsUpdated() {
-	if (_linphone_call_stats_get_updated(mStats)) {
-		switch (_linphone_call_stats_get_updated(mStats)) {
+	int updated = mStats->getUpdated();
+	if (updated) {
+		switch (updated) {
 			case LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE:
 			case LINPHONE_CALL_STATS_SENT_RTCP_UPDATE:
 				getMediaSession().notifyRtcpUpdateForReporting(getType());
@@ -1369,7 +1368,7 @@ void MS2Stream::notifyStatsUpdated() {
 				break;
 		}
 		getMediaSession().notifyStatsUpdated(mStats);
-		_linphone_call_stats_set_updated(mStats, 0);
+		mStats->setUpdated(0);
 	}
 }
 
@@ -1379,13 +1378,13 @@ void MS2Stream::iceStateChanged() {
 
 void MS2Stream::updateIceInStats(LinphoneIceState state) {
 	lInfo() << "ICE state is " << linphone_ice_state_to_string(state) << " for " << *this;
-	_linphone_call_stats_set_ice_state(mStats, state);
+	mStats->setIceState(state);
 }
 
 void MS2Stream::updateIceInStats() {
 	/* Special case for rtp bundle: we report the ice state of the transport owner. */
 	if (mRtpBundle && !mOwnsBundle && mBundleOwner && mBundleOwner->mStats) {
-		updateIceInStats(linphone_call_stats_get_ice_state(mBundleOwner->mStats));
+		updateIceInStats(mBundleOwner->mStats->getIceState());
 		return;
 	}
 
@@ -1487,7 +1486,7 @@ void MS2Stream::handleEvents() {
 			} while ((rtcpMessage = rtcp_parser_context_next_packet(&rtcpctx)) != nullptr);
 			rtcp_parser_context_uninit(&rtcpctx);
 		}
-		if (ms) linphone_call_stats_fill(mStats, ms, ev);
+		if (ms) mStats->fill(ms, ev);
 		bool isIceEvent = false;
 		switch (evt) {
 			case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
@@ -1630,27 +1629,22 @@ float MS2Stream::getCurrentQuality() {
 void MS2Stream::updateBandwidthReports() {
 	MediaStream *ms = getMediaStream();
 	bool active = ms ? (media_stream_get_state(ms) == MSStreamStarted) : false;
-	_linphone_call_stats_set_download_bandwidth(mStats, active ? (float)(media_stream_get_down_bw(ms) * 1e-3) : 0.f);
-	_linphone_call_stats_set_upload_bandwidth(mStats, active ? (float)(media_stream_get_up_bw(ms) * 1e-3) : 0.f);
-	_linphone_call_stats_set_fec_download_bandwidth(mStats,
-	                                                active ? (float)(media_stream_get_fec_down_bw(ms) * 1e-3) : 0.f);
-	_linphone_call_stats_set_fec_upload_bandwidth(mStats,
-	                                              active ? (float)(media_stream_get_fec_up_bw(ms) * 1e-3) : 0.f);
-	_linphone_call_stats_set_rtcp_download_bandwidth(mStats,
-	                                                 active ? (float)(media_stream_get_rtcp_down_bw(ms) * 1e-3) : 0.f);
-	_linphone_call_stats_set_rtcp_upload_bandwidth(mStats,
-	                                               active ? (float)(media_stream_get_rtcp_up_bw(ms) * 1e-3) : 0.f);
-	_linphone_call_stats_set_ip_family_of_remote(mStats, active ? (ortp_stream_is_ipv6(&mSessions.rtp_session->rtp.gs)
-	                                                                   ? LinphoneAddressFamilyInet6
-	                                                                   : LinphoneAddressFamilyInet)
-	                                                            : LinphoneAddressFamilyUnspec);
+	mStats->setDownloadBandwidth(active ? (float)(media_stream_get_down_bw(ms) * 1e-3) : 0.f);
+	mStats->setUploadBandwidth(active ? (float)(media_stream_get_up_bw(ms) * 1e-3) : 0.f);
+	mStats->setFecDownloadBandwidth(active ? (float)(media_stream_get_fec_down_bw(ms) * 1e-3) : 0.f);
+	mStats->setFecUploadBandwidth(active ? (float)(media_stream_get_fec_up_bw(ms) * 1e-3) : 0.f);
+	mStats->setRtcpDownloadBandwidth(active ? (float)(media_stream_get_rtcp_down_bw(ms) * 1e-3) : 0.f);
+	mStats->setRtcpUploadBandwidth(active ? (float)(media_stream_get_rtcp_up_bw(ms) * 1e-3) : 0.f);
+	mStats->setIpFamilyOfRemote(active
+	                                ? (ortp_stream_is_ipv6(&mSessions.rtp_session->rtp.gs) ? LinphoneAddressFamilyInet6
+	                                                                                       : LinphoneAddressFamilyInet)
+	                                : LinphoneAddressFamilyUnspec);
 
 	if (getCCore()->send_call_stats_periodical_updates) {
-		if (active) linphone_call_stats_update(mStats, ms);
-		_linphone_call_stats_set_updated(mStats, _linphone_call_stats_get_updated(mStats) |
-		                                             LINPHONE_CALL_STATS_PERIODICAL_UPDATE);
+		if (active) mStats->update(ms);
+		mStats->setUpdated(mStats->getUpdated() | LINPHONE_CALL_STATS_PERIODICAL_UPDATE);
 		getMediaSession().notifyStatsUpdated(mStats);
-		_linphone_call_stats_set_updated(mStats, 0);
+		mStats->setUpdated(0);
 	}
 }
 
@@ -1719,7 +1713,6 @@ void MS2Stream::disconnectFromMixer() {
 
 MS2Stream::~MS2Stream() {
 	finish();
-	linphone_call_stats_unref(mStats);
 	mStats = nullptr;
 }
 

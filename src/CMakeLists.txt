@@ -119,6 +119,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
 	call/call-log.h
+	call/call-stats.h
 	call/call.h
 	call/video-source/video-source-descriptor.h
 	call/audio-device/audio-device.h
@@ -431,6 +432,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	call/call-log.cpp
+	call/call-stats.cpp
 	call/call.cpp
 	call/video-source/video-source-descriptor.cpp
 	chat/chat-message/chat-message-reaction.cpp

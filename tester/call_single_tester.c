@@ -105,12 +105,13 @@ static void liblinphone_tester_check_rtcp_base(LinphoneCoreManager *caller,
 		reset_call_stats(video_stats1, linphone_call_get_video_stats(c1));
 		reset_call_stats(audio_stats2, linphone_call_get_audio_stats(c2));
 		reset_call_stats(video_stats2, linphone_call_get_video_stats(c2));
-		if (linphone_call_stats_get_round_trip_delay(audio_stats1) > 0.0 &&
-		    linphone_call_stats_get_round_trip_delay(audio_stats2) > 0.0 &&
-		    (!linphone_call_log_video_enabled(linphone_call_get_call_log(c1)) ||
-		     linphone_call_stats_get_round_trip_delay(video_stats1) > 0.0) &&
-		    (!linphone_call_log_video_enabled(linphone_call_get_call_log(c2)) ||
-		     linphone_call_stats_get_round_trip_delay(video_stats2) > 0.0)) {
+		if (audio_stats1 && audio_stats2 && video_stats1 && video_stats2 &&
+		    (linphone_call_stats_get_round_trip_delay(audio_stats1) > 0.0 &&
+		     linphone_call_stats_get_round_trip_delay(audio_stats2) > 0.0 &&
+		     (!linphone_call_log_video_enabled(linphone_call_get_call_log(c1)) ||
+		      linphone_call_stats_get_round_trip_delay(video_stats1) > 0.0) &&
+		     (!linphone_call_log_video_enabled(linphone_call_get_call_log(c2)) ||
+		      linphone_call_stats_get_round_trip_delay(video_stats2) > 0.0))) {
 			break;
 		}
 		wait_for_until(caller->lc, callee->lc, NULL, 0, 20); /*just to sleep while iterating*/

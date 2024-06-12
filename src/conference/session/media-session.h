@@ -117,7 +117,7 @@ public:
 	void enableEchoCancellation(bool value);
 	void enableEchoLimiter(bool value);
 	bool getAllMuted() const;
-	LinphoneCallStats *getAudioStats() const;
+	std::shared_ptr<CallStats> getAudioStats() const;
 	const std::string &getAuthenticationToken() const;
 	void storeAndSortRemoteAuthToken(const std::string &remoteAuthToken) const;
 	const std::list<std::string> &getRemoteAuthenticationTokens() const;
@@ -143,11 +143,11 @@ public:
 	float getRecordVolume() const;
 	const MediaSessionParams *getRemoteParams() const;
 	float getSpeakerVolumeGain() const;
-	LinphoneCallStats *getStats(LinphoneStreamType type) const;
+	std::shared_ptr<CallStats> getStats(LinphoneStreamType type) const;
 	int getStreamCount() const;
 	MSFormatType getStreamType(int streamIndex) const;
-	LinphoneCallStats *getTextStats() const;
-	LinphoneCallStats *getVideoStats() const;
+	std::shared_ptr<CallStats> getTextStats() const;
+	std::shared_ptr<CallStats> getVideoStats() const;
 	bool mediaInProgress() const;
 	void checkAuthenticationTokenSelected(const std::string &selectedValue, const std::string &halfAuthToken);
 	void skipZrtpAuthentication();

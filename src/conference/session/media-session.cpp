@@ -32,6 +32,7 @@
 #include "account/account.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
+#include "call/call-stats.h"
 #include "call/call.h"
 #include "chat/chat-room/client-chat-room.h"
 #include "conference/conference.h"
@@ -945,7 +946,7 @@ Stream *MediaSessionPrivate::getStream(LinphoneStreamType type) const {
 	return nullptr;
 }
 
-LinphoneCallStats *MediaSessionPrivate::getStats(LinphoneStreamType type) const {
+shared_ptr<CallStats> MediaSessionPrivate::getStats(LinphoneStreamType type) const {
 	Stream *s = getStream(type);
 	if (s) return s->getStats();
 	lError() << "There is no stats for main stream of type " << linphone_stream_type_to_string(type)
@@ -5086,7 +5087,7 @@ bool MediaSession::getAllMuted() const {
 	return d->getStreamsGroup().isMuted();
 }
 
-LinphoneCallStats *MediaSession::getAudioStats() const {
+shared_ptr<CallStats> MediaSession::getAudioStats() const {
 	return getStats(LinphoneStreamTypeAudio);
 }
 
@@ -5461,14 +5462,14 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 	return nullptr;
 }
 
-LinphoneCallStats *MediaSession::getStats(LinphoneStreamType type) const {
+shared_ptr<CallStats> MediaSession::getStats(LinphoneStreamType type) const {
 	L_D();
 	if (type == LinphoneStreamTypeUnknown) return nullptr;
-	LinphoneCallStats *stats = nullptr;
-	LinphoneCallStats *statsCopy = nullptr;
+	shared_ptr<CallStats> stats = nullptr;
+	shared_ptr<CallStats> statsCopy = nullptr;
 	Stream *s = d->getStream(type);
 	if (s && (stats = s->getStats())) {
-		statsCopy = (LinphoneCallStats *)belle_sip_object_clone((belle_sip_object_t *)stats);
+		statsCopy = stats->clone()->toSharedPtr();
 	}
 	return statsCopy;
 }
@@ -5496,11 +5497,11 @@ MSFormatType MediaSession::getStreamType(int streamIndex) const {
 	return MSUnknownMedia;
 }
 
-LinphoneCallStats *MediaSession::getTextStats() const {
+shared_ptr<CallStats> MediaSession::getTextStats() const {
 	return getStats(LinphoneStreamTypeText);
 }
 
-LinphoneCallStats *MediaSession::getVideoStats() const {
+shared_ptr<CallStats> MediaSession::getVideoStats() const {
 	return getStats(LinphoneStreamTypeVideo);
 }
 
@@ -5508,8 +5509,8 @@ bool MediaSession::mediaInProgress() const {
 	L_D();
 	for (auto &stream : d->getStreamsGroup().getStreams()) {
 		if (stream) {
-			LinphoneCallStats *stats = stream->getStats();
-			if (stats && linphone_call_stats_get_ice_state(stats) == LinphoneIceStateInProgress) {
+			shared_ptr<CallStats> stats = stream->getStats();
+			if (stats && stats->getIceState() == LinphoneIceStateInProgress) {
 				return true;
 			}
 		}

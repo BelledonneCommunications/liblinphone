@@ -133,7 +133,7 @@ public:
 		return natPolicy;
 	}
 
-	LinphoneCallStats *getStats(LinphoneStreamType type) const;
+	std::shared_ptr<CallStats> getStats(LinphoneStreamType type) const;
 
 	SalCallOp *getOp() const {
 		return op;

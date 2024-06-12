@@ -227,11 +227,11 @@ VideoBandwidthAlertMonitor::VideoBandwidthAlertMonitor(MediaSession &mediaSessio
 	getTimer(LinphoneAlertQoSLowDownloadBandwidthEstimation, "video"s, "download_bandwidth_interval"s, 1000);
 }
 
-void VideoBandwidthAlertMonitor::check(LinphoneCallStats *callStats) {
+void VideoBandwidthAlertMonitor::check(const shared_ptr<CallStats> &callStats) {
 	if (!mAlertsEnabled) return;
-	float bandwidth = linphone_call_stats_get_download_bandwidth(callStats);
+	float bandwidth = callStats->getDownloadBandwidth();
 	checkVideoBandwidth(bandwidth);
-	float estimatedBandwidth = linphone_call_stats_get_estimated_download_bandwidth(callStats);
+	float estimatedBandwidth = callStats->getEstimatedDownloadBandwidth();
 	if (estimatedBandwidth != 0) {
 		lInfo() << "Got video bandwidth estimation: " << estimatedBandwidth;
 		checkBandwidthEstimation(estimatedBandwidth);
@@ -279,12 +279,12 @@ float NetworkQualityAlertMonitor::getLossRateThreshold() {
 	return mLossRateThreshold;
 }
 
-void NetworkQualityAlertMonitor::check(LinphoneCallStats *callStats, bool burstOccured) {
+void NetworkQualityAlertMonitor::check(const shared_ptr<CallStats> &callStats, bool burstOccured) {
 	if (!mAlertsEnabled) return;
-	float localLossRate = linphone_call_stats_get_local_loss_rate(callStats);
-	float localLateRate = linphone_call_stats_get_local_late_rate(callStats);
+	float localLossRate = callStats->getLocalLossRate();
+	float localLateRate = callStats->getLocalLateRate();
 
-	float remoteLossRate = linphone_call_stats_get_receiver_loss_rate(callStats);
+	float remoteLossRate = callStats->getReceiverLossRate();
 	checkRemoteLossRate(remoteLossRate);
 	checkLocalLossRate(localLossRate, localLateRate, LinphoneStreamTypeAudio);
 	checkLostSignal();

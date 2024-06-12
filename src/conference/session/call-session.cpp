@@ -2310,7 +2310,7 @@ void CallSession::notifyRtcpUpdateForReporting(SalStreamType type) {
 	}
 }
 
-void CallSession::notifyStatsUpdated(const LinphoneCallStats *stats) {
+void CallSession::notifyStatsUpdated(const shared_ptr<CallStats> &stats) {
 	L_D();
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;

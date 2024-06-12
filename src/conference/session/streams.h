@@ -31,6 +31,7 @@
 #include "mediastreamer2/msmire.h"
 
 #include "c-wrapper/list-holder.h"
+#include "call/call-stats.h"
 #include "media-description-renderer.h"
 #include "port-config.h"
 #include "tester_utils.h"
@@ -111,7 +112,7 @@ public:
 	 * Returns the current mixer, if any. It will still return non-null within disconnectFromMixer().
 	 */
 	StreamMixer *getMixer() const;
-	virtual LinphoneCallStats *getStats() {
+	virtual std::shared_ptr<CallStats> getStats() const {
 		return nullptr;
 	}
 	/**

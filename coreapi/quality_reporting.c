@@ -663,11 +663,11 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 	int report_interval;
 
 	if (stats_type == 0) {
-		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeAudio);
+		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeAudio)->toC();
 	} else if (stats_type == 1) {
-		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeVideo);
+		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeVideo)->toC();
 	} else {
-		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeText);
+		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeText)->toC();
 	}
 
 	if (!media_report_enabled(call, stats_type)) return;

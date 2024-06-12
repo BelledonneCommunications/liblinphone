@@ -239,19 +239,6 @@ typedef enum _LinphoneCallDir {
 } LinphoneCallDir;
 
 /**
- * @brief This object carry various statistic informations regarding the quality of an audio or video stream for a given
- *#LinphoneCall.
- *
- * To receive these informations periodically and as soon as they are computed,
- * implement the call_stats_updated() callback inside a #LinphoneCoreCbs.
- *
- * At any time, the application can access latest computed statistics using linphone_call_get_audio_stats() and
- *linphone_call_get_video_stats().
- * @ingroup call_misc
- **/
-typedef struct _LinphoneCallStats LinphoneCallStats;
-
-/**
  * @ingroup call_misc
  */
 typedef enum _LinphoneSupportLevel {

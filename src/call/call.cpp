@@ -172,7 +172,7 @@ void Call::setMicrophoneMuted(bool muted) {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setMicrophoneMuted(muted);
 }
 
-LinphoneCallStats *Call::getPrivateStats(LinphoneStreamType type) const {
+shared_ptr<CallStats> Call::getPrivateStats(LinphoneStreamType type) const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getPrivate()->getStats(type);
 }
 
@@ -658,8 +658,8 @@ void Call::onRtcpUpdateForReporting(BCTBX_UNUSED(const shared_ptr<CallSession> &
 	linphone_reporting_on_rtcp_update(this->toC(), type);
 }
 
-void Call::onStatsUpdated(BCTBX_UNUSED(const shared_ptr<CallSession> &session), const LinphoneCallStats *stats) {
-	linphone_call_notify_stats_updated(this->toC(), stats);
+void Call::onStatsUpdated(BCTBX_UNUSED(const shared_ptr<CallSession> &session), const shared_ptr<CallStats> &stats) {
+	linphone_call_notify_stats_updated(this->toC(), stats->toC());
 }
 
 void Call::onUpdateMediaInfoForReporting(BCTBX_UNUSED(const shared_ptr<CallSession> &session), int statsType) {
@@ -1002,7 +1002,7 @@ bool Call::getAllMuted() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAllMuted();
 }
 
-LinphoneCallStats *Call::getAudioStats() const {
+shared_ptr<CallStats> Call::getAudioStats() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAudioStats();
 }
 
@@ -1013,9 +1013,8 @@ const string &Call::getAuthenticationToken() const {
 void Call::forgeHalfAuthenticationToken(bool localHalfAuthToken) const {
 	const string &authToken = getAuthenticationToken();
 	if (authToken.empty()) return; // ZRTP disabled
-	LinphoneCallStats *stats = getStats(LinphoneStreamTypeAudio);
-	int sasAlgo = linphone_call_stats_get_zrtp_algo(stats)->sas_algo;
-	linphone_call_stats_unref(stats);
+	shared_ptr<CallStats> stats = getStats(LinphoneStreamTypeAudio);
+	int sasAlgo = stats->getZrtpAlgo()->sas_algo;
 	if (localHalfAuthToken) {
 		if (sasAlgo == MS_ZRTP_SAS_B32) {
 			if (getDirection() == LinphoneCallOutgoing) {
@@ -1219,7 +1218,7 @@ CallSession::State Call::getState() const {
 	return getActiveSession()->getState();
 }
 
-LinphoneCallStats *Call::getStats(LinphoneStreamType type) const {
+shared_ptr<CallStats> Call::getStats(LinphoneStreamType type) const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getStats(type);
 }
 
@@ -1231,7 +1230,7 @@ MSFormatType Call::getStreamType(int streamIndex) const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getStreamType(streamIndex);
 }
 
-LinphoneCallStats *Call::getTextStats() const {
+shared_ptr<CallStats> Call::getTextStats() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getTextStats();
 }
 
@@ -1256,7 +1255,7 @@ shared_ptr<Call> Call::getTransferTarget() const {
 	return nullptr;
 }
 
-LinphoneCallStats *Call::getVideoStats() const {
+std::shared_ptr<CallStats> Call::getVideoStats() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getVideoStats();
 }
 

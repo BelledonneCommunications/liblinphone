@@ -117,7 +117,7 @@ class VideoBandwidthAlertMonitor : public AlertMonitor {
 public:
 	explicit VideoBandwidthAlertMonitor(MediaSession &mediaSession);
 	float getBandwidthThreshold();
-	void check(LinphoneCallStats *callStats);
+	void check(const std::shared_ptr<CallStats> &callStats);
 	void checkVideoBandwidth(float bandwidth);
 	void checkBandwidthEstimation(float bandwidth);
 
@@ -135,7 +135,7 @@ public:
 	void checkLostSignal();
 	void checkBurstOccurence(const bool burstOccured);
 	void checkNackQuality(RtpSession *session);
-	void check(LinphoneCallStats *, bool);
+	void check(const std::shared_ptr<CallStats> &, bool);
 	void reset() override;
 	float computeNackIndicator(uint64_t lostBeforeNack, uint64_t cumPacketLoss);
 	void checkSignalQuality();

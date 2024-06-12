@@ -144,7 +144,7 @@ public:
 	void enableEchoCancellation(bool value);
 	void enableEchoLimiter(bool value);
 	bool getAllMuted() const;
-	LinphoneCallStats *getAudioStats() const;
+	std::shared_ptr<CallStats> getAudioStats() const;
 	const std::string &getAuthenticationToken() const;
 	const std::string &forgeLocalAuthenticationToken() const;
 	const std::string &forgeRemoteAuthenticationToken() const;
@@ -184,16 +184,16 @@ public:
 	std::shared_ptr<Call> getReplacedCall() const;
 	float getSpeakerVolumeGain() const;
 	CallSession::State getState() const;
-	LinphoneCallStats *getStats(LinphoneStreamType type) const;
-	LinphoneCallStats *getPrivateStats(LinphoneStreamType type) const;
+	std::shared_ptr<CallStats> getStats(LinphoneStreamType type) const;
+	std::shared_ptr<CallStats> getPrivateStats(LinphoneStreamType type) const;
 	int getStreamCount() const;
 	MSFormatType getStreamType(int streamIndex) const;
-	LinphoneCallStats *getTextStats() const;
+	std::shared_ptr<CallStats> getTextStats() const;
 	const std::shared_ptr<Address> getToAddress() const;
 	const char *getToHeader(const std::string &name) const;
 	CallSession::State getTransferState() const;
 	std::shared_ptr<Call> getTransferTarget() const;
-	LinphoneCallStats *getVideoStats() const;
+	std::shared_ptr<CallStats> getVideoStats() const;
 	bool isInConference() const;
 	std::string getConferenceId() const;
 	void setConferenceId(const std::string &conferenceId);
@@ -295,7 +295,7 @@ public:
 	void onGoClearAckSent() override;
 	void onCallSessionStateChangedForReporting(const std::shared_ptr<CallSession> &session) override;
 	void onRtcpUpdateForReporting(const std::shared_ptr<CallSession> &session, SalStreamType type) override;
-	void onStatsUpdated(const std::shared_ptr<CallSession> &session, const LinphoneCallStats *stats) override;
+	void onStatsUpdated(const std::shared_ptr<CallSession> &session, const std::shared_ptr<CallStats> &stats) override;
 	void onUpdateMediaInfoForReporting(const std::shared_ptr<CallSession> &session, int statsType) override;
 	void onResetCurrentSession(const std::shared_ptr<CallSession> &session) override;
 	void onSetCurrentSession(const std::shared_ptr<CallSession> &session) override;

@@ -664,19 +664,39 @@ LinphoneStatus linphone_call_send_info_message(LinphoneCall *call, const Linphon
 }
 
 LinphoneCallStats *linphone_call_get_stats(LinphoneCall *call, LinphoneStreamType type) {
-	return Call::toCpp(call)->getStats(type);
+	auto stats = Call::toCpp(call)->getStats(type);
+	if (stats) {
+		stats->ref();
+		return stats->toC();
+	}
+	return NULL;
 }
 
 LinphoneCallStats *linphone_call_get_audio_stats(LinphoneCall *call) {
-	return Call::toCpp(call)->getAudioStats();
+	auto stats = Call::toCpp(call)->getAudioStats();
+	if (stats) {
+		stats->ref();
+		return stats->toC();
+	}
+	return NULL;
 }
 
 LinphoneCallStats *linphone_call_get_video_stats(LinphoneCall *call) {
-	return Call::toCpp(call)->getVideoStats();
+	auto stats = Call::toCpp(call)->getVideoStats();
+	if (stats) {
+		stats->ref();
+		return stats->toC();
+	}
+	return NULL;
 }
 
 LinphoneCallStats *linphone_call_get_text_stats(LinphoneCall *call) {
-	return Call::toCpp(call)->getTextStats();
+	auto stats = Call::toCpp(call)->getTextStats();
+	if (stats) {
+		stats->ref();
+		return stats->toC();
+	}
+	return NULL;
 }
 
 void linphone_call_add_callbacks(LinphoneCall *call, LinphoneCallCbs *cbs) {

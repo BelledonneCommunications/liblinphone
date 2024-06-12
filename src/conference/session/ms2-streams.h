@@ -60,7 +60,7 @@ public:
 	virtual void finishEarlyMediaForking() override;
 	virtual float getCurrentQuality() override;
 	virtual float getAverageQuality() override;
-	virtual LinphoneCallStats *getStats() override;
+	virtual std::shared_ptr<CallStats> getStats() const override;
 	virtual void startDtls(const OfferAnswerContext &params) override;
 	virtual bool isMuted() const override;
 	virtual void refreshSockets() override;
@@ -119,7 +119,7 @@ protected:
 	RtpProfile *mRtpIoProfile = nullptr;
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
-	LinphoneCallStats *mStats = nullptr;
+	std::shared_ptr<CallStats> mStats = nullptr;
 	int mOutputBandwidth; // Target output bandwidth for the stream.
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with

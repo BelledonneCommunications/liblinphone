@@ -121,7 +121,7 @@ public:
 	                                      BCTBX_UNUSED(SalStreamType type)) {
 	}
 	virtual void onStatsUpdated(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
-	                            BCTBX_UNUSED(const LinphoneCallStats *stats)) {
+	                            BCTBX_UNUSED(const std::shared_ptr<CallStats> &stats)) {
 	}
 	virtual void onUpdateMediaInfoForReporting(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                           BCTBX_UNUSED(int statsType)) {

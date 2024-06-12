@@ -24,6 +24,7 @@
 #include <mediastreamer2/msrtt4103.h>
 
 #include "address/address.h"
+#include "call/call-stats.h"
 #include "conference/conference-id.h"
 #include "conference/params/call-session-params.h"
 #include "core/core-accessor.h"
@@ -196,7 +197,7 @@ public:
 	void notifyReceiveMasterKeyChanged(const std::string key);
 	void notifyUpdateMediaInfoForReporting(const int type);
 	void notifyRtcpUpdateForReporting(SalStreamType type);
-	void notifyStatsUpdated(const LinphoneCallStats *stats);
+	void notifyStatsUpdated(const std::shared_ptr<CallStats> &stats);
 	void notifyTmmbrReceived(const int index, const int max_bitrate);
 	void notifyAlert(std::shared_ptr<Alert> &alert);
 	void notifyCallSessionStateChanged(CallSession::State newState, const std::string &message);
