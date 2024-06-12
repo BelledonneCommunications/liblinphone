@@ -261,7 +261,7 @@ const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev) {
 // Public functions.
 // =============================================================================
 
-LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linphone_event, LinphoneContent *body) {
+LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linphone_event, const LinphoneContent *body) {
 	EventLogContextualizer logContextualizer(linphone_event);
 	auto event_subscribe = dynamic_cast<EventSubscribe *>(Event::toCpp(linphone_event));
 	if (!event_subscribe) {
@@ -273,7 +273,7 @@ LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linphone_event, Linp
 	return event_subscribe->send(cppBody);
 }
 
-LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *linphone_event, LinphoneContent *body) {
+LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *linphone_event, const LinphoneContent *body) {
 	EventLogContextualizer logContextualizer(linphone_event);
 	auto event_subscribe = dynamic_cast<EventSubscribe *>(Event::toCpp(linphone_event));
 	if (!event_subscribe) {
@@ -315,7 +315,7 @@ LinphoneStatus linphone_event_deny_subscription(LinphoneEvent *linphone_event, L
 	return event_subscribe->deny(reason);
 }
 
-LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_event, LinphoneContent *body) {
+LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_event, const LinphoneContent *body) {
 	EventLogContextualizer logContextualizer(linphone_event);
 	auto event_subscribe = dynamic_cast<EventSubscribe *>(Event::toCpp(linphone_event));
 	if (!event_subscribe) {
@@ -327,7 +327,7 @@ LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_event, LinphoneCont
 	return event_subscribe->notify(cppBody);
 }
 
-LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, LinphoneContent *body) {
+LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, const LinphoneContent *body) {
 	EventLogContextualizer logContextualizer(linphone_event);
 	auto event_publish = dynamic_cast<EventPublish *>(Event::toCpp(linphone_event));
 	if (!event_publish) {
@@ -339,7 +339,7 @@ LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, Linpho
 	return event_publish->send(cppBody);
 }
 
-LinphoneStatus linphone_event_update_publish(LinphoneEvent *linphone_event, LinphoneContent *body) {
+LinphoneStatus linphone_event_update_publish(LinphoneEvent *linphone_event, const LinphoneContent *body) {
 	EventLogContextualizer logContextualizer(linphone_event);
 	auto event_publish = dynamic_cast<EventPublish *>(Event::toCpp(linphone_event));
 	if (!event_publish) {

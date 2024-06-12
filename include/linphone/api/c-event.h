@@ -38,7 +38,8 @@ extern "C" {
  * @param body optional content to attach with the subscription. @maybenil
  * @return 0 if successful, -1 otherwise.
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linphone_event, LinphoneContent *body);
+LINPHONE_PUBLIC LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linphone_event,
+                                                             const LinphoneContent *body);
 
 /**
  * Update (refresh) an outgoing subscription, changing the body.
@@ -47,7 +48,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linp
  * @return 0 if successful, error code otherwise
  * @maybenil
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *linphone_event, LinphoneContent *body);
+LINPHONE_PUBLIC LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *linphone_event,
+                                                               const LinphoneContent *body);
 
 /**
  * Refresh an outgoing subscription keeping the same body.
@@ -77,7 +79,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_deny_subscription(LinphoneEvent *l
  * @param body an optional body containing the actual notification data.@maybenil
  * @return 0 if successful, -1 otherwise.
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_event, LinphoneContent *body);
+LINPHONE_PUBLIC LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_event, const LinphoneContent *body);
 
 /**
  * Send a publish created by linphone_core_create_publish().
@@ -85,7 +87,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_eve
  * @param body the new data to be published @notnil
  * @return 0 if successful, -1 otherwise.
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, LinphoneContent *body);
+LINPHONE_PUBLIC LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, const LinphoneContent *body);
 
 /**
  * Update (refresh) a publish.
@@ -93,7 +95,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_send_publish(LinphoneEvent *linpho
  * @param body the new data to be published @notnil
  * @return 0 if successful, error code otherwise
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_event_update_publish(LinphoneEvent *linphone_event, LinphoneContent *body);
+LINPHONE_PUBLIC LinphoneStatus linphone_event_update_publish(LinphoneEvent *linphone_event,
+                                                             const LinphoneContent *body);
 
 /**
  * Refresh an outgoing publish keeping the same body.

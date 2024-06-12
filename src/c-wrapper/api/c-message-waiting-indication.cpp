@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/api/c-content.h"
 #include "linphone/wrapper_utils.h"
 
 #include "account/account.h"
@@ -69,7 +70,7 @@ linphone_message_waiting_indication_get_summary(const LinphoneMessageWaitingIndi
 }
 
 LinphoneContent *linphone_message_waiting_indication_to_content(const LinphoneMessageWaitingIndication *mwi) {
-	return MessageWaitingIndication::toCpp(mwi)->toContent()->toC();
+	return linphone_content_ref(MessageWaitingIndication::toCpp(mwi)->toContent()->toC());
 }
 
 LinphoneMessageWaitingIndicationSummary *
