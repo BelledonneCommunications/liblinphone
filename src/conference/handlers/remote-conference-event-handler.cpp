@@ -702,7 +702,7 @@ void RemoteConferenceEventHandler::subscribe() {
 
 	const auto &peerAddress = getConferenceId().getPeerAddress();
 	ev = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(conf->getCore(), peerAddress, Account::toCpp(acc)->getConfig(), "conference", 600))
+	    (new EventSubscribe(conf->getCore(), peerAddress, Account::toCpp(acc)->getSharedFromThis(), "conference", 600))
 	        ->toSharedPtr());
 	ev->getOp()->setFromAddress(localAddress->getImpl());
 	setInitialSubscriptionUnderWayFlag(true);

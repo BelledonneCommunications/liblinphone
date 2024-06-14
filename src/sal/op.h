@@ -231,8 +231,9 @@ public:
 	void setRetryFunction(const std::function<void()> &retryFunc);
 	bool hasRetryFunction() const;
 	void resetRetryFunction();
-
 	int processRedirect();
+	/* to restrict the use of connections for this op, see in belle-sip. */
+	void setChannelBankIdentifier(const std::string &identifier);
 
 protected:
 	enum class State {
@@ -344,6 +345,7 @@ protected:
 	SalCustomHeader *mSentCustomHeaders = nullptr;
 	SalCustomHeader *mRecvCustomHeaders = nullptr;
 	std::string mEntityTag; // As defined by rfc3903 (I.E publih)
+	std::string mChannelBankIdentifier;
 	ReleaseCb mReleaseCb = nullptr;
 
 	const belle_sip_listener_callbacks_t *mCallbacks = nullptr;
