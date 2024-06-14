@@ -272,6 +272,9 @@ int SalOp::sendRequestWithContact(belle_sip_request_t *request, bool addContact)
 		                                     L_STRING_TO_C(mRealm));
 	}
 
+	if (!mChannelBankIdentifier.empty())
+		belle_sip_message_set_channel_bank_identifier(BELLE_SIP_MESSAGE(request), mChannelBankIdentifier.c_str());
+
 	int result = belle_sip_client_transaction_send_request_to(clientTransaction, nextHopUri);
 
 	// Update call id if not set yet for this op
@@ -1098,6 +1101,10 @@ bool SalOp::runRetryFunc() {
 	mRetryFunc();
 	mRetryFunc = nullptr;
 	return true;
+}
+
+void SalOp::setChannelBankIdentifier(const std::string &identifier) {
+	mChannelBankIdentifier = identifier;
 }
 
 LINPHONE_END_NAMESPACE

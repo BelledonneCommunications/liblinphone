@@ -128,8 +128,10 @@ LinphoneEvent *linphone_core_subscribe(
 LinphoneEvent *linphone_core_create_subscribe_2(
     LinphoneCore *lc, LinphoneAddress *resource, LinphoneProxyConfig *cfg, const char *event, int expires) {
 	CoreLogContextualizer logContextualizer(lc);
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), cfg,
-	                           L_C_TO_STRING(event), expires))
+	LinphoneAccount *account = nullptr;
+	if (cfg) account = linphone_proxy_config_get_account(cfg);
+	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	                           Account::toCpp(account)->getSharedFromThis(), L_C_TO_STRING(event), expires))
 	    ->toC();
 }
 

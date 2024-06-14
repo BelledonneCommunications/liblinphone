@@ -925,6 +925,74 @@ static void call_outbound_using_different_proxies(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void test_accounts_connections(bool_t accounts_channel_isolation_enabled) {
+	// Caller
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dual_proxy_udp_rc");
+	LinphoneCallParams *params;
+	const bctbx_list_t *accounts;
+
+	linphone_core_remove_supported_tag(marie->lc, "gruu");
+
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "accounts_channel_isolation",
+	                        (int)accounts_channel_isolation_enabled);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "reject_duplicated_calls", 0);
+	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
+	linphone_core_set_use_files(marie->lc, TRUE);
+	linphone_core_manager_start(marie, TRUE);
+	accounts = linphone_core_get_account_list(marie->lc);
+	LinphoneAccount *first_account = (LinphoneAccount *)accounts->data;
+	LinphoneAccount *second_account = (LinphoneAccount *)accounts->next->data;
+
+	const LinphoneAddress *first_contact = linphone_account_get_contact_address(first_account);
+	const LinphoneAddress *second_contact = linphone_account_get_contact_address(second_account);
+
+	/* the host part will be the same, there is only one interface */
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(first_contact), linphone_address_get_domain(second_contact));
+	if (!accounts_channel_isolation_enabled) {
+		BC_ASSERT_EQUAL(linphone_address_get_port(first_contact), linphone_address_get_port(second_contact), int, "%i");
+	} else {
+		/* the ports must be different */
+		BC_ASSERT_NOT_EQUAL(linphone_address_get_port(first_contact), linphone_address_get_port(second_contact), int,
+		                    "%i");
+	}
+	params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_set_account(params, first_account);
+	/* make a call from one account to the other */
+	LinphoneCall *marie_call = linphone_core_invite_address_with_params(
+	    marie->lc, linphone_account_params_get_identity_address(linphone_account_get_params(second_account)), params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallIncomingReceived, 1));
+	LinphoneCall *marie2_call;
+	const bctbx_list_t *calls = linphone_core_get_calls(marie->lc);
+	if (calls->data == marie_call) marie2_call = (LinphoneCall *)calls->next->data;
+	else marie2_call = (LinphoneCall *)calls->data;
+	linphone_call_accept(marie2_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+	first_contact = linphone_call_get_remote_contact_address(marie_call);
+	second_contact = linphone_call_get_remote_contact_address(marie2_call);
+
+	if (!accounts_channel_isolation_enabled) {
+		BC_ASSERT_EQUAL(linphone_address_get_port(first_contact), linphone_address_get_port(second_contact), int, "%i");
+	} else {
+		/* the ports must be different */
+		BC_ASSERT_NOT_EQUAL(linphone_address_get_port(first_contact), linphone_address_get_port(second_contact), int,
+		                    "%i");
+	}
+
+	linphone_call_terminate(marie_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallReleased, 1));
+	linphone_core_manager_destroy(marie);
+}
+
+static void two_accounts_use_different_connections(void) {
+	test_accounts_connections(0);
+	test_accounts_connections(1);
+}
+
 static void multiple_answers_call(void) {
 	/* Scenario is this: pauline calls marie, which is registered 2 times.
 	   Both linphones answer at the same time, and only one should get the
@@ -7803,7 +7871,8 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Call with audio stream added later on", call_with_audio_stream_added_later_on),
     TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
     TEST_NO_TAG("Call with custom m line and crappy to header", call_with_custom_m_line),
-    TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri)};
+    TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri),
+    TEST_NO_TAG("Two accounts not sharing same connection", two_accounts_use_different_connections)};
 
 static test_t call_not_established_tests[] = {
     TEST_NO_TAG("Early declined call", early_declined_call),

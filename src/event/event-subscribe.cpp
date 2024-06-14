@@ -82,11 +82,11 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
                                const std::shared_ptr<Address> resource,
-                               LinphoneProxyConfig *cfg,
+                               const std::shared_ptr<Account> &account,
                                const string &event,
                                int expires)
     : EventSubscribe(core, LinphoneSubscriptionOutgoing, event, expires) {
-	linphone_configure_op_with_proxy(core->getCCore(), mOp, resource->toC(), NULL, TRUE, cfg);
+	linphone_configure_op_with_account(core->getCCore(), mOp, resource->toC(), NULL, TRUE, account->toC());
 	mOp->setManualRefresherMode(
 	    !linphone_config_get_int(core->getCCore()->config, "sip", "refresh_generic_subscribe", 1));
 }

@@ -27,6 +27,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Account;
+
 class LINPHONE_PUBLIC EventSubscribe : public Event {
 public:
 	EventSubscribe(const std::shared_ptr<Core> &core,
@@ -52,7 +54,7 @@ public:
 	               int expires);
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               const std::shared_ptr<Address> resource,
-	               LinphoneProxyConfig *cfg,
+	               const std::shared_ptr<Account> &account,
 	               const std::string &event,
 	               int expires);
 

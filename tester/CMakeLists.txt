@@ -159,6 +159,7 @@ set(RC_FILES
 	rcfiles/marie_dtls_srtp_immediate_rc
 	rcfiles/marie_dual_proxy_2_rc
 	rcfiles/marie_dual_proxy_rc
+	rcfiles/marie_dual_proxy_udp_rc
 	rcfiles/marie_early_rc
 	rcfiles/marie_h264_rc
 	rcfiles/marie_nat64_rc

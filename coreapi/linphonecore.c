@@ -4574,34 +4574,6 @@ linphone_core_start_refered_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *c
      nodes with the basic SIP routing policy in order to get a workable
      system.
 */
-static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const LinphoneAddress *dest) {
-	bctbx_list_t *ret = NULL;
-	const bctbx_list_t *proxy_routes = linphone_proxy_config_get_routes(proxy);
-	bctbx_list_t *proxy_routes_iterator = (bctbx_list_t *)proxy_routes;
-	const LinphoneAddress *srv_route = linphone_proxy_config_get_service_route(proxy);
-	while (proxy_routes_iterator) {
-		const char *local_route = (const char *)bctbx_list_get_data(proxy_routes_iterator);
-		if (local_route) {
-			ret = bctbx_list_append(ret, sal_address_new(local_route));
-		}
-		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
-	}
-	if (srv_route) {
-		const auto srv_route_addr = LinphonePrivate::Address::getSharedFromThis(srv_route);
-		ret = bctbx_list_append(ret, sal_address_clone(srv_route_addr->getImpl()));
-	}
-	if (ret == NULL) {
-		/*if the proxy address matches the domain part of the destination, then use the same transport
-		 * as the one used for registration. This is done by forcing a route to this proxy.*/
-		SalAddress *proxy_addr = sal_address_new(linphone_proxy_config_get_addr(proxy));
-		const char *proxy_addr_domain = sal_address_get_domain(proxy_addr);
-		const char *linphone_addr_domain = linphone_address_get_domain(dest);
-		if (proxy_addr_domain && linphone_addr_domain && strcmp(proxy_addr_domain, linphone_addr_domain) == 0) {
-			ret = bctbx_list_append(ret, proxy_addr);
-		} else sal_address_unref(proxy_addr);
-	}
-	return ret;
-}
 
 static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const LinphoneAddress *dest) {
 	bctbx_list_t *ret = NULL;
@@ -4821,46 +4793,6 @@ static void linphone_transfer_routes_to_op(bctbx_list_t *routes, SalOp *op) {
 	bctbx_list_free(routes);
 }
 
-void linphone_configure_op_with_proxy(LinphoneCore *lc,
-                                      SalOp *op,
-                                      const LinphoneAddress *dest,
-                                      SalCustomHeader *headers,
-                                      bool_t with_contact,
-                                      LinphoneProxyConfig *proxy) {
-	bctbx_list_t *routes = NULL;
-	const char *identity;
-
-	if (proxy) {
-		identity = linphone_proxy_config_get_identity(proxy);
-		if (linphone_proxy_config_get_privacy(proxy) != LinphonePrivacyDefault) {
-			op->setPrivacy(linphone_proxy_config_get_privacy(proxy));
-		}
-		op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
-	} else identity = linphone_core_get_primary_contact(lc);
-	/*sending out of calls*/
-	if (proxy) {
-		routes = make_routes_for_proxy(proxy, dest);
-		linphone_transfer_routes_to_op(routes, op);
-	}
-
-	op->setToAddress(Address::toCpp(dest)->getImpl());
-	op->setFrom(identity);
-	op->setSentCustomHeaders(headers);
-
-	if (with_contact && proxy && Account::toCpp(proxy->account)->getOp()) {
-		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
-		SalAddress *salAddress = nullptr;
-		if (contact) {
-			const auto contact_addr = LinphonePrivate::Address::getSharedFromThis(contact);
-			salAddress = sal_address_clone(contact_addr->getImpl());
-		}
-		op->setContactAddress(salAddress);
-		if (salAddress) sal_address_unref(salAddress);
-	}
-	op->enableCnxIpTo0000IfSendOnly(!!linphone_config_get_default_int(
-	    lc->config, "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0)); /*also set in linphone_call_new_incoming*/
-}
-
 void linphone_configure_op_with_account(LinphoneCore *lc,
                                         SalOp *op,
                                         const LinphoneAddress *dest,
@@ -4899,6 +4831,10 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 		if (contact) {
 			op->setContactAddress(Address::toCpp(contact)->getImpl());
 		}
+	}
+	if (linphone_config_get_int(lc->config, "sip", "accounts_channel_isolation", 0)) {
+		op->setChannelBankIdentifier(
+		    Account::toCpp(account)->getAccountParams()->getIdentityAddress()->asStringUriOnly());
 	}
 	op->enableCnxIpTo0000IfSendOnly(!!linphone_config_get_int(lc->config, "sip", "cnx_ip_to_0000_if_sendonly_enabled",
 	                                                          0)); /*also set in linphone_call_new_incoming*/

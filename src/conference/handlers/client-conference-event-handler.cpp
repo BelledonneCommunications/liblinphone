@@ -759,7 +759,7 @@ void ClientConferenceEventHandler::requestFullState() {
 	auto conference = getConference();
 	lInfo() << "Requesting full state for conference "
 	        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-	                                                    : std::string("<unknown conference address>"));
+	                                               : std::string("<unknown conference address>"));
 	unsubscribe();
 	conference->setLastNotify(0);
 	subscribe(getConferenceId());
@@ -808,7 +808,7 @@ bool ClientConferenceEventHandler::subscribe() {
 	const auto &conferenceAddress = getConference()->getConferenceAddress();
 	if (!conferenceAddress) return false; // Unknown peer address
 	ev = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(getCore(), conferenceAddress, Account::toCpp(acc)->getConfig(), "conference", 600))
+	    (new EventSubscribe(getCore(), conferenceAddress, Account::toCpp(acc)->getSharedFromThis(), "conference", 600))
 	        ->toSharedPtr());
 	ev->getOp()->setFromAddress(localAddress->getImpl());
 	setInitialSubscriptionUnderWayFlag(true);

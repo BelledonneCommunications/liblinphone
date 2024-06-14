@@ -1,0 +1,74 @@
+[sip]
+#dont bind socket at all (-2)
+sip_port=-2
+sip_tcp_port=0
+sip_tls_port=0
+default_proxy=0
+ping_with_options=0
+composing_idle_timeout=1
+store_ha1_passwd=0 #used for sipp
+
+[auth_info_0]
+username=marie
+userid=marie
+passwd=secret
+realm=sip.example.org
+
+[proxy_0]
+realm=sip.example.org
+reg_proxy=<sip:sip.example.org;transport=udp>
+reg_route=<sip:sip.example.org;transport=udp>
+reg_identity="Super Marie" <sip:marie@sip.example.org>
+reg_expires=3600
+reg_sendregister=1
+publish=0
+dial_escape_plus=0
+
+[proxy_1]
+reg_proxy=<sip:sip.example.org;transport=udp>
+reg_route=<sip:sip.example.org;transport=udp>
+reg_identity="Super Marie 2" <sip:marie2@sip.example.org>
+reg_expires=3600
+reg_sendregister=1
+publish=0
+dial_escape_plus=0
+
+[friend_0]
+url="Paupoche" <sip:pauline@sip.example.org>
+pol=accept
+subscribe=0
+
+[rtp]
+audio_rtp_port=-1--1
+video_rtp_port=-1--1
+text_rtp_port=-1--1
+
+[video]
+display=0
+capture=0
+show_local=0
+size=qcif
+enabled=0
+self_view=0
+automatically_initiate=0
+automatically_accept=0
+device=StaticImage: Static picture
+
+[sound]
+echocancellation=0 #to not overload cpu in case of VG
+
+[net]
+stun_server=stun.example.org
+
+#leave this section, which is used by "Codec setup" test of "Setup" suite.
+[video_codec_0]
+mime=VP8
+rate=90000
+enabled=1
+
+[tester]
+test_env=1
+
+[storage]
+call_logs_db_uri=null
+friends_db_uri=null

@@ -261,10 +261,10 @@ void ClientEktManager::subscribe() {
 
 	const auto &peerAddress = mClientConf.lock()->getConferenceAddress();
 	if (mEventSubscribe == nullptr) {
-		mEventSubscribe =
-		    dynamic_pointer_cast<EventSubscribe>((new EventSubscribe(mClientConf.lock()->getCore(), peerAddress,
-		                                                             Account::toCpp(acc)->getConfig(), "ekt", 600))
-		                                             ->toSharedPtr());
+		mEventSubscribe = dynamic_pointer_cast<EventSubscribe>(
+		    (new EventSubscribe(mClientConf.lock()->getCore(), peerAddress, Account::toCpp(acc)->getSharedFromThis(),
+		                        "ekt", 600))
+		        ->toSharedPtr());
 		mEventSubscribe->getOp()->setFromAddress(localAddress->getImpl());
 		mEventSubscribe->setInternal(true);
 	}
