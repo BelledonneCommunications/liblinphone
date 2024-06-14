@@ -105,6 +105,12 @@ static void qrcode_found_cb(LinphoneCore *lc, const char *result) {
 	}
 }
 
+static void qrcode_reset_cb(qrcode_callback_data *qrcode_cb_data) {
+	qrcode_cb_data->qrcode_found = FALSE;
+	if (qrcode_cb_data->text) ms_free(qrcode_cb_data->text);
+	qrcode_cb_data->text = NULL;
+}
+
 typedef struct struct_image_rect {
 	int x;
 	int y;
@@ -143,7 +149,7 @@ static void _decode_qrcode(const char *image_path, image_rect *rect, bool_t imag
 	}
 	linphone_core_enable_video_preview(lcm->lc, TRUE);
 
-	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &qrcode_data.qrcode_found, TRUE, 2000));
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &qrcode_data.qrcode_found, TRUE, 3000));
 	if (qrcode_data.qrcode_found) {
 		if (BC_ASSERT_PTR_NOT_NULL(qrcode_data.text)) {
 			ms_message("QRCode decode: %s", qrcode_data.text);
@@ -173,6 +179,95 @@ static void decode_qrcode_from_zone(void) {
 	_decode_qrcode("images/linphonesiteqr_captured.jpg", &rect, TRUE);
 }
 
+static void decode_qrcode_from_image_when_enabled(LinphoneCore *lc,
+                                                  char *image_path,
+                                                  char *expected_qrcode_text,
+                                                  qrcode_callback_data *qrcode_data,
+                                                  bool_t enabled_expected,
+                                                  bool_t QRCode_found_expected) {
+	linphone_core_set_video_device(lc, liblinphone_tester_static_image_id);
+	linphone_core_set_static_picture(lc, image_path);
+	qrcode_reset_cb(qrcode_data);
+
+	if (enabled_expected) BC_ASSERT_TRUE(linphone_core_qrcode_video_preview_enabled(lc));
+	else BC_ASSERT_FALSE(linphone_core_qrcode_video_preview_enabled(lc));
+	if (QRCode_found_expected) {
+		BC_ASSERT_TRUE(wait_for_until(lc, NULL, &qrcode_data->qrcode_found, TRUE, 3000));
+	} else {
+		BC_ASSERT_FALSE(wait_for_until(lc, NULL, &qrcode_data->qrcode_found, TRUE, 3000));
+	}
+	if (qrcode_data->qrcode_found) {
+		if (enabled_expected && QRCode_found_expected) {
+			if (BC_ASSERT_PTR_NOT_NULL(qrcode_data->text)) {
+				ms_message("QRCode decode: %s", qrcode_data->text);
+				BC_ASSERT_STRING_EQUAL(qrcode_data->text, expected_qrcode_text);
+			}
+		}
+	}
+}
+
+static void decode_several_qrcodes(void) {
+	qrcode_callback_data qrcode_data;
+	char *qrcode_image = bc_tester_res("images/linphonesiteqr.jpg");
+	char *no_qrcode_image = bc_tester_res("images/nowebcamCIF.jpg");
+	char *qrcode_text = "https://www.linphone.org/";
+	LinphoneCoreManager *lcm = NULL;
+	MSFactory *factory = NULL;
+	factory = ms_factory_new_with_voip();
+	if (!ms_factory_lookup_filter_by_name(factory, "MSQRCodeReader")) {
+		ms_error("QRCode support is not built-in");
+		goto end;
+	}
+
+	lcm = linphone_core_manager_create("empty_rc");
+	linphone_core_manager_start(lcm, FALSE);
+
+	linphone_core_set_video_device(lcm->lc, liblinphone_tester_static_image_id);
+	linphone_core_set_static_picture(lcm->lc, qrcode_image);
+	linphone_core_enable_video_preview(lcm->lc, TRUE);
+
+	linphone_core_enable_qrcode_video_preview(lcm->lc, TRUE);
+	LinphoneCoreCbs *cbs = NULL;
+	qrcode_data.qrcode_found = FALSE;
+	qrcode_data.text = NULL;
+	cbs = linphone_core_get_current_callbacks(lcm->lc);
+	linphone_core_cbs_set_qrcode_found(cbs, qrcode_found_cb);
+	linphone_core_cbs_set_user_data(cbs, &qrcode_data);
+
+	// scan QRCode
+	decode_qrcode_from_image_when_enabled(lcm->lc, qrcode_image, qrcode_text, &qrcode_data, TRUE, TRUE);
+
+	// cannot scan again because the delay is too short
+	qrcode_reset_cb(&qrcode_data);
+	BC_ASSERT_FALSE(wait_for_until(lcm->lc, NULL, &qrcode_data.qrcode_found, TRUE, 1000));
+
+	// no QRCode to scan
+	decode_qrcode_from_image_when_enabled(lcm->lc, no_qrcode_image, NULL, &qrcode_data, TRUE, FALSE);
+
+	// scan QR code
+	decode_qrcode_from_image_when_enabled(lcm->lc, qrcode_image, qrcode_text, &qrcode_data, TRUE, TRUE);
+
+	// disable QRCode search, do no scan current QRCode
+	linphone_core_enable_qrcode_video_preview(lcm->lc, FALSE);
+	wait_for_until(lcm->lc, NULL, NULL, 0, 1000);
+	decode_qrcode_from_image_when_enabled(lcm->lc, qrcode_image, NULL, &qrcode_data, FALSE, FALSE);
+
+	// enable QRCode search, scan QRCode
+	linphone_core_enable_qrcode_video_preview(lcm->lc, TRUE);
+	decode_qrcode_from_image_when_enabled(lcm->lc, qrcode_image, qrcode_text, &qrcode_data, TRUE, TRUE);
+
+	// enable QRCode search, scan QRCode again
+	decode_qrcode_from_image_when_enabled(lcm->lc, qrcode_image, qrcode_text, &qrcode_data, TRUE, TRUE);
+
+	if (qrcode_data.text) ms_free(qrcode_data.text);
+	if (qrcode_image) ms_free(qrcode_image);
+	if (no_qrcode_image) ms_free(no_qrcode_image);
+	linphone_core_enable_video_preview(lcm->lc, FALSE);
+	linphone_core_manager_destroy(lcm);
+end:
+	ms_factory_destroy(factory);
+}
+
 #if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
 static void encode_qrcode(void) {
 	unsigned int w = 200;
@@ -196,12 +291,11 @@ end:
 }
 
 #endif
-
-
 test_t video_tests[] = {
     TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
     TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
     TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode"),
+    TEST_ONE_TAG("Decode several QRCodes", decode_several_qrcodes, "QRCode"),
 #if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
     TEST_ONE_TAG("Encode QRCode", encode_qrcode, "QRCode"),
 #endif

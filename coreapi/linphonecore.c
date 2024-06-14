@@ -6690,6 +6690,9 @@ bool_t linphone_core_video_preview_enabled(const LinphoneCore *lc) {
 void linphone_core_enable_qrcode_video_preview(LinphoneCore *lc, bool_t val) {
 	lc->video_conf.qrcode_decoder = val;
 	if (linphone_core_ready(lc)) linphone_config_set_int(lc->config, "video", "qrcode_decoder", val);
+#ifdef VIDEO_ENABLED
+	if (lc->previewstream) video_preview_enable_qrcode(lc->previewstream, val);
+#endif
 }
 
 bool_t linphone_core_qrcode_video_preview_enabled(const LinphoneCore *lc) {

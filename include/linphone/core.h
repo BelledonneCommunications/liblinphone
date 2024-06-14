@@ -4059,9 +4059,9 @@ LINPHONE_PUBLIC void linphone_core_enable_video_preview(LinphoneCore *core, bool
 LINPHONE_PUBLIC bool_t linphone_core_video_preview_enabled(const LinphoneCore *core);
 
 /**
- * Controls QRCode enablement.
+ * Controls QRCode enablement. When enabled, several QRCodes can be decoded.
  * @param core LinphoneCore object @notnil
- * @param enable A boolean value telling whether the QRCode is enabled in the preview.
+ * @param enable A boolean value telling whether to enable QRCode in the preview.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_enable_qrcode_video_preview(LinphoneCore *core, bool_t enable);
