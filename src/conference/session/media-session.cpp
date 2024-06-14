@@ -445,18 +445,9 @@ void MediaSessionPrivate::accepted() {
 						case CallSession::State::StreamsRunning:
 							break;
 						default:
-							lError() << "Incompatible SDP answer received";
-							switch (state) {
-								case CallSession::State::PausedByRemote:
-								case CallSession::State::Paused:
-								case CallSession::State::StreamsRunning:
-									break;
-								default:
-									lInfo() << "Incompatible SDP answer received, restoring previous state ["
-									        << Utils::toString(prevState) << "]";
-									setState(prevState, "Incompatible media parameters.");
-									break;
-							}
+							lInfo() << "Incompatible SDP answer received, restoring previous state ["
+							        << Utils::toString(prevState) << "]";
+							setState(prevState, "Incompatible media parameters.");
 							break;
 					}
 					break;
@@ -581,8 +572,18 @@ void MediaSessionPrivate::pausedByRemote() {
 	L_Q();
 	auto logContext = getLogContextualizer();
 	MediaSessionParams newParams(*getParams());
+	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_audio_on_pause",
+	                            0)) {
+		lInfo() << "Media session [" << this << "] (local address " << *q->getLocalAddress() << " remote address "
+		        << *q->getRemoteAddress()
+		        << "): Setting audio direction to inactive when being paused as per user setting in the linphonerc";
+		newParams.setAudioDirection(LinphoneMediaDirectionInactive);
+	}
 	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause",
 	                            0)) {
+		lInfo() << "Media session [" << this << "] (local address " << *q->getLocalAddress() << " remote address "
+		        << *q->getRemoteAddress()
+		        << "): Setting video direction to inactive when being paused as per user setting in the linphonerc";
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
 	}
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
@@ -682,7 +683,8 @@ bool MediaSessionPrivate::isPausedByRemoteAllowed() {
 	// allowed to paused a call unilaterally. This assumption also aims at simplifying the management of the
 	// PausedByRemote state as it is simply triggered by SIP messages without really knowing the will of the other party
 	return !((conference && !isInConference() && remoteContactAddress && remoteContactAddress->hasParam("isfocus")) ||
-	         updatingConference);
+	         updatingConference ||
+	         ((prevState != CallSession::State::PausedByRemote) && (state == CallSession::State::Updating)));
 }
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
@@ -705,14 +707,11 @@ void MediaSessionPrivate::updated(bool isUpdate) {
 				lastRemoteRecordingState = rmd->record;
 				q->notifyRemoteRecording(rmd->record == SalMediaRecordOn);
 			}
-			BCTBX_NO_BREAK;
-		case CallSession::State::Updating:
 			if (isPausedByRemoteAllowed() && rmd &&
 			    (rmd->hasDir(SalStreamSendOnly) || rmd->hasDir(SalStreamInactive))) {
 				pausedByRemote();
 				return;
 			}
-
 			break;
 		default:
 			/* The other cases are handled in CallSessionPrivate::updated */
@@ -1480,16 +1479,25 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState(std::shared_ptr<SalMed
 					sd.setDirection(SalStreamInactive);
 				} else if (sd.getDirection() != SalStreamInactive) {
 					sd.setDirection(SalStreamSendOnly);
+					if ((sd.type == SalAudio) &&
+					    linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
+					                            "inactive_audio_on_pause", 0)) {
+						lInfo() << "Media session [" << this << "] (local address " << *q->getLocalAddress()
+						        << " remote address " << *q->getRemoteAddress()
+						        << ") Setting audio direction to inactive when pausing the call as per user setting in "
+						           "the linphonerc";
+
+						sd.setDirection(SalStreamInactive);
+					}
 					if ((sd.type == SalVideo) &&
 					    linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
-					                            "inactive_video_on_pause", 0))
+					                            "inactive_video_on_pause", 0)) {
+						lInfo() << "Media session [" << this << "] (local address " << *q->getLocalAddress()
+						        << " remote address " << *q->getRemoteAddress()
+						        << ") Setting video direction to inactive when pausing the call as per user setting in "
+						           "the linphonerc";
 						sd.setDirection(SalStreamInactive);
-				} else if (sd.getDirection() != SalStreamInactive) {
-					sd.setDirection(SalStreamSendOnly);
-					if ((sd.type == SalVideo) &&
-					    linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
-					                            "inactive_video_on_pause", 0))
-						sd.setDirection(SalStreamInactive);
+					}
 				}
 				break;
 			default:

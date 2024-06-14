@@ -2260,6 +2260,82 @@ static void call_with_no_sdp_ack_without_sdp(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_paused_with_update(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "sip", "inactive_audio_on_pause", 1);
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+
+	// Invite sendonly Audio (Marie pause Pauline)
+	ms_message("CONTEXT: Marie sends a re-INVITE with the audio stream direction set to sendonly to pause the call");
+	int marieStreamsRunning = marie->stat.number_of_LinphoneCallStreamsRunning;
+	LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, marie_call);
+	linphone_call_params_set_audio_direction(params, LinphoneMediaDirectionSendOnly);
+	linphone_call_update(marie_call, params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1));
+	BC_ASSERT_TRUE(
+	    wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, (marieStreamsRunning + 1)));
+
+	linphone_call_params_unref(params);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, NULL, 0, 2000));
+
+	check_local_desc_stream(marie_call);
+
+	const LinphoneCallParams *pauline_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_PTR_NOT_NULL(pauline_params);
+	if (pauline_params) {
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(pauline_params));
+		BC_ASSERT_EQUAL(linphone_call_params_get_audio_direction(pauline_params), (int)LinphoneMediaDirectionInactive,
+		                int, "%d");
+	}
+
+	// Invite sendrecv Audio (Marie resumes call with Pauline)
+	ms_message("CONTEXT: Marie resumes the call");
+	linphone_core_enable_sdp_200_ack(marie->lc, FALSE);
+	marieStreamsRunning = marie->stat.number_of_LinphoneCallStreamsRunning;
+	int paulineStreamsRunning = pauline->stat.number_of_LinphoneCallStreamsRunning;
+	params = linphone_core_create_call_params(marie->lc, marie_call);
+	linphone_call_params_set_audio_direction(params, LinphoneMediaDirectionSendRecv);
+	linphone_call_update(marie_call, params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 2));
+	BC_ASSERT_TRUE(
+	    wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, (marieStreamsRunning + 1)));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+	                        (paulineStreamsRunning + 1)));
+	linphone_call_params_unref(params);
+
+	check_local_desc_stream(marie_call);
+	check_local_desc_stream(pauline_call);
+
+	const LinphoneCallParams *marie_params2 = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_PTR_NOT_NULL(marie_params2);
+	if (marie_params2) {
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(marie_params2));
+	}
+	const LinphoneCallParams *pauline_params2 = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_PTR_NOT_NULL(pauline_params2);
+	if (pauline_params2) {
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(pauline_params2));
+	}
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, NULL, 0, 2000));
+
+	ms_message("=============== Ending call =================");
+	end_call(marie, pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void call_paused_with_rtp_port_to_zero(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
@@ -7662,6 +7738,7 @@ static test_t call_tests[] = {
     TEST_ONE_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime, "LimeX3DH"),
     TEST_NO_TAG("Call without SDP and ACK without SDP", call_with_no_sdp_ack_without_sdp),
     TEST_NO_TAG("Call paused with RTP port to 0", call_paused_with_rtp_port_to_zero),
+    TEST_NO_TAG("Call paused with update", call_paused_with_update),
     TEST_NO_TAG("Call paused resumed", call_paused_resumed),
     TEST_NO_TAG("Call paused quickly resumed", call_paused_quickly_resumed),
     TEST_NO_TAG("Call paused resumed with sip packets looses", call_paused_resumed_with_sip_packets_losses),
