@@ -165,8 +165,7 @@ private:
 	static void processDialogTerminatedCb(void *userCtx, const belle_sip_dialog_terminated_event_t *event);
 
 	// Private constants
-	static const size_t SIP_MESSAGE_BODY_LIMIT = 16 * 1024; // 16kB
-	static const int MIN_SE = 1800;                         // Min-Session-Expires, in seconds
+	static const int MIN_SE = 1800; // Min-Session-Expires, in seconds
 
 	// Attributes
 	bool capabilityNegotiation = false;

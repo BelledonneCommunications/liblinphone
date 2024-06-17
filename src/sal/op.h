@@ -262,8 +262,6 @@ protected:
 		Refer = 7 // For out of dialog refer only
 	};
 
-	static const size_t SIP_MESSAGE_BODY_LIMIT = 16 * 1024; // 16kB
-
 	static std::string toString(const Type type);
 
 	using ReleaseCb = void (*)(SalOp *op);
