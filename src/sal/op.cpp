@@ -908,12 +908,6 @@ int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
 	string contentEncoding = body.getContentEncoding();
 	size_t bodySize = body.getBody().size();
 
-	if (bodySize > SIP_MESSAGE_BODY_LIMIT) {
-		bctbx_error("trying to add a body greater than %lukB to message [%p]",
-		            (unsigned long)SIP_MESSAGE_BODY_LIMIT / 1024, msg);
-		return -1;
-	}
-
 	if (contentType.isValid()) {
 		belle_sip_header_content_type_t *content_type =
 		    belle_sip_header_content_type_parse(contentType.asString().c_str());

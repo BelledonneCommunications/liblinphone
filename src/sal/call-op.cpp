@@ -106,7 +106,7 @@ std::vector<char> SalCallOp::marshalMediaDescription(belle_sdp_session_descripti
 
 	// Try to marshal the description. This could go higher than 2k so we iterate.
 	error = BELLE_SIP_BUFFER_OVERFLOW;
-	while ((error != BELLE_SIP_OK) && (bufferSize <= SIP_MESSAGE_BODY_LIMIT)) {
+	while (error != BELLE_SIP_OK) {
 		error = belle_sip_object_marshal(BELLE_SIP_OBJECT(sessionDesc), buffer.data(), bufferSize, &length);
 		if (error != BELLE_SIP_OK) {
 			bufferSize *= 2;
