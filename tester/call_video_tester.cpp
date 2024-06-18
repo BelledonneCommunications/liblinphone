@@ -822,8 +822,8 @@ void video_call_base_3(LinphoneCoreManager *caller,
 	linphone_core_set_preferred_video_definition_by_name(caller->lc, "QVGA");
 	linphone_core_set_preferred_video_definition_by_name(callee->lc, "QVGA");
 
-	linphone_core_set_video_device(caller->lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_set_video_device(callee->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(caller->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(callee->lc, liblinphone_tester_mire_id);
 
 	linphone_core_enable_video_display(callee->lc, callee_video_enabled);
 	linphone_core_enable_video_capture(callee->lc, callee_video_enabled);
@@ -914,8 +914,8 @@ static void video_call_dummy_codec(void) {
 	disable_all_video_codecs_except_one(pauline->lc, "h264");
 	LinphoneCallTestParams marie_test_params = {0}, pauline_test_params = {0};
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -3070,8 +3070,8 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	linphone_core_set_preferred_video_definition_by_name(caller->lc, "QVGA");
 	linphone_core_set_preferred_video_definition_by_name(callee->lc, "QVGA");
 
-	linphone_core_set_video_device(caller->lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_set_video_device(callee->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(caller->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(callee->lc, liblinphone_tester_mire_id);
 
 	linphone_core_enable_video_display(callee->lc, TRUE);
 	linphone_core_enable_video_capture(callee->lc, TRUE);
@@ -3629,8 +3629,8 @@ static void video_call_without_audio_disable_video(void) {
 	linphone_core_set_preferred_video_definition_by_name(marie->lc, "QVGA");
 	linphone_core_set_preferred_video_definition_by_name(pauline->lc, "QVGA");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
 	// no audio
 	disable_all_audio_codecs(marie->lc);

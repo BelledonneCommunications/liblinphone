@@ -64,7 +64,7 @@ static void enable_disable_camera_after_camera_switches(void) {
 
 static void camera_switches_while_only_preview(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	const char *camId = "Mire: Mire (synthetic moving picture)";
+	const char *camId = liblinphone_tester_mire_id;
 	float fps = 0.0f;
 	MSWebCam *cam =
 	    ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(marie->lc)), camId);
@@ -291,6 +291,7 @@ end:
 }
 
 #endif
+
 test_t video_tests[] = {
     TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
     TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),

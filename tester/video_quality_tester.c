@@ -132,7 +132,7 @@ static void video_call_with_thin_congestion(void) {
 	disable_all_video_codecs_except_one(marie->lc, "VP8");
 	disable_all_video_codecs_except_one(pauline->lc, "VP8");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -211,7 +211,7 @@ static void video_call_with_high_bandwidth_available(void) {
 	disable_all_video_codecs_except_one(marie->lc, "VP8");
 	disable_all_video_codecs_except_one(pauline->lc, "VP8");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -258,7 +258,7 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int e
 		disable_all_video_codecs_except_one(marie->lc, "VP8");
 		disable_all_video_codecs_except_one(pauline->lc, "VP8");
 
-		linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+		linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 		linphone_core_enable_video_capture(marie->lc, TRUE);
 		linphone_core_enable_video_display(marie->lc, TRUE);
 		linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -351,7 +351,7 @@ static void video_call_expected_size_for_specified_bandwidth_with_congestion(
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
 		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
-			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+			linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 			linphone_core_enable_video_capture(marie->lc, TRUE);
 			linphone_core_enable_video_display(marie->lc, TRUE);
 			linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -434,7 +434,7 @@ static void video_call_expected_size_for_specified_bandwidth(
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
 		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
-			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+			linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 			linphone_core_enable_video_capture(marie->lc, TRUE);
 			linphone_core_enable_video_display(marie->lc, TRUE);
 			linphone_core_enable_video_capture(pauline->lc, TRUE);

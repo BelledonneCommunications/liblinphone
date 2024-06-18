@@ -181,7 +181,7 @@ static void h264_call_with_fmtps(void) {
 	bctbx_list_t *video_codecs = NULL;
 	OrtpPayloadType *origin_h264_pt = NULL;
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -269,7 +269,7 @@ static void enable_rtp_bundle(LinphoneCore *lc, bool_t enable) {
 }
 static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy) {
 
-	linphone_core_set_video_device(lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(lc, TRUE);
 	linphone_core_enable_video_display(lc, TRUE);
 	linphone_core_set_video_activation_policy(lc, policy);
@@ -350,7 +350,7 @@ static void h264_call_receiver_with_no_h264_support(void) {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_tcp_rc");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -400,7 +400,7 @@ static void h264_call_without_packetization_mode(void) {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_tcp_rc");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -841,7 +841,7 @@ static OrtpPayloadType *configure_core_for_avpf_and_video(LinphoneCore *lc) {
 	linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
 	linphone_proxy_config_done(lpc);
-	linphone_core_set_video_device(lc, "StaticImage: Static picture");
+	linphone_core_set_video_device(lc, liblinphone_tester_static_image_id);
 	linphone_core_enable_video_capture(lc, TRUE);
 	linphone_core_enable_video_display(lc, TRUE);
 	linphone_core_set_video_activation_policy(lc, vpol);

@@ -184,8 +184,8 @@ static void audio_video_call(const params_t *params) {
 	linphone_core_set_preferred_video_definition_by_name(marie->lc, "QVGA");
 	linphone_core_set_preferred_video_definition_by_name(pauline->lc, "QVGA");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
 	if (params->with_ice) {
 		/*enable ICE on both ends*/
@@ -423,8 +423,8 @@ static void simple_audio_video_call_with_bundle_enabled_by_reinvite(void) {
 	linphone_core_set_preferred_video_definition_by_name(marie->lc, "QVGA");
 	linphone_core_set_preferred_video_definition_by_name(pauline->lc, "QVGA");
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
 	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_set_video_activation_policy(pauline->lc, vpol);

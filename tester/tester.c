@@ -623,7 +623,7 @@ void linphone_core_manager_configure(LinphoneCoreManager *mgr) {
 		MSWebCam *cam;
 
 		cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(mgr->lc)),
-		                                 "Mire: Mire (synthetic moving picture)");
+		                                 liblinphone_tester_mire_id);
 
 // Usefull especially for encoders not supporting qcif
 #ifdef __ANDROID__
