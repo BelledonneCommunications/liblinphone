@@ -1219,6 +1219,17 @@ void create_conference_base(time_t start_time,
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
 
+		if (enable_lime) {
+			// Focus is in full packet mode: transfer packet not payload
+			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
+
+			linphone_config_set_int(focus_config, "sound", "conference_mode",
+			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+
+			linphone_config_set_int(focus_config, "video", "conference_mode",
+			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+		}
+
 		int nortp_timeout = 10;
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 
