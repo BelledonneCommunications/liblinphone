@@ -1672,10 +1672,10 @@ static void check_incorrect_zrtp_short_code_test(void) {
 		pstats = linphone_call_get_audio_stats(pauline_call);
 
 		// Marie and Pauline selected a wrong SAS. We verify that they neither send nor receive anything.
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0.0, float, "%f");
 
 		end_call(marie, pauline);
 
@@ -1715,10 +1715,10 @@ static void check_incorrect_zrtp_short_code_pause_resume_update_test(void) {
 
 		// Marie selected a wrong SAS. We verify that she neither sends nor receives anything. Pauline, however, sends
 		// but does not receive anything.
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0.0, float, "%f");
 		linphone_call_stats_unref(mstats);
 		linphone_call_stats_unref(pstats);
 
@@ -1735,10 +1735,10 @@ static void check_incorrect_zrtp_short_code_pause_resume_update_test(void) {
 		mstats = linphone_call_get_audio_stats(marie_call);
 		pstats = linphone_call_get_audio_stats(pauline_call);
 		// We verify that we are still in the same state.
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0.0, float, "%f");
 		linphone_call_stats_unref(mstats);
 		linphone_call_stats_unref(pstats);
 
@@ -1751,10 +1751,10 @@ static void check_incorrect_zrtp_short_code_pause_resume_update_test(void) {
 		mstats = linphone_call_get_audio_stats(marie_call);
 		pstats = linphone_call_get_audio_stats(pauline_call);
 		// We verify that we are still in the same state.
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0.0, float, "%f");
 		linphone_call_stats_unref(mstats);
 		linphone_call_stats_unref(pstats);
 
@@ -1775,10 +1775,10 @@ static void check_incorrect_zrtp_short_code_pause_resume_update_test(void) {
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 		mstats = linphone_call_get_audio_stats(marie_call);
 		pstats = linphone_call_get_audio_stats(pauline_call);
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0, int, "%d");
-		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(pstats), 0.0, float, "%f");
+		BC_ASSERT_EQUAL(linphone_call_stats_get_upload_bandwidth(mstats), 0.0, float, "%f");
+		BC_ASSERT_NOT_EQUAL(linphone_call_stats_get_upload_bandwidth(pstats), 0.0, float, "%f");
 		linphone_call_stats_unref(mstats);
 		linphone_call_stats_unref(pstats);
 
