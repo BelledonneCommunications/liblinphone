@@ -88,6 +88,7 @@ public:
 	std::shared_ptr<ChatMessage> findChatMessage(const std::string &messageId) const override;
 	std::shared_ptr<ChatMessage> findChatMessage(const std::string &messageId,
 	                                             ChatMessage::Direction direction) const override;
+	std::shared_ptr<ChatMessage> findChatMessageFromCallId(const std::string &callId) const override;
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const std::string &messageId) const;
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const std::list<std::string> &messageIds) const override;
 

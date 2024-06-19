@@ -307,6 +307,11 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId, ChatM
 	return nullptr;
 }
 
+shared_ptr<ChatMessage> ChatRoom::findChatMessageFromCallId(const std::string &callId) const {
+	auto chatMessages = getCore()->getPrivate()->mainDb->findChatMessagesFromCallId(callId);
+	return chatMessages.empty() ? nullptr : chatMessages.front();
+}
+
 void ChatRoom::markAsRead() {
 	const auto &meAddress = getMe()->getAddress();
 	// Mark any message currently waiting aggregation as read
@@ -446,7 +451,7 @@ std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMes
 	msg->setInternalContent(content);
 
 	msg->getPrivate()->setTime(message->time);
-	ostringstream messageId;
+	ostringstream messageId, callId;
 	if (op->hasDialog()) {
 		/* If this message has been received part of a dialog (which is unlikely to happen for IM),
 		 * set an IMDN Message ID abitrary to be the SIP Call-ID followed by the CSeq number.
@@ -456,6 +461,9 @@ std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMes
 		messageId << op->getCallId();
 	}
 
+	// Do the same thing for the call-id for the same reason as above.
+	callId << messageId.str();
+
 	// Don't do it for flexisip backend chat rooms, we need to know if the real message id from CPIM was retrieved or
 	// not Based on that we will send IMDNs or not In case CPIM was enabled on a Basic chat room, IMDN message ID will
 	// be overwritten by real one
@@ -463,7 +471,7 @@ std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMes
 	if (isBasicChatRoom) {
 		msg->getPrivate()->setImdnMessageId(messageId.str());
 	}
-	msg->getPrivate()->setCallId(op->getCallId());
+	msg->getPrivate()->setCallId(callId.str());
 
 	const SalCustomHeader *ch = op->getRecvCustomHeaders();
 	if (ch) msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));

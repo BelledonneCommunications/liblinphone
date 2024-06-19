@@ -347,3 +347,7 @@ void linphone_call_restart_main_audio_stream(LinphoneCall *call) {
 	s->restartStream(LinphonePrivate::MS2AudioStream::InputChanged);
 	lInfo() << "Restarting audio stream [" << s << "] on linphone call [" << call << "]";
 }
+
+int linphone_core_get_number_of_duplicated_messages(const LinphoneCore *core) {
+	return core->number_of_duplicated_messages;
+}
