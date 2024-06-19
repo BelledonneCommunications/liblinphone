@@ -778,6 +778,13 @@ LinphoneReason ChatMessagePrivate::receive() {
 	shared_ptr<Core> core = q->getCore();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 
+	// Prevent message duplication before decoding
+	if (!callId.empty() && chatRoom && chatRoom->findChatMessageFromCallId(callId)) {
+		lInfo() << "Duplicated SIP MESSAGE with Call-ID " << callId << ", ignored.";
+		core->getCCore()->number_of_duplicated_messages++;
+		return core->getCCore()->chat_deny_code;
+	}
+
 	// ---------------------------------------
 	// Start of message modification
 	// ---------------------------------------
@@ -899,7 +906,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	// Check if this is a duplicate message.
 	if (!imdnId.empty() && chatRoom && chatRoom->findChatMessage(imdnId, direction)) {
-		lInfo() << "Duplicated SIP MESSAGE, ignored.";
+		lInfo() << "Duplicated SIP MESSAGE with Imdn-ID " << imdnId << ", ignored.";
 		return core->getCCore()->chat_deny_code;
 	}
 

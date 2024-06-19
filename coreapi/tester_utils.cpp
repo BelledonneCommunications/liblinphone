@@ -326,3 +326,7 @@ bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, M
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
+
+int linphone_core_get_number_of_duplicated_messages(const LinphoneCore *core) {
+	return core->number_of_duplicated_messages;
+}

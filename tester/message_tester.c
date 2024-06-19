@@ -159,6 +159,14 @@ LinphoneChatMessage *create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	                                              "sintel_trailer_opus_h264.mkv");
 }
 
+void chat_room_message_received_callback(LinphoneChatRoom *chat_room, BCTBX_UNUSED(LinphoneChatMessage *message)) {
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_current_callbacks(chat_room);
+	LinphoneCoreManager *mgr = (LinphoneCoreManager *)linphone_chat_room_cbs_get_user_data(cbs);
+
+	// Set network reachable false so that the mgr cannot send the 200 Ok
+	linphone_core_set_network_reachable(mgr->lc, FALSE);
+}
+
 void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
                                              LinphoneCoreManager *pauline,
                                              const char *text,
@@ -167,7 +175,8 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
                                              bool_t reply_message,
                                              bool_t allow_cpim_in_basic_chat_room_sender,
                                              bool_t allow_cpim_in_basic_chat_room_receiver,
-                                             bool_t reaction_message) {
+                                             bool_t reaction_message,
+                                             bool_t check_duplication) {
 	if (allow_cpim_in_basic_chat_room_sender) {
 		LinphoneCore *marieCore = marie->lc;
 		LinphoneAccount *marieAccount = linphone_core_get_default_account(marieCore);
@@ -194,6 +203,15 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
 
+	if (check_duplication) {
+		LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+		LinphoneChatRoomCbs *room_cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+		linphone_chat_room_cbs_set_message_received(room_cbs, chat_room_message_received_callback);
+		linphone_chat_room_cbs_set_user_data(room_cbs, marie);
+		linphone_chat_room_add_callbacks(marie_room, room_cbs);
+		linphone_chat_room_cbs_unref(room_cbs);
+	}
+
 	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
@@ -202,6 +220,14 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+
+	if (check_duplication) {
+		linphone_core_set_network_reachable(marie->lc, TRUE);
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+
+		BC_ASSERT_EQUAL(linphone_core_get_number_of_duplicated_messages(marie->lc), 1, int, "%d");
+	}
+
 	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
 	if (marie->stat.last_received_chat_message != NULL) {
 		LinphoneContent *content =
@@ -415,7 +441,8 @@ void text_message_base_with_text(LinphoneCoreManager *marie,
                                  LinphoneCoreManager *pauline,
                                  const char *text,
                                  const char *content_type) {
-	text_message_base_with_text_and_forward(marie, pauline, text, content_type, FALSE, FALSE, FALSE, FALSE, FALSE);
+	text_message_base_with_text_and_forward(marie, pauline, text, content_type, FALSE, FALSE, FALSE, FALSE, FALSE,
+	                                        FALSE);
 }
 
 void text_message_base(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
@@ -496,7 +523,7 @@ static void text_forward_message(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", TRUE, FALSE, FALSE,
-	                                        FALSE, FALSE);
+	                                        FALSE, FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -507,7 +534,7 @@ static void text_forward_message_cpim_enabled_backward_compat(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", TRUE, FALSE, TRUE,
-	                                        FALSE, FALSE);
+	                                        FALSE, FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -518,7 +545,7 @@ static void text_forward_message_cpim_enabled(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", TRUE, FALSE, TRUE, TRUE,
-	                                        FALSE);
+	                                        FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -605,7 +632,7 @@ static void text_reply_message(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", FALSE, TRUE, FALSE,
-	                                        FALSE, FALSE);
+	                                        FALSE, FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -616,7 +643,7 @@ static void text_reply_message_cpim_enabled_backward_compat(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", FALSE, TRUE, TRUE,
-	                                        FALSE, FALSE);
+	                                        FALSE, FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -627,7 +654,7 @@ static void text_reply_message_cpim_enabled(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", FALSE, TRUE, TRUE, TRUE,
-	                                        FALSE);
+	                                        FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -638,7 +665,7 @@ static void text_reaction_message(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", FALSE, FALSE, FALSE,
-	                                        FALSE, TRUE);
+	                                        FALSE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -649,7 +676,7 @@ static void text_reaction_message_cpim_enabled_backward_compat(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", FALSE, FALSE, TRUE,
-	                                        FALSE, TRUE);
+	                                        FALSE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -660,7 +687,7 @@ static void text_reaction_message_cpim_enabled(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", FALSE, FALSE, TRUE,
-	                                        TRUE, TRUE);
+	                                        TRUE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1034,6 +1061,17 @@ static void text_message_in_call_chat_room_when_room_exists(void) {
 
 static void text_message_in_call_chat_room_from_denied_text_offer_when_room_exists(void) {
 	text_message_in_call_chat_room_base(TRUE, TRUE);
+}
+
+static void text_message_duplication(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", FALSE, FALSE, TRUE,
+	                                        TRUE, FALSE, TRUE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 void transfer_message_base4(LinphoneCoreManager *marie,
@@ -3963,6 +4001,7 @@ test_t message_tests[] = {
     TEST_NO_TAG("Text message in call chat room when room exists", text_message_in_call_chat_room_when_room_exists),
     TEST_NO_TAG("Text message in call chat room from denied text offer when room exists",
                 text_message_in_call_chat_room_from_denied_text_offer_when_room_exists),
+    TEST_NO_TAG("Text message duplication", text_message_duplication),
     TEST_NO_TAG("Transfer message", transfer_message),
     TEST_NO_TAG("Transfer message 2", transfer_message_2),
     TEST_NO_TAG("Transfer message 3", transfer_message_3),
