@@ -57,9 +57,11 @@ void create_transfer_conference_base(time_t start_time,
 
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
 
 		// Record files, each participant gets a different input file so we can check manually the mix is actually
 		// performed
@@ -122,7 +124,7 @@ void create_transfer_conference_base(time_t start_time,
 			                        static_cast<int>(MSConferenceModeRouterFullPacket));
 		}
 
-		int nortp_timeout = 10;
+		int nortp_timeout = 15;
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), participant_list_type);
 
@@ -172,6 +174,11 @@ void create_transfer_conference_base(time_t start_time,
 			}
 		}
 
+		int nb_subscriptions = 1;
+		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+			nb_subscriptions = 2; // One more subscription for the EKT
+		}
+
 		// Check everyone is connected to the conference
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
@@ -187,9 +194,10 @@ void create_transfer_conference_base(time_t start_time,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
 			                             ((mgr == marie.getCMgr()) ? 2 : 1), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,
+			                             nb_subscriptions, 5000));
 			BC_ASSERT_TRUE(
-			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
+			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, nb_subscriptions, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 
@@ -224,9 +232,10 @@ void create_transfer_conference_base(time_t start_time,
 		                             focus_stat.number_of_LinphoneConferenceStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
-		                             focus_stat.number_of_LinphoneSubscriptionIncomingReceived + 3, 5000));
+		                             focus_stat.number_of_LinphoneSubscriptionIncomingReceived + (3 * nb_subscriptions),
+		                             5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
-		                             focus_stat.number_of_LinphoneSubscriptionActive + 3, 5000));
+		                             focus_stat.number_of_LinphoneSubscriptionActive + (3 * nb_subscriptions), 5000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 3, liblinphone_tester_sip_timeout));
@@ -471,6 +480,18 @@ static void create_video_transfer_conference(void) {
 	                                LinphoneConferenceSecurityLevelNone, true, true);
 }
 
+static void create_audio_encrypted_conference(void) {
+	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
+	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
+	                                LinphoneConferenceSecurityLevelEndToEnd, true, false);
+}
+
+static void create_video_encrypted_conference(void) {
+	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
+	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
+	                                LinphoneConferenceSecurityLevelEndToEnd, true, true);
+}
+
 static void create_video_transfer_conference_active_speaker_changed(void) {
 	change_active_speaker_base(true);
 }
@@ -482,6 +503,8 @@ static test_t local_conference_transfered_conference_basic_tests[] = {
     TEST_NO_TAG("Create video transfer conference", LinphoneTest::create_video_transfer_conference),
     TEST_NO_TAG("Create video transfer conference with active speaker changed",
                 LinphoneTest::create_video_transfer_conference_active_speaker_changed),
+    TEST_NO_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference),
+    TEST_NO_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference),
 };
 
 test_suite_t local_conference_test_suite_transfered_conference_basic = {
