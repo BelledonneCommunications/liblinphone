@@ -404,9 +404,7 @@ void SalOp::processAuthentication() {
 	if (authList) {
 		auto authEvent = reinterpret_cast<belle_sip_auth_event_t *>(authList->data);
 		mAuthInfo = sal_auth_info_create(authEvent);
-		if (mAuthInfo) {
-			belle_sip_list_free_with_data(authList, (void (*)(void *))belle_sip_auth_event_destroy);
-		}
+		belle_sip_list_free_with_data(authList, (void (*)(void *))belle_sip_auth_event_destroy);
 	}
 }
 
