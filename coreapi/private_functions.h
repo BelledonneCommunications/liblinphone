@@ -50,11 +50,13 @@ LinphoneAccountManagerServicesRequestCbs *_linphone_account_manager_services_req
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
 void linphone_call_notify_goclear_ack_sent(LinphoneCall *call);
+void linphone_call_notify_security_level_downgraded(LinphoneCall *call);
 void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, const char *authentication_token);
 void linphone_call_notify_authentication_token_verified(LinphoneCall *call, bool_t verified);
 void linphone_call_notify_send_master_key_changed(LinphoneCall *call, const char *master_key);
 void linphone_call_notify_receive_master_key_changed(LinphoneCall *call, const char *master_key);
 void linphone_call_notify_transfer_state_changed(LinphoneCall *call, LinphoneCallState cstate);
+void linphone_call_notify_refer_requested(LinphoneCall *call, const LinphoneAddress *refer_to);
 void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallStats *stats);
 void linphone_core_notify_remaining_number_of_file_transfer_changed(LinphoneCore *lc,
                                                                     unsigned int download_count,

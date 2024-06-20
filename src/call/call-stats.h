@@ -24,6 +24,7 @@
 #include <belle-sip/object++.hh>
 
 #include "c-wrapper/c-wrapper.h"
+#include "encryption-status.h"
 #include "linphone/api/c-call-stats.h"
 #include "linphone/api/c-types.h"
 #include "private_structs.h"
@@ -75,6 +76,7 @@ public:
 	bool_t rtcpReceivedViaMux() const;
 	bool_t hasReceivedRtcp() const;
 	bool_t hasSentRtcp() const;
+	const EncryptionStatus &getEncryptionStatus() const;
 
 	/* Setters */
 	void setEstimatedDownloadBandwidth(float estimatedValue);
@@ -102,11 +104,12 @@ public:
 	const char *getZrtpSasAlgo() const;
 
 	/* SRTP stats */
-	const SrtpInfo *getSrtpInfo(bool_t is_inner) const;
+	const SrtpInfo *getSrtpInfo(bool isInner) const;
 	LinphoneSrtpSuite getSrtpSuite() const;
 	LinphoneMediaEncryption getSrtpSource() const;
 
 private:
+	EncryptionStatus mEncryptionStatus;
 	LinphoneStreamType mType;        /**< Type of the stream which the stats refer to */
 	jitter_stats_t mJitterStats;     /**<jitter buffer statistics, see oRTP documentation for details */
 	mblk_t *mReceivedRtcp = nullptr; /**<Last RTCP packet received, as a mblk_t structure. See oRTP documentation for
@@ -141,11 +144,6 @@ private:
 	float mEstimatedDownloadBandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in
 	                                       kbit/s, including IP/UDP/RTP headers*/
 	bool_t mRtcpReceivedViaMux;        /*private flag, for non-regression test only*/
-	ZrtpAlgo mZrtpAlgo; /**< informations on the ZRTP exchange updated once it is performed(when the SAS is available),
-	                                       this is valid only on the audio stream */
-	SrtpInfo mInnerSrtpInfo; /**< informations on the SRTP crypto suite and and source of key material used on this
-	                                       stream for inner encryption when double encryption is on */
-	SrtpInfo mSrtpInfo; /**< informations on the SRTP crypto suite and and source of key material used on this stream */
 };
 
 LINPHONE_END_NAMESPACE

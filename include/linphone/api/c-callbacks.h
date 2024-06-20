@@ -135,6 +135,12 @@ typedef void (*LinphoneCallCbsDtmfReceivedCb)(LinphoneCall *call, int dtmf);
 typedef void (*LinphoneCallCbsGoClearAckSentCb)(LinphoneCall *call);
 
 /**
+ * Call security level downgraded callback.
+ * @param call #LinphoneCall object whose security level is downgraded. @notnil
+ */
+typedef void (*LinphoneCallCbsSecurityLevelDowngradedCb)(LinphoneCall *call);
+
+/**
  * Call encryption changed callback.
  * @param call #LinphoneCall object whose encryption is changed. @notnil
  * @param on Whether encryption is activated.
@@ -191,6 +197,13 @@ typedef void (*LinphoneCallCbsStatsUpdatedCb)(LinphoneCall *call, const Linphone
  * @param state The #LinphoneCallState of the call to transfer target at the far end.
  */
 typedef void (*LinphoneCallCbsTransferStateChangedCb)(LinphoneCall *call, LinphoneCallState state);
+
+/**
+ * Callback for notifying when a call transfer (refer) is requested.
+ * @param call #LinphoneCall associated with the transfer request. @notnil
+ * @param refer_to The target #LinphoneAddress to which the call is being transferred. @notnil
+ */
+typedef void (*LinphoneCallCbsReferRequestedCb)(LinphoneCall *call, const LinphoneAddress *refer_to);
 
 /**
  * Callback for notifying the processing SIP ACK messages.

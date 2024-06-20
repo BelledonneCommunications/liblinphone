@@ -570,23 +570,4 @@ class Core;
 	bool_t native_ringing_enabled;                                                                                     \
 	bool_t vibrate_on_incoming_call;
 
-typedef struct _ZrtpAlgo ZrtpAlgo;
-struct _ZrtpAlgo {
-	int cipher_algo;        /**< Id of the cipher algorithms */
-	int key_agreement_algo; /**< Id of the key agreement algorithm */
-	int hash_algo;          /**< Id of the hash algorithm */
-	int auth_tag_algo;      /**< Id of the authencation tag algorithm */
-	int sas_algo;           /**< Id of the SAS algorithm */
-};
-
-typedef struct _SrtpInfo SrtpInfo;
-struct _SrtpInfo {
-	int send_suite;  /**< srtp crypto suite used by sender channel, cast from MSCryptoSuite defined in ms_srtp.h */
-	int send_source; /**< source of srtp key material used by sender channel, cast from MSSrtpKeySource defined in
-	                    ms_srtp.h*/
-	int recv_suite;  /**< srtp crypto suite used by receiver channel, cast from MSCryptoSuite defined in ms_srtp.h */
-	int recv_source; /**< source of srtp key material used by receiver channel, cast from MSSrtpKeySource defined in
-	                    ms_srtp.h*/
-};
-
 #endif /* _PRIVATE_STRUCTS_H_ */

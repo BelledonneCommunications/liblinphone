@@ -314,6 +314,18 @@ MediaSessionPrivate &StreamsGroup::getMediaSessionPrivate() const {
 	return *getMediaSession().getPrivate();
 }
 
+const EncryptionStatus &StreamsGroup::getEncryptionStatus() {
+	if (mStreams.size() != 0) {
+		auto it = mStreams.begin();
+		if (it->get()) mEncryptionStatus = it->get()->getStats()->getEncryptionStatus();
+		it++;
+		for (; it != mStreams.end(); it++) {
+			if (it->get()) mEncryptionStatus.setWorstSecurityAlgo(it->get()->getStats()->getEncryptionStatus());
+		}
+	}
+	return mEncryptionStatus;
+}
+
 int StreamsGroup::updateAllocatedAudioBandwidth(const OrtpPayloadType *pt, int maxbw) {
 	mAudioBandwidth = PayloadTypeHandler::getAudioPayloadTypeBandwidth(pt, maxbw);
 	lInfo() << "Audio bandwidth for StreamsGroup [" << this << "] is " << mAudioBandwidth;
@@ -360,7 +372,18 @@ void StreamsGroup::goClearAckSent() {
 }
 
 void StreamsGroup::propagateEncryptionChanged() {
-	getMediaSessionPrivate().propagateEncryptionChanged();
+	// The task `mEncryptionChangedNotificationTask` ensures that the function
+	// `propagateEncryptionChanged()` is called only once to update the encryption
+	// status of all streams.
+	if (mEncryptionChangedNotificationTask == nullptr)
+		mEncryptionChangedNotificationTask = getCore().createTimer(
+		    [this]() {
+			    getMediaSessionPrivate().propagateEncryptionChanged();
+			    getCore().destroyTimer(mEncryptionChangedNotificationTask);
+			    mEncryptionChangedNotificationTask = nullptr;
+			    return true;
+		    },
+		    0, "Encryption changed notification task");
 }
 
 void StreamsGroup::authTokensReady(const list<string> &&incorrectAuthTokens,
@@ -620,6 +643,10 @@ void StreamsGroup::finish() {
 	mSharedServices.clear();
 	forEach<Stream>(mem_fn(&Stream::finish));
 	mFinished = true;
+	if (mEncryptionChangedNotificationTask) {
+		getCore().destroyTimer(mEncryptionChangedNotificationTask);
+		mEncryptionChangedNotificationTask = nullptr;
+	}
 }
 
 void StreamsGroup::attachMixers() {

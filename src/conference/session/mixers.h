@@ -74,7 +74,7 @@ public:
 	void enableLocalParticipant(bool enabled);
 	/*
 	 * Request the MixerSession to set the focus on a given StreamsGroup, ie to show the video
-	 * of a specific participant refered by its StreamsGroup pointer.
+	 * of a specific participant referred by its StreamsGroup pointer.
 	 */
 	void setFocus(StreamsGroup *sg);
 	Core &getCore() const;

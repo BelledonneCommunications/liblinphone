@@ -227,6 +227,10 @@ int Call::startInvite(const std::shared_ptr<Address> &destination,
 	return getActiveSession()->startInvite(destination, subject, content);
 }
 
+void Call::acceptRefer() {
+	getActiveSession()->getPrivate()->referred(nullptr);
+}
+
 shared_ptr<Call> Call::startReferredCall(const MediaSessionParams *params) {
 	// Create and initiate parameters before pausing the call because initialization of some settings requires knowledge
 	// of the current call held by the core
@@ -249,6 +253,8 @@ shared_ptr<Call> Call::startReferredCall(const MediaSessionParams *params) {
 	LinphoneCall *newCall =
 	    linphone_core_invite_with_params(getCore()->getCCore(), getActiveSession()->getReferTo().c_str(), lcp);
 	if (newCall) {
+		Call::toCpp(newCall)->getMediaSession()->getPrivate()->setEncryptionStatus(
+		    getMediaSession()->getPrivate()->getEncryptionStatus());
 		getActiveSession()->getPrivate()->setTransferTarget(Call::toCpp(newCall)->getActiveSession());
 		Call::toCpp(newCall)->getActiveSession()->getPrivate()->notifyReferState();
 		Call::toCpp(newCall)->setMicrophoneMuted(getMicrophoneMuted());
@@ -376,7 +382,7 @@ void Call::onCallSessionSetTerminated(BCTBX_UNUSED(const shared_ptr<CallSession>
 }
 
 void Call::onCallSessionStartReferred(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
-	startReferredCall(nullptr);
+	startReferredCall(getMediaSession()->getMediaParams());
 }
 
 void Call::reenterLocalConference(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
@@ -556,6 +562,11 @@ void Call::onCallSessionTransferStateChanged(BCTBX_UNUSED(const shared_ptr<CallS
 	linphone_call_notify_transfer_state_changed(this->toC(), static_cast<LinphoneCallState>(state));
 }
 
+void Call::onCallSessionReferRequested(BCTBX_UNUSED(const shared_ptr<CallSession> &session),
+                                       const shared_ptr<Address> &address) {
+	linphone_call_notify_refer_requested(this->toC(), address->toC());
+}
+
 void Call::onCheckForAcceptation(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
 	// If the core is a conference server, there is no need to ensure that media resources are not shared
 	if (!linphone_core_conference_server_enabled(getCore()->getCCore()) &&
@@ -626,6 +637,10 @@ void Call::onInfoReceived(BCTBX_UNUSED(const shared_ptr<CallSession> &session), 
 
 void Call::onLossOfMediaDetected(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
 	terminateBecauseOfLostMedia();
+}
+
+void Call::onSecurityLevelDowngraded(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
+	linphone_call_notify_security_level_downgraded(this->toC());
 }
 
 void Call::onEncryptionChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &session),

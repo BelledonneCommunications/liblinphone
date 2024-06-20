@@ -1505,6 +1505,7 @@ void MS2Stream::handleEvents() {
 					encryptionChanged();
 				}
 				break;
+			case ORTP_EVENT_SRTP_ENCRYPTION_CHANGED:
 			case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
 				encryptionChanged();
 				break;

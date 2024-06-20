@@ -306,6 +306,8 @@ class CoreManagerStats:
         self.number_of_LinphoneCallEncryptedOn = 0
         self.number_of_LinphoneCallEncryptedOff = 0
 
+        self.number_of_LinphoneCallSecurityLevelDowngraded = 0
+
         self.last_received_chat_message = None
 
 

@@ -202,6 +202,7 @@ public:
 	void notifyAlert(std::shared_ptr<Alert> &alert);
 	void notifyCallSessionStateChanged(CallSession::State newState, const std::string &message);
 	void notifyCallSessionTransferStateChanged(CallSession::State newState);
+	void notifyCallSessionReferRequested(const std::shared_ptr<Address> &address);
 	void notifyCallSessionStateChangedForReporting();
 	void notifyStartRingtone();
 	void notifyIncomingCallSessionTimeoutCheck(int elapsed, bool oneSecondElapsed);
@@ -228,6 +229,7 @@ public:
 	void notifyResetCurrentSession();
 	void notifyDtmfReceived(char dtmf);
 	void notifyRemoteRecording(bool isRecording);
+	void notifySecurityLevelDowngraded();
 	void notifyEncryptionChanged(bool activated, const std::string &authToken);
 	void notifyAuthenticationTokenVerified(bool verified);
 	void notifyVideoDisplayErrorOccurred(int errorCode);

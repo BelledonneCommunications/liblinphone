@@ -68,6 +68,9 @@ public:
 	virtual void onCallSessionTransferStateChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                               BCTBX_UNUSED(CallSession::State state)) {
 	}
+	virtual void onCallSessionReferRequested(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+	                                         BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
+	}
 	virtual void onCheckForAcceptation(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 	}
 	virtual void onDtmfReceived(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(char dtmf)) {
@@ -101,6 +104,8 @@ public:
 	                               BCTBX_UNUSED(bool recording)) {
 	}
 
+	virtual void onSecurityLevelDowngraded(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
+	}
 	virtual void onEncryptionChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                 BCTBX_UNUSED(bool activated),
 	                                 BCTBX_UNUSED(const std::string &authToken)) {

@@ -639,11 +639,16 @@ static void call_refer_received(SalOp *op, const SalAddress *referTo) {
 	string method;
 	if (referToAddr && referToAddr->isValid()) method = referToAddr->getMethodParam();
 
+	LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
 	if (session && (method.empty() || (method == "INVITE"))) {
 		auto sessionRef = session->getSharedFromThis();
-		L_GET_PRIVATE(sessionRef)->referred(referToAddr);
+		if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "auto_accept_refer", 1)) {
+			L_GET_PRIVATE(sessionRef)->referred(referToAddr);
+		} else {
+			L_GET_PRIVATE(sessionRef)->setReferToAddress(referToAddr);
+			session->notifyCallSessionReferRequested(referToAddr);
+		}
 	} else {
-		LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
 		linphone_core_notify_refer_received(lc, L_STRING_TO_C(referToAddr->toString()));
 	}
 }

@@ -202,6 +202,12 @@ public:
 	LinphoneMediaEncryption getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> &md) const;
 	bool isMediaEncryptionAccepted(const LinphoneMediaEncryption enc) const;
 
+	const EncryptionStatus &getEncryptionStatus() const {
+		return mEncryptionStatus;
+	}
+	void setEncryptionStatus(const EncryptionStatus &encryptionStatus) {
+		mEncryptionStatus = encryptionStatus;
+	}
 	LinphoneMediaEncryption getNegotiatedMediaEncryption() const;
 	LinphoneMediaDirection getDirFromMd(const std::shared_ptr<SalMediaDescription> &md, const SalStreamType type) const;
 	void validateVideoStreamDirection(SalStreamConfiguration &cfg) const;
@@ -373,6 +379,7 @@ private:
 	int mainVideoStreamIndex = -1;
 	int mainTextStreamIndex = -1;
 
+	EncryptionStatus mEncryptionStatus;
 	mutable LinphoneMediaEncryption negotiatedEncryption = LinphoneMediaEncryptionNone;
 
 	std::shared_ptr<NatPolicy> natPolicy = nullptr;

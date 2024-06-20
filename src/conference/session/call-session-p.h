@@ -80,6 +80,7 @@ public:
 	virtual bool failure();
 	void infoReceived(SalBodyHandler *bodyHandler);
 	void pingReply();
+	void setReferToAddress(const std::shared_ptr<Address> &referToAddr);
 	void referred(const std::shared_ptr<Address> &referToAddr);
 	virtual void remoteRinging();
 	virtual void replaceOp(SalCallOp *newOp);

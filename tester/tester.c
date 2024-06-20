@@ -3898,6 +3898,20 @@ void linphone_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call) {
 	linphone_call_confirm_go_clear(call);
 }
 
+static void security_level_downgraded(LinphoneCall *call) {
+	LinphoneCore *lc = linphone_call_get_core(call);
+	stats *corestats = get_stats(lc);
+	corestats->number_of_LinphoneCallSecurityLevelDowngraded++;
+}
+
+void linphone_call_create_cbs_security_level_downgraded(LinphoneCall *call) {
+	LinphoneCallCbs *call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+	BC_ASSERT_PTR_NOT_NULL(call);
+	linphone_call_cbs_set_security_level_downgraded(call_cbs, security_level_downgraded);
+	linphone_call_add_callbacks(call, call_cbs);
+	linphone_call_cbs_unref(call_cbs);
+}
+
 void linphone_call_encryption_changed(LinphoneCore *lc,
                                       LinphoneCall *call,
                                       bool_t on,

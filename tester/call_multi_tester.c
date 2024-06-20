@@ -443,7 +443,26 @@ end:
 	bctbx_list_free(lcs);
 }
 
-static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer_replacing_calls) {
+void linphone_refer_requested(LinphoneCall *call, const LinphoneAddress *address) {
+	LinphoneCore *lc = linphone_call_get_core(call);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCallReferRequested++;
+	char *refer_to = linphone_address_as_string_uri_only(address);
+	ms_message("A REFER request has been initiated to transfer the call to %s", refer_to);
+	ms_free(refer_to);
+}
+
+void linphone_call_create_cbs_refer_requested(LinphoneCall *call) {
+	LinphoneCallCbs *call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+	BC_ASSERT_PTR_NOT_NULL(call);
+	linphone_call_cbs_set_refer_requested(call_cbs, linphone_refer_requested);
+	linphone_call_add_callbacks(call, call_cbs);
+	linphone_call_cbs_unref(call_cbs);
+}
+
+static void call_transfer_existing_call(bool_t outgoing_call,
+                                        bool_t auto_answer_replacing_calls,
+                                        bool_t security_level_downgraded) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
@@ -451,6 +470,8 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 	LinphoneCall *pauline_called_by_marie;
 	LinphoneCall *marie_call_laure;
 	LinphoneCall *laure_called_by_marie;
+	LinphoneCall *pauline_call_laure = NULL;
+	LinphoneCall *laure_called_by_pauline = NULL;
 	LinphoneCall *lcall;
 	bool_t call_ok = TRUE;
 	const bctbx_list_t *calls;
@@ -461,11 +482,31 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 	if (!auto_answer_replacing_calls)
 		linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "auto_answer_replacing_calls", 0);
 
+	if (security_level_downgraded) {
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "auto_accept_refer", 0);
+		BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_set_media_encryption(laure->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+
+		LpConfig *lpm = linphone_core_get_config(marie->lc);
+		LpConfig *lpp = linphone_core_get_config(pauline->lc);
+		LpConfig *lpl = linphone_core_get_config(laure->lc);
+
+		linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_X255");
+		linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_X255");
+		linphone_config_set_string(lpl, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_DH3K");
+	}
+
 	// marie call pauline
 	BC_ASSERT_TRUE((call_ok = call(marie, pauline)));
 	if (call_ok) {
 		marie_call_pauline = linphone_core_get_current_call(marie->lc);
 		pauline_called_by_marie = linphone_core_get_current_call(pauline->lc);
+		linphone_call_create_cbs_security_level_downgraded(marie_call_pauline);
+		linphone_call_create_cbs_security_level_downgraded(pauline_called_by_marie);
+		linphone_call_create_cbs_refer_requested(marie_call_pauline);
+		linphone_call_create_cbs_refer_requested(pauline_called_by_marie);
+
 		// marie pause pauline
 		if (!BC_ASSERT_TRUE(pause_call_1(marie, marie_call_pauline, pauline, pauline_called_by_marie))) {
 			goto end;
@@ -478,7 +519,7 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 				goto end;
 			}
 		} else {
-			// laure call pauline
+			// laure call marie
 			if (!BC_ASSERT_TRUE(call(laure, marie))) {
 				end_call(marie, pauline);
 				goto end;
@@ -487,8 +528,12 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 
 		marie_call_laure = linphone_core_get_current_call(marie->lc);
 		laure_called_by_marie = linphone_core_get_current_call(laure->lc);
+
 		if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
 		if (!BC_ASSERT_PTR_NOT_NULL(laure_called_by_marie)) goto end;
+
+		linphone_call_create_cbs_security_level_downgraded(marie_call_laure);
+		linphone_call_create_cbs_security_level_downgraded(laure_called_by_marie);
 
 		// marie pause laure
 		BC_ASSERT_TRUE(pause_call_1(marie, marie_call_laure, laure, laure_called_by_marie));
@@ -498,7 +543,16 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 		reset_counters(&laure->stat);
 
 		linphone_call_transfer_to_another(marie_call_pauline, marie_call_laure);
+		if (security_level_downgraded) {
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReferRequested, 1, 2000));
+			linphone_call_accept_refer(pauline_called_by_marie);
+		}
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallRefered, 1, 2000));
+
+		pauline_call_laure = linphone_core_get_current_call(pauline->lc);
+		laure_called_by_pauline = linphone_core_get_current_call(laure->lc);
+		linphone_call_create_cbs_security_level_downgraded(pauline_call_laure);
+		linphone_call_create_cbs_security_level_downgraded(laure_called_by_pauline);
 
 		// pauline pausing marie
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausing, 1, 4000));
@@ -521,11 +575,18 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 				}
 			}
 		}
+
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallConnected, 1, 2000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 1, 2000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 2000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 2000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneTransferCallConnected, 1, 2000));
+
+		if (security_level_downgraded) {
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallSecurityLevelDowngraded, 1, 2000));
+		} else {
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallSecurityLevelDowngraded, 0, int, "%d");
+		}
 
 		// terminate marie to pauline/laure call
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 2000));
@@ -543,15 +604,23 @@ end:
 }
 
 static void call_transfer_existing_call_outgoing_call(void) {
-	call_transfer_existing_call(TRUE, TRUE);
+	call_transfer_existing_call(TRUE, TRUE, FALSE);
 }
 
 static void call_transfer_existing_call_outgoing_call_no_auto_answer(void) {
-	call_transfer_existing_call(TRUE, FALSE);
+	call_transfer_existing_call(TRUE, FALSE, FALSE);
 }
 
 static void call_transfer_existing_call_incoming_call(void) {
-	call_transfer_existing_call(FALSE, TRUE);
+	call_transfer_existing_call(FALSE, TRUE, FALSE);
+}
+
+static void call_transfer_existing_call_outgoing_call_no_auto_answer_security_level_downgraded(void) {
+	call_transfer_existing_call(TRUE, FALSE, TRUE);
+}
+
+static void call_transfer_existing_call_incoming_call_no_auto_answer_security_level_downgraded(void) {
+	call_transfer_existing_call(FALSE, FALSE, TRUE);
 }
 
 static void call_transfer_existing_ringing_call(void) {
@@ -1410,6 +1479,10 @@ test_t multi_call_tests[] = {
     TEST_NO_TAG("Call transfer existing outgoing call without auto answer of replacing call",
                 call_transfer_existing_call_outgoing_call_no_auto_answer),
     TEST_NO_TAG("Call transfer existing incoming call", call_transfer_existing_call_incoming_call),
+    TEST_NO_TAG("Call transfer existing outgoing call without auto answer of replacing call security level downgraded",
+                call_transfer_existing_call_outgoing_call_no_auto_answer_security_level_downgraded),
+    TEST_NO_TAG("Call transfer existing incoming call without auto answer of replacing call security level downgraded",
+                call_transfer_existing_call_incoming_call_no_auto_answer_security_level_downgraded),
     TEST_NO_TAG("Call transfer existing ringing call", call_transfer_existing_ringing_call),
     TEST_NO_TAG("Do not stop ringing when declining one of two incoming calls",
                 do_not_stop_ringing_when_declining_one_of_two_incoming_calls),

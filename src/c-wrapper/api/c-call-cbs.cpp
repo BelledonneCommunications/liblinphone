@@ -61,6 +61,15 @@ void linphone_call_cbs_set_goclear_ack_sent(LinphoneCallCbs *cbs, LinphoneCallCb
 	CallCbs::toCpp(cbs)->goClearAckSentCb = cb;
 }
 
+LinphoneCallCbsSecurityLevelDowngradedCb linphone_call_cbs_get_security_level_downgraded(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->securityLevelDowngradedCb;
+}
+
+void linphone_call_cbs_set_security_level_downgraded(LinphoneCallCbs *cbs,
+                                                     LinphoneCallCbsSecurityLevelDowngradedCb cb) {
+	CallCbs::toCpp(cbs)->securityLevelDowngradedCb = cb;
+}
+
 LinphoneCallCbsEncryptionChangedCb linphone_call_cbs_get_encryption_changed(LinphoneCallCbs *cbs) {
 	return CallCbs::toCpp(cbs)->encryptionChangedCb;
 }
@@ -125,6 +134,14 @@ LinphoneCallCbsTransferStateChangedCb linphone_call_cbs_get_transfer_state_chang
 
 void linphone_call_cbs_set_transfer_state_changed(LinphoneCallCbs *cbs, LinphoneCallCbsTransferStateChangedCb cb) {
 	CallCbs::toCpp(cbs)->transferStateChangedCb = cb;
+}
+
+LinphoneCallCbsReferRequestedCb linphone_call_cbs_get_refer_requested(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->referRequestedCb;
+}
+
+void linphone_call_cbs_set_refer_requested(LinphoneCallCbs *cbs, LinphoneCallCbsReferRequestedCb cb) {
+	CallCbs::toCpp(cbs)->referRequestedCb = cb;
 }
 
 LinphoneCallCbsAckProcessingCb linphone_call_cbs_get_ack_processing(LinphoneCallCbs *cbs) {

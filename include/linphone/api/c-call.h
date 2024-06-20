@@ -1017,6 +1017,12 @@ LINPHONE_PUBLIC const LinphoneVideoSourceDescriptor *linphone_call_get_video_sou
  */
 LINPHONE_PUBLIC void linphone_call_confirm_go_clear(const LinphoneCall *call);
 
+/**
+ * Accept the refer when accept_auto_refer is false
+ * @param call The #LinphoneCall to be transferred @notnil
+ */
+LINPHONE_PUBLIC void linphone_call_accept_refer(LinphoneCall *call);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

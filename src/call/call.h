@@ -52,6 +52,7 @@ class CallCbs : public bellesip::HybridObject<LinphoneCallCbs, CallCbs>, public 
 public:
 	LinphoneCallCbsDtmfReceivedCb dtmfReceivedCb;
 	LinphoneCallCbsGoClearAckSentCb goClearAckSentCb;
+	LinphoneCallCbsSecurityLevelDowngradedCb securityLevelDowngradedCb;
 	LinphoneCallCbsEncryptionChangedCb encryptionChangedCb;
 	LinphoneCallCbsAuthenticationTokenVerifiedCb authenticationTokenVerifiedCb;
 	LinphoneCallCbsSendMasterKeyChangedCb sendMasterKeyChangedCb;
@@ -60,6 +61,7 @@ public:
 	LinphoneCallCbsStateChangedCb stateChangedCb;
 	LinphoneCallCbsStatsUpdatedCb statsUpdatedCb;
 	LinphoneCallCbsTransferStateChangedCb transferStateChangedCb;
+	LinphoneCallCbsReferRequestedCb referRequestedCb;
 	LinphoneCallCbsAckProcessingCb ackProcessing;
 	LinphoneCallCbsTmmbrReceivedCb tmmbrReceivedCb;
 	LinphoneCallCbsSnapshotTakenCb snapshotTakenCb;
@@ -230,6 +232,7 @@ public:
 	int startInvite(const std::shared_ptr<Address> &destination,
 	                const std::string subject = std::string(),
 	                const std::shared_ptr<const Content> content = nullptr);
+	void acceptRefer();
 	std::shared_ptr<Call> startReferredCall(const MediaSessionParams *params);
 
 	// -----------------------------------------------------------------------------
@@ -276,6 +279,8 @@ public:
 	                               const std::string &message) override;
 	void onCallSessionTransferStateChanged(const std::shared_ptr<CallSession> &session,
 	                                       CallSession::State state) override;
+	void onCallSessionReferRequested(const std::shared_ptr<CallSession> &session,
+	                                 const std::shared_ptr<Address> &address) override;
 	void onCheckForAcceptation(const std::shared_ptr<CallSession> &session) override;
 	void onDtmfReceived(const std::shared_ptr<CallSession> &session, char dtmf) override;
 	void onIncomingCallSessionNotified(const std::shared_ptr<CallSession> &session) override;
@@ -286,6 +291,7 @@ public:
 	void onPushCallSessionTimeoutCheck(const std::shared_ptr<CallSession> &session, int elapsed) override;
 	void onInfoReceived(const std::shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) override;
 	void onLossOfMediaDetected(const std::shared_ptr<CallSession> &session) override;
+	void onSecurityLevelDowngraded(const std::shared_ptr<CallSession> &session) override;
 	void onEncryptionChanged(const std::shared_ptr<CallSession> &session,
 	                         bool activated,
 	                         const std::string &authToken) override;

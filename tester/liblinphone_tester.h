@@ -473,7 +473,9 @@ typedef struct _stats {
 	int number_of_LinphoneConfiguringFailed;
 	int number_of_LinphoneConfiguringSuccessful;
 
+	int number_of_LinphoneCallReferRequested;
 	int number_of_LinphoneCallGoClearAckSent;
+	int number_of_LinphoneCallSecurityLevelDowngraded;
 	int number_of_LinphoneCallEncryptedOn;
 	int number_of_LinphoneCallEncryptedOff;
 	int number_of_LinphoneCallAuthenticationTokenVerified;
@@ -779,7 +781,9 @@ void linphone_publish_received(LinphoneCore *lc,
                                const char *eventname,
                                const LinphoneContent *content);
 void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);
+void linphone_refer_asked(LinphoneCore *lc);
 void linphone_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call);
+void linphone_call_create_cbs_security_level_downgraded(LinphoneCall *call);
 void linphone_call_encryption_changed(LinphoneCore *lc,
                                       LinphoneCall *call,
                                       bool_t on,

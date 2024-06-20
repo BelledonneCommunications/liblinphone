@@ -62,7 +62,7 @@ LINPHONE_BEGIN_NAMESPACE
 /*
  * Returns the best local address to talk with peer address.
  * If peerAddress is not defined, returns the local address of the default proxy config.
- * If withGruu is true, returns the local address with its gruu parameter. FlexisipChat kind of chatroom (also refered
+ * If withGruu is true, returns the local address with its gruu parameter. FlexisipChat kind of chatroom (also referred
  * as ClientChatRoom) require a local address with gruu, unlike basic chatrooms.
  */
 std::shared_ptr<const Address> CorePrivate::getDefaultLocalAddress(const std::shared_ptr<const Address> peerAddress,

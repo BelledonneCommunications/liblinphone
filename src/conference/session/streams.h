@@ -575,6 +575,8 @@ public:
 	LinphoneCore *getCCore() const;
 	Core &getCore() const;
 
+	const EncryptionStatus &getEncryptionStatus();
+
 protected:
 	int updateAllocatedAudioBandwidth(const OrtpPayloadType *pt, int maxbw);
 	int getVideoBandwidth(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc);
@@ -596,6 +598,8 @@ private:
 	void detachMixers();
 	std::unique_ptr<IceService> mIceService;
 	std::vector<std::unique_ptr<Stream>> mStreams;
+	belle_sip_source_t *mEncryptionChangedNotificationTask = nullptr;
+	EncryptionStatus mEncryptionStatus;
 
 	// Upload bandwidth used by audio.
 	int mAudioBandwidth = 0;

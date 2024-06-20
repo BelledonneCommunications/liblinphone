@@ -7662,7 +7662,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_remove_listener(LinphoneC
  *#LinphoneCallStateOutgoingProgress, #LinphoneCallStateOutgoingRinging and #LinphoneCallStateConnected.
  * @param core #LinphoneCore object
  * @param call The call to be transferred
- * @param refer_to The destination the call is to be refered to
+ * @param refer_to The destination the call is to be referred to
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 12/01/2017 Use #linphone_call_transfer() instead.

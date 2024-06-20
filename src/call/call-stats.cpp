@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-CallStats::CallStats(const CallStats &other) : HybridObject(other) {
+CallStats::CallStats(const CallStats &other) : HybridObject(other), mEncryptionStatus{other.mEncryptionStatus} {
 	mType = other.mType;
 	mJitterStats = other.mJitterStats;
 	mReceivedRtcp = other.mReceivedRtcp ? dupmsg(other.mReceivedRtcp) : nullptr;
@@ -53,19 +53,6 @@ CallStats::CallStats(const CallStats &other) : HybridObject(other) {
 	mClockrate = other.mClockrate;
 	mEstimatedDownloadBandwidth = other.mEstimatedDownloadBandwidth;
 	mRtcpReceivedViaMux = other.mRtcpReceivedViaMux;
-	mZrtpAlgo.cipher_algo = other.mZrtpAlgo.cipher_algo;
-	mZrtpAlgo.key_agreement_algo = other.mZrtpAlgo.key_agreement_algo;
-	mZrtpAlgo.hash_algo = other.mZrtpAlgo.hash_algo;
-	mZrtpAlgo.auth_tag_algo = other.mZrtpAlgo.auth_tag_algo;
-	mZrtpAlgo.sas_algo = other.mZrtpAlgo.sas_algo;
-	mSrtpInfo.send_suite = other.mSrtpInfo.send_suite;
-	mSrtpInfo.send_source = other.mSrtpInfo.send_source;
-	mSrtpInfo.recv_suite = other.mSrtpInfo.recv_suite;
-	mSrtpInfo.recv_source = other.mSrtpInfo.recv_source;
-	mInnerSrtpInfo.send_suite = other.mInnerSrtpInfo.send_suite;
-	mInnerSrtpInfo.send_source = other.mInnerSrtpInfo.send_source;
-	mInnerSrtpInfo.recv_suite = other.mInnerSrtpInfo.recv_suite;
-	mInnerSrtpInfo.recv_source = other.mInnerSrtpInfo.recv_source;
 }
 
 CallStats::~CallStats() {
@@ -117,27 +104,27 @@ void CallStats::fill(MediaStream *ms, OrtpEvent *ev) {
 			mUpdated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			update(ms);
 		} else if (evt == ORTP_EVENT_ZRTP_SAS_READY) {
-			mZrtpAlgo.cipher_algo = evd->info.zrtp_info.cipherAlgo;
-			mZrtpAlgo.key_agreement_algo = evd->info.zrtp_info.keyAgreementAlgo;
-			mZrtpAlgo.hash_algo = evd->info.zrtp_info.hashAlgo;
-			mZrtpAlgo.auth_tag_algo = evd->info.zrtp_info.authTagAlgo;
-			mZrtpAlgo.sas_algo = evd->info.zrtp_info.sasAlgo;
+			mEncryptionStatus.setZrtpCipherAlgo(evd->info.zrtp_info.cipherAlgo);
+			mEncryptionStatus.setZrtpKeyAgreementAlgo(evd->info.zrtp_info.keyAgreementAlgo);
+			mEncryptionStatus.setZrtpHashAlgo(evd->info.zrtp_info.hashAlgo);
+			mEncryptionStatus.setZrtpAuthTagAlgo(evd->info.zrtp_info.authTagAlgo);
+			mEncryptionStatus.setZrtpSasAlgo(evd->info.zrtp_info.sasAlgo);
 		} else if (evt == ORTP_EVENT_SRTP_ENCRYPTION_CHANGED) {
 			if (evd->info.srtp_info.is_inner) {
 				if (evd->info.srtp_info.is_send) {
-					mInnerSrtpInfo.send_suite = evd->info.srtp_info.suite;
-					mInnerSrtpInfo.send_source = evd->info.srtp_info.source;
+					mEncryptionStatus.setInnerSrtpSendSuite(evd->info.srtp_info.suite);
+					mEncryptionStatus.setInnerSrtpSendSource(evd->info.srtp_info.source);
 				} else {
-					mInnerSrtpInfo.recv_suite = evd->info.srtp_info.suite;
-					mInnerSrtpInfo.recv_source = evd->info.srtp_info.source;
+					mEncryptionStatus.setInnerSrtpRecvSuite(evd->info.srtp_info.suite);
+					mEncryptionStatus.setInnerSrtpRecvSource(evd->info.srtp_info.source);
 				}
 			} else {
 				if (evd->info.srtp_info.is_send) {
-					mSrtpInfo.send_suite = evd->info.srtp_info.suite;
-					mSrtpInfo.send_source = evd->info.srtp_info.source;
+					mEncryptionStatus.setSrtpSendSuite(evd->info.srtp_info.suite);
+					mEncryptionStatus.setSrtpSendSource(evd->info.srtp_info.source);
 				} else {
-					mSrtpInfo.recv_suite = evd->info.srtp_info.suite;
-					mSrtpInfo.recv_source = evd->info.srtp_info.source;
+					mEncryptionStatus.setSrtpRecvSuite(evd->info.srtp_info.suite);
+					mEncryptionStatus.setSrtpRecvSource(evd->info.srtp_info.source);
 				}
 			}
 		}
@@ -370,171 +357,58 @@ bool_t CallStats::hasSentRtcp() const {
 	return mSentRtcp != NULL;
 }
 
+const EncryptionStatus &CallStats::getEncryptionStatus() const {
+	return mEncryptionStatus;
+}
+
 void CallStats::setEstimatedDownloadBandwidth(float estimatedValue) {
 	mEstimatedDownloadBandwidth = estimatedValue;
 }
 
 const ZrtpAlgo *CallStats::getZrtpAlgo() const {
-	return &mZrtpAlgo;
+	return mEncryptionStatus.getZrtpAlgo();
 }
 
 const char *CallStats::getZrtpCipherAlgo() const {
-	switch (mZrtpAlgo.cipher_algo) {
-		case (MS_ZRTP_CIPHER_INVALID):
-			return "invalid";
-		case (MS_ZRTP_CIPHER_AES1):
-			return "AES-128";
-		case (MS_ZRTP_CIPHER_AES2):
-			return "AES-192";
-		case (MS_ZRTP_CIPHER_AES3):
-			return "AES-256";
-		case (MS_ZRTP_CIPHER_2FS1):
-			return "TwoFish-128";
-		case (MS_ZRTP_CIPHER_2FS2):
-			return "TwoFish-192";
-		case (MS_ZRTP_CIPHER_2FS3):
-			return "TwoFish-256";
-		default:
-			return "Unknown Algo";
-	}
+	return mEncryptionStatus.getZrtpCipherAlgo();
 }
 
 const char *CallStats::getZrtpKeyAgreementAlgo() const {
-	switch (mZrtpAlgo.key_agreement_algo) {
-		case (MS_ZRTP_KEY_AGREEMENT_INVALID):
-			return "invalid";
-		case (MS_ZRTP_KEY_AGREEMENT_DH2K):
-			return "DHM-2048";
-		case (MS_ZRTP_KEY_AGREEMENT_EC25):
-			return "ECDH-256";
-		case (MS_ZRTP_KEY_AGREEMENT_DH3K):
-			return "DHM-3072";
-		case (MS_ZRTP_KEY_AGREEMENT_EC38):
-			return "ECDH-384";
-		case (MS_ZRTP_KEY_AGREEMENT_EC52):
-			return "ECDH-521";
-		case (MS_ZRTP_KEY_AGREEMENT_X255):
-			return "X25519";
-		case (MS_ZRTP_KEY_AGREEMENT_X448):
-			return "X448";
-		case (MS_ZRTP_KEY_AGREEMENT_K255):
-			return "KEM-X25519";
-		case (MS_ZRTP_KEY_AGREEMENT_K448):
-			return "KEM-X448";
-		case (MS_ZRTP_KEY_AGREEMENT_KYB1):
-			return "KYBER-512";
-		case (MS_ZRTP_KEY_AGREEMENT_KYB2):
-			return "KYBER-768";
-		case (MS_ZRTP_KEY_AGREEMENT_KYB3):
-			return "KYBER-1024";
-		case (MS_ZRTP_KEY_AGREEMENT_HQC1):
-			return "HQC-128";
-		case (MS_ZRTP_KEY_AGREEMENT_HQC2):
-			return "HQC-192";
-		case (MS_ZRTP_KEY_AGREEMENT_HQC3):
-			return "HQC-256";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
-			return "X25519/Kyber512";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
-			return "X25519/HQC128";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
-			return "X448/Kyber1024";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
-			return "X448/HQC256";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
-			return "X25519/Kyber512/HQC128";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256):
-			return "X448/Kyber1024/HQC256";
-		default:
-			return "Unknown Algo";
-	}
+	return mEncryptionStatus.getZrtpKeyAgreementAlgo();
 }
 
 bool_t CallStats::isZrtpKeyAgreementAlgoPostQuantum() const {
-	switch (mZrtpAlgo.key_agreement_algo) {
-		case (MS_ZRTP_KEY_AGREEMENT_KYB1):
-		case (MS_ZRTP_KEY_AGREEMENT_KYB2):
-		case (MS_ZRTP_KEY_AGREEMENT_KYB3):
-		case (MS_ZRTP_KEY_AGREEMENT_HQC1):
-		case (MS_ZRTP_KEY_AGREEMENT_HQC2):
-		case (MS_ZRTP_KEY_AGREEMENT_HQC3):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256):
-			return TRUE;
-		default:
-			return FALSE;
-	}
+	return mEncryptionStatus.isZrtpKeyAgreementAlgoPostQuantum();
 }
 
 const char *CallStats::getZrtpHashAlgo() const {
-	switch (mZrtpAlgo.hash_algo) {
-		case (MS_ZRTP_HASH_INVALID):
-			return "invalid";
-		case (MS_ZRTP_HASH_S256):
-			return "SHA-256";
-		case (MS_ZRTP_HASH_S384):
-			return "SHA-384";
-		case (MS_ZRTP_HASH_N256):
-			return "SHA3-256";
-		case (MS_ZRTP_HASH_N384):
-			return "SHA3-384";
-		case (MS_ZRTP_HASH_S512):
-			return "SHA-512";
-		default:
-			return "Unknown Algo";
-	}
+	return mEncryptionStatus.getZrtpHashAlgo();
 }
 
 const char *CallStats::getZrtpAuthTagAlgo() const {
-	switch (mZrtpAlgo.auth_tag_algo) {
-		case (MS_ZRTP_AUTHTAG_INVALID):
-			return "invalid";
-		case (MS_ZRTP_AUTHTAG_HS32):
-			return "HMAC-SHA1-32";
-		case (MS_ZRTP_AUTHTAG_HS80):
-			return "HMAC-SHA1-80";
-		case (MS_ZRTP_AUTHTAG_SK32):
-			return "Skein-32";
-		case (MS_ZRTP_AUTHTAG_SK64):
-			return "Skein-64";
-		case (MS_ZRTP_AUTHTAG_GCM):
-			return "GCM";
-		default:
-			return "Unknown Algo";
-	}
+	return mEncryptionStatus.getZrtpAuthTagAlgo();
 }
 
 const char *CallStats::getZrtpSasAlgo() const {
-	switch (mZrtpAlgo.sas_algo) {
-		case (MS_ZRTP_SAS_INVALID):
-			return "invalid";
-		case (MS_ZRTP_SAS_B32):
-			return "Base32";
-		case (MS_ZRTP_SAS_B256):
-			return "PGP-WordList";
-		default:
-			return "Unknown Algo";
-	}
+	return mEncryptionStatus.getZrtpSasAlgo();
 }
 
-const SrtpInfo *CallStats::getSrtpInfo(bool_t is_inner) const {
-	if (is_inner == TRUE) {
-		return &mInnerSrtpInfo;
+const SrtpInfo *CallStats::getSrtpInfo(bool isInner) const {
+	if (isInner == TRUE) {
+		return mEncryptionStatus.getInnerSrtpInfo();
 	} else {
-		return &mSrtpInfo;
+		return mEncryptionStatus.getSrtpInfo();
 	}
 }
 
 LinphoneSrtpSuite CallStats::getSrtpSuite() const {
 	// When send and receive suite are different, setting is not complete (on going nego), returns invalid
-	if (mSrtpInfo.send_suite != mSrtpInfo.recv_suite) {
+	auto sendSuite = mEncryptionStatus.getSrtpSendSuite();
+	auto recvSuite = mEncryptionStatus.getSrtpRecvSuite();
+	if (sendSuite != recvSuite) {
 		return LinphoneSrtpSuiteInvalid;
 	}
-	switch (mSrtpInfo.send_suite) {
+	switch (sendSuite) {
 		case (MS_AES_128_SHA1_80):
 			return LinphoneSrtpSuiteAESCM128HMACSHA180;
 		case (MS_AES_256_SHA1_80):
@@ -555,23 +429,7 @@ LinphoneSrtpSuite CallStats::getSrtpSuite() const {
 }
 
 LinphoneMediaEncryption CallStats::getSrtpSource() const {
-	// When send and receive suite are different, setting is not complete (on going nego), returns invalid
-	if (mSrtpInfo.send_source != mSrtpInfo.recv_source) {
-		return LinphoneMediaEncryptionNone;
-	}
-	switch (mSrtpInfo.send_source) {
-		case (MSSrtpKeySourceSDES):
-			return LinphoneMediaEncryptionSRTP;
-		case (MSSrtpKeySourceZRTP):
-			return LinphoneMediaEncryptionZRTP;
-		case (MSSrtpKeySourceDTLS):
-			return LinphoneMediaEncryptionDTLS;
-		case (MSSrtpKeySourceUnknown):
-		case (MSSrtpKeySourceUnavailable):
-		case (MSSrtpKeySourceEKT):
-		default:
-			return LinphoneMediaEncryptionNone;
-	}
+	return mEncryptionStatus.getMediaEncryption();
 }
 
 LINPHONE_END_NAMESPACE

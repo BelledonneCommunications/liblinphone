@@ -517,9 +517,13 @@ void CallSessionPrivate::pingReply() {
 	}
 }
 
+void CallSessionPrivate::setReferToAddress(const std::shared_ptr<Address> &referToAddr) {
+	referToAddress = referToAddr;
+}
+
 void CallSessionPrivate::referred(const std::shared_ptr<Address> &referToAddr) {
 	L_Q();
-	referToAddress = referToAddr;
+	if (referToAddr) referToAddress = referToAddr;
 	referPending = true;
 	setState(CallSession::State::Referred, "Referred");
 	if (referPending) q->notifyCallSessionStartReferred();
@@ -2364,6 +2368,16 @@ void CallSession::notifyCallSessionTransferStateChanged(CallSession::State newSt
 	}
 }
 
+void CallSession::notifyCallSessionReferRequested(const shared_ptr<Address> &address) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionReferRequested(getSharedFromThis(), address);
+	}
+}
+
 void CallSession::notifyCallSessionStateChangedForReporting() {
 	L_D();
 	// Copy list of listeners as the callback might delete one
@@ -2591,6 +2605,16 @@ void CallSession::notifyRemoteRecording(bool isRecording) {
 	for (const auto &listener : listeners) {
 		auto logContext = listener->getLogContextualizer();
 		listener->onRemoteRecording(getSharedFromThis(), isRecording);
+	}
+}
+
+void CallSession::notifySecurityLevelDowngraded() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onSecurityLevelDowngraded(getSharedFromThis());
 	}
 }
 

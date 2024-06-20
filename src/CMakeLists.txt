@@ -124,6 +124,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	call/call-log.h
 	call/call-stats.h
 	call/call.h
+	call/encryption-status.h
 	call/video-source/video-source-descriptor.h
 	call/audio-device/audio-device.h
 	call/audio-device/audio-device.cpp
@@ -444,6 +445,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	call/call-log.cpp
 	call/call-stats.cpp
 	call/call.cpp
+	call/encryption-status.cpp
 	call/video-source/video-source-descriptor.cpp
 	chat/chat-message/chat-message-reaction.cpp
 	chat/chat-message/chat-message.cpp

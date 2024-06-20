@@ -98,6 +98,10 @@ void linphone_call_notify_goclear_ack_sent(LinphoneCall *call) {
 	linphone_core_notify_call_goclear_ack_sent(linphone_call_get_core(call), call);
 }
 
+void linphone_call_notify_security_level_downgraded(LinphoneCall *call) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Call, Call::toCpp(call), linphone_call_cbs_get_security_level_downgraded);
+}
+
 void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, const char *authentication_token) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_encryption_changed, on,
 	                                  authentication_token);
@@ -124,6 +128,10 @@ void linphone_call_notify_receive_master_key_changed(LinphoneCall *call, const c
 void linphone_call_notify_transfer_state_changed(LinphoneCall *call, LinphoneCallState cstate) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_transfer_state_changed, cstate);
 	linphone_core_notify_transfer_state_changed(linphone_call_get_core(call), call, cstate);
+}
+
+void linphone_call_notify_refer_requested(LinphoneCall *call, const LinphoneAddress *refer_to) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_refer_requested, refer_to);
 }
 
 void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallStats *stats) {
@@ -510,6 +518,11 @@ LinphoneStatus linphone_call_defer_update(LinphoneCall *call) {
 LinphoneStatus linphone_call_accept_update(LinphoneCall *call, const LinphoneCallParams *params) {
 	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->acceptUpdate(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
+}
+
+void linphone_call_accept_refer(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
+	return Call::toCpp(call)->acceptRefer();
 }
 
 LinphoneStatus linphone_call_transfer(LinphoneCall *call, const char *referTo) {

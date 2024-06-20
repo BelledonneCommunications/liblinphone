@@ -91,6 +91,22 @@ LINPHONE_PUBLIC LinphoneCallCbsGoClearAckSentCb linphone_call_cbs_get_goclear_ac
 LINPHONE_PUBLIC void linphone_call_cbs_set_goclear_ack_sent(LinphoneCallCbs *cbs, LinphoneCallCbsGoClearAckSentCb cb);
 
 /**
+ * Get the security level downgraded callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @return The current security level downgraded callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsSecurityLevelDowngradedCb
+linphone_call_cbs_get_security_level_downgraded(LinphoneCallCbs *cbs);
+
+/**
+ * Set the security level downgraded callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @param[in] cb The security level downgraded callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_security_level_downgraded(LinphoneCallCbs *cbs,
+                                                                     LinphoneCallCbsSecurityLevelDowngradedCb cb);
+
+/**
  * Get the encryption changed callback.
  * @param cbs #LinphoneCallCbs object. @notnil
  * @return The current encryption changed callback.
@@ -212,6 +228,20 @@ linphone_call_cbs_get_transfer_state_changed(LinphoneCallCbs *cbs);
  */
 LINPHONE_PUBLIC void linphone_call_cbs_set_transfer_state_changed(LinphoneCallCbs *cbs,
                                                                   LinphoneCallCbsTransferStateChangedCb cb);
+
+/**
+ * Get the refer requested callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @return The refer requested callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsReferRequestedCb linphone_call_cbs_get_refer_requested(LinphoneCallCbs *cbs);
+
+/**
+ * Set the refer requested callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @param[in] cb The refer requested callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_refer_requested(LinphoneCallCbs *cbs, LinphoneCallCbsReferRequestedCb cb);
 
 /**
  * Get the ACK processing callback.

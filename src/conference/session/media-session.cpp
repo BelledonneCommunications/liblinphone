@@ -3396,6 +3396,8 @@ bool MediaSessionPrivate::isEncryptionMandatory() const {
 void MediaSessionPrivate::propagateEncryptionChanged() {
 	L_Q();
 
+	auto oldEncryptionStatus = mEncryptionStatus;
+
 	string authToken = getStreamsGroup().getAuthenticationToken();
 	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
@@ -3474,6 +3476,12 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 			VideoControlInterface *vc = dynamic_cast<VideoControlInterface *>(videoStream);
 			if (vc) vc->sendVfu();
 		}
+	}
+
+	mEncryptionStatus = getStreamsGroup().getEncryptionStatus();
+	if (mEncryptionStatus.isDowngradedComparedTo(oldEncryptionStatus)) {
+		lInfo() << __func__ << " : Security level downgraded";
+		q->notifySecurityLevelDowngraded();
 	}
 }
 
