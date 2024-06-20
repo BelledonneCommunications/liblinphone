@@ -59,7 +59,13 @@ private:
 // ---------------------------------------------------------------------------
 
 constexpr const char *select[SelectCount] = {
-    /* SelectSipAddressId */ R"(
+    /* SelectSipAddressIdCaseSensitive */ R"(
+			SELECT id
+			FROM sip_address
+			WHERE value = :1
+		)",
+
+    /* SelectSipAddressIdCaseInsensitive */ R"(
 			SELECT id
 			FROM sip_address
 			WHERE value LIKE :1

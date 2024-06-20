@@ -164,6 +164,8 @@ public:
 	std::shared_ptr<ClientConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 
+	void requestFullState();
+
 	/* Report the csrc included in the video stream, so that we can notify who is presented on the screen.*/
 	void notifyDisplayedSpeaker(uint32_t csrc);
 	void notifyLouderSpeaker(uint32_t ssrc);

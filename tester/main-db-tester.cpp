@@ -429,6 +429,12 @@ static void database_with_chatroom_duplicates(void) {
 			const auto &subject = chatRoom->getSubject();
 			if (backend == ChatParams::Backend::FlexisipChat) {
 				BC_ASSERT_EQUAL(subject.find("new test subject for chatroom idx"), 0, size_t, "%zu");
+				BC_ASSERT_EQUAL(chatRoom->getConference()->getParticipantCount(),
+				                ((subject == "new test subject for chatroom idx 3") ||
+				                 (subject == "new test subject for chatroom idx 4"))
+				                    ? 4
+				                    : 3,
+				                int, "%0d");
 				BC_ASSERT_EQUAL(chatRoom->getConference()->getLastNotify(), 25, size_t, "%zu");
 			}
 			int messageCount = 0;

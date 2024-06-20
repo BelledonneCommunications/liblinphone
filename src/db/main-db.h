@@ -200,9 +200,13 @@ public:
 	std::list<std::shared_ptr<Participant>>
 	selectChatRoomParticipants(const std::shared_ptr<AbstractChatRoom> &chatRoom) const;
 	std::list<std::shared_ptr<Participant>> selectChatRoomParticipants(const long long chatRoomId) const;
+	void insertChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                               const std::shared_ptr<Participant> &participant);
 	void deleteChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                               const std::shared_ptr<Address> &participant);
 
+	void insertChatRoomParticipantDevice(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                                     const std::shared_ptr<ParticipantDevice> &device);
 	void deleteChatRoomParticipantDevice(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                     const std::shared_ptr<ParticipantDevice> &device);
 

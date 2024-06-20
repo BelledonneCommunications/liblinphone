@@ -99,8 +99,8 @@ private:
 	long long insertOrUpdateFriendList(const std::shared_ptr<FriendList> &list);
 	long long insertOrUpdateDevice(const std::shared_ptr<Address> &addressWithGruu, const std::string &displayName);
 
-	long long selectSipAddressId(const std::string &sipAddress) const;
-	long long selectSipAddressId(const std::shared_ptr<Address> &address) const;
+	long long selectSipAddressId(const std::string &sipAddress, const bool caseSensitive) const;
+	long long selectSipAddressId(const std::shared_ptr<Address> &address, const bool caseSensitive) const;
 	std::string selectSipAddressFromId(long long sipAddressId) const;
 	long long selectChatRoomId(long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId(const ConferenceId &conferenceId) const;

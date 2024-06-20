@@ -2654,6 +2654,12 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 	}
 }
 
+void ClientConference::requestFullState() {
+#ifdef HAVE_ADVANCED_IM
+	eventHandler->requestFullState();
+#endif // HAVE_ADVANCED_IM
+}
+
 #ifdef HAVE_ADVANCED_IM
 shared_ptr<ClientEktManager> ClientConference::getClientEktManager() const {
 	return mClientEktManager;
