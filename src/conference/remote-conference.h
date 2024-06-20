@@ -34,6 +34,7 @@ class Core;
 class LINPHONE_PUBLIC RemoteConference : public Conference, public ConferenceListenerInterface {
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupChatRoom;
+	friend class LimeX3dhEncryptionEngine;
 
 public:
 	RemoteConference(const std::shared_ptr<Core> &core,

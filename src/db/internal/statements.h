@@ -29,7 +29,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 namespace Statements {
 enum Select {
-	SelectSipAddressId,
+	SelectSipAddressIdCaseSensitive,
+	SelectSipAddressIdCaseInsensitive,
 	SelectChatRoomId,
 	SelectChatRoomParticipantId,
 	SelectOneToOneChatRoomId,

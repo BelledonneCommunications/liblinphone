@@ -31,6 +31,7 @@
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
+#include "conference/handlers/remote-conference-event-handler.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "core/core.h"
@@ -246,6 +247,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
 	auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.asStringUriOnly());
+	auto peerAddressStr = peerAddress.isValid() ? peerAddress.asString() : std::string("<unknown>");
 
 	// Check if chatroom is encrypted or not
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
@@ -264,19 +266,27 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 			return ChatMessageModifier::Result::Error;
 		}
 	}
-
 	// Add participants to the recipient list
 	bool tooManyDevices = FALSE;
 	int maxNbDevicePerParticipant = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()),
 	                                                        "lime", "max_nb_device_per_participant", INT_MAX);
-	auto recipients = make_shared<vector<lime::RecipientData>>();
+	bool requestFullState = false;
+	// A set allow doesn't allow to have two identical keys
+	std::set<Address> recipientAddresses;
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &participant : participants) {
 		int nbDevice = 0;
 		const list<shared_ptr<ParticipantDevice>> devices = participant->getDevices();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
-			recipients->emplace_back(device->getAddress()->asStringUriOnly());
-			nbDevice++;
+			Address address(*device->getAddress());
+			auto [it, inserted] = recipientAddresses.insert(address);
+			if (inserted) {
+				nbDevice++;
+			} else {
+				lWarning() << "Multiple instances of participant device with address " << address
+				           << " have been found in chat room " << peerAddressStr;
+				requestFullState = true;
+			}
 		}
 		if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 	}
@@ -286,17 +296,32 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getDevices();
 	for (const auto &senderDevice : senderDevices) {
 		if (*senderDevice->getAddress() != *chatRoom->getLocalAddress()) {
-			recipients->emplace_back(senderDevice->getAddress()->asStringUriOnly());
-			nbDevice++;
+			Address address(*senderDevice->getAddress());
+			auto [it, inserted] = recipientAddresses.insert(address);
+			if (inserted) {
+				nbDevice++;
+			} else {
+				lWarning() << "Multiple instances of me participant device with address " << address
+				           << " have been found in chat room " << peerAddressStr;
+				requestFullState = true;
+			}
 		}
 	}
 	if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 
 	// Check if there is at least one recipient
-	if (recipients->empty()) {
-		lError() << "[LIME] encrypting message with no recipient";
+	if (recipientAddresses.empty()) {
+		lError() << "[LIME] encrypting message on chatroom " << chatRoom << " (address " << peerAddressStr
+		         << ") with no recipient";
 		errorCode = 488;
 		return ChatMessageModifier::Result::Error;
+	}
+
+	auto handler = dynamic_pointer_cast<RemoteConference>(chatRoom->getConference())->eventHandler;
+	if (requestFullState && handler) {
+		// It looks like at least one participant device has multiple instances in the chat room therefore request a
+		// full state to make sure the client and the server are on the same page
+		handler->requestFullState();
 	}
 
 	// If too many devices for a participant, throw a local security alert event
@@ -325,7 +350,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 			    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded;
 			shared_ptr<ConferenceSecurityEvent> securityEvent =
 			    make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityEventType);
-			confListener->onSecurityEvent(securityEvent);
+			shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+			if (confListener) {
+				confListener->onSecurityEvent(securityEvent);
+			}
 		}
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
@@ -338,6 +366,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	try {
 		errorCode = 0; // no need to specify error code because not used later
+		auto recipients = make_shared<vector<lime::RecipientData>>();
+		for (const auto &address : recipientAddresses) {
+			recipients->emplace_back(address.asStringUriOnly());
+		}
 		limeManager->encrypt(
 		    localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage,
 		    [localDeviceId, recipients, cipherMessage, message, result](lime::CallbackReturn returnCode,
