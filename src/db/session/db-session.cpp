@@ -311,7 +311,7 @@ time_t DbSession::getTime(const soci::row &row, int col) const {
 
 pair<tm, soci::indicator> DbSession::getTimeWithSociIndicator(time_t t) const {
 	L_D();
-	auto dateTime = Utils::getTimeTAsTm(t);
+	auto dateTime = Utils::getTimeTAsTm((t < 0) ? 0 : t);
 	auto indicator = soci::i_ok;
 	switch (d->backend) {
 		case DbSessionPrivate::Backend::Mysql:

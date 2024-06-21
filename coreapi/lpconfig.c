@@ -761,6 +761,10 @@ bool_t linphone_config_get_range(const LpConfig *lpconfig,
 		}
 		*min = atoi(str);
 		*max = atoi(minusptr + 1);
+		if (*min >= *max) {
+			ms_error("Invalid range found in key %s under section %s: minimum value %0d maximum value %0d", key,
+			         section, *min, *max);
+		}
 		return TRUE;
 	} else {
 		*min = default_min;

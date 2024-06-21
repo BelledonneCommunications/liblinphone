@@ -1363,10 +1363,13 @@ shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<Part
 	if (!session) {
 		shared_ptr<Participant> participant =
 		    const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
+		MediaSessionParams *currentParams = csp->clone();
 		if (mConfParams->chatEnabled()) {
-			const_cast<MediaSessionParams *>(csp)->addCustomContactParameter("text", std::string());
+			currentParams->addCustomContactParameter("text", std::string());
 		}
-		session = participant->createSession(*this, csp, true, this);
+		currentParams->getPrivate()->enableToneIndications(mConfParams->audioEnabled() || mConfParams->videoEnabled());
+		session = participant->createSession(*this, currentParams, true, this);
+		delete currentParams;
 		session->configure(LinphoneCallOutgoing, nullptr, nullptr, getConferenceAddress(), device->getAddress());
 		device->setSession(session);
 		session->initiateOutgoing();
@@ -1395,8 +1398,8 @@ void ServerConference::byeDevice(const std::shared_ptr<ParticipantDevice> &devic
 			csp.addCustomHeader("Ephemeral-Life-Time",
 			                    to_string(getCurrentParams()->getChatParams()->getEphemeralLifetime()));
 		}
-		csp.getPrivate()->enableToneIndications(false);
 	}
+	csp.getPrivate()->enableToneIndications(mConfParams->audioEnabled() || mConfParams->videoEnabled());
 	shared_ptr<CallSession> session = makeSession(device, &csp);
 	switch (session->getState()) {
 		case CallSession::State::OutgoingInit:

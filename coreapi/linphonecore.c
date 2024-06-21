@@ -3888,12 +3888,14 @@ int linphone_core_get_audio_port(const LinphoneCore *lc) {
 void linphone_core_get_audio_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
 	*min_port = lc->rtp_conf.audio_rtp_min_port;
 	*max_port = lc->rtp_conf.audio_rtp_max_port;
+	if (*min_port >= *max_port) {
+		ms_error("Invalid audio port range: minimum value %0d maximum value %0d", *min_port, *max_port);
+	}
 }
 
 LinphoneRange *linphone_core_get_audio_ports_range(const LinphoneCore *lc) {
 	LinphoneRange *range = linphone_range_new();
-	range->min = lc->rtp_conf.audio_rtp_min_port;
-	range->max = lc->rtp_conf.audio_rtp_max_port;
+	linphone_core_get_audio_port_range(lc, &range->min, &range->max);
 	return range;
 }
 
@@ -3904,12 +3906,14 @@ int linphone_core_get_video_port(const LinphoneCore *lc) {
 void linphone_core_get_video_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
 	*min_port = lc->rtp_conf.video_rtp_min_port;
 	*max_port = lc->rtp_conf.video_rtp_max_port;
+	if (*min_port >= *max_port) {
+		ms_error("Invalid video port range: minimum value %0d maximum value %0d", *min_port, *max_port);
+	}
 }
 
 LinphoneRange *linphone_core_get_video_ports_range(const LinphoneCore *lc) {
 	LinphoneRange *range = linphone_range_new();
-	range->min = lc->rtp_conf.video_rtp_min_port;
-	range->max = lc->rtp_conf.video_rtp_max_port;
+	linphone_core_get_video_port_range(lc, &range->min, &range->max);
 	return range;
 }
 
@@ -3920,12 +3924,14 @@ int linphone_core_get_text_port(const LinphoneCore *lc) {
 void linphone_core_get_text_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
 	*min_port = lc->rtp_conf.text_rtp_min_port;
 	*max_port = lc->rtp_conf.text_rtp_max_port;
+	if (*min_port >= *max_port) {
+		ms_error("Invalid text port range: minimum value %0d maximum value %0d", *min_port, *max_port);
+	}
 }
 
 LinphoneRange *linphone_core_get_text_ports_range(const LinphoneCore *lc) {
 	LinphoneRange *range = linphone_range_new();
-	range->min = lc->rtp_conf.text_rtp_min_port;
-	range->max = lc->rtp_conf.text_rtp_max_port;
+	linphone_core_get_text_port_range(lc, &range->min, &range->max);
 	return range;
 }
 
@@ -4515,14 +4521,13 @@ LinphoneAddress *linphone_core_interpret_url_2(LinphoneCore *lc, const char *url
 	LinphoneAddress *result = NULL;
 
 	char *url_lowercase = ms_strdup(url);
-	LinphoneAddress *addr = linphone_address_new(url);
-	if (!addr || !linphone_address_is_valid(addr)) {
+	auto addr = Address::create(L_C_TO_STRING(url), false, false);
+	if (!addr || !addr->isValid()) {
 		// Convert uppercase letters to lowercase
 		for (size_t i = 0; i < strlen(url_lowercase); i++) {
 			url_lowercase[i] = (char)tolower(url_lowercase[i]);
 		}
 	}
-	if (addr) linphone_address_unref(addr);
 
 	if (apply_international_prefix && linphone_account_is_phone_number(account, url_lowercase)) {
 		char *normalized_number = linphone_account_normalize_phone_number(account, url_lowercase);

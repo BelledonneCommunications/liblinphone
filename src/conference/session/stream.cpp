@@ -128,14 +128,23 @@ void Stream::setRandomPortConfig() {
 }
 
 int Stream::selectRandomPort(pair<int, int> portRange) {
-	unsigned int rangeSize = static_cast<unsigned int>(portRange.second - portRange.first);
+	auto max = portRange.second;
+	auto min = portRange.first;
+	auto range = (max - min);
+	if (range < 0) {
+		lError() << "Unable to select a random port within range [ " << min << " , " << max
+		         << "] because the maximum value is lower than the minimum value";
+		return -1;
+	}
+
+	unsigned int rangeSize = static_cast<unsigned int>(range);
 
 	for (int nbTries = 0; nbTries < 100; nbTries++) {
 		bool alreadyUsed = false;
 		unsigned int randomInRangeSize = (bctbx_random() % rangeSize) & (unsigned int)~0x1; /* Select an even number */
-		int triedPort = ((int)randomInRangeSize) + portRange.first;
-		/*If portRange.first is even, the triedPort will be even too. The one who configures a port range that starts
-		 * with an odd number will get odd RTP port numbers.*/
+		int triedPort = ((int)randomInRangeSize) + min;
+		/*If min is even, the triedPort will be even too. The one who configures a port range that starts with an odd
+		 * number will get odd RTP port numbers.*/
 
 		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr;
 		     elem = bctbx_list_next(elem)) {
@@ -148,8 +157,7 @@ int Stream::selectRandomPort(pair<int, int> portRange) {
 			}
 		}
 		if (!alreadyUsed) {
-			lInfo() << "Port " << triedPort << " randomly taken from range [ " << portRange.first << " , "
-			        << portRange.second << "]";
+			lInfo() << "Port " << triedPort << " randomly taken from range [ " << min << " , " << max << "]";
 			return triedPort;
 		}
 	}

@@ -291,6 +291,7 @@ std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared
 
 	csp.enableAudio(mConfParams->audioEnabled());
 	csp.enableVideo(mConfParams->videoEnabled());
+	csp.getPrivate()->enableToneIndications(mConfParams->audioEnabled() || mConfParams->videoEnabled());
 
 	auto chatRoom = getChatRoom();
 	shared_ptr<CallSession> session = mFocus->createSession(*this, &csp, TRUE, this);
@@ -2533,8 +2534,9 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					    ->addCustomHeader("Ephemeral-Life-Time",
 					                      to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
 				}
-				linphone_call_params_enable_tone_indications(new_params, FALSE);
 			}
+			linphone_call_params_enable_tone_indications(new_params,
+			                                             mConfParams->audioEnabled() || mConfParams->videoEnabled());
 
 			const auto cCore = getCore()->getCCore();
 			const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(cCore);

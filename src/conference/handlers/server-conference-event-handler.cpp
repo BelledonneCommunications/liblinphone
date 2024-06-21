@@ -765,7 +765,9 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceRemoved(const 
 			const auto &timeOfDisconnection = participantDevice->getTimeOfDisconnection();
 			if (timeOfDisconnection > -1) {
 				ExecutionType disconnectionInfoType = ExecutionType();
-				disconnectionInfoType.setWhen(timeTToDateTime(timeOfDisconnection));
+				if (timeOfDisconnection >= 0) {
+					disconnectionInfoType.setWhen(timeTToDateTime(timeOfDisconnection));
+				}
 				const auto &reason = participantDevice->getDisconnectionReason();
 				if (!reason.empty()) {
 					disconnectionInfoType.setReason(reason);

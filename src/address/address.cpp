@@ -58,11 +58,13 @@ SalAddress *Address::getSalAddressFromCache(const string &address, bool assumeGr
 
 // -----------------------------------------------------------------------------
 
-Address::Address(const string &address, bool assumeGrUri) {
+Address::Address(const string &address, bool assumeGrUri, bool logError) {
 	if (address.empty()) {
 		mImpl = sal_address_new_empty();
 	} else if (!(mImpl = getSalAddressFromCache(address, assumeGrUri))) {
-		lWarning() << "Cannot create Address, bad uri [" << address << "]";
+		if (logError) {
+			lWarning() << "Cannot create Address, bad uri [" << address << "]";
+		}
 	}
 }
 

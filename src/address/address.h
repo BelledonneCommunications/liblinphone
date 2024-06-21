@@ -39,7 +39,7 @@ LINPHONE_BEGIN_NAMESPACE
  */
 class LINPHONE_PUBLIC Address : public bellesip::HybridObject<LinphoneAddress, Address> {
 public:
-	explicit Address(const std::string &address, bool assumeGrUri = false);
+	explicit Address(const std::string &address, bool assumeGrUri = false, bool logError = true);
 	Address();
 	Address(Address &&other);
 	Address(const Address &other);

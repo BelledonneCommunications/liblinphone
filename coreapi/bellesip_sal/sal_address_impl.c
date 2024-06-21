@@ -24,7 +24,7 @@
 SalAddress *sal_address_new(const char *uri) {
 	if (uri) {
 		belle_sip_header_address_t *result;
-		result = belle_sip_header_address_fast_parse(uri);
+		result = belle_sip_header_address_try_fast_parse(uri);
 		if (result) belle_sip_object_ref(result);
 		return (SalAddress *)result;
 	} else {

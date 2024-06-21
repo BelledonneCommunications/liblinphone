@@ -597,7 +597,8 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const auto &organizerAddress = organizer->getAddress();
 	const long long &organizerSipAddressId = insertSipAddress(organizerAddress);
 	const long long &uriSipAddressid = insertSipAddress(conferenceUri);
-	auto startTime = dbSession.getTimeWithSociIndicator(conferenceInfo->getDateTime());
+	const auto &dateTime = conferenceInfo->getDateTime();
+	auto startTime = dbSession.getTimeWithSociIndicator(dateTime);
 	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getUtf8Subject();
 	const string &description = conferenceInfo->getUtf8Description();
