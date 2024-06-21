@@ -78,7 +78,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	                     linphone_config_get_default_int(lc->config, "proxy", "avpf", LinphoneAVPFDefault))
 	               : LinphoneAVPFDefault;
 	mAvpfRrInterval = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
-	mPublishExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
+	mPublishExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "publish_expires", 600) : 600;
 	mPublishEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", false) : false;
 
 	bool pushAllowedDefault = false;
@@ -634,8 +634,8 @@ int AccountParams::getQualityReportingInterval() const {
 }
 
 int AccountParams::getPublishExpires() const {
-	/*default value is same as register*/
-	return mPublishExpires < 0 ? mExpires : mPublishExpires;
+	// Default value has changed, but still take into account config files with the last one which was -1.
+	return mPublishExpires < 0 ? 600 : mPublishExpires;
 }
 
 uint8_t AccountParams::getAvpfRrInterval() const {
