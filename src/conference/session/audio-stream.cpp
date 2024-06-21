@@ -602,7 +602,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 
-		auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+		conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 		if (conference) {
 			audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
 

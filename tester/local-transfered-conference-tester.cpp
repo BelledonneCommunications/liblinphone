@@ -480,6 +480,7 @@ static void create_video_transfer_conference(void) {
 	                                LinphoneConferenceSecurityLevelNone, true, true);
 }
 
+#ifdef HAVE_EKT_SERVER_PLUGIN
 static void create_audio_encrypted_conference(void) {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
@@ -491,6 +492,7 @@ static void create_video_encrypted_conference(void) {
 	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
 	                                LinphoneConferenceSecurityLevelEndToEnd, true, true);
 }
+#endif // HAVE_EKT_SERVER_PLUGIN
 
 static void create_video_transfer_conference_active_speaker_changed(void) {
 	change_active_speaker_base(true);
@@ -503,8 +505,10 @@ static test_t local_conference_transfered_conference_basic_tests[] = {
     TEST_NO_TAG("Create video transfer conference", LinphoneTest::create_video_transfer_conference),
     TEST_NO_TAG("Create video transfer conference with active speaker changed",
                 LinphoneTest::create_video_transfer_conference_active_speaker_changed),
+#ifdef HAVE_EKT_SERVER_PLUGIN
     TEST_NO_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference),
     TEST_NO_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference),
+#endif // HAVE_EKT_SERVER_PLUGIN
 };
 
 test_suite_t local_conference_test_suite_transfered_conference_basic = {
