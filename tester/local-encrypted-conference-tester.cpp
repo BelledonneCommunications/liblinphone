@@ -119,28 +119,28 @@ static void create_simple_end_to_end_encrypted_conference() {
 
 static void create_simple_end_to_end_encrypted_conference_with_server_restart(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
-	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE,
+	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_simple_end_to_end_encrypted_conference_with_client_restart(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
-	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       TRUE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_end_to_end_encrypted_conference_with_uninvited_participant(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
-	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_end_to_end_encrypted_conference_with_uninvited_participant_not_allowed(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE,
-	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
 	                       LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
@@ -148,14 +148,14 @@ static void create_end_to_end_encrypted_conference_with_uninvited_participant_no
 
 static void create_end_to_end_encrypted_conference_starting_immediately(void) {
 	create_conference_base(ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE,
-	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_end_to_end_encrypted_conference_starting_in_the_past(void) {
 	create_conference_base(ms_time(NULL) - 600, 900, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE,
-	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
 	                       LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
@@ -163,21 +163,21 @@ static void create_end_to_end_encrypted_conference_starting_in_the_past(void) {
 
 static void create_simple_end_to_end_encrypted_conference_with_audio_only_participant(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
-	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_end_to_end_encrypted_conference_with_audio_only_and_uninvited_participant(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
-	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_simple_end_to_end_encrypted_conference_with_audio_only_participant_enabling_video(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
-	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
@@ -196,7 +196,7 @@ static void create_end_to_end_encrypted_conference_with_late_participant_additio
 
 static void create_simple_end_to_end_encrypted_ice_conference(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
-	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
+	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
