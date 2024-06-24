@@ -56,7 +56,7 @@ public class HeadsetReceiver extends BroadcastReceiver {
                 Log.w("[Headset] Unknown headset plugged state: " + state);
             }
 
-            if (CoreManager.isReady()) CoreManager.instance().onHeadsetStateChanged();
+            if (CoreManager.isReady()) CoreManager.instance().onHeadsetStateChanged(state == 1);
         }
     }
 }

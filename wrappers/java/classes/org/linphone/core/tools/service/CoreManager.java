@@ -92,6 +92,7 @@ public class CoreManager {
     private AudioHelper mAudioHelper;
     private BluetoothHelper mBluetoothHelper;
     private ShutdownReceiver mShutdownReceiver;
+    private boolean mReloadSoundDevicesScheduled;
 
     private Handler mHandler;
     private DisplayManager mDisplayManager;
@@ -116,6 +117,7 @@ public class CoreManager {
         mCore = core;
         mServiceRunning = false;
         mServiceRunningInForeground = false;
+        mReloadSoundDevicesScheduled = false;
 
         mTimer = null;
         mForcedIterateTimer = null;
@@ -559,38 +561,60 @@ public class CoreManager {
     }
 
     private void onBluetoothHeadsetStateChanged(int delay) {
-        GlobalState globalState = mCore.getGlobalState();
-        if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
-            Log.i("[Core Manager] Bluetooth headset state changed, waiting for " + delay + " ms before reloading sound devices");
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i("[Core Manager] Reloading sound devices");
-                    if (mCore != null) {
-                        reloadSoundDevices(mCore.getNativePointer());
-                    }
+        if (mCore != null) {
+            if (mCore.getConfig().getInt("audio", "android_monitor_audio_devices", 1) == 0) return;
+            
+            GlobalState globalState = mCore.getGlobalState();
+            if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
+                Log.i("[Core Manager] Bluetooth headset state changed, waiting for " + delay + " ms before reloading sound devices");
+                if (mReloadSoundDevicesScheduled) {
+                    Log.w("[Core Manager] Sound devices reload is already pending, skipping...");
+                    return;
                 }
-            }, delay);
-        } else {
-            Log.w("[Core Manager] Bluetooth headset state changed but current global state is ", globalState.name(), ", skipping...");
+                mReloadSoundDevicesScheduled = true;
+
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Core Manager] Reloading sound devices");
+                        if (mCore != null) {
+                            reloadSoundDevices(mCore.getNativePointer());
+                            mReloadSoundDevicesScheduled = false;
+                        }
+                    }
+                }, delay);
+            } else {
+                Log.w("[Core Manager] Bluetooth headset state changed but current global state is ", globalState.name(), ", skipping...");
+            }
         }
     }
 
-    public void onHeadsetStateChanged() {
-        GlobalState globalState = mCore.getGlobalState();
-        if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
-            Log.i("[Core Manager] Headset state changed, waiting for 500ms before reloading sound devices");
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i("[Core Manager] Reloading sound devices");
-                    if (mCore != null) {
-                        reloadSoundDevices(mCore.getNativePointer());
-                    }
+    public void onHeadsetStateChanged(boolean connected) {
+        if (mCore != null) {
+            if (mCore.getConfig().getInt("audio", "android_monitor_audio_devices", 1) == 0) return;
+
+            GlobalState globalState = mCore.getGlobalState();
+            if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
+                Log.i("[Core Manager] Headset state changed, waiting for 500ms before reloading sound devices");
+                if (mReloadSoundDevicesScheduled) {
+                    Log.w("[Core Manager] Sound devices reload is already pending, skipping...");
+                    return;
                 }
-            }, 500);
-        } else {
-            Log.w("[Core Manager] Headset state changed but current global state is ", globalState.name(), ", skipping...");
+                mReloadSoundDevicesScheduled = true;
+
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Core Manager] Reloading sound devices");
+                        if (mCore != null) {
+                            reloadSoundDevices(mCore.getNativePointer());
+                            mReloadSoundDevicesScheduled = false;
+                        }
+                    }
+                });
+            } else {
+                Log.w("[Core Manager] Headset state changed but current global state is ", globalState.name(), ", skipping...");
+            }
         }
     }
 
