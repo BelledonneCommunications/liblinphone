@@ -401,12 +401,16 @@ void FriendList::synchronizeFriendsFromServer() {
 		belle_http_request_t *request = belle_http_request_create(
 		    "GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), nullptr);
 		const auto &account = getCore()->getDefaultAccount();
+
+		// https://datatracker.ietf.org/doc/id/draft-ietf-vcarddav-vcardrev-02.html#mime_type_registration
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("Accept", "text/vcard"));
+
 		if (account) {
 			std::string uri = account->getAccountParams()->getIdentityAddress()->asStringUriOnly();
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", uri.c_str()));
 		}
-		belle_http_provider_send_request(getCore()->getHttpClient().getProvider(), request,
-		                                 lc->base_contacts_list_http_listener);
+
+		belle_http_provider_send_request(lc->http_provider, request, lc->base_contacts_list_http_listener);
 	} else if (mType == LinphoneFriendListTypeCardDAV) {
 		if (mUri.empty()) {
 			lError() << "Can't synchronize CardDAV list [" << toC() << "](" << getDisplayName() << ") without an URI";
