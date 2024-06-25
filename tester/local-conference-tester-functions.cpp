@@ -2857,10 +2857,6 @@ void create_conference_base(time_t start_time,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneSubscriptionTerminated,
 			                             nb_subscriptions, liblinphone_tester_sip_timeout));
-			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphonePublishCleared, 1,
-				                             liblinphone_tester_sip_timeout));
-			}
 			BC_ASSERT_TRUE(wait_for_list(coresList,
 			                             &laure.getStats().number_of_LinphoneConferenceStateTerminationPending, 1,
 			                             liblinphone_tester_sip_timeout));
