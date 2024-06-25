@@ -1631,6 +1631,15 @@ LinphoneStatus CallSession::redirect(const Address &redirectAddr) {
 		lError() << "Unable to redirect call when in state " << d->state;
 		return -1;
 	}
+	if (!redirectAddr.isValid()) {
+		lError() << "Call session " << this << " (local address " << *getLocalAddress() << " remote address "
+		         << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown")
+		         << ") is being redirected to an invalid address - aborting the operation";
+		return -1;
+	}
+	lInfo() << "Call session " << this << " (local address " << *getLocalAddress() << " remote address "
+	        << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ") is being redirected to address "
+	        << redirectAddr;
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);

@@ -410,7 +410,8 @@ void FriendList::synchronizeFriendsFromServer() {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", uri.c_str()));
 		}
 
-		belle_http_provider_send_request(lc->http_provider, request, lc->base_contacts_list_http_listener);
+		belle_http_provider_send_request(getCore()->getHttpClient().getProvider(), request,
+		                                 lc->base_contacts_list_http_listener);
 	} else if (mType == LinphoneFriendListTypeCardDAV) {
 		if (mUri.empty()) {
 			lError() << "Can't synchronize CardDAV list [" << toC() << "](" << getDisplayName() << ") without an URI";

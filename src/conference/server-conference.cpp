@@ -866,15 +866,15 @@ void ServerConference::finalizeCreation() {
 	const auto chatEnabled = mConfParams->chatEnabled();
 	if ((getState() == ConferenceInterface::State::CreationPending) || chatEnabled) {
 #ifdef HAVE_ADVANCED_IM
-			const auto &chatRoom = getChatRoom();
-			if (chatEnabled && chatRoom) {
-				/* Application (conference server) callback to register the name.
-				 * In response, the conference server will call setConferenceAddress().
-				 * It has the possibility to change the conference address.
-				 */
-				LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ChatRoom, chatRoom,
-				                                         linphone_chat_room_cbs_get_conference_address_generation);
-			}
+		const auto &chatRoom = getChatRoom();
+		if (chatEnabled && chatRoom) {
+			/* Application (conference server) callback to register the name.
+			 * In response, the conference server will call setConferenceAddress().
+			 * It has the possibility to change the conference address.
+			 */
+			LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ChatRoom, chatRoom,
+			                                         linphone_chat_room_cbs_get_conference_address_generation);
+		}
 #endif // HAVE_ADVANCED_IM
 		const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
@@ -912,7 +912,14 @@ void ServerConference::finalizeCreation() {
 					getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 				}
 #endif // HAVE_ADVANCED_IM
+			} else {
+				lInfo() << "Conference [" << this << "] with address " << *conferenceAddress
+				        << " has already been created therefore no need to arry out the redirection to its address";
 			}
+		} else {
+			lError() << "Session of the me participant " << *mMe->getAddress() << " of conference [" << this
+			         << "] with address " << *conferenceAddress
+			         << " is not known therefore it is not possible to carry out the redirection";
 		}
 	}
 }
@@ -2356,7 +2363,7 @@ void ServerConference::cleanup() {
 		mMixerSession.reset();
 	}
 	// Detach conference from the session if not already done
-	for (const auto &device : getParticipantDevices()){
+	for (const auto &device : getParticipantDevices()) {
 		auto session = device->getSession();
 		if (session) {
 			session->removeListener(this);
@@ -3031,8 +3038,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				} else {
 					removeParticipant(session, false);
 				}
-							}
-				break;
+			} break;
 			default:
 				break;
 		}

@@ -1439,9 +1439,12 @@ void MediaSessionPrivate::runStunTestsIfNeeded() {
 			bool isConferenceLayoutActiveSpeaker = false;
 			if (conference) {
 				bool isInLocalConference = getParams()->getPrivate()->getInConference();
-				const auto &confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout()
-				                                             : getParams()->getConferenceVideoLayout();
-				isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+				const auto &parameters = isInLocalConference ? getRemoteParams() : getParams();
+				if (parameters) {
+					const auto &confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout()
+					                                             : getParams()->getConferenceVideoLayout();
+					isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+				}
 			}
 			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker
 			                                     ? MediaSessionPrivate::ActiveSpeakerVideoContentAttribute
@@ -2131,9 +2134,13 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 		// Add additional video streams if required
 		if ((isVideoStream && isVideoConferenceEnabled) || (type == SalAudio)) {
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
-			const auto &confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout()
-			                                             : getParams()->getConferenceVideoLayout();
-
+			const auto &parameters = isInLocalConference ? getRemoteParams() : getParams();
+			if (!parameters) {
+				lInfo() << "Not adding streams of type " << std::string(sal_stream_type_to_string(type))
+				        << " because the layout is not known yet";
+				return;
+			}
+			const auto &confLayout = parameters->getConferenceVideoLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 			const auto remoteContactAddress = q->getRemoteContactAddress();
 			q->updateContactAddressInOp();
