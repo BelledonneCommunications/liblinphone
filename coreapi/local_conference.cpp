@@ -552,7 +552,13 @@ void LocalConference::finalizeCreation() {
 				} else {
 					session->redirect(addr);
 				}
+			} else {
+				lInfo() << "Conference " << *conferenceAddress
+				        << " has already been created therefore no need to arry out the redirection to its address";
 			}
+		} else {
+			lError() << "Session of the me participant " << *me->getAddress() << " of conference " << *conferenceAddress
+			         << " is not known therefore it is not possible to carry out the redirection";
 		}
 #ifdef HAVE_ADVANCED_IM
 		if (eventHandler) {
