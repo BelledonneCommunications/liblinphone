@@ -23,6 +23,7 @@
 
 #include <list>
 
+#include "bctoolbox/list.h"
 #include "linphone/api/c-types.h"
 #include <belle-sip/object++.hh>
 
@@ -35,7 +36,8 @@ public:
 	DialPlan(const std::string &country = "",
 	         const std::string &isoCountryCode = "",
 	         const std::string &ccc = "",
-	         int nnl = 0,
+	         int minNnl = 0,
+	         int maxNnl = 0,
 	         const std::string &icp = "",
 	         const std::string &flag = "");
 	DialPlan(const DialPlan &other);
@@ -50,13 +52,16 @@ public:
 	const std::string &getIsoCountryCode() const;
 	const std::string &getCountryCallingCode() const;
 	void setCountryCallingCode(const std::string &ccc);
-	int getNationalNumberLength() const;
+	int getMinNationalNumberLength() const;
+	int getMaxNationalNumberLength() const;
 	const std::string &getInternationalCallPrefix() const;
 	const std::string &getFlag() const;
 	bool isGeneric() const;
 
 	std::string flattenPhoneNumber(const std::string &number) const;
 	std::string formatPhoneNumber(const std::string &phoneNumber, bool escapePlus) const;
+	std::string formatShortNumber(const std::string &phoneNumber) const;
+	std::string getSignificantDigits(const std::string &phoneNumber) const;
 
 	static const std::shared_ptr<DialPlan> MostCommon;
 
@@ -65,12 +70,15 @@ public:
 	static std::shared_ptr<DialPlan> findByCcc(int ccc);
 	static std::shared_ptr<DialPlan> findByCcc(const std::string &ccc);
 	static const std::list<std::shared_ptr<DialPlan>> &getAllDialPlans();
+	static bool_t isShortNumber(const int ccc, const std::string &phoneNumber);
+	static bool_t hasEnoughSignificantDigits(const int ccc, const std::string &phoneNumber);
 
 private:
 	std::string country;
 	std::string isoCountryCode;          // ISO 3166-1 alpha-2 code, ex: FR for France.
 	std::string countryCallingCode;      // Country calling code.
-	int nationalNumberLength = 0;        // Maximum national number length.
+	int minNationalNumberLength = 0;     // Minimum national number length to search for prefixes.
+	int maxNationalNumberLength = 8;     // Maximum national number length.
 	std::string internationalCallPrefix; // International call prefix, ex: 00 in europe.
 	std::string flag;
 

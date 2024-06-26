@@ -348,6 +348,16 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 	char *flatten = linphone_account_flatten_phone_number(username);
 	lDebug() << "Flattened number is [" << flatten << "] for [" << username << "]";
 
+	// if local short number, do not add international prefix
+	if (dial_prefix) {
+		std::shared_ptr<DialPlan> dialplan = DialPlan::findByCcc(dial_prefix);
+		if ((flatten[0] != '+') && (strlen(flatten) < (size_t)dialplan->getMinNationalNumberLength())) {
+			lDebug() << "Short number for [" << flatten << "] identified in dial plan [" << dialplan->getCountry()
+			         << "] (min length is " << dialplan->getMinNationalNumberLength() << ")";
+			return flatten;
+		}
+	}
+
 	int ccc = -1;
 	if (strlen(flatten) > 2 && flatten[0] == '0' && flatten[1] == '0') {
 		std::string copy = std::string(flatten).substr(2);
@@ -355,9 +365,18 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		ccc = DialPlan::lookupCccFromE164(zeroReplacedByPlus.c_str());
 		lDebug() << "Flattened number started by 00, replaced it by + to lookup CCC";
 		if (ccc > -1) {
-			// If a dialplan was found using this, remove the + in the flatenned number
-			ms_free(flatten);
-			flatten = ms_strdup(zeroReplacedByPlus.substr(1).c_str());
+			// If a dialplan was found using this, test if it is a short number
+			if (DialPlan::isShortNumber(ccc, flatten)) {
+				lDebug() << "Do not set international prefix for flattened short number";
+				return flatten;
+			} else if (!DialPlan::hasEnoughSignificantDigits(ccc, zeroReplacedByPlus)) {
+				lDebug() << "Flattened number is too short, do not format phone number [" << flatten << "]";
+				return flatten;
+			} else {
+				// If a dialplan was found using this, remove the + in the flatenned number
+				ms_free(flatten);
+				flatten = ms_strdup(zeroReplacedByPlus.substr(1).c_str());
+			}
 		}
 	} else {
 		ccc = DialPlan::lookupCccFromE164(flatten);

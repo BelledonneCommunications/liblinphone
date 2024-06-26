@@ -260,10 +260,10 @@ static void local_phone_number_ok(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = init(marie->lc);
 
-	BC_ASSERT_EQUAL(linphone_account_creator_set_phone_number(creator, "000555455", "1") &
+	BC_ASSERT_EQUAL(linphone_account_creator_set_phone_number(creator, "0005554559", "1") &
 	                    LinphoneAccountCreatorPhoneNumberStatusOk,
 	                LinphoneAccountCreatorPhoneNumberStatusOk, LinphoneAccountCreatorPhoneNumberStatus, "%i");
-	BC_ASSERT_STRING_EQUAL(linphone_account_creator_get_phone_number(creator), "+1000555455");
+	BC_ASSERT_STRING_EQUAL(linphone_account_creator_get_phone_number(creator), "+10005554559");
 
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);

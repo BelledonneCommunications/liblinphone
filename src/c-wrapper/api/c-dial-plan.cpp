@@ -51,7 +51,7 @@ const char *linphone_dial_plan_get_country_calling_code(const LinphoneDialPlan *
 }
 
 int linphone_dial_plan_get_national_number_length(const LinphoneDialPlan *dp) {
-	return DialPlan::toCpp(dp)->getNationalNumberLength();
+	return DialPlan::toCpp(dp)->getMaxNationalNumberLength();
 }
 
 const char *linphone_dial_plan_get_international_call_prefix(const LinphoneDialPlan *dp) {

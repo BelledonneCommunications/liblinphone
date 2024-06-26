@@ -1537,7 +1537,7 @@ static void search_friend_with_phone_number_2(void) {
 	linphone_address_unref(identity_address);
 	linphone_account_params_set_server_addr(new_params, "<sip:sip.example.org;transport=tls>");
 	linphone_account_params_set_outbound_proxy_enabled(new_params, TRUE);
-	linphone_account_params_set_international_prefix(new_params, "358");
+	linphone_account_params_set_international_prefix(new_params, "593");
 	LinphoneAccount *new_account = linphone_core_create_account(manager->lc, new_params);
 	linphone_core_add_account(manager->lc, new_account);
 	linphone_account_params_unref(new_params);
@@ -1572,7 +1572,7 @@ static void search_friend_with_phone_number_2(void) {
 	}
 
 	// Exists also with secondary account prefix
-	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+358633889977");
+	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+593633889977");
 	BC_ASSERT_PTR_NOT_NULL(lf);
 	if (lf) {
 		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
@@ -1640,8 +1640,8 @@ static void search_friend_with_presence(void) {
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[10], NULL); //"sip:+111223344@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[11], NULL); //"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, chloeSipUri, chloePhoneNumber); //"sip:ch@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 3, "sip:+3333@sip.example.org",
-		                          NULL); //"sip:+3333@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 3, "sip:33@sip.example.org",
+		                          NULL); //"sip:33@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 
@@ -2777,7 +2777,8 @@ static void async_search_friend_in_sources(void) {
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		// The result has only lowercase characters
-		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL); //"sip:charles@sip.test.org;id=ABCDEF"
+		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri,
+		                          NULL); //"sip:charles@sip.test.org;id=ABCDEF"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 	linphone_magic_search_reset_search_cache(magicSearch);

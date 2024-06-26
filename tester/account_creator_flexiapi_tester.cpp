@@ -359,7 +359,7 @@ static void server_account_created_with_phone(void) {
 	string authToken = obtain_auth_token(marie);
 
 	// Create
-	string phone = string("000").append(to_string(bctbx_random()).substr(0, 6));
+	string phone = string("000").append(to_string(bctbx_random()).substr(0, 7));
 	string password = "password";
 
 	linphone_account_creator_set_phone_number(creator, phone.c_str(), "1");
@@ -394,7 +394,8 @@ static void server_account_created_with_phone(void) {
 	linphone_account_creator_cbs_unref(cbs);
 }
 
-// Automatic account creation (Used by Linhome for automatic creation of push account set as depdent proxy config of non push enabled SIP accounts)
+// Automatic account creation (Used by Linhome for automatic creation of push account set as depdent proxy config of non
+// push enabled SIP accounts)
 static void server_account_created_with_generated_username(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
 	LinphoneAccountCreator *creator = init(marie->lc);
@@ -405,7 +406,7 @@ static void server_account_created_with_generated_username(void) {
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
-												   (void *)LinphoneAccountCreatorStatusAccountCreated);
+	                                               (void *)LinphoneAccountCreatorStatusAccountCreated);
 
 	// Obtain auth token (normally it is sent via push notification.
 
@@ -417,11 +418,11 @@ static void server_account_created_with_generated_username(void) {
 	linphone_account_creator_set_algorithm(creator, "SHA-256");
 	linphone_account_creator_cbs_set_create_account(cbs, account_creator_cb);
 
-	BC_ASSERT_EQUAL(linphone_account_creator_create_push_account_with_token_flexiapi(creator), LinphoneAccountCreatorStatusRequestOk,
-					LinphoneAccountCreatorStatus, "%i");
+	BC_ASSERT_EQUAL(linphone_account_creator_create_push_account_with_token_flexiapi(creator),
+	                LinphoneAccountCreatorStatusRequestOk, LinphoneAccountCreatorStatus, "%i");
 
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
-	
+
 	// Delete
 	account_delete_on_api(creator->core, creator->username, creator->password);
 
@@ -431,8 +432,7 @@ static void server_account_created_with_generated_username(void) {
 	linphone_account_creator_cbs_unref(cbs);
 }
 
-test_t account_creator_flexiapi_tests
-[] = {
+test_t account_creator_flexiapi_tests[] = {
     TEST_ONE_TAG("Server - Account exists", server_account_exist, "Server"),
     TEST_ONE_TAG("Server - Account activated", server_account_activated, "Server"),
     TEST_ONE_TAG("Server - Account linked", server_account_linked, "Server"),
@@ -443,7 +443,9 @@ test_t account_creator_flexiapi_tests
     // Dangerous endpoints
     TEST_ONE_TAG("Server - Account created with email", server_account_created_with_email, "Server"),
     TEST_ONE_TAG("Server - Account created with phone", server_account_created_with_phone, "Server"),
-    TEST_ONE_TAG("Server - Account created with generated random user/pass", server_account_created_with_generated_username, "Server"), // Push Account for Linhome
+    TEST_ONE_TAG("Server - Account created with generated random user/pass",
+                 server_account_created_with_generated_username,
+                 "Server"), // Push Account for Linhome
 };
 
 test_suite_t account_creator_flexiapi_test_suite = {"Account creator FlexiAPI",
