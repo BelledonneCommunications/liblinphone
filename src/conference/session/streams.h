@@ -329,6 +329,7 @@ class StreamsGroup : public MediaDescriptionRenderer {
 	friend class Stream;
 	friend class MS2Stream;
 	friend class MS2AudioStream;
+	friend class MS2VideoStream;
 
 public:
 	StreamsGroup(MediaSession &session);

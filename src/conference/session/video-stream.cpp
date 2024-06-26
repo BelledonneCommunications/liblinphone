@@ -290,9 +290,11 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	MS2VideoMixer *videoMixer = getVideoMixer();
-	const auto &stream = ctx.getLocalStreamDescription();
-	const auto &label = stream.getLabel();
-	const auto &content = stream.getContent();
+	const auto localIsInConference = getMediaSessionPrivate().getParams()->getPrivate()->getInConference();
+	const auto &localDesc = ctx.getLocalStreamDescription();
+	const auto &remoteDesc = ctx.getRemoteStreamDescription();
+	const auto &label = localIsInConference ? localDesc.getLabel() : remoteDesc.getLabel();
+	const auto &content = localIsInConference ? remoteDesc.getContent() : localDesc.getContent();
 	MSFilter *source = nullptr;
 	MSWebCam *cam = nullptr;
 	const MSWebCam *currentCam = video_stream_get_camera(mStream);
@@ -555,14 +557,18 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				                           dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 
 				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !isThumbnail) {
-					link_video_stream_with_itc_sink(mStream);
-					MS2VideoStream *vs = getGroup().lookupStreamInterface<MS2VideoStream>(lambda, label, getIndex());
-					if (vs) {
-						itcStream = vs->getVideoStream();
-						lInfo() << "[mix to all] this normal stream " << mStream << " find itcStream " << itcStream
-						        << " with label " << label;
-						ms_filter_call_method(mStream->itcsink, MS_ITC_SINK_CONNECT, itcStream->source);
-					}
+					getGroup().addPostRenderHook([this, &label, &ctx] {
+						link_video_stream_with_itc_sink(mStream);
+						const auto idx = getMediaSessionPrivate().getThumbnailStreamIdx(ctx.localMediaDescription);
+						MS2VideoStream *vs = nullptr;
+						if (idx >= 0) vs = dynamic_cast<MS2VideoStream *>(getGroup().getStream(idx));
+						if (vs) {
+							VideoStream *itcStream = vs->getVideoStream();
+							lInfo() << "[mix to all] this normal stream " << mStream << " find itcStream " << itcStream
+							        << " with label " << label;
+							ms_filter_call_method(mStream->itcsink, MS_ITC_SINK_CONNECT, itcStream->source);
+						}
+					});
 				}
 
 				AudioStream *as = getPeerAudioStream();
