@@ -423,9 +423,25 @@ static void database_with_chatroom_duplicates(void) {
 	MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-		BC_ASSERT_EQUAL(chatRooms.size(), 10, size_t, "%zu");
+		BC_ASSERT_EQUAL(chatRooms.size(), 11, size_t, "%zu");
 		for (const auto &chatRoom : chatRooms) {
-			BC_ASSERT_EQUAL(mainDb.getChatMessageCount(chatRoom->getConferenceId()), 3, size_t, "%zu");
+			const auto &backend = chatRoom->getCurrentParams()->getChatParams()->getBackend();
+			const auto &subject = chatRoom->getSubject();
+			if (backend == ChatParams::Backend::FlexisipChat) {
+				BC_ASSERT_EQUAL(subject.find("new test subject for chatroom idx"), 0, size_t, "%zu");
+				BC_ASSERT_EQUAL(chatRoom->getConference()->getLastNotify(), 25, size_t, "%zu");
+			}
+			int messageCount = 0;
+			if (backend == ChatParams::Backend::Basic) {
+				messageCount = 0;
+			} else {
+				if (subject == "new test subject for chatroom idx 0") {
+					messageCount = 2;
+				} else {
+					messageCount = 3;
+				}
+			}
+			BC_ASSERT_EQUAL(mainDb.getChatMessageCount(chatRoom->getConferenceId()), messageCount, size_t, "%zu");
 		}
 	}
 }

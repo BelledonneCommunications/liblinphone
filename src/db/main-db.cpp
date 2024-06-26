@@ -5430,30 +5430,72 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	shared_ptr<AbstractChatRoom> chatRoomToAdd = nullptr;
+	size_t chatRoom1LastNotify = 0;
+	const auto &chatRoom1Backend = chatRoom1->getCurrentParams()->getChatParams()->getBackend();
+	auto chatRoom1IsFlexisipChat = (chatRoom1Backend == ChatParams::Backend::FlexisipChat);
+	if (chatRoom1IsFlexisipChat) {
+		chatRoom1LastNotify = chatRoom1->getConference()->getLastNotify();
+	}
 	const auto chatRoom1ConferenceId = chatRoom1->getConferenceId();
 	const auto chatRoom1CreationTime = chatRoom1->getCreationTime();
+
+	size_t chatRoom2LastNotify = 0;
+	const auto &chatRoom2Backend = chatRoom2->getCurrentParams()->getChatParams()->getBackend();
+	auto chatRoom2IsFlexisipChat = (chatRoom2Backend == ChatParams::Backend::FlexisipChat);
+	if (chatRoom2IsFlexisipChat) {
+		chatRoom2LastNotify = chatRoom2->getConference()->getLastNotify();
+	}
 	const auto chatRoom2ConferenceId = chatRoom2->getConferenceId();
 	const auto chatRoom2CreationTime = chatRoom2->getCreationTime();
 	lInfo() << "Chat rooms with conference id " << chatRoom1ConferenceId << " and " << chatRoom2ConferenceId
 	        << " will be merged as they have the same peer address";
 	ConferenceId conferenceIdToAdd;
 	ConferenceId conferenceIdToRemove;
-	time_t creationTime = 0;
+	time_t creationTimeToAdd = 0;
 	time_t creationTimeToDelete = 0;
-	// Update chatroom with the largest creation time and update its creation time with the lowest value.
-	if (chatRoom2CreationTime < chatRoom1CreationTime) {
+	// The boolean updateChatRoomTable is used to ensure that only the most up-to-date informations stay in the
+	// chat_room table. In fact during a merge it may happen that the same chat room lays in multiple lines of table
+	// chat_room. Here below a snapshot of all entries for the same chat room in a database:
+	// ==========================================
+	// | ID |    Creation Time    | Last Notify |
+	// ==========================================
+	// | 1  | 2023-11-08 08:10:39 |     5       |
+	// | 20 | 2023-11-08 08:20:39 |     5       |
+	// | 24 | 2023-11-08 08:21:39 |     22      |
+	// | 27 | 2023-11-08 08:40:39 |     25      |
+	// ==========================================
+	// Obviously the most recent chat room is the one with ID 27 and therefore we should keep its line but change the
+	// creation time Unfortunately the chat rooms are not returned ordered by ID therefore it is necessary to take into
+	// account the lastNotify column if the chat room is conference based The first merge operation is the merge of chat
+	// room with ID 24 into the one with ID 27. The former chat room is deleted from the DB and the creation time of the
+	// latter chat room is updated to 2023-11-08 08:21:39 Then a second merge operation occurs between ID 1 and ID 24.
+	// The former chat room is deleted and the latter's creation time is updated to 2023-11-08 08:10:39 Ultimately the
+	// last merge operation occurs between ID 27 and ID 20. This time around, we cannot look to the creation time
+	// anymore as if we would so, we would end up with the wrong Last Notify and subject at least. We should therefore
+	// delete chat room with ID 20 and move all its conference events to chat room with ID 27 Update chatroom with the
+	// largest creation time and update its creation time with the lowest value.
+	if ((chatRoom2LastNotify < chatRoom1LastNotify) ||
+	    ((chatRoom2LastNotify == chatRoom1LastNotify) && (chatRoom2CreationTime < chatRoom1CreationTime))) {
 		chatRoomToAdd = chatRoom1;
-		creationTime = chatRoom2CreationTime;
-		creationTimeToDelete = chatRoom1CreationTime;
 		conferenceIdToAdd = chatRoom1ConferenceId;
 		conferenceIdToRemove = chatRoom2ConferenceId;
+		creationTimeToAdd = chatRoom1CreationTime;
+		creationTimeToDelete = chatRoom2CreationTime;
 	} else {
 		chatRoomToAdd = chatRoom2;
-		creationTime = chatRoom1CreationTime;
-		creationTimeToDelete = chatRoom2CreationTime;
 		conferenceIdToAdd = chatRoom2ConferenceId;
 		conferenceIdToRemove = chatRoom1ConferenceId;
+		creationTimeToAdd = chatRoom1CreationTime;
+		creationTimeToDelete = chatRoom2CreationTime;
 	}
+
+	time_t creationTime = 0;
+	if (chatRoom2CreationTime < chatRoom1CreationTime) {
+		creationTime = chatRoom2CreationTime;
+	} else {
+		creationTime = chatRoom1CreationTime;
+	}
+
 	chatRoomToAdd->setCreationTime(creationTime);
 	const auto unreadChatMessageCountChatRoomToAdd = d->unreadChatMessageCountCache[conferenceIdToAdd];
 	const auto unreadChatMessageCountChatRoomToRemove = d->unreadChatMessageCountCache[conferenceIdToRemove];
@@ -5470,19 +5512,39 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 	const long long &dbChatRoomToAddId = d->selectChatRoomId(conferenceIdToAdd);
 	const long long &dbChatRoomToRemoveId = d->selectChatRoomId(conferenceIdToRemove);
 
-	auto creationTimeToDeleteSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToDelete);
+	auto creationTimeToAddSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToAdd);
 	soci::session *session = d->dbSession.getBackendSession();
 	lInfo() << "Moving all event of chatroom with ID " << dbChatRoomToRemoveId
 	        << " (conference id: " << conferenceIdToRemove << ") to chatroom with ID " << dbChatRoomToAddId
 	        << " (conference id:" << conferenceIdToAdd << ")";
-	;
 	// Move conference event that occurred before the latest chatroom was created.
 	// Events such as chat messages are already stored in both chat rooms
-	*session << "UPDATE conference_event SET chat_room_id = :newChatRoomid WHERE event_id IN (SELECT "
-	            "conference_event.event_id FROM conference_event, event WHERE event.id = conference_event.event_id "
-	            "AND conference_event.chat_room_id = :chatRoomId AND event.creation_time < :creationTime)",
-	    soci::use(dbChatRoomToAddId), soci::use(dbChatRoomToRemoveId),
-	    soci::use(creationTimeToDeleteSoci.first, creationTimeToDeleteSoci.second);
+	auto creationTimeToDeleteSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToDelete);
+	std::pair<tm, soci::indicator> oldestCreationTimeSoci;
+	std::pair<tm, soci::indicator> newestCreationTimeSoci;
+	if (creationTimeToAdd < creationTimeToDelete) {
+		oldestCreationTimeSoci = creationTimeToAddSoci;
+		newestCreationTimeSoci = creationTimeToDeleteSoci;
+	} else {
+		oldestCreationTimeSoci = creationTimeToDeleteSoci;
+		newestCreationTimeSoci = creationTimeToAddSoci;
+	}
+
+	soci::rowset<soci::row> rows =
+	    (session->prepare
+	         << "SELECT conference_event.event_id, conference_event.chat_room_id FROM conference_event, event WHERE "
+	            "event.id = conference_event.event_id AND conference_event.chat_room_id = :chatRoomId AND "
+	            "event.creation_time > :creationTimeMin AND event.creation_time < :creationTimeMax",
+	     soci::use(dbChatRoomToRemoveId), soci::use(oldestCreationTimeSoci.first, oldestCreationTimeSoci.second),
+	     soci::use(newestCreationTimeSoci.first, newestCreationTimeSoci.second));
+
+	// Update row one by one to avoid disk IO Errors from SQL
+	for (const auto &row : rows) {
+		auto eventid = d->dbSession.getUnsignedInt(row, 0, 0);
+		*session << "UPDATE conference_event SET chat_room_id = :newChatRoomid WHERE event_id = :eventId",
+		    soci::use(dbChatRoomToAddId), soci::use(eventid);
+	}
+
 	if (dbChatRoomToRemoveId != -1) {
 		lInfo() << "Deleting chatroom with ID " << dbChatRoomToRemoveId << " (conference id: " << conferenceIdToRemove
 		        << ")";
