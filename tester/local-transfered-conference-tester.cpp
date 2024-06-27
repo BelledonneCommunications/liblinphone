@@ -40,7 +40,7 @@ void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_
 void create_transfer_conference_base(time_t start_time,
                                      int duration,
                                      LinphoneConferenceParticipantListType participant_list_type,
-                                     const LinphoneMediaEncryption encryption,
+                                     const std::vector<LinphoneMediaEncryption> encryption,
                                      LinphoneConferenceLayout layout,
                                      LinphoneConferenceSecurityLevel security_level,
                                      bool audio_transfer,
@@ -80,7 +80,11 @@ void create_transfer_conference_base(time_t start_time,
 
 		bctbx_list_t *coresList = NULL;
 
-		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
+		auto encryptionIndex = 0;
+
+		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(),
+		                                                laure.getCMgr()};
+		for (auto mgr : conferenceMgrs) {
 			if (video_transfer) {
 				LinphoneVideoActivationPolicy *pol =
 				    linphone_factory_create_video_activation_policy(linphone_factory_get());
@@ -105,7 +109,8 @@ void create_transfer_conference_base(time_t start_time,
 
 			if (mgr != focus.getCMgr()) {
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
-				linphone_core_set_media_encryption(mgr->lc, encryption);
+				linphone_core_set_media_encryption(mgr->lc, encryption[encryptionIndex]);
+				encryptionIndex++;
 			}
 
 			coresList = bctbx_list_append(coresList, mgr->lc);
@@ -130,8 +135,6 @@ void create_transfer_conference_base(time_t start_time,
 
 		stats focus_stat = focus.getStats();
 
-		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(),
-		                                                laure.getCMgr()};
 		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()};
 
 		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
@@ -162,7 +165,6 @@ void create_transfer_conference_base(time_t start_time,
 		// Each member call the conference
 		for (auto mgr : members) {
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
-			linphone_call_params_set_media_encryption(new_params, encryption);
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
 			linphone_call_params_unref(new_params);
@@ -180,6 +182,7 @@ void create_transfer_conference_base(time_t start_time,
 		}
 
 		// Check everyone is connected to the conference
+		encryptionIndex = 0;
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
@@ -206,15 +209,16 @@ void create_transfer_conference_base(time_t start_time,
 			if (pcall) {
 				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(pcall);
 				const LinphoneMediaEncryption pcall_enc = linphone_call_params_get_media_encryption(call_cparams);
-				BC_ASSERT_EQUAL(pcall_enc, encryption, int, "%d");
+				BC_ASSERT_EQUAL(pcall_enc, encryption[encryptionIndex], int, "%d");
 			}
 			LinphoneCall *ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
 			BC_ASSERT_PTR_NOT_NULL(ccall);
 			if (ccall) {
 				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(ccall);
 				const LinphoneMediaEncryption ccall_enc = linphone_call_params_get_media_encryption(call_cparams);
-				BC_ASSERT_EQUAL(ccall_enc, encryption, int, "%d");
+				BC_ASSERT_EQUAL(ccall_enc, encryption[encryptionIndex], int, "%d");
 			}
+			encryptionIndex++;
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived,
@@ -306,6 +310,14 @@ void create_transfer_conference_base(time_t start_time,
 						_linphone_call_check_max_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_streams_video,
 						                                       no_streams_text);
+						if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+							auto *callStats = linphone_call_get_stats(pcall, LinphoneStreamTypeAudio);
+							auto *srtpInfo = linphone_call_stats_get_srtp_info(
+							    callStats, TRUE); // TRUE to get inner encryption stats
+							BC_ASSERT_TRUE(srtpInfo->send_source == MSSrtpKeySourceEKT);
+							BC_ASSERT_TRUE(srtpInfo->recv_source == MSSrtpKeySourceEKT);
+							linphone_call_stats_unref(callStats);
+						}
 					}
 					LinphoneCall *ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
 					BC_ASSERT_PTR_NOT_NULL(ccall);
@@ -468,6 +480,18 @@ void create_transfer_conference_base(time_t start_time,
 	bc_free(marie_soundpath);
 }
 
+void create_transfer_conference_base(time_t start_time,
+                                     int duration,
+                                     LinphoneConferenceParticipantListType participant_list_type,
+                                     const LinphoneMediaEncryption encryption,
+                                     LinphoneConferenceLayout layout,
+                                     LinphoneConferenceSecurityLevel security_level,
+                                     bool audio_transfer,
+                                     bool video_transfer) {
+	create_transfer_conference_base(start_time, duration, participant_list_type, {encryption, encryption, encryption},
+	                                layout, security_level, audio_transfer, video_transfer);
+}
+
 static void create_audio_transfer_conference(void) {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionNone, LinphoneConferenceLayoutGrid,
@@ -485,6 +509,13 @@ static void create_audio_encrypted_conference(void) {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
 	                                LinphoneConferenceSecurityLevelEndToEnd, true, false);
+}
+
+static void create_audio_encrypted_conference_multi_encrypt(void) {
+	create_transfer_conference_base(
+	    ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
+	    {LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS},
+	    LinphoneConferenceLayoutActiveSpeaker, LinphoneConferenceSecurityLevelEndToEnd, true, false);
 }
 
 static void create_video_encrypted_conference(void) {
@@ -506,8 +537,10 @@ static test_t local_conference_transfered_conference_basic_tests[] = {
     TEST_NO_TAG("Create video transfer conference with active speaker changed",
                 LinphoneTest::create_video_transfer_conference_active_speaker_changed),
 #ifdef HAVE_EKT_SERVER_PLUGIN
-    TEST_ONE_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference, "End2EndConf"),
-    TEST_ONE_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference, "End2EndConf"),
+    TEST_NO_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference),
+    TEST_NO_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference),
+    TEST_NO_TAG("Create encrypted audio conference multiple external SRTP key negociation scheme",
+                LinphoneTest::create_audio_encrypted_conference_multi_encrypt),
 #endif // HAVE_EKT_SERVER_PLUGIN
 };
 
