@@ -188,7 +188,8 @@ public:
 	uint32_t getSsrc(LinphoneStreamType type) const;
 	uint32_t getSsrc(std::string content) const;
 
-	int getThumbnailStreamIdx() const;
+	int getLocalThumbnailStreamIdx() const;
+	int getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
 	int getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
 
 	/**

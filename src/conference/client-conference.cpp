@@ -2406,7 +2406,6 @@ std::pair<bool, LinphoneMediaDirection> ClientConference::getMainStreamVideoDire
 	auto participantDevice = getMe()->findDevice(session);
 	bool enableVideoStream =
 	    (useLocalParams) ? ms->getMediaParams()->videoEnabled() : ms->getCurrentParams()->videoEnabled();
-
 	const auto videoDirInParams = ms->getMediaParams()->getVideoDirection();
 	const auto sendingVideo =
 	    ((videoDirInParams == LinphoneMediaDirectionSendRecv) || (videoDirInParams == LinphoneMediaDirectionSendOnly));

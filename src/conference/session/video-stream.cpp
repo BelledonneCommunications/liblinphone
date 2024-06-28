@@ -409,7 +409,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 						}
 					}
 				} else { // Get Thumbnail Stream.
-					int idx = getMediaSession().getThumbnailStreamIdx();
+					int idx = getMediaSession().getLocalThumbnailStreamIdx();
 					if (idx >= 0) auxStream = dynamic_cast<MS2VideoStream *>(getGroup().getStream(idx));
 					localScreenSharingChanged = enableLocalScreenSharing(isScreenSharing);
 				}
@@ -735,7 +735,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 						link_video_stream_with_itc_sink(mStream);
 						// Current stream is Main, search for the thumbnail to connect with ITC.
 						MS2VideoStream *vs = nullptr;
-						int idx = getMediaSession().getThumbnailStreamIdx();
+						int idx = getMediaSession().getLocalThumbnailStreamIdx();
 						if (idx >= 0) vs = dynamic_cast<MS2VideoStream *>(getGroup().getStream(idx));
 						if (vs) {
 							VideoStream *itcStream = vs->getVideoStream();

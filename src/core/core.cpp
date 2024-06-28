@@ -643,14 +643,14 @@ bool CorePrivate::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevic
 void CorePrivate::updateVideoDevice() {
 #ifdef VIDEO_ENABLED
 	if (currentCall && currentCall->getState() == CallSession::State::StreamsRunning) {
-		MS2VideoControl *i =
-		    currentCall->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
+		auto ms = currentCall->getMediaSession();
+		MS2VideoControl *i = ms->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
 		// VideoDevice is a camera. If we are sharing screen, the camera change is only for thumbnail.
 		if (i) {
 			auto vs = i->getVideoStream();
 			if (vs && video_stream_local_screen_sharing_enabled(vs)) {
-				auto &group = currentCall->getMediaSession()->getStreamsGroup();
-				int idx = currentCall->getMediaSession()->getThumbnailStreamIdx();
+				auto &group = ms->getStreamsGroup();
+				int idx = ms->getLocalThumbnailStreamIdx();
 				if (idx >= 0) i = dynamic_cast<MS2VideoControl *>(group.getStream(idx));
 			}
 			if (i) i->parametersChanged();

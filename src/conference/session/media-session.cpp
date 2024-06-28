@@ -802,7 +802,6 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 				}
 			}
 		}
-
 		bool enableCapabilityNegotiations = false;
 		bool useNegotiatedMediaProtocol = true;
 		// Add capability negotiation attribute during update if they are supported
@@ -810,7 +809,6 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
 			useNegotiatedMediaProtocol = false;
 		}
-
 		makeLocalMediaDescription(makeOffer, enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
 	if (rmd) {
@@ -2597,8 +2595,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
 		if (conference) {
-			auto [enableVideoStreamTmp, linphoneVideoDir] =
-			    conference->getMainStreamVideoDirection(q->getSharedFromThis(), localIsOfferer, conferenceCreated);
+			auto [enableVideoStreamTmp, linphoneVideoDir] = conference->getMainStreamVideoDirection(
+			    q->getSharedFromThis(), localIsOfferer, conferenceCreated || !isInLocalConference);
 			enableVideoStream = enableVideoStreamTmp;
 			videoDir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(linphoneVideoDir);
 			if (videoDir == SalStreamInactive) {
@@ -3842,7 +3840,7 @@ void MediaSessionPrivate::updateCurrentParams() const {
 			getCurrentParams()->enableAudio(false);
 		}
 
-		const auto streamIdx = q->getThumbnailStreamIdx();
+		const auto streamIdx = q->getThumbnailStreamIdx(md);
 		const auto &videoStream =
 		    (streamIdx == -1) ? md->findBestStream(SalVideo) : md->getStreamAtIdx(static_cast<unsigned int>(streamIdx));
 		if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
@@ -4007,7 +4005,9 @@ LinphoneStatus MediaSessionPrivate::accept(const MediaSessionParams *msp, BCTBX_
 
 	const bool isOfferer = (op->getRemoteMediaDescription() ? false : true);
 
-	if (msp || (localDesc == nullptr)) makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false);
+	if (msp || (localDesc == nullptr)) {
+		makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false);
+	}
 
 	// If call is going to be accepted, then recreate the local media description if there is no local description or
 	// encryption is mandatory. The initial INVITE sequence goes through the offer answer negotiation process twice. The
@@ -4015,8 +4015,9 @@ LinphoneStatus MediaSessionPrivate::accept(const MediaSessionParams *msp, BCTBX_
 	// compatible set of parameters. The second offer answer negotiation is more thorough as the set of parameters to
 	// accept the call is known. In this case, if the encryption is mandatory a new local media description must be
 	// generated in order to populate the crypto keys with the set actually ued in the call
-	if ((state == CallSession::State::IncomingReceived) && params)
+	if ((state == CallSession::State::IncomingReceived) && params) {
 		makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false, false);
+	}
 
 	updateRemoteSessionIdAndVer();
 
@@ -5043,7 +5044,7 @@ bool MediaSession::cameraEnabled() const {
 	if (iface) {
 		auto vs = iface->getVideoStream();
 		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
-			auto streamIdx = getThumbnailStreamIdx();
+			auto streamIdx = getLocalThumbnailStreamIdx();
 			if (streamIdx >= 0) iface = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
 		}
 	}
@@ -5060,7 +5061,7 @@ void MediaSession::enableCamera(BCTBX_UNUSED(bool value)) {
 	if (iface) {
 		auto vs = iface->getVideoStream();
 		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
-			auto streamIdx = getThumbnailStreamIdx();
+			auto streamIdx = getLocalThumbnailStreamIdx();
 			if (streamIdx >= 0) iface = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
 		}
 	}
@@ -5286,11 +5287,10 @@ void MediaSession::setNativePreviewWindowId(BCTBX_UNUSED(void *id)) {
 	if (iface) {
 		auto vs = iface->getVideoStream();
 		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
-			auto streamIdx = getThumbnailStreamIdx();
+			auto streamIdx = getLocalThumbnailStreamIdx();
 			if (streamIdx < 0) return;
 			auto videostream = dynamic_cast<VideoControlInterface *>(d->getStreamsGroup().getStream(streamIdx));
 			videostream->setNativePreviewWindowId(id);
-
 		} else iface->setNativePreviewWindowId(id);
 	}
 #endif
@@ -5303,11 +5303,10 @@ void *MediaSession::getNativePreviewVideoWindowId() const {
 	if (iface) {
 		auto vs = iface->getVideoStream();
 		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
-			auto streamIdx = getThumbnailStreamIdx();
+			auto streamIdx = getLocalThumbnailStreamIdx();
 			if (streamIdx < 0) return nullptr;
 			auto videostream = dynamic_cast<VideoControlInterface *>(d->getStreamsGroup().getStream(streamIdx));
 			return videostream->getNativePreviewWindowId();
-
 		} else return iface->getNativePreviewWindowId();
 	}
 #endif
@@ -5321,11 +5320,10 @@ void *MediaSession::createNativePreviewVideoWindowId() const {
 	if (iface) {
 		auto vs = iface->getVideoStream();
 		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
-			int streamIdx = getThumbnailStreamIdx();
+			auto streamIdx = getLocalThumbnailStreamIdx();
 			if (streamIdx < 0) return nullptr;
 			auto videostream = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
 			return videostream->createNativePreviewWindowId();
-
 		} else return iface->createNativePreviewWindowId();
 	}
 #endif
@@ -5396,12 +5394,13 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 				                                                  audioStream.custom_sdp_attributes);
 			} else params->enableAudio(false);
 
-			const auto streamIdx = getThumbnailStreamIdx();
+			const auto streamIdx = getThumbnailStreamIdx(md);
 			const auto &videoStream = (streamIdx == -1) ? md->findBestStream(SalVideo)
 			                                            : md->getStreamAtIdx(static_cast<unsigned int>(streamIdx));
 			if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 				const auto videoDir = d->getDirFromMd(md, SalVideo);
-				params->enableVideo(videoStream.enabled() || (videoDir != LinphoneMediaDirectionInactive));
+				const auto &videoEnabled = videoStream.enabled();
+				params->enableVideo(videoEnabled || (videoDir != LinphoneMediaDirectionInactive));
 				params->setVideoDirection(videoDir);
 				params->setMediaEncryption(videoStream.hasSrtp() ? LinphoneMediaEncryptionSRTP
 				                                                 : LinphoneMediaEncryptionNone);
@@ -5410,9 +5409,10 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 				// The camera is enabled if:
 				// - the thumbnail stream is enabled
 				// - the thumbnail stream's direction is sendrecv or sendonly
-				params->enableCamera(((videoStream.getDirection() == SalStreamSendRecv) ||
-				                      (videoStream.getDirection() == SalStreamSendOnly)) &&
-				                     videoStream.enabled());
+				const auto &thumbnailDirection = videoStream.getDirection();
+				params->enableCamera(
+				    ((thumbnailDirection == SalStreamSendRecv) || (thumbnailDirection == SalStreamSendOnly)) &&
+				    videoEnabled);
 			} else {
 				params->enableVideo(false);
 				params->enableCamera(false);
@@ -5846,7 +5846,12 @@ int MediaSession::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescriptio
 	return streamIdx;
 }
 
-int MediaSession::getThumbnailStreamIdx() const {
+int MediaSession::getLocalThumbnailStreamIdx() const {
+	L_D();
+	return getThumbnailStreamIdx(d->op ? d->op->getLocalMediaDescription() : nullptr);
+}
+
+int MediaSession::getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const {
 	L_D();
 	// In order to set properly the negotiated parameters, we must know if the client is sending video to the
 	// conference, i.e. look at the thumbnail stream direction. In order to do so, we must know the label of the
@@ -5854,14 +5859,24 @@ int MediaSession::getThumbnailStreamIdx() const {
 	// client is more difficult as the NOTIFY message may have not come or been processed. The algorithm below searches
 	// for the label in the main stream and then reuses the label to look for the desired thumbnail stream
 	auto streamIdx = -1;
-	const auto conference = getCore()->findConference(getSharedFromThis(), false);
-	if (conference && d->op) {
-		const auto md = d->op->getLocalMediaDescription();
-		if (md) {
+	if (md) {
+		const auto conference = getCore()->findConference(getSharedFromThis(), false);
+		if (conference) {
 			const auto content = MediaSessionPrivate::ThumbnailVideoContentAttribute;
 			const bool isInLocalConference = d->getParams()->getPrivate()->getInConference();
-			const auto direction = isInLocalConference ? SalStreamRecvOnly : SalStreamSendOnly;
-			streamIdx = md->findIdxStreamWithContent(content, direction);
+			std::string label;
+			if (isInLocalConference) {
+				auto device = conference->findParticipantDevice(getSharedFromThis());
+				if (device) {
+					label = device->getThumbnailStreamLabel();
+				}
+			} else {
+				auto device = conference->getMe()->findDevice(getSharedFromThis());
+				if (device) {
+					label = device->getThumbnailStreamLabel();
+				}
+			}
+			streamIdx = md->findIdxStreamWithContent(content, label);
 		}
 	}
 	return streamIdx;

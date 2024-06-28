@@ -47,8 +47,8 @@ class Conference;
 
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
-	friend class Core;
 	friend class Conference;
+	friend class Core;
 	friend class CorePrivate;
 	friend class ServerConference;
 	friend class ClientConference;
