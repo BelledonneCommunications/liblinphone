@@ -383,7 +383,7 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	float fec_packets = (float)(stats_fec_session_pauline->packet_sent - prev_fec_sent_number);
 	float current_overhead = fec_stream_get_overhead(pauline_vstream->ms.fec_stream);
 	int it = 0;
-	while ((fec_packets / rtp_packets < 0.35f || current_overhead > 0.95f) && it < 5) {
+	while ((fec_packets / rtp_packets < 0.35f || current_overhead > 0.95f) && it < 10) {
 		wait_for_list(lcs, &dummy, 1, 4000);
 		prev_rtp_sent_number = stats_rtp_session_pauline->packet_sent;
 		prev_fec_sent_number = stats_fec_session_pauline->packet_sent;

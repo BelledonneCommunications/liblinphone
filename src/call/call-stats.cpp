@@ -249,7 +249,7 @@ float CallStats::getFecDownloadBandwidth() const {
 }
 
 float CallStats::getFecUploadBandwidth() const {
-	return mUploadBandwidth;
+	return mFecUploadBandwidth;
 }
 
 float CallStats::getRtcpDownloadBandwidth() const {
