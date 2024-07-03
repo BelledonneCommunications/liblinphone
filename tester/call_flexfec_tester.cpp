@@ -21,9 +21,7 @@
 #include <set>
 #include <sys/stat.h>
 
-#include "bctoolbox/defs.h"
-
-#include "call/call.h"
+#include "bctoolbox/list.h"
 #include "liblinphone_tester.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
@@ -52,13 +50,15 @@ static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy 
 	linphone_core_set_preferred_video_definition_by_name(lc, "VGA");
 }
 static void disable_all_audio_codecs(LinphoneCore *lc) {
-	const bctbx_list_t *elem = linphone_core_get_audio_codecs(lc);
-	PayloadType *pt;
-
-	for (; elem != NULL; elem = elem->next) {
-		pt = (PayloadType *)elem->data;
-		linphone_core_enable_payload_type(lc, pt, FALSE);
+	LinphonePayloadType *pt;
+	bctbx_list_t *codecs = linphone_core_get_audio_payload_types(lc);
+	bctbx_list_t *elem;
+	int index = 0;
+	for (elem = codecs; elem != NULL; elem = elem->next, ++index) {
+		pt = (LinphonePayloadType *)elem->data;
+		linphone_payload_type_enable(pt, FALSE);
 	}
+	bctbx_list_free_with_data(codecs, (bctbx_list_free_func)linphone_payload_type_unref);
 }
 typedef struct _flexfec_tests_params {
 
@@ -116,8 +116,8 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	}
 
 	uint64_t expected_recovered_packets = 7;
-	PayloadType *pt_marie = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
-	PayloadType *pt_pauline = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	LinphonePayloadType *pt_marie = linphone_core_get_payload_type(marie->lc, "AV1", -1, -1);
+	LinphonePayloadType *pt_pauline = linphone_core_get_payload_type(marie->lc, "AV1", -1, -1);
 	if (pt_marie && pt_pauline) {
 		disable_all_video_codecs_except_one(marie->lc, "AV1");
 		disable_all_video_codecs_except_one(pauline->lc, "AV1");
@@ -126,6 +126,8 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 		disable_all_video_codecs_except_one(pauline->lc, "VP8");
 		expected_recovered_packets = 50;
 	}
+	linphone_payload_type_unref(pt_marie);
+	linphone_payload_type_unref(pt_pauline);
 
 	enable_video_stream(marie->lc, pol);
 	enable_video_stream(pauline->lc, pol);
@@ -533,8 +535,8 @@ int video_call_fps_measurement(bool_t withFEC) {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	PayloadType *pt_marie = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
-	PayloadType *pt_pauline = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	LinphonePayloadType *pt_marie = linphone_core_get_payload_type(marie->lc, "AV1", -1, -1);
+	LinphonePayloadType *pt_pauline = linphone_core_get_payload_type(marie->lc, "AV1", -1, -1);
 	if (pt_marie && pt_pauline) {
 		disable_all_video_codecs_except_one(marie->lc, "AV1");
 		disable_all_video_codecs_except_one(pauline->lc, "AV1");
@@ -542,6 +544,8 @@ int video_call_fps_measurement(bool_t withFEC) {
 		disable_all_video_codecs_except_one(marie->lc, "VP8");
 		disable_all_video_codecs_except_one(pauline->lc, "VP8");
 	}
+	linphone_payload_type_unref(pt_marie);
+	linphone_payload_type_unref(pt_pauline);
 
 	linphone_core_set_media_encryption(marie->lc, params.encryption_mode);
 	linphone_core_set_media_encryption(pauline->lc, params.encryption_mode);
