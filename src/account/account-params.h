@@ -86,6 +86,11 @@ public:
 	void enableRtpBundleAssumption(bool value);
 	void setCustomContact(const std::shared_ptr<Address> contact);
 	void setLimeServerUrl(const std::string &url);
+	/**
+	 * valid algorithms are: c25519, c448 and c25519k512. Empty string is also valid, it will unset the value
+	 * @param algo 	The base algorithm to use for lime on this account
+	 */
+	void setLimeAlgo(const std::string &algo);
 	void setPictureUri(const std::string &uri);
 	void setMwiServerAddress(const std::shared_ptr<Address> &address);
 	void setInstantMessagingEncryptionMandatory(bool mandatory);
@@ -136,6 +141,7 @@ public:
 	bool rtpBundleAssumptionEnabled() const;
 	const std::shared_ptr<Address> &getCustomContact() const;
 	const std::string &getLimeServerUrl() const;
+	const std::string &getLimeAlgo() const;
 	const std::string &getPictureUri() const;
 	const std::shared_ptr<Address> &getMwiServerAddress() const;
 	bool isInstantMessagingEncryptionMandatory() const;
@@ -193,6 +199,7 @@ private:
 	std::string mIdKey;
 	std::string mFileTransferServer;
 	std::string mLimeServerUrl;
+	std::string mLimeAlgo;
 	std::string mIdentity;
 	std::string mPictureUri;
 

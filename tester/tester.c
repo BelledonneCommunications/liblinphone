@@ -5527,10 +5527,10 @@ static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
 static void set_lime_server_and_curve_tls(
     const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req, bool_t in_account) {
 	const char *server = NULL;
+	char algo[16];
 	switch (curveId) {
 		case 448:
-			// Change the curve setting before the server URL
-			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c448");
+			sprintf(algo, "%s", "c448");
 			// changing the url will restart the encryption engine allowing to also use the changed curve config
 			if (tls_auth_server == TRUE) {
 				if (req == TRUE) {
@@ -5543,8 +5543,7 @@ static void set_lime_server_and_curve_tls(
 			}
 			break;
 		case 25519:
-			// Change the curve setting before the server URL
-			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519");
+			sprintf(algo, "%s", "c25519");
 			// changing the url will restart the encryption engine allowing to also use the changed curve config
 			if (tls_auth_server == TRUE) {
 				if (req == TRUE) {
@@ -5557,8 +5556,7 @@ static void set_lime_server_and_curve_tls(
 			}
 			break;
 		case 25519512:
-			// Change the curve setting before the server URL
-			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519k512");
+			sprintf(algo, "%s", "c25519k512");
 			// changing the url will restart the encryption engine allowing to also use the changed curve config
 			if (tls_auth_server == TRUE) {
 				if (req == TRUE) {
@@ -5570,6 +5568,13 @@ static void set_lime_server_and_curve_tls(
 				server = lime_server_c25519k512_url;
 			}
 			break;
+		case 0: // explicitely disable lime
+			sprintf(algo, "%s", "unset");
+			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "enabled", FALSE);
+			break;
+		default:
+			BC_FAIL("Unknown lime curve setting");
+			return;
 	}
 
 	if (in_account) { // This is the way to set the lime server url: in the accounts
@@ -5578,12 +5583,14 @@ static void set_lime_server_and_curve_tls(
 			LinphoneAccount *account = (LinphoneAccount *)(accountList->data);
 			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 			LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+			linphone_account_params_set_lime_algo(new_account_params, algo);
 			linphone_account_params_set_lime_server_url(new_account_params, server);
 			linphone_account_set_params(account, new_account_params);
 			linphone_account_params_unref(new_account_params);
 			accountList = accountList->next;
 		}
 	} else { // this is legacy behavior, just for testing. Set the lime server url in the core [lime] setting
+		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", algo);
 		linphone_core_set_lime_x3dh_server_url(manager->lc, server);
 	}
 }

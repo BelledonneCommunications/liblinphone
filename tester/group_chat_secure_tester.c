@@ -96,6 +96,50 @@ static void group_chat_lime_x3dh_create_lime_user(void) {
 	}
 }
 
+// Multiple account in one rc file, we have eric and roger
+static void group_chat_lime_x3dh_create_multialgo_users(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_create("multi_account_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, manager);
+
+	LinphoneAccount *eric_account = linphone_core_get_account_by_idkey(manager->lc, "eric");
+	BC_ASSERT_PTR_NOT_NULL(eric_account);
+	if (eric_account) {
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(eric_account));
+		linphone_account_params_set_lime_algo(params, "c25519");
+		linphone_account_params_set_lime_server_url(params, lime_server_c25519_url);
+		linphone_account_set_params(eric_account, params);
+		linphone_account_params_unref(params);
+	}
+
+	LinphoneAccount *roger_account = linphone_core_get_account_by_idkey(manager->lc, "roger");
+	BC_ASSERT_PTR_NOT_NULL(roger_account);
+	if (roger_account) {
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(roger_account));
+		if (liblinphone_tester_is_lime_PQ_available()) {
+			linphone_account_params_set_lime_algo(params, "c25519k512");
+			linphone_account_params_set_lime_server_url(params, lime_server_c25519k512_url);
+		} else { // when PQ is not available, assign curve 448 to user roger
+			linphone_account_params_set_lime_algo(params, "c448");
+			linphone_account_params_set_lime_server_url(params, lime_server_c448_url);
+		}
+		linphone_account_set_params(roger_account, params);
+		linphone_account_params_unref(params);
+	}
+
+	stats initialStats = manager->stat;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime users to be created on X3DH server
+	BC_ASSERT_TRUE(wait_for_list(coresList, &manager->stat.number_of_X3dhUserCreationSuccess,
+	                             initialStats.number_of_X3dhUserCreationSuccess + 2, x3dhServer_creationTimeout));
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(manager);
+}
+
 static void group_chat_lime_x3dh_change_server_url_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -6020,6 +6064,9 @@ end:
 
 test_t secure_group_chat_tests[] = {
     TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
+    TEST_ONE_TAG("LIME X3DH create multiple lime user using different base algorithm",
+                 group_chat_lime_x3dh_create_multialgo_users,
+                 "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH change server url", group_chat_lime_x3dh_change_server_url, "LimeX3DH"),
     TEST_TWO_TAGS("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH", "CRYPTO"),
     TEST_ONE_TAG("LIME X3DH encrypted chatrooms, Lime server URL set at core level(legacy)",

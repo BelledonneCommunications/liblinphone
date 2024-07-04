@@ -55,7 +55,6 @@ public:
 	lime::limeCallback setLimeCallback(std::string operation);
 	lime::limeCallback
 	setLimeUserCreationCallback(LinphoneCore *lc, const std::string localDeviceId, std::shared_ptr<Account> &account);
-	lime::CurveId getCurveId() const;
 
 	// EncryptionEngine overrides
 
@@ -147,7 +146,7 @@ private:
 	void update(const std::string localDeviceId);
 	std::shared_ptr<LimeManager> limeManager;
 	std::string _dbAccess;
-	lime::CurveId curve;
+	lime::CurveId coreCurve;
 	bool forceFailure = false;
 };
 

@@ -876,6 +876,21 @@ LINPHONE_PUBLIC void linphone_account_params_set_lime_server_url(LinphoneAccount
 LINPHONE_PUBLIC const char *linphone_account_params_get_lime_server_url(const LinphoneAccountParams *params);
 
 /**
+ * Set the base x3dh algorithm.
+ * valid algorithms are: c25519, c448 and c25519k512. NULL is also valid, it will unset the value
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param algo The x3dh base algorithm. @maybenil
+ **/
+LINPHONE_PUBLIC void linphone_account_params_set_lime_algo(LinphoneAccountParams *params, const char *algo);
+
+/**
+ * Get the base x3dh algorithm.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The x3dh base algorithm. @maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_account_params_get_lime_algo(const LinphoneAccountParams *params);
+
+/**
  * Sets an URI for the account picture.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param uri The account picture URI. @maybenil

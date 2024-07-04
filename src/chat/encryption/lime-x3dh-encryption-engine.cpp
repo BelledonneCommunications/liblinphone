@@ -47,6 +47,33 @@
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+namespace { // local function
+lime::CurveId string2CurveId(const std::string &algo) {
+	lime::CurveId curve = lime::CurveId::unset; // default to unset
+	if (algo.compare("c448") == 0) {
+		curve = lime::CurveId::c448;
+	} else if (algo.compare("c25519k512") == 0) {
+		curve = lime::CurveId::c25519k512;
+	} else if (algo.compare("c25519") == 0) {
+		curve = lime::CurveId::c25519;
+	}
+	return curve;
+}
+
+const std::string CurveId2String(const lime::CurveId algo) {
+	switch (algo) {
+		case lime::CurveId::c25519:
+			return "c25519";
+		case lime::CurveId::c448:
+			return "c448";
+		case lime::CurveId::c25519k512:
+			return "c25519k512";
+		case lime::CurveId::unset:
+		default:
+			return "unset";
+	}
+}
+} // namespace
 
 struct X3dhServerPostContext {
 	const lime::limeX3DHServerResponseProcess responseProcess;
@@ -153,17 +180,12 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
     : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
 	auto cCore = core->getCCore();
-	// get the curve to use in the config file, default is c25519
+	// Default curve core config is c25519 - keep it for retrocompatibility [june 2024] but when the move
+	// to account based setting for this feature is completed, it should default to unset
 	const std::string curveConfig = linphone_config_get_string(cCore->config, "lime", "curve", "c25519");
-	if (curveConfig.compare("c448") == 0) {
-		curve = lime::CurveId::c448;
-	} else if (curveConfig.compare("c25519k512") == 0) {
-		curve = lime::CurveId::c25519k512;
-	} else {
-		curve = lime::CurveId::c25519;
-	}
+	coreCurve = string2CurveId(curveConfig);
 	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is ["
-	        << core->getX3dhServerUrl() << "] and curve " << curveConfig << " DB path: " << dbAccess;
+	        << core->getX3dhServerUrl() << "] and default curve [" << curveConfig << "] DB path: " << dbAccess;
 	_dbAccess = dbAccess;
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
 	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
@@ -176,10 +198,6 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
 
 LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine() {
 	lInfo() << "[LIME] destroy LimeX3dhEncryption engine " << this;
-}
-
-lime::CurveId LimeX3dhEncryptionEngine::getCurveId() const {
-	return curve;
 }
 
 void LimeX3dhEncryptionEngine::rawEncrypt(
@@ -1163,6 +1181,13 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 		    << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL ["
 		    << accountLimeServerUrl << "]";
 	}
+	// The LIME base algorithm set in the account parameters is preferred to that set in the core parameters
+	lime::CurveId accountLimeAlgo = string2CurveId(accountParams->getLimeAlgo());
+	if (accountLimeAlgo == lime::CurveId::unset) {
+		accountLimeAlgo = coreCurve;
+		lWarning() << "[LIME] No LIME algo in account params. Fallback on Core's default LIME algo ["
+		           << CurveId2String(accountLimeAlgo) << "]";
+	}
 
 	// Can take into account LIME server changed when the contact address is not known
 	auto contactAddress = account->getContactAddress();
@@ -1174,22 +1199,20 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 
 	lInfo() << "[LIME] Trying to update lime user for device " << localDeviceId << " with server URL ["
-	        << accountLimeServerUrl << "]";
+	        << accountLimeServerUrl << "] on base algorithm [" << CurveId2String(accountLimeAlgo) << "]";
 
 	try {
 		if (!accountLimeServerUrl.empty()) {
 			if (!limeManager->is_user(localDeviceId)) {
-				const std::string curveConfig = linphone_config_get_string(lc->config, "lime", "curve", "c25519");
-				if (curveConfig.compare("c448") == 0) {
-					curve = lime::CurveId::c448;
-				} else if (curveConfig.compare("c25519k512") == 0) {
-					curve = lime::CurveId::c25519k512;
+				if (accountLimeAlgo != lime::CurveId::unset) {
+					lime::limeCallback callback = setLimeUserCreationCallback(lc, localDeviceId, account);
+					// create user if not exist
+					limeManager->create_user(localDeviceId, accountLimeServerUrl, accountLimeAlgo, callback);
 				} else {
-					curve = lime::CurveId::c25519;
+					lError() << "[LIME] user for id [" << localDeviceId
+					         << "] cannot be created as base algorithm is unset";
+					return;
 				}
-				lime::limeCallback callback = setLimeUserCreationCallback(lc, localDeviceId, account);
-				// create user if not exist
-				limeManager->create_user(localDeviceId, accountLimeServerUrl, curve, callback);
 			} else {
 				limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
 				update(localDeviceId);
@@ -1207,7 +1230,6 @@ void LimeX3dhEncryptionEngine::setTestForceDecryptionFailureFlag(bool flag) {
 void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, const string &gruu) {
 	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 	string accountLimeServerUrl = account->getAccountParams()->getLimeServerUrl();
-
 	if (accountLimeServerUrl.empty()) {
 		accountLimeServerUrl = getCore()->getX3dhServerUrl();
 		lWarning()
@@ -1220,13 +1242,26 @@ void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, cons
 		return;
 	}
 
+	lime::CurveId accountLimeAlgo = string2CurveId(account->getAccountParams()->getLimeAlgo());
+	if (accountLimeAlgo == lime::CurveId::unset) {
+		accountLimeAlgo = coreCurve;
+		lWarning() << "[LIME] No LIME algo in account params. Fallback on Core's default LIME algo ["
+		           << CurveId2String(accountLimeAlgo) << "]";
+	}
+	if (accountLimeAlgo == lime::CurveId::unset) {
+		lWarning() << "[LIME] Algo unavailable for encryption engine: can't create user";
+		account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
+		return;
+	}
+
 	try {
 		if (!limeManager->is_user(gruu)) {
 			lInfo() << "[LIME] Try to create lime user for device " << gruu << " with server URL ["
-			        << accountLimeServerUrl << "]";
+			        << accountLimeServerUrl << "] on base algorithm [" << CurveId2String(accountLimeAlgo) << "]";
+
 			lime::limeCallback callback = setLimeUserCreationCallback(lc, gruu, account);
 			// create user if not exist
-			limeManager->create_user(gruu, accountLimeServerUrl, curve, callback);
+			limeManager->create_user(gruu, accountLimeServerUrl, accountLimeAlgo, callback);
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountIsCreating);
 		} else {
 			string info = "";

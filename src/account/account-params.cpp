@@ -26,6 +26,7 @@
 #include "nat/nat-policy.h"
 #include "private.h"
 #include "push-notification/push-notification-config.h"
+#include <set>
 
 // =============================================================================
 
@@ -158,6 +159,9 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	string limeServerUrl = lc ? linphone_config_get_default_string(lc->config, "proxy", "lime_server_url", "") : "";
 	setLimeServerUrl(limeServerUrl);
 
+	string limeAlgo = lc ? linphone_config_get_default_string(lc->config, "proxy", "lime_algo", "") : "";
+	setLimeAlgo(limeAlgo);
+
 	string pictureUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "picture_uri", "") : "";
 	setPictureUri(pictureUri);
 
@@ -271,6 +275,7 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 
 	setLimeServerUrl(linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str()));
+	setLimeAlgo(linphone_config_get_string(config, key, "lime_algo", mLimeAlgo.c_str()));
 
 	setPictureUri(linphone_config_get_string(config, key, "picture_uri", mPictureUri.c_str()));
 
@@ -355,6 +360,7 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 		mCustomContact = nullptr;
 	}
 	mLimeServerUrl = other.mLimeServerUrl;
+	mLimeAlgo = other.mLimeAlgo;
 	mPictureUri = other.mPictureUri;
 	if (other.mMwiServerAddress) {
 		mMwiServerAddress = other.mMwiServerAddress->clone()->toSharedPtr();
@@ -842,6 +848,18 @@ const std::string &AccountParams::getLimeServerUrl() const {
 	return mLimeServerUrl;
 }
 
+void AccountParams::setLimeAlgo(const std::string &algo) {
+	std::set<std::string> validAlgo{"", "c25519", "c448", "c25519k512"};
+	if (validAlgo.find(algo) == validAlgo.end()) {
+		lWarning() << "AccountParans::setLimeAlgo invalid input value [" << algo << "]";
+	}
+	mLimeAlgo = algo;
+}
+
+const std::string &AccountParams::getLimeAlgo() const {
+	return mLimeAlgo;
+}
+
 void AccountParams::setPictureUri(const std::string &uri) {
 	mPictureUri = uri;
 }
@@ -1024,6 +1042,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	writeCustomParamsToConfigFile(config, key);
 
 	linphone_config_set_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
+	linphone_config_set_string(config, key, "lime_algo", mLimeAlgo.c_str());
 	linphone_config_set_string(config, key, "picture_uri", mPictureUri.c_str());
 	if (mMwiServerAddress) {
 		linphone_config_set_string(config, key, "mwi_server_uri", getMwiServerAddressCstr());
