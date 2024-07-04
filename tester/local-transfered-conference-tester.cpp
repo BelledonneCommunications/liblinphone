@@ -537,10 +537,11 @@ static test_t local_conference_transfered_conference_basic_tests[] = {
     TEST_NO_TAG("Create video transfer conference with active speaker changed",
                 LinphoneTest::create_video_transfer_conference_active_speaker_changed),
 #ifdef HAVE_EKT_SERVER_PLUGIN
-    TEST_NO_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference),
-    TEST_NO_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference),
-    TEST_NO_TAG("Create encrypted audio conference multiple external SRTP key negociation scheme",
-                LinphoneTest::create_audio_encrypted_conference_multi_encrypt),
+    TEST_ONE_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference, "End2EndConf"),
+    TEST_ONE_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference, "End2EndConf"),
+    TEST_ONE_TAG("Create encrypted audio conference multiple external SRTP key negociation scheme",
+                 LinphoneTest::create_audio_encrypted_conference_multi_encrypt,
+                 "End2EndConf"),
 #endif // HAVE_EKT_SERVER_PLUGIN
 };
 
