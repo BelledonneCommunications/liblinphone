@@ -1602,7 +1602,6 @@ static void unreliable_channels_cleanup(void) {
 }
 
 static void registration_with_custom_contact(void) {
-#if REENABLE_ME_WHEN_FLEXISIP_2_3_IS_DEPLOYED
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
@@ -1675,7 +1674,32 @@ static void registration_with_custom_contact(void) {
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
-#endif
+}
+
+static void _registration_with_ip_version_preference(bool with_ipv6) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "prefer_ipv6", with_ipv6);
+
+	linphone_core_remove_supported_tag(marie->lc, "gruu");
+	linphone_core_enable_dns_srv(marie->lc, FALSE); /* we want to skip DNS SRV because given current flexisip-tester DNS
+	    configuraition, it gives only an IPv6 host */
+
+	linphone_core_manager_start(marie, TRUE);
+	LinphoneAddress *contact = linphone_account_get_contact_address(linphone_core_get_default_account(marie->lc));
+	if (BC_ASSERT_PTR_NOT_NULL(contact)) {
+		BC_ASSERT_EQUAL(ms_is_ipv6(linphone_address_get_domain(contact)), with_ipv6, int, "%i");
+	}
+	linphone_core_manager_destroy(marie);
+}
+
+static void registration_with_ip_version_preference(void) {
+	if (liblinphone_tester_ipv6_available() && liblinphone_tester_ipv4_available()) {
+		_registration_with_ip_version_preference(TRUE);
+		_registration_with_ip_version_preference(FALSE);
+	} else {
+		ms_warning("Test skipped, ipv6 and ipv4 are not both available");
+	}
 }
 
 test_t register_tests[] = {
@@ -1739,7 +1763,8 @@ test_t register_tests[] = {
     TEST_NO_TAG("Register with specific client port", register_with_specific_client_port),
     TEST_NO_TAG("Cleanup of unreliable channels", unreliable_channels_cleanup),
     TEST_NO_TAG("MD5-based digest rejected by policy", md5_digest_rejected),
-    TEST_NO_TAG("Registration with custom contact", registration_with_custom_contact)};
+    TEST_NO_TAG("Registration with custom contact", registration_with_custom_contact),
+    TEST_NO_TAG("Registration with IP version preference", registration_with_ip_version_preference)};
 
 test_suite_t register_test_suite = {"Register",
                                     NULL,

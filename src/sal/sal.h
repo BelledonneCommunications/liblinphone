@@ -365,6 +365,10 @@ public:
 		return !!belle_sip_stack_dns_srv_enabled(mStack);
 	}
 
+	void setIpv6Preference(bool value) {
+		belle_sip_stack_set_ip_version_preference(mStack, value ? AF_INET6 : AF_INET);
+	}
+
 	void setDnsUserHostsFile(const std::string &value);
 	const std::string &getDnsUserHostsFile() const;
 

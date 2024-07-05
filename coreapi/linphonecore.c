@@ -4116,6 +4116,7 @@ int _linphone_core_apply_transports(LinphoneCore *lc) {
 			if (tr->tls_port != 0) sal->setListenPort(listening_address, tr->tls_port, SalTransportTLS, FALSE);
 		}
 	}
+	lc->sal->setIpv6Preference(!!linphone_config_get_int(lc->config, "sip", "prefer_ipv6", TRUE));
 	return 0;
 }
 
