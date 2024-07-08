@@ -120,13 +120,8 @@ LdapConfigKeys::loadConfig(const std::map<std::string, std::vector<std::string>>
 	for (auto conf : config)
 		if (gLdapConfigKeys.count(conf.first) == 0) finalConfig[conf.first] = conf.second;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
-		if (it->first == "name_attribute")
-			finalConfig[it->first] = config.count(it->first) > 0
-			                             ? Utils::stringToLower(config.at(it->first))
-			                             : LdapConfigKeys::split(it->first, Utils::stringToLower(it->second.mValue));
-		else
-			finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first)
-			                                                     : LdapConfigKeys::split(it->first, it->second.mValue);
+		finalConfig[it->first] =
+		    config.count(it->first) > 0 ? config.at(it->first) : LdapConfigKeys::split(it->first, it->second.mValue);
 	}
 	return finalConfig;
 }
@@ -136,10 +131,7 @@ std::map<std::string, std::string> LdapConfigKeys::loadConfig(const std::map<std
 	for (auto conf : config)
 		if (gLdapConfigKeys.count(conf.first) == 0) finalConfig[conf.first] = conf.second;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
-		if (it->first == "name_attribute")
-			finalConfig[it->first] = config.count(it->first) > 0 ? Utils::stringToLower(config.at(it->first))
-			                                                     : Utils::stringToLower(it->second.mValue);
-		else finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
+		finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
 	}
 	return finalConfig;
 }

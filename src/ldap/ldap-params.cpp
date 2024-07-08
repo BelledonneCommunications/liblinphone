@@ -109,11 +109,11 @@ void LdapParams::setFilter(const std::string &filter) {
 }
 
 void LdapParams::setNameAttribute(const std::string &nameAttribute) {
-	setCustomValue("name_attribute", Utils::stringToLower(nameAttribute));
+	setCustomValue("name_attribute", nameAttribute);
 }
 
 void LdapParams::setSipAttribute(const std::string &sipAttribute) {
-	setCustomValue("sip_attribute", Utils::stringToLower(sipAttribute));
+	setCustomValue("sip_attribute", sipAttribute);
 }
 
 void LdapParams::setSipDomain(const std::string &sipDomain) {
