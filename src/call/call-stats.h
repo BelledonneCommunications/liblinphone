@@ -55,6 +55,8 @@ public:
 	float getReceiverInterarrivalJitter() const;
 	const rtp_stats_t *getRtpStats() const;
 	uint64_t getLatePacketsCumulativeNumber() const;
+	uint64_t getFecCumulativeLostPacketsNumber() const;
+	uint64_t getFecRepairedPacketsNumber() const;
 	float getDownloadBandwidth() const;
 	float getUploadBandwidth() const;
 	float getFecDownloadBandwidth() const;
@@ -132,6 +134,7 @@ private:
 	float mRtcpUploadBandwidth;   /**<RTCP download bandwidth measurement of sent stream, expressed in kbit/s, including
 	                                         IP/UDP/RTP headers*/
 	rtp_stats_t mRtpStats;        /**< RTP stats */
+	fec_stats_t mFecStats;        /**< FEC stats */
 	int mRtpRemoteFamily;         /**< Ip adress family of the remote destination */
 	int mClockrate; /*RTP clockrate of the stream, provided here for easily converting timestamp units expressed in RTCP
 	                                       packets in milliseconds*/

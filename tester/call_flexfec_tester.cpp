@@ -138,7 +138,9 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
 	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
-
+	LinphoneCallStats *call_stats = NULL;
+	uint64_t repaired_packets = 0;
+	uint64_t cumulative_lost_packets = 0;
 	fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 20000));
@@ -148,6 +150,15 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 		                                         expected_recovered_packets, 25000));
 		ms_message("%s recovered %0d packets. The expected value is %0d", linphone_core_get_identity(marie->lc),
 		           static_cast<int>(fec_stats->packets_recovered), static_cast<int>(expected_recovered_packets));
+		call_stats = linphone_call_get_video_stats(marie_call);
+		repaired_packets = linphone_call_stats_get_fec_repaired_packets_number(call_stats);
+		cumulative_lost_packets = linphone_call_stats_get_fec_cumulative_lost_packets_number(call_stats);
+		BC_ASSERT_TRUE(repaired_packets == fec_stats->packets_recovered);
+		BC_ASSERT_TRUE(cumulative_lost_packets == fec_stats->packets_not_recovered);
+		BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_fec_upload_bandwidth(call_stats), 0., float, "%f");
+		BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_fec_download_bandwidth(call_stats), 0., float, "%f");
+		if (call_stats) linphone_call_stats_unref(call_stats);
+		call_stats = NULL;
 
 		if (params.video_enabled_and_disabled) {
 
@@ -182,6 +193,16 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 			initial_marie_stat = marie->stat;
 			initial_pauline_stat = pauline->stat;
 
+			call_stats = linphone_call_get_video_stats(marie_call);
+			repaired_packets = linphone_call_stats_get_fec_repaired_packets_number(call_stats);
+			cumulative_lost_packets = linphone_call_stats_get_fec_cumulative_lost_packets_number(call_stats);
+			BC_ASSERT_TRUE(repaired_packets == 0);
+			BC_ASSERT_TRUE(cumulative_lost_packets == 0);
+			BC_ASSERT_EQUAL(linphone_call_stats_get_fec_upload_bandwidth(call_stats), 0., float, "%f");
+			BC_ASSERT_EQUAL(linphone_call_stats_get_fec_download_bandwidth(call_stats), 0., float, "%f");
+			if (call_stats) linphone_call_stats_unref(call_stats);
+			call_stats = NULL;
+
 			// now enable video again
 			new_params = linphone_core_create_call_params(marie->lc, marie_call);
 			linphone_call_params_enable_video(new_params, TRUE);
@@ -209,11 +230,23 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 			                                         expected_recovered_packets, 45000));
 			ms_message("%s recovered %0d packets. The expected value is %0d", linphone_core_get_identity(marie->lc),
 			           static_cast<int>(fec_stats->packets_recovered), static_cast<int>(expected_recovered_packets));
+
+			call_stats = linphone_call_get_video_stats(marie_call);
+			repaired_packets = linphone_call_stats_get_fec_repaired_packets_number(call_stats);
+			cumulative_lost_packets = linphone_call_stats_get_fec_cumulative_lost_packets_number(call_stats);
+			BC_ASSERT_TRUE(repaired_packets == fec_stats->packets_recovered);
+			BC_ASSERT_TRUE(cumulative_lost_packets == fec_stats->packets_not_recovered);
+			BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_fec_upload_bandwidth(call_stats), 0., float, "%f");
+			BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_fec_download_bandwidth(call_stats), 0., float, "%f");
+			if (call_stats) linphone_call_stats_unref(call_stats);
+			call_stats = NULL;
 		}
 	} else {
 		BC_FAIL("FEC not enabled.");
 	}
 	end_call(marie, pauline);
+
+	if (call_stats) linphone_call_stats_unref(call_stats);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);

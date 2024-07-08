@@ -48,6 +48,7 @@ CallStats::CallStats(const CallStats &other) : HybridObject(other) {
 	mRtcpDownloadBandwidth = other.mRtcpDownloadBandwidth;
 	mRtcpUploadBandwidth = other.mRtcpUploadBandwidth;
 	mRtpStats = other.mRtpStats;
+	mFecStats = other.mFecStats;
 	mRtpRemoteFamily = other.mRtpRemoteFamily;
 	mClockrate = other.mClockrate;
 	mEstimatedDownloadBandwidth = other.mEstimatedDownloadBandwidth;
@@ -91,6 +92,7 @@ void CallStats::update(MediaStream *stream) {
 		mLocalLossRate = ms_quality_indicator_get_local_loss_rate(qi);
 	}
 	media_stream_get_local_rtp_stats(stream, &mRtpStats);
+	if (stream->sessions.fec_session) media_stream_get_local_fec_stats(stream, &mFecStats);
 	pt = rtp_profile_get_payload(rtp_session_get_profile(session), rtp_session_get_send_payload_type(session));
 	mClockrate = pt ? pt->clock_rate : 8000;
 }
@@ -234,6 +236,14 @@ const rtp_stats_t *CallStats::getRtpStats() const {
 
 uint64_t CallStats::getLatePacketsCumulativeNumber() const {
 	return mRtpStats.outoftime;
+}
+
+uint64_t CallStats::getFecCumulativeLostPacketsNumber() const {
+	return mFecStats.packets_not_recovered;
+}
+
+uint64_t CallStats::getFecRepairedPacketsNumber() const {
+	return mFecStats.packets_recovered;
 }
 
 float CallStats::getDownloadBandwidth() const {

@@ -137,6 +137,22 @@ LINPHONE_PUBLIC const rtp_stats_t *linphone_call_stats_get_rtp_stats(const Linph
 LINPHONE_PUBLIC uint64_t linphone_call_stats_get_late_packets_cumulative_number(const LinphoneCallStats *stats);
 
 /**
+ * If the FEC is enabled, gets the cumulative number of lost source packets of the RTP session that have not been
+ *repaired by the current FEC stream.
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The cumulative number of lost packets
+ **/
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_fec_cumulative_lost_packets_number(const LinphoneCallStats *stats);
+
+/**
+ * If the FEC is enabled, gets the cumulative number of source packets of the RTP session that have been repaired by the
+ *current FEC stream.
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The cumulative number of repaired packets
+ **/
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_fec_repaired_packets_number(const LinphoneCallStats *stats);
+
+/**
  * Get the bandwidth measurement of the received stream, expressed in kbit/s, including IP/UDP/RTP headers.
  * @param stats #LinphoneCallStats object @notnil
  * @return The bandwidth measurement of the received stream in kbit/s.

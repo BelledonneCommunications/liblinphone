@@ -193,6 +193,16 @@ uint64_t linphone_call_stats_get_late_packets_cumulative_number(const LinphoneCa
 	return CallStats::toCpp(stats)->getLatePacketsCumulativeNumber();
 }
 
+uint64_t linphone_call_stats_get_fec_cumulative_lost_packets_number(const LinphoneCallStats *stats) {
+	if (stats) return CallStats::toCpp(stats)->getFecCumulativeLostPacketsNumber();
+	else return 0;
+}
+
+uint64_t linphone_call_stats_get_fec_repaired_packets_number(const LinphoneCallStats *stats) {
+	if (stats) return CallStats::toCpp(stats)->getFecRepairedPacketsNumber();
+	else return 0;
+}
+
 float linphone_call_stats_get_download_bandwidth(const LinphoneCallStats *stats) {
 	return CallStats::toCpp(stats)->getDownloadBandwidth();
 }
