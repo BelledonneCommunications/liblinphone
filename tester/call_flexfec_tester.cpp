@@ -20,6 +20,7 @@
 
 #include <set>
 #include <sys/stat.h>
+#include <vector>
 
 #include "bctoolbox/list.h"
 #include "liblinphone_tester.h"
