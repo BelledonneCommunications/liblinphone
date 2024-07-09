@@ -186,7 +186,7 @@ const list<shared_ptr<DialPlan>> DialPlan::sDialPlans = {
     DialPlan::create("Niger", "NE", "227", 8, 8, "00", "🇳🇪"),
     DialPlan::create("Nigeria", "NG", "234", 7, 10, "009", "🇳🇬"),
     DialPlan::create("Niue", "NU", "683", 4, 4, "00", "🇳🇺"),
-    DialPlan::create("Norfolk Island", "NF", "672", 5, 5, "00", "🇳🇫"),
+    DialPlan::create("Norfolk Island", "NF", "672", 6, 6, "00", "🇳🇫"),
     DialPlan::create("North Macedonia", "MK", "389", 8, 8, "00", "🇲🇰"),
     DialPlan::create("Northern Mariana Islands", "MP", "1", 10, 10, "011", "🇲🇵"),
     DialPlan::create("Norway", "NO", "47", 5, 8, "00", "🇳🇴"), DialPlan::create("Oman", "OM", "968", 7, 8, "00", "🇴🇲"),

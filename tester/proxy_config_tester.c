@@ -205,10 +205,15 @@ static void phone_normalization_with_proxy(void) {
 	linphone_proxy_config_set_dial_prefix(proxy, "237");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "674788175"), "+237674788175");
 
-	// Phone normalization for Finland dial plans
+	// Phone normalization for Finland dial plan
 	linphone_proxy_config_set_dial_prefix(proxy, "358");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+3584012345678"), "+3584012345678");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "112"), "112");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+6723 21234"), "+672321234");
+
+	// Phone normalization for Norfolk Island dial plan
+	linphone_proxy_config_set_dial_prefix(proxy, "672");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "672 3 21234"), "+672321234");
 
 	linphone_proxy_config_unref(proxy);
 }
