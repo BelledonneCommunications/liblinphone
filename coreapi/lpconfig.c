@@ -37,6 +37,7 @@
 #define MAX_LEN 16384
 
 #include "bctoolbox/vfs.h"
+#include "bctoolbox/charconv.h"
 #include "belle-sip/object.h"
 #include "xml2lpc.h"
 #include <bctoolbox/defs.h>
@@ -1028,7 +1029,9 @@ LinphoneStatus linphone_config_sync(LpConfig *lpconfig) {
 	/* don't create group/world-accessible files */
 	(void)umask(S_IRWXG | S_IRWXO);
 #endif
-	pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->tmpfilename, "w");
+	char *wFname = bctbx_utf8_to_locale(lpconfig->tmpfilename);
+	if(wFname) pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, wFname, "w");
+	bctbx_free(wFname);
 	lpconfig->pFile = pFile;
 	if (pFile == NULL) {
 		ms_warning("Could not write %s ! Maybe it is read-only. Configuration will not be saved.", lpconfig->filename);
