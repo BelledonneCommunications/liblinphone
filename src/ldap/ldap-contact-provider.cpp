@@ -71,6 +71,11 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core,
 		mCurrentAction = ACTION_ERROR;
 	} else {
 		mConfig = LdapConfigKeys::loadConfig(config);
+		// tolower on configuration to avoid changing case on each result.
+		if (mConfig.count("name_attribute") > 0)
+			mConfig["name_attribute"] = Utils::stringToLower(mConfig["name_attribute"]);
+		if (mConfig.count("sip_attribute") > 0)
+			mConfig["sip_attribute"] = Utils::stringToLower(mConfig["sip_attribute"]);
 		mCurrentAction = ACTION_NONE;
 	}
 }
@@ -721,6 +726,14 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 						if (values) ldap_value_free_len(values);
 						ldap_memfree(attr);
 						attr = ldap_next_attribute(mLd, entry, ber);
+					}
+					if (attributes.size() > 0 && mConfig.count("debug") > 0 &&
+					    LinphoneLdapDebugLevelVerbose ==
+					        static_cast<LinphoneLdapDebugLevel>(atoi(mConfig["debug"][0].c_str()))) {
+						std::string attributesDebug = attributes[0].first + "=" + attributes[0].second;
+						for (size_t i = 1; i < attributes.size(); ++i)
+							attributesDebug += ", " + attributes[i].first + "=" + attributes[i].second;
+						lInfo() << "[LDAP] Got attributes from Server : " << attributesDebug;
 					}
 					contact_complete = buildContact(&ldapData, attributes);
 					if (contact_complete) {
