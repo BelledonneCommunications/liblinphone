@@ -1219,7 +1219,7 @@ static void text_message_auto_resent_after_failure_base(bool with_file_transfer)
 	if (pauline_msg) {
 		const bctbx_list_t *contents = linphone_chat_message_get_contents(pauline_msg);
 		BC_ASSERT_PTR_NOT_NULL(contents);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), nb_of_contents, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), nb_of_contents, size_t, "%zu");
 		content = (LinphoneContent *)bctbx_list_get_data(contents);
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "text");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "plain");
