@@ -761,21 +761,18 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 	if (isStarred) {
 		flags &= LinphoneMagicSearchSourceFavoriteFriends;
 	}
+	bool addedToResults = false;
 
 	// NAME & ORGANIZATION
-	if (linphone_core_vcard_supported()) {
-		if (linphone_friend_get_vcard(lFriend)) {
-			const char *name = linphone_vcard_get_full_name(linphone_friend_get_vcard(lFriend));
-			if (name) {
-				weight += getWeight(name, filter) * 3;
-			}
-			if (weight == getMinWeight()) {
-				// If name doesn't match filter, check if organization does
-				const char *organization = linphone_vcard_get_organization(linphone_friend_get_vcard(lFriend));
-				if (organization) {
-					weight += getWeight(organization, filter) * 2;
-				}
-			}
+	const char *name = linphone_friend_get_name(lFriend);
+	if (name) {
+		weight += getWeight(name, filter) * 3;
+	}
+	if (weight == getMinWeight()) {
+		// If name doesn't match filter, check if organization does
+		const char *organization = linphone_friend_get_organization(lFriend);
+		if (organization) {
+			weight += getWeight(organization, filter) * 2;
 		}
 	}
 
@@ -794,6 +791,7 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 		if ((weightAddress + weight) > getMinWeight()) {
 			friendResult.push_back(SearchResult::create(
 			    weight + weightAddress, Address::toCpp(lAddress)->getSharedFromThis(), phoneNumber, lFriend, flags));
+			addedToResults = true;
 		}
 	}
 
@@ -825,6 +823,7 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 						if ((weightNumber + weight) > getMinWeight()) {
 							friendResult.push_back(
 							    SearchResult::create(weight + weightNumber, tmpAdd, phoneNumber, lFriend, flags));
+							addedToResults = true;
 						}
 						bctbx_free(contact);
 					}
@@ -842,10 +841,21 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 			     )) {
 				friendResult.push_back(
 				    SearchResult::create(weight + weightNumber, tmpAdd, phoneNumber, lFriend, flags));
+				addedToResults = true;
 			}
 		}
 		phoneNumbers = phoneNumbers->next;
 	}
+
+	if (!addedToResults && withDomain.empty() && weight > getMinWeight()) {
+		LinphoneConfig *config = linphone_core_get_config(this->getCore()->getCCore());
+		if (!!linphone_config_get_bool(config, "magic_search", "return_empty_friends", FALSE)) {
+			lInfo() << "[Magic Search] Friend [" << name
+			        << "] matches but it doesn't contain any SIP URI or phone number, returning it in results anyway";
+			friendResult.push_back(SearchResult::create(weight, nullptr, "", lFriend, flags));
+		}
+	}
+
 	if (begin) bctbx_list_free_with_data(begin, bctbx_free);
 
 	return friendResult;
