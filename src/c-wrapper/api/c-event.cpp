@@ -508,6 +508,11 @@ void linphone_event_set_request_address(LinphoneEvent *linphone_event, LinphoneA
 	    ->setRequestAddress(request_address ? Address::toCpp(request_address)->getSharedFromThis() : nullptr);
 }
 
+const char *linphone_event_get_call_id(const LinphoneEvent *linphone_event) {
+	EventLogContextualizer logContextualizer(linphone_event);
+	return L_STRING_TO_C(Event::toCpp(linphone_event)->getCallId());
+}
+
 LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event) {
 	return Event::toCpp(linphone_event)->getCore()->getCCore();
 }

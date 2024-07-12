@@ -81,6 +81,8 @@ public:
 	const std::shared_ptr<Address> getTo() const;
 	void setTo(const std::shared_ptr<Address> &toAddress);
 
+	const std::string &getCallId() const;
+
 	const std::shared_ptr<Address> getRemoteContact() const;
 
 	const std::shared_ptr<Address> getResource() const;

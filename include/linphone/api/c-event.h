@@ -323,6 +323,13 @@ LINPHONE_PUBLIC void linphone_event_set_request_address(LinphoneEvent *linphone_
                                                         LinphoneAddress *request_address);
 
 /**
+ * Get the call ID of the subscription.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return The call ID used by the call as a string. @maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_event_get_call_id(const LinphoneEvent *linphone_event);
+
+/**
  * @}
  **/
 

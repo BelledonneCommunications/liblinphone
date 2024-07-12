@@ -107,6 +107,10 @@ void Event::setTo(const std::shared_ptr<Address> &toAddress) {
 	mToAddress = toAddress->clone()->toSharedPtr();
 }
 
+const std::string &Event::getCallId() const {
+	return mOp->getCallId();
+}
+
 const std::shared_ptr<Address> Event::getResource() const {
 	return cacheTo();
 }
