@@ -568,20 +568,21 @@ static void message_with_two_attachments(void) {
 		linphone_chat_message_download_contents(laure_recv_msg);
 		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
 		                              &laure->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
-		                              nb_of_contents, liblinphone_tester_sip_timeout));
-		BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(laure->lc), nb_of_contents, unsigned int, "%u");
+		                              (int)nb_of_contents, liblinphone_tester_sip_timeout));
+		BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(laure->lc), (unsigned int)nb_of_contents,
+		                unsigned int, "%u");
 		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
-		                              &laure->stat.number_of_LinphoneMessageFileTransferInProgress, nb_of_contents,
+		                              &laure->stat.number_of_LinphoneMessageFileTransferInProgress, (int)nb_of_contents,
 		                              liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc, &laure->stat.number_of_LinphoneMessageFileTransferDone,
-		                              nb_of_contents, liblinphone_tester_sip_timeout));
+		                              (int)nb_of_contents, liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
-		                              &laure->stat.number_of_LinphoneMessageFileTransferTerminated, nb_of_contents,
+		                              &laure->stat.number_of_LinphoneMessageFileTransferTerminated, (int)nb_of_contents,
 		                              liblinphone_tester_sip_timeout));
 	}
 	BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
 	                              &laure->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
-	                              2 * nb_of_contents, liblinphone_tester_sip_timeout));
+	                              2 * (int)nb_of_contents, liblinphone_tester_sip_timeout));
 	BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(laure->lc), 0, unsigned int, "%u");
 	linphone_chat_message_unref(message);
 	linphone_content_unref(file_transfer_content1);
