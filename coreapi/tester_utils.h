@@ -390,6 +390,8 @@ LINPHONE_PUBLIC SalCustomHeader *sal_custom_header_append(SalCustomHeader *ch, c
 LINPHONE_PUBLIC SalAddress *sal_address_clone(const SalAddress *addr);
 LINPHONE_PUBLIC void sal_address_unref(SalAddress *addr);
 
+LINPHONE_PUBLIC LinphoneAddress *linphone_address_get_uri_without_gruu(const LinphoneAddress *address);
+
 LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
 
 LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,

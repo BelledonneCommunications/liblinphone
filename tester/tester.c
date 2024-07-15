@@ -5588,8 +5588,13 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 	if (info1 && info2) {
 		BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_conference_info_get_organizer(info1),
 		                                           linphone_conference_info_get_organizer(info2)));
-		BC_ASSERT_TRUE(
-		    linphone_address_equal(linphone_conference_info_get_uri(info1), linphone_conference_info_get_uri(info2)));
+		const LinphoneAddress *uri1 = linphone_conference_info_get_uri(info1);
+		LinphoneAddress *addr1 = linphone_address_get_uri_without_gruu(uri1);
+		const LinphoneAddress *uri2 = linphone_conference_info_get_uri(info2);
+		LinphoneAddress *addr2 = linphone_address_get_uri_without_gruu(uri2);
+		BC_ASSERT_TRUE(linphone_address_equal(addr1, addr2));
+		linphone_address_unref(addr1);
+		linphone_address_unref(addr2);
 
 		const bctbx_list_t *info1_participants = linphone_conference_info_get_participant_infos(info1);
 		const bctbx_list_t *info2_participants = linphone_conference_info_get_participant_infos(info2);

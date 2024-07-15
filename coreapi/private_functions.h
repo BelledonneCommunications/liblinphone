@@ -1036,6 +1036,8 @@ LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneC
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_conference_info_set_state(LinphoneConferenceInfo *conference_info,
                                                         LinphoneConferenceInfoState state);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
+LINPHONE_PUBLIC LinphoneAddress *linphone_address_get_uri_without_gruu(const LinphoneAddress *address);
 
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new(void);
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new_from_config(LinphoneConfig *config);

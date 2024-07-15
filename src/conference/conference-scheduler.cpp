@@ -329,7 +329,15 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 		return;
 	}
 
-	mConferenceInfo->setUri(conferenceAddress);
+	if (getState() == State::AllocationPending) {
+		lInfo() << "[Conference Scheduler] [" << this
+		        << "] Conference has been succesfully created: " << *conferenceAddress;
+		mConferenceInfo->setUri(conferenceAddress);
+	} else {
+		// No need to update the conference address during an update
+		lInfo() << "[Conference Scheduler] [" << this
+		        << "] Conference has been succesfully created: " << *mConferenceInfo->getUri();
+	}
 
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -339,7 +347,6 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 		mainDb->insertConferenceInfo(mConferenceInfo);
 	}
 #endif
-
 	setState(State::Ready);
 }
 
@@ -357,7 +364,7 @@ void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSessio
 	} else if (getState() != State::Error) {
 		// Do not try to call inpromptu conference if a participant updates its informations
 		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
-			lInfo() << "Automatically rejoining conference " << remoteAddress->toString();
+			lInfo() << "Automatically rejoining conference " << *remoteAddress;
 			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 			// Participant with the focus call is admin
 			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
@@ -392,8 +399,6 @@ void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSessio
 		}
 
 		auto conferenceAddress = remoteAddress;
-		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully created: " << *conferenceAddress;
 		setConferenceAddress(conferenceAddress);
 	}
 }

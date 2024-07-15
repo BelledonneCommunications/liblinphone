@@ -40,6 +40,10 @@ LinphoneAddress *linphone_address_clone(const LinphoneAddress *address) {
 	return Address::toCpp(address)->clone()->toC();
 }
 
+LinphoneAddress *linphone_address_get_uri_without_gruu(const LinphoneAddress *address) {
+	return Address::createCObject(Address::toCpp(address)->getUriWithoutGruu());
+}
+
 LinphoneAddress *linphone_address_ref(LinphoneAddress *address) {
 	belle_sip_object_ref(address);
 	return address;

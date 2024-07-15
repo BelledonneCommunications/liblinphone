@@ -586,7 +586,7 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const auto &organizer = conferenceInfo->getOrganizer();
 	const auto &organizerAddress = organizer->getAddress();
 	const long long &organizerSipAddressId = insertSipAddress(organizerAddress);
-	const long long &uriSipAddressid = insertSipAddress(conferenceUri);
+	const long long &uriSipAddressId = insertSipAddress(Address::create(conferenceUri->getUriWithoutGruu()));
 	auto startTime = dbSession.getTimeWithSociIndicator(conferenceInfo->getDateTime());
 	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getUtf8Subject();
@@ -596,7 +596,7 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const string &uid = conferenceInfo->getIcsUid();
 	const unsigned int security_level = static_cast<unsigned int>(conferenceInfo->getSecurityLevel());
 
-	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
+	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressId);
 	ConferenceInfo::participant_list_t dbParticipantList;
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
@@ -626,10 +626,10 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		                                  "  organizer_sip_address_id, uri_sip_address_id, start_time, duration, "
 		                                  "subject, description, state, ics_sequence, ics_uid, security_level"
 		                                  ") VALUES ("
-		                                  "  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, "
+		                                  "  :organizerSipAddressId, :uriSipAddressId, :startTime, :duration, "
 		                                  ":subject, :description, :state, :sequence, :uid, :security_level"
 		                                  ")",
-		    soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime.first, startTime.second),
+		    soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second),
 		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
 		    soci::use(uid), soci::use(security_level);
 
@@ -777,8 +777,9 @@ long long MainDbPrivate::insertOrUpdateConferenceCall(const std::shared_ptr<Call
 	if (conferenceInfo != nullptr) {
 		const auto &conferenceAddress = conferenceInfo->getUri();
 		if (conferenceAddress) {
-			const long long &uriSipAddressid = insertSipAddress(conferenceAddress);
-			conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
+			const long long &uriSipAddressId =
+			    insertSipAddress(Address::create(conferenceAddress->getUriWithoutGruu()));
+			conferenceInfoId = selectConferenceInfoId(uriSipAddressId);
 			if (conferenceInfoId < 0) {
 				conferenceInfoId = insertConferenceInfo(conferenceInfo, nullptr);
 			}
@@ -5819,7 +5820,16 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"
 		               " AND uri_sip_address.value LIKE '" +
-		               uri->toStringUriOnlyOrdered() + "'";
+		               uri->getUriWithoutGruu().toStringUriOnlyOrdered() + "'";
+
+		string fallback_query =
+		    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+		    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
+		    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+		    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
+		    "conference_info.uri_sip_address_id = uri_sip_address.id"
+		    " AND uri_sip_address.value LIKE '" +
+		    uri->toStringUriOnlyOrdered() + "'";
 
 		return L_DB_TRANSACTION {
 			L_D();
@@ -5829,6 +5839,13 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 			const auto &row = rows.begin();
 			if (row != rows.end()) {
 				confInfo = d->selectConferenceInfo(*row);
+			} else {
+				// This allow to handle backward compatibility as previously the conference address has the GRUU
+				rows = (session->prepare << fallback_query);
+				const auto &row = rows.begin();
+				if (row != rows.end()) {
+					confInfo = d->selectConferenceInfo(*row);
+				}
 			}
 
 			tr.commit();
@@ -5863,7 +5880,8 @@ void MainDb::deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &confere
 		L_DB_TRANSACTION {
 			L_D();
 
-			const long long &uriSipAddressId = d->selectSipAddressId(conferenceInfo->getUri());
+			const long long &uriSipAddressId =
+			    d->insertSipAddress(Address::create(conferenceInfo->getUri()->getUriWithoutGruu()));
 			const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
 
 			*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId",
