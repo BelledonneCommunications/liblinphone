@@ -86,6 +86,7 @@ public:
 	void setCustomheader(const std::string &headerName, const std::string &headerValue);
 	void setPresencePublishEvent(const std::shared_ptr<EventPublish> &presencePublishEvent);
 	void setDependency(std::shared_ptr<Account> dependency);
+	void setDependee(std::shared_ptr<Account> dependency);
 	void setLimeUserAccountStatus(LimeUserAccountStatus status);
 
 	// Getters
@@ -104,6 +105,7 @@ public:
 	const char *getCustomHeader(const std::string &headerName) const;
 	std::shared_ptr<EventPublish> getPresencePublishEvent() const;
 	std::shared_ptr<Account> getDependency();
+	std::shared_ptr<Account> getDependee();
 	LimeUserAccountStatus getLimeUserAccountStatus() const;
 
 	int getUnreadChatMessageCount() const;
@@ -203,6 +205,11 @@ private:
 	LinphonePresenceModel *mPresenceModel = nullptr;
 
 	std::shared_ptr<Account> mDependency = nullptr;
+
+	// The dependee account is of type LinphoneAccount and not Account because the C++ pointer is an account is not held
+	// by anythig. The proxy config holds the C pointer of an account and not the C++ pointer and the core holds a list
+	// of proxy configs.
+	LinphoneAccount *mDependee = nullptr;
 
 	unsigned long long mPreviousPublishParamsHash[2] = {0};
 	std::shared_ptr<AccountParams> mOldParams;
