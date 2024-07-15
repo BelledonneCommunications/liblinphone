@@ -89,6 +89,7 @@ public:
 	void setCustomheader(const std::string &headerName, const std::string &headerValue);
 	void setPresencePublishEvent(const std::shared_ptr<EventPublish> &presencePublishEvent);
 	void setDependency(std::shared_ptr<Account> dependency);
+	void setDependee(std::shared_ptr<Account> dependency);
 	void setLimeUserAccountStatus(LimeUserAccountStatus status);
 
 	// Getters
@@ -107,6 +108,7 @@ public:
 	const char *getCustomHeader(const std::string &headerName) const;
 	std::shared_ptr<EventPublish> getPresencePublishEvent() const;
 	std::shared_ptr<Account> getDependency();
+	std::shared_ptr<Account> getDependee();
 	LimeUserAccountStatus getLimeUserAccountStatus() const;
 
 	int getUnreadChatMessageCount() const;
@@ -217,6 +219,7 @@ private:
 	LinphonePresenceModel *mPresenceModel = nullptr;
 
 	std::shared_ptr<Account> mDependency = nullptr;
+	std::weak_ptr<Account> mDependee;
 
 	unsigned long long mPreviousPublishParamsHash[2] = {0};
 	std::shared_ptr<AccountParams> mOldParams;

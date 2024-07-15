@@ -331,36 +331,32 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 	auto core = getCCore();
 
 	if (!core) return;
-	for (auto &tmp : getCore()->getAccounts()) {
-		auto params = tmp->mParams;
-		lInfo() << "updateDependentAccount(): " << this << " is registered, checking for [" << tmp
-		        << "] ->dependency=" << tmp->getDependency();
-
-		if ((tmp != getSharedFromThis()) && (tmp->getDependency() == getSharedFromThis())) {
-			if (!params->mRegisterEnabled) {
-				lInfo() << "Dependant account [" << tmp << "] has registration disabled, so it will not register.";
-				continue;
-			}
-			auto copyParams = params->clone()->toSharedPtr();
-			if (state == LinphoneRegistrationOk) {
-				// Force dependent account to re-register
-				params->mRegisterEnabled = false;
-				copyParams->mRegisterEnabled = true;
-				const SalAddress *salAddr = mOp->getContactAddress();
-
-				if (!mContactAddress) {
-					mContactAddress = Address::create();
-				}
-				if (salAddr) {
-					mContactAddress->setImpl(salAddr);
-				}
-			} else if (state == LinphoneRegistrationCleared || state == LinphoneRegistrationFailed) {
-				tmp->pauseRegister();
-				tmp->setState(state, message);
-			}
-			tmp->setAccountParams(copyParams);
-			tmp->update();
+	auto dependee = getDependee();
+	if (dependee) {
+		auto params = dependee->mParams;
+		if (!params->mRegisterEnabled) {
+			lInfo() << "Dependant account [" << dependee << "] has registration disabled, so it will not register.";
+			return;
 		}
+		auto copyParams = params->clone()->toSharedPtr();
+		if (state == LinphoneRegistrationOk) {
+			// Force dependent account to re-register
+			params->mRegisterEnabled = false;
+			copyParams->mRegisterEnabled = true;
+			const SalAddress *salAddr = mOp->getContactAddress();
+
+			if (!mContactAddress) {
+				mContactAddress = Address::create();
+			}
+			if (salAddr) {
+				mContactAddress->setImpl(salAddr);
+			}
+		} else if (state == LinphoneRegistrationCleared || state == LinphoneRegistrationFailed) {
+			dependee->pauseRegister();
+			dependee->setState(state, message);
+		}
+		dependee->setAccountParams(copyParams);
+		dependee->update();
 	}
 }
 
@@ -424,6 +420,10 @@ void Account::setPresencePublishEvent(const std::shared_ptr<EventPublish> &prese
 	mPresencePublishEvent = presencePublishEvent;
 }
 
+void Account::setDependee(std::shared_ptr<Account> dependee) {
+	mDependee = dependee;
+}
+
 void Account::setDependency(std::shared_ptr<Account> dependency) {
 	if (!mParams) {
 		lWarning() << "setDependency is called but no AccountParams is set on Account [" << this << "]";
@@ -432,8 +432,12 @@ void Account::setDependency(std::shared_ptr<Account> dependency) {
 
 	if (dependency && (dependency != getSharedFromThis())) {
 		mDependency = dependency;
+		dependency->setDependee(getSharedFromThis());
 		mParams->mDependsOn = dependency->mParams->mIdKey;
 	} else {
+		if (mDependency) {
+			mDependency->setDependee(nullptr);
+		}
 		mDependency = nullptr;
 		mParams->mDependsOn = "";
 	}
@@ -513,6 +517,10 @@ const char *Account::getCustomHeader(const std::string &headerName) const {
 
 std::shared_ptr<EventPublish> Account::getPresencePublishEvent() const {
 	return mPresencePublishEvent;
+}
+
+std::shared_ptr<Account> Account::getDependee() {
+	return mDependee.lock();
 }
 
 std::shared_ptr<Account> Account::getDependency() {
