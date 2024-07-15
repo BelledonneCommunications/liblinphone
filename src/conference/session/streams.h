@@ -475,6 +475,9 @@ public:
 	void goClearAckSent();
 	void confirmGoClear();
 
+	// Returns true if at least one of the streams is a FEC stream.
+	bool isFecEnabled() const;
+
 	/**
 	 * set the EKT to all audio and video streams in this group
 	 *

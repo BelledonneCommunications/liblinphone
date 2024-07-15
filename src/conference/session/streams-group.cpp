@@ -580,6 +580,17 @@ void StreamsGroup::addPostRenderHook(const std::function<void()> &l) {
 	mPostRenderHooks.push_back(l);
 }
 
+bool StreamsGroup::isFecEnabled() const {
+	for (auto &stream : mStreams) {
+		if (!stream) continue;
+		if (stream->getState() != Stream::Running) continue;
+		if (stream->isFecEnabled()) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void StreamsGroup::setStreamMain(size_t index, const bool force) {
 	Stream *s = getStream(index);
 	if (s) {

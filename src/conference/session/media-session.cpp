@@ -3886,6 +3886,7 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		}
 	}
 	getCurrentParams()->enableScreenSharing(q->isScreenSharingNegotiated() && (!conference || deviceIsScreenSharing));
+	getCurrentParams()->enableFec(getStreamsGroup().isFecEnabled());
 }
 
 // -----------------------------------------------------------------------------

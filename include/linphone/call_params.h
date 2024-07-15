@@ -461,6 +461,13 @@ LINPHONE_PUBLIC bool_t linphone_call_params_screen_sharing_enabled(const Linphon
 LINPHONE_PUBLIC bool_t linphone_call_params_video_enabled(const LinphoneCallParams *call_params);
 
 /**
+ * Tell whether FEC is enabled or not. The FEC is enbaled whether a FEC stream is found.
+ * @param call_params #LinphoneCallParams object @notnil
+ * @return A boolean value telling whether FEC is enabled or not.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_params_fec_enabled(const LinphoneCallParams *call_params);
+
+/**
  * Get the audio stream direction.
  * @param call_params #LinphoneCallParams object @notnil
  * @return The audio stream #LinphoneMediaDirection associated with the call params.

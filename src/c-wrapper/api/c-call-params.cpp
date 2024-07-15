@@ -420,6 +420,10 @@ bool_t linphone_call_params_video_enabled(const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->videoEnabled();
 }
 
+bool_t linphone_call_params_fec_enabled(const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->fecEnabled();
+}
+
 LinphoneMediaDirection linphone_call_params_get_audio_direction(const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getAudioDirection();
 }

@@ -53,6 +53,7 @@ void MediaSessionParamsPrivate::clone(const MediaSessionParamsPrivate *src) {
 	    src->receivedVideoDefinition ? linphone_video_definition_ref(src->receivedVideoDefinition) : nullptr;
 	sentFps = src->sentFps;
 	sentVideoDefinition = src->sentVideoDefinition ? linphone_video_definition_ref(src->sentVideoDefinition) : nullptr;
+	fecEnabled = src->fecEnabled;
 	realtimeTextEnabled = src->realtimeTextEnabled;
 	realtimeTextKeepaliveInterval = src->realtimeTextKeepaliveInterval;
 	usedRealtimeTextCodec = src->usedRealtimeTextCodec;
@@ -253,6 +254,7 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 	d->audioEnabled = true;
 	d->screenSharingEnabled = false;
 	d->cameraEnabled = true;
+	d->fecEnabled = false;
 
 	LinphoneConference *conference = linphone_core_get_conference(cCore);
 

@@ -144,6 +144,9 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	uint64_t cumulative_lost_packets = 0;
 	fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
 
+	BC_ASSERT_TRUE(linphone_call_params_fec_enabled(linphone_call_get_current_params(pauline_call)));
+	BC_ASSERT_TRUE(linphone_call_params_fec_enabled(linphone_call_get_current_params(marie_call)));
+
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 20000));
 	if (vstream->ms.fec_stream) {
 		fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
@@ -191,6 +194,9 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 			// wait
 			wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
 
+			BC_ASSERT_FALSE(linphone_call_params_fec_enabled(linphone_call_get_current_params(pauline_call)));
+			BC_ASSERT_FALSE(linphone_call_params_fec_enabled(linphone_call_get_current_params(marie_call)));
+
 			initial_marie_stat = marie->stat;
 			initial_pauline_stat = pauline->stat;
 
@@ -224,6 +230,9 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_call_params));
 			marie_call_params = linphone_call_get_current_params(marie_call);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_params));
+
+			BC_ASSERT_TRUE(linphone_call_params_fec_enabled(pauline_call_params));
+			BC_ASSERT_TRUE(linphone_call_params_fec_enabled(marie_call_params));
 
 			vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
 			fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
@@ -603,9 +612,11 @@ int video_call_fps_measurement(bool_t withFEC) {
 	enable_rtp_bundle(marie->lc, TRUE);
 	enable_rtp_bundle(pauline->lc, TRUE);
 
+	linphone_core_enable_fec(pauline->lc, TRUE);
 	if (withFEC) {
 		linphone_core_enable_fec(marie->lc, TRUE);
-		linphone_core_enable_fec(pauline->lc, TRUE);
+	} else {
+		linphone_core_enable_fec(marie->lc, FALSE);
 	}
 
 	enable_video_stream(marie->lc, pol);
@@ -619,7 +630,16 @@ int video_call_fps_measurement(bool_t withFEC) {
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
+
+	if (withFEC) {
+		BC_ASSERT_TRUE(linphone_call_params_fec_enabled(linphone_call_get_current_params(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_params_fec_enabled(linphone_call_get_current_params(pauline_call)));
+	} else {
+		BC_ASSERT_FALSE(linphone_call_params_fec_enabled(linphone_call_get_current_params(marie_call)));
+		BC_ASSERT_FALSE(linphone_call_params_fec_enabled(linphone_call_get_current_params(pauline_call)));
+	}
 
 	// wait enough to start recovering lost packets with FEC
 	if (vstream->ms.fec_stream) {
