@@ -178,10 +178,10 @@ public:
 	void removeListener(std::shared_ptr<ChatMessageListener> listener);
 
 	// Core listener
-	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable);
+	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
 	void onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
 	                                       LinphoneRegistrationState state,
-	                                       const std::string &message);
+	                                       const std::string &message) override;
 
 protected:
 	explicit ChatMessage(ChatMessagePrivate &p);

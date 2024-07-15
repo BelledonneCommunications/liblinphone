@@ -232,7 +232,9 @@ bool IceService::prepare() {
 
 	// Start ICE gathering if needed.
 	if (!ice_session_candidates_gathered(mIceSession)) {
+		mInsideGatherIceCandidates = true;
 		int err = gatherIceCandidates();
+		mInsideGatherIceCandidates = false;
 		if (err == 0) {
 			// Ice candidates gathering wasn't started, but we can proceed with the call anyway.
 			return false;
@@ -327,33 +329,13 @@ void IceService::addPredefinedSflrxCandidates(const std::shared_ptr<NatPolicy> &
 	lInfo() << "Configuration-defined server reflexive candidates added to check lists.";
 }
 
-/** Return values:
- *  1: STUN gathering is started
- *  0: no STUN gathering is started, but it's ok to proceed with ICE anyway (with local candidates only or because STUN
- * gathering was already done before) -1: no gathering started and something went wrong with local candidates. There is
- * no way to start the ICE session.
- */
-int IceService::gatherIceCandidates() {
-	const struct addrinfo *ai = nullptr;
+int IceService::gatherSflrxIceCandidates(const struct addrinfo *stunServerAi) {
 	int err = 0;
-
 	const auto &natPolicy = getMediaSessionPrivate().getNatPolicy();
-	if (natPolicy && natPolicy->stunServerActivated()) {
-		ai = natPolicy->getStunServerAddrinfo();
-		if (ai) ai = getIcePreferredStunServerAddrinfo(ai);
-		else lWarning() << "Failed to resolve STUN server for ICE gathering, continuing without STUN";
-	} else lWarning() << "ICE is used without STUN server";
-	LinphoneCore *core = getCCore();
-	ice_session_enable_forced_relay(mIceSession, core->forced_ice_relay);
-	ice_session_enable_short_turn_refresh(mIceSession, core->short_turn_refresh);
-
-	// Gather local host candidates.
-	if (gatherLocalCandidates() == -1) {
-		lError() << "Local network permission is not granted, ICE must be disabled.";
-		return -1;
-	}
-
-	if (ai && natPolicy && natPolicy->stunServerActivated()) {
+	if (stunServerAi) stunServerAi = getIcePreferredStunServerAddrinfo(stunServerAi);
+	else lWarning() << "Failed to resolve STUN server for ICE gathering, continuing without STUN";
+	if (stunServerAi) {
+		LinphoneCore *core = getCCore();
 		const string &server = natPolicy->getStunServer();
 		lInfo() << "ICE: gathering candidates from [" << server << "] using "
 		        << (natPolicy->turnEnabled() ? "TURN" : "STUN");
@@ -378,13 +360,52 @@ int IceService::gatherIceCandidates() {
 		}
 		ice_session_set_stun_auth_requested_cb(mIceSession, MediaSessionPrivate::stunAuthRequestedCb,
 		                                       &getMediaSessionPrivate());
-		err = ice_session_gather_candidates(mIceSession, ai->ai_addr, (socklen_t)ai->ai_addrlen) ? 1 : 0;
+		err = ice_session_gather_candidates(mIceSession, stunServerAi->ai_addr, (socklen_t)stunServerAi->ai_addrlen)
+		          ? 1
+		          : 0;
 	} else {
 		lInfo() << "ICE: bypass server-reflexive candidates gathering";
-		addPredefinedSflrxCandidates(natPolicy);
 	}
 	if (err == 0) gatheringFinished();
 	return err;
+}
+
+/** Return values:
+ *  1: STUN gathering is started
+ *  0: no STUN gathering is started, but it's ok to proceed with ICE anyway (with local candidates only or because STUN
+ * gathering was already done before) -1: no gathering started and something went wrong with local candidates. There is
+ * no way to start the ICE session.
+ */
+int IceService::gatherIceCandidates() {
+	LinphoneCore *core = getCCore();
+
+	// Gather local host candidates.
+	if (gatherLocalCandidates() == -1) {
+		lError() << "Local network permission is not granted, ICE must be disabled.";
+		return -1;
+	}
+	ice_session_enable_forced_relay(mIceSession, core->forced_ice_relay);
+	ice_session_enable_short_turn_refresh(mIceSession, core->short_turn_refresh);
+
+	const auto &natPolicy = getMediaSessionPrivate().getNatPolicy();
+	addPredefinedSflrxCandidates(natPolicy);
+	if (natPolicy && natPolicy->stunServerActivated()) {
+		mSflrxGatheringStatus = 1; // Assume gathering is in progress.
+		mAsyncStunResolverHandle = natPolicy->getStunServerAddrinfoAsync([this](const struct addrinfo *stunServerAi) {
+			mAsyncStunResolverHandle = 0;
+			mSflrxGatheringStatus = gatherSflrxIceCandidates(stunServerAi);
+			if (mSflrxGatheringStatus != 1 && !mInsideGatherIceCandidates) {
+				/* case where ICE gathering is finally not in progress, but prepare() returned true to
+				 * indicate an in-progress operation because of the DNS resolution of stun server.*/
+				notifyEndOfPrepare();
+			}
+		});
+		return mSflrxGatheringStatus;
+	} else {
+		lInfo() << "ICE is used without STUN server";
+		gatheringFinished();
+	}
+	return 0;
 }
 
 bool IceService::checkForIceRestartAndSetRemoteCredentials(const std::shared_ptr<SalMediaDescription> &md,
@@ -801,6 +822,11 @@ void IceService::finish() {
 
 void IceService::deleteSession() {
 	if (!mIceSession) return;
+	if (mAsyncStunResolverHandle != 0) {
+		auto natPolicy = getMediaSessionPrivate().getNatPolicy();
+		if (natPolicy) natPolicy->cancelAsync(mAsyncStunResolverHandle);
+		mAsyncStunResolverHandle = 0;
+	}
 	/* clear all check lists */
 	for (auto &stream : mStreamsGroup.getStreams()) {
 		if (stream) {
@@ -841,6 +867,11 @@ bool IceService::hasCompletedCheckList() const {
 	}
 }
 
+void IceService::notifyEndOfPrepare() {
+	mStreamsGroup.finishPrepare();
+	if (mListener) mListener->onGatheringFinished(*this);
+}
+
 void IceService::handleIceEvent(const OrtpEvent *ev) {
 	OrtpEventType evt = ortp_event_get_type(ev);
 	const OrtpEventData *evd = ortp_event_get_data(const_cast<OrtpEvent *>(ev));
@@ -851,11 +882,11 @@ void IceService::handleIceEvent(const OrtpEvent *ev) {
 			}
 			break;
 		case ORTP_EVENT_ICE_GATHERING_FINISHED:
-			if (!evd->info.ice_processing_successful)
+			if (!evd->info.ice_processing_successful) {
 				lWarning() << "No STUN answer from [" << getMediaSessionPrivate().getNatPolicy()->getStunServer()
 				           << "], continuing without STUN";
-			mStreamsGroup.finishPrepare();
-			if (mListener) mListener->onGatheringFinished(*this);
+			}
+			notifyEndOfPrepare();
 			break;
 		case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			if (mListener) mListener->onLosingPairsCompleted(*this);

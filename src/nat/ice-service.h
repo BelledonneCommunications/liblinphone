@@ -69,11 +69,14 @@ public:
 	virtual void fillLocalMediaDescription(OfferAnswerContext &ctx) override;
 	/*
 	 * Prepare to run.
+	 * Returns true if operation is in progress, in which case StreamsGroup::finishPrepare() is to be called
+	 * when operation has finally completed.
+	 * Returns false is the prepare step is synchronously done.
 	 */
 	virtual bool prepare() override;
 	/*
 	 * Prepare stage is finishing.
-	 * Called by the StreamsGroup (who receives mediastreamer2 events) when the ICE gathering is finished.
+	 * Called by StreamsGroup's own finishPrepare() method.
 	 *
 	 */
 	virtual void finishPrepare() override;
@@ -146,18 +149,23 @@ private:
 	void deleteSession();
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
 	int gatherIceCandidates();
+	int gatherSflrxIceCandidates(const struct addrinfo *stunServerAi);
 	int gatherLocalCandidates();
 	void addPredefinedSflrxCandidates(const std::shared_ptr<NatPolicy> &natPolicy);
 	bool hasRelayCandidates(const SalMediaDescription &md) const;
 	void chooseDefaultCandidates(const OfferAnswerContext &ctx);
+	void notifyEndOfPrepare();
 	StreamsGroup &mStreamsGroup;
 	IceSession *mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;
+	NatPolicy::AsyncHandle mAsyncStunResolverHandle{};
+	int mSflrxGatheringStatus = 0;
 	bool mGatheringFinished = false;
 	bool mAllowLateIce = false;
 	bool mDontDefaultToStunCandidates = false;
 	bool mEnableIntegrityCheck = true;
 	bool mIceWasDisabled = false; // Remember that at some point ICE was disabled by an incoming offer or answer.
+	bool mInsideGatherIceCandidates;
 };
 
 class LINPHONE_INTERNAL_PUBLIC IceServiceListener {

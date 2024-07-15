@@ -4346,7 +4346,6 @@ static void notify_network_reachable_change(LinphoneCore *lc) {
 
 	lc->network_reachable_to_be_notified = FALSE;
 	linphone_core_notify_network_reachable(lc, lc->sip_network_state.global_state);
-	if (lc->sip_network_state.global_state) linphone_core_resolve_stun_server(lc);
 }
 
 static void assign_buddy_info(LinphoneCore *lc, BuddyInfo *info) {
@@ -6233,8 +6232,6 @@ void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatPolicy *policy) {
 	}
 	if (policy != NULL) {
 		lc->nat_policy = policy;
-		/*start an immediate (but asynchronous) resolution.*/
-		linphone_nat_policy_resolve_stun_server(policy);
 		linphone_config_set_string(lc->config, "net", "nat_policy_ref", NatPolicy::toCpp(policy)->getRef().c_str());
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->writeNatPolicyConfigurations();
 	}

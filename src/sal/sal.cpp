@@ -43,6 +43,47 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+SalResolverContext::SalResolverContext(belle_sip_resolver_context_t *ctx, Callback *cb) {
+	if (ctx) {
+		belle_sip_object_ref(ctx);
+		mCtx = ctx;
+	}
+	mCallback = cb;
+}
+
+SalResolverContext &SalResolverContext::operator=(SalResolverContext &&other) {
+	belle_sip_resolver_context *old = mCtx;
+	mCtx = other.mCtx;
+	mCallback = other.mCallback;
+	if (old && old != mCtx) belle_sip_object_unref(old);
+	other.mCtx = nullptr;
+	other.mCallback = nullptr;
+	return *this;
+}
+
+void SalResolverContext::cancel() {
+	if (mCtx) {
+		if (belle_sip_resolver_context_cancel(mCtx) == 0) {
+			mCtx = nullptr;
+			if (mCallback) {
+				delete mCallback;
+				mCallback = nullptr;
+			}
+		}
+	}
+}
+/* Reset the resolver context. If a resolution is still pending, it is not cancelled.*/
+void SalResolverContext::reset() {
+	if (mCtx) {
+		belle_sip_object_unref(mCtx);
+		mCtx = nullptr;
+	}
+}
+SalResolverContext::~SalResolverContext() {
+	if (mCtx) belle_sip_object_unref(mCtx);
+	// Do not delete the callback, it will be done by the C callback directly after invocation.
+}
+
 void Sal::processDialogTerminatedCb(BCTBX_UNUSED(void *sal), const belle_sip_dialog_terminated_event_t *event) {
 	auto dialog = belle_sip_dialog_terminated_event_get_dialog(event);
 	auto op = static_cast<SalOp *>(belle_sip_dialog_get_application_data(dialog));
@@ -835,6 +876,30 @@ belle_sip_resolver_context_t *Sal::resolve(const string &service,
                                            void *data) {
 	return belle_sip_stack_resolve(mStack, L_STRING_TO_C(service), L_STRING_TO_C(transport), L_STRING_TO_C(name), port,
 	                               family, cb, data);
+}
+
+SalResolverContext Sal::resolve(const std::string &service,
+                                const std::string &transport,
+                                const std::string &name,
+                                int port,
+                                int family,
+                                const SalResolverContext::Callback &onResults) {
+	auto lambda = new SalResolverContext::Callback(onResults);
+	belle_sip_resolver_context_t *ret = resolve(service, transport, name, port, family, onResolverResults, lambda);
+	return SalResolverContext(ret, lambda);
+}
+
+SalResolverContext
+Sal::resolveA(const std::string &name, int port, int family, const SalResolverContext::Callback &onResults) {
+	auto lambda = new SalResolverContext::Callback(onResults);
+	belle_sip_resolver_context_t *ret = resolveA(name, port, family, onResolverResults, lambda);
+	return SalResolverContext(ret, lambda);
+}
+
+void Sal::onResolverResults(void *lambdaptr, belle_sip_resolver_results_t *results) {
+	auto lambda = static_cast<std::function<void(belle_sip_resolver_results_t *)> *>(lambdaptr);
+	(*lambda)(results);
+	delete lambda;
 }
 
 belle_sip_source_t *

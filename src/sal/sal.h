@@ -42,6 +42,31 @@ class SalPublishOp;
 class SalPresenceOp;
 class SalReferOp;
 
+class SalResolverContext {
+public:
+	using Callback = std::function<void(belle_sip_resolver_results_t *)>;
+	SalResolverContext() = default;
+	SalResolverContext(belle_sip_resolver_context_t *ctx, Callback *cb);
+	// Evalulates whether the resolver context is not empty.
+	// Not empty means that resolution may be pending (hence cancellable) or already completed.
+	operator bool() const {
+		return mCtx != nullptr;
+	}
+	SalResolverContext(const SalResolverContext &other) = delete;
+	SalResolverContext(SalResolverContext &&other) = default;
+	SalResolverContext &operator=(const SalResolverContext &other) = delete;
+	SalResolverContext &operator=(SalResolverContext &&other);
+
+	void cancel();
+	/* Reset the resolver context. If a resolution is still pending, it is not cancelled.*/
+	void reset();
+	~SalResolverContext();
+
+private:
+	belle_sip_resolver_context_t *mCtx = nullptr;
+	Callback *mCallback = nullptr;
+};
+
 class Sal {
 public:
 	using OnCallReceivedCb = void (*)(SalCallOp *op);
@@ -372,8 +397,10 @@ public:
 	void setDnsUserHostsFile(const std::string &value);
 	const std::string &getDnsUserHostsFile() const;
 
+	/* to deprecate, use prototype with lambda function, more convenient*/
 	belle_sip_resolver_context_t *
 	resolveA(const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
+
 	belle_sip_resolver_context_t *resolve(const std::string &service,
 	                                      const std::string &transport,
 	                                      const std::string &name,
@@ -381,7 +408,15 @@ public:
 	                                      int family,
 	                                      belle_sip_resolver_callback_t cb,
 	                                      void *data);
+	SalResolverContext
+	resolveA(const std::string &name, int port, int family, const SalResolverContext::Callback &onResults);
 
+	SalResolverContext resolve(const std::string &service,
+	                           const std::string &transport,
+	                           const std::string &name,
+	                           int port,
+	                           int family,
+	                           const SalResolverContext::Callback &onResults);
 	// ---------------------------------------------------------------------------
 	// Timers
 	// ---------------------------------------------------------------------------
@@ -398,6 +433,7 @@ public:
 	}
 
 private:
+	static void onResolverResults(void *lambda, belle_sip_resolver_results_t *results);
 	struct SalUuid {
 		unsigned int timeLow;
 		unsigned short timeMid;

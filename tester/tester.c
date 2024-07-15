@@ -452,18 +452,6 @@ bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint
 	else return TRUE;
 }
 
-static bool_t wait_for_stun_resolution(LinphoneCoreManager *m, LinphoneNatPolicy *nat_policy) {
-	MSTimeSpec start;
-	int timeout_ms = 10000;
-	liblinphone_tester_clock_start(&start);
-	while (linphone_nat_policy_get_stun_server_addrinfo(nat_policy) == NULL &&
-	       !liblinphone_tester_clock_elapsed(&start, timeout_ms)) {
-		linphone_core_iterate(m->lc);
-		ms_usleep(20000);
-	}
-	return linphone_nat_policy_get_stun_server_addrinfo(nat_policy) != NULL;
-}
-
 static void enable_codec(LinphoneCore *lc, const char *type, int rate) {
 	bctbx_list_t *codecs = bctbx_list_copy(linphone_core_get_audio_codecs(lc));
 	bctbx_list_t *codecs_it;
@@ -2967,25 +2955,9 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	linphone_core_manager_uninit2(mgr, TRUE, TRUE);
 }
 
-static void linphone_nat_policy_wait_for_stun_resolution(LinphoneCoreManager *mgr, LinphoneNatPolicy *nat_policy) {
-	if ((nat_policy != NULL) && (linphone_nat_policy_get_stun_server(nat_policy) != NULL) &&
-	    (linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy)) &&
-	    (linphone_nat_policy_ice_enabled(nat_policy))) {
-		/*before we go, ensure that the stun server is resolved, otherwise all ice related test will fail*/
-		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr, nat_policy));
-	}
-}
-
-void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
-	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
-	linphone_nat_policy_wait_for_stun_resolution(mgr, nat_policy);
-	const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
-	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
-		LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
-		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
-		LinphoneNatPolicy *account_nat_policy = linphone_account_params_get_nat_policy(account_params);
-		linphone_nat_policy_wait_for_stun_resolution(mgr, account_nat_policy);
-	}
+void linphone_core_manager_wait_for_stun_resolution(BCTBX_UNUSED(LinphoneCoreManager *mgr)) {
+	/* This function is no longer needed, the core is able to perform stun server resolution asynchronously before at
+	 * call setup.*/
 }
 
 void linphone_core_manager_uninit3(LinphoneCoreManager *mgr) {

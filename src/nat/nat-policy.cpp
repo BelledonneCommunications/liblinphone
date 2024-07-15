@@ -27,6 +27,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+NatPolicy::AsyncHandle NatPolicy::sAsyncHandleGenerator = 0;
+
 NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionMethod method, const std::string &value)
     : CoreAccessor(core) {
 	LpConfig *config = linphone_core_get_config(core->getCCore());
@@ -86,9 +88,8 @@ NatPolicy *NatPolicy::clone() const {
 
 void NatPolicy::clearResolverContexts() {
 	if (mStunResolverContext) {
-		belle_sip_resolver_context_cancel(mStunResolverContext);
-		belle_sip_object_unref(mStunResolverContext);
-		mStunResolverContext = nullptr;
+		mStunResolverContext.cancel();
+		mStunResolverContext.reset();
 	}
 	if (mResolverResults) {
 		belle_sip_object_unref(mResolverResults);
@@ -99,6 +100,7 @@ void NatPolicy::clearResolverContexts() {
 /* Simply cancel pending DNS resoltion, as the core is going to shutdown.*/
 void NatPolicy::release() {
 	clearResolverContexts();
+	mResolverResultsFunctions.clear();
 }
 
 bool NatPolicy::stunServerActivated() const {
@@ -160,7 +162,6 @@ void NatPolicy::clear() {
 void NatPolicy::setStunServer(const std::string &stunServer) {
 	mStunServer = stunServer;
 	clearResolverContexts();
-	resolveStunServer();
 }
 
 const std::string &NatPolicy::getStunServer() const {
@@ -203,17 +204,16 @@ void NatPolicy::stunServerResolved(belle_sip_resolver_results_t *results) {
 		ms_warning("Stun server resolution failed.");
 	}
 	if (mStunResolverContext) {
-		belle_sip_object_unref(mStunResolverContext);
-		mStunResolverContext = nullptr;
+		mStunResolverContext.reset();
 	}
+	const struct addrinfo *ais =
+	    mResolverResults ? belle_sip_resolver_results_get_addrinfos(mResolverResults) : nullptr;
+	for (auto &p : mResolverResultsFunctions)
+		p.second(ais);
+	mResolverResultsFunctions.clear();
 }
 
-void NatPolicy::sStunServerResolved(void *data, belle_sip_resolver_results_t *results) {
-	NatPolicy *policy = static_cast<NatPolicy *>(data);
-	policy->stunServerResolved(results);
-}
-
-void NatPolicy::resolveStunServer() {
+bool NatPolicy::resolveStunServer() {
 	LinphoneCore *lc = getCore()->getCCore();
 	const char *service = NULL;
 
@@ -227,15 +227,19 @@ void NatPolicy::resolveStunServer() {
 			int family = AF_INET;
 			if (linphone_core_ipv6_enabled(lc) == TRUE) family = AF_INET6;
 			ms_message("Starting stun server resolution [%s]", host);
+			auto lambda = [this](belle_sip_resolver_results_t *results) { this->stunServerResolved(results); };
 			if (port == 0) {
 				port = 3478;
-				mStunResolverContext = lc->sal->resolve(service, "udp", host, port, family, sStunServerResolved, this);
+				mStunResolverContext = lc->sal->resolve(service, "udp", host, port, family, lambda);
 			} else {
-				mStunResolverContext = lc->sal->resolveA(host, port, family, sStunServerResolved, this);
+				mStunResolverContext = lc->sal->resolveA(host, port, family, lambda);
 			}
-			if (mStunResolverContext) belle_sip_object_ref(mStunResolverContext);
+			if (mStunResolverContext) {
+				return true;
+			}
 		}
 	}
+	return false;
 }
 
 const struct addrinfo *NatPolicy::getStunServerAddrinfo() {
@@ -254,13 +258,35 @@ const struct addrinfo *NatPolicy::getStunServerAddrinfo() {
 		int wait_ms = 0;
 		int wait_limit = 1000;
 		resolveStunServer();
-		while ((mResolverResults == nullptr) && (mStunResolverContext != nullptr) && (wait_ms < wait_limit)) {
+		while ((mResolverResults == nullptr) && (mStunResolverContext) && (wait_ms < wait_limit)) {
 			getCore()->getCCore()->sal->iterate();
 			ms_usleep(10000);
 			wait_ms += 10;
 		}
 	}
 	return mResolverResults ? belle_sip_resolver_results_get_addrinfos(mResolverResults) : nullptr;
+}
+
+NatPolicy::AsyncHandle
+NatPolicy::getStunServerAddrinfoAsync(const std::function<void(const struct addrinfo *)> &onResults) {
+	if (stunServerActivated() && (mResolverResults == nullptr)) {
+		/* need to request resolution */
+		mResolverResultsFunctions[++sAsyncHandleGenerator] = onResults;
+		if (resolveStunServer()) return sAsyncHandleGenerator;
+	} else {
+		/* results already available, invoke the lambda immediately.*/
+		onResults(mResolverResults ? belle_sip_resolver_results_get_addrinfos(mResolverResults) : nullptr);
+	}
+	return 0;
+}
+
+void NatPolicy::cancelAsync(AsyncHandle h) {
+	auto it = mResolverResultsFunctions.find(h);
+	if (it != mResolverResultsFunctions.end()) {
+		mResolverResultsFunctions.erase(it);
+	} else {
+		lError() << "NatPolicy: no AsyncHandle with id " << h;
+	}
 }
 
 void NatPolicy::initFromSection(const LinphoneConfig *config, const char *section) {

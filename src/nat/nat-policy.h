@@ -23,11 +23,14 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-accessor.h"
+#include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class NatPolicy : public bellesip::HybridObject<LinphoneNatPolicy, NatPolicy>, public CoreAccessor {
 public:
+	using ResolverResultsFn = std::function<void(const struct addrinfo *)>;
+	using AsyncHandle = unsigned;
 	enum class ConstructionMethod { Default, FromSectionName, FromRefName };
 	NatPolicy(const std::shared_ptr<Core> &core,
 	          ConstructionMethod method = ConstructionMethod::Default,
@@ -110,22 +113,30 @@ public:
 	}
 
 	const struct addrinfo *getStunServerAddrinfo();
+	/* Resolve stun server asynchronously.
+	 * If results are already available, onResults() is invoked synchronously and the function returns 0.
+	 * Otherwise, it returns a handle to the asynchronous operation, that may be used to later cancel it.
+	 */
+	AsyncHandle getStunServerAddrinfoAsync(const ResolverResultsFn &onResults);
+	void cancelAsync(AsyncHandle h);
 
 	void clear();
 	void release();
 	bool stunServerActivated() const;
-	void resolveStunServer();
+	/* returns true if the operation is pending, false if results are already available */
+	bool resolveStunServer();
 	void saveToConfig(LinphoneConfig *config, int index) const;
 	static void clearConfigFromIndex(LinphoneConfig *config, int index);
 
 private:
 	void initFromSection(const LinphoneConfig *config, const char *section);
-	static void sStunServerResolved(void *data, belle_sip_resolver_results_t *results);
 	void stunServerResolved(belle_sip_resolver_results_t *results);
 	void clearResolverContexts();
 	void *mUserData = nullptr;
-	belle_sip_resolver_context_t *mStunResolverContext = nullptr;
+	SalResolverContext mStunResolverContext;
 	belle_sip_resolver_results_t *mResolverResults = nullptr;
+	std::map<AsyncHandle, ResolverResultsFn> mResolverResultsFunctions;
+	static AsyncHandle sAsyncHandleGenerator;
 	std::string mStunServer;
 	std::string mStunServerUsername;
 	std::string mRef;

@@ -28,7 +28,8 @@ This changelog file was started on October 2019. Previous changes were more or l
 - LinphoneFriendList revision field is now a string instead of an int. If there was a revision value > 0, it is kept but as string, otherwise newly created friend list will have a revision set to empty string.
 
 ### Fixed
-- t= lines in the SDP no longer changed in the answer 
+- t= lines in the SDP no longer changed in the answer
+- DNS resolution of stun server for ICE is now made asynchronously at the beginning of calls.
 
 ### Removed
 - Removed old & deprecated VideoPolicy object.
