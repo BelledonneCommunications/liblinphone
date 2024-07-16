@@ -2789,6 +2789,19 @@ LINPHONE_PUBLIC LinphoneRange *linphone_core_get_text_ports_range(const Linphone
 LINPHONE_PUBLIC int linphone_core_get_nortp_timeout(const LinphoneCore *core);
 
 /**
+ * Gets the value of the no-rtp timeout when the call is on hold.
+ *
+ * When no RTP or RTCP packets have been received for a while when the call is on hold
+ * #LinphoneCore will consider the call is broken (remote end crashed or
+ * disconnected from the network), and thus will terminate the call.
+ * The no-rtp timeout is the duration above which the call is considered broken.
+ * @param core #LinphoneCore object @notnil
+ * @return The value of the no-rtp timeout in seconds when the call is on hold
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC int linphone_core_get_nortp_onhold_timeout(const LinphoneCore *core);
+
+/**
  * Sets the UDP port used for audio streaming.
  * A value of -1 will request the system to allocate the local port randomly.
  * This is recommended in order to avoid firewall warnings.
@@ -2853,6 +2866,15 @@ LINPHONE_PUBLIC void linphone_core_set_text_port_range(LinphoneCore *core, int m
  * @see linphone_core_get_nortp_timeout() for details.
  **/
 LINPHONE_PUBLIC void linphone_core_set_nortp_timeout(LinphoneCore *core, int seconds);
+
+/**
+ * Sets the no-rtp timeout value in seconds when the call is on hold.
+ * @param core #LinphoneCore object @notnil
+ * @param seconds The no-rtp timeout value to use in seconds when the call is on hold
+ * @ingroup media_parameters
+ * @see linphone_core_get_nortp_on_hold_timeout() for details.
+ **/
+LINPHONE_PUBLIC void linphone_core_set_nortp_onhold_timeout(LinphoneCore *core, int seconds);
 
 /**
  * Sets whether SIP INFO is to be used to send digits.

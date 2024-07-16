@@ -246,7 +246,7 @@ protected:
 
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
-	void setupMediaLossCheck();
+	void setupMediaLossCheck(bool_t isPaused);
 	void setPlaybackGainDb(float gain);
 	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOffer);
 	void startZrtpPrimaryChannel(const OfferAnswerContext &params);

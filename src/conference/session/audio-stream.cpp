@@ -276,8 +276,11 @@ MediaStream *MS2AudioStream::getMediaStream() const {
 	return mStream ? &mStream->ms : nullptr;
 }
 
-void MS2AudioStream::setupMediaLossCheck() {
+void MS2AudioStream::setupMediaLossCheck(bool_t isPaused) {
 	int disconnectTimeout = linphone_core_get_nortp_timeout(getCCore());
+	if (isPaused) {
+		disconnectTimeout = linphone_core_get_nortp_onhold_timeout(getCCore());
+	}
 	if (disconnectTimeout == 0) {
 		lInfo() << "No RTP timeout disabled";
 		return;
@@ -673,7 +676,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		});
 	}
 
-	setupMediaLossCheck();
+	setupMediaLossCheck(targetState == CallSession::State::Paused);
 
 	return;
 }

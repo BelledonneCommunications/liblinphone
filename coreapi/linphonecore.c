@@ -2042,6 +2042,7 @@ static void rtp_config_read(LinphoneCore *lc) {
 	int min_port, max_port;
 	int jitt_comp;
 	int nortp_timeout;
+	int nortp_onhold_timeout;
 	bool_t rtp_no_xmit_on_audio_mute;
 	bool_t adaptive_jitt_comp_enabled;
 	const char *tmp;
@@ -2081,6 +2082,8 @@ static void rtp_config_read(LinphoneCore *lc) {
 	linphone_core_set_video_jittcomp(lc, jitt_comp);
 	nortp_timeout = linphone_config_get_int(lc->config, "rtp", "nortp_timeout", 30);
 	linphone_core_set_nortp_timeout(lc, nortp_timeout);
+	nortp_onhold_timeout = linphone_config_get_int(lc->config, "rtp", "nortp_onhold_timeout", 3600);
+	linphone_core_set_nortp_onhold_timeout(lc, nortp_onhold_timeout);
 	rtp_no_xmit_on_audio_mute = !!linphone_config_get_int(lc->config, "rtp", "rtp_no_xmit_on_audio_mute", FALSE);
 	linphone_core_set_rtp_no_xmit_on_audio_mute(lc, rtp_no_xmit_on_audio_mute);
 	adaptive_jitt_comp_enabled = !!linphone_config_get_int(lc->config, "rtp", "audio_adaptive_jitt_comp_enabled", TRUE);
@@ -3951,6 +3954,10 @@ int linphone_core_get_nortp_timeout(const LinphoneCore *lc) {
 	return lc->rtp_conf.nortp_timeout;
 }
 
+int linphone_core_get_nortp_onhold_timeout(const LinphoneCore *lc) {
+	return lc->rtp_conf.nortp_onhold_timeout;
+}
+
 bool_t linphone_core_get_rtp_no_xmit_on_audio_mute(const LinphoneCore *lc) {
 	return lc->rtp_conf.rtp_no_xmit_on_audio_mute;
 }
@@ -4018,6 +4025,10 @@ void linphone_core_set_text_port_range(LinphoneCore *lc, int min_port, int max_p
 
 void linphone_core_set_nortp_timeout(LinphoneCore *lc, int nortp_timeout) {
 	lc->rtp_conf.nortp_timeout = nortp_timeout;
+}
+
+void linphone_core_set_nortp_onhold_timeout(LinphoneCore *lc, int nortp_onhold_timeout) {
+	lc->rtp_conf.nortp_onhold_timeout = nortp_onhold_timeout;
 }
 
 bool_t linphone_core_get_use_info_for_dtmf(LinphoneCore *lc) {
@@ -7392,6 +7403,7 @@ void rtp_config_uninit(LinphoneCore *lc) {
 	linphone_config_set_int(lc->config, "rtp", "audio_jitt_comp", config->audio_jitt_comp);
 	linphone_config_set_int(lc->config, "rtp", "video_jitt_comp", config->video_jitt_comp);
 	linphone_config_set_int(lc->config, "rtp", "nortp_timeout", config->nortp_timeout);
+	linphone_config_set_int(lc->config, "rtp", "nortp_onhold_timeout", config->nortp_onhold_timeout);
 	linphone_config_set_int(lc->config, "rtp", "audio_adaptive_jitt_comp_enabled",
 	                        config->audio_adaptive_jitt_comp_enabled);
 	linphone_config_set_int(lc->config, "rtp", "video_adaptive_jitt_comp_enabled",

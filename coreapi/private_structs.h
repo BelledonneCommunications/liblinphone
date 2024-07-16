@@ -98,6 +98,7 @@ struct rtp_config {
 	int audio_jitt_comp; /*jitter compensation*/
 	int video_jitt_comp; /*jitter compensation*/
 	int nortp_timeout;
+	int nortp_onhold_timeout;
 	int disable_upnp;
 	MSCryptoSuite *srtp_suites;
 	LinphoneAVPFMode avpf_mode;
