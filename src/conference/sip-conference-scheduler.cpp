@@ -101,7 +101,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 	} else if (getState() != State::Error) {
 		// Do not try to call inpromptu conference if a participant updates its informations
 		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
-			lInfo() << "Automatically rejoining conference " << remoteAddress->toString();
+			lInfo() << "Automatically rejoining conference " << *remoteAddress;
 			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 			// Participant with the focus call is admin
 			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
@@ -135,8 +135,6 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		}
 
 		auto conferenceAddress = remoteAddress;
-		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully created: " << *conferenceAddress;
 		setConferenceAddress(conferenceAddress);
 	}
 }

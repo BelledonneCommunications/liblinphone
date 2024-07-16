@@ -168,12 +168,11 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	const bool isBasicChatRoom =
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 	ChatMessage::State currentState = q->getParticipantState(participantAddress);
+	const auto &conferenceAddress = chatRoom->getConferenceAddress();
+	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
 
 	if (!chatMessageFsmChecker.isValid(currentState, newState)) {
 		if (isBasicChatRoom) {
-			const auto &conferenceAddress = chatRoom->getConferenceAddress();
-			const auto conferenceAddressStr =
-			    conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
 			lWarning() << "Chat message " << sharedMessage << ": Invalid transaction of message in basic chat room "
 			           << conferenceAddressStr << " from state " << Utils::toString(currentState) << " to state "
 			           << Utils::toString(newState);
@@ -184,6 +183,8 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		}
 		return;
 	}
+
+	lDebug() << "Chat message " << sharedMessage << " of chat room " << chatRoom << " (" << conferenceAddressStr << "): Moving participant " << *participantAddress << " from state " << Utils::toString(currentState) << " to state " << Utils::toString(newState);
 
 	auto me = chatRoom->getMe();
 	const auto isMe = participantAddress->weakEqual(*me->getAddress());

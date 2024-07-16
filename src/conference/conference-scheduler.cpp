@@ -265,7 +265,14 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 		return;
 	}
 
-	mConferenceInfo->setUri(conferenceAddress);
+	if (getState() == State::AllocationPending) {
+		lInfo() << "[Conference Scheduler] [" << this << "] Conference has been succesfully created: " << *conferenceAddress;
+		mConferenceInfo->setUri(conferenceAddress);
+	} else {
+		// No need to update the conference address during an update
+		lInfo() << "[Conference Scheduler] [" << this << "] Conference has been succesfully updated: " << *mConferenceInfo->getUri();
+	}
+
 
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;

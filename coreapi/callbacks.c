@@ -869,7 +869,7 @@ static void notify_refer(SalOp *op, SalReferStatus status) {
 		sessionRef->terminate(); // Automatically terminate the call as the transfer is complete
 }
 
-static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus status, const SalErrorInfo *errorInfo) {
+static LinphoneChatMessageState chatStatusSal2Linphone(LinphoneCore *lc, SalMessageDeliveryStatus status, const SalErrorInfo *errorInfo) {
 	switch (status) {
 		case SalMessageDeliveryInProgress:
 			return LinphoneChatMessageStateInProgress;
@@ -877,7 +877,7 @@ static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus 
 			return LinphoneChatMessageStateDelivered;
 		case SalMessageDeliveryFailed:
 			const auto reason = errorInfo->reason;
-			if (reason == SalReasonIOError) {
+			if ((reason == SalReasonIOError) && (linphone_core_get_global_state(lc) == LinphoneGlobalOn)) {
 				// Retry delivery later on
 				return LinphoneChatMessageStatePendingDelivery;
 			} else {
@@ -903,7 +903,7 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) 
 	if (chatRoom) {
 		L_GET_PRIVATE(msg)->setParticipantState(
 		    chatRoom->getMe()->getAddress(),
-		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(status, op->getErrorInfo()), ::ms_time(NULL));
+		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, op->getErrorInfo()), ::ms_time(NULL));
 	}
 }
 
