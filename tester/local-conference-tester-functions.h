@@ -255,7 +255,7 @@ public:
 		const LinphoneAddress *cAddr = linphone_account_get_contact_address(otherMgr.getDefaultAccount());
 		Address participantDevice = Address::toCpp(cAddr)->getUri();
 		Address participant = participantDevice.getUriWithoutGruu();
-		mParticipantDevices.insert({participant, participantDevice});
+		mParticipantDevices.insert({participant, std::reference_wrapper<ClientConference>(otherMgr)});
 		// to allow client conference to delete chatroom in its destructor
 		otherMgr.setFocus(borrowed_mut(this));
 	}
@@ -335,7 +335,8 @@ private:
 				auto participantRange = focus->mParticipantDevices.equal_range(participant);
 				for (auto participantIt = participantRange.first; participantIt != participantRange.second;
 				     participantIt++) {
-					bctbx_list_t *specs = linphone_core_get_linphone_specs_list(linphone_chat_room_get_core(cr));
+					ClientConference &client = participantIt->second;
+					bctbx_list_t *specs = linphone_core_get_linphone_specs_list(client.getLc());
 					bool groupchat_enabled = false;
 					for (const bctbx_list_t *specIt = specs; specIt != NULL; specIt = specIt->next) {
 						const char *spec = (const char *)bctbx_list_get_data(specIt);
@@ -343,12 +344,11 @@ private:
 						groupchat_enabled |= (strstr(spec, "groupchat") != NULL);
 					}
 					if (groupchat_enabled) {
-						LinphoneAddress *deviceAddr = linphone_address_new(participantIt->second.toString().c_str());
+						const LinphoneAddress *deviceAddr = linphone_account_get_contact_address(client.getDefaultAccount());
 						LinphoneParticipantDeviceIdentity *identity =
 						    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
 						linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
 						devices = bctbx_list_append(devices, identity);
-						linphone_address_unref(deviceAddr);
 					}
 					bctbx_list_free_with_data(specs, ms_free);
 				}
@@ -392,7 +392,7 @@ private:
 		}
 	}
 
-	std::multimap<Address, Address> mParticipantDevices;
+	std::multimap<Address, std::reference_wrapper<ClientConference>> mParticipantDevices;
 };
 
 // Chat rooms

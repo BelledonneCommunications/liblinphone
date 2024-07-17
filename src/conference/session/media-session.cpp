@@ -500,7 +500,7 @@ bool MediaSessionPrivate::failure() {
 		                                     failure */
 		case SalReasonNotAcceptable:
 			if ((linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
-			                             "retry_invite_after_offeranswer_failure", 1)) &&
+			                             "retry_invite_after_offeranswer_failure", 1)) && localDesc && 
 			    ((state == CallSession::State::OutgoingInit) || (state == CallSession::State::OutgoingProgress) ||
 			     (state == CallSession::State::OutgoingRinging) /* Push notification case */
 			     || (state == CallSession::State::OutgoingEarlyMedia))) {

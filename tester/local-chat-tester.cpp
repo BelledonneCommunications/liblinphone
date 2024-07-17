@@ -1996,6 +1996,115 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 	}
 }
 
+static void one_to_one_chatroom_backward_compatibility_base(const char *groupchat_spec) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+
+		if (groupchat_spec) {
+			for (auto &client : {marie.getCMgr(), pauline.getCMgr()}) {
+				ms_message("Setting groupchat spec of %s to %s", linphone_core_get_identity(client->lc), groupchat_spec);
+				stats old_stat = client->stat;
+				linphone_core_set_network_reachable(client->lc, FALSE);
+				linphone_core_remove_linphone_spec(client->lc, "groupchat");
+				linphone_core_add_linphone_spec(client->lc, groupchat_spec);
+				linphone_core_set_network_reachable(client->lc, TRUE);
+				BC_ASSERT_TRUE(wait_for_list(coresList, &client->stat.number_of_LinphoneRegistrationOk, old_stat.number_of_LinphoneRegistrationOk + 1, liblinphone_tester_sip_timeout));
+
+			}
+		}
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+
+		stats initialMarieStats = marie.getStats();
+		stats initialPaulineStats = pauline.getStats();
+
+		// Marie creates a new one to one chat room
+		const char *initialSubject = "one to one with Pauline";
+		LinphoneChatRoom *marieCr =
+		    create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses,
+		                                 initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+		BC_ASSERT_PTR_NOT_NULL(confAddr);
+
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(
+		    coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
+			for (auto chatRoom : focus.getCore().getChatRooms()) {
+				for (auto participant : chatRoom->getParticipants()) {
+					for (auto device : participant->getDevices())
+						if (device->getState() != ParticipantDevice::State::Present) {
+							return false;
+						}
+				}
+			}
+			return true;
+		}));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateCreated,
+		                             initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		LinphoneChatMessage *marieMsg1 = linphone_chat_room_create_message_from_utf8(marieCr, "Long live the C++ !");
+		linphone_chat_message_send(marieMsg1);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageSent,
+		                             initialMarieStats.number_of_LinphoneMessageSent + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+		                              initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+		linphone_chat_message_unref(marieMsg1);
+
+		int marieMsgs = linphone_chat_room_get_history_size(marieCr);
+		BC_ASSERT_EQUAL(marieMsgs, 1, int, "%d");
+		// Pauline didn't received the message as she was offline
+		int paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+		BC_ASSERT_EQUAL(paulineMsgs, 1, int, "%d");
+
+		// Wait a little bit to detect side effects
+		CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(2), [] { return false; });
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			for (auto participant : chatRoom->getParticipants()) {
+				//  force deletion by removing devices
+				std::shared_ptr<Address> participantAddress = participant->getAddress();
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
+			}
+		}
+
+		// wait until chatroom is deleted server side
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
+			return focus.getCore().getChatRooms().size() == 0;
+		}));
+
+		// wait bit more to detect side effect if any
+		CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(2), [] { return false; });
+
+		// to avoid creation attempt of a new chatroom
+		auto focus_account = focus.getDefaultAccount();
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(focus_account));
+		linphone_account_params_set_conference_factory_uri(params, NULL);
+		linphone_account_set_params(focus_account, params);
+		linphone_account_params_unref(params);
+
+		bctbx_list_free(coresList);
+	}
+}
+
+static void one_to_one_chatroom_backward_compatibility(void) {
+	one_to_one_chatroom_backward_compatibility_base("groupchat/1.0");
+}
+
 static void one_to_one_chatroom_exhumed_while_offline(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -3084,6 +3193,8 @@ static test_t local_conference_chat_basic_tests[] = {
     TEST_ONE_TAG("One to one chatroom exhumed while participant is offline",
                  LinphoneTest::one_to_one_chatroom_exhumed_while_offline,
                  "LeaksMemory"), /* because of network up and down*/
+    TEST_NO_TAG("One to one chatroom (backward compatibility)",
+                 LinphoneTest::one_to_one_chatroom_backward_compatibility),
     TEST_ONE_TAG("Group chat Server chat room deletion with remote list event handler",
                  LinphoneTest::group_chat_room_server_deletion_with_rmt_lst_event_handler,
                  "LeaksMemory") /* because of coreMgr restart*/

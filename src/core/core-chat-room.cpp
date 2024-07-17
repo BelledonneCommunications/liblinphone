@@ -134,7 +134,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createServerChatRoom(const std::shared
 	auto conference = dynamic_pointer_cast<ServerConference>(
 	    (new ServerConference(q->getSharedFromThis(), conferenceFactoryUri, nullptr, newConferenceParameters))
 	        ->toSharedPtr());
-	conference->init(op, nullptr);
+	conference->init(op, conference.get());
 	return conference->getChatRoom();
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
@@ -467,8 +467,10 @@ void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 }
 
 void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
-	if (mainDb->isInitialized() && (chatRoom->getState() == ConferenceInterface::State::Created))
+	const auto chatRoomState = chatRoom->getState();
+	if (mainDb->isInitialized() && ((chatRoomState == ConferenceInterface::State::CreationPending) || (chatRoomState == ConferenceInterface::State::Created))) {
 		mainDb->insertChatRoom(chatRoom, notifyId);
+	}
 }
 
 void CorePrivate::loadChatRooms() {

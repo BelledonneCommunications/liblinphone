@@ -80,7 +80,7 @@ void ServerConference::initFromDb(BCTBX_UNUSED(const std::shared_ptr<Participant
 		auto chatRoom =
 		    dynamic_pointer_cast<ServerChatRoom>((new ServerChatRoom(getCore(), getSharedFromThis()))->toSharedPtr());
 		setChatRoom(chatRoom);
-		createEventHandler(chatRoom.get());
+		createEventHandler(this);
 #endif // HAVE_ADVANCED_IM
 	}
 
@@ -99,6 +99,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 	mMe = Participant::create(getSharedFromThis(), mConfParams->getMe());
 	mOrganizer = op ? Address::create(op->getFrom()) : mMe->getAddress();
 
+	createEventHandler(confListener);
 	if (mConfParams->chatEnabled()) {
 		if (op) {
 			const auto from = Address::create(op->getFrom());
@@ -112,12 +113,10 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		auto chatRoom =
 		    dynamic_pointer_cast<ServerChatRoom>((new ServerChatRoom(getCore(), getSharedFromThis()))->toSharedPtr());
 		setChatRoom(chatRoom);
-		createEventHandler(chatRoom.get());
 #endif // HAVE_ADVANCED_IM
 		setState(ConferenceInterface::State::Instantiated);
 	} else {
 		setState(ConferenceInterface::State::Instantiated);
-		createEventHandler(confListener);
 		LinphoneCore *lc = getCore()->getCCore();
 		if (op) {
 			configure(op);
@@ -888,7 +887,6 @@ void ServerConference::finalizeCreation() {
 			}
 #endif // HAVE_DB_STORAGE
 			const bool createdConference = (info && info->isValidUri());
-
 			if (mConfParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut) {
 				mConfParams->setStartTime(ms_time(NULL));
 			}
@@ -904,7 +902,6 @@ void ServerConference::finalizeCreation() {
 					session->redirect(addr);
 				}
 #ifdef HAVE_ADVANCED_IM
-				const auto &chatRoom = getChatRoom();
 				if (chatRoom) {
 					auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 					getCore()->getPrivate()->serverListEventHandler->addHandler(eventHandler);
@@ -2407,8 +2404,7 @@ void ServerConference::moveDeviceToPresent(BCTBX_UNUSED(const std::shared_ptr<Ca
 
 void ServerConference::moveDeviceToPresent(BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 #ifdef HAVE_ADVANCED_IM
-	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom && device && !ParticipantDevice::isLeavingState(device->getState())) {
+	if (mConfParams->chatEnabled() && device && !ParticipantDevice::isLeavingState(device->getState())) {
 		setParticipantDeviceState(device, ParticipantDevice::State::Present);
 	}
 #endif // HAVE_ADVANCED_IM

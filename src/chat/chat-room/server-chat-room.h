@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SalCallOp;
 
-class ServerChatRoom : public ChatRoom, public ConferenceListener {
+class ServerChatRoom : public ChatRoom {
 	friend ServerConference;
 
 public:

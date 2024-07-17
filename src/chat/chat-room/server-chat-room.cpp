@@ -69,7 +69,7 @@ ServerChatRoom::ServerChatRoom(const shared_ptr<Core> &core,
 	confParams->enableVideo(false);
 	confParams->enableAudio(false);
 	confParams->setUtf8Subject(subject);
-	getConference()->init(nullptr, this);
+	getConference()->init(nullptr, getConference().get());
 	for (const auto &p : participants) {
 		addCachedParticipant(std::move(p));
 	}
