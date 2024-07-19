@@ -304,8 +304,7 @@ string CpimChatMessageModifier::cpimAddressUri(const std::shared_ptr<Address> &a
 std::shared_ptr<Content>
 CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const auto &chatRoomParams = chatRoom->getCurrentParams();
-	const auto &account = chatRoomParams->getAccount();
+	const auto &account = chatRoom->getAccount();
 	if (!account) {
 		lWarning() << "Unable to create CPIM becaus the account attached to the message is unknown";
 		return Content::create();

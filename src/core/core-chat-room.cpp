@@ -208,7 +208,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const string &sub
                                                                AbstractChatRoom::EphemeralMode ephemerableMode,
                                                                long ephemeralLifeTime) {
 #ifdef HAVE_ADVANCED_IM
-	shared_ptr<ConferenceParams> params = ConferenceParams::create();
+	L_Q();
+	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
 	params->setUtf8Subject(subject);
 	params->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
 	                                   : ConferenceParams::SecurityLevel::None);
@@ -232,8 +233,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const string &sub
 
 	auto defaultLocalAddress = getDefaultLocalAddress(nullptr, true);
 	const auto &conferenceFactoryUri = Core::getConferenceFactoryAddress(q->getSharedFromThis(), defaultLocalAddress);
-	shared_ptr<ConferenceParams> params = ConferenceParams::create();
-	params->setChatDefaults(getCCore());
+	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
+	params->setChatDefaults();
 	params->setSubject(subject);
 	params->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
 	                                   : ConferenceParams::SecurityLevel::None);
@@ -426,8 +427,8 @@ shared_ptr<AbstractChatRoom>
 CorePrivate::createChatRoom(const std::string &subject, const std::list<std::shared_ptr<const Address>> &participants) {
 	L_Q();
 
-	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getCCore());
-	params->setChatDefaults(q->getCCore());
+	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
+	params->setChatDefaults();
 	if (participants.size() > 1) {
 		// Try to infer chat room type based on requested participants number
 		params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
@@ -855,7 +856,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom(const ConferenceId &
 		return chatRoom;
 	}
 	ChatRoom::CapabilitiesMask capabilities({ChatRoom::Capabilities::Basic, ChatRoom::Capabilities::OneToOne});
-	auto params = ConferenceParams::fromCapabilities(capabilities);
+	auto params = ConferenceParams::fromCapabilities(capabilities, getSharedFromThis());
 	chatRoom = d->createBasicChatRoom(conferenceId, params);
 	d->insertChatRoom(chatRoom);
 	d->insertChatRoomWithDb(chatRoom);
@@ -874,7 +875,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom(const std::shared_pt
 	chatRoom = d->createBasicChatRoom(ConferenceId(peerAddress, (localAddress && localAddress->isValid()
 	                                                                 ? localAddress
 	                                                                 : d->getDefaultLocalAddress(peerAddress, false))),
-	                                  ConferenceParams::fromCapabilities(capabilities));
+	                                  ConferenceParams::fromCapabilities(capabilities, getSharedFromThis()));
 	d->insertChatRoom(chatRoom);
 	d->insertChatRoomWithDb(chatRoom);
 

@@ -186,7 +186,7 @@ bool ParticipantDevice::setSsrc(const LinphoneStreamType type, uint32_t newSsrc)
 			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
 			        << this << " (address " << *getAddress() << ") in conference "
 			        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-			                                               : std::string("sip:unknown"))
+			                                               : std::string("sip:"))
 			        << " to " << newSsrc;
 		} else {
 			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
@@ -218,7 +218,7 @@ bool ParticipantDevice::setThumbnailStreamSsrc(uint32_t newSsrc) {
 			lInfo() << "Setting thumbnail stream ssrc of participant device " << this << " (address " << *getAddress()
 			        << ") in conference "
 			        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-			                                               : std::string("sip:unknown"))
+			                                               : std::string("sip:"))
 			        << " to " << newSsrc;
 		} else {
 			lInfo() << "Setting thumbnail stream ssrc of participant device " << this << " (address " << *getAddress()
@@ -390,7 +390,7 @@ bool ParticipantDevice::setLabel(const std::string &streamLabel, const LinphoneS
 		auto conference = getConference();
 		const auto conferenceAddress =
 		    ((conference && conference->getConferenceAddress()) ? conference->getConferenceAddress()->toString()
-		                                                        : std::string("sip:unknown"));
+		                                                        : std::string("sip:"));
 		lInfo() << "Setting label of " << std::string(linphone_stream_type_to_string(type))
 		        << " stream of participant device " << this << " (address " << *getAddress() << ") in conference "
 		        << conferenceAddress << " to " << streamLabel;
@@ -410,7 +410,7 @@ bool ParticipantDevice::setThumbnailStreamLabel(const std::string &streamLabel) 
 		lInfo() << "Setting label of the thumbnail stream of participant device " << this << " (address "
 		        << *getAddress() << ") in conference "
 		        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-		                                               : std::string("sip:unknown"))
+		                                               : std::string("sip:"))
 		        << " to " << streamLabel;
 		thumbnailStream.label = streamLabel;
 		return true;

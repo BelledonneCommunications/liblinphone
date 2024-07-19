@@ -44,7 +44,7 @@ SIPConferenceScheduler::~SIPConferenceScheduler() {
 void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
                                                       const std::shared_ptr<Address> &creator) {
 
-	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore());
 	conferenceParams->setAccount(getAccount());
 	conferenceParams->enableAudio(true);
 	conferenceParams->enableVideo(true);

@@ -255,7 +255,7 @@ void ClientConference::updateAndSaveConferenceInformations() {
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		lInfo() << "Inserting or updating conference information to database related to conference "
 		        << conferenceAddressStr;
 		conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
@@ -574,9 +574,9 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 		LinphoneCallParams *params;
 		std::shared_ptr<Call> focusCall = nullptr;
 		const auto &remoteAddress = call->getRemoteAddress();
-		const auto remoteAddressStr = (remoteAddress ? remoteAddress->toString() : "sip:unknown");
+		const auto remoteAddressStr = (remoteAddress ? remoteAddress->toString() : "sip:");
 		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		switch (mState) {
 			case ConferenceInterface::State::None:
 			case ConferenceInterface::State::Instantiated:
@@ -786,7 +786,7 @@ bool ClientConference::transferToFocus(std::shared_ptr<Call> call) {
 		referToAddr->setParam("admin", Utils::toString(participant->isAdmin()));
 		const auto &remoteAddress = call->getRemoteAddress();
 		lInfo() << "Transfering call (local address " << call->getLocalAddress()->toString() << " remote address "
-		        << (remoteAddress ? remoteAddress->toString() : "sip:unknown") << ") to focus " << *referToAddr;
+		        << (remoteAddress ? remoteAddress->toString() : "sip:") << ") to focus " << *referToAddr;
 		updateParticipantInConferenceInfo(participant);
 		if (call->transfer(referToAddr->toString()) == 0) {
 			mTransferingCalls.push_back(call);
@@ -947,7 +947,7 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 
 		const bool isFocusFound = focusContactAddress ? focusContactAddress->hasParam("isfocus") : false;
 		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		list<std::shared_ptr<Call>>::iterator it;
 		switch (state) {
 			case CallSession::State::StreamsRunning: {
@@ -1193,7 +1193,7 @@ void ClientConference::onParticipantAdded(const shared_ptr<ConferenceParticipant
 		return; // The conference has just been instanted and it may be adding participants quite quickly
 	}
 	const auto conferenceAddressStr =
-	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 	lInfo() << "Updating conference information of conference " << conferenceAddressStr
 	        << " because the core has been notified that participant " << *participant->getAddress()
 	        << " has been added";
@@ -1268,7 +1268,7 @@ void ClientConference::onParticipantSetAdmin(const shared_ptr<ConferenceParticip
 void ClientConference::onParticipantSetRole(BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),
                                             const std::shared_ptr<Participant> &participant) {
 	const auto conferenceAddressStr =
-	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 	lInfo() << "Updating conference information of conference " << conferenceAddressStr
 	        << " because the core has been notified that participant " << *participant->getAddress()
 	        << " has changed its role to " << participant->getRole();
@@ -1733,7 +1733,7 @@ void ClientConference::onFullStateReceived() {
 			}
 		} else {
 			const auto conferenceAddressStr =
-			    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+			    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 			lInfo() << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for conference "
 			        << conferenceAddressStr << " because ICE negotiations didn't end yet";
 			mScheduleUpdate = true;
@@ -1975,7 +1975,7 @@ bool ClientConference::finalizeParticipantAddition(BCTBX_UNUSED(std::shared_ptr<
 int ClientConference::removeParticipant(const std::shared_ptr<Address> &addr) {
 	if (getMe()->isAdmin()) {
 		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		std::shared_ptr<Participant> p = findParticipant(addr);
 		if (p) {
 			switch (mState) {

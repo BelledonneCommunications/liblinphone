@@ -184,6 +184,8 @@ public:
 	virtual ConferenceInterface::State getState() const = 0;
 	virtual void setState(ConferenceInterface::State newState) = 0;
 
+	virtual void invalidateAccount() = 0;
+	virtual const std::shared_ptr<Account> getAccount() = 0;
 	virtual const std::string &getSubject() const = 0;
 	virtual void setSubject(const std::string &subject) = 0;
 	virtual void setUtf8Subject(const std::string &subject) = 0;

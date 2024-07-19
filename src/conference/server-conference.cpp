@@ -203,8 +203,8 @@ bool ServerConference::validateNewParameters(const ConferenceParams &newConfPara
 	if (((oldFactoryAddress == nullptr) != (newFactoryAddress == nullptr)) ||
 	    (oldFactoryAddress && newFactoryAddress && (*oldFactoryAddress != *newFactoryAddress))) {
 		lError() << "Factory address change is not allowed: actual "
-		         << (oldFactoryAddress ? oldFactoryAddress->toString() : std::string("sip:unknown")) << " new value "
-		         << (newFactoryAddress ? newFactoryAddress->toString() : std::string("sip:unknown"));
+		         << (oldFactoryAddress ? oldFactoryAddress->toString() : std::string("sip:")) << " new value "
+		         << (newFactoryAddress ? newFactoryAddress->toString() : std::string("sip:"));
 		return false;
 	}
 
@@ -213,9 +213,9 @@ bool ServerConference::validateNewParameters(const ConferenceParams &newConfPara
 	if (((oldConferenceAddress == nullptr) != (newConferenceAddress == nullptr)) ||
 	    (oldConferenceAddress && newConferenceAddress && (*oldConferenceAddress != *newConferenceAddress))) {
 		lError() << "Conference address change is not allowed: actual "
-		         << (oldConferenceAddress ? oldConferenceAddress->toString() : std::string("sip:unknown"))
+		         << (oldConferenceAddress ? oldConferenceAddress->toString() : std::string("sip:"))
 		         << " new value "
-		         << (newConferenceAddress ? newConferenceAddress->toString() : std::string("sip:unknown"));
+		         << (newConferenceAddress ? newConferenceAddress->toString() : std::string("sip:"));
 		return false;
 	}
 

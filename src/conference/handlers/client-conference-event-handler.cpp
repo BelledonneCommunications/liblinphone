@@ -798,18 +798,16 @@ bool ClientConferenceEventHandler::subscribe() {
 	const auto localAddress = getConferenceId().getLocalAddress();
 	if (!localAddress) return false; // Unknown local address
 
-	LinphoneCore *lc = getCore()->getCCore();
-	LinphoneAccount *acc = linphone_core_lookup_account_by_identity(lc, localAddress->toC());
-
-	if (!acc || (linphone_account_get_state(acc) != LinphoneRegistrationOk)) {
+	auto conference = getConference();
+	auto account = conference->getAccount();
+	if (!account || (account->getState() != LinphoneRegistrationOk)) {
 		return false;
 	}
 
 	const auto &conferenceAddress = getConference()->getConferenceAddress();
 	if (!conferenceAddress) return false; // Unknown peer address
 	ev = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(getCore(), conferenceAddress, Account::toCpp(acc)->getSharedFromThis(), "conference", 600))
-	        ->toSharedPtr());
+	    (new EventSubscribe(getCore(), conferenceAddress, account, "conference", 600))->toSharedPtr());
 	ev->getOp()->setFromAddress(localAddress->getImpl());
 	setInitialSubscriptionUnderWayFlag(true);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
@@ -843,10 +841,13 @@ void ClientConferenceEventHandler::onNetworkReachable(bool sipNetworkReachable,
 	}
 }
 
-void ClientConferenceEventHandler::onAccountRegistrationStateChanged(BCTBX_UNUSED(std::shared_ptr<Account> account),
+void ClientConferenceEventHandler::onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
                                                                      LinphoneRegistrationState state,
                                                                      BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk) subscribe(getConferenceId());
+	const auto &conferenceId = getConferenceId();
+	const auto &params = account->getAccountParams();
+	const auto &address = params->getIdentityAddress();
+	if (address->weakEqual(*conferenceId.getLocalAddress()) && (state == LinphoneRegistrationOk)) subscribe(conferenceId);
 }
 
 void ClientConferenceEventHandler::onEnteringBackground() {

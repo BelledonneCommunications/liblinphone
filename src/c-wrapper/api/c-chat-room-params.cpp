@@ -50,7 +50,7 @@ LinphoneChatRoomParams *linphone_chat_room_params_new_with_core(LinphoneCore *co
 
 LinphoneChatRoomParams *linphone_chat_room_params_new_and_init(LinphoneCore *core) {
 	LinphoneChatRoomParams *params = linphone_chat_room_params_new_with_core(core);
-	ConferenceParams::toCpp(params)->setChatDefaults(core);
+	ConferenceParams::toCpp(params)->setChatDefaults();
 	return params;
 }
 

@@ -120,6 +120,23 @@ void Conference::addListener(std::shared_ptr<ConferenceListenerInterface> listen
 	mConfListeners.push_back(listener);
 }
 
+void Conference::invalidateAccount() {
+	mConfParams->setAccount(nullptr);
+}
+
+const std::shared_ptr<Account> Conference::getAccount() {
+	auto account = mConfParams->getAccount();
+	if (!account) {
+		account = getCore()->findAccountByIdentityAddress(mConferenceId.getLocalAddress());
+		mConfParams->setAccount(account);
+	}
+	if (!account) {
+		const auto &conferenceAddress = getConferenceAddress();
+		lError() << "Unable to associate account to conference [" << this << "] with address [" << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << "]";
+	}
+	return account;
+}
+
 time_t Conference::getStartTime() const {
 	return mConfParams->getStartTime();
 }
@@ -145,7 +162,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<Call> call) {
 	if (p) {
 		const auto &session = call->getActiveSession();
 		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		// If device is not found, then add it
 		if (p->findDevice(session, false) == nullptr) {
 			shared_ptr<ParticipantDevice> device = p->addDevice(session);
@@ -177,7 +194,7 @@ void Conference::fillParticipantAttributes(std::shared_ptr<Participant> &p) {
 	    std::find_if(mInvitedParticipants.cbegin(), mInvitedParticipants.cend(),
 	                 [&pAddress](const auto &info) { return pAddress->weakEqual(*info->getAddress()); });
 	const auto conferenceAddressStr =
-	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 
 	if (participantInfo == mInvitedParticipants.cend()) {
 		if (mInvitedParticipants.empty()) {
@@ -289,7 +306,7 @@ bool Conference::addParticipant(const std::shared_ptr<const Address> &participan
 	if (!mActiveParticipant) mActiveParticipant = participant;
 
 	const auto conferenceAddressStr =
-	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 	lInfo() << "Participant with address " << *participantAddress << " has been added to conference "
 	        << conferenceAddressStr;
 	time_t creationTime = time(nullptr);
@@ -1726,7 +1743,7 @@ void Conference::setMicrophoneMuted(bool muted) {
 		notifyLocalMutedDevices(muted || !coreMicrophoneEnabled);
 	} else {
 		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		lError() << "Unable to " << std::string(muted ? "disable" : "enable")
 		         << " microphone because the audio control interface of conference " << conferenceAddressStr
 		         << " cannot be found";

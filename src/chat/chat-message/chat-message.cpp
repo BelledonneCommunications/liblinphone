@@ -804,9 +804,7 @@ std::string ChatMessagePrivate::createFakeFileTransferFromUrl(const std::string 
 void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	mChatRoom = chatRoom;
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
-
-	const auto &chatRoomParams = chatRoom->getCurrentParams();
-	const auto &account = chatRoomParams->getAccount();
+	const auto &account = chatRoom->getAccount();
 	// If an account is attached to a chatroom, use its contact address otherwise use the local address of the
 	// conference ID. Note that the conference ID's local address may not have the "gr" parameter hence this may lead to
 	// issues such as IMDN not received
@@ -818,11 +816,12 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		        << " has no account associated to, setting conference ID's local address as message local address";
 		localAddress = conferenceId.getLocalAddress();
 	}
+	const auto peerAddress = conferenceId.getPeerAddress();
 	if (direction == ChatMessage::Direction::Outgoing) {
 		fromAddress = localAddress;
-		toAddress = conferenceId.getPeerAddress();
+		toAddress = peerAddress;
 	} else {
-		fromAddress = conferenceId.getPeerAddress();
+		fromAddress = peerAddress;
 		toAddress = localAddress;
 	}
 }
@@ -869,7 +868,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 	const auto &meAddress = chatRoom->getMe()->getAddress();
 
 	bool encryptionMandatory = false;
-	auto account = core->findAccountByIdentityAddress(q->getLocalAddress());
+	const auto &account = chatRoom->getAccount();
 	if (account) {
 		encryptionMandatory = account->getAccountParams()->isInstantMessagingEncryptionMandatory();
 	}

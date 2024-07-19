@@ -5642,12 +5642,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			const long long &lastMessageId = d->dbSession.resolveId(row, 9);
 			bool muted = !!row.get<int>(13);
 
-			shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities);
-			LinphoneAccount *acc =
-			    linphone_core_lookup_account_by_identity(core->getCCore(), conferenceId.getLocalAddress()->toC());
-			if (acc) {
-				params->setAccount(Account::toCpp(acc)->getSharedFromThis());
-			}
+			shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
 			const auto backend = params->getChatParams()->getBackend();
 			if (backend == ChatParams::Backend::Basic) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, params);

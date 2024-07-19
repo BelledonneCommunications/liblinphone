@@ -1766,7 +1766,7 @@ LinphoneStatus CallSession::transfer(const shared_ptr<CallSession> &dest) {
 LinphoneStatus CallSession::transfer(const std::shared_ptr<Address> &address) {
 	L_D();
 	if (!address || !address->isValid()) {
-		lError() << "Received invalid address " << (address ? address->toString() : std::string("sip:unknown"))
+		lError() << "Received invalid address " << (address ? address->toString() : std::string("sip:"))
 		         << " to transfer the call to";
 		return -1;
 	}

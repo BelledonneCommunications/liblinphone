@@ -284,7 +284,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 		}
 	}
 
-	const auto &account = chatRoomParams->getAccount();
+	const auto &account = chatRoom->getAccount();
 	if (!account) {
 		lWarning() << "Sending encrypted message with unknown account";
 		errorCode = 488; // Not Acceptable
@@ -537,7 +537,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(*internalContent);
 
-	const auto &account = chatRoomParams->getAccount();
+	const auto &account = chatRoom->getAccount();
 	if (!account) {
 		lWarning() << "Receiving encrypted message with unknown account";
 		errorCode = 488; // Not Acceptable

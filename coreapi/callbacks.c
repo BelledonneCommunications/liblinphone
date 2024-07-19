@@ -171,8 +171,8 @@ static void call_received(SalCallOp *h) {
 		    L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room"));
 		bool isOneToOne = (oneToOneChatRoom == "true");
 
-		shared_ptr<ConferenceParams> params = ConferenceParams::create();
-		params->setChatDefaults(lc);
+		shared_ptr<ConferenceParams> params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+		params->setChatDefaults();
 		params->setUtf8Subject(h->getSubject());
 		params->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
 		                                   : ConferenceParams::SecurityLevel::None);
@@ -300,8 +300,8 @@ static void call_received(SalCallOp *h) {
 					}
 				}
 			} else {
-				auto params = ConferenceParams::create(lc);
-				params->setAudioVideoDefaults(lc);
+				auto params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+				params->setAudioVideoDefaults();
 #ifdef HAVE_DB_STORAGE
 				std::shared_ptr<ConferenceInfo> confInfo =
 				    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
@@ -869,7 +869,8 @@ static void notify_refer(SalOp *op, SalReferStatus status) {
 		sessionRef->terminate(); // Automatically terminate the call as the transfer is complete
 }
 
-static LinphoneChatMessageState chatStatusSal2Linphone(LinphoneCore *lc, SalMessageDeliveryStatus status, const SalErrorInfo *errorInfo) {
+static LinphoneChatMessageState
+chatStatusSal2Linphone(LinphoneCore *lc, SalMessageDeliveryStatus status, const SalErrorInfo *errorInfo) {
 	switch (status) {
 		case SalMessageDeliveryInProgress:
 			return LinphoneChatMessageStateInProgress;
@@ -903,7 +904,8 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) 
 	if (chatRoom) {
 		L_GET_PRIVATE(msg)->setParticipantState(
 		    chatRoom->getMe()->getAddress(),
-		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, op->getErrorInfo()), ::ms_time(NULL));
+		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, op->getErrorInfo()),
+		    ::ms_time(NULL));
 	}
 }
 

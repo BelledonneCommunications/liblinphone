@@ -22,16 +22,19 @@
 #endif
 
 #include "chat/chat-room/chat-params.h"
+#include "core/core-p.h"
+#include "core/core.h"
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-void ChatParams::setChatDefaults(const LinphoneCore *core) {
-	if (core) {
+void ChatParams::setChatDefaults(const std::shared_ptr<Core> &core) {
+	auto cCore = core ? core->getCCore() : nullptr;
+	if (cCore) {
 		setEphemeralMode(
-		    static_cast<AbstractChatRoom::EphemeralMode>(linphone_core_chat_room_get_default_ephemeral_mode(core)));
-		setEphemeralLifetime(linphone_core_get_default_ephemeral_lifetime(core));
+		    static_cast<AbstractChatRoom::EphemeralMode>(linphone_core_chat_room_get_default_ephemeral_mode(cCore)));
+		setEphemeralLifetime(linphone_core_get_default_ephemeral_lifetime(cCore));
 	}
 }
 

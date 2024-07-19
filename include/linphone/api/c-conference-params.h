@@ -53,7 +53,7 @@ extern "C" {
  * @param core The #LinphoneCore to pass to the constructor. @notnil
  * @return The created #LinphoneConferenceParams. @notnil
  */
-LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_new(LinphoneCore *core);
 
 /**
  * Take a reference on a #LinphoneConferenceParams.

@@ -1350,7 +1350,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs,
 				const LinphoneAddress *conference_address =
 				    linphone_conference_get_conference_address(admin_conference);
 				char *conference_address_str =
-				    (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("sip:unknown");
+				    (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("sip:");
 				ms_message("%s is adding %s to conference %p (address %s)", linphone_core_get_identity(conf_mgr->lc),
 				           linphone_core_get_identity(m->lc), admin_conference, conference_address_str);
 				linphone_conference_add_participant(admin_conference, conf_call);
@@ -1378,7 +1378,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs,
 				const LinphoneAddress *conference_address =
 				    linphone_conference_get_conference_address(admin_conference);
 				char *conference_address_str =
-				    conference_address ? linphone_address_as_string(conference_address) : ms_strdup("sip:unknown");
+				    conference_address ? linphone_address_as_string(conference_address) : ms_strdup("sip:");
 				ms_message("%s is adding %s to a conference %s", linphone_core_get_identity(conf_mgr->lc),
 				           linphone_core_get_identity(m->lc), conference_address_str);
 				linphone_conference_add_participant(admin_conference, conf_call);

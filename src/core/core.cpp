@@ -1714,6 +1714,21 @@ void Core::destroyTimer(belle_sip_source_t *timer) {
 	belle_sip_object_unref(timer);
 }
 
+void Core::invalidateAccountInConferencesAndChatRooms(const std::shared_ptr<Account> &account) {
+	L_D();
+	for (const auto &[id, conference] : d->conferenceById) {
+		if (account == conference->getAccount()) {
+			conference->invalidateAccount();
+		}
+	}
+
+	for (const auto &[id, chatRoom] : d->chatRoomsById) {
+		if (account == chatRoom->getAccount()) {
+			chatRoom->invalidateAccount();
+		}
+	}
+}
+
 std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const CallSession> &session,
                                                  bool logIfNotFound) const {
 
@@ -2422,6 +2437,8 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 	removeDependentAccount(account);
 	/* add to the list of destroyed accounts, so that the possible unREGISTER request can succeed authentication */
 	mDeletedAccounts.mList.push_back(account);
+
+	invalidateAccountInConferencesAndChatRooms(account);
 
 	if (getDefaultAccount() == account) {
 		setDefaultAccount(nullptr);

@@ -24,9 +24,10 @@
 #include "belle-sip/object++.hh"
 
 #include "chat/chat-room/abstract-chat-room.h"
-#include "linphone/core.h"
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Core;
 
 class LINPHONE_PUBLIC ChatParams : public bellesip::HybridObject<LinphoneChatParams, ChatParams> {
 
@@ -52,7 +53,7 @@ public:
 	ChatParams() = default;
 	ChatParams(const ChatParams &other) = default;
 
-	void setChatDefaults(const LinphoneCore *core);
+	void setChatDefaults(const std::shared_ptr<Core> &core);
 
 	ChatParams *clone() const override {
 		return new ChatParams(*this);

@@ -104,6 +104,9 @@ public:
 	ConferenceInterface::State getState() const override;
 	void setState(ConferenceInterface::State newState) override;
 
+	void invalidateAccount() override;
+	const std::shared_ptr<Account> getAccount() override;
+
 	const std::string &getSubject() const override;
 	void setSubject(const std::string &subject) override;
 	void setUtf8Subject(const std::string &subject) override;

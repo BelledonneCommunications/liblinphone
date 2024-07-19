@@ -22,14 +22,16 @@
 #include "account/account.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "conference/conference-params.h"
+#include "core/core.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "private_functions.h"
 
 using namespace LinphonePrivate;
 
-LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core) {
-	LinphoneConferenceParams *params = ConferenceParams::createCObject(core);
+LinphoneConferenceParams *linphone_conference_params_new(LinphoneCore *core) {
+	LinphoneConferenceParams *params =
+	    ConferenceParams::createCObject(core ? L_GET_CPP_PTR_FROM_C_OBJECT(core) : nullptr);
 	return params;
 }
 

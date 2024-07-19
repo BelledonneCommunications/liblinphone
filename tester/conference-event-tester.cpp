@@ -780,7 +780,7 @@ public:
 };
 
 ConferenceEventTester::ConferenceEventTester(const shared_ptr<Core> &core, const std::shared_ptr<Address> &confAddr)
-    : ClientConference(core, confAddr, nullptr, ConferenceParams::create(core->getCCore())) {
+    : ClientConference(core, confAddr, nullptr, ConferenceParams::create(core)) {
 	getCurrentParams()->enableAudio(true);
 }
 
@@ -868,7 +868,7 @@ public:
 	ServerConferenceTester(const std::shared_ptr<Core> &core,
 	                       const std::shared_ptr<Address> &myAddress,
 	                       CallSessionListener *listener)
-	    : ServerConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {
+	    : ServerConference(core, myAddress, listener, ConferenceParams::create(core)) {
 		getCurrentParams()->enableLocalParticipant(false);
 		getCurrentParams()->enableAudio(true);
 		getCurrentParams()->enableChat(false);
@@ -1476,7 +1476,7 @@ void send_first_notify() {
 	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
 	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
 	tester->init();
-	auto params = ConferenceParams::create(pauline->lc);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
 	params->enableAudio(true);
 	shared_ptr<Conference> localConf =
 	    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
@@ -1939,7 +1939,7 @@ void send_added_notify_through_call() {
 	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	stats initialPaulineStats = pauline->stat;
 	{
-		auto params = ConferenceParams::create(pauline->lc);
+		auto params = ConferenceParams::create(pauline->lc->cppPtr);
 		params->enableAudio(true);
 		shared_ptr<Conference> localConf =
 		    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
@@ -2021,7 +2021,7 @@ void send_removed_notify_through_call() {
 	stats initialPaulineStats = pauline->stat;
 
 	{
-		auto params = ConferenceParams::create(pauline->lc);
+		auto params = ConferenceParams::create(pauline->lc->cppPtr);
 		params->enableAudio(true);
 		shared_ptr<Conference> localConf =
 		    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
@@ -2476,7 +2476,7 @@ void one_to_one_keyword() {
 	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
 	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
 	tester->init();
-	auto params = ConferenceParams::create(pauline->lc);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
 	params->enableAudio(false);
 	params->enableChat(true);
 	params->setGroup(false);

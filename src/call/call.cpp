@@ -531,7 +531,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			clientConference->setConferenceAddress(remoteContactAddress);
 		}
 	} else {
-		auto confParams = ConferenceParams::create(getCore()->getCCore());
+		auto confParams = ConferenceParams::create(getCore());
 		std::shared_ptr<SalMediaDescription> md = (op) ? op->getFinalMediaDescription() : nullptr;
 		if (md) {
 			confParams->enableAudio(md->nbActiveStreamsOfType(SalAudio) > 0);

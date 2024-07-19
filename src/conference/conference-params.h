@@ -28,25 +28,26 @@
 #include "chat/chat-room/chat-params.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-params-interface.h"
-#include "linphone/core.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class Account;
 class Address;
 class Conference;
+class Core;
 
 class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>,
-                                         public ConferenceParamsInterface {
+                                         public ConferenceParamsInterface,
+                                         public CoreAccessor {
 	friend class ServerConference;
 	friend class ClientConference;
 
 public:
-	ConferenceParams(const LinphoneCore *core = NULL);
+	ConferenceParams(const std::shared_ptr<Core> &core = nullptr);
 	ConferenceParams(const ConferenceParams &other);
 
-	void setAudioVideoDefaults(const LinphoneCore *core);
-	void setChatDefaults(const LinphoneCore *core);
+	void setAudioVideoDefaults();
+	void setChatDefaults();
 
 	ConferenceParams *clone() const override {
 		return new ConferenceParams(*this);
@@ -145,9 +146,7 @@ public:
 	};
 
 	void setAccount(const std::shared_ptr<Account> &a);
-	const std::shared_ptr<Account> getAccount() const {
-		return mAccount.lock();
-	};
+	const std::shared_ptr<Account> getAccount() const;
 
 	virtual void setStartTime(const time_t &start) override {
 		mStartTime = start;
@@ -197,7 +196,8 @@ public:
 	static ConferenceParams::SecurityLevel getSecurityLevelFromAttribute(const std::string &level);
 	static std::string getSecurityLevelAttribute(const ConferenceParams::SecurityLevel &level);
 	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ConferenceParams> &params);
-	static std::shared_ptr<ConferenceParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
+	static std::shared_ptr<ConferenceParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities,
+	                                                          const std::shared_ptr<Core> &core = nullptr);
 
 private:
 	void updateFromAccount(const std::shared_ptr<Account> &account); // Update Me and default factory from account.

@@ -31,13 +31,17 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ConferenceParams::ConferenceParams(const LinphoneCore *core) {
+ConferenceParams::ConferenceParams(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
 	if (core) {
-		setAccount(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getDefaultAccount());
+		setAccount(core->getDefaultAccount());
 	}
 }
 
-ConferenceParams::ConferenceParams(const ConferenceParams &other) : ConferenceParams(nullptr) {
+ConferenceParams::ConferenceParams(const ConferenceParams &other) : HybridObject<LinphoneConferenceParams, ConferenceParams>(other), CoreAccessor(nullptr) {
+	try {
+		setCore(other.getCore());
+	} catch (const bad_weak_ptr &) {
+	}
 	mEnableAudio = other.mEnableAudio;
 	mEnableVideo = other.mEnableVideo;
 	mEnableChat = other.mEnableChat;
@@ -63,19 +67,23 @@ ConferenceParams::ConferenceParams(const ConferenceParams &other) : ConferencePa
 	mChatParams = other.mChatParams ? other.mChatParams->clone()->toSharedPtr() : nullptr;
 }
 
-void ConferenceParams::setAudioVideoDefaults(const LinphoneCore *core) {
-	if (core) {
-		enableAudio(true);
-		const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(core);
-		enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
-		setParticipantListType(
-		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
+void ConferenceParams::setAudioVideoDefaults() {
+	try {
+		auto core = getCore()->getCCore();
+		if (core) {
+			enableAudio(true);
+			const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(core);
+			enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
+			setParticipantListType(
+			    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
+		}
+	} catch (const bad_weak_ptr &) {
 	}
 }
 
-void ConferenceParams::setChatDefaults(const LinphoneCore *core) {
+void ConferenceParams::setChatDefaults() {
 	enableChat(true);
-	mChatParams->setChatDefaults(core);
+	mChatParams->setChatDefaults(getCore());
 }
 
 void ConferenceParams::enableChat(bool enable) {
@@ -84,6 +92,10 @@ void ConferenceParams::enableChat(bool enable) {
 		mChatParams = ChatParams::create();
 	}
 };
+
+const std::shared_ptr<Account> ConferenceParams::getAccount() const {
+	return mAccount.lock();
+}
 
 void ConferenceParams::setAccount(const shared_ptr<Account> &a) {
 	mAccount = a;
@@ -102,10 +114,9 @@ void ConferenceParams::updateFromAccount(
 				setMe(nullptr);
 			}
 			if (mUseDefaultFactoryAddress) {
-				auto core = account->getCore();
 				mFactoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
 				if (mFactoryAddress &&
-				    (linphone_core_get_global_state(L_GET_C_BACK_PTR(core)) != LinphoneGlobalStartup)) {
+				    (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup)) {
 					lInfo() << "Update conference parameters from account, factory: " << *mFactoryAddress;
 				}
 			}
@@ -190,8 +201,9 @@ string ConferenceParams::getSecurityLevelAttribute(const ConferenceParams::Secur
 	return "none";
 }
 
-shared_ptr<ConferenceParams> ConferenceParams::fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities) {
-	auto params = ConferenceParams::create();
+shared_ptr<ConferenceParams> ConferenceParams::fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities,
+                                                                const std::shared_ptr<Core> &core) {
+	auto params = ConferenceParams::create(core);
 	params->enableAudio(false);
 	params->enableVideo(false);
 	params->enableChat(true);

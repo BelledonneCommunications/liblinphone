@@ -75,7 +75,7 @@ LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core
 	    (new ServerConference(
 	         L_GET_CPP_PTR_FROM_C_OBJECT(core), Address::toCpp(addr)->getSharedFromThis(), nullptr,
 	         params ? ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()
-	                : ConferenceParams::create(core)))
+	                : ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(core))))
 	        ->toSharedPtr();
 	localConf->init();
 	localConf->ref();
@@ -94,7 +94,7 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
 	if (params) {
 		conf_params = ConferenceParams::toCpp(params)->getSharedFromThis();
 	} else {
-		conf_params = ConferenceParams::create(core);
+		conf_params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(core));
 	}
 	std::shared_ptr<Conference> conference =
 	    (new ClientConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), Address::toCpp(addr)->getSharedFromThis(), nullptr,

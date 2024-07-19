@@ -37,6 +37,7 @@ extern "C" {
 /**
  * Returns new chat room parameters.
  * @return LinphoneChatRoomParams
+ * @deprecated 20/05/2024. Use linphone_conference_params_new() instead.
  **/
 LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_chat_room_params_new(void);
 LinphoneChatRoomParams *linphone_chat_room_params_new_with_core(LinphoneCore *core);
@@ -48,6 +49,7 @@ LinphoneChatRoomParams *linphone_chat_room_params_clone(const LinphoneChatRoomPa
  * Acquire a reference to the chat room parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
  * @return The same #LinphoneChatRoomParams object. @notnil
+ * @deprecated 20/05/2024. Use linphone_conference_params_clone() instead.
  **/
 LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_chat_room_params_ref(LinphoneChatRoomParams *params);
 

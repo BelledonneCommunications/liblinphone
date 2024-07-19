@@ -100,6 +100,18 @@ const std::shared_ptr<ConferenceParams> &BasicChatRoom::getCurrentParams() const
 	return mParams;
 }
 
+void BasicChatRoom::invalidateAccount() {
+	mParams->setAccount(nullptr);
+}
+
+const std::shared_ptr<Account> BasicChatRoom::getAccount() {
+	auto account = mParams->getAccount();
+	if (!account) {
+		mParams->setAccount(getCore()->findAccountByIdentityAddress(mConferenceId.getLocalAddress()));
+	}
+	return account;
+}
+
 const ConferenceId &BasicChatRoom::getConferenceId() const {
 	return mConferenceId;
 }
@@ -121,6 +133,10 @@ void BasicChatRoom::setSubject(const string &subject) {
 
 void BasicChatRoom::setUtf8Subject(const string &subject) {
 	mParams->setUtf8Subject(subject);
+}
+
+const std::string &BasicChatRoom::getSubject() const {
+	return mParams->getSubject();
 }
 
 bool BasicChatRoom::isMe(const std::shared_ptr<Address> &address) const {

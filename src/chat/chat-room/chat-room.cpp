@@ -100,6 +100,21 @@ void ChatRoom::onStateChanged(BCTBX_UNUSED(ConferenceInterface::State state)) {
 	notifyStateChanged();
 }
 
+void ChatRoom::invalidateAccount() {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		conferencePtr->invalidateAccount();
+	}
+}
+
+const std::shared_ptr<Account> ChatRoom::getAccount() {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		return conferencePtr->getAccount();
+	}
+	return nullptr;
+}
+
 const std::string &ChatRoom::getSubject() const {
 	const auto conferencePtr = getConference();
 	if (conferencePtr) {
