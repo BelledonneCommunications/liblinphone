@@ -469,7 +469,7 @@ void *Vcard::getBelcard() {
 
 #else
 
-Vcard::Vcard(bool useVCard3Grammar) {
+Vcard::Vcard(bool) {
 	bctbx_message("LinphoneVcard[%p] created", toC());
 }
 

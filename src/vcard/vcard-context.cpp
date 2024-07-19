@@ -81,7 +81,7 @@ std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromFile(const std::
 
 #else
 
-VcardContext::VcardContext(bool useVCard3Grammar) {
+VcardContext::VcardContext(bool) {
 }
 
 VcardContext *VcardContext::clone() const {
