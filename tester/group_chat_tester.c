@@ -5362,6 +5362,9 @@ static void aggregated_imdn_for_group_chat_room_base(bool_t read_while_offline) 
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg)) goto end;
 	LinphoneChatMessage *chloe2LastMsg = chloe2->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe2LastMsg)) goto end;
+
+	BC_ASSERT_TRUE(linphone_chat_message_get_state(marieLastMsg) == LinphoneChatMessageStateDelivered);
+	BC_ASSERT_TRUE(linphone_chat_message_get_state(chloe2LastMsg) == LinphoneChatMessageStateDelivered);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage3);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(chloe2LastMsg), chloeTextMessage3);
 	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
@@ -8407,11 +8410,11 @@ static void group_chat_room_device_unregistered(void) {
 	linphone_core_enter_background(laure->lc);
 	wait_for_list(coresList, NULL, 1, 3000);
 	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateDeleted,
-	                             initialMarieStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
+	                              initialMarieStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateDeleted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
+	                              initialPaulineStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateDeleted,
-	                             initialLaureStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
+	                              initialLaureStats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
 
 	// to force re-re-connection to restarted flexisip
 	linphone_core_set_network_reachable(marie->lc, FALSE);

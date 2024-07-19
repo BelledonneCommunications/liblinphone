@@ -4173,6 +4173,7 @@ void unread_message_count_when_muted(void) {
 static void message_received_callback(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	BC_ASSERT_PTR_NOT_NULL(room);
 	BC_ASSERT_FALSE(linphone_chat_room_is_empty(room));
+	BC_ASSERT_TRUE(linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 	BC_ASSERT_EQUAL(1, linphone_chat_room_get_unread_messages_count(room), int, "%d");
 	BC_ASSERT_EQUAL(1, linphone_core_get_unread_chat_message_count(lc), int, "%d");
 	BC_ASSERT_EQUAL(1, linphone_core_get_unread_chat_message_count_from_active_locals(lc), int, "%d");

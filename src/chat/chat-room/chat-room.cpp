@@ -509,6 +509,7 @@ void ChatRoom::onChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage)
 	if (core->isCurrentlyAggregatingChatMessages()) {
 		lDebug() << "[Chat Room] [" << getConferenceId()
 		         << "] Core is currently aggregating chat messages, push message to list";
+		chatMessage->setInAggregationQueue(true);
 		aggregatedMessages.push_back(chatMessage);
 	} else {
 		// No aggregation, notify right away
@@ -533,6 +534,7 @@ void ChatRoom::notifyMessageReceived(const shared_ptr<ChatMessage> &chatMessage)
 	// Legacy.
 	notifyChatMessageReceived(chatMessage);
 
+	// Notify delivery
 	sendDeliveryNotification(chatMessage);
 }
 
@@ -563,6 +565,7 @@ void ChatRoom::notifyAggregatedChatMessages() {
 		shared_ptr<ConferenceChatMessageEvent> event =
 		    make_shared<ConferenceChatMessageEvent>(::time(nullptr), chatMessage);
 		eventsList.push_back(event);
+		chatMessage->setInAggregationQueue(false);
 	}
 	bctbx_list_t *cEvents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(eventsList);
 	_linphone_chat_room_notify_chat_messages_received(cChatRoom, cEvents);

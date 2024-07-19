@@ -157,6 +157,8 @@ public:
 	bool getToBeStored() const;
 	virtual void setToBeStored(bool value);
 
+	void setInAggregationQueue(bool isInQueue);
+
 	const std::list<std::shared_ptr<Content>> &getContents() const;
 	void addContent(std::shared_ptr<Content> content);
 	void removeContent(std::shared_ptr<Content> content);

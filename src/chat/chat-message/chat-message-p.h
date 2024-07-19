@@ -321,6 +321,7 @@ private:
 
 	bool encryptionPrevented = false;
 	mutable bool contentsNotLoadedFromDatabase = false;
+	bool isInAggregationQueue = false;
 
 	std::list<std::shared_ptr<ChatMessageListener>> listeners;
 

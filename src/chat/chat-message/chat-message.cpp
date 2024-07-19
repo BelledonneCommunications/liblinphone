@@ -169,7 +169,8 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 	ChatMessage::State currentState = q->getParticipantState(participantAddress);
 	const auto &conferenceAddress = chatRoom->getConferenceAddress();
-	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
+	const auto conferenceAddressStr =
+	    conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
 
 	if (!chatMessageFsmChecker.isValid(currentState, newState)) {
 		if (isBasicChatRoom) {
@@ -184,7 +185,9 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		return;
 	}
 
-	lDebug() << "Chat message " << sharedMessage << " of chat room " << chatRoom << " (" << conferenceAddressStr << "): Moving participant " << *participantAddress << " from state " << Utils::toString(currentState) << " to state " << Utils::toString(newState);
+	lDebug() << "Chat message " << sharedMessage << " of chat room " << chatRoom << " (" << conferenceAddressStr
+	         << "): Moving participant " << *participantAddress << " from state " << Utils::toString(currentState)
+	         << " to state " << Utils::toString(newState);
 
 	auto me = chatRoom->getMe();
 	const auto isMe = participantAddress->weakEqual(*me->getAddress());
@@ -1195,9 +1198,13 @@ void ChatMessagePrivate::endMessageReception() {
 	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
 	// Accepted when a message is sent
 	setParticipantState(meAddress, ChatMessage::State::Delivered, ::ms_time(NULL));
+
 	const bool isBasicChatRoom = chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic);
 	if (!isBasicChatRoom) {
-		setParticipantState(meAddress, ChatMessage::State::DeliveredToUser, ::ms_time(nullptr));
+		if (!isInAggregationQueue) {
+			// Wait for message to be notified to the app before changing the state to DeliveredToUser
+			setParticipantState(meAddress, ChatMessage::State::DeliveredToUser, ::ms_time(nullptr));
+		}
 	}
 }
 
@@ -1832,6 +1839,11 @@ time_t ChatMessage::getEphemeralExpireTime() const {
 void ChatMessage::setToBeStored(bool value) {
 	L_D();
 	d->toBeStored = value;
+}
+
+void ChatMessage::setInAggregationQueue(bool isInQueue) {
+	L_D();
+	d->isInAggregationQueue = isInQueue;
 }
 
 // -----------------------------------------------------------------------------
