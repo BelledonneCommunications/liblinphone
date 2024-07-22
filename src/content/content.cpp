@@ -41,8 +41,12 @@ Content::Content(const SalBodyHandler *bodyHandler, bool parseMultipart) {
 
 	mBodyHandler = sal_body_handler_ref((SalBodyHandler *)bodyHandler);
 
-	mContentType.setType(sal_body_handler_get_type(bodyHandler));
-	mContentType.setSubType(sal_body_handler_get_subtype(bodyHandler));
+	const char *type = sal_body_handler_get_type(bodyHandler);
+	if (!type) return;
+	mContentType.setType(type);
+	const char *subtype = sal_body_handler_get_subtype(bodyHandler);
+	if (!subtype) return;
+	mContentType.setSubType(subtype);
 	for (const belle_sip_list_t *params = sal_body_handler_get_content_type_parameters_names(bodyHandler); params;
 	     params = params->next) {
 		const char *paramName = reinterpret_cast<const char *>(params->data);
