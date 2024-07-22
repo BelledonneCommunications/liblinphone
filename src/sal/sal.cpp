@@ -941,6 +941,12 @@ int Sal::findCryptoIndexFromAlgo(const std::vector<SalSrtpCryptoAlgo> &crypto, c
 	return -1;
 }
 
+void Sal::setRefreshWindow(const int min_value, const int max_value) {
+	if (mStack) {
+		belle_sip_stack_set_refresh_window(mStack, min_value, max_value);
+	}
+}
+
 //***********************************
 // Global functions implementation
 //***********************************

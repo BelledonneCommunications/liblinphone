@@ -7305,6 +7305,15 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCor
 LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
 
 /**
+ * Set the refresh window. During this window, belle-sip schedules the refreshes of the sip messages
+ * @param core A #LinphoneCore object @notnil
+ * @param min_value lower bound of the refresh window
+ * @param max_value upper bound of the refresh window
+ * @warning The refresh window must be set before starting the core
+ */
+LINPHONE_PUBLIC void linphone_core_set_refresh_window(LinphoneCore *lc, const int min_value, const int max_value);
+
+/**
  * Get the number of participants including me, if it in, in the running conference. The local
  * participant is included in the count only if it is in the conference.
  * @param core #LinphoneCore @notnil

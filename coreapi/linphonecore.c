@@ -2030,6 +2030,17 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sal->setUnreliableConnectionTimeout(
 	    linphone_config_get_int(lc->config, "sip", "unreliable_connection_timeout", 120));
 
+	int min_refresh_window = 90;
+	int max_refresh_window = 90;
+	if (linphone_config_get_range(lc->config, "sip", "refresh_window", &min_refresh_window, &max_refresh_window, 90,
+	                              90) == TRUE) {
+		if ((min_refresh_window < 0) || (max_refresh_window <= 0) || (min_refresh_window > max_refresh_window)) {
+			min_refresh_window = 90;
+			max_refresh_window = 90;
+		}
+	}
+	linphone_core_set_refresh_window(lc, min_refresh_window, max_refresh_window);
+
 	bool_t record_aware = linphone_config_get_bool(lc->config, "app", "record_aware", FALSE);
 	linphone_core_set_record_aware_enabled(lc, record_aware);
 
@@ -7290,6 +7301,8 @@ void sip_config_uninit(LinphoneCore *lc) {
 	linphone_config_set_int(lc->config, "sip", "register_only_when_network_is_up",
 	                        config->register_only_when_network_is_up);
 	linphone_config_set_int(lc->config, "sip", "register_only_when_upnp_is_ok", config->register_only_when_upnp_is_ok);
+	linphone_config_set_range(lc->config, "sip", "refresh_window", config->refresh_window_min,
+	                          config->refresh_window_max);
 
 	if (lc->sip_network_state.global_state) {
 		bool_t need_to_unregister = FALSE;
@@ -9600,6 +9613,18 @@ void linphone_core_set_tls_cert_path(LinphoneCore *lc, const char *tls_cert_path
 
 void linphone_core_set_tls_key_path(LinphoneCore *lc, const char *tls_key_path) {
 	linphone_config_set_string(lc->config, "sip", "client_cert_key", tls_key_path);
+}
+
+void linphone_core_set_refresh_window(LinphoneCore *lc, const int min_value, const int max_value) {
+	if ((min_value >= 0) && (max_value > 0) && (max_value >= min_value)) {
+		lc->sip_conf.refresh_window_min = min_value;
+		lc->sip_conf.refresh_window_max = max_value;
+		if (lc->sal) {
+			lc->sal->setRefreshWindow(min_value, max_value);
+		}
+	} else {
+		ms_error("Unable to set refresh window range with min value %0d and max value %0d.", min_value, max_value);
+	}
 }
 
 const char *linphone_core_get_tls_cert(const LinphoneCore *lc) {

@@ -36,8 +36,8 @@
 
 #define MAX_LEN 16384
 
-#include "bctoolbox/vfs.h"
 #include "bctoolbox/charconv.h"
+#include "bctoolbox/vfs.h"
 #include "belle-sip/object.h"
 #include "xml2lpc.h"
 #include <bctoolbox/defs.h>
@@ -981,9 +981,7 @@ void lp_item_write(LpItem *item, LpConfig *lpconfig) {
 
 	} else if (item->value && item->value[0] != '\0') {
 		ret = (int)bctbx_file_fprintf(lpconfig->pFile, 0, "%s=%s\n", item->key, item->value);
-	}
-
-	else {
+	} else {
 		ms_warning("Not writing item %s to file, it is empty", item->key);
 	}
 	if (ret < 0) {
@@ -1001,7 +999,6 @@ void lp_section_param_write(LpSectionParam *param, LpConfig *lpconfig) {
 }
 
 void lp_section_write(LpSection *sec, LpConfig *lpconfig) {
-
 	if (bctbx_file_fprintf(lpconfig->pFile, 0, "[%s", sec->name) < 0)
 		ms_error("lp_section_write : write error on %s", sec->name);
 	bctbx_list_for_each2(sec->params, (void (*)(void *, void *))lp_section_param_write, (void *)lpconfig);
@@ -1030,7 +1027,7 @@ LinphoneStatus linphone_config_sync(LpConfig *lpconfig) {
 	(void)umask(S_IRWXG | S_IRWXO);
 #endif
 	char *wFname = bctbx_utf8_to_locale(lpconfig->tmpfilename);
-	if(wFname) pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, wFname, "w");
+	if (wFname) pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, wFname, "w");
 	bctbx_free(wFname);
 	lpconfig->pFile = pFile;
 	if (pFile == NULL) {

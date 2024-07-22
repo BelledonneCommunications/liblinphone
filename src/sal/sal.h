@@ -432,6 +432,8 @@ public:
 		return mOfferAnswerEngine;
 	}
 
+	void setRefreshWindow(const int min_value, const int max_value);
+
 private:
 	static void onResolverResults(void *lambda, belle_sip_resolver_results_t *results);
 	struct SalUuid {

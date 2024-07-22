@@ -261,6 +261,54 @@ static void simple_register(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
+static void simple_register_with_custom_refresh_period(void) {
+	LinphoneCoreManager *lcm = create_lcm();
+
+	int min_refresh = 20; // %
+	int max_refresh = 50; // %
+	int expires = 10;     // s;
+	linphone_core_set_refresh_window(lcm->lc, min_refresh, max_refresh);
+	stats *counters = &lcm->stat;
+	LinphoneAccountParams *account_params = linphone_core_create_account_params(lcm->lc);
+
+	LinphoneAddress *from = create_linphone_address_for_algo(NULL, NULL);
+
+	linphone_account_params_set_identity_address(account_params, from);
+	const char *server_addr = linphone_address_get_domain(from);
+
+	linphone_account_params_enable_register(account_params, TRUE);
+	linphone_account_params_set_expires(account_params, expires);
+	linphone_account_params_set_server_addr(account_params, server_addr);
+	linphone_address_unref(from);
+
+	LinphoneAccount *account = linphone_core_create_account(lcm->lc, account_params);
+	linphone_core_add_account(lcm->lc, account);
+	linphone_core_set_default_account(lcm->lc, account);
+
+	linphone_account_unref(account);
+	linphone_account_params_unref(account_params);
+
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &counters->number_of_LinphoneRegistrationOk, 1, 5000));
+	// The timeout of the timer is the upper bound of the refresh window in ms
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &counters->number_of_LinphoneRegistrationOk, 2,
+	                              (1000 * max_refresh * expires) / 100));
+
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 0, int, "%d");
+
+	linphone_core_stop(lcm->lc);
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &counters->number_of_LinphoneRegistrationCleared, 1, 5000));
+	linphone_core_start(lcm->lc);
+	int actual_min_refresh;
+	int actual_max_refresh;
+	LinphoneConfig *lcfg = linphone_core_get_config(lcm->lc);
+	BC_ASSERT_TRUE(
+	    linphone_config_get_range(lcfg, "sip", "refresh_window", &actual_min_refresh, &actual_max_refresh, 90, 90));
+	BC_ASSERT_EQUAL(actual_min_refresh, min_refresh, int, "%d");
+	BC_ASSERT_EQUAL(actual_max_refresh, max_refresh, int, "%d");
+
+	linphone_core_manager_destroy(lcm);
+}
+
 static void register_with_custom_headers(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(marie->lc);
@@ -1735,6 +1783,7 @@ test_t register_tests[] = {
     TEST_NO_TAG("Authenticated register with provided credentials, username with space",
                 authenticated_register_with_provided_credentials_and_username_with_space),
     TEST_NO_TAG("Register with refresh", simple_register_with_refresh),
+    TEST_NO_TAG("Register with custom refresh period", simple_register_with_custom_refresh_period),
     TEST_NO_TAG("Authenticated register with refresh", simple_auth_register_with_refresh),
     TEST_NO_TAG("Register with refresh and send error", register_with_refresh_with_send_error),
     TEST_NO_TAG("Multi account", multiple_proxy), TEST_NO_TAG("Transport changes", transport_change),
