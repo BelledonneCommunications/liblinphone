@@ -4840,18 +4840,30 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
                                         bool_t with_contact,
                                         LinphoneAccount *account) {
 	bctbx_list_t *routes = NULL;
-	const char *identity;
 
 	if (account) {
-		identity = linphone_account_params_get_identity(linphone_account_get_params(account));
+		const LinphoneAddress *identity =
+		    linphone_account_params_get_identity_address(linphone_account_get_params(account));
+
+		if (!identity) {
+			lError() << "No from identity to configure the op.";
+			return;
+		}
+
+		op->setFromAddress(Address::toCpp(identity)->getImpl());
+
 		if (linphone_account_params_get_privacy(linphone_account_get_params(account)) != LinphonePrivacyDefault) {
 			op->setPrivacy(linphone_account_params_get_privacy(linphone_account_get_params(account)));
 		}
-	} else identity = linphone_core_get_primary_contact(lc);
+	} else {
+		const char *identity = linphone_core_get_primary_contact(lc);
 
-	if (!identity) {
-		lError() << "No from identity to configure the op.";
-		return;
+		if (!identity) {
+			lError() << "No from identity to configure the op.";
+			return;
+		}
+
+		op->setFrom(identity);
 	}
 
 	/*sending out of calls*/
@@ -4860,8 +4872,7 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 		linphone_transfer_routes_to_op(routes, op);
 	}
 
-	op->setToAddress(LinphonePrivate::Address::toCpp(dest)->getImpl());
-	op->setFrom(identity);
+	op->setToAddress(Address::toCpp(dest)->getImpl());
 	op->setSentCustomHeaders(headers);
 	op->setRealm(
 	    L_C_TO_STRING(account ? linphone_account_params_get_realm(linphone_account_get_params(account)) : NULL));

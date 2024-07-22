@@ -2372,7 +2372,7 @@ void send_device_added_notify() {
 	auto op = new SalSubscribeOp(pauline->lc->sal.get());
 	SalAddress *toAddr = sal_address_new(linphone_core_get_identity(pauline->lc));
 	op->setToAddress(toAddr);
-	op->setFrom(bobAddr->toString().c_str());
+	op->setFromAddress(bobAddr->getImpl());
 	op->overrideRemoteContact(bobAddr->toString().c_str());
 	LinphoneAccount *default_account = linphone_core_get_default_account(pauline->lc);
 	op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(default_account)));

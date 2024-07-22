@@ -33,8 +33,8 @@ public:
 		mType = Type::Register;
 	}
 
-	int sendRegister(const std::string &proxy,
-	                 const std::string &from,
+	int sendRegister(const SalAddress *proxy,
+	                 const SalAddress *from,
 	                 int expires,
 	                 const std::list<SalAddress *> &customContacts);
 	int refreshRegister(int expires) {
@@ -50,7 +50,7 @@ public:
 	}
 
 private:
-	void fillCallbacks() override{};
+	void fillCallbacks() override {};
 	static void registerRefresherListener(belle_sip_refresher_t *refresher,
 	                                      void *userCtx,
 	                                      unsigned int statusCode,

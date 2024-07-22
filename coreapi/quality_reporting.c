@@ -421,7 +421,7 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 	if (sal_address_has_uri_param(salAddress, "transport") || sal_address_has_uri_param(salAddress, "maddr") ||
 	    linphone_address_get_port(request_uri) != 0) {
 		ms_message("Publishing report with custom route %s", collector_uri);
-		Event::toCpp(lev)->getOp()->setRoute(collector_uri);
+		Event::toCpp(lev)->getOp()->setRouteAddress(salAddress);
 	}
 
 	if (linphone_event_send_publish(lev, content) != 0) {

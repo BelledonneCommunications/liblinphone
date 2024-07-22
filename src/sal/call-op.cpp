@@ -1112,10 +1112,10 @@ void SalCallOp::fillCallbacks() {
 	mCallbacks = &callOpCallbacks;
 }
 
-int SalCallOp::call(const string &from, const string &to, const string &subject) {
+int SalCallOp::call(const SalAddress *from, const SalAddress *to, const string &subject) {
 	mDir = Dir::Outgoing;
-	setFrom(from);
-	setTo(to);
+	setFromAddress(from);
+	setToAddress(to);
 
 	lInfo() << "[" << from << "] calling [" << to << "] on op [" << this << "]";
 
@@ -1460,7 +1460,7 @@ int SalCallOp::update(const string &subject, bool noUserConsent, bool withSDP, i
 	if (!mDialog) {
 		// If the dialog does not exist, this is that we are trying to recover from a connection loss
 		// during a very early state of outgoing call initiation (the dialog has not been created yet).
-		return call(mFrom, mTo, subject);
+		return call(mFromAddress, mToAddress, subject);
 	}
 
 	auto state = belle_sip_dialog_get_state(mDialog);

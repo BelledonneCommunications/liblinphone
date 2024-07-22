@@ -342,17 +342,15 @@ bool CallSessionPrivate::startPing() {
 		pingReplied = false;
 		pingOp = new SalOp(q->getCore()->getCCore()->sal.get());
 		if (direction == LinphoneCallIncoming) {
-			string from = pingOp->getFrom();
-			string to = pingOp->getTo();
+			auto *from = sal_address_clone(pingOp->getFromAddress());
+			auto *to = sal_address_clone(pingOp->getToAddress());
 			linphone_configure_op(q->getCore()->getCCore(), pingOp, log->getFromAddress()->toC(), nullptr, false);
-			pingOp->setRoute(op->getNetworkOrigin());
-			pingOp->ping(from.c_str(), to.c_str());
-		} else if (direction == LinphoneCallOutgoing) {
-			char *from = ms_strdup(L_STRING_TO_C(log->getFromAddress()->toString()));
-			char *to = ms_strdup(L_STRING_TO_C(log->getToAddress()->toString()));
+			pingOp->setRouteAddress(op->getNetworkOriginAddress());
 			pingOp->ping(from, to);
-			ms_free(from);
-			ms_free(to);
+			sal_address_unref(from);
+			sal_address_unref(to);
+		} else if (direction == LinphoneCallOutgoing) {
+			pingOp->ping(log->getFromAddress()->getImpl(), log->getToAddress()->getImpl());
 		}
 		pingOp->setUserPointer(this);
 		return true;
@@ -1690,11 +1688,9 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 	d->subject = subject;
 	/* Try to be best-effort in giving real local or routable contact address */
 	d->setContactOp();
-	string destinationStr;
-	if (destination) destinationStr = destination->toString();
-	else {
-		destinationStr = d->log->getToAddress()->toString();
-	}
+	const SalAddress *destinationAddress;
+	if (destination) destinationAddress = destination->getImpl();
+	else destinationAddress = d->log->getToAddress()->getImpl();
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
 	d->op->setLocalBodies({});
@@ -1707,7 +1703,7 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 		d->op->addLocalBody(*c);
 	}
 
-	int result = d->op->call(d->log->getFromAddress()->toString().c_str(), destinationStr, subject);
+	int result = d->op->call(d->log->getFromAddress()->getImpl(), destinationAddress, subject);
 	if (result < 0) {
 		if ((d->state != CallSession::State::Error) && (d->state != CallSession::State::Released)) {
 			// sal_call() may invoke call_failure() and call_released() SAL callbacks synchronously,

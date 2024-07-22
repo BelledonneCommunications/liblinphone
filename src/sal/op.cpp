@@ -94,23 +94,48 @@ void SalOp::setContactAddress(const SalAddress *value) {
 	mContactAddress = value ? sal_address_clone(value) : nullptr;
 }
 
-void SalOp::assignAddress(SalAddress **address, const string &value) {
+void SalOp::assignAddress(SalAddress **address, string &addressStr, const string &value) {
 	if (*address) {
 		sal_address_unref(*address);
 		*address = nullptr;
 	}
-	if (!value.empty()) *address = sal_address_new(value.c_str());
+	addressStr.clear();
+
+	if (!value.empty()) {
+		*address = sal_address_new(value.c_str());
+
+		char *str = sal_address_as_string(*address);
+		addressStr = str;
+		ms_free(str);
+	}
+}
+
+void SalOp::assignAddress(SalAddress **address, string &addressStr, const SalAddress *value) {
+	if (*address) {
+		sal_address_unref(*address);
+		*address = nullptr;
+	}
+	addressStr.clear();
+
+	if (value) {
+		*address = sal_address_clone(value);
+
+		char *str = sal_address_as_string(*address);
+		addressStr = str;
+		ms_free(str);
+	}
 }
 
 void SalOp::setRoute(const string &value) {
 	for (auto &address : mRouteAddresses)
 		sal_address_unref(address);
 	mRouteAddresses.clear();
-	if (value.empty()) {
-		mRoute.clear();
-	} else {
-		auto address = sal_address_new(value.c_str());
+	mRoute.clear();
+
+	if (!value.empty()) {
+		auto *address = sal_address_new(value.c_str());
 		mRouteAddresses.push_back(address);
+
 		char *routeStr = sal_address_as_string(address);
 		mRoute = routeStr;
 		ms_free(routeStr);
@@ -118,10 +143,19 @@ void SalOp::setRoute(const string &value) {
 }
 
 void SalOp::setRouteAddress(const SalAddress *value) {
-	// Can probably be optimized
-	char *addressStr = sal_address_as_string(value);
-	setRoute(addressStr);
-	ms_free(addressStr);
+	for (auto &address : mRouteAddresses)
+		sal_address_unref(address);
+	mRouteAddresses.clear();
+	mRoute.clear();
+
+	if (value) {
+		auto *address = sal_address_clone(value);
+		mRouteAddresses.push_back(address);
+
+		char *routeStr = sal_address_as_string(address);
+		mRoute = routeStr;
+		ms_free(routeStr);
+	}
 }
 
 void SalOp::addRouteAddress(const SalAddress *address) {
@@ -130,39 +164,19 @@ void SalOp::addRouteAddress(const SalAddress *address) {
 }
 
 void SalOp::setFrom(const string &value) {
-	assignAddress(&mFromAddress, value);
-	if (mFromAddress) {
-		char *valueStr = sal_address_as_string(mFromAddress);
-		mFrom = valueStr;
-		ms_free(valueStr);
-	} else {
-		mFrom.clear();
-	}
+	assignAddress(&mFromAddress, mFrom, value);
 }
 
 void SalOp::setFromAddress(const SalAddress *value) {
-	// Can probably be optimized
-	char *addressStr = sal_address_as_string(value);
-	setFrom(addressStr);
-	ms_free(addressStr);
+	assignAddress(&mFromAddress, mFrom, value);
 }
 
 void SalOp::setTo(const string &value) {
-	assignAddress(&mToAddress, value);
-	if (mToAddress) {
-		char *valueStr = sal_address_as_string(mToAddress);
-		mTo = valueStr;
-		ms_free(valueStr);
-	} else {
-		mTo.clear();
-	}
+	assignAddress(&mToAddress, mTo, value);
 }
 
 void SalOp::setToAddress(const SalAddress *value) {
-	// Can probably be optimized
-	char *addressStr = sal_address_as_string(value);
-	setTo(addressStr);
-	ms_free(addressStr);
+	assignAddress(&mToAddress, mTo, value);
 }
 
 void SalOp::setDiversionAddress(const SalAddress *diversion) {
@@ -722,9 +736,9 @@ void SalOp::setOrUpdateDialog(belle_sip_dialog_t *dialog) {
 	unref();
 }
 
-int SalOp::ping(const string &from, const string &to) {
-	setFrom(from);
-	setTo(to);
+int SalOp::ping(const SalAddress *from, const SalAddress *to) {
+	setFromAddress(from);
+	setToAddress(to);
 	return sendRequest(buildRequest("OPTIONS"));
 }
 
@@ -771,26 +785,22 @@ void SalOp::overrideRemoteContact(const string &value) {
 }
 
 void SalOp::setRemoteContact(const string &value) {
-	assignAddress(&mRemoteContactAddress, value);
+	if (mRemoteContactAddress) {
+		sal_address_unref(mRemoteContactAddress);
+		mRemoteContactAddress = nullptr;
+	}
+
+	if (!value.empty()) mRemoteContactAddress = sal_address_new(value.c_str());
+
 	mRemoteContact = value; // To preserve header params
 }
 
 void SalOp::setNetworkOrigin(const string &value) {
-	assignAddress(&mOriginAddress, value);
-	if (mOriginAddress) {
-		char *valueStr = sal_address_as_string(mOriginAddress);
-		mOrigin = valueStr;
-		ms_free(valueStr);
-	} else {
-		mOrigin.clear();
-	}
+	assignAddress(&mOriginAddress, mOrigin, value);
 }
 
 void SalOp::setNetworkOriginAddress(SalAddress *value) {
-	// Can probably be optimized
-	char *valueStr = sal_address_as_string(value);
-	setNetworkOrigin(valueStr);
-	ms_free(valueStr);
+	assignAddress(&mOriginAddress, mOrigin, value);
 }
 
 void SalOp::setPrivacyFromMessage(belle_sip_message_t *message) {

@@ -130,8 +130,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(
 	    (new EventSubscribe(getCore(), factoryUri, "conference", 600))->toSharedPtr());
-	std::string from = account->getContactAddress()->toString();
-	evSub->getOp()->setFrom(from);
+	evSub->getOp()->setFromAddress(account->getContactAddress()->getImpl());
 	evSub->setInternal(true);
 	evSub->addCustomHeader("Require", "recipient-list-subscribe");
 	evSub->addCustomHeader("Accept", "multipart/related, application/conference-info+xml, application/rlmi+xml");

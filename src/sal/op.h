@@ -165,6 +165,9 @@ public:
 	const std::string &getNetworkOrigin() const {
 		return mOrigin;
 	}
+	const SalAddress *getNetworkOriginAddress() const {
+		return mOriginAddress;
+	}
 	const std::string &getCallId() const {
 		return mCallId;
 	}
@@ -229,7 +232,7 @@ public:
 		return mAuthInfo;
 	}
 
-	int ping(const std::string &from, const std::string &to);
+	int ping(const SalAddress *from, const SalAddress *to);
 	int sendInfo(const SalBodyHandler *bodyHandler);
 
 	int replyMessage(SalReason reason);
@@ -323,7 +326,8 @@ protected:
 
 	static bool isExternalBody(belle_sip_header_content_type_t *contentType);
 
-	static void assignAddress(SalAddress **address, const std::string &value);
+	static void assignAddress(SalAddress **address, std::string &addressStr, const std::string &value);
+	static void assignAddress(SalAddress **address, std::string &addressStr, const SalAddress *value);
 	static void addInitialRouteSet(belle_sip_request_t *request, const std::list<SalAddress *> &routeAddresses);
 
 	// SalOpBase
