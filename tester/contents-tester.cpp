@@ -296,7 +296,7 @@ static const char *source_multipart2 =
     "Content-ID:<AFqAMY@broadworks>\r\n"
     "\r\n"
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
-    "uri=\"sip:441473283472@ngnine.dom\" version=\"0\" fullState=\"true\">\r\n"
+    "uri=\"sip:toto@nohyphen.com\" version=\"0\" fullState=\"true\">\r\n"
     "\r\n"
     "</list>\r\n"
     "\r\n"
@@ -304,8 +304,24 @@ static const char *source_multipart2 =
     "\r\n"
     "--UniqueBroadWorksBoundary--\r\n";
 
+static const char *invalid_source_multipart =
+    "\r\n"
+    "--InvalidContentType\r\n"
+    "\r\n"
+    "Content-Type:\r\n"
+    "Content-Length:154\r\n"
+    "\r\n"
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
+    "uri=\"sip:error@content-type.invalid\" version=\"0\" fullState=\"true\">\r\n"
+    "\r\n"
+    "</list>\r\n"
+    "\r\n"
+    "\r\n"
+    "\r\n"
+    "--InvalidContentType--\r\n";
+
 static const char *part21 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
-                            "uri=\"sip:441473283472@ngnine.dom\" version=\"0\" fullState=\"true\"></list>";
+                            "uri=\"sip:toto@nohyphen.com\" version=\"0\" fullState=\"true\"></list>";
 
 void multipart_parsing() {
 	Content multipartContent;
@@ -354,6 +370,18 @@ void multipart_parsing() {
 	string generatedContentId1 = content1.getHeader("Content-ID").getValueWithParams();
 
 	BC_ASSERT_TRUE(originalContentId1 == generatedContentId1);
+}
+
+void invalid_multipart_parsing() {
+	Content multipartContent;
+	multipartContent.setBodyFromLocale(invalid_source_multipart);
+	ContentType contentType = ContentType("multipart", "related");
+	contentType.addParameter("type", "application/rlmi+xml");
+	contentType.addParameter("boundary", "InvalidContentType");
+	multipartContent.setContentType(contentType);
+
+	list<Content> contents = ContentManager::multipartToContentList(multipartContent);
+	BC_ASSERT_EQUAL((int)contents.size(), 1, int, "%d");
 }
 
 void multipart_to_list() {
@@ -683,6 +711,7 @@ static void content_public_api(void) {
 
 test_t contents_tests[] = {TEST_NO_TAG("Multipart to list", multipart_to_list),
                            TEST_NO_TAG("Multipart parsing", multipart_parsing),
+                           TEST_NO_TAG("Invalid multipart parsing", invalid_multipart_parsing),
                            TEST_NO_TAG("List to multipart", list_to_multipart),
                            TEST_NO_TAG("Content type parsing", content_type_parsing),
                            TEST_NO_TAG("Content header parsing", content_header_parsing),
