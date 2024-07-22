@@ -655,7 +655,6 @@ void Account::registerAccount() {
 		}
 		lInfo() << "LinphoneAccount [" << this
 		        << "] about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
-		auto proxy_string = mParams->mProxyAddress->asStringUriOnly();
 
 		if (mOp) mOp->release();
 		mOp = new SalRegisterOp(getCCore()->sal.get());
@@ -669,8 +668,8 @@ void Account::registerAccount() {
 		mOp->setUserPointer(this->toC());
 
 		auto otherContacts = getOtherContacts();
-		const auto identity = (mParams) ? mParams->getIdentity() : std::string();
-		if (mOp->sendRegister(proxy_string.c_str(), identity, mParams->mExpires, otherContacts) == 0) {
+		if (mOp->sendRegister(mParams->mProxyAddress->getImpl(), mParams->mIdentityAddress->getImpl(),
+		                      mParams->mExpires, otherContacts) == 0) {
 			if (mPendingContactAddress) {
 				mPendingContactAddress = nullptr;
 			}

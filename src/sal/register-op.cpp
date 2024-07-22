@@ -26,8 +26,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-int SalRegisterOp::sendRegister(const string &proxy,
-                                const string &from,
+int SalRegisterOp::sendRegister(const SalAddress *proxy,
+                                const SalAddress *from,
                                 int expires,
                                 const std::list<SalAddress *> &customContacts) {
 	if (mRefresher) {
@@ -36,9 +36,9 @@ int SalRegisterOp::sendRegister(const string &proxy,
 		mRefresher = nullptr;
 	}
 
-	setFrom(from);
-	setTo(from);
-	setRoute(proxy);
+	setFromAddress(from);
+	setToAddress(from);
+	setRouteAddress(proxy);
 	auto request = buildRequest("REGISTER");
 	if (request == nullptr) return -1;
 	auto requestUri = belle_sip_request_get_uri(request);
