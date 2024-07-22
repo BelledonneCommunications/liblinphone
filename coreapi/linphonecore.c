@@ -4367,9 +4367,8 @@ static void notify_network_reachable_change(LinphoneCore *lc) {
 	if (lc->sip_network_state.global_state) linphone_core_resolve_stun_server(lc);
 }
 
-static void proxy_update(LinphoneCore *lc) {
+static void remove_deleted_accounts(LinphoneCore *lc) {
 	bctbx_list_t *elem, *next;
-	bctbx_list_for_each(lc->sip_conf.proxies, (void (*)(void *)) & linphone_proxy_config_update);
 	for (elem = lc->sip_conf.deleted_proxies; elem != NULL; elem = next) {
 		LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)elem->data;
 		next = elem->next;
@@ -4515,7 +4514,7 @@ void linphone_core_iterate(LinphoneCore *lc) {
 		// Avoid registration before getting remote configuration results
 		return;
 
-	proxy_update(lc);
+	remove_deleted_accounts(lc);
 
 	/* We have to iterate for each call */
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->iterateCalls(current_real_time, one_second_elapsed);

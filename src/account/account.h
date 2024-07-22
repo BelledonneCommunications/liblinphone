@@ -175,6 +175,8 @@ private:
 	bool customContactChanged();
 	std::list<SalAddress *> getOtherContacts();
 
+	void triggerUpdate();
+
 	std::shared_ptr<AccountParams> mParams;
 
 	int mAuthFailure;
