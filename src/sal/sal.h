@@ -395,6 +395,8 @@ public:
 		return mOfferAnswerEngine;
 	}
 
+	void setRefreshWindow(const int min_value, const int max_value);
+
 private:
 	struct SalUuid {
 		unsigned int timeLow;

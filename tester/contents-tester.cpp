@@ -320,7 +320,7 @@ static const char *invalid_source_multipart =
     "--InvalidContentType--\r\n";
 
 static const char *part21 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
-                            "uri=\"sip:441473283472@ngnine.dom\" version=\"0\" fullState=\"true\"></list>";
+                            "uri=\"sip:toto@nohyphen.com\" version=\"0\" fullState=\"true\"></list>";
 
 void multipart_parsing() {
 	Content multipartContent;
