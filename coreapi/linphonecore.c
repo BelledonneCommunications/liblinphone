@@ -4494,7 +4494,7 @@ void linphone_core_iterate(LinphoneCore *lc) {
 		// Avoid registration before getting remote configuration results
 		return;
 
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->accountUpdate();
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->removeDeletedAccounts();
 
 	/* We have to iterate for each call */
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->iterateCalls(current_real_time, one_second_elapsed);
@@ -7357,11 +7357,6 @@ void sip_config_uninit(LinphoneCore *lc) {
 	lc->auth_info = bctbx_list_free_with_data(lc->auth_info, (void (*)(void *))linphone_auth_info_unref);
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->releaseAccounts();
 
-	if (lc->vcard_context) {
-		VcardContext::toCpp(lc->vcard_context)->unref();
-		lc->vcard_context = nullptr;
-	}
-
 	lc->sal->resetTransports();
 	lc->sal->unlistenPorts(); /*to make sure no new messages are received*/
 
@@ -7378,6 +7373,12 @@ void sip_config_uninit(LinphoneCore *lc) {
 
 	for (i = 0; i < 5; ++i)
 		lc->sal->iterate(); /*make sure event are purged*/
+
+	if (lc->vcard_context) {
+		VcardContext::toCpp(lc->vcard_context)->unref();
+		lc->vcard_context = nullptr;
+	}
+
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->stopHttpClient();
 	lc->sal = NULL;
 

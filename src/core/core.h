@@ -417,7 +417,7 @@ public:
 	const bctbx_list_t *getAccountsCList() const;
 	std::shared_ptr<Account> lookupKnownAccount(const std::shared_ptr<const Address> uri, bool fallbackToDefault) const;
 	std::shared_ptr<Account> findAccountByIdentityAddress(const std::shared_ptr<const Address> identity) const;
-	void accountUpdate();
+	void removeDeletedAccounts();
 	void releaseAccounts();
 	const bctbx_list_t *getProxyConfigList() const;
 

@@ -263,6 +263,9 @@ void Account::setRegisterChanged(bool registerChanged) {
 
 void Account::setSendPublish(bool sendPublish) {
 	mSendPublish = sendPublish;
+	if (mSendPublish) {
+		triggerUpdate();
+	}
 }
 
 void Account::setNeedToRegister(bool needToRegister) {
@@ -278,6 +281,8 @@ void Account::setNeedToRegister(bool needToRegister) {
 		} catch (const bad_weak_ptr &) {
 			// Core pointer is null
 		}
+
+		triggerUpdate();
 	}
 }
 
@@ -402,6 +407,8 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 		if (state == LinphoneRegistrationOk && previousState != state) {
 			subscribeToMessageWaitingIndication();
 		}
+
+		triggerUpdate();
 	} else {
 		/*state already reported*/
 	}
@@ -445,6 +452,13 @@ void Account::setDependency(std::shared_ptr<Account> dependency) {
 
 void Account::setLimeUserAccountStatus(LimeUserAccountStatus status) {
 	mLimeUserAccountStatus = status;
+
+	if (mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountCreated ||
+	    mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountCreationSkiped ||
+	    mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountNone) {
+		// Trigger the update again so that it can continue.
+		triggerUpdate();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -1036,31 +1050,11 @@ int Account::done() {
 				unpublish();
 			}
 		}
-		mNeedToRegister = true;
-		try {
-			auto engine = getCore()->getEncryptionEngine();
-			if (engine && mParams) {
-				if (!mParams->getLimeServerUrl().empty() || !getCore()->getX3dhServerUrl().empty()) {
-					mLimeUserAccountStatus = LimeUserAccountStatus::LimeUserAccountNeedCreation;
-				}
-			}
-		} catch (const bad_weak_ptr &) {
-			// Core pointer is null
-		}
+		setNeedToRegister(true);
 	}
 
 	if (mRegisterChanged) {
-		mNeedToRegister = true;
-		try {
-			auto engine = getCore()->getEncryptionEngine();
-			if (engine && mParams) {
-				if (!mParams->getLimeServerUrl().empty() || !getCore()->getX3dhServerUrl().empty()) {
-					mLimeUserAccountStatus = LimeUserAccountStatus::LimeUserAccountNeedCreation;
-				}
-			}
-		} catch (const bad_weak_ptr &) {
-			// Core pointer is null
-		}
+		setNeedToRegister(true);
 		mRegisterChanged = false;
 	}
 
@@ -1074,7 +1068,7 @@ int Account::done() {
 			/*publish is terminated*/
 			mPresencePublishEvent->terminate();
 		}
-		if (mParams->mPublishEnabled) mSendPublish = true;
+		if (mParams->mPublishEnabled) setSendPublish(true);
 	} else {
 		lInfo() << "Publish params have not changed on account [" << this << "]";
 	}
@@ -1266,7 +1260,7 @@ int Account::sendPublish() {
 			bctbx_free(contact);
 		}
 	} else
-		mSendPublish = true; /*otherwise do not send publish if registration is in progress, this will be done later*/
+		setSendPublish(true); /*otherwise do not send publish if registration is in progress, this will be done later*/
 
 	return err;
 }
@@ -1461,6 +1455,20 @@ void Account::setConfig(LinphoneProxyConfig *config, bool takeProxyConfigRef) {
 
 LinphoneAccountAddressComparisonResult Account::isServerConfigChanged() {
 	return isServerConfigChanged(mOldParams, mParams);
+}
+
+void Account::triggerUpdate() {
+	try {
+		auto account = getSharedFromThis();
+		getCore()->doLater([account]() {
+			// Avoid updating if the core is not running
+			if (const auto *cCore = account->getCCore();
+			    cCore != nullptr && linphone_core_get_global_state(cCore) == LinphoneGlobalOn)
+				account->update();
+		});
+	} catch (const bad_weak_ptr &) {
+		// Core pointer is null
+	}
 }
 
 #ifndef _MSC_VER

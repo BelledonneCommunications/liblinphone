@@ -2654,11 +2654,7 @@ end:
 	return foundAccount;
 }
 
-void Core::accountUpdate() {
-	const auto accounts = mAccounts.mList;
-	for (const auto &account : accounts) {
-		account->update();
-	}
+void Core::removeDeletedAccounts() {
 	const auto deletedAccounts = mDeletedAccounts.mList;
 	for (const auto &account : deletedAccounts) {
 		if ((ms_time(NULL) - account->getDeletionDate()) > 32) {

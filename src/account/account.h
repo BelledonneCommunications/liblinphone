@@ -187,6 +187,8 @@ private:
 	std::list<SalAddress *> getOtherContacts();
 	void updateChatRoomList() const;
 
+	void triggerUpdate();
+
 	std::shared_ptr<AccountParams> mParams;
 
 	int mAuthFailure;
