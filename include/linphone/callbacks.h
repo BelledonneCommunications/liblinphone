@@ -578,6 +578,7 @@ typedef LinphoneCoreCbsFriendListRemovedCb LinphoneCoreFriendListRemovedCb;
  * Callback prototype for reporting the result of a version update check.
  * @param core #LinphoneCore object @notnil
  * @param result The result of the version update check @notnil
+ * @param version The version to update to @notnil
  * @param url The url where to download the new version if the result is #LinphoneVersionUpdateCheckNewVersionAvailable
  * @maybenil
  */
@@ -702,7 +703,6 @@ typedef void (*LinphoneCoreCbsMessageWaitingIndicationChangedCb)(LinphoneCore *c
  * Callback prototype for notifying the application about notification that is being sent.
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
- * @param notified_event The event as string @notnil
  * @param body the #LinphoneContent of the event @maybenil
  */
 typedef void (*LinphoneCoreCbsNotifySentCb)(LinphoneCore *core,

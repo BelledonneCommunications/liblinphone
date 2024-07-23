@@ -151,7 +151,7 @@ LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMes
 
 /**
  * @brief Gets the list of listener in the account.
- * @param account #LinphoneConferenceScheduler object. @notnil
+ * @param conference_scheduler #LinphoneConferenceScheduler object. @notnil
  * @return The list of #LinphoneConferenceSchedulerCbs. @maybenil
  * @donotwrap
  */
@@ -160,7 +160,7 @@ linphone_conference_scheduler_get_callbacks_list(const LinphoneConferenceSchedul
 
 /**
  * Sets the current LinphoneConferenceSchedulerCbs.
- * @param account #LinphoneConferenceScheduler object. @notnil
+ * @param conference_scheduler #LinphoneConferenceScheduler object. @notnil
  * @param cbs The #LinphoneConferenceSchedulerCbs object. @maybenil
  * @donotwrap
  */

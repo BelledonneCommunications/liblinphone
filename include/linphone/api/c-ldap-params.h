@@ -334,7 +334,7 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_sip_attribute(const Linphon
 /*************************************************************************************/
 
 /**
- * @brief Add the domain to the sip address(sip:username@domain).
+ * @brief Add the domain to the sip address(sip:username\@domain).
  * By default or if it is empty, the domain will be specify while searching on the current proxy account.
  * Default value : "".
  *
@@ -344,12 +344,12 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_sip_attribute(const Linphon
 LINPHONE_PUBLIC void linphone_ldap_params_set_sip_domain(LinphoneLdapParams *params, const char *sip_domain);
 
 /**
- * @brief Get the domain to the sip address(sip:username@domain).
+ * @brief Get the domain to the sip address(sip:username\@domain).
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The SIP domain for the friend. @maybenil
  **/
-LINPHONE_PUBLIC const char *linphone_ldap_params_get_sip_domain(const LinphoneLdapParams *param);
+LINPHONE_PUBLIC const char *linphone_ldap_params_get_sip_domain(const LinphoneLdapParams *params);
 
 /*************************************************************************************/
 

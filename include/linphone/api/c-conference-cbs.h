@@ -44,20 +44,20 @@ LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_conference_cbs_ref(LinphoneConfe
 
 /**
  * Release reference to the conference callbacks object.
- * @param[in] cr The conference callbacks object
+ * @param[in] cbs The conference callbacks object
  **/
 LINPHONE_PUBLIC void linphone_conference_cbs_unref(LinphoneConferenceCbs *cbs);
 
 /**
  * Retrieve the user pointer associated with the conference callbacks object.
- * @param[in] cr The conference callbacks object
+ * @param[in] cbs The conference callbacks object
  * @return The user pointer associated with the conference callbacks object
  **/
 LINPHONE_PUBLIC void *linphone_conference_cbs_get_user_data(const LinphoneConferenceCbs *cbs);
 
 /**
  * Assign a user pointer to the conference callbacks object.
- * @param[in] cr The conference callbacks object
+ * @param[in] cbs The conference callbacks object
  * @param[in] ud The user pointer to associate with the conference callbacks object
  **/
 LINPHONE_PUBLIC void linphone_conference_cbs_set_user_data(LinphoneConferenceCbs *cbs, void *ud);

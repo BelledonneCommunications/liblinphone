@@ -34,7 +34,7 @@ extern "C" {
 
 /**
  * Clone an existing #LinphoneNatPolicy object.
- * @param policy #LinphoneNatPolicy object. @notnil
+ * @param other #LinphoneNatPolicy object. @notnil
  * @return A clone of the original #LinphoneNatPolicy object. @notnil
  **/
 LINPHONE_PUBLIC LinphoneNatPolicy *linphone_nat_policy_clone(const LinphoneNatPolicy *other);
@@ -51,13 +51,6 @@ LINPHONE_PUBLIC LinphoneNatPolicy *linphone_nat_policy_ref(LinphoneNatPolicy *po
  * @param policy #LinphoneNatPolicy object. @notnil
  **/
 LINPHONE_PUBLIC void linphone_nat_policy_unref(LinphoneNatPolicy *policy);
-
-/**
- * Clone a #LinphoneNatPolicy object.
- * @param policy #LinphoneNatPolicy object. @notnil
- * @return a new #LinphoneNatPolicy object. @notnil
- */
-LINPHONE_PUBLIC LinphoneNatPolicy *linphone_nat_policy_clone(const LinphoneNatPolicy *policy);
 
 /**
  * Retrieve the user pointer associated with the #LinphoneNatPolicy object.

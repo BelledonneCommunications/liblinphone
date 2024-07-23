@@ -42,7 +42,7 @@ extern "C" {
 LINPHONE_PUBLIC LinphoneDialPlan *linphone_dial_plan_ref(LinphoneDialPlan *dial_plan);
 
 /**
- * Decreases the reference counter of #LinphoneDialPaln objects.
+ * Decreases the reference counter of #LinphoneDialPlan objects.
  * @param dial_plan the #LinphoneDialPlan object @notnil
  */
 LINPHONE_PUBLIC void linphone_dial_plan_unref(LinphoneDialPlan *dial_plan);

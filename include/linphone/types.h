@@ -40,7 +40,7 @@
  * In addition to the #LinphoneAuthInfo that stores the credentials,
  * you need to configure a #LinphoneProxyConfig as well to be able to connect to a proxy server.
  *
- * A minimal proxy config consists of an identity address (sip:username@domain.tld)
+ * A minimal proxy config consists of an identity address (sip:username\@domain.tld)
  * and the proxy server address, @see linphone_proxy_config_set_server_addr().
  *
  * If any, it will be stored inside the default configuration file, so it will survive the destruction

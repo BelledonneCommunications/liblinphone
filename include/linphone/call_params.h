@@ -254,15 +254,15 @@ LINPHONE_PUBLIC void linphone_call_params_enable_video(LinphoneCallParams *call_
 
 /**
  * Set video layout for conference.
- * @param call_params The #LinphoneCallParams to get the custom SIP header from. @notnil
- * @param layout Preferred #LinphoneConferenceLayout to use at the start of a conference
+ * @param params The #LinphoneCallParams to get the custom SIP header from. @notnil
+ * @return Preferred #LinphoneConferenceLayout to use at the start of a conference
  */
 LINPHONE_PUBLIC LinphoneConferenceLayout
 linphone_call_params_get_conference_video_layout(const LinphoneCallParams *params);
 
 /**
  * Set video layout for conference.
- * @param call_params The #LinphoneCallParams to get the custom SIP header from. @notnil
+ * @param params The #LinphoneCallParams to get the custom SIP header from. @notnil
  * @param layout #LinphoneConferenceLayout to use as default when creating a conference
  */
 LINPHONE_PUBLIC void linphone_call_params_set_conference_video_layout(LinphoneCallParams *params,
@@ -872,7 +872,7 @@ linphone_call_params_get_received_video_size(const LinphoneCallParams *call_para
 
 /**
  * @brief Gets the size of the video that is sent.
- * @param call_params #LinphoneCalParams object @notnil
+ * @param call_params #LinphoneCallParams object @notnil
  * @return The sent video size or MS_VIDEO_SIZE_UNKNOWN if not available.
  * @deprecated 22/11/2017 Use #linphone_call_params_get_sent_video_definition() instead.
  * @donotwrap

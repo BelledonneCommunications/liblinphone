@@ -152,14 +152,14 @@ typedef void (*LinphoneCallCbsAuthenticationTokenVerifiedCb)(LinphoneCall *call,
 /**
  * Call send master key changed callback.
  * @param call #LinphoneCall object whose encryption is changed. @notnil
- * @param master_key The send master key of the SRTP session. @maybenil
+ * @param send_master_key The send master key of the SRTP session. @maybenil
  */
 typedef void (*LinphoneCallCbsSendMasterKeyChangedCb)(LinphoneCall *call, const char *send_master_key);
 
 /**
  * Call receive master key changed callback.
  * @param call #LinphoneCall object whose encryption is changed. @notnil
- * @param master_key The receive master key of the SRTP session. @maybenil
+ * @param receive_master_key The receive master key of the SRTP session. @maybenil
  */
 typedef void (*LinphoneCallCbsReceiveMasterKeyChangedCb)(LinphoneCall *call, const char *receive_master_key);
 
@@ -899,6 +899,7 @@ typedef void (*LinphoneParticipantDeviceCbsScreenSharingChangedCb)(LinphoneParti
 /**
  * Callback used to notify that participant device changed state
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] state new participant device state
  */
 typedef void (*LinphoneParticipantDeviceCbsStateChangedCb)(LinphoneParticipantDevice *participant_device,
                                                            const LinphoneParticipantDeviceState state);
@@ -906,8 +907,8 @@ typedef void (*LinphoneParticipantDeviceCbsStateChangedCb)(LinphoneParticipantDe
 /**
  * Callback used to notify that participant device stream capability has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- * @param[in] direction  participant device's stream direction
- * @param[in] stream_type type of stream: aaudio, video or text
+ * @param[in] direction participant device's stream direction
+ * @param[in] stream_type type of stream: audio, video or text
  */
 typedef void (*LinphoneParticipantDeviceCbsStreamCapabilityChangedCb)(LinphoneParticipantDevice *participant_device,
                                                                       LinphoneMediaDirection direction,
@@ -924,8 +925,8 @@ typedef void (*LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb)(
 /**
  * Callback used to notify that participant device stream availability has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- * @param[in] available  participant device's stream availability
- * @param[in] stream_type type of stream: aaudio, video or text
+ * @param[in] available TRUE if the stream is available on our side
+ * @param[in] stream_type type of stream: audio, video or text
  */
 typedef void (*LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb)(LinphoneParticipantDevice *participant_device,
                                                                         bool_t available,

@@ -183,15 +183,14 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_get_stream_availability(
  * The availability information represents whether a given stream type is currently available to be presented in the
  * conference for a #LinphoneParticipantDevice
  * @param participant_device A #LinphoneParticipantDevice object @notnil
- * @param stream_type A #LinphoneStreamType
  * @return TRUE if the stream of type stream_type is available for device, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t
 linphone_participant_device_get_thumbnail_stream_availability(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the stream SSRC of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * Get the audio stream SSRC of the device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param stream_type A #LinphoneStreamType
  * @return the stream's SSRC of the device
  */
@@ -200,7 +199,7 @@ LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphonePart
 
 /**
  * Get the thumbnail stream SSRC of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the thumbnail stream's SSRC of the device
  */
 LINPHONE_PUBLIC uint32_t

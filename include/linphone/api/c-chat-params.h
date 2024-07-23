@@ -164,7 +164,7 @@ LINPHONE_PUBLIC void linphone_chat_params_set_ephemeral_mode(LinphoneChatParams 
 /**
  * Enables or disables real time text for the text capabilities of the chat associated with the given parameters.
  * @param params The #LinphoneChatParams object. @notnil
- * @param rtt. TRUE to enable real time text, FALSE to disable.
+ * @param rtt TRUE to enable real time text, FALSE to disable.
  **/
 LINPHONE_PUBLIC void linphone_chat_params_enable_rtt(LinphoneChatParams *params, bool_t rtt);
 

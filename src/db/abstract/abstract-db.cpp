@@ -123,6 +123,7 @@ void AbstractDb::disconnect() {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	d->dbSession = DbSession();
+	d->initialized = false;
 #endif
 }
 

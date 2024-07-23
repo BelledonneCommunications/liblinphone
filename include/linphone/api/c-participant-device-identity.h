@@ -103,7 +103,7 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_participant_device_identity_get_cap
  * @return the address. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *
-linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity);
+linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * @}

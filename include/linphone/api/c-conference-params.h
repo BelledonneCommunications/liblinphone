@@ -310,7 +310,7 @@ LINPHONE_PUBLIC void linphone_conference_params_set_security_level(LinphoneConfe
  * Set the conference factory address of the conference.
  * By default when creating a new conference, the factory address will come from the current proxy configuration.
  * If NULL then the conference will be local else it will be a remote conference.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param address the conference factory address. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_conference_factory_address(LinphoneConferenceParams *params,
@@ -318,7 +318,7 @@ LINPHONE_PUBLIC void linphone_conference_params_set_conference_factory_address(L
 
 /**
  * Get the conference factory address of the conference that has been set.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return the factory address conference description. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *
@@ -326,7 +326,7 @@ linphone_conference_params_get_conference_factory_address(const LinphoneConferen
 
 /**
  * Set the description of the conference
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param description the conference description. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_description(LinphoneConferenceParams *params,
@@ -334,28 +334,28 @@ LINPHONE_PUBLIC void linphone_conference_params_set_description(LinphoneConferen
 
 /**
  * Get conference description
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return the conference description. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_params_get_description(const LinphoneConferenceParams *params);
 
 /**
  * Set the subject of the conference
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param subject the conference subject. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char *subject);
 
 /**
  * Get conference subject
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return the conference subject. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_params_get_subject(const LinphoneConferenceParams *params);
 
 /**
  * Set the participant list type
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param type Participant list type #LinphoneConferenceParticipantListType. This allows to restrict the access to the
  * conference to a selected set of participants
  */
@@ -365,21 +365,21 @@ LINPHONE_PUBLIC void linphone_conference_params_set_participant_list_type(Linpho
 /**
  * Set the conference as hidden. This means that the contact address will not have any conference releated attribute
  * such as isfocus, the conference ID and the admin status.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param hidden Boolean that states whether the conference is hidden or not
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_hidden(LinphoneConferenceParams *params, bool_t hidden);
 
 /**
  * Get the value of the hidden flag
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return whether the conference is hidden or not
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_hidden(const LinphoneConferenceParams *params);
 
 /**
  * Get the participant list type
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return participant list type #LinphoneConferenceParticipantListType.
  */
 LINPHONE_PUBLIC LinphoneConferenceParticipantListType
@@ -402,7 +402,7 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_group_enabled(const LinphoneCo
 /**
  * Enables or disables group chat for the text capabilities of the conference associated with the given parameters.
  * @param params The #LinphoneConferenceParams object. @notnil
- * @param group. TRUE to enable group chat, FALSE to disable (resulting in one-to-one text capabilities of
+ * @param group TRUE to enable group chat, FALSE to disable (resulting in one-to-one text capabilities of
  * the conference)
  **/
 LINPHONE_PUBLIC void linphone_conference_params_enable_group(LinphoneConferenceParams *params, bool_t group);

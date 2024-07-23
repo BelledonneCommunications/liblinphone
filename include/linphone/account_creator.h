@@ -209,8 +209,6 @@ linphone_account_creator_request_account_creation_request_token(LinphoneAccountC
  * Send a request to get a token to be used for account creation from a request_token. The token is retrieved from the
  *callback linphone_account_creator_cbs_get_account_creation_token_using_request_token()
  * @param creator #LinphoneAccountCreator object @notnil
- * @param token the request token to check. It comes from
- *linphone_account_creator_cbs_get_account_creation_request_token()
  * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent,
  *#LinphoneAccountCreatorStatusRequestFailed otherwise
  * @deprecated 11/06/2024 use #LinphoneAccountManagerServices instead

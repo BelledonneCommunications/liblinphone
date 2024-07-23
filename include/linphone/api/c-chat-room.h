@@ -686,12 +686,13 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCore *linphone_chat_room_get_lc(cons
 
 /**
  * Send a message to peer member of this chat room.
- * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
  * @param chat_room #LinphoneChatRoom object
  * @param message message to be sent
+ * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
  * @donotwrap
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(LinphoneChatRoom *chat_room, const char *msg);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(LinphoneChatRoom *chat_room,
+                                                                         const char *message);
 
 /**
  * Send a message to peer member of this chat room.

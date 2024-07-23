@@ -253,7 +253,6 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const Linp
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param username The username that needs to be authenticated @notnil
  * @param access_token An access token to send to authenticate @maybenil
- * @param passwd The password in clear text @maybenil
  * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't
  * use this parameter. @maybenil
  * @return A #LinphoneAuthInfo object. linphone_auth_info_unref() must be used to destroy it when no longer needed.
