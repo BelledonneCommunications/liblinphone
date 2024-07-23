@@ -70,7 +70,7 @@ LINPHONE_PUBLIC void linphone_friend_list_set_type(LinphoneFriendList *friend_li
  * Get the #LinphoneFriendListType of a friend list
  * @param friend_list #LinphoneFriendList object. @notnil
  **/
-LINPHONE_PUBLIC LinphoneFriendListType linphone_friend_list_get_type(LinphoneFriendList *list);
+LINPHONE_PUBLIC LinphoneFriendListType linphone_friend_list_get_type(LinphoneFriendList *friend_list);
 
 /**
  * Get the display name of the friend list.
@@ -129,7 +129,7 @@ LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_add_friend(Linphon
 
 /**
  * Add a friend to a friend list. The friend will never be sent to a remote CardDAV server.
- * Warning! #LinphoneFriends added this way will be removed on the next synchronization, and the callback
+ * Warning! #LinphoneFriend added this way will be removed on the next synchronization, and the callback
  *contact_deleted will be called.
  * @param friend_list #LinphoneFriendList object. @notnil
  * @param linphone_friend #LinphoneFriend object to add to the friend list. @notnil

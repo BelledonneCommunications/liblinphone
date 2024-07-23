@@ -289,7 +289,7 @@ LINPHONE_PUBLIC void linphone_content_set_file_path(LinphoneContent *content, co
 /**
  * Gets the file duration in seconds, if information is available.
  * @param content #LinphoneContent object. @notnil
- * @param The duration of the file in seconds or -1 if information isn't available.
+ * @return The duration of the file in seconds or -1 if information isn't available.
  */
 LINPHONE_PUBLIC int linphone_content_get_file_duration(LinphoneContent *content);
 

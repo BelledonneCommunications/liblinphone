@@ -266,7 +266,7 @@ linphone_logging_service_cbs_get_log_message_written(const LinphoneLoggingServic
 /**
  * @brief Pass a pointer on a custom object.
  *
- * That pointer can be get back by callbacks by using #linphone_logging_service_get_cbs() and
+ * That pointer can be get back by callbacks by using #linphone_logging_service_get_callbacks() and
  * #linphone_logging_service_cbs_get_user_data().
  * @param cbs the #LinphoneLoggingServiceCbs object. @notnil
  * @param user_data the user data pointer. @maybenil

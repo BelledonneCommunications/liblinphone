@@ -172,7 +172,7 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_get_stream_availability(
 
 /**
  * Get the audio stream SSRC of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param stream_type A #LinphoneStreamType
  * @return the audio stream SSRC of the device
  */
@@ -211,8 +211,7 @@ linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevic
  * @param window_id the window ID of the device @maybenil
  */
 LINPHONE_PUBLIC void
-linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device,
-                                                       void *window_id);
+linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void *window_id);
 
 /**
  * Get window ID.

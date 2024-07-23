@@ -609,7 +609,6 @@ linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *params
  * Set the conference factory uri.
  * @param params The #LinphoneAccountParams object @notnil
  * @param address The #LinphoneAddress to set. @maybenil
- * @param uri The uri of the conference factory as a #LinphoneAddress. @maybenil
  */
 LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_address(LinphoneAccountParams *params,
                                                                             const LinphoneAddress *address);
@@ -618,7 +617,6 @@ LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_address(Linp
  * Set the audio video conference factory uri.
  * @param params The #LinphoneAccountParams object @notnil
  * @param address The #LinphoneAddress to set. @maybenil
- * @param uri The uri of the audio video conference factory. @maybenil
  */
 LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
                                                                                         const LinphoneAddress *address);

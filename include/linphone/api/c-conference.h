@@ -100,7 +100,7 @@ LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConferen
  * Set the conference factory address of the conference.
  * By default when creating a new conference, the factory address will come from the current proxy configuration.
  * If NULL then the conference will be local else it will be a remote conference.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param address the conference factory address. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_conference_factory_address(LinphoneConferenceParams *params,
@@ -108,7 +108,7 @@ LINPHONE_PUBLIC void linphone_conference_params_set_conference_factory_address(L
 
 /**
  * Get the conference factory address of the conference that has been set.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return the factory address conference description. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *
@@ -116,7 +116,7 @@ linphone_conference_params_get_conference_factory_address(const LinphoneConferen
 
 /**
  * Set the description of the conference
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param description the conference description. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_description(LinphoneConferenceParams *params,
@@ -124,28 +124,28 @@ LINPHONE_PUBLIC void linphone_conference_params_set_description(LinphoneConferen
 
 /**
  * Get conference description
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return the conference description. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_params_get_description(const LinphoneConferenceParams *params);
 
 /**
  * Set the subject of the conference
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param subject the conference subject. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char *subject);
 
 /**
  * Get conference subject
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return the conference subject. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_params_get_subject(const LinphoneConferenceParams *params);
 
 /**
  * Set the conference start time
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param start the conference start time as the number of seconds between the desired start time and the 1st of January
  * 1970. In order to program an immediate start of a conference, then program the start time to 0
  */
@@ -153,7 +153,7 @@ LINPHONE_PUBLIC void linphone_conference_params_set_start_time(LinphoneConferenc
 
 /**
  * Get the start time of the conference.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return start time of a conference as time_t type or 0 for immediate start of a conference. For UNIX based systems it
  * is the number of seconds since 00:00hours of the 1st of January 1970
  */
@@ -161,7 +161,7 @@ LINPHONE_PUBLIC time_t linphone_conference_params_get_start_time(const LinphoneC
 
 /**
  * Set the conference end time
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param end the conference end time as the number of seconds between the desired end time and the 1st of January 1970.
  * In order to program an undefined end of a conference, then program the end time to 0
  */
@@ -169,7 +169,7 @@ LINPHONE_PUBLIC void linphone_conference_params_set_end_time(LinphoneConferenceP
 
 /**
  * Get the end time of the conference.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return end time of a conference as time_t type or 0 for open end of a conference. For UNIX based systems it is the
  * number of seconds since 00:00hours of the 1st of January 1970
  */
@@ -177,7 +177,7 @@ LINPHONE_PUBLIC time_t linphone_conference_params_get_end_time(const LinphoneCon
 
 /**
  * Set the participant list type
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param type Participant list type #LinphoneConferenceParticipantListType. This allows to restrict the access to the
  * conference to a selected set of participants
  */
@@ -187,21 +187,21 @@ LINPHONE_PUBLIC void linphone_conference_params_set_participant_list_type(Linpho
 /**
  * Set the conference as hidden. This means that the contact address will not have any conference releated attribute
  * such as isfocus, the conference ID and the admin status.
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @param hidden Boolean that states whether the conference is hidden or not
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_hidden(LinphoneConferenceParams *params, bool_t hidden);
 
 /**
  * Get the value of the hidden flag
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return whether the conference is hidden or not
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_hidden(const LinphoneConferenceParams *params);
 
 /**
  * Get the participant list type
- * @param conference The #LinphoneConference object. @notnil
+ * @param params The #LinphoneConferenceParams object. @notnil
  * @return participant list type #LinphoneConferenceParticipantListType.
  */
 LINPHONE_PUBLIC LinphoneConferenceParticipantListType

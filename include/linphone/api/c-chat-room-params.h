@@ -144,7 +144,7 @@ LINPHONE_PUBLIC void linphone_chat_room_params_set_encryption_backend(LinphoneCh
 /**
  * Enables or disables group chat for the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
- * @param group. TRUE to enable group chat, FALSE to disable (resulting in one-to-one chat room)
+ * @param group TRUE to enable group chat, FALSE to disable (resulting in one-to-one chat room)
  **/
 LINPHONE_PUBLIC void linphone_chat_room_params_enable_group(LinphoneChatRoomParams *params, bool_t group);
 
@@ -159,14 +159,14 @@ LINPHONE_PUBLIC void linphone_chat_room_params_set_ephemeral_mode(LinphoneChatRo
 /**
  * Enables or disables encryption for the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
- * @param encrypted. TRUE to enable encryption, FALSE to disable.
+ * @param encrypted TRUE to enable encryption, FALSE to disable.
  **/
 LINPHONE_PUBLIC void linphone_chat_room_params_enable_encryption(LinphoneChatRoomParams *params, bool_t encrypted);
 
 /**
  * Enables or disables real time text for the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
- * @param rtt. TRUE to enable real time text, FALSE to disable.
+ * @param rtt TRUE to enable real time text, FALSE to disable.
  **/
 LINPHONE_PUBLIC void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams *params, bool_t rtt);
 

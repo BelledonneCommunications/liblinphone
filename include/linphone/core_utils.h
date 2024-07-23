@@ -147,7 +147,7 @@ LINPHONE_PUBLIC void linphone_core_stop_dtmf_stream(LinphoneCore *core);
  * @param activated TRUE to activate the audio session, FALSE to disable it.
  * @ingroup IOS
  */
-LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore *core, bool_t actived);
+LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore *core, bool_t activated);
 
 /**
  * Special function to configure audio session with default settings. Must be called in ProviderDelegate's callbacks

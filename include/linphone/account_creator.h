@@ -83,13 +83,15 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator);
 
 /**
- * Send a request to create a push account on server. Push accounts are used in account dependent situation when account cannot send push notifications.
- * A username and password are automatically generated, an account is automatically activated.
+ * Send a request to create a push account on server. Push accounts are used in account dependent situation when account
+ *cannot send push notifications. A username and password are automatically generated, an account is automatically
+ *activated.
  * @param creator #LinphoneAccountCreator object @notnil
  * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent,
  *#LinphoneAccountCreatorStatusRequestFailed otherwise
  **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_push_account(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_create_push_account(LinphoneAccountCreator *creator);
 
 /**
  * Send a request to know if an account is activated on server.
@@ -186,8 +188,6 @@ linphone_account_creator_request_account_creation_request_token(LinphoneAccountC
  * Send a request to get a token to be used for account creation from a request_token. The token is retrieved from the
  *callback linphone_account_creator_cbs_get_account_creation_token_using_request_token()
  * @param creator #LinphoneAccountCreator object @notnil
- * @param token the request token to check. It comes from
- *linphone_account_creator_cbs_get_account_creation_request_token()
  * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent,
  *#LinphoneAccountCreatorStatusRequestFailed otherwise
  **/

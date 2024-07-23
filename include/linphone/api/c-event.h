@@ -68,6 +68,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_accept_subscription(LinphoneEvent 
 /**
  * Deny an incoming subscription with given reason.
  * @param linphone_event #LinphoneEvent object. @notnil
+ * @param reason The #LinphoneReason of denial. @notnil
  * @return 0 if successful, error code otherwise
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_event_deny_subscription(LinphoneEvent *linphone_event, LinphoneReason reason);
@@ -115,6 +116,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_accept_publish(LinphoneEvent *linp
 /**
  * Deny an incoming publish with given reason.
  * @param linphone_event #LinphoneEvent object. @notnil
+ * @param reason The #LinphoneReason of denial. @notnil
  * @return 0 if successful, error code otherwise
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_event_deny_publish(LinphoneEvent *linphone_event, LinphoneReason reason);
@@ -247,7 +249,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEve
  * @param linphone_event #LinphoneEvent object @notnil
  * @return the "to" #LinphoneAddress. @notnil
  **/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *linphone_event);
 
 /**
  * Get the resource address of the subscription or publish.

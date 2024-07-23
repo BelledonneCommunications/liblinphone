@@ -92,7 +92,8 @@ LINPHONE_PUBLIC time_t linphone_presence_model_get_timestamp(const LinphonePrese
 /**
  *  Gets the latest activity timestamp of a presence model.
  * @param model The #LinphonePresenceModel object to get the timestamp from. @notnil
- * @return The activity timestamp of the #LinphonePresenceModel object or -1 if there is no activity (such as when status is Online).
+ * @return The activity timestamp of the #LinphonePresenceModel object or -1 if there is no activity (such as when
+ * status is Online).
  */
 LINPHONE_PUBLIC time_t linphone_presence_model_get_latest_activity_timestamp(const LinphonePresenceModel *model);
 

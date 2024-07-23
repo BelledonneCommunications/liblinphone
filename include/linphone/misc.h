@@ -88,7 +88,7 @@ LINPHONE_PUBLIC const char *linphone_media_direction_to_string(LinphoneMediaDire
 
 /**
  * Convert string to enum member.
- * @param a string representation of the #LinphoneMediaEncryption to convert @notnil
+ * @param value string representation of the #LinphoneMediaEncryption to convert @notnil
  * @return integer value of the media_encryption in enum #LinphoneMediaEncryption or -1 if it is not found
  * @ingroup media_parameters
  **/

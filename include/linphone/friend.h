@@ -40,7 +40,8 @@ extern "C" {
  * @param address the #LinphoneAddress to set @maybenil
  * return 0 if successful, -1 otherwise
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_friend_set_address(LinphoneFriend *fr, const LinphoneAddress *address);
+LINPHONE_PUBLIC LinphoneStatus linphone_friend_set_address(LinphoneFriend *linphone_friend,
+                                                           const LinphoneAddress *address);
 
 /**
  * Get address of this friend.
@@ -154,7 +155,7 @@ LINPHONE_PUBLIC bool_t linphone_friend_subscribes_enabled(const LinphoneFriend *
  * @param enable if TRUE this friend will receive subscription message
  * @return 0
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_friend_enable_subscribes(LinphoneFriend *fr, bool_t enable);
+LINPHONE_PUBLIC LinphoneStatus linphone_friend_enable_subscribes(LinphoneFriend *linphone_friend, bool_t enable);
 #define linphone_friend_send_subscribe linphone_friend_enable_subscribes
 
 /**
@@ -163,7 +164,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_friend_enable_subscribes(LinphoneFriend 
  * @param policy #LinphoneSubscribePolicy policy to apply.
  * @return 0
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_friend_set_inc_subscribe_policy(LinphoneFriend *fr,
+LINPHONE_PUBLIC LinphoneStatus linphone_friend_set_inc_subscribe_policy(LinphoneFriend *linphone_friend,
                                                                         LinphoneSubscribePolicy policy);
 
 /**
@@ -573,7 +574,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_friend_destroy(LinphoneFriend 
 
 /**
  * Get the status of a friend
- * @param lf A #LinphoneFriend object
+ * @param linphone_friend A #LinphoneFriend object
  * @return #LinphoneOnlineStatus
  * @deprecated 19/06/2013 Use linphone_friend_get_presence_model() instead
  * @donotwrap

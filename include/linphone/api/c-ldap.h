@@ -91,7 +91,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_ldap_get_core(LinphoneLdap *ldap);
 /**
  * Set the index associated to the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
- * @param The index of the Ldap. Can be -1 : it will be determined on save.
+ * @param index The index of the Ldap. Can be -1 : it will be determined on save.
  **/
 LINPHONE_PUBLIC void linphone_ldap_set_index(LinphoneLdap *ldap, int index);
 

@@ -98,8 +98,9 @@ LINPHONE_PUBLIC void linphone_push_notification_config_set_provider(LinphonePush
  * @param push_cfg The #LinphonePushNotificationConfig object @notnil
  * @param remote_push_interval The new remote push interval set for push notification config. @notnil
  */
-LINPHONE_PUBLIC void linphone_push_notification_config_set_remote_push_interval(LinphonePushNotificationConfig *push_cfg,
-                                                                    const char *remote_push_interval);
+LINPHONE_PUBLIC void
+linphone_push_notification_config_set_remote_push_interval(LinphonePushNotificationConfig *push_cfg,
+                                                           const char *remote_push_interval);
 
 /**
  * Gets the team id for "contact uri parameter".

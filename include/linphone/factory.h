@@ -19,9 +19,9 @@
  */
 
 // In nested files
-//#ifndef LINPHONE_FACTORY_H
-//#define LINPHONE_FACTORY_H
+// #ifndef LINPHONE_FACTORY_H
+// #define LINPHONE_FACTORY_H
 
 #include "linphone/api/c-factory.h"
 
-//#endif // LINPHONE_FACTORY_H
+// #endif // LINPHONE_FACTORY_H

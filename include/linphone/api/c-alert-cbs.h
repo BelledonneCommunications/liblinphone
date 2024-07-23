@@ -61,12 +61,14 @@ LINPHONE_PUBLIC void *linphone_alert_cbs_get_user_data(const LinphoneAlertCbs *c
  * @param user_data The user pointer to associate with the alert callbacks object. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_alert_cbs_set_user_data(LinphoneAlertCbs *cbs, void *user_data);
+
 /**
  * Assign a callback for when the alert is terminated
  * @param cbs The #LinphoneAlertCbs object. @notnil
- * @param on_terminated The #LinphoneAlertCbsOnTerminatedCb callback to execute. @notnil
+ * @param terminated The #LinphoneAlertCbsOnTerminatedCb callback to execute. @notnil
  */
 LINPHONE_PUBLIC void linphone_alert_cbs_set_terminated(LinphoneAlertCbs *cbs, LinphoneAlertCbsTerminatedCb terminated);
+
 /**
  * Get the callback for when the alert is terminated
  * @param cbs The #LinphoneAlertCbs object. @notnil

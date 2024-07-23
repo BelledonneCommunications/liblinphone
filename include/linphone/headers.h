@@ -45,7 +45,7 @@ LINPHONE_PUBLIC void linphone_headers_unref(LinphoneHeaders *obj);
 /**
  * Search for a given header name and return its value.
  * @param headers the #LinphoneHeaders object @notnil
- * @param name the header's name @notnil
+ * @param header_name the header's name @notnil
  * @return the header's value or NULL if not found. @maybenil
  **/
 

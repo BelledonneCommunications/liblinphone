@@ -148,7 +148,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_config_load_from_xml_string(LinphoneConf
 /**
  * Returns the filename used to store the user config.
  * @ingroup misc
- * @param config the #LinphoneConfig object. @notnill
+ * @param config the #LinphoneConfig object. @notnil
  * @return the filename used to store the user config if any. @maybenil
  * @donotwrap
  */
@@ -157,7 +157,7 @@ LINPHONE_PUBLIC const char *linphone_config_get_filename(const LinphoneConfig *c
 /**
  * Returns the filename that was used as the factory config.
  * @ingroup misc
- * @param config the #LinphoneConfig object. @notnill
+ * @param config the #LinphoneConfig object. @notnil
  * @return the filename used to as the factory config if any. @maybenil
  * @donotwrap
  */
@@ -166,7 +166,7 @@ LINPHONE_PUBLIC const char *linphone_config_get_factory_filename(const LinphoneC
 /**
  * Returns the temporary filename used to store the user config.
  * @ingroup misc
- * @param config the #LinphoneConfig object. @notnill
+ * @param config the #LinphoneConfig object. @notnil
  * @return the temporary filename used to store the user config if any. @maybenil
  * @donotwrap
  */

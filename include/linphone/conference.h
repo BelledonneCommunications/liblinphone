@@ -493,7 +493,7 @@ LINPHONE_PUBLIC void linphone_conference_set_username(LinphoneConference *confer
  * Set stream capability on me device of a local conference
  * @param conference The #LinphoneConference object. @notnil
  * @param direction the direction of stream of type stream_type
- * @param stream_type A #LinphoneStreamType
+ * @param type The #LinphoneStreamType
  */
 LINPHONE_PUBLIC void linphone_conference_set_local_participant_stream_capability(LinphoneConference *conference,
                                                                                  const LinphoneMediaDirection direction,
@@ -545,7 +545,7 @@ LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference
 
 /**
  * Associate a user pointer to the linphone conference.
- * @param core #LinphoneConference object @notnil
+ * @param conference #LinphoneConference object @notnil
  * @param user_data The user data to associate with the #LinphoneConference object. @maybenil
  * @ingroup initializing
  **/
@@ -674,8 +674,7 @@ LINPHONE_PUBLIC LinphoneCall *linphone_conference_get_call(const LinphoneConfere
 /**
  * Retrieves the volume of a specific participant
  * @param conference A #LinphoneConference object @notnil
- * @param device The Participant @notnil
- * @return The volume of the participant expressed in dbm0.
+ * @return TRUE if the microphone is muted, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_conference_get_microphone_muted(const LinphoneConference *conference);
 
@@ -684,14 +683,13 @@ LINPHONE_PUBLIC bool_t linphone_conference_get_microphone_muted(const LinphoneCo
  * Note that the microphone may be disabled globally if FALSE was given to
  * linphone_core_enable_mic().
  * @param conference A #LinphoneConference object @notnil
- * @return The microphone muted state.
+ * @param muted The microphone muted state.
  **/
 LINPHONE_PUBLIC void linphone_conference_set_microphone_muted(LinphoneConference *conference, bool_t muted);
 
 /**
  * Retrieves the volume of a specific participant
  * @param conference A #LinphoneConference object @notnil
- * @param device The Participant @notnil
  * @return The volume of the participant expressed in dbm0.
  */
 LINPHONE_PUBLIC float linphone_conference_get_input_volume(const LinphoneConference *conference);
