@@ -560,8 +560,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 
 			SalAddress *addr = sal_address_new(tmp.c_str());
 			if (addr != NULL) {
-				sal_address_unref(addr);
-				mRoutes.emplace_back(Address::create(tmp.c_str()));
+				mRoutes.emplace_back(Address::create(addr, true));
 			} else {
 				error = true;
 			}

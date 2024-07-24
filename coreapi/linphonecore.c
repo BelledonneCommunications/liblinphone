@@ -4616,28 +4616,30 @@ linphone_core_start_refered_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *c
 */
 
 static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const LinphoneAddress *dest) {
-	bctbx_list_t *ret = NULL;
+	bctbx_list_t *ret = nullptr;
 	bctbx_list_t *account_routes = linphone_account_params_get_routes_addresses(linphone_account_get_params(account));
+
 	bctbx_list_t *account_routes_iterator = (bctbx_list_t *)account_routes;
 	while (account_routes_iterator) {
 		LinphoneAddress *local_route = (LinphoneAddress *)bctbx_list_get_data(account_routes_iterator);
 		if (local_route) {
-			char *route_str = linphone_address_as_string(local_route);
-			ret = bctbx_list_append(ret, sal_address_new(route_str));
-			ms_free(route_str);
+			ret = bctbx_list_append(ret, sal_address_clone(Address::toCpp(local_route)->getImpl()));
 		}
 		account_routes_iterator = bctbx_list_next(account_routes_iterator);
 	}
 	bctbx_list_free(account_routes);
+
 	const auto srv_route = Account::toCpp(account)->getServiceRouteAddress();
 	if (srv_route) {
 		ret = bctbx_list_append(ret, sal_address_clone(srv_route->getImpl()));
 	}
-	if (ret == NULL && linphone_account_params_get_server_addr(linphone_account_get_params(account))) {
+
+	auto *server_addr = linphone_account_params_get_server_address(linphone_account_get_params(account));
+	if (ret == nullptr && server_addr != nullptr) {
 		/*if the account identity address matches the domain part of the destination, then use the same transport
 		 * as the one used for registration. This is done by forcing a route to this account.*/
-		SalAddress *account_addr =
-		    sal_address_new(linphone_account_params_get_server_addr(linphone_account_get_params(account)));
+
+		SalAddress *account_addr = sal_address_clone(Address::toCpp(server_addr)->getImpl());
 		const char *account_identity_domain = linphone_address_get_domain(
 		    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 		const char *linphone_addr_domain = linphone_address_get_domain(dest);
