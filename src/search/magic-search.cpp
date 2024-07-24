@@ -986,8 +986,7 @@ static bool compareResults(const std::shared_ptr<SearchResult> &lsr, const std::
 		sip_addresses = left->weakEqual(*right);
 	}
 	return sip_addresses && lsr->getCapabilities() == rsr->getCapabilities() &&
-	       lsr->getPhoneNumber() == rsr->getPhoneNumber() &&
-	       (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
+	       lsr->getPhoneNumber() == rsr->getPhoneNumber();
 }
 
 void MagicSearch::uniqueItemsList(std::shared_ptr<list<std::shared_ptr<SearchResult>>> list) const {

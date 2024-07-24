@@ -2122,7 +2122,7 @@ static void search_friend_with_multiple_sip_address(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-static void search_friend_with_same_address(void) {
+static void _search_friend_with_same_address(int sourceFlags, LinphoneMagicSearchAggregation aggregation) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
@@ -2148,9 +2148,16 @@ static void search_friend_with_same_address(void) {
 	linphone_friend_set_vcard(stephanieFriend2, stephanieVcard2);
 	linphone_core_add_friend(manager->lc, stephanieFriend2);
 
+	LinphoneFriend *stephanieFriend3 = linphone_core_create_friend(manager->lc);
+	LinphoneAddress *stephanieAddress3 = linphone_core_interpret_url(manager->lc, stephanieSipUri);
+	linphone_address_set_display_name(stephanieAddress3, "Steph Del");
+	linphone_friend_set_address(stephanieFriend3, stephanieAddress3);
+	linphone_core_add_friend(manager->lc, stephanieFriend3);
+	linphone_address_unref(stephanieAddress3);
+
 	magicSearch = linphone_magic_search_new(manager->lc);
 
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stephanie", "");
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", sourceFlags, aggregation);
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
@@ -2160,7 +2167,7 @@ static void search_friend_with_same_address(void) {
 
 	linphone_magic_search_reset_search_cache(magicSearch);
 
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "delarue", "");
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "delarue", "", sourceFlags, aggregation);
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
@@ -2170,7 +2177,7 @@ static void search_friend_with_same_address(void) {
 
 	linphone_magic_search_reset_search_cache(magicSearch);
 
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "", "", sourceFlags, aggregation);
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND + 1, int, "%d");
@@ -2179,7 +2186,7 @@ static void search_friend_with_same_address(void) {
 
 	linphone_magic_search_reset_search_cache(magicSearch);
 
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "*");
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "", "*", sourceFlags, aggregation);
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND + 1, int, "%d");
@@ -2189,13 +2196,19 @@ static void search_friend_with_same_address(void) {
 	_remove_friends_from_list(lfl, sFriends, sSizeFriend);
 	linphone_friend_list_remove_friend(lfl, stephanieFriend1);
 	linphone_friend_list_remove_friend(lfl, stephanieFriend2);
+	linphone_friend_list_remove_friend(lfl, stephanieFriend3);
 	if (stephanieFriend1) linphone_friend_unref(stephanieFriend1);
 	if (stephanieFriend2) linphone_friend_unref(stephanieFriend2);
+	if (stephanieFriend2) linphone_friend_unref(stephanieFriend3);
 	if (stephanieVcard1) linphone_vcard_unref(stephanieVcard1);
 	if (stephanieVcard2) linphone_vcard_unref(stephanieVcard2);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
+}
+
+static void search_friend_with_same_address(void) {
+	_search_friend_with_same_address(LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);
 }
 
 static void search_friend_large_database(void) {
