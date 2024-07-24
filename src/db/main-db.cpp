@@ -6409,222 +6409,232 @@ std::shared_ptr<CallLog> MainDb::getCallLog(const std::string &callId, int limit
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(int limit) {
 #ifdef HAVE_DB_STORAGE
-	if (limit == 0) return list<shared_ptr<CallLog>>();
-	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
-	               "to_sip_address.value, to_sip_address.display_name,"
-	               "  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, "
-	               "refkey, conference_info_id"
-	               " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
-	               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
-	               "conference_call.to_sip_address_id = to_sip_address.id"
-	               " ORDER BY conference_call.id DESC";
+	if (isInitialized()) {
+		if (limit == 0) return list<shared_ptr<CallLog>>();
+		string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
+		               "to_sip_address.value, to_sip_address.display_name,"
+		               "  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, "
+		               "refkey, conference_info_id"
+		               " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
+		               "conference_call.to_sip_address_id = to_sip_address.id"
+		               " ORDER BY conference_call.id DESC";
 
-	if (limit > 0) query += " LIMIT " + to_string(limit);
+		if (limit > 0) query += " LIMIT " + to_string(limit);
 
-	DurationLogger durationLogger("Get call history.");
+		DurationLogger durationLogger("Get call history.");
 
-	return L_DB_TRANSACTION {
-		L_D();
+		return L_DB_TRANSACTION {
+			L_D();
 
-		list<shared_ptr<CallLog>> clList;
+			list<shared_ptr<CallLog>> clList;
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		soci::rowset<soci::row> rows = (session->prepare << query);
-		for (const auto &row : rows) {
-			auto callLog = d->selectCallLog(row);
-			clList.push_back(callLog);
-		}
+			soci::rowset<soci::row> rows = (session->prepare << query);
+			for (const auto &row : rows) {
+				auto callLog = d->selectCallLog(row);
+				clList.push_back(callLog);
+			}
 
-		tr.commit();
+			tr.commit();
 
-		return clList;
-	};
-#else
-	return list<shared_ptr<CallLog>>();
+			return clList;
+		};
+	}
 #endif
+	return list<shared_ptr<CallLog>>();
 }
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress,
                                                                           int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
-	               "to_sip_address.value, to_sip_address.display_name,"
-	               "  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, "
-	               "refkey, conference_info_id"
-	               " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
-	               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
-	               "conference_call.to_sip_address_id = to_sip_address.id"
-	               "  AND ((from_sip_address.value LIKE '%%" +
-	               localAddress->toStringUriOnlyOrdered() +
-	               "%%' AND direction = 0) OR" // 0 == outgoing
-	               "  (to_sip_address.value LIKE '%%" +
-	               localAddress->toStringUriOnlyOrdered() +
-	               "%%' AND direction = 1))" // 1 == incoming
-	               " ORDER BY conference_call.id DESC";
+	if (isInitialized()) {
+		string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
+		               "to_sip_address.value, to_sip_address.display_name,"
+		               "  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, "
+		               "refkey, conference_info_id"
+		               " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
+		               "conference_call.to_sip_address_id = to_sip_address.id"
+		               "  AND ((from_sip_address.value LIKE '%%" +
+		               localAddress->toStringUriOnlyOrdered() +
+		               "%%' AND direction = 0) OR" // 0 == outgoing
+		               "  (to_sip_address.value LIKE '%%" +
+		               localAddress->toStringUriOnlyOrdered() +
+		               "%%' AND direction = 1))" // 1 == incoming
+		               " ORDER BY conference_call.id DESC";
 
-	if (limit > 0) query += " LIMIT " + to_string(limit);
+		if (limit > 0) query += " LIMIT " + to_string(limit);
 
-	DurationLogger durationLogger("Get call history.");
+		DurationLogger durationLogger("Get call history.");
 
-	return L_DB_TRANSACTION {
-		L_D();
+		return L_DB_TRANSACTION {
+			L_D();
 
-		list<shared_ptr<CallLog>> clList;
+			list<shared_ptr<CallLog>> clList;
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		soci::rowset<soci::row> rows = (session->prepare << query);
-		for (const auto &row : rows) {
-			auto callLog = d->selectCallLog(row);
-			clList.push_back(callLog);
-		}
+			soci::rowset<soci::row> rows = (session->prepare << query);
+			for (const auto &row : rows) {
+				auto callLog = d->selectCallLog(row);
+				clList.push_back(callLog);
+			}
 
-		tr.commit();
+			tr.commit();
 
-		return clList;
-	};
-#else
-	return list<shared_ptr<CallLog>>();
+			return clList;
+		};
+	}
 #endif
+	return list<shared_ptr<CallLog>>();
 }
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const std::shared_ptr<const Address> &peer,
                                                            const std::shared_ptr<const Address> &local,
                                                            int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query =
-	    "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
-	    "to_sip_address.value, to_sip_address.display_name,"
-	    "  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, "
-	    "refkey, conference_info_id"
-	    " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
-	    " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
-	    "conference_call.to_sip_address_id = to_sip_address.id"
-	    "  AND ((from_sip_address.value LIKE '%%" +
-	    local->toStringUriOnlyOrdered() + "%%' AND to_sip_address.value LIKE '%%" + peer->toStringUriOnlyOrdered() +
-	    "%%' AND direction = 0) OR" // 0 == outgoing
-	    "  (from_sip_address.value LIKE '%%" +
-	    peer->toStringUriOnlyOrdered() + "%%' AND to_sip_address.value LIKE '%%" + local->toStringUriOnlyOrdered() +
-	    "%%' AND direction = 1))" // 1 == incoming
-	    " ORDER BY conference_call.id DESC";
+	if (isInitialized()) {
+		string query =
+		    "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
+		    "to_sip_address.value, to_sip_address.display_name,"
+		    "  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, "
+		    "refkey, conference_info_id"
+		    " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		    " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
+		    "conference_call.to_sip_address_id = to_sip_address.id"
+		    "  AND ((from_sip_address.value LIKE '%%" +
+		    local->toStringUriOnlyOrdered() + "%%' AND to_sip_address.value LIKE '%%" + peer->toStringUriOnlyOrdered() +
+		    "%%' AND direction = 0) OR" // 0 == outgoing
+		    "  (from_sip_address.value LIKE '%%" +
+		    peer->toStringUriOnlyOrdered() + "%%' AND to_sip_address.value LIKE '%%" + local->toStringUriOnlyOrdered() +
+		    "%%' AND direction = 1))" // 1 == incoming
+		    " ORDER BY conference_call.id DESC";
 
-	if (limit > 0) query += " LIMIT " + to_string(limit);
+		if (limit > 0) query += " LIMIT " + to_string(limit);
 
-	DurationLogger durationLogger("Get call history 2.");
+		DurationLogger durationLogger("Get call history 2.");
 
-	return L_DB_TRANSACTION {
-		L_D();
+		return L_DB_TRANSACTION {
+			L_D();
 
-		list<shared_ptr<CallLog>> clList;
+			list<shared_ptr<CallLog>> clList;
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		soci::rowset<soci::row> rows = (session->prepare << query);
-		for (const auto &row : rows) {
-			auto callLog = d->selectCallLog(row);
-			clList.push_back(callLog);
-		}
+			soci::rowset<soci::row> rows = (session->prepare << query);
+			for (const auto &row : rows) {
+				auto callLog = d->selectCallLog(row);
+				clList.push_back(callLog);
+			}
 
-		tr.commit();
+			tr.commit();
 
-		return clList;
-	};
-#else
-	return list<shared_ptr<CallLog>>();
+			return clList;
+		};
+	}
 #endif
+	return list<shared_ptr<CallLog>>();
 }
 
 std::shared_ptr<CallLog> MainDb::getLastOutgoingCall() {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
-	                            "to_sip_address.value, to_sip_address.display_name,"
-	                            "  direction, duration, start_time, connected_time, status, video_enabled, quality, "
-	                            "call_id, refkey, conference_info_id"
-	                            " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
-	                            " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
-	                            "conference_call.to_sip_address_id = to_sip_address.id"
-	                            "  AND direction = 0 AND conference_info_id IS NULL" // 0 == outgoing
-	                            " ORDER BY conference_call.id DESC LIMIT 1";
+	if (isInitialized()) {
+		static const string query =
+		    "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
+		    "to_sip_address.value, to_sip_address.display_name,"
+		    "  direction, duration, start_time, connected_time, status, video_enabled, quality, "
+		    "call_id, refkey, conference_info_id"
+		    " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		    " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
+		    "conference_call.to_sip_address_id = to_sip_address.id"
+		    "  AND direction = 0 AND conference_info_id IS NULL" // 0 == outgoing
+		    " ORDER BY conference_call.id DESC LIMIT 1";
 
-	DurationLogger durationLogger("Get last outgoing call.");
+		DurationLogger durationLogger("Get last outgoing call.");
 
-	return L_DB_TRANSACTION {
-		L_D();
+		return L_DB_TRANSACTION {
+			L_D();
 
-		std::shared_ptr<CallLog> callLog = nullptr;
+			std::shared_ptr<CallLog> callLog = nullptr;
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		soci::rowset<soci::row> rows = (session->prepare << query);
+			soci::rowset<soci::row> rows = (session->prepare << query);
 
-		const auto &row = rows.begin();
-		if (row != rows.end()) {
-			callLog = d->selectCallLog(*row);
-		}
+			const auto &row = rows.begin();
+			if (row != rows.end()) {
+				callLog = d->selectCallLog(*row);
+			}
 
-		tr.commit();
+			tr.commit();
 
-		return callLog;
-	};
-#else
-	return nullptr;
+			return callLog;
+		};
+	}
 #endif
+	return nullptr;
 }
 
 void MainDb::deleteCallHistory() {
 #ifdef HAVE_DB_STORAGE
-	L_DB_TRANSACTION {
-		L_D();
+	if (isInitialized()) {
+		L_DB_TRANSACTION {
+			L_D();
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		*session << "DELETE FROM conference_call";
+			*session << "DELETE FROM conference_call";
 
-		tr.commit();
-	};
+			tr.commit();
+		};
+	}
 #endif
 }
 
 void MainDb::deleteCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress) {
 #ifdef HAVE_DB_STORAGE
-	L_DB_TRANSACTION {
-		L_D();
+	if (isInitialized()) {
+		L_DB_TRANSACTION {
+			L_D();
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		const long long &sipAddressId = d->selectSipAddressId(localAddress, true);
+			const long long &sipAddressId = d->selectSipAddressId(localAddress, true);
 
-		*session << "DELETE FROM conference_call WHERE"
-		            " ((from_sip_address_id = :sipAddressId  AND direction = 0) OR" // 0 == outgoing
-		            " (to_sip_address_id = :sipAddressId AND direction = 1))",      // 1 == incoming
-		    soci::use(sipAddressId);
+			*session << "DELETE FROM conference_call WHERE"
+			            " ((from_sip_address_id = :sipAddressId  AND direction = 0) OR" // 0 == outgoing
+			            " (to_sip_address_id = :sipAddressId AND direction = 1))",      // 1 == incoming
+			    soci::use(sipAddressId);
 
-		tr.commit();
-	};
+			tr.commit();
+		};
+	}
 #endif
 }
 
 int MainDb::getCallHistorySize() {
 #ifdef HAVE_DB_STORAGE
-	return L_DB_TRANSACTION {
-		L_D();
+	if (isInitialized()) {
+		return L_DB_TRANSACTION {
+			L_D();
 
-		int count = 0;
+			int count = 0;
 
-		soci::session *session = d->dbSession.getBackendSession();
+			soci::session *session = d->dbSession.getBackendSession();
 
-		soci::statement st = (session->prepare << "SELECT count(*) FROM conference_call", soci::into(count));
-		st.execute();
-		st.fetch();
+			soci::statement st = (session->prepare << "SELECT count(*) FROM conference_call", soci::into(count));
+			st.execute();
+			st.fetch();
 
-		tr.commit();
+			tr.commit();
 
-		return count;
-	};
-#else
-	return -1;
+			return count;
+		};
+	}
 #endif
+	return -1;
 }
 
 // -----------------------------------------------------------------------------
