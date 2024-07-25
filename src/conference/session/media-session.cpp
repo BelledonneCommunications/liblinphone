@@ -500,7 +500,8 @@ bool MediaSessionPrivate::failure() {
 		                                     failure */
 		case SalReasonNotAcceptable:
 			if ((linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
-			                             "retry_invite_after_offeranswer_failure", 1)) && localDesc && 
+			                             "retry_invite_after_offeranswer_failure", 1)) &&
+			    localDesc &&
 			    ((state == CallSession::State::OutgoingInit) || (state == CallSession::State::OutgoingProgress) ||
 			     (state == CallSession::State::OutgoingRinging) /* Push notification case */
 			     || (state == CallSession::State::OutgoingEarlyMedia))) {
@@ -3739,6 +3740,7 @@ void MediaSessionPrivate::updateCurrentParams() const {
 	const LinphoneMediaEncryption enc = getNegotiatedMediaEncryption();
 	bool srtpEncryptionMatch = false;
 	auto srtpSuite = LinphoneSrtpSuiteInvalid;
+	const auto allStreamsAreEncrypted = allStreamsEncrypted();
 	if (md) {
 		srtpEncryptionMatch = true;
 		bool srtpSuiteSet = false;
@@ -3778,26 +3780,27 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		}
 		getCurrentParams()->enableRtpBundle(!md->bundles.empty());
 	} else {
-		srtpEncryptionMatch = allStreamsEncrypted();
+		srtpEncryptionMatch = allStreamsAreEncrypted;
 	}
 
 	getCurrentParams()->setSrtpSuites(std::list<LinphoneSrtpSuite>{srtpSuite});
 
 	bool updateEncryption = false;
 	bool validNegotiatedEncryption = false;
+	const auto activeStreams = getNbActiveStreams();
 
 	switch (enc) {
 		case LinphoneMediaEncryptionZRTP:
 			updateEncryption = atLeastOneStreamStarted();
-			validNegotiatedEncryption = (allStreamsEncrypted() && !authToken.empty());
+			validNegotiatedEncryption = (allStreamsAreEncrypted && !authToken.empty());
 			break;
 		case LinphoneMediaEncryptionSRTP:
 			updateEncryption = atLeastOneStreamStarted();
-			validNegotiatedEncryption = ((getNbActiveStreams() == 0) || srtpEncryptionMatch);
+			validNegotiatedEncryption = ((activeStreams == 0) || srtpEncryptionMatch);
 			break;
 		case LinphoneMediaEncryptionDTLS:
 			updateEncryption = atLeastOneStreamStarted();
-			validNegotiatedEncryption = ((getNbActiveStreams() == 0) || allStreamsEncrypted());
+			validNegotiatedEncryption = ((activeStreams == 0) || allStreamsAreEncrypted);
 			break;
 		case LinphoneMediaEncryptionNone:
 			updateEncryption = true;
@@ -3810,7 +3813,7 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		} else {
 			/* To avoid too many traces */
 			lDebug() << "Encryption was requested to be " << std::string(linphone_media_encryption_to_string(enc))
-			         << ", but isn't effective (allStreamsEncrypted=" << allStreamsEncrypted()
+			         << ", but isn't effective (allStreamsEncrypted=" << allStreamsAreEncrypted
 			         << ", auth_token=" << authToken << ")";
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 		}

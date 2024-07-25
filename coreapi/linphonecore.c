@@ -3914,7 +3914,7 @@ int linphone_core_get_audio_port(const LinphoneCore *lc) {
 void linphone_core_get_audio_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
 	*min_port = lc->rtp_conf.audio_rtp_min_port;
 	*max_port = lc->rtp_conf.audio_rtp_max_port;
-	if (*min_port >= *max_port) {
+	if (*min_port > *max_port) {
 		ms_error("Invalid audio port range: minimum value %0d maximum value %0d", *min_port, *max_port);
 	}
 }
@@ -3932,7 +3932,7 @@ int linphone_core_get_video_port(const LinphoneCore *lc) {
 void linphone_core_get_video_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
 	*min_port = lc->rtp_conf.video_rtp_min_port;
 	*max_port = lc->rtp_conf.video_rtp_max_port;
-	if (*min_port >= *max_port) {
+	if (*min_port > *max_port) {
 		ms_error("Invalid video port range: minimum value %0d maximum value %0d", *min_port, *max_port);
 	}
 }
@@ -3950,7 +3950,7 @@ int linphone_core_get_text_port(const LinphoneCore *lc) {
 void linphone_core_get_text_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
 	*min_port = lc->rtp_conf.text_rtp_min_port;
 	*max_port = lc->rtp_conf.text_rtp_max_port;
-	if (*min_port >= *max_port) {
+	if (*min_port > *max_port) {
 		ms_error("Invalid text port range: minimum value %0d maximum value %0d", *min_port, *max_port);
 	}
 }

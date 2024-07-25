@@ -1071,6 +1071,9 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 
 		startDtls(params);
 	} else {
+		if (mSessions.dtls_context) {
+			ms_dtls_srtp_reset_context(mSessions.dtls_context);
+		}
 		mDtlsStarted = false;
 	}
 }
