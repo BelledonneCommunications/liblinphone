@@ -93,6 +93,11 @@ void ConferenceScheduler::fillCancelList(const ConferenceInfo::participant_list_
 
 void ConferenceScheduler::cancelConference(const std::shared_ptr<ConferenceInfo> &info) {
 	if (info) {
+		const auto &conferenceAddress = info->getUri();
+		const std::string conferenceAddressStr =
+		    (conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown"));
+		lInfo() << "[Conference Scheduler] [" << this << "] is attempting to cancel a conference with address "
+		        << conferenceAddressStr;
 		auto clone = info->clone()->toSharedPtr();
 		while (!clone->getParticipants().empty()) {
 			const auto &participants = clone->getParticipants();
@@ -120,12 +125,15 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	const auto creator = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()
 	                                  : Address::create(linphone_core_get_identity(getCore()->getCCore()));
 	if (!creator || !creator->isValid()) {
-		lWarning() << "[Conference Scheduler] [" << this << "] Core address attempting to set conference information!";
+		lWarning() << "[Conference Scheduler] [" << this
+		           << "] Unable to determine the address of the user attempting to set the conference information!";
 		return;
 	}
 
 	const auto &organizer = clone->getOrganizerAddress();
 	const auto &conferenceAddress = clone->getUri();
+	const std::string conferenceAddressStr =
+	    (conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown"));
 	const auto &participants = clone->getParticipants();
 	const auto participantListEmpty = participants.empty();
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator](const auto &p) {
@@ -136,8 +144,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Address " << *creator
 		           << " is trying to modify the conference information but he/she is neither an invited participant "
 		              "nor the organizer ("
-		           << *organizer << ") of conference "
-		           << (conferenceAddress ? conferenceAddress->toString() : std::string("<unknown>"));
+		           << *organizer << ") of conference " << conferenceAddressStr;
 		setState(State::Error);
 		return;
 	}
@@ -154,6 +161,8 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 			clone->updateFrom(confInfo);
 			fillCancelList(confInfo->getParticipants(), clone->getParticipants());
 		} else {
+			lError() << "[Conference Scheduler] [" << this
+			         << "] Unable to find conference info in database for address [" << *conferenceAddress << "]";
 			isUpdate = false;
 		}
 	}
@@ -165,6 +174,9 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		setState(State::Error);
 		return;
 	}
+
+	lInfo() << "[Conference Scheduler] [" << this << "] is attempting to " << (isUpdate ? "update" : "schedule")
+	        << " a conference with address " << conferenceAddressStr;
 
 	if (mConferenceInfo == nullptr && !isUpdate) {
 		setState(State::AllocationPending);

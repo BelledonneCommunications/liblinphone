@@ -845,9 +845,10 @@ void ClientConferenceEventHandler::onAccountRegistrationStateChanged(std::shared
                                                                      LinphoneRegistrationState state,
                                                                      BCTBX_UNUSED(const std::string &message)) {
 	const auto &conferenceId = getConferenceId();
+	const auto &localAddress = conferenceId.getLocalAddress();
 	const auto &params = account->getAccountParams();
 	const auto &address = params->getIdentityAddress();
-	if (address->weakEqual(*conferenceId.getLocalAddress()) && (state == LinphoneRegistrationOk)) subscribe(conferenceId);
+	if (localAddress && address->weakEqual(*localAddress) && (state == LinphoneRegistrationOk)) subscribe(conferenceId);
 }
 
 void ClientConferenceEventHandler::onEnteringBackground() {

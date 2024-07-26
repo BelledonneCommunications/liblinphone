@@ -257,8 +257,8 @@ static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceS
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 	BC_ASSERT_PTR_NOT_NULL(failed_addresses);
 	if (failed_addresses) {
-		int failed_addresses_size = (int)(bctbx_list_size(failed_addresses));
-		BC_ASSERT_EQUAL(failed_addresses_size, 1, int, "%d");
+		size_t failed_addresses_size = bctbx_list_size(failed_addresses);
+		BC_ASSERT_EQUAL(failed_addresses_size, 1, size_t, "%zu");
 		LinphoneAddress *failed = (LinphoneAddress *)bctbx_list_get_data(failed_addresses);
 		char *failed_str = linphone_address_as_string(failed);
 		BC_ASSERT_STRING_EQUAL(failed_str, "sip:error404@sip.example.org");
@@ -345,7 +345,7 @@ static void send_conference_invitations(bool_t enable_encryption,
 		LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(marieCr);
 
 		const bctbx_list_t *original_contents = linphone_chat_message_get_contents(msg);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(original_contents), 1, size_t, "%zu");
 		LinphoneContent *original_content = (LinphoneContent *)bctbx_list_get_data(original_contents);
 
 		LinphoneConferenceInfo *conf_info_from_original_content =
@@ -399,7 +399,7 @@ static void send_conference_invitations(bool_t enable_encryption,
 		                       expected.c_str());
 
 		const bctbx_list_t *contents = linphone_chat_message_get_contents(laure->stat.last_received_chat_message);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, size_t, "%zu");
 		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 
 		LinphoneConferenceInfo *conf_info_from_content =
@@ -425,10 +425,6 @@ static void send_conference_invitations(bool_t enable_encryption,
 			BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 1, int, "%d");
 			bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
 		}
-
-		bctbx_list_t *conf_info_list = linphone_core_get_conference_information_list(laure->lc);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(conf_info_list), 1, int, "%d");
-		bctbx_list_free_with_data(conf_info_list, (bctbx_list_free_func)linphone_conference_info_unref);
 
 		// Check that specifying the future parameter to TRUE returns no conference info
 		bctbx_list_t *conf_info_list_future = linphone_core_get_future_conference_information_list(laure->lc);

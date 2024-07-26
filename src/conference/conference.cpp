@@ -617,7 +617,12 @@ void Conference::setConferenceAddress(const std::shared_ptr<Address> &conference
 			return;
 		}
 
-		mConfParams->setConferenceAddress(conferenceAddress);
+		if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+			mConfParams->setConferenceAddress(Address::create(conferenceAddress->getUriWithoutGruu()));
+		} else {
+			// Handle backward compatibility with release/5.3
+			mConfParams->setConferenceAddress(conferenceAddress);
+		}
 		setState(ConferenceInterface::State::CreationPending);
 		lInfo() << "Conference " << this << " has been given the address " << *conferenceAddress;
 	} else {
@@ -639,7 +644,7 @@ const list<shared_ptr<Participant>> &Conference::getParticipants() const {
 	return mParticipants;
 }
 
-const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() const {
+const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices(bool includeMe) const {
 	list<shared_ptr<ParticipantDevice>> devices;
 	for (const auto &p : mParticipants) {
 		const auto &d = p->getDevices();
@@ -647,7 +652,7 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() co
 			devices.insert(devices.end(), d.begin(), d.end());
 		}
 	}
-	if (isIn()) {
+	if (isIn() && includeMe) {
 		const auto &d = getMe()->getDevices();
 		if (!d.empty()) {
 			devices.insert(devices.begin(), d.begin(), d.end());

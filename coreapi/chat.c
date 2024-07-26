@@ -142,12 +142,9 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc,
 		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
 	}
 
-	bool withGruu = conferenceParams ? conferenceParams->getChatParams()->getBackend() ==
-	                                       LinphonePrivate::ChatParams::Backend::FlexisipChat
-	                                 : false;
 	shared_ptr<const LinphonePrivate::Address> identityAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
-	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
+	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
 	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(conferenceParams, identityAddress, participantsList);
 	if (room) {
@@ -168,12 +165,9 @@ LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc,
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
 	    LinphonePrivate::Address::getCppListFromCList(participants);
-	bool withGruu = conferenceParams ? conferenceParams->getChatParams()->getBackend() ==
-	                                       LinphonePrivate::ChatParams::Backend::FlexisipChat
-	                                 : false;
 	shared_ptr<const LinphonePrivate::Address> identityAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
-	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
+	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =
 	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(

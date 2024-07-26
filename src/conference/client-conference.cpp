@@ -57,8 +57,6 @@ ClientConference::ClientConference(const shared_ptr<Core> &core,
                                    CallSessionListener *listener,
                                    const std::shared_ptr<const ConferenceParams> params)
     : Conference(core, myAddress, listener, params) {
-	ConferenceId conferenceId(nullptr, myAddress);
-	setConferenceId(conferenceId);
 }
 
 ClientConference::~ClientConference() {
@@ -199,11 +197,14 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 		getMe()->setAdmin((focusSession == nullptr) || (organizer == nullptr) || organizer->weakEqual(*meAddress));
 	}
 
+	if (focusSession || conferenceInfo) {
+		ConferenceId conferenceId(conferenceAddress, meAddress);
+		setConferenceId(conferenceId);
+	}
+
 	setState(ConferenceInterface::State::Instantiated);
 
 	if (focusSession) {
-		ConferenceId conferenceId(conferenceAddress, meAddress);
-		setConferenceId(conferenceId);
 		setConferenceAddress(conferenceAddress);
 	}
 

@@ -282,7 +282,7 @@ ClientConferenceListEventHandler::findHandler(const ConferenceId &conferenceId) 
 
 void ClientConferenceListEventHandler::addHandler(std::shared_ptr<ClientConferenceEventHandler> handler) {
 	if (!handler) {
-		lWarning() << "Trying to insert null handler in the remote conference handler list";
+		lWarning() << "Trying to insert null handler in the client conference handler list";
 		return;
 	}
 
@@ -347,17 +347,14 @@ void ClientConferenceListEventHandler::removeHandler(std::shared_ptr<ClientConfe
 		return;
 	}
 
-	if (handler) {
-		auto it = handlers.find(conferenceId);
-		if (it != handlers.end()) {
-			handler->setManagedByListEventhandler(false);
-			handlers.erase(it);
-			lInfo() << "Handler removed.";
-		} else {
-			lError() << "Handler not found in ClientConferenceListEventHandler.";
-		}
+	auto it = handlers.find(conferenceId);
+	if (it != handlers.end()) {
+		handler->setManagedByListEventhandler(false);
+		handlers.erase(it);
+		lInfo() << "Client Conference Event Handler with conference id " << conferenceId << " [" << handler
+		        << "] has been removed.";
 	} else {
-		lError() << "Handler is null !";
+		lError() << "Client Conference Event Handler with conference id " << conferenceId << " has not been found.";
 	}
 }
 

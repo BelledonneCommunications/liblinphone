@@ -1535,18 +1535,17 @@ void ServerConferenceEventHandler::onStateChanged(LinphonePrivate::ConferenceInt
 		case ConferenceInterface::State::Created:
 		case ConferenceInterface::State::CreationFailed:
 		case ConferenceInterface::State::TerminationFailed:
+		case ConferenceInterface::State::Deleted:
 			break;
 		case ConferenceInterface::State::CreationPending:
 			conf->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
-			if ((!textEnabled) && conf->getParticipantCount() == 0)
+			if ((!textEnabled) && conf->getParticipantDevices(false).size() == 0)
 				conf->setState(ConferenceInterface::State::Terminated);
 			break;
 		case ConferenceInterface::State::Terminated:
 			if (!textEnabled) conf->resetLastNotify();
-			break;
-		case ConferenceInterface::State::Deleted:
 			break;
 	}
 }

@@ -226,10 +226,6 @@ bool_t linphone_conference_params_is_hidden(const LinphoneConferenceParams *para
 	return (ConferenceParams::toCpp(params)->isHidden() ? TRUE : FALSE);
 }
 
-bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params) {
-	return (ConferenceParams::toCpp(params)->isStatic() ? TRUE : FALSE);
-}
-
 bool_t linphone_conference_params_is_valid(const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->isValid();
 }

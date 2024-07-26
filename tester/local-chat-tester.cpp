@@ -400,6 +400,11 @@ static void group_chat_room_with_client_removed_added(void) {
 				BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 0, int, "%d");
 				bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
 			}
+			LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+			BC_ASSERT_PTR_NULL(info);
+			if (info) {
+				linphone_conference_info_unref(info);
+			}
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneChatRoomStateCreated,

@@ -261,8 +261,10 @@ static void call_received(SalCallOp *h) {
 				chatRoom.reset();
 			}
 			if (!chatRoom) {
-				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientChatRoom(to, ConferenceId(remoteContact, to), h,
-				                                                                 params);
+				const auto localAddressWithoutGruu = Address::create(to->getUriWithoutGruu());
+				const auto peerAddressWithoutGruu = Address::create(remoteContact->getUriWithoutGruu());
+				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientChatRoom(
+				    to, ConferenceId(peerAddressWithoutGruu, localAddressWithoutGruu), h, params);
 			}
 
 			shared_ptr<Conference> conference = chatRoom->getConference();

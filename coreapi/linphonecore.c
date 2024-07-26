@@ -8902,6 +8902,15 @@ void linphone_core_set_default_conference_layout(LinphoneCore *lc, LinphoneConfe
 	linphone_config_set_int(lc->config, "misc", "conference_layout", (int)value);
 }
 
+void linphone_core_set_conference_cleanup_period(LinphoneCore *lc, long seconds) {
+	CoreLogContextualizer logContextualizer(lc);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setConferenceCleanupPeriod(seconds);
+}
+
+long linphone_core_get_conference_cleanup_period(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getConferenceCleanupPeriod();
+}
+
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 	return lc->sip_conf.sdp_200_ack != 0;
 }

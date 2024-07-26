@@ -200,7 +200,7 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 
 void ServerConferenceListEventHandler::addHandler(std::shared_ptr<ServerConferenceEventHandler> handler) {
 	if (!handler) {
-		lError() << "Trying to insert null handler in the local conference handler list";
+		lError() << "Trying to insert null handler in the server conference handler list";
 		return;
 	}
 
@@ -210,43 +210,55 @@ void ServerConferenceListEventHandler::addHandler(std::shared_ptr<ServerConferen
 		return;
 	}
 
-	if (findHandler(conf->getConferenceId())) {
-		lError() << "Trying to insert an already present handler in the local conference handler list: "
-		         << conf->getConferenceId();
+	const auto &id = conf->getConferenceId();
+
+	if (!id.isValid()) {
+		// Do not add the evetn handler if the conference ID is not valid as it might be changed later on and therefore
+		// the core ends up in a scenario where 2 entries point to the same handler
+		lError() << "The conference " << conf << " associated to handler " << handler
+		         << " has an invalid conference id " << id;
 		return;
 	}
 
-	handlers[conf->getConferenceId()] = handler;
+	if (findHandler(id)) {
+		lError() << "Trying to insert an already present handler in the server conference handler list: " << id;
+		return;
+	}
+
+	handlers[id] = handler;
 }
 
 void ServerConferenceListEventHandler::removeHandler(std::shared_ptr<ServerConferenceEventHandler> handler) {
-	if (handler) {
-		auto conf = handler->getConference();
-		if (conf) {
-			auto it = handlers.find(conf->getConferenceId());
-			if (it != handlers.end()) {
-				handlers.erase(it);
-				lInfo() << "Handler removed.";
-			} else {
-				lError() << "Handler not found in ServerConferenceListEventHandler.";
-			}
+	if (!handler) {
+		return;
+	}
+
+	auto conf = handler->getConference();
+	if (conf) {
+		const ConferenceId &conferenceId = conf->getConferenceId();
+		auto it = handlers.find(conferenceId);
+		if (it != handlers.end()) {
+			handlers.erase(it);
+			lInfo() << "Server Conference Event Handler with conference id " << conferenceId << " [" << handler
+			        << "] has been removed.";
 		} else {
-			lInfo() << "Unable to remove handler " << handler << " because conference was likely already terminated.";
+			lError() << "Server Conference Event Handler with conference id " << conferenceId << " has not been found.";
 		}
 	} else {
-		lError() << "Handler is null !";
+		lInfo() << "Unable to remove handler " << handler << " from ServerConferenceListEventHandler [" << this
+		        << "] because conference was likely already terminated.";
 	}
 }
 
 std::shared_ptr<ServerConferenceEventHandler>
 ServerConferenceListEventHandler::findHandler(const ConferenceId &conferenceId) const {
 	try {
-		auto it = handlers.find(conferenceId);
-		if (it != handlers.end()) {
-			std::shared_ptr<ServerConferenceEventHandler> handler((*it).second);
-			return handler;
-		}
+		auto &weakHandler = handlers.at(conferenceId);
+		std::shared_ptr<ServerConferenceEventHandler> handler(weakHandler);
+		return handler;
 	} catch (const bad_weak_ptr &) {
+	} catch (const out_of_range &) {
+		lInfo() << "Unable to find handler with conference id " << conferenceId;
 	}
 	return nullptr;
 }

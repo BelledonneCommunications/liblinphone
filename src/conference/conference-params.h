@@ -75,13 +75,6 @@ public:
 		return mHidden;
 	}
 
-	void setStatic(bool enable) {
-		mStatic = enable;
-	}
-	bool isStatic() const {
-		return mStatic;
-	}
-
 	virtual void enableVideo(bool enable) override {
 		mEnableVideo = enable;
 	}
@@ -222,7 +215,6 @@ private:
 	time_t mEndTime = (time_t)-1;
 	bool mGroup = true; // group chat
 	std::weak_ptr<Account> mAccount;
-	bool mStatic = false;
 	bool mHidden = false;
 	std::shared_ptr<ChatParams> mChatParams = nullptr;
 };

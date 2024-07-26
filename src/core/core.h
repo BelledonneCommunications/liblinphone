@@ -230,9 +230,11 @@ public:
 	void decrementRemainingDownloadFileCount();
 
 	// ---------------------------------------------------------------------------
-	// Audio Video Conference.
+	// Conference.
 	// ---------------------------------------------------------------------------
 
+	void setConferenceCleanupPeriod(long seconds);
+	long getConferenceCleanupPeriod() const;
 	void insertConference(const std::shared_ptr<Conference> conference);
 	void invalidateAccountInConferencesAndChatRooms(const std::shared_ptr<Account> &account);
 	std::shared_ptr<Conference> findConference(const std::shared_ptr<const CallSession> &session,

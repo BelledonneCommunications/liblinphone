@@ -289,9 +289,6 @@ static void simple_dial_out_conference_with_no_payloads(void) {
 		                                                        description, FALSE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
-		LinphoneConference *fconference =
-		    (confAddr) ? linphone_core_search_conference_2(focus.getLc(), confAddr) : NULL;
-
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
 		                             liblinphone_tester_sip_timeout));
@@ -388,30 +385,15 @@ static void simple_dial_out_conference_with_no_payloads(void) {
 		                             focus_stat.number_of_participant_devices_removed + 4,
 		                             liblinphone_tester_sip_timeout));
 
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
-		                focus_stat.number_of_LinphoneConferenceStateTerminationPending, int, "%d");
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminated,
-		                focus_stat.number_of_LinphoneConferenceStateTerminated, int, "%d");
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateDeleted,
-		                focus_stat.number_of_LinphoneConferenceStateDeleted, int, "%d");
-
 		for (auto mgr : {focus.getCMgr()}) {
 			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
-			BC_ASSERT_PTR_NOT_NULL(pconference);
-			if (pconference) {
-				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pconference), 0, int, "%0d");
-				BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), initialSubject);
-			}
+			BC_ASSERT_PTR_NULL(pconference);
 		}
 
 		focus_stat = focus.getStats();
 		const bctbx_list_t *calls = linphone_core_get_calls(focus.getLc());
 		BC_ASSERT_EQUAL(bctbx_list_size(calls), 0, size_t, "%zu");
 
-		// Explicitely terminate conference as those on server are static by default
-		if (fconference) {
-			linphone_conference_terminate(fconference);
-		}
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
 		                             1, liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, 1,
@@ -962,35 +944,15 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 		                             focus_stat.number_of_participant_devices_removed + members_no,
 		                             liblinphone_tester_sip_timeout));
 
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
-		                focus_stat.number_of_LinphoneConferenceStateTerminationPending, int, "%d");
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminated,
-		                focus_stat.number_of_LinphoneConferenceStateTerminated, int, "%d");
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateDeleted,
-		                focus_stat.number_of_LinphoneConferenceStateDeleted, int, "%d");
-
 		for (auto mgr : {focus.getCMgr()}) {
 			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
-			BC_ASSERT_PTR_NOT_NULL(pconference);
-			if (pconference) {
-				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pconference), 0, int, "%0d");
-				bctbx_list_t *devices = linphone_conference_get_participant_device_list(pconference);
-				BC_ASSERT_EQUAL(bctbx_list_size(devices), 0, size_t, "%zu");
-				if (devices) {
-					bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
-				}
-				BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), initialSubject);
-			}
+			BC_ASSERT_PTR_NULL(pconference);
 		}
 
 		focus_stat = focus.getStats();
 		const bctbx_list_t *calls = linphone_core_get_calls(focus.getLc());
 		BC_ASSERT_EQUAL(bctbx_list_size(calls), 0, size_t, "%zu");
 
-		// Explicitely terminate conference as those on server are static by default
-		if (fconference) {
-			linphone_conference_terminate(fconference);
-		}
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
 		                             1, liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, 1,

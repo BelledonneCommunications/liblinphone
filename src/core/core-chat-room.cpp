@@ -161,12 +161,6 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const std::shared
 		lWarning() << "Invalid chat room parameters given for client group chat room creation";
 		return nullptr;
 	}
-	if (!conferenceId.getLocalAddress()->hasUriParam("gr")) {
-		lError() << "createClientChatRoom(): local address [" << *conferenceId.getLocalAddress()
-		         << "] must have a gruu.";
-		return nullptr;
-	}
-
 	LinphoneCore *cCore = getCCore();
 	auto newConferenceParameters = params->clone()->toSharedPtr();
 	newConferenceParameters->enableChat(true);
@@ -360,17 +354,6 @@ CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
 		}
 
 		ConferenceId conferenceId = ConferenceId(nullptr, localAddr);
-		if (!localAddr->hasUriParam("gr")) {
-			lWarning() << "Local identity address [" << *localAddr << "] doesn't have a gruu, let's try to find it";
-			auto localAddrWithGruu = getIdentityAddressWithGruu(localAddr);
-			if (localAddrWithGruu && localAddrWithGruu->isValid()) {
-				lInfo() << "Found matching contact address [" << *localAddrWithGruu << "] to use instead";
-				conferenceId.setLocalAddress(localAddrWithGruu);
-			} else {
-				lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr
-				         << "], client group chat room creation will fail!";
-			}
-		}
 		if (!params->isGroup() && participants.size() > 0) {
 			// Prevent multiple 1-1 conference based chat room with same local/remote addresses
 			chatRoom = q->findOneToOneChatRoom(localAddr, participants.front(), false, true,
@@ -636,10 +619,7 @@ CorePrivate::findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &local
 	for (const auto &chatRoom : q->getRawChatRoomList()) {
 		const std::shared_ptr<Address> &curLocalAddress = chatRoom->getLocalAddress();
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
-		// Don't check if terminated, it can be exhumed before the BYE has been received
-		if (/*chatRoom->getState() == ChatRoom::State::Terminated
-		        && */
-		    (chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
+		if ((chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
 		    !chatRoomParams->isGroup() && (encrypted == chatRoomParams->getChatParams()->isEncrypted())) {
 			if (chatRoom->getParticipants().size() > 0 && localAddress->weakEqual(*curLocalAddress) &&
 			    participantAddress->weakEqual(*chatRoom->getParticipants().front()->getAddress())) {

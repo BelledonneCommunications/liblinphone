@@ -62,7 +62,6 @@ ConferenceParams::ConferenceParams(const ConferenceParams &other) : HybridObject
 	mEndTime = other.mEndTime;
 	mGroup = other.mGroup;
 	mAccount = other.mAccount;
-	mStatic = other.mStatic;
 	mHidden = other.mHidden;
 	mChatParams = other.mChatParams ? other.mChatParams->clone()->toSharedPtr() : nullptr;
 }

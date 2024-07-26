@@ -1021,10 +1021,10 @@ void CallSessionPrivate::setContactOp() {
 			}
 		}
 
-		lInfo() << "Setting contact address for session " << this << " to " << *contactAddress;
+		lInfo() << "Setting contact address for session " << q << " to " << *contactAddress;
 		op->setContactAddress(contactAddress->getImpl());
 	} else {
-		lWarning() << "Unable to set contact address for session " << this << " to "
+		lWarning() << "Unable to set contact address for session " << q << " to "
 		           << ((contactAddress) ? contactAddress->toString() : std::string("<unknown>"))
 		           << " as it is not valid";
 	}
@@ -2156,6 +2156,7 @@ void CallSession::updateContactAddressInOp() {
 	}
 
 	updateContactAddress(contactAddress);
+	lInfo() << "Updating contact address for session " << this << " to " << contactAddress;
 	d->op->setContactAddress(contactAddress.getImpl());
 }
 

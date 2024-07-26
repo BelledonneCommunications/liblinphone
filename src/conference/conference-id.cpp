@@ -32,8 +32,8 @@ ConferenceId::ConferenceId() {
 }
 
 ConferenceId::ConferenceId(Address &&pAddress, Address &&lAddress) {
-	peerAddress = Address::create(std::move(pAddress));
-	localAddress = Address::create(std::move(lAddress));
+	mPeerAddress = Address::create(std::move(pAddress));
+	mLocalAddress = Address::create(std::move(lAddress));
 }
 
 ConferenceId::ConferenceId(const std::shared_ptr<const Address> &pAddress,
@@ -48,21 +48,23 @@ ConferenceId::ConferenceId(const std::shared_ptr<Address> &pAddress, const std::
 }
 
 ConferenceId::ConferenceId(const ConferenceId &other) {
-	setLocalAddress(other.localAddress);
-	setPeerAddress(other.peerAddress);
+	setPeerAddress(other.mPeerAddress, true);
+	setLocalAddress(other.mLocalAddress, true);
 	mHash = other.mHash;
+	mWeakHash = other.mWeakHash;
 }
 
 ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
-	setLocalAddress(other.localAddress);
-	setPeerAddress(other.peerAddress);
+	setPeerAddress(other.mPeerAddress, true);
+	setLocalAddress(other.mLocalAddress, true);
 	mHash = other.mHash;
+	mWeakHash = other.mWeakHash;
 	return *this;
 }
 
 bool ConferenceId::operator==(const ConferenceId &other) const {
-	return peerAddress && other.peerAddress && (*peerAddress == *(other.peerAddress)) && localAddress &&
-	       other.localAddress && (*localAddress == *(other.localAddress));
+	return mPeerAddress && other.mPeerAddress && (*mPeerAddress == *(other.mPeerAddress)) && mLocalAddress &&
+	       other.mLocalAddress && (*mLocalAddress == *(other.mLocalAddress));
 }
 
 bool ConferenceId::operator!=(const ConferenceId &other) const {
@@ -70,36 +72,50 @@ bool ConferenceId::operator!=(const ConferenceId &other) const {
 }
 
 bool ConferenceId::operator<(const ConferenceId &other) const {
-	return *peerAddress < *(other.peerAddress) ||
-	       (*peerAddress == *(other.peerAddress) && *localAddress < *(other.localAddress));
+	return *mPeerAddress < *(other.mPeerAddress) ||
+	       (*mPeerAddress == *(other.mPeerAddress) && *mLocalAddress < *(other.mLocalAddress));
 }
 
-void ConferenceId::setPeerAddress(const std::shared_ptr<const Address> &addr) {
-	peerAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
-	mHash = 0;
+bool ConferenceId::canUpdateAddress(const std::shared_ptr<const Address> &addr, bool useLocal) const {
+	// Local and peer addresses cannot be modified if the hash or weak hash have already been computed
+	const auto newUri = (addr) ? addr->getUri() : Address();
+	const auto currentMember = useLocal ? mLocalAddress : mPeerAddress;
+	return (!currentMember || (currentMember->toStringOrdered() == newUri.toStringOrdered()) ||
+	        ((mHash == 0) && (mWeakHash == 0)));
 }
 
-void ConferenceId::setLocalAddress(const std::shared_ptr<const Address> &addr) {
-	localAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
-	mHash = 0;
+void ConferenceId::setPeerAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate) {
+	if (!forceUpdate && !canUpdateAddress(addr, false)) {
+		lError() << "Cannot modify peer address if either its hash or its weak hash is defined";
+		abort();
+	}
+	mPeerAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
+}
+
+void ConferenceId::setLocalAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate) {
+	if (!forceUpdate && !canUpdateAddress(addr, true)) {
+		lInfo() << "Cannot modify local address if either its hash or its weak hash is defined";
+		abort();
+	}
+	mLocalAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
 }
 
 const std::shared_ptr<Address> &ConferenceId::getPeerAddress() const {
-	return peerAddress;
+	return mPeerAddress;
 }
 
 const std::shared_ptr<Address> &ConferenceId::getLocalAddress() const {
-	return localAddress;
+	return mLocalAddress;
 }
 
 bool ConferenceId::isValid() const {
-	return peerAddress && peerAddress->isValid() && localAddress && localAddress->isValid();
+	return mPeerAddress && mPeerAddress->isValid() && mLocalAddress && mLocalAddress->isValid();
 }
 
 size_t ConferenceId::getHash() const {
 	if (mHash == 0) {
-		const auto &pAddress = peerAddress ? peerAddress->toStringOrdered(true) : "sip:";
-		const auto &lAddress = localAddress ? localAddress->toStringOrdered(true) : "sip:";
+		const auto &pAddress = mPeerAddress ? mPeerAddress->toStringOrdered(true) : "sip:";
+		const auto &lAddress = mLocalAddress ? mLocalAddress->toStringOrdered(true) : "sip:";
 		mHash = hash<string>()(pAddress) ^ (hash<string>()(lAddress) << 1);
 	}
 	return mHash;
@@ -113,16 +129,17 @@ Address ConferenceId::reducedAddress(const Address &addr) {
 
 size_t ConferenceId::getWeakHash() const {
 	if (mWeakHash == 0) {
-		const auto &pAddress = peerAddress ? reducedAddress(*peerAddress).toStringUriOnlyOrdered(true) : "sip:";
-		const auto &lAddress = localAddress ? reducedAddress(*localAddress).toStringUriOnlyOrdered(true) : "sip:";
+		const auto &pAddress = mPeerAddress ? reducedAddress(*mPeerAddress).toStringUriOnlyOrdered(true) : "sip:";
+		const auto &lAddress = mLocalAddress ? reducedAddress(*mLocalAddress).toStringUriOnlyOrdered(true) : "sip:";
 		mWeakHash = hash<string>()(pAddress) ^ (hash<string>()(lAddress) << 1);
 	}
 	return mWeakHash;
 }
 
 bool ConferenceId::weakEqual(const ConferenceId &other) const {
-	return peerAddress && other.peerAddress && reducedAddress(*peerAddress) == reducedAddress(*other.peerAddress) &&
-	       localAddress && other.localAddress && reducedAddress(*localAddress) == reducedAddress(*other.localAddress);
+	return mPeerAddress && other.mPeerAddress && reducedAddress(*mPeerAddress) == reducedAddress(*other.mPeerAddress) &&
+	       mLocalAddress && other.mLocalAddress &&
+	       reducedAddress(*mLocalAddress) == reducedAddress(*other.mLocalAddress);
 }
 
 LINPHONE_END_NAMESPACE

@@ -240,8 +240,11 @@ public:
 	std::shared_ptr<ConferenceInfo> getConferenceInfo(long long conferenceInfoId);
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
+	void deleteConferenceInfo(long long dbConferenceId);
+	void deleteConferenceInfo(const std::shared_ptr<Address> &address);
 	void deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void migrateConferenceInfos();
+	void cleanupConferenceInfo(time_t expiredBeforeThisTime);
 
 	// ---------------------------------------------------------------------------
 	// Call log.

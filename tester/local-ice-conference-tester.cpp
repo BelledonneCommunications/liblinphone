@@ -32,63 +32,65 @@ static void create_simple_ice_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_stun_ice_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_ice_srtp_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_ice_dtls_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionDTLS, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_stun_ice_srtp_conference(void) {
-	create_conference_base(
-	    ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE,
-	    LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv,
-	    FALSE, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
+	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE,
+	                       FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
+	                       LinphoneConferenceSecurityLevelNone,
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_ice_conference_with_audio_only_participant(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_stun_ice_conference_with_audio_only_participant(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_stun_ice_srtp_conference_with_audio_only_participant(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_point_to_point_encrypted_ice_conference(void) {
-	create_conference_base(
-	    ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE,
-	    LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
-	    LinphoneConferenceSecurityLevelPointToPoint, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
+	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, FALSE,
+	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
+	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
+	                       LinphoneConferenceSecurityLevelPointToPoint,
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
 }
 
 static void create_simple_ice_conference_merging_calls(void) {
@@ -136,8 +138,8 @@ static void abort_call_to_ice_conference(void) {
 		members.push_back(marie.getCMgr());
 
 		time_t start_time = ms_time(NULL);
-		int duration = -1;
-		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
+		int duration = 1;
+		time_t end_time = (start_time + duration * 60);
 		const char *initialSubject = "Test aborted ICE call";
 		const char *description = "Grenoble";
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
@@ -439,12 +441,17 @@ static void abort_call_to_ice_conference(void) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateDeleted, 1,
 			                             liblinphone_tester_sip_timeout));
 
-			// Explicitely terminate conference as those on server are static by default
-			LinphoneConference *pconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
-			BC_ASSERT_PTR_NOT_NULL(pconference);
-			if (pconference) {
-				linphone_conference_terminate(pconference);
+			if (end_time > 0) {
+				time_t now = ms_time(NULL);
+				time_t time_left = end_time - now + linphone_core_get_conference_cleanup_period(focus.getLc());
+				// wait for the conference to end
+				if (time_left > 0) {
+					CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds((time_left + 1)), [] {
+						return false;
+					});
+				}
 			}
+
 			BC_ASSERT_TRUE(wait_for_list(coresList,
 			                             &focus.getStats().number_of_LinphoneConferenceStateTerminationPending, 1,
 			                             liblinphone_tester_sip_timeout));

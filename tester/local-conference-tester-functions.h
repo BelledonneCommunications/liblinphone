@@ -365,6 +365,7 @@ private:
 		linphone_config_set_int(linphone_core_get_config(getLc()), "sip", "reject_duplicated_calls", 0);
 		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		linphone_core_enable_rtp_bundle(getLc(), TRUE);
+		linphone_core_set_conference_cleanup_period(getLc(), 1);
 
 		LinphoneAccount *account = linphone_core_get_default_account(getLc());
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
@@ -438,7 +439,8 @@ void create_conference_base(time_t start_time,
                             LinphoneMediaDirection video_direction,
                             bool_t network_restart,
                             LinphoneConferenceSecurityLevel security_level,
-                            std::list<LinphoneParticipantRole> allowedRoles);
+                            std::list<LinphoneParticipantRole> allowedRoles,
+                            bool_t add_participant_after_end);
 
 void create_conference_with_screen_sharing_base(time_t start_time,
                                                 int duration,

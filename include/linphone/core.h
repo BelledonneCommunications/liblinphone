@@ -7150,6 +7150,26 @@ LINPHONE_PUBLIC void linphone_core_set_default_conference_layout(LinphoneCore *c
 LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *core);
 
 /**
+ * Set the conference cleanup timer period. This timer helps managing the automatic deletion of ended conferences. In
+ * fact, under normal circumstances a conference is deleted only if it transition from an active to an inactive state
+ * after its end time. Nonetheless a side effect is that there may be a conference that never became active or it was
+ * terminate before its due date and time. This timer, if setup, therefore periodically looks for expired conference and
+ * cleans then up
+ * @param core the linphone core
+ * @param seconds period of the timer. A 0 or negative value stops the timer
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC void linphone_core_set_conference_cleanup_period(LinphoneCore *core, long seconds);
+
+/**
+ * Gets the conference cleanup timer period
+ * @param core the linphone core
+ * @return the period of the conference cleanup timer period
+ * @ingroup conference
+ **/
+LINPHONE_PUBLIC long linphone_core_get_conference_cleanup_period(const LinphoneCore *core);
+
+/**
  * Retrieve the conference information linked to the provided URI if any.
  * @param core #LinphoneCore object. @notnil
  * @param uri #LinphoneAddress of the uri. @notnil

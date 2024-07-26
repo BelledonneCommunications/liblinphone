@@ -6673,23 +6673,83 @@ long long MainDb::insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &co
 	return -1;
 }
 
-void MainDb::deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+void MainDb::deleteConferenceInfo(long long dbConferenceId) {
 #ifdef HAVE_DB_STORAGE
+	L_D();
+	*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId",
+	    soci::use(dbConferenceId);
+	d->storageIdToConferenceInfo.erase(dbConferenceId);
+#endif
+}
+
+void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
+#ifdef HAVE_DB_STORAGE
+	L_D();
 	if (isInitialized()) {
+		if (expiredBeforeThisTime < 0) {
+			lError() << "Unable to delete conference informations whose expire time is negative";
+			return;
+		}
+
+		auto timestampType = d->dbSession.timestampType();
+		// Compute the time difference in minutes.
+		// MySQL provides a dedicated function: TIMESTAMPDIFF
+		// https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html#function_timestampdiff In the case of an
+		// Sqlite3 database, we have to compute the difference in days between two juliandays and then convert it to
+		// minutes by multiplying the result (that is a floating point number) by 24*60
+		const std::string timediffExpression =
+		    (getBackend() == MainDb::Backend::Sqlite3)
+		        ? "(julianday(:maxExpireTime) - julianday(conference_info.start_time)) * 24 * 60"
+		        : "TIMESTAMPDIFF(MINUTES, :maxExpireTime, conference_info.start_time)";
+		// The logic to find conference that may be deleted because their end time is in the past is the following:
+		// - compute how much time has elapsed since the start of the conference ans verify yhay this value is larger or
+		// equal to the duration.
+		// - verify that the duration is larger than 0
+		std::string findQuery = "SELECT conference_info.id, uri_sip_address.value FROM conference_info, sip_address AS "
+		                        "uri_sip_address WHERE CAST(" +
+		                        timediffExpression +
+		                        " As Integer) >= conference_info.duration AND conference_info.duration > 0 AND "
+		                        "conference_info.uri_sip_address_id = uri_sip_address.id";
 		L_DB_TRANSACTION {
 			L_D();
-
-			const long long &uriSipAddressId = d->selectSipAddressId(conferenceInfo->getUri(), false);
-			const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
-
-			*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId",
-			    soci::use(dbConferenceId);
-			d->storageIdToConferenceInfo.erase(dbConferenceId);
-
+			soci::session *session = d->dbSession.getBackendSession();
+			auto expiryTime = d->dbSession.getTimeWithSociIndicator(expiredBeforeThisTime);
+			soci::rowset<soci::row> rows =
+			    (session->prepare << findQuery, soci::use(expiryTime.first, expiryTime.second));
+			for (const auto &row : rows) {
+				long long dbConferenceId = d->dbSession.resolveId(row, 0);
+				const std::string uriString = row.get<string>(1);
+				const auto &conference = getCore()->searchConference(Address::create(uriString));
+				// Delete conference only if it is not in the core's cache or it has no participants (i.e. it was
+				// terminated before its end time)
+				if (!conference || (conference->getParticipantDevices(false).size() == 0)) {
+					lInfo() << "Deleting conference information linked to conference " << uriString;
+					deleteConferenceInfo(dbConferenceId);
+				}
+			}
 			tr.commit();
 		};
 	}
 #endif
+}
+
+void MainDb::deleteConferenceInfo(const std::shared_ptr<Address> &address) {
+#ifdef HAVE_DB_STORAGE
+	if (isInitialized()) {
+		L_DB_TRANSACTION {
+			L_D();
+			lInfo() << "Deleting conference information linked to conference " << *address;
+			const long long &uriSipAddressId = d->selectSipAddressId(address, false);
+			const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
+			deleteConferenceInfo(dbConferenceId);
+			tr.commit();
+		};
+	}
+#endif
+}
+
+void MainDb::deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+	deleteConferenceInfo(conferenceInfo->getUri());
 }
 
 // -----------------------------------------------------------------------------
@@ -6750,7 +6810,6 @@ std::shared_ptr<CallLog> MainDb::getCallLog(const std::string &callId, int limit
 			std::shared_ptr<CallLog> callLog = nullptr;
 
 			soci::session *session = d->dbSession.getBackendSession();
-
 			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(callId));
 
 			const auto &row = rows.begin();
@@ -6790,7 +6849,6 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(int limit) {
 			list<shared_ptr<CallLog>> clList;
 
 			soci::session *session = d->dbSession.getBackendSession();
-
 			soci::rowset<soci::row> rows = (session->prepare << query);
 			for (const auto &row : rows) {
 				auto callLog = d->selectCallLog(row);
@@ -6835,7 +6893,6 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistoryForLocalAddress(const 
 			list<shared_ptr<CallLog>> clList;
 
 			soci::session *session = d->dbSession.getBackendSession();
-
 			soci::rowset<soci::row> rows = (session->prepare << query);
 			for (const auto &row : rows) {
 				auto callLog = d->selectCallLog(row);

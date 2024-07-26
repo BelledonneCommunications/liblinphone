@@ -8367,7 +8367,10 @@ static void core_stop_start_with_chat_room_ref(void) {
 	    linphone_core_create_chat_room_2(pauline1->lc, params, initialSubject, participantsAddresses);
 	linphone_chat_room_params_unref(params);
 
-	BC_ASSERT_PTR_NULL(chatRoom);
+	BC_ASSERT_PTR_NOT_NULL(chatRoom);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneChatRoomStateCreationFailed,
+	                             initialPauline1Stats.number_of_LinphoneChatRoomStateCreationFailed + 1,
+	                             liblinphone_tester_sip_timeout));
 	if (chatRoom) linphone_chat_room_unref(chatRoom);
 
 	coresList = bctbx_list_remove(coresList, pauline1->lc);

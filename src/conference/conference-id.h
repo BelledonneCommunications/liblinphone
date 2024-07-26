@@ -54,8 +54,8 @@ public:
 	const std::shared_ptr<Address> &getPeerAddress() const;
 	const std::shared_ptr<Address> &getLocalAddress() const;
 
-	void setPeerAddress(const std::shared_ptr<const Address> &addr);
-	void setLocalAddress(const std::shared_ptr<const Address> &addr);
+	void setPeerAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate = false);
+	void setLocalAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate = false);
 
 	bool isValid() const;
 	size_t getHash() const;
@@ -74,10 +74,12 @@ public:
 
 private:
 	static Address reducedAddress(const Address &addr);
-	std::shared_ptr<Address> peerAddress;
-	std::shared_ptr<Address> localAddress;
+	std::shared_ptr<Address> mPeerAddress;
+	std::shared_ptr<Address> mLocalAddress;
 	mutable size_t mHash = 0;
 	mutable size_t mWeakHash = 0;
+
+	bool canUpdateAddress(const std::shared_ptr<const Address> &addr, bool useLocal) const;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {

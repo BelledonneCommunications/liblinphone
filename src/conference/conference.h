@@ -114,7 +114,7 @@ public:
 
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
-	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
+	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const override;
 	const std::shared_ptr<Participant> getScreenSharingParticipant() const;
 	const std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;
 

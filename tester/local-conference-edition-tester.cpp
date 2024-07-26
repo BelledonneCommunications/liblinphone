@@ -338,7 +338,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 
 		time_t start_time = time(NULL) + 600; // Start in 10 minutes
 		int duration = 60;                    // minutes
-		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
+		time_t end_time = (start_time + duration * 60);
 		const char *initialSubject = "Test characters: <S-F12><S-F11><S-F6> £$%§";
 		const char *description = "Testing characters";
 
@@ -380,6 +380,11 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			LinphoneParticipantRole role = LinphoneParticipantRoleListener;
 			stats focus_stat = focus.getStats();
 			stats marie_stat = marie.getStats();
+			start_time = time(NULL) + 5; // Start in 5 seconds
+			duration = 1;                // minutes
+			end_time = (start_time + duration * 60);
+			linphone_conference_info_set_date_time(conf_info, start_time);
+			linphone_conference_info_set_duration(conf_info, duration);
 			linphone_conference_info_set_subject(conf_info, initialSubject);
 			linphone_conference_info_set_description(conf_info, description);
 			LinphoneParticipantInfo *lise_participant_info =
@@ -554,6 +559,10 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		uid = NULL;
 
 		if (join) {
+			CoreManagerAssert({focus, marie, pauline, laure, michelle, lise}).waitUntil(chrono::seconds(5), [] {
+				return false;
+			});
+
 			std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()};
 			std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr()};
 			add_participant_info_to_list(&participants_info, marie.getCMgr()->identity, LinphoneParticipantRoleSpeaker,
@@ -1250,9 +1259,9 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 
 		std::list<LinphoneCoreManager *> participants{pauline.getCMgr(), marie.getCMgr(), laure.getCMgr()};
 
-		time_t start_time = time(NULL) + 600; // Start in 10 minutes
-		int duration = 60;                    // minutes
-		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
+		time_t start_time = time(NULL) + 20; // Start in 20 seconds
+		int duration = 1;                    // minutes
+		time_t end_time = (start_time + duration * 60);
 		const char *initialSubject = "Test characters: <S-F12><S-F11><S-F6> £$%§";
 		const char *description = "Testing characters";
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;

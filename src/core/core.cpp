@@ -227,6 +227,8 @@ void CorePrivate::init() {
 		}
 	}
 
+	createConferenceCleanupTimer();
+
 #ifdef __ANDROID__
 	// On Android assume Core has been started in background,
 	// otherwise first notifyEnterForeground() will do nothing.
@@ -331,6 +333,38 @@ bool CorePrivate::isShutdownDone() {
 	return true;
 }
 
+void CorePrivate::createConferenceCleanupTimer() {
+	L_Q();
+
+	const auto period = q->getConferenceCleanupPeriod();
+	if (period > 0) {
+		auto onConferenceCleanup = [this]() -> bool {
+			auto it = conferenceById.begin();
+			while (it != conferenceById.end()) {
+				auto [id, conference] = (*it);
+				it++;
+				const auto conferenceIsEnded = conference->isConferenceEnded();
+				const auto conferenceHasNoParticipantDevices = (conference->getParticipantDevices(false).size() == 0);
+				if (conferenceIsEnded && conferenceHasNoParticipantDevices) {
+					conference->terminate();
+				}
+			};
+			mainDb->cleanupConferenceInfo(ms_time(NULL));
+			return BELLE_SIP_CONTINUE;
+		};
+		mConferenceCleanupTimer =
+		    q->createTimer(onConferenceCleanup, static_cast<unsigned int>(period) * 1000, "conference");
+	}
+}
+
+void CorePrivate::stopConferenceCleanupTimer() {
+	L_Q();
+	if (mConferenceCleanupTimer) {
+		q->destroyTimer(mConferenceCleanupTimer);
+		mConferenceCleanupTimer = nullptr;
+	}
+}
+
 // Called by _linphone_core_stop_async_start() to stop the asynchronous tasks.
 // Put here the calls to stop some task with asynchronous process and check in CorePrivate::isShutdownDone() if they
 // have finished.
@@ -356,6 +390,7 @@ void CorePrivate::shutdown() {
 	ephemeralMessages.clear();
 
 	stopChatMessagesAggregationTimer();
+	stopConferenceCleanupTimer();
 
 	for (const auto &chatRoom : q->getChatRooms()) {
 		for (auto &chatMessage : chatRoom->getTransientChatMessages()) {
@@ -1767,6 +1802,27 @@ void Core::invalidateAccountInConferencesAndChatRooms(const std::shared_ptr<Acco
 	}
 }
 
+void Core::setConferenceCleanupPeriod(long seconds) {
+	L_D();
+	auto oldPeriod = getConferenceCleanupPeriod();
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	linphone_config_set_int64(config, "misc", "conference_cleanup_period", seconds);
+	if ((oldPeriod <= 0) && (seconds > 0)) {
+		// Create cleanup time if not already done
+		d->createConferenceCleanupTimer();
+	} else if ((oldPeriod > 0) && (seconds <= 0)) {
+		// Stop time if the new period is 0 or lower
+		d->stopConferenceCleanupTimer();
+	} else {
+		// Only update timeout
+		belle_sip_source_set_timeout_int64(d->mConferenceCleanupTimer, seconds);
+	}
+}
+
+long Core::getConferenceCleanupPeriod() const {
+	return linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc", "conference_cleanup_period", -1);
+}
+
 std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const CallSession> &session,
                                                  bool logIfNotFound) const {
 
@@ -1796,16 +1852,16 @@ std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const Cal
 
 std::shared_ptr<Conference> Core::findConference(const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
-	auto it = d->conferenceById.find(conferenceId);
-	if (it != d->conferenceById.cend()) {
-		auto conference = it->second;
+	try {
+		auto conference = d->conferenceById.at(conferenceId);
 		lInfo() << "Found audio video conference " << conference << " in RAM with conference ID " << conferenceId
 		        << ".";
 		return conference;
+	} catch (const out_of_range &) {
+		if (logIfNotFound) {
+			lInfo() << "Unable to find audio video conference with conference ID " << conferenceId << " in RAM.";
+		}
 	}
-
-	if (logIfNotFound)
-		lInfo() << "Unable to find audio video conference with conference ID " << conferenceId << " in RAM.";
 	return nullptr;
 }
 
@@ -1875,7 +1931,6 @@ shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams>
 		// p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
 		const auto &conference = p.second;
 		const ConferenceId &conferenceId = conference->getConferenceId();
-
 		auto curLocalAddress =
 		    (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->getUriWithoutGruu() : Address();
 		if (localAddressUri.isValid() && (localAddressUri != curLocalAddress)) return false;
@@ -1938,7 +1993,6 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
                                                                const std::list<Address> &participants,
                                                                const std::shared_ptr<Address> &confAddr,
                                                                CallSessionListener *listener) {
-	L_D()
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
 		return nullptr;
@@ -1967,19 +2021,6 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 		conferenceFactoryUri = conferenceFactoryUriRef->clone()->toSharedPtr();
 		conferenceFactoryUri->setUriParam(Conference::SecurityModeParameter,
 		                                  ConferenceParams::getSecurityLevelAttribute(confParams->getSecurityLevel()));
-	}
-
-	ConferenceId conferenceId = ConferenceId(nullptr, localAddr);
-	if (!localAddr->hasUriParam("gr")) {
-		lWarning() << "Local identity address [" << *localAddr << "] doesn't have a gruu, let's try to find it";
-		auto localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
-		if (localAddrWithGruu && localAddrWithGruu->isValid()) {
-			lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
-			conferenceId = ConferenceId(nullptr, localAddrWithGruu);
-		} else {
-			lError() << "Failed to find matching contact address with gruu for identity address [" << *localAddr
-			         << "], client group chat room creation will fail!";
-		}
 	}
 
 	if (confParams->chatEnabled()) {

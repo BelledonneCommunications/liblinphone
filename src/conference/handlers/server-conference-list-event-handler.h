@@ -46,7 +46,11 @@ public:
 	static void notifyResponseCb(LinphoneEvent *lev);
 
 private:
-	std::unordered_map<ConferenceId, std::weak_ptr<ServerConferenceEventHandler>> handlers;
+	std::unordered_map<ConferenceId,
+	                   std::weak_ptr<ServerConferenceEventHandler>,
+	                   ConferenceId::WeakHash,
+	                   ConferenceId::WeakEqual>
+	    handlers;
 };
 
 LINPHONE_END_NAMESPACE

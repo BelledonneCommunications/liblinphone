@@ -2749,9 +2749,6 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateDeleted, 1, 1000));
 
-	if (focus_conference) {
-		linphone_conference_terminate(focus_conference);
-	}
 	BC_ASSERT_TRUE(wait_for_list(lcs, &focus_mgr->stat.number_of_LinphoneConferenceStateTerminationPending, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &focus_mgr->stat.number_of_LinphoneConferenceStateTerminated, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &focus_mgr->stat.number_of_LinphoneConferenceStateDeleted, 1, 1000));
@@ -3910,9 +3907,8 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 	add_participant_info_to_list(&participants_info, pauline->identity, LinphoneParticipantRoleSpeaker, -1);
 	add_participant_info_to_list(&participants_info, laure->identity, LinphoneParticipantRoleSpeaker, -1);
 	add_participant_info_to_list(&participants_info, marie->identity, LinphoneParticipantRoleSpeaker, -1);
-	check_conference_info_in_db(marie, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
-	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE, TRUE,
-	                            with_video, FALSE);
+	LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(marie->lc, confAddr);
+	BC_ASSERT_PTR_NULL(info);
 	check_conference_info_in_db(pauline, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
 	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE, TRUE,
 	                            with_video, FALSE);
