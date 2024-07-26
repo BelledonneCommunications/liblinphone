@@ -63,6 +63,7 @@ public:
 	void unregisterListener(CoreListener *listener);
 	void uninit();
 	void shutdown();
+	void unregisterAccounts();
 	bool isShutdownDone();
 	void disconnectMainDb();
 

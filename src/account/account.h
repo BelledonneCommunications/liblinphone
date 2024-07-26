@@ -124,7 +124,9 @@ public:
 	void resetMissedCallsCount();
 	void setMissedCallsCount(int count);
 	void deleteCallLogs() const;
-
+	bool isUnregistering() const {
+		return mIsUnregistering;
+	}
 	bool check();
 	bool isAvpfEnabled() const;
 	void setPresenceModel(LinphonePresenceModel *presence);
@@ -197,6 +199,7 @@ private:
 	bool mNeedToRegister = false;
 	bool mRegisterChanged = false;
 	bool mSendPublish = false;
+	bool mIsUnregistering = false;
 
 	bool hasProxyConfigRef = false;
 

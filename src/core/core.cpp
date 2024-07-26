@@ -324,6 +324,10 @@ bool CorePrivate::isShutdownDone() {
 		}
 	}
 
+	for (const auto &account : q->getAccounts()) {
+		if (account->isUnregistering()) return false;
+	}
+
 	return true;
 }
 
@@ -364,8 +368,29 @@ void CorePrivate::shutdown() {
 		}
 	}
 
+	unregisterAccounts();
+
 	pushReceivedBackgroundTask.stop();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
+}
+
+void CorePrivate::unregisterAccounts() {
+	L_Q();
+	LinphoneCore *lc = q->getCCore();
+	if (lc->sip_network_state.global_state) {
+		for (const auto &account : q->getAccounts()) {
+			account->unpublish(); /* to unpublish without changing the stored flag enable_publish */
+			auto params = account->getAccountParams();
+			auto natPolicy = params->getNatPolicy();
+			if (natPolicy) natPolicy->release();
+
+			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP
+			 * server.*/
+			if (!params->getPushNotificationAllowed() && !params->getRemotePushNotificationAllowed()) {
+				account->unregister(); /* to unregister without changing the stored flag enable_register */
+			}
+		}
+	}
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.

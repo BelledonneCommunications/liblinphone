@@ -7304,7 +7304,6 @@ void net_config_uninit(LinphoneCore *lc) {
 void sip_config_uninit(LinphoneCore *lc) {
 	int i;
 	sip_config_t *config = &lc->sip_conf;
-	bool_t still_registered = TRUE;
 
 	linphone_config_set_int(lc->config, "sip", "guess_hostname", config->guess_hostname);
 	linphone_config_set_string(lc->config, "sip", "contact", config->contact);
@@ -7316,45 +7315,6 @@ void sip_config_uninit(LinphoneCore *lc) {
 	linphone_config_set_int(lc->config, "sip", "register_only_when_upnp_is_ok", config->register_only_when_upnp_is_ok);
 	linphone_config_set_range(lc->config, "sip", "refresh_window", config->refresh_window_min,
 	                          config->refresh_window_max);
-
-	if (lc->sip_network_state.global_state) {
-		bool_t need_to_unregister = FALSE;
-
-		for (auto acc : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
-			acc->unpublish(); /* to unpublish without changing the stored flag enable_publish */
-			LinphoneNatPolicy *policy = linphone_account_params_get_nat_policy(linphone_account_get_params(acc->toC()));
-			if (policy) NatPolicy::toCpp(policy)->release();
-
-			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP
-			 * server.*/
-			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc->toC())) &&
-			    !linphone_account_params_get_remote_push_notification_allowed(
-			        linphone_account_get_params(acc->toC()))) {
-				acc->unregister(); /* to unregister without changing the stored flag enable_register */
-				need_to_unregister = TRUE;
-			}
-		}
-
-		if (need_to_unregister) {
-			ms_message("Unregistration started.");
-
-			for (i = 0; i < 20 && still_registered; i++) {
-				still_registered = FALSE;
-				lc->sal->iterate();
-				for (auto acc : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
-					if (!linphone_account_params_get_push_notification_allowed(
-					        linphone_account_get_params(acc->toC())) &&
-					    !linphone_account_params_get_remote_push_notification_allowed(
-					        linphone_account_get_params(acc->toC()))) {
-						LinphoneRegistrationState state = linphone_account_get_state(acc->toC());
-						still_registered = (state == LinphoneRegistrationOk || state == LinphoneRegistrationProgress);
-					}
-				}
-				ms_usleep(100000);
-			}
-			if (i >= 20) ms_warning("Cannot complete unregistration, giving up");
-		}
-	}
 
 	lc->auth_info = bctbx_list_free_with_data(lc->auth_info, (void (*)(void *))linphone_auth_info_unref);
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->releaseAccounts();
