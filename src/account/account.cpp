@@ -363,7 +363,7 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 		lInfo() << "Account [" << this << "] for identity [" << identity << "] moving from state ["
 		        << linphone_registration_state_to_string(mState) << "] to ["
 		        << linphone_registration_state_to_string(state) << "] on core [" << core << "]";
-
+		mIsUnregistering = false;
 		if (state == LinphoneRegistrationOk) {
 
 			const auto salAddr = mOp->getContactAddress();
@@ -724,6 +724,7 @@ void Account::unregister() {
 	if (mOp &&
 	    (mState == LinphoneRegistrationOk || (mState == LinphoneRegistrationProgress && mParams->mExpires != 0))) {
 		mOp->unregister();
+		mIsUnregistering = true;
 	}
 }
 

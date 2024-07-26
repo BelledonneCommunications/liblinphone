@@ -298,6 +298,11 @@ bool CorePrivate::isShutdownDone() {
 			return false;
 		}
 	}
+	LinphoneCore *lc = q->getCCore();
+	for (elem = lc->sip_conf.accounts; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneAccount *acc = (LinphoneAccount *)(elem->data);
+		if (Account::toCpp(acc)->isUnregistering()) return false;
+	}
 
 	return true;
 }
@@ -340,8 +345,32 @@ void CorePrivate::shutdown() {
 		}
 	}
 
+	unregisterAccounts();
+
 	pushReceivedBackgroundTask.stop();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
+}
+
+void CorePrivate::unregisterAccounts() {
+	L_Q();
+	LinphoneCore *lc = q->getCCore();
+	if (lc->sip_network_state.global_state) {
+		bctbx_list_t *elem;
+
+		for (elem = lc->sip_conf.accounts; elem != NULL; elem = bctbx_list_next(elem)) {
+			LinphoneAccount *acc = (LinphoneAccount *)(elem->data);
+			Account::toCpp(acc)->unpublish(); /* to unpublish without changing the stored flag enable_publish */
+			LinphoneNatPolicy *policy = linphone_account_params_get_nat_policy(linphone_account_get_params(acc));
+			if (policy) NatPolicy::toCpp(policy)->release();
+
+			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP
+			 * server.*/
+			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc)) &&
+			    !linphone_account_params_get_remote_push_notification_allowed(linphone_account_get_params(acc))) {
+				Account::toCpp(acc)->unregister(); /* to unregister without changing the stored flag enable_register */
+			}
+		}
+	}
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.
