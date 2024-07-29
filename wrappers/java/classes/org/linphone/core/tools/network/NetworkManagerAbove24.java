@@ -201,6 +201,8 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
     public Network getActiveNetwork() {
         if (mNetworkAvailable != null) {
             return mNetworkAvailable;
+        } else {
+            Log.w("[Platform Helper] [Network Manager 24] No active network stored, trying to get it from connectivity manager directly");
         }
 
         return mConnectivityManager.getActiveNetwork();

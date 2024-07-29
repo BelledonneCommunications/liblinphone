@@ -64,12 +64,12 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
                     return;
                 }
 
-                Log.i("[Platform Helper] [Network Manager 26] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+                Log.i("[Platform Helper] [Network Manager 26] A network is available: " + info.getTypeName() + ", WiFi only is " + (mWifiOnly ? "enabled" : "disabled"));
                 if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI || info.getType() == ConnectivityManager.TYPE_ETHERNET) {
                     mNetworkAvailable = network;
                     mHelper.updateNetworkReachability();
                 } else {
-                    Log.i("[Platform Helper] [Network Manager 26] Network isn't wifi and wifi only mode is enabled");
+                    Log.i("[Platform Helper] [Network Manager 26] Network isn't WiFi and WiFi only mode is enabled");
                     if (mWifiOnly) {
                         mLastNetworkAvailable = network;
                     }
@@ -131,12 +131,12 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         if (mWifiOnly && mNetworkAvailable != null) {
             NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
             if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI && networkInfo.getType() != ConnectivityManager.TYPE_ETHERNET) {
-                Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled and current network isn't wifi or ethernet");
+                Log.i("[Platform Helper] [Network Manager 26] WiFi only mode enabled and current network isn't WiFi or ethernet");
                 mLastNetworkAvailable = mNetworkAvailable;
                 mNetworkAvailable = null;
             }
         } else if (!mWifiOnly && mNetworkAvailable == null) {
-            Log.i("[Platform Helper] [Network Manager 26] Wifi only mode disabled, restoring previous network");
+            Log.i("[Platform Helper] [Network Manager 26] WiFi only mode disabled, restoring previous network");
             mNetworkAvailable = mLastNetworkAvailable;
             mLastNetworkAvailable = null;
         }
@@ -171,6 +171,8 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
     public Network getActiveNetwork() {
         if (mNetworkAvailable != null) {
             return mNetworkAvailable;
+        } else {
+            Log.w("[Platform Helper] [Network Manager 26] No active network stored, trying to get it from connectivity manager directly");
         }
 
         return mConnectivityManager.getActiveNetwork();
@@ -196,13 +198,18 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         if (activeNetwork != null) {
             NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(activeNetwork);
             if (networkInfo != null) {
-                boolean connected = networkInfo.isConnected();
-                if (connected) {
-                    Log.i("[Platform Helper] [Network Manager 26] Active network info says it's connected");
+                if (mWifiOnly && networkInfo.getType() != ConnectivityManager.TYPE_WIFI && networkInfo.getType() != ConnectivityManager.TYPE_ETHERNET) {
+                    Log.w("[Platform Helper] [Network Manager 26] Active network isn't WiFi and WiFi only mode is enabled, network as unavailable");
+                    return false;
                 } else {
-                    Log.w("[Platform Helper] [Network Manager 26] Active network info says it's not connected..."); 
-                }
-                return connected;
+                    boolean connected = networkInfo.isConnected();
+                    if (connected) {
+                        Log.i("[Platform Helper] [Network Manager 26] Active network info says it's connected");
+                    } else {
+                        Log.w("[Platform Helper] [Network Manager 26] Active network info says it's not connected..."); 
+                    }
+                    return connected;
+                } 
             } else {
                 Log.w("[Platform Helper] [Network Manager 26] Failed to get active network info, considering network as unavailable");
                 return false;
