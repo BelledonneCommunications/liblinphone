@@ -274,6 +274,11 @@ int linphone_chat_room_get_history_size(LinphoneChatRoom *cr) {
 	return AbstractChatRoom::toCpp(cr)->getChatMessageCount();
 }
 
+int linphone_chat_room_get_history_size_2(LinphoneChatRoom *cr, LinphoneChatRoomHistoryFilterMask filters) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	return AbstractChatRoom::toCpp(cr)->getHistorySize(filters);
+}
+
 bool_t linphone_chat_room_is_empty(LinphoneChatRoom *cr) {
 	ChatRoomLogContextualizer logContextualizer(cr);
 	return (bool_t)AbstractChatRoom::toCpp(cr)->isEmpty();
@@ -310,9 +315,33 @@ bctbx_list_t *linphone_chat_room_get_history_range(LinphoneChatRoom *cr, int sta
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(chatMessages);
 }
 
+bctbx_list_t *linphone_chat_room_get_history_range_2(LinphoneChatRoom *cr,
+                                                     int startm,
+                                                     int endm,
+                                                     LinphoneChatRoomHistoryFilterMask filters) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(AbstractChatRoom::toCpp(cr)->getHistoryRange(startm, endm, filters));
+}
+
 bctbx_list_t *linphone_chat_room_get_history(LinphoneChatRoom *cr, int nb_message) {
 	ChatRoomLogContextualizer logContextualizer(cr);
 	return linphone_chat_room_get_history_range(cr, 0, nb_message);
+}
+
+bctbx_list_t *
+linphone_chat_room_get_history_2(LinphoneChatRoom *cr, int nb_message, LinphoneChatRoomHistoryFilterMask filters) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	return linphone_chat_room_get_history_range_2(cr, 0, nb_message, filters);
+}
+
+bctbx_list_t *linphone_chat_room_get_history_range_near(LinphoneChatRoom *cr,
+                                                        unsigned int before,
+                                                        unsigned int after,
+                                                        LinphoneEventLog *event,
+                                                        LinphoneChatRoomHistoryFilterMask filters) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(AbstractChatRoom::toCpp(cr)->getHistoryRangeNear(
+	    before, after, event ? L_GET_CPP_PTR_FROM_C_OBJECT(event) : nullptr, filters));
 }
 
 bctbx_list_t *linphone_chat_room_get_unread_history(LinphoneChatRoom *cr) {
@@ -359,6 +388,18 @@ LinphoneChatMessage *linphone_chat_room_find_message(LinphoneChatRoom *cr, const
 	if (!cppPtr) return nullptr;
 
 	return linphone_chat_message_ref(L_GET_C_BACK_PTR(cppPtr));
+}
+
+LinphoneEventLog *linphone_chat_room_search_chat_message_by_text(LinphoneChatRoom *cr,
+                                                                 const char *text,
+                                                                 const LinphoneEventLog *from,
+                                                                 LinphoneSearchDirection direction) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	shared_ptr<EventLog> cppPtr = AbstractChatRoom::toCpp(cr)->searchChatMessageByText(
+	    L_C_TO_STRING(text), from ? L_GET_CPP_PTR_FROM_C_OBJECT(from) : nullptr, direction);
+	if (!cppPtr) return nullptr;
+
+	return linphone_event_log_ref(L_GET_C_BACK_PTR(cppPtr));
 }
 
 LinphoneChatRoomState linphone_chat_room_get_state(const LinphoneChatRoom *cr) {

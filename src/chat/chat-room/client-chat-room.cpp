@@ -162,6 +162,10 @@ list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast) const {
 	                                  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
 }
 
+list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast, HistoryFilterMask filters) const {
+	return ChatRoom::getHistory(nLast, filters);
+}
+
 list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end) const {
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
 	    getConferenceId(), begin, end,
@@ -170,12 +174,20 @@ list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end) c
 	                                  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
 }
 
+list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end, HistoryFilterMask filters) const {
+	return ChatRoom::getHistoryRange(begin, end, filters);
+}
+
 int ClientChatRoom::getHistorySize() const {
 	return getCore()->getPrivate()->mainDb->getHistorySize(
 	    getConferenceId(), getCurrentParams()->isGroup()
 	                           ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
 	                                                 MainDb::Filter::ConferenceInfoNoDeviceFilter})
 	                           : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+}
+
+int ClientChatRoom::getHistorySize(HistoryFilterMask filters) const {
+	return ChatRoom::getHistorySize(filters);
 }
 
 void ClientChatRoom::exhume() {

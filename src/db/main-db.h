@@ -146,6 +146,11 @@ public:
 
 	std::list<std::shared_ptr<ChatMessage>> findChatMessagesToBeNotifiedAsDelivered() const;
 
+	std::shared_ptr<EventLog> searchChatMessagesByText(const ConferenceId &conferenceId,
+	                                                   const std::string &text,
+	                                                   const std::shared_ptr<const EventLog> &from,
+	                                                   LinphoneSearchDirection direction);
+
 	// ---------------------------------------------------------------------------
 	// Conference events.
 	// ---------------------------------------------------------------------------
@@ -154,6 +159,11 @@ public:
 	getHistory(const ConferenceId &conferenceId, int nLast, FilterMask mask = NoFilter) const;
 	std::list<std::shared_ptr<EventLog>>
 	getHistoryRange(const ConferenceId &conferenceId, int begin, int end, FilterMask mask = NoFilter) const;
+	std::list<std::shared_ptr<EventLog>> getHistoryRangeNear(const ConferenceId &conferenceId,
+	                                                         unsigned int before,
+	                                                         unsigned int after,
+	                                                         const std::shared_ptr<EventLog> &event = nullptr,
+	                                                         FilterMask = NoFilter) const;
 
 	int getHistorySize(const ConferenceId &conferenceId, FilterMask mask = NoFilter) const;
 
@@ -268,6 +278,8 @@ public:
 
 	// Import legacy calls/messages from old db.
 	bool import(Backend backend, const std::string &parameters) override;
+
+	static FilterMask getFilterMaskFromHistoryFilterMask(AbstractChatRoom::HistoryFilterMask historyFilterMask);
 
 protected:
 	void init() override;

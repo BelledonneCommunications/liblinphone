@@ -502,6 +502,21 @@ typedef struct _LinphoneConferenceParams LinphoneChatRoomParams;
  */
 typedef int LinphoneChatRoomCapabilitiesMask;
 
+/**
+ * @brief A mask of #LinphoneChatRoomHistoryFilter
+ * @ingroup chatroom
+ */
+typedef int LinphoneChatRoomHistoryFilterMask;
+
+/**
+ * @brief Enum for search direction.
+ * @ingroup chatroom
+ **/
+typedef enum _LinphoneSearchDirection {
+	LinphoneSearchDirectionUp = 0,
+	LinphoneSearchDirectionDown = 1,
+} LinphoneSearchDirection;
+
 // -----------------------------------------------------------------------------
 // Ekt.
 // -----------------------------------------------------------------------------

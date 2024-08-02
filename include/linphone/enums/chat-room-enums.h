@@ -83,4 +83,18 @@ typedef enum _LinphoneChatRoomEphemeralMode {
 	    1 /**< Ephemeral settings are chatroom wide and only admins can change them. */
 } LinphoneChatRoomEphemeralMode;
 
+/**
+ * #LinphoneChatRoomHistoryFilter is used to determine which filter to apply to history functions.
+ * @ingroup chatroom
+ **/
+typedef enum _LinphoneChatRoomHistoryFilter {
+	LinphoneChatRoomHistoryFilterNone = 0x0,                   /**< No filter. */
+	LinphoneChatRoomHistoryFilterCall = 1 << 0,                /**< Retrieve calls. */
+	LinphoneChatRoomHistoryFilterChatMessage = 1 << 1,         /**< Retrieve chat messages. */
+	LinphoneChatRoomHistoryFilterChatMessageSecurity = 1 << 2, /**< Retrieve chat messages and security events. */
+	LinphoneChatRoomHistoryFilterInfo = 1 << 3,                /**< Retrieve all chat room events. */
+	LinphoneChatRoomHistoryFilterInfoNoDevice = 1 << 4, /**< Retrieve all chat room events without device events. */
+
+} LinphoneChatRoomHistoryFilter;
+
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_

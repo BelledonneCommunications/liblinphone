@@ -362,6 +362,12 @@ list<shared_ptr<ChatMessage>> ChatRoom::findChatMessages(const list<string> &mes
 	return getCore()->getPrivate()->mainDb->findChatMessages(getConferenceId(), messageIds);
 }
 
+std::shared_ptr<EventLog> ChatRoom::searchChatMessageByText(const std::string &text,
+                                                            const std::shared_ptr<const EventLog> &from,
+                                                            LinphoneSearchDirection direction) const {
+	return getCore()->getPrivate()->mainDb->searchChatMessagesByText(getConferenceId(), text, from, direction);
+}
+
 // -----------------------------------------------------------------------------
 
 void ChatRoom::sendDeliveryErrorNotification(const shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason) {
@@ -687,6 +693,11 @@ list<shared_ptr<EventLog>> ChatRoom::getHistory(int nLast) const {
 	        {MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter}));
 }
 
+list<shared_ptr<EventLog>> ChatRoom::getHistory(int nLast, HistoryFilterMask filters) const {
+	return getCore()->getPrivate()->mainDb->getHistory(getConferenceId(), nLast,
+	                                                   MainDb::getFilterMaskFromHistoryFilterMask(filters));
+}
+
 list<shared_ptr<EventLog>> ChatRoom::getHistoryRange(int begin, int end) const {
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
 	    getConferenceId(), begin, end,
@@ -694,8 +705,26 @@ list<shared_ptr<EventLog>> ChatRoom::getHistoryRange(int begin, int end) const {
 	        {MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter}));
 }
 
+list<shared_ptr<EventLog>> ChatRoom::getHistoryRange(int begin, int end, HistoryFilterMask filters) const {
+	return getCore()->getPrivate()->mainDb->getHistoryRange(getConferenceId(), begin, end,
+	                                                        MainDb::getFilterMaskFromHistoryFilterMask(filters));
+}
+
+list<shared_ptr<EventLog>> ChatRoom::getHistoryRangeNear(unsigned int before,
+                                                         unsigned int after,
+                                                         const shared_ptr<EventLog> &event,
+                                                         HistoryFilterMask filters) const {
+	return getCore()->getPrivate()->mainDb->getHistoryRangeNear(getConferenceId(), before, after, event,
+	                                                            MainDb::getFilterMaskFromHistoryFilterMask(filters));
+}
+
 int ChatRoom::getHistorySize() const {
 	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId());
+}
+
+int ChatRoom::getHistorySize(HistoryFilterMask filters) const {
+	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId(),
+	                                                       MainDb::getFilterMaskFromHistoryFilterMask(filters));
 }
 
 void ChatRoom::deleteFromDb() {

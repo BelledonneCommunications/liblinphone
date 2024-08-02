@@ -1843,6 +1843,16 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error, bool_t im_
 		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_text(foundMessage));
 		linphone_chat_message_unref(foundMessage);
 
+		LinphoneEventLog *event =
+		    linphone_chat_room_search_chat_message_by_text(marieCr, "Hello", NULL, LinphoneSearchDirectionUp);
+		if (BC_ASSERT_PTR_NOT_NULL(event)) {
+			LinphoneChatMessage *chat_from_search = linphone_event_log_get_chat_message(event);
+			if (BC_ASSERT_PTR_NOT_NULL(chat_from_search)) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(chat_from_search), "Hello");
+			}
+			linphone_event_log_unref(event);
+		}
+
 		LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
 		BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 		linphone_address_unref(chloeAddr);
@@ -2595,7 +2605,8 @@ static void group_chat_room_remove_participant_base(bool_t restart) {
 	// Check that participant removed event has been stored
 	// Passing 0 as second argument because all events must be retrived
 	int nbMarieParticipantRemoved = 0;
-	bctbx_list_t *marieHistory = linphone_chat_room_get_history_events(marieCr, 0);
+	bctbx_list_t *marieHistory = linphone_chat_room_get_history_2(
+	    marieCr, 0, LinphoneChatRoomHistoryFilterChatMessage | LinphoneChatRoomHistoryFilterInfoNoDevice);
 	for (bctbx_list_t *item = marieHistory; item; item = bctbx_list_next(item)) {
 		LinphoneEventLog *event = (LinphoneEventLog *)bctbx_list_get_data(item);
 		if (linphone_event_log_get_type(event) == LinphoneEventLogTypeConferenceParticipantRemoved) {
@@ -7878,7 +7889,9 @@ static void participant_removed_then_added(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newPauline1Cr), initialSubject);
 
 	// Check timestamps ordering in history
-	bctbx_list_t *history = linphone_chat_room_get_history_events(marie1Cr, 3); // Leave + Message + Join
+	bctbx_list_t *history = linphone_chat_room_get_history_range_near(
+	    marie1Cr, 3, 0, NULL,
+	    LinphoneChatRoomHistoryFilterChatMessage | LinphoneChatRoomHistoryFilterInfoNoDevice); // Leave + Message + Join
 	bctbx_list_t *itHistory = history;
 	int step = 0;
 	time_t lastTime = 0;

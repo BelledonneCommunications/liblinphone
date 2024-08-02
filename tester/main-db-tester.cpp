@@ -452,6 +452,93 @@ static void database_with_chatroom_duplicates(void) {
 	}
 }
 
+static void search_messages_in_chat_room(void) {
+	MainDbProvider provider("db/chatrooms.db");
+	MainDb &mainDb = provider.getMainDb();
+	if (mainDb.isInitialized()) {
+		ConferenceId conferenceId;
+		{
+			auto chatrooms = mainDb.getChatRooms();
+
+			for (const auto &c : chatrooms) {
+				if (c->getSubject() == "Les réunions") {
+					conferenceId = c->getConferenceId();
+					break;
+				}
+			}
+		}
+
+		// retrieve the 10 first messages, after should not retrieve events since there is none after the beginning
+		auto listEvent = mainDb.getHistoryRangeNear(conferenceId, 10, 10, nullptr, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(!listEvent.empty());
+		BC_ASSERT_EQUAL(listEvent.size(), (size_t)10, size_t, "%zu");
+
+		// Search up from the beginning
+		auto event = mainDb.searchChatMessagesByText(conferenceId, "réunion", nullptr, LinphoneSearchDirectionUp);
+		auto chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+		BC_ASSERT_STRING_EQUAL(
+		    linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(chatMessage)),
+		    "La réunion a durer vraiment longtemps mais elle était nécessaire pour faire avancer le projet.");
+
+		listEvent = mainDb.getHistoryRangeNear(conferenceId, 5, 5, event, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(!listEvent.empty());
+		BC_ASSERT_EQUAL(listEvent.size(), (size_t)11, size_t, "%zu"); // 11 because the provided event is also retrieved
+
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionUp);
+		chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(chatMessage)),
+		                       "On a prévu une petit réunion avec Super Marie et Super Pauline");
+
+		listEvent = mainDb.getHistoryRangeNear(conferenceId, 5, 0, event, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(!listEvent.empty());
+		BC_ASSERT_EQUAL(listEvent.size(), (size_t)6, size_t, "%zu"); // So here 6 instead of 5
+
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionUp);
+		chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(chatMessage)),
+		                       "On en parle en réunion");
+
+		listEvent = mainDb.getHistoryRangeNear(conferenceId, 0, 5, event, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(!listEvent.empty());
+		BC_ASSERT_EQUAL(listEvent.size(), (size_t)6, size_t, "%zu");
+
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionUp);
+		chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(chatMessage)),
+		                       "Salut, c'est quand la réunion pour la maquette Android ?");
+
+		listEvent = mainDb.getHistoryRangeNear(conferenceId, 5, 5, event, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(!listEvent.empty());
+		BC_ASSERT_EQUAL(listEvent.size(), (size_t)11, size_t, "%zu");
+
+		// Now search down
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionDown);
+		chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(chatMessage)),
+		                       "On en parle en réunion");
+
+		listEvent = mainDb.getHistoryRangeNear(conferenceId, 5, 5, event, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(!listEvent.empty());
+		BC_ASSERT_EQUAL(listEvent.size(), (size_t)11, size_t, "%zu");
+
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionDown);
+		chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(chatMessage)),
+		                       "On a prévu une petit réunion avec Super Marie et Super Pauline");
+
+		listEvent = mainDb.getHistoryRangeNear(conferenceId, 0, 0, event, MainDb::ConferenceChatMessageFilter);
+		BC_ASSERT_TRUE(listEvent.empty());
+
+		// Go back to the last message
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionUp);
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionUp);
+
+		// Search up again, now there is no more text message with "réunion" so it should return nullptr
+		event = mainDb.searchChatMessagesByText(conferenceId, "réunion", event, LinphoneSearchDirectionUp);
+		BC_ASSERT_PTR_NULL(event);
+	}
+}
+
 test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
                           TEST_NO_TAG("Get messages count", get_messages_count),
                           TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
@@ -461,7 +548,8 @@ test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
                           TEST_NO_TAG("Set/get conference info", set_get_conference_info),
                           TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference),
                           TEST_NO_TAG("Database with chatroom duplicates", database_with_chatroom_duplicates),
-                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)};
+                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
+                          TEST_NO_TAG("Search messages in chatroom", search_messages_in_chat_room)};
 
 test_suite_t main_db_test_suite = {"MainDb",
                                    NULL,

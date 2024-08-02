@@ -5178,6 +5178,96 @@ MainDb::getHistoryRange(const ConferenceId &conferenceId, int begin, int end, Fi
 #endif
 }
 
+list<shared_ptr<EventLog>> MainDb::getHistoryRangeNear(const ConferenceId &conferenceId,
+                                                       unsigned int before,
+                                                       unsigned int after,
+                                                       const shared_ptr<EventLog> &event,
+                                                       FilterMask mask) const {
+#ifdef HAVE_DB_STORAGE
+	list<shared_ptr<EventLog>> events;
+
+	if (before == 0 && after == 0) {
+		return events;
+	}
+
+	// Build the base query
+	const string baseQuery = Statements::get(Statements::SelectConferenceEvents);
+	const string baseFilter =
+	    buildSqlEventFilter({ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter,
+	                         ConferenceInfoNoDeviceFilter, ConferenceChatMessageSecurityFilter},
+	                        mask, "AND");
+
+	string query;
+	if (event == nullptr) {
+		query = baseQuery + baseFilter +
+		        " ORDER BY event_id DESC"
+		        " LIMIT :2";
+	} else {
+		// Apply filtering for events before the one we want
+		string beforeQuery = baseQuery + baseFilter +
+		                     " AND event_id <= :2"
+		                     " ORDER BY event_id DESC"
+		                     " LIMIT :3";
+
+		// Same but for after
+		string afterQuery = baseQuery + baseFilter +
+		                    " AND event_id >= :2"
+		                    " ORDER BY event_id ASC"
+		                    " LIMIT :4";
+
+		// Make an union
+		query = "SELECT * FROM (" + beforeQuery +
+		        ") "
+		        "UNION "
+		        "SELECT * FROM (" +
+		        afterQuery +
+		        ") "
+		        "ORDER BY event_id DESC";
+	}
+
+	// DurationLogger durationLogger(
+	//     "Get history range near of: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
+	//     ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ", before=" + Utils::toString(before)
+	//     +
+	//     ", after=" + Utils::toString(after) + ", event=" + Utils::toString(event) + ").");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+		if (!chatRoom) return events;
+
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+
+		if (event == nullptr) {
+			soci::rowset<soci::row> rows =
+			    (d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId), soci::use(before));
+
+			for (const auto &row : rows) {
+				shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+				if (event) events.push_front(event);
+			}
+		} else {
+			const EventLogPrivate *dEventLog = event->getPrivate();
+			MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
+			const long long &dbEventId = dEventKey->storageId;
+
+			soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId),
+			                                soci::use(dbEventId), soci::use(before + 1), soci::use(after + 1));
+
+			for (const auto &row : rows) {
+				shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+				if (event) events.push_front(event);
+			}
+		}
+
+		return events;
+	};
+#else
+	return list<shared_ptr<EventLog>>();
+#endif
+}
+
 int MainDb::getHistorySize(const ConferenceId &conferenceId, FilterMask mask) const {
 #ifdef HAVE_DB_STORAGE
 	const string query = "SELECT COUNT(*) FROM event, conference_event"
@@ -6141,6 +6231,75 @@ void MainDb::deleteChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 #endif
 }
 
+shared_ptr<EventLog> MainDb::searchChatMessagesByText(const ConferenceId &conferenceId,
+                                                      const std::string &text,
+                                                      const shared_ptr<const EventLog> &from,
+                                                      LinphoneSearchDirection direction) {
+#ifdef HAVE_DB_STORAGE
+	string query =
+	    "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, "
+	    "  from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, "
+	    "  notify_id, device_sip_address.value, participant_sip_address.value, conference_event_view.subject, "
+	    "  delivery_notification_required, display_notification_required, peer_sip_address.value, "
+	    "  local_sip_address.value, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, "
+	    "  reply_message_id, reply_sender_address.value "
+	    "FROM conference_event_view "
+	    "JOIN chat_room ON chat_room.id = chat_room_id "
+	    "JOIN sip_address AS peer_sip_address ON peer_sip_address.id = peer_sip_address_id "
+	    "JOIN sip_address AS local_sip_address ON local_sip_address.id = local_sip_address_id "
+	    "LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id "
+	    "LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id "
+	    "LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id "
+	    "LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id "
+	    "LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id "
+	    "LEFT JOIN chat_message_content ON chat_message_content.event_id = conference_event_view.id "
+	    "WHERE chat_room_id = :chatRoomId AND chat_message_content.content_type_id = 1 "
+	    "  AND chat_message_content.body LIKE '%" +
+	    text + "%' ";
+
+	if (from != nullptr) {
+		const EventLogPrivate *dEventLog = from->getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
+		const long long &dbEventId = dEventKey->storageId;
+
+		query += "AND chat_message_content.event_id ";
+		query += direction == LinphoneSearchDirectionUp ? "< " : "> ";
+		query += Utils::toString(dbEventId);
+	}
+
+	query += " ORDER BY event_id ";
+	query += direction == LinphoneSearchDirectionUp ? "DESC " : "ASC ";
+
+	query += "LIMIT 1";
+
+	// DurationLogger durationLogger(
+	//     "Search chat message of: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
+	//     ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ", text=" + text +
+	//     ", fromPosition=" + Utils::toString(from) + ", direction=" + Utils::toString(direction) + ").");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		const long long &chatRoomId = d->selectChatRoomId(conferenceId);
+		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+
+		shared_ptr<EventLog> message;
+		if (!chatRoom) return message;
+
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(chatRoomId));
+
+		const auto &row = rows.begin();
+		if (row != rows.end()) {
+			message = d->selectGenericConferenceEvent(chatRoom, *row);
+		}
+
+		return message;
+	};
+#else
+	return nullptr;
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos(time_t afterThisTime) {
@@ -6866,6 +7025,20 @@ bool MainDb::import(Backend, const string &parameters) {
 #else
 	return false;
 #endif
+}
+
+MainDb::FilterMask MainDb::getFilterMaskFromHistoryFilterMask(AbstractChatRoom::HistoryFilterMask historyFilterMask) {
+	FilterMask mask;
+
+	if (historyFilterMask.isSet(AbstractChatRoom::HistoryFilter::None)) mask |= NoFilter;
+	if (historyFilterMask.isSet(AbstractChatRoom::HistoryFilter::Call)) mask |= ConferenceCallFilter;
+	if (historyFilterMask.isSet(AbstractChatRoom::HistoryFilter::ChatMessage)) mask |= ConferenceChatMessageFilter;
+	if (historyFilterMask.isSet(AbstractChatRoom::HistoryFilter::ChatMessageSecurity))
+		mask |= ConferenceChatMessageSecurityFilter;
+	if (historyFilterMask.isSet(AbstractChatRoom::HistoryFilter::Info)) mask |= ConferenceInfoFilter;
+	if (historyFilterMask.isSet(AbstractChatRoom::HistoryFilter::InfoNoDevice)) mask |= ConferenceInfoNoDeviceFilter;
+
+	return mask;
 }
 
 #ifndef _MSC_VER

@@ -55,8 +55,11 @@ public:
 	void deleteFromDb() override;
 
 	std::list<std::shared_ptr<EventLog>> getHistory(int nLast) const override;
+	std::list<std::shared_ptr<EventLog>> getHistory(int nLast, HistoryFilterMask filters) const override;
 	std::list<std::shared_ptr<EventLog>> getHistoryRange(int begin, int end) const override;
+	std::list<std::shared_ptr<EventLog>> getHistoryRange(int begin, int end, HistoryFilterMask filters) const override;
 	int getHistorySize() const override;
+	int getHistorySize(HistoryFilterMask filters) const override;
 	void exhume();
 
 	void enableEphemeral(bool ephem, bool updateDb) override;

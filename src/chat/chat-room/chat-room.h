@@ -61,8 +61,15 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages() const override;
 	int getMessageHistorySize() const override;
 	std::list<std::shared_ptr<EventLog>> getHistory(int nLast) const override;
+	std::list<std::shared_ptr<EventLog>> getHistory(int nLast, HistoryFilterMask filters) const override;
 	std::list<std::shared_ptr<EventLog>> getHistoryRange(int begin, int end) const override;
+	std::list<std::shared_ptr<EventLog>> getHistoryRange(int begin, int end, HistoryFilterMask filters) const override;
+	std::list<std::shared_ptr<EventLog>> getHistoryRangeNear(unsigned int before,
+	                                                         unsigned int after,
+	                                                         const std::shared_ptr<EventLog> &event,
+	                                                         HistoryFilterMask filters) const override;
 	int getHistorySize() const override;
+	int getHistorySize(HistoryFilterMask filters) const override;
 
 	void deleteFromDb() override;
 	void deleteHistory() override;
@@ -91,6 +98,10 @@ public:
 	std::shared_ptr<ChatMessage> findChatMessageFromCallId(const std::string &callId) const override;
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const std::string &messageId) const;
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const std::list<std::string> &messageIds) const override;
+
+	std::shared_ptr<EventLog> searchChatMessageByText(const std::string &text,
+	                                                  const std::shared_ptr<const EventLog> &from,
+	                                                  LinphoneSearchDirection direction) const override;
 
 	void markAsRead() override;
 	void enableEphemeral(bool ephem, bool updateDb) override;

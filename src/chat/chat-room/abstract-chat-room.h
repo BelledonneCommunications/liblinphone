@@ -83,6 +83,15 @@ public:
 		AdminManaged = LinphoneChatRoomEphemeralModeAdminManaged
 	};
 
+	enum class HistoryFilter {
+		None = LinphoneChatRoomHistoryFilterNone,
+		Call = LinphoneChatRoomHistoryFilterCall,
+		ChatMessage = LinphoneChatRoomHistoryFilterChatMessage,
+		ChatMessageSecurity = LinphoneChatRoomHistoryFilterChatMessageSecurity,
+		Info = LinphoneChatRoomHistoryFilterInfo,
+		InfoNoDevice = LinphoneChatRoomHistoryFilterInfoNoDevice
+	};
+
 	typedef enum EphemeralMode ChatRoomEphemeralMode;
 
 	// casting to int to get rid of the enum compare warning.
@@ -98,6 +107,7 @@ public:
 	    "LinphoneEncryptionEngineSecurityLevel and AbstractChatRoom::SecurityLevel are not synchronized, fix this !");
 
 	typedef EnumMask<Capabilities> CapabilitiesMask;
+	typedef EnumMask<HistoryFilter> HistoryFilterMask;
 
 	virtual void allowCpim(bool value) = 0;
 	virtual void allowMultipart(bool value) = 0;
@@ -123,8 +133,16 @@ public:
 	virtual std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages() const = 0;
 	virtual int getMessageHistorySize() const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getHistory(int nLast) const = 0;
+	virtual std::list<std::shared_ptr<EventLog>> getHistory(int nLast, HistoryFilterMask filters) const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getHistoryRange(int begin, int end) const = 0;
+	virtual std::list<std::shared_ptr<EventLog>>
+	getHistoryRange(int begin, int end, HistoryFilterMask filters) const = 0;
+	virtual std::list<std::shared_ptr<EventLog>> getHistoryRangeNear(unsigned int before,
+	                                                                 unsigned int after,
+	                                                                 const std::shared_ptr<EventLog> &event,
+	                                                                 HistoryFilterMask filters) const = 0;
 	virtual int getHistorySize() const = 0;
+	virtual int getHistorySize(HistoryFilterMask filters) const = 0;
 
 	virtual void deleteFromDb() = 0;
 	virtual void deleteHistory() = 0;
@@ -154,6 +172,10 @@ public:
 	virtual std::shared_ptr<ChatMessage> findChatMessageFromCallId(const std::string &callId) const = 0;
 	virtual std::list<std::shared_ptr<ChatMessage>>
 	findChatMessages(const std::list<std::string> &messageIds) const = 0;
+
+	virtual std::shared_ptr<EventLog> searchChatMessageByText(const std::string &text,
+	                                                          const std::shared_ptr<const EventLog> &from,
+	                                                          LinphoneSearchDirection direction) const = 0;
 
 	virtual void sendPendingMessages() {};
 
