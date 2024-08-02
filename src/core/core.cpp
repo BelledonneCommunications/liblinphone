@@ -910,6 +910,12 @@ std::string Core::getX3dhDbPath() const {
 	string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
 	if (dbAccess.empty()) {
 		dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
+	} else {
+		char *basename = bctbx_basename(dbAccess.c_str());
+		if (strcmp(basename, dbAccess.c_str()) == 0) {
+			dbAccess = getDataPath() + dbAccess;
+		}
+		bctbx_free(basename);
 	}
 	return dbAccess;
 }

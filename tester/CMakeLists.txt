@@ -316,6 +316,7 @@ set(SOURCE_FILES_CXX
 	shared_tester_functions.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
+	lime-db-tester.cpp
 	lime-user-authentication-tester.cpp
 	local-chat-tester-functions.cpp
 	local-conference-tester-functions.cpp

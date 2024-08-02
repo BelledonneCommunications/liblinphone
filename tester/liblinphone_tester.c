@@ -490,6 +490,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&cpim_test_suite, 3);
 	liblinphone_tester_add_suite_with_default_time(&ics_test_suite, 28);
 #ifdef HAVE_LIME_X3DH
+	liblinphone_tester_add_suite_with_default_time(&lime_db_test_suite, 500);
 	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_test_suite, 506);
 	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_exhume_test_suite, 100);
 	liblinphone_tester_add_suite_with_default_time(&secure_message_test_suite, 423);
