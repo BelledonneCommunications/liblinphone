@@ -6236,6 +6236,7 @@ shared_ptr<EventLog> MainDb::searchChatMessagesByText(const ConferenceId &confer
                                                       const shared_ptr<const EventLog> &from,
                                                       LinphoneSearchDirection direction) {
 #ifdef HAVE_DB_STORAGE
+	std::string patternToFind = Utils::replaceAll(text, "'", "''"); // replace all ' by ''
 	string query =
 	    "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, "
 	    "  from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, "
@@ -6255,7 +6256,7 @@ shared_ptr<EventLog> MainDb::searchChatMessagesByText(const ConferenceId &confer
 	    "LEFT JOIN chat_message_content ON chat_message_content.event_id = conference_event_view.id "
 	    "WHERE chat_room_id = :chatRoomId AND chat_message_content.content_type_id = 1 "
 	    "  AND chat_message_content.body LIKE '%" +
-	    text + "%' ";
+	    patternToFind + "%' ";
 
 	if (from != nullptr) {
 		const EventLogPrivate *dEventLog = from->getPrivate();
