@@ -302,6 +302,21 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_near(Linphone
                                                                         unsigned int after,
                                                                         LinphoneEventLog *event,
                                                                         LinphoneChatRoomHistoryFilterMask filters);
+/**
+ * Gets the partial list of messages between two given #LinphoneEventLog, sorted from oldest to most
+ * recent.
+ * If either first_event or last_event is null, then nothing is returned.
+ * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be
+ * retrieved @notnil
+ * @param first_event The #LinphoneEventLog object corresponding to the event. @maybenil
+ * @param last_event The #LinphoneEventLog object corresponding to the event. @maybenil
+ * @param filters The #LinphoneChatRoomHistoryFilterMask mask to filter the results with #LinphoneChatRoomHistoryFilter
+ * @return A list of \bctbx_list{LinphoneEventLog} between the two provided events, if any. @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_between(LinphoneChatRoom *cr,
+                                                                           LinphoneEventLog *first_event,
+                                                                           LinphoneEventLog *last_event,
+                                                                           LinphoneChatRoomHistoryFilterMask filters);
 
 /**
  * Gets all unread messages for this chat room, sorted from oldest to most recent.

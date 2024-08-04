@@ -344,6 +344,16 @@ bctbx_list_t *linphone_chat_room_get_history_range_near(LinphoneChatRoom *cr,
 	    before, after, event ? L_GET_CPP_PTR_FROM_C_OBJECT(event) : nullptr, filters));
 }
 
+bctbx_list_t *linphone_chat_room_get_history_range_between(LinphoneChatRoom *cr,
+                                                           LinphoneEventLog *first_event,
+                                                           LinphoneEventLog *last_event,
+                                                           LinphoneChatRoomHistoryFilterMask filters) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(AbstractChatRoom::toCpp(cr)->getHistoryRangeBetween(
+	    first_event ? L_GET_CPP_PTR_FROM_C_OBJECT(first_event) : nullptr,
+	    last_event ? L_GET_CPP_PTR_FROM_C_OBJECT(last_event) : nullptr, filters));
+}
+
 bctbx_list_t *linphone_chat_room_get_unread_history(LinphoneChatRoom *cr) {
 	ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(AbstractChatRoom::toCpp(cr)->getUnreadChatMessages());

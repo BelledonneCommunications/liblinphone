@@ -164,6 +164,10 @@ public:
 	                                                         unsigned int after,
 	                                                         const std::shared_ptr<EventLog> &event = nullptr,
 	                                                         FilterMask = NoFilter) const;
+	std::list<std::shared_ptr<EventLog>> getHistoryRangeBetween(const ConferenceId &conferenceId,
+	                                                            const std::shared_ptr<EventLog> &firstEvent = nullptr,
+	                                                            const std::shared_ptr<EventLog> &lastEvent = nullptr,
+	                                                            FilterMask = NoFilter) const;
 
 	int getHistorySize(const ConferenceId &conferenceId, FilterMask mask = NoFilter) const;
 

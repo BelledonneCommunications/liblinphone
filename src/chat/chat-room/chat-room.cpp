@@ -718,6 +718,13 @@ list<shared_ptr<EventLog>> ChatRoom::getHistoryRangeNear(unsigned int before,
 	                                                            MainDb::getFilterMaskFromHistoryFilterMask(filters));
 }
 
+list<shared_ptr<EventLog>> ChatRoom::getHistoryRangeBetween(const shared_ptr<EventLog> &firstEvent,
+                                                            const shared_ptr<EventLog> &lastEvent,
+                                                            HistoryFilterMask filters) const {
+	return getCore()->getPrivate()->mainDb->getHistoryRangeBetween(getConferenceId(), firstEvent, lastEvent,
+	                                                               MainDb::getFilterMaskFromHistoryFilterMask(filters));
+}
+
 int ChatRoom::getHistorySize() const {
 	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId());
 }

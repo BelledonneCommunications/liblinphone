@@ -68,6 +68,9 @@ public:
 	                                                         unsigned int after,
 	                                                         const std::shared_ptr<EventLog> &event,
 	                                                         HistoryFilterMask filters) const override;
+	std::list<std::shared_ptr<EventLog>> getHistoryRangeBetween(const std::shared_ptr<EventLog> &firstEvent,
+	                                                            const std::shared_ptr<EventLog> &lastEvent,
+	                                                            HistoryFilterMask filters) const override;
 	int getHistorySize() const override;
 	int getHistorySize(HistoryFilterMask filters) const override;
 

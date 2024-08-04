@@ -5268,6 +5268,73 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRangeNear(const ConferenceId &confe
 #endif
 }
 
+list<shared_ptr<EventLog>> MainDb::getHistoryRangeBetween(const ConferenceId &conferenceId,
+                                                          const shared_ptr<EventLog> &firstEvent,
+                                                          const shared_ptr<EventLog> &lastEvent,
+                                                          FilterMask mask) const {
+#ifdef HAVE_DB_STORAGE
+	list<shared_ptr<EventLog>> events;
+
+	if (firstEvent == nullptr || lastEvent == nullptr) {
+		return events;
+	}
+
+	// Build the base query
+	const string baseQuery = Statements::get(Statements::SelectConferenceEvents);
+	const string baseFilter =
+	    buildSqlEventFilter({ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter,
+	                         ConferenceInfoNoDeviceFilter, ConferenceChatMessageSecurityFilter},
+	                        mask, "AND");
+
+	string query = "SELECT * FROM (" + baseQuery + baseFilter +
+	               " AND event_id > :2 AND event_id < :3) "
+	               "ORDER BY event_id DESC";
+
+	// DurationLogger durationLogger(
+	//     "Get history range between of: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
+	//     ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ", after=" +
+	//     Utils::toString(lastEvent)
+	//     +
+	//     ", before=" + Utils::toString(firstEvent) + ").");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+		if (!chatRoom) return events;
+
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+
+		const EventLogPrivate *dFirstEventLog = firstEvent->getPrivate();
+		MainDbKeyPrivate *dFirstEventKey = static_cast<MainDbKey &>(dFirstEventLog->dbKey).getPrivate();
+		const long long &dbFirstEventId = dFirstEventKey->storageId;
+
+		const EventLogPrivate *dLastEventLog = lastEvent->getPrivate();
+		MainDbKeyPrivate *dLastEventKey = static_cast<MainDbKey &>(dLastEventLog->dbKey).getPrivate();
+		const long long &dbLastEventId = dLastEventKey->storageId;
+
+		long long lowerId = dbFirstEventId;
+		long long higherId = dbLastEventId;
+		if (lowerId > higherId) {
+			lowerId = dbLastEventId;
+			higherId = dbFirstEventId;
+		}
+
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId),
+		                                soci::use(lowerId), soci::use(higherId));
+
+		for (const auto &row : rows) {
+			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+			if (event) events.push_front(event);
+		}
+
+		return events;
+	};
+#else
+	return list<shared_ptr<EventLog>>();
+#endif
+}
+
 int MainDb::getHistorySize(const ConferenceId &conferenceId, FilterMask mask) const {
 #ifdef HAVE_DB_STORAGE
 	const string query = "SELECT COUNT(*) FROM event, conference_event"

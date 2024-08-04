@@ -141,6 +141,9 @@ public:
 	                                                                 unsigned int after,
 	                                                                 const std::shared_ptr<EventLog> &event,
 	                                                                 HistoryFilterMask filters) const = 0;
+	virtual std::list<std::shared_ptr<EventLog>> getHistoryRangeBetween(const std::shared_ptr<EventLog> &firstEvent,
+	                                                                    const std::shared_ptr<EventLog> &lastEvent,
+	                                                                    HistoryFilterMask filters) const = 0;
 	virtual int getHistorySize() const = 0;
 	virtual int getHistorySize(HistoryFilterMask filters) const = 0;
 
