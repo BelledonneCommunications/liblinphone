@@ -6689,7 +6689,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistoryForLocalAddress(const 
 
 		if (limit > 0) query += " LIMIT " + to_string(limit);
 
-		DurationLogger durationLogger("Get call history.");
+		DurationLogger durationLogger("Get call history for address " + localAddress->toString());
 
 		return L_DB_TRANSACTION {
 			L_D();
@@ -6736,7 +6736,8 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const std::shared_ptr
 
 		if (limit > 0) query += " LIMIT " + to_string(limit);
 
-		DurationLogger durationLogger("Get call history 2.");
+		DurationLogger durationLogger("Get call history for local address " + local->toString() + " and peer address " +
+		                              peer->toString());
 
 		return L_DB_TRANSACTION {
 			L_D();

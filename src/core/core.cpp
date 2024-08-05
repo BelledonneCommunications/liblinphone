@@ -902,6 +902,7 @@ void Core::enableLimeX3dh(bool enable) {
 				            "proxy section of the RC file";
 			}
 			string dbAccess = getX3dhDbPath();
+			lInfo() << "Using [" << dbAccess << "] as lime database path";
 			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 			/* Both Lime and MainDb use soci as database engine.
 			 * However, the initialisation of backends must be done manually on platforms where soci is statically

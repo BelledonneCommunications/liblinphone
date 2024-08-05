@@ -745,7 +745,7 @@ LINPHONE_PUBLIC int linphone_chat_room_get_history_size(LinphoneChatRoom *chat_r
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be
  * retrieved @notnil
  * @param nb_message Number of message to retrieve. 0 means everything.
- * @return A list of \bctbx_list{LinphoneEventLog} @tobefreed
+ * @return A list of \bctbx_list{LinphoneChatMessage} @tobefreed
  * @deprecated 30/07/2024. Use linphone_chat_room_get_history_2() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history(LinphoneChatRoom *chat_room, int nb_message);

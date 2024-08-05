@@ -29,11 +29,12 @@ using namespace LinphonePrivate;
 static void db_access_test(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneConfig *config = linphone_factory_create_config_with_factory(linphone_factory_get(), marie->rc_local, NULL);
-	linphone_config_set_string(config, "lime", "x3dh_db_path", "my_file.db");
+	std::string limeDb("my_file.db");
+	linphone_config_set_string(config, "lime", "x3dh_db_path", limeDb.c_str());
 	auto lc = configure_lc_from(marie->cbs, bc_tester_get_resource_dir_prefix(), config, marie);
 	auto core = shared_ptr<Core>(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
 	auto actualDbPath = core->getX3dhDbPath();
-	auto expectedDbPath = core->getDataPath() + "my_file.db";
+	auto expectedDbPath = core->getDataPath() + limeDb;
 	BC_ASSERT_STRING_EQUAL(actualDbPath.c_str(), expectedDbPath.c_str());
 	linphone_config_unref(config);
 	linphone_core_unref(lc);
