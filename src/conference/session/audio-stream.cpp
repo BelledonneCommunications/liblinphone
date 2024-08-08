@@ -651,9 +651,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		});
 	}
 
-	// Use no_rtp_onhold_timeout if the call requested or accepted a request to pause itself
-	setupMediaLossCheck((targetState == CallSession::State::Paused) ||
-	                    (targetState == CallSession::State::PausedByRemote));
+	setupMediaLossCheck(targetState == CallSession::State::Paused);
 
 	return;
 }

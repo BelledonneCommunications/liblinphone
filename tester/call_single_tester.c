@@ -2271,6 +2271,7 @@ static void call_terminated_by_nortp_timeout_base(bool_t on_hold) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCallParams *pauline_params = NULL;
 	bctbx_list_t *lcs = NULL;
 	bool_t call_ok;
 
@@ -2287,7 +2288,7 @@ static void call_terminated_by_nortp_timeout_base(bool_t on_hold) {
 		linphone_core_set_nortp_timeout(marie->lc, nortp_timeout);
 	}
 
-	BC_ASSERT_TRUE(call_ok = call(pauline, marie));
+	BC_ASSERT_TRUE((call_ok = call_with_params(pauline, marie, pauline_params, NULL)));
 	if (!call_ok) goto end;
 
 	LinphoneCall *marie_call = NULL;
@@ -2300,7 +2301,7 @@ static void call_terminated_by_nortp_timeout_base(bool_t on_hold) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, 1, 10000));
 	}
 
-	/*marie loses the network and pauline terminates the call, no rtp sent*/
+	/*marie looses the network and pauline terminates the call, no rtp sent*/
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 
@@ -2310,6 +2311,9 @@ static void call_terminated_by_nortp_timeout_base(bool_t on_hold) {
 	BC_ASSERT_EQUAL(linphone_call_get_reason(marie_call), LinphoneReasonIOError, int, "%d");
 
 end:
+	if (pauline_params) {
+		linphone_call_params_unref(pauline_params);
+	}
 	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -2321,51 +2325,6 @@ static void call_terminated_by_nortp_timeout(void) {
 
 static void call_terminated_by_nortp_timeout_on_hold(void) {
 	call_terminated_by_nortp_timeout_base(TRUE);
-}
-
-static void paused_by_remote_call_terminated_by_nortp_timeout(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager *pauline =
-	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	bctbx_list_t *lcs = NULL;
-	bool_t call_ok;
-
-	lcs = bctbx_list_append(lcs, marie->lc);
-	lcs = bctbx_list_append(lcs, pauline->lc);
-
-	int nortp_on_hold_timeout = 8;
-	int test_timeout = (nortp_on_hold_timeout + 1) * 1000;
-	linphone_core_set_nortp_onhold_timeout(marie->lc, nortp_on_hold_timeout + 10);
-	linphone_core_set_nortp_timeout(marie->lc, 0);
-	linphone_core_set_nortp_onhold_timeout(pauline->lc, nortp_on_hold_timeout);
-	linphone_core_set_nortp_timeout(pauline->lc, 0);
-
-	BC_ASSERT_TRUE(call_ok = call(pauline, marie));
-	if (!call_ok) goto end;
-
-	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
-	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
-
-	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
-	/*marie in pause*/
-	linphone_call_pause(marie_call);
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 10000));
-
-	linphone_call_get_meta_rtp_transport(marie_call, 0)->session->rtcp.enabled = 0;
-	linphone_call_get_meta_rtp_transport(marie_call, 0)->session->rtp.gs.rem_addrlen = 0;
-
-	/*call terminates after nortp timeout has been reached */
-	wait_for_list(lcs, NULL, 0, test_timeout);
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_EQUAL(linphone_call_get_reason(pauline_call), LinphoneReasonIOError, int, "%d");
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
-end:
-	bctbx_list_free(lcs);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_no_sdp(void) {
@@ -7819,8 +7778,6 @@ static test_t call_tests[] = {
     TEST_NO_TAG("Call terminated by caller", call_terminated_by_caller),
     TEST_NO_TAG("Call terminated by no rtp timeout", call_terminated_by_nortp_timeout),
     TEST_NO_TAG("Call terminated by no rtp timeout on hold", call_terminated_by_nortp_timeout_on_hold),
-    TEST_NO_TAG("Paused by remote call terminated by no rtp timeout on hold",
-                paused_by_remote_call_terminated_by_nortp_timeout),
     TEST_NO_TAG("Call without SDP", call_with_no_sdp),
     TEST_ONE_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime, "LimeX3DH"),
     TEST_NO_TAG("Call without SDP and ACK without SDP", call_with_no_sdp_ack_without_sdp),
