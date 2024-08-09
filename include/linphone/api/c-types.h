@@ -506,7 +506,7 @@ typedef int LinphoneChatRoomCapabilitiesMask;
  * @brief A mask of #LinphoneChatRoomHistoryFilter
  * @ingroup chatroom
  */
-typedef int LinphoneChatRoomHistoryFilterMask;
+typedef unsigned int LinphoneChatRoomHistoryFilterMask;
 
 /**
  * @brief Enum for search direction.

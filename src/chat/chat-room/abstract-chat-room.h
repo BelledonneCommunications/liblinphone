@@ -83,7 +83,7 @@ public:
 		AdminManaged = LinphoneChatRoomEphemeralModeAdminManaged
 	};
 
-	enum class HistoryFilter {
+	enum class HistoryFilter : unsigned {
 		None = LinphoneChatRoomHistoryFilterNone,
 		Call = LinphoneChatRoomHistoryFilterCall,
 		ChatMessage = LinphoneChatRoomHistoryFilterChatMessage,
@@ -180,7 +180,7 @@ public:
 	                                                          const std::shared_ptr<const EventLog> &from,
 	                                                          LinphoneSearchDirection direction) const = 0;
 
-	virtual void sendPendingMessages() {};
+	virtual void sendPendingMessages(){};
 
 	virtual void markAsRead() = 0;
 	virtual void enableEphemeral(bool ephem, bool updateDb) = 0;
