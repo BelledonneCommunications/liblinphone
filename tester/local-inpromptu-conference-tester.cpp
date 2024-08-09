@@ -162,7 +162,7 @@ static void create_simple_conference_dial_out_organizer_codec_mismatch(void) {
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, TRUE, security_level);
+		                                                        description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -286,7 +286,7 @@ static void simple_dial_out_conference_with_no_payloads(void) {
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, FALSE, security_level);
+		                                                        description, FALSE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		LinphoneConference *fconference =
@@ -481,7 +481,7 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 		}
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, FALSE, security_level);
+		                                                        description, FALSE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
@@ -552,7 +552,7 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 				// Encryption is None because we haven't received yet the NOTIFY full state yet
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0,
 				                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew,
-				                            LinphoneConferenceSecurityLevelNone, FALSE);
+				                            LinphoneConferenceSecurityLevelNone, FALSE, TRUE, TRUE, FALSE);
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -601,7 +601,8 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0,
-			                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, FALSE);
+			                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, FALSE,
+			                            TRUE, TRUE, FALSE);
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
@@ -702,7 +703,8 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 
 					check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0,
 					                            0, initialSubject, (mgr == marie.getCMgr()) ? description : NULL, 0,
-					                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+					                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE,
+					                            FALSE);
 					bctbx_list_free_with_data(participants_info3,
 					                          (bctbx_list_free_func)linphone_participant_info_unref);
 
@@ -1027,7 +1029,7 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 			}
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0,
 			                            initialSubject, (mgr == marie.getCMgr()) ? description : NULL, 0,
-			                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+			                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE, FALSE);
 			bctbx_list_free_with_data(participants_info3, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
 

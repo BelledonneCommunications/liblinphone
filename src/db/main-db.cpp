@@ -593,6 +593,10 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		lError() << "Trying to insert a Conference Info without organizer or URI!";
 		return -1;
 	}
+
+	const int audioEnabled = conferenceInfo->getCapability(LinphoneStreamTypeAudio) ? 1 : 0;
+	const int videoEnabled = conferenceInfo->getCapability(LinphoneStreamTypeVideo) ? 1 : 0;
+	const int chatEnabled = conferenceInfo->getCapability(LinphoneStreamTypeText) ? 1 : 0;
 	const auto &organizer = conferenceInfo->getOrganizer();
 	const auto &organizerAddress = organizer->getAddress();
 	const long long &organizerSipAddressId = insertSipAddress(organizerAddress);
@@ -616,33 +620,27 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 			dbParticipantList = oldConferenceInfo->getParticipants();
 		}
 
-		*dbSession.getBackendSession() << "UPDATE conference_info SET"
-		                                  "  organizer_sip_address_id = :organizerSipAddressId,"
-		                                  "  start_time = :startTime,"
-		                                  "  duration = :duration,"
-		                                  "  subject = :subject,"
-		                                  "  description = :description,"
-		                                  "  state = :state,"
-		                                  "  ics_sequence = :sequence,"
-		                                  "  ics_uid = :uid,"
-		                                  "  security_level = :security_level"
-		                                  " WHERE id = :conferenceInfoId",
-		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
-		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
-		    soci::use(security_level), soci::use(conferenceInfoId);
+		*dbSession.getBackendSession()
+		    << "UPDATE conference_info SET audio = :audioEnabled, video = :videoEnabled, chat = :chatEnabled, "
+		       "organizer_sip_address_id = :organizerSipAddressId, start_time = :startTime, duration = :duration, "
+		       "subject = :subject, description = :description, state = :state, ics_sequence = :sequence, ics_uid = "
+		       ":uid, security_level = :security_level WHERE id = :conferenceInfoId",
+		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(organizerSipAddressId),
+		    soci::use(startTime.first, startTime.second), soci::use(duration), soci::use(subject),
+		    soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid), soci::use(security_level),
+		    soci::use(conferenceInfoId);
 	} else {
 		lInfo() << "Insert new conference info in database.";
 
-		*dbSession.getBackendSession() << "INSERT INTO conference_info ("
-		                                  "  organizer_sip_address_id, uri_sip_address_id, start_time, duration, "
-		                                  "subject, description, state, ics_sequence, ics_uid, security_level"
-		                                  ") VALUES ("
-		                                  "  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, "
-		                                  ":subject, :description, :state, :sequence, :uid, :security_level"
-		                                  ")",
-		    soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime.first, startTime.second),
-		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
-		    soci::use(uid), soci::use(security_level);
+		*dbSession.getBackendSession()
+		    << "INSERT INTO conference_info (audio, video, chat, organizer_sip_address_id, uri_sip_address_id, "
+		       "start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level) VALUES "
+		       "(:audioEnabled, :videoEnabled, :chatEnabled, :organizerSipAddressId, :uriSipAddressid, :startTime, "
+		       ":duration, :subject, :description, :state, :sequence, :uid, :security_level)",
+		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(organizerSipAddressId),
+		    soci::use(uriSipAddressid), soci::use(startTime.first, startTime.second), soci::use(duration),
+		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
+		    soci::use(security_level);
 
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
@@ -2126,6 +2124,9 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setIcsUid(row.get<string>(9));
 	conferenceInfo->setSecurityLevel(
 	    static_cast<ConferenceParams::SecurityLevel>(dbSession.getUnsignedInt(row, 10, 0)));
+	conferenceInfo->setCapability(LinphoneStreamTypeAudio, (row.get<int>(11) == 0) ? false : true);
+	conferenceInfo->setCapability(LinphoneStreamTypeVideo, (row.get<int>(12) == 0) ? false : true);
+	conferenceInfo->setCapability(LinphoneStreamTypeText, (row.get<int>(13) == 0) ? false : true);
 
 	// For backward compability purposes, get the organizer from conference_info table and set the sequence number to
 	// that of the conference info stored in the db It may be overridden if the conference organizer has been stored in
@@ -2918,6 +2919,24 @@ void MainDbPrivate::updateSchema() {
 		*session << "ALTER TABLE friends_list ADD COLUMN ctag VARCHAR(255) NOT NULL DEFAULT ''";
 	} catch (const soci::soci_error &e) {
 		lDebug() << "Caught exception " << e.what() << ": Column 'ctag' already exists in table 'friends_list'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN audio BOOLEAN NOT NULL DEFAULT 1";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'audio' already exists in table 'conference_info'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN video BOOLEAN NOT NULL DEFAULT 1";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'video' already exists in table 'conference_info'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN chat BOOLEAN NOT NULL DEFAULT 0";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'chat' already exists in table 'conference_info'";
 	}
 
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
@@ -5855,7 +5874,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				params->setUtf8Subject(subject);
 				params->getChatParams()->setEphemeralLifetime((long)row.get<double>(11));
 				params->getChatParams()->enableEphemeral(!!row.get<int>(10, 0));
-				params->setConferenceAddress(conferenceId.getPeerAddress());
+				const auto &conferenceAddress = conferenceId.getPeerAddress();
+				params->setConferenceAddress(conferenceAddress);
 
 				bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 				std::shared_ptr<Conference> conference = nullptr;
@@ -5868,10 +5888,10 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 					conference = (new ClientConference(core, me->getAddress(), nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
 					chatRoom = conference->getChatRoom();
+					conference->setParticipants(std::move(participants));
 					if (hasBeenLeft) {
 						conference->setState(ConferenceInterface::State::Terminated);
 					} else {
-						conference->setParticipants(std::move(participants));
 						conference->setState(ConferenceInterface::State::Created);
 					}
 					if (!params->isGroup()) {
@@ -6403,14 +6423,22 @@ shared_ptr<EventLog> MainDb::searchChatMessagesByText(const ConferenceId &confer
 
 // -----------------------------------------------------------------------------
 
-std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos(time_t afterThisTime) {
+std::list<std::shared_ptr<ConferenceInfo>>
+MainDb::getConferenceInfos(time_t afterThisTime, const std::list<LinphoneStreamType> capabilities) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
-	               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
-	               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
-	               "conference_info.uri_sip_address_id = uri_sip_address.id";
+	string query =
+	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat"
+	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
+	    "conference_info.uri_sip_address_id = uri_sip_address.id";
 	if (afterThisTime > -1) query += " AND start_time >= :startTime";
+
+	const auto capabilitiesQuery = getConferenceInfoTypeQuery(capabilities);
+	if (!capabilitiesQuery.empty()) {
+		query += " AND " + capabilitiesQuery;
+	}
+
 	query += " ORDER BY start_time";
 
 	DurationLogger durationLogger("Get conference infos.");
@@ -6449,19 +6477,53 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos(time_t aft
 #endif
 }
 
+std::string MainDb::getConferenceInfoTypeQuery(const std::list<LinphoneStreamType> &capabilities) const {
+	std::string capabilitiesQuery;
+	for (const auto &capability : capabilities) {
+		std::string capabilityString;
+		switch (capability) {
+			case LinphoneStreamTypeAudio:
+				capabilityString = "audio";
+				break;
+			case LinphoneStreamTypeVideo:
+				capabilityString = "video";
+				break;
+			case LinphoneStreamTypeText:
+				capabilityString = "chat";
+				break;
+			case LinphoneStreamTypeUnknown:
+				break;
+		}
+		if (!capabilityString.empty()) {
+			if (!capabilitiesQuery.empty()) {
+				capabilitiesQuery += " AND ";
+			}
+			capabilitiesQuery += "(" + capabilityString + " = 1)";
+		}
+	}
+	return capabilitiesQuery;
+}
+
 std::list<std::shared_ptr<ConferenceInfo>>
-MainDb::getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress) {
+MainDb::getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress,
+                                          const std::list<LinphoneStreamType> capabilities) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
-	               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
-	               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id"
-	               " AND conference_info.uri_sip_address_id = uri_sip_address.id"
-	               " AND (conference_info.organizer_sip_address_id = :sipAddressId"
-	               " OR :sipAddressId IN ("
-	               " SELECT participant_sip_address_id FROM conference_info_participant WHERE"
-	               " conference_info_id = conference_info.id"
-	               " ))";
+	string query =
+	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat"
+	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id"
+	    " AND conference_info.uri_sip_address_id = uri_sip_address.id"
+	    " AND (conference_info.organizer_sip_address_id = :sipAddressId"
+	    " OR :sipAddressId IN ("
+	    " SELECT participant_sip_address_id FROM conference_info_participant WHERE"
+	    " conference_info_id = conference_info.id"
+	    " ))";
+
+	const auto capabilitiesQuery = getConferenceInfoTypeQuery(capabilities);
+	if (!capabilitiesQuery.empty()) {
+		query += " AND " + capabilitiesQuery;
+	}
 	query += " ORDER BY start_time";
 
 	DurationLogger durationLogger("Get conference infos for account.");
@@ -6494,7 +6556,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceIn
 #ifdef HAVE_DB_STORAGE
 	static const string query =
 	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
+	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat"
 	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 	    "conference_info.uri_sip_address_id = uri_sip_address.id"
@@ -6525,7 +6587,8 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 #ifdef HAVE_DB_STORAGE
 	if (isInitialized() && uri) {
 		string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-		               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
+		               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, "
+		               "audio, video, chat"
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"

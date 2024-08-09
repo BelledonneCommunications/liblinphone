@@ -3911,11 +3911,14 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 	add_participant_info_to_list(&participants_info, laure->identity, LinphoneParticipantRoleSpeaker, -1);
 	add_participant_info_to_list(&participants_info, marie->identity, LinphoneParticipantRoleSpeaker, -1);
 	check_conference_info_in_db(marie, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
-	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE, TRUE,
+	                            with_video, FALSE);
 	check_conference_info_in_db(pauline, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
-	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE, TRUE,
+	                            with_video, FALSE);
 	check_conference_info_in_db(laure, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
-	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE, TRUE,
+	                            with_video, FALSE);
 
 	bc_free(recordfile);
 	bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);

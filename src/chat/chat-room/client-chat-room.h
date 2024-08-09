@@ -117,12 +117,6 @@ public:
 private:
 	ClientChatRoom(const std::shared_ptr<Core> &core, const std::shared_ptr<Conference> &conf);
 
-	/*	ClientChatRoom(const std::shared_ptr<Core> &core,
-	                   const std::string &factoryUri,
-	                   const std::shared_ptr<const Address> &me,
-	                   const std::shared_ptr<ConferenceParams> &params);
-	*/
-
 	// Create a chat room from the main database.
 	ClientChatRoom(const std::shared_ptr<Core> &core, bool hasBeenLeft = false);
 

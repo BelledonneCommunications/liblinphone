@@ -5758,11 +5758,15 @@ void check_conference_info_in_db(LinphoneCoreManager *mgr,
                                  unsigned int sequence,
                                  LinphoneConferenceInfoState state,
                                  LinphoneConferenceSecurityLevel security_level,
-                                 bool_t skip_participant_info) {
+                                 bool_t skip_participant_info,
+                                 bool_t audio_enabled,
+                                 bool_t video_enabled,
+                                 bool_t chat_enabled) {
 	LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
 	if (BC_ASSERT_PTR_NOT_NULL(info)) {
 		check_conference_info_members(info, uid, confAddr, organizer, participantList, start_time, duration, subject,
-		                              description, sequence, state, security_level, skip_participant_info);
+		                              description, sequence, state, security_level, skip_participant_info,
+		                              audio_enabled, video_enabled, chat_enabled);
 		linphone_conference_info_unref(info);
 	}
 }
@@ -5789,7 +5793,10 @@ void check_conference_info_members(const LinphoneConferenceInfo *info,
                                    unsigned int sequence,
                                    LinphoneConferenceInfoState state,
                                    LinphoneConferenceSecurityLevel security_level,
-                                   bool_t skip_participant_info) {
+                                   bool_t skip_participant_info,
+                                   bool_t audio_enabled,
+                                   bool_t video_enabled,
+                                   bool_t chat_enabled) {
 	LinphoneConferenceInfo *info2 = linphone_conference_info_new();
 	linphone_conference_info_set_ics_uid(info2, uid);
 	linphone_conference_info_set_uri(info2, confAddr);
@@ -5802,6 +5809,9 @@ void check_conference_info_members(const LinphoneConferenceInfo *info,
 	linphone_conference_info_set_ics_sequence(info2, sequence);
 	linphone_conference_info_set_state(info2, state);
 	linphone_conference_info_set_security_level(info2, security_level);
+	linphone_conference_info_set_capability(info2, LinphoneStreamTypeAudio, audio_enabled);
+	linphone_conference_info_set_capability(info2, LinphoneStreamTypeVideo, video_enabled);
+	linphone_conference_info_set_capability(info2, LinphoneStreamTypeText, chat_enabled);
 	compare_conference_infos(info, info2, skip_participant_info);
 	linphone_conference_info_unref(info2);
 }
@@ -5889,5 +5899,17 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 		if (uid1 && uid2) {
 			BC_ASSERT_STRING_EQUAL(uid1, uid2);
 		}
+
+		const bool_t audio_enabled1 = linphone_conference_info_get_capability(info1, LinphoneStreamTypeAudio);
+		const bool_t audio_enabled2 = linphone_conference_info_get_capability(info2, LinphoneStreamTypeAudio);
+		BC_ASSERT_EQUAL(audio_enabled1, audio_enabled2, int, "%d");
+
+		const bool_t video_enabled1 = linphone_conference_info_get_capability(info1, LinphoneStreamTypeVideo);
+		const bool_t video_enabled2 = linphone_conference_info_get_capability(info2, LinphoneStreamTypeVideo);
+		BC_ASSERT_EQUAL(video_enabled1, video_enabled2, int, "%d");
+
+		const bool_t chat_enabled1 = linphone_conference_info_get_capability(info1, LinphoneStreamTypeText);
+		const bool_t chat_enabled2 = linphone_conference_info_get_capability(info2, LinphoneStreamTypeText);
+		BC_ASSERT_EQUAL(chat_enabled1, chat_enabled2, int, "%d");
 	}
 }

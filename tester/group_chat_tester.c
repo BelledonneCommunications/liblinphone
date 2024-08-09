@@ -7011,10 +7011,13 @@ static void search_friend_chat_room_participants(void) {
 	const LinphoneAddress *confAddr = NULL;
 	LinphoneProxyConfig *laurePC = linphone_core_get_default_proxy_config(laure->lc);
 	LinphoneProxyConfig *mariePC = linphone_core_get_default_proxy_config(marie->lc);
+	LinphoneProxyConfig *paulinePC = linphone_core_get_default_proxy_config(pauline->lc);
 	const LinphoneAddress *laureIdentity = linphone_proxy_config_get_identity_address(laurePC);
 	const LinphoneAddress *marieIdentity = linphone_proxy_config_get_identity_address(mariePC);
+	const LinphoneAddress *paulineIdentity = linphone_proxy_config_get_identity_address(paulinePC);
 	char *laureI = linphone_address_as_string_uri_only(laureIdentity);
 	char *marieI = linphone_address_as_string_uri_only(marieIdentity);
+	char *paulineI = linphone_address_as_string_uri_only(paulineIdentity);
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 
@@ -7055,14 +7058,17 @@ static void search_friend_chat_room_participants(void) {
 	magicSearch = linphone_magic_search_new(pauline->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
 		_check_friend_result_list_2(pauline->lc, resultList, 0, laureI, NULL, NULL, LinphoneMagicSearchSourceChatRooms);
 		_check_friend_result_list_2(pauline->lc, resultList, 1, marieI, NULL, NULL, LinphoneMagicSearchSourceChatRooms);
+		_check_friend_result_list_2(pauline->lc, resultList, 2, paulineI, NULL, NULL,
+		                            LinphoneMagicSearchSourceConferencesInfo);
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
 	ms_free(laureI);
 	ms_free(marieI);
+	ms_free(paulineI);
 	linphone_magic_search_reset_search_cache(magicSearch);
 	linphone_magic_search_unref(magicSearch);
 

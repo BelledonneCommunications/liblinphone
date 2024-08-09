@@ -7167,6 +7167,19 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_core_find_conference_informatio
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core);
 
+#if 0
+/**
+ * Retrieve the list of conference information on DB.
+ * @param core #LinphoneCore object. @notnil
+ * @param capabilities the list of conference capabilities that the conference information must has set
+ * \bctbx_list{LinphoneStreamType}. @tobefreed @maybenil
+ * @return The list of conference infos \bctbx_list{LinphoneConferenceInfo}. @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_2(LinphoneCore *core,
+                                                                              bctbx_list_t *capabilities);
+#endif
+
 /**
  * Retrieve the list of future conference information on DB.
  * @param core #LinphoneCore object. @notnil
@@ -7174,6 +7187,19 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(Linp
  * @ingroup conference
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core);
+
+#if 0
+/**
+ * Retrieve the list of future conference information on DB.
+ * @param core #LinphoneCore object. @notnil
+ * @param capabilities the list of conference capabilities that the conference information must has set
+ * \bctbx_list{LinphoneStreamType}. @tobefreed @maybenil
+ * @return The list of future conference infos \bctbx_list{LinphoneConferenceInfo}. @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_list_2(LinphoneCore *core,
+                                                                                     bctbx_list_t *capabilities);
+#endif
 
 /**
  * Retrieve the list of conference information on DB after a certain time.
@@ -7183,6 +7209,20 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_li
  * @ingroup conference
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time);
+
+#if 0
+/**
+ * Retrieve the list of conference information on DB after a certain time.
+ * @param core #LinphoneCore object. @notnil
+ * @param time Time to retrieve conference info.
+ * @param capabilities the list of conference capabilities that the conference information must has set
+ * \bctbx_list{LinphoneStreamType}. @tobefreed @maybenil
+ * @return The list of conference infos \bctbx_list{LinphoneConferenceInfo}. @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC bctbx_list_t *
+linphone_core_get_conference_information_list_after_time_2(LinphoneCore *core, time_t time, bctbx_list_t *capabilities);
+#endif
 
 /**
  * Deletes a conference information from DB.

@@ -586,6 +586,12 @@ void linphone_chat_room_set_muted(LinphoneChatRoom *chat_room, bool_t muted) {
 	AbstractChatRoom::toCpp(chat_room)->setIsMuted(!!muted);
 }
 
+const LinphoneConferenceInfo *linphone_chat_room_get_conference_info(LinphoneChatRoom *chat_room) {
+	ChatRoomLogContextualizer logContextualizer(chat_room);
+	auto info = AbstractChatRoom::toCpp(chat_room)->getConferenceInfo();
+	return info ? info->toC() : nullptr;
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

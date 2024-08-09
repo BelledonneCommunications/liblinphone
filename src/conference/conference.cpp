@@ -132,7 +132,8 @@ const std::shared_ptr<Account> Conference::getAccount() {
 	}
 	if (!account) {
 		const auto &conferenceAddress = getConferenceAddress();
-		lError() << "Unable to associate account to conference [" << this << "] with address [" << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << "]";
+		lError() << "Unable to associate account to conference [" << this << "] with address ["
+		         << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << "]";
 	}
 	return account;
 }
@@ -348,6 +349,10 @@ bool Conference::setParticipants(const std::list<std::shared_ptr<Participant>> &
 	mParticipants.clear();
 	mParticipants = std::move(newParticipants);
 	return 0;
+}
+
+void Conference::setInvitedParticipants(const ConferenceInfo::participant_list_t &invitedParticipants) {
+	mInvitedParticipants = invitedParticipants;
 }
 
 void Conference::removeParticipantDevice(BCTBX_UNUSED(const shared_ptr<Participant> &participant),
@@ -1268,18 +1273,29 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 	}
 }
 
-std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
+const std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
+	// Do not create conference infos if the conference doesn't have audio or video capabilities
+	// Pure chatrooms do not need a conference information
+	mConferenceInfo = nullptr;
+	if (!mConfParams->audioEnabled() && !mConfParams->videoEnabled()) return mConferenceInfo;
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
-		std::shared_ptr<ConferenceInfo> conferenceInfo =
-		    getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
+		std::shared_ptr<ConferenceInfo> conferenceInfo;
+		if (mConferenceInfoId == -1) {
+			mConferenceInfo = mainDb->getConferenceInfoFromURI(getConferenceAddress());
+		} else {
+			mConferenceInfo = mainDb->getConferenceInfo(mConferenceInfoId);
+		}
 		if (conferenceInfo) {
 			return conferenceInfo;
 		}
 	}
 #endif // HAVE_DB_STORAGE
-	return createConferenceInfo();
+	if (!mConferenceInfo) {
+		mConferenceInfo = createConferenceInfo();
+	}
+	return mConferenceInfo;
 }
 
 std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
@@ -1314,49 +1330,28 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 		}
 
 		// Update me only if he/she is already in the list of participants info
-		const auto &meAddress = getMe()->getAddress();
-		const auto &currentParticipants = conferenceInfo->getParticipants();
-		const auto meInfoIt =
-		    std::find_if(currentParticipants.begin(), currentParticipants.end(),
-		                 [&meAddress](const auto &p) { return (meAddress->weakEqual(*p->getAddress())); });
-		if (meInfoIt != currentParticipants.end()) {
-			updateParticipantInfoInConferenceInfo(conferenceInfo, getMe());
-		}
+		updateParticipantInfoInConferenceInfo(conferenceInfo, getMe());
 		for (const auto &participant : getParticipants()) {
 			updateParticipantInfoInConferenceInfo(conferenceInfo, participant);
 		}
 
 		conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
 		conferenceInfo->setSubject(mConfParams->getSubject());
-	}
 
-	// Update me only if he/she is already in the list of participants info
-	const auto &meAddress = getMe()->getAddress();
-	const auto &currentParticipants = conferenceInfo->getParticipants();
-	const auto meInfoIt =
-	    std::find_if(currentParticipants.begin(), currentParticipants.end(),
-	                 [&meAddress](const auto &p) { return (meAddress->weakEqual(*p->getAddress())); });
-	if (meInfoIt != currentParticipants.end()) {
-		updateParticipantInfoInConferenceInfo(conferenceInfo, getMe());
-	}
+		// Update start time and duration as this information can be sent through the SUBSCRIBE/NOTIFY dialog. In fact,
+		// if a client dials a conference without prior knowledge (for example it is given an URI to call), the start
+		// and end time are initially estimated as there is no conference information associated to that URI.
+		time_t startTime = mConfParams->getStartTime();
+		time_t endTime = mConfParams->getEndTime();
+		conferenceInfo->setDateTime(startTime);
+		if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
+			unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
+			conferenceInfo->setDuration(duration);
+		}
 
-	for (const auto &participant : getParticipants()) {
-		updateParticipantInfoInConferenceInfo(conferenceInfo, participant);
+		conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
+		conferenceInfo->setSubject(mConfParams->getSubject());
 	}
-
-	// Update start time and duration as this information can be sent through the SUBSCRIBE/NOTIFY dialog. In fact, if a
-	// client dials a conference without prior knowledge (for example it is given an URI to call), the start and end
-	// time are initially estimated as there is no conference information associated to that URI.
-	time_t startTime = mConfParams->getStartTime();
-	time_t endTime = mConfParams->getEndTime();
-	conferenceInfo->setDateTime(startTime);
-	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
-		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
-		conferenceInfo->setDuration(duration);
-	}
-
-	conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
-	conferenceInfo->setSubject(mConfParams->getSubject());
 
 	return conferenceInfo;
 }
@@ -1390,6 +1385,10 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomPartic
 
 	info->setSubject(mConfParams->getSubject());
 	info->setSecurityLevel(mConfParams->getSecurityLevel());
+
+	info->setCapability(LinphoneStreamTypeAudio, mConfParams->audioEnabled());
+	info->setCapability(LinphoneStreamTypeVideo, mConfParams->videoEnabled());
+	info->setCapability(LinphoneStreamTypeText, mConfParams->chatEnabled());
 
 	return info;
 }

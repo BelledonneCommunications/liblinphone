@@ -244,10 +244,22 @@ void linphone_account_clear_call_logs(const LinphoneAccount *account) {
 }
 
 bctbx_list_t *linphone_account_get_conference_information_list(const LinphoneAccount *account) {
+	return linphone_account_get_conference_information_list_2(account, NULL);
+}
+
+bctbx_list_t *linphone_account_get_conference_information_list_2(const LinphoneAccount *account,
+                                                                 bctbx_list_t *capabilities) {
 	AccountLogContextualizer logContextualizer(account);
 
+	std::list<LinphoneStreamType> capabilityList;
+	if (capabilities) {
+		for (bctbx_list_t *capability = capabilities; capability != NULL; capability = capability->next) {
+			capabilityList.push_back(
+			    static_cast<LinphoneStreamType>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(capability))));
+		}
+	}
 	bctbx_list_t *results = NULL;
-	std::list list = Account::toCpp(account)->getConferenceInfos();
+	std::list list = Account::toCpp(account)->getConferenceInfos(capabilityList);
 	if (!list.empty()) {
 		for (auto &confInfo : list) {
 			results = bctbx_list_append(results, linphone_conference_info_ref(confInfo->toC()));

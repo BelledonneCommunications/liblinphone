@@ -998,7 +998,10 @@ void check_conference_info_in_db(LinphoneCoreManager *mgr,
                                  unsigned int sequence,
                                  LinphoneConferenceInfoState state,
                                  LinphoneConferenceSecurityLevel security_level,
-                                 bool_t skip_participant_info);
+                                 bool_t skip_participant_info,
+                                 bool_t audio_enabled,
+                                 bool_t video_enabled,
+                                 bool_t chat_enabled);
 
 void check_conference_info_members(const LinphoneConferenceInfo *info,
                                    const char *uid,
@@ -1012,7 +1015,10 @@ void check_conference_info_members(const LinphoneConferenceInfo *info,
                                    unsigned int sequence,
                                    LinphoneConferenceInfoState state,
                                    LinphoneConferenceSecurityLevel security_level,
-                                   bool_t skip_participant_info);
+                                   bool_t skip_participant_info,
+                                   bool_t audio_enabled,
+                                   bool_t video_enabled,
+                                   bool_t chat_enabled);
 
 void compare_conference_infos(const LinphoneConferenceInfo *info1,
                               const LinphoneConferenceInfo *info2,

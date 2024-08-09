@@ -997,15 +997,17 @@ bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_e
 			const std::shared_ptr<SalMediaDescription> &label_desc =
 			    is_in_conference ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
 			SalStreamDescription screen_sharing_stream = label_desc->getStreamAtIdx(screenSharingStreamIdx);
-			const std::string screen_sharing_label = screen_sharing_stream.getLabel();
+			const SalStreamDir screen_sharing_direction = screen_sharing_stream.getDirection();
 			int thumbnailStreamIdx =
 			    content_desc->findIdxStreamWithContent(MediaSessionPrivate::ThumbnailVideoContentAttribute);
 			if (thumbnailStreamIdx == -1) {
 				// If no thumbnail stream is found, then verify that the screen sharing label is not empty
-				ret &= screen_sharing_enabled ? !screen_sharing_label.empty() : screen_sharing_label.empty();
+				ret &= screen_sharing_enabled ? (screen_sharing_direction != SalStreamInactive)
+				                              : (screen_sharing_direction == SalStreamInactive);
 			} else {
 				SalStreamDescription thumbnail_stream = label_desc->getStreamAtIdx(thumbnailStreamIdx);
 				const std::string thumbnail_label = thumbnail_stream.getLabel();
+				const std::string screen_sharing_label = screen_sharing_stream.getLabel();
 				// Verify that the label of the screen sharing and thumbnail streams are different
 				ret &= screen_sharing_enabled ? (thumbnail_label.compare(screen_sharing_label) != 0)
 				                              : (thumbnail_label.compare(screen_sharing_label) == 0);

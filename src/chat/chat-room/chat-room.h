@@ -205,6 +205,8 @@ public:
 	void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) override;
 	void setCallId(const std::string &value) override;
 
+	const std::shared_ptr<ConferenceInfo> getConferenceInfo() const override;
+
 	Imdn *getImdnHandler() const override {
 		return mImdnHandler.get();
 	}

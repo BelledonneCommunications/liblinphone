@@ -241,6 +241,29 @@ LINPHONE_PUBLIC void linphone_conference_info_set_security_level(LinphoneConfere
                                                                  LinphoneConferenceSecurityLevel security_level);
 
 /**
+ * Set the capability of the conference.
+ * The capability information represents the capability for the conference linked to the #ConferenceInfo to handle a
+ * given stream type (audio, video or text).
+ * @param conference_info A #LinphoneConferenceInfo object @notnil
+ * @param stream_type A #LinphoneStreamType
+ * @param enable the capability of the conference linked to conference information #LinphoneConferenceInfo
+ */
+LINPHONE_PUBLIC void linphone_conference_info_set_capability(LinphoneConferenceInfo *conference_info,
+                                                             const LinphoneStreamType stream_type,
+                                                             bool_t enable);
+
+/**
+ * Get the capability of the conference.
+ * The capability information represents the capability for the conference linked to the #ConferenceInfo to handle a
+ * given stream type (audio, video or text).
+ * @param conference_info A #LinphoneConferenceInfo object @notnil
+ * @param stream_type A #LinphoneStreamType
+ * @return the capability of the conference linked to conference information #LinphoneConferenceInfo
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_info_get_capability(const LinphoneConferenceInfo *conference_info,
+                                                               const LinphoneStreamType stream_type);
+
+/**
  * Retrieve the conference as an Icalendar string.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The conference as an Icalendar string. The returned char* must be freed by the caller. @maybenil @tobefreed

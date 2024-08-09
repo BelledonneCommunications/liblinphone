@@ -2366,9 +2366,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(descParams);
 	std::shared_ptr<SalMediaDescription> &oldMd = localDesc;
 	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
-	const std::shared_ptr<SalMediaDescription> &refMd =
-	    (conference) ? ((isInLocalConference) ? oldMd : op->getRemoteMediaDescription())
-	                 : ((localIsOfferer) ? oldMd : op->getRemoteMediaDescription());
+	const std::shared_ptr<SalMediaDescription> &refMd = ((localIsOfferer) ? oldMd : op->getRemoteMediaDescription());
 
 	this->localIsOfferer = localIsOfferer;
 
@@ -2615,14 +2613,19 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 
 		int videoStreamIdx = -1;
 		if (refMd) {
-			const auto streamIdxWithContent = refMd->findIdxStreamWithContent(mainStreamAttrValue);
+			const auto gridStreamIdxWithContent =
+			    refMd->findIdxStreamWithContent(MediaSessionPrivate::GridVideoContentAttribute);
+			const auto activeSpeakerStreamIdxWithContent =
+			    refMd->findIdxStreamWithContent(MediaSessionPrivate::ActiveSpeakerVideoContentAttribute);
 			const auto screenSharingStreamIdxWithContent =
 			    refMd->findIdxStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
 			if (conference) {
 				if (screenSharingStreamIdxWithContent > -1) {
 					videoStreamIdx = screenSharingStreamIdxWithContent;
-				} else if (streamIdxWithContent > -1) {
-					videoStreamIdx = streamIdxWithContent;
+				} else if (gridStreamIdxWithContent > -1) {
+					videoStreamIdx = gridStreamIdxWithContent;
+				} else if (activeSpeakerStreamIdxWithContent > -1) {
+					videoStreamIdx = activeSpeakerStreamIdxWithContent;
 				} else {
 					videoStreamIdx = refMd->findIdxBestStream(SalVideo);
 				}

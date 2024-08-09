@@ -213,8 +213,7 @@ bool ServerConference::validateNewParameters(const ConferenceParams &newConfPara
 	if (((oldConferenceAddress == nullptr) != (newConferenceAddress == nullptr)) ||
 	    (oldConferenceAddress && newConferenceAddress && (*oldConferenceAddress != *newConferenceAddress))) {
 		lError() << "Conference address change is not allowed: actual "
-		         << (oldConferenceAddress ? oldConferenceAddress->toString() : std::string("sip:"))
-		         << " new value "
+		         << (oldConferenceAddress ? oldConferenceAddress->toString() : std::string("sip:")) << " new value "
 		         << (newConferenceAddress ? newConferenceAddress->toString() : std::string("sip:"));
 		return false;
 	}
@@ -309,7 +308,7 @@ void ServerConference::updateConferenceInformation(SalCallOp *op) {
 			// - Subject is got from the "Subject" header in the INVITE
 			const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
 			auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore()))
-			                        ? linphone_core_video_enabled(getCore()->getCCore())
+			                        ? (remoteMd->nbActiveStreamsOfType(SalVideo) > 0)
 			                        : false;
 			if (!linphone_core_conference_server_enabled(getCore()->getCCore())) {
 				lWarning() << "Video capability in a conference is not supported when a device that is not a server is "
@@ -364,20 +363,19 @@ void ServerConference::updateConferenceInformation(SalCallOp *op) {
 			}
 			conferenceInfo->setState(infoState);
 
-			long long conferenceInfoId = -1;
 #ifdef HAVE_DB_STORAGE
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
 				lInfo()
 				    << "Inserting conference information to database in order to be able to recreate the conference "
 				    << *getConferenceAddress() << " in case of restart";
-				conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
+				mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 			}
 #endif // HAVE_DB_STORAGE
 			auto callLog = session->getLog();
 			if (callLog) {
 				callLog->setConferenceInfo(conferenceInfo);
-				callLog->setConferenceInfoId(conferenceInfoId);
+				callLog->setConferenceInfoId(mConferenceInfoId);
 			}
 			if (isEmpty) {
 				setState(ConferenceInterface::State::TerminationPending);
@@ -753,7 +751,6 @@ void ServerConference::confirmCreation() {
 		session->startIncomingNotification(false);
 
 		const auto &conferenceInfo = createOrGetConferenceInfo();
-		long long conferenceInfoId = -1;
 
 #ifdef HAVE_ADVANCED_IM
 		const auto &remoteContactAddress = session->getRemoteContactAddress();
@@ -781,7 +778,8 @@ void ServerConference::confirmCreation() {
 #ifdef HAVE_DB_STORAGE
 		// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
 		// doesn't have any of the codecs the server supports
-		if (getState() != ConferenceInterface::State::CreationFailed) {
+		if ((mConfParams->audioEnabled() || mConfParams->videoEnabled()) &&
+		    (getState() != ConferenceInterface::State::CreationFailed)) {
 			// Store into DB after the start incoming notification in order to have a valid conference address being the
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -791,14 +789,14 @@ void ServerConference::confirmCreation() {
 				lInfo()
 				    << "Inserting conference information to database in order to be able to recreate the conference "
 				    << conferenceAddressStr << " in case of restart";
-				conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
+				mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 			}
 		}
 #endif // HAVE_DB_STORAGE
 		auto callLog = session->getLog();
 		if (callLog) {
 			callLog->setConferenceInfo(conferenceInfo);
-			callLog->setConferenceInfoId(conferenceInfoId);
+			callLog->setConferenceInfoId(mConferenceInfoId);
 		}
 	} else {
 		lError() << "Unable to confirm the creation of the conference because no session was created";

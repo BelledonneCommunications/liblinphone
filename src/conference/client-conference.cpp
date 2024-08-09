@@ -149,7 +149,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	    (mConfParams->audioEnabled() || mConfParams->videoEnabled())) {
 		conferenceInfo = core->getPrivate()->mainDb->getConferenceInfoFromURI(conferenceAddress);
 	}
-#endif
+#endif // HAVE_DB_STORAGE
 
 	const auto focusSession = mFocus ? mFocus->getSession() : nullptr;
 	if (conferenceInfo) {
@@ -247,7 +247,13 @@ void ClientConference::initializeHandlers(ConferenceListener *confListener, bool
 void ClientConference::updateAndSaveConferenceInformations() {
 	const auto conferenceInfo = getUpdatedConferenceInfo();
 	if (!conferenceInfo) return;
-	long long conferenceInfoId = -1;
+
+	// Until the full state is received, the core doesn't know the conference capabilities
+	if (!mFullStateReceived) {
+		conferenceInfo->setCapability(LinphoneStreamTypeAudio, mConfParams->audioEnabled());
+		conferenceInfo->setCapability(LinphoneStreamTypeVideo, mConfParams->videoEnabled());
+		conferenceInfo->setCapability(LinphoneStreamTypeText, mConfParams->chatEnabled());
+	}
 
 #ifdef HAVE_DB_STORAGE
 	// Store into DB after the start incoming notification in order to have a valid conference address being the contact
@@ -258,14 +264,14 @@ void ClientConference::updateAndSaveConferenceInformations() {
 		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		lInfo() << "Inserting or updating conference information to database related to conference "
 		        << conferenceAddressStr;
-		conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
+		mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 	}
 #endif // HAVE_DB_STORAGE
 
 	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
 	if (callLog) {
 		callLog->setConferenceInfo(conferenceInfo);
-		callLog->setConferenceInfoId(conferenceInfoId);
+		callLog->setConferenceInfoId(mConferenceInfoId);
 	}
 }
 
@@ -1696,6 +1702,11 @@ void ClientConference::onParticipantDeviceScreenSharingChanged(
 
 void ClientConference::onFullStateReceived() {
 	updateMinatureRequestedFlag();
+
+	// When receiving a full state, we must recreate the conference informations in order to get the security level
+	// and the participant list up to date
+	updateAndSaveConferenceInformations();
+
 	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
 #ifdef HAVE_ADVANCED_IM
 		if ((mConfParams->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) &&
@@ -1707,10 +1718,6 @@ void ClientConference::onFullStateReceived() {
 			mClientEktManager->subscribe();
 		}
 #endif // HAVE_ADVANCED_IM
-
-		// When receiving a full state, we must recreate the conference informations in order to get the security level
-		// and the participant list up to date
-		updateAndSaveConferenceInformations();
 
 		auto requestStreams = [this]() -> LinphoneStatus {
 			lInfo() << "Sending re-INVITE in order to get streams after receiving a NOTIFY full state for conference "
@@ -2464,7 +2471,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 		           ((mState == ConferenceInterface::State::Instantiated) ||
 		            (mState == ConferenceInterface::State::CreationPending)) &&
 		           (session->getParams()->getPrivate()->getStartTime() < 0)) {
-			// TODO: same code as in the conference scheduler and core.cpp. Needs refacftoring?
+			// TODO: same code as in the conference scheduler and core.cpp. Needs refactoring?
 			auto conferenceAddress = remoteAddress;
 
 			lInfo() << "Conference [" << this << "] has been succesfully created: " << *conferenceAddress;
@@ -2493,13 +2500,14 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			for (const auto &participantInfo : mInvitedParticipants) {
 				const auto &address = participantInfo->getAddress();
 				// Do not add the me address to the list of participants to put in the INVITE
-				if (!address->weakEqual(*meAddress)) {
+				if (!isMe(address)) {
 					addressesList.push_back(Conference::createParticipantAddressForResourceList(participantInfo));
 				}
 			}
 			addressesList.sort([](const auto &addr1, const auto &addr2) { return addr1 < addr2; });
 			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1.weakEqual(addr2); });
 
+			bool supportsMedia = mConfParams->audioEnabled() || mConfParams->videoEnabled();
 			std::shared_ptr<Content> content = nullptr;
 			if (!addressesList.empty()) {
 				auto resourceList = Content::create();
@@ -2513,14 +2521,14 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 				// Adding a custom content to the call params allows to create a multipart message body.
 				// For audio video conferences it is requires as the client has to initiate a media session. The chat
 				// room code, instead, makes the assumption that the participant list is the body itself
-				if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
+				if (supportsMedia) {
 					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
 				} else {
 					content = resourceList;
 				}
 			}
 
-			if (!(mConfParams->audioEnabled() || mConfParams->videoEnabled())) {
+			if (!supportsMedia) {
 				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("text");
 				if (!mConfParams->isGroup()) {
 					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("One-To-One-Chat-Room", "true");
@@ -2535,8 +2543,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					                      to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
 				}
 			}
-			linphone_call_params_enable_tone_indications(new_params,
-			                                             mConfParams->audioEnabled() || mConfParams->videoEnabled());
+			linphone_call_params_enable_tone_indications(new_params, supportsMedia);
 
 			const auto cCore = getCore()->getCCore();
 			const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(cCore);
@@ -2556,7 +2563,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			linphone_call_params_enable_realtime_text(new_params, FALSE);
 
 			const auto subject = mConfParams->getSubject();
-			if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
+			if (supportsMedia) {
 				LinphoneCall *call = linphone_core_invite_address_with_params_2(cCore, remoteAddress->toC(), new_params,
 				                                                                L_STRING_TO_C(subject),
 				                                                                content ? content->toC() : nullptr);

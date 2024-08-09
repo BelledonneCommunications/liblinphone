@@ -155,8 +155,9 @@ static void abort_call_to_ice_conference(void) {
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, FALSE, FALSE);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *confAddrStr = (confAddr) ? linphone_address_as_string(confAddr) : NULL;

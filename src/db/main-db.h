@@ -232,9 +232,11 @@ public:
 	// Conference Info.
 	// ---------------------------------------------------------------------------
 
-	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos(time_t afterThisTime = -1);
 	std::list<std::shared_ptr<ConferenceInfo>>
-	getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress);
+	getConferenceInfos(time_t afterThisTime = -1, const std::list<LinphoneStreamType> capabilities = {});
+	std::list<std::shared_ptr<ConferenceInfo>>
+	getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress,
+	                                  const std::list<LinphoneStreamType> capabilities = {});
 	std::shared_ptr<ConferenceInfo> getConferenceInfo(long long conferenceInfoId);
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
@@ -299,6 +301,8 @@ private:
 	                       const std::shared_ptr<AbstractChatRoom> &chatRoom) const;
 	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> chatRoom1,
 	                                                 const std::shared_ptr<AbstractChatRoom> chatRoom2) const;
+
+	std::string getConferenceInfoTypeQuery(const std::list<LinphoneStreamType> &capabilities) const;
 };
 
 LINPHONE_END_NAMESPACE

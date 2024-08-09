@@ -420,7 +420,12 @@ static void send_conference_invitations(bool_t enable_encryption,
 			linphone_conference_info_unref(conf_info_from_content);
 		}
 
-		// Check that the core can retrieve the conference info list on DB
+		bctbx_list_t *infos = linphone_core_get_conference_information_list(laure->lc);
+		if (BC_ASSERT_PTR_NOT_NULL(infos)) {
+			BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 1, int, "%d");
+			bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+		}
+
 		bctbx_list_t *conf_info_list = linphone_core_get_conference_information_list(laure->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(conf_info_list), 1, int, "%d");
 		bctbx_list_free_with_data(conf_info_list, (bctbx_list_free_func)linphone_conference_info_unref);

@@ -118,7 +118,8 @@ public:
 	int getMissedCallsCount() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogs() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogsForAddress(const std::shared_ptr<const Address> &) const;
-	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos() const;
+	std::list<std::shared_ptr<ConferenceInfo>>
+	getConferenceInfos(const std::list<LinphoneStreamType> capabilities = {}) const;
 
 	// Other
 	void resetMissedCallsCount();

@@ -979,6 +979,14 @@ void ChatRoom::setIsMuted(const bool muted, const bool updateDb) {
 	}
 }
 
+const std::shared_ptr<ConferenceInfo> ChatRoom::getConferenceInfo() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return nullptr;
+	}
+	return conference->createOrGetConferenceInfo();
+}
+
 ChatRoomLogContextualizer::ChatRoomLogContextualizer(const LinphoneChatRoom *cr)
     : CoreLogContextualizer(*AbstractChatRoom::toCpp(cr)) {
 }

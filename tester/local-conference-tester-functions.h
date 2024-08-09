@@ -344,7 +344,8 @@ private:
 						groupchat_enabled |= (strstr(spec, "groupchat") != NULL);
 					}
 					if (groupchat_enabled) {
-						const LinphoneAddress *deviceAddr = linphone_account_get_contact_address(client.getDefaultAccount());
+						const LinphoneAddress *deviceAddr =
+						    linphone_account_get_contact_address(client.getDefaultAccount());
 						LinphoneParticipantDeviceIdentity *identity =
 						    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
 						linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
@@ -482,7 +483,9 @@ create_conference_on_server(Focus &focus,
                             const char *subject,
                             const char *description,
                             bool_t send_ics,
-                            LinphoneConferenceSecurityLevel security_level);
+                            LinphoneConferenceSecurityLevel security_level,
+                            bool_t enable_video,
+                            bool_t enable_chat);
 
 void set_video_settings_in_conference(LinphoneCoreManager *focus,
                                       LinphoneCoreManager *participant,

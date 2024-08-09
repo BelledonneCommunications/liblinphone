@@ -84,6 +84,7 @@ public:
 
 	std::shared_ptr<ParticipantInfo>
 	findInvitedParticipant(const std::shared_ptr<const Address> &participantAddress) const;
+	void setInvitedParticipants(const ConferenceInfo::participant_list_t &invitedParticipants);
 
 	std::shared_ptr<ParticipantDevice> findParticipantDevice(const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDevice(const std::shared_ptr<const Address> &pAddr,
@@ -327,7 +328,7 @@ public:
 
 	virtual std::shared_ptr<Player> getPlayer() const;
 
-	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
+	virtual const std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
@@ -361,6 +362,8 @@ protected:
 
 	std::string mUsername = "";
 
+	long long mConferenceInfoId = -1;
+
 	ConferenceInterface::State mState = ConferenceInterface::State::None;
 	std::map<uint32_t, bool> mPendingParticipantsMutes;
 
@@ -390,6 +393,7 @@ protected:
 	std::unique_ptr<LogContextualizer> getLogContextualizer() override;
 
 private:
+	mutable std::shared_ptr<ConferenceInfo> mConferenceInfo;
 	std::shared_ptr<AbstractChatRoom> mChatRoom = nullptr;
 
 	L_DISABLE_COPY(Conference);

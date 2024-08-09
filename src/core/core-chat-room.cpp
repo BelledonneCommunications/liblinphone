@@ -30,6 +30,7 @@
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/chat-room/basic-chat-room.h"
 #include "chat/chat-room/chat-room.h"
+#include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/server-conference.h"
 #include "core-p.h"
@@ -469,7 +470,8 @@ void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 
 void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 	const auto chatRoomState = chatRoom->getState();
-	if (mainDb->isInitialized() && ((chatRoomState == ConferenceInterface::State::CreationPending) || (chatRoomState == ConferenceInterface::State::Created))) {
+	if (mainDb->isInitialized() && ((chatRoomState == ConferenceInterface::State::CreationPending) ||
+	                                (chatRoomState == ConferenceInterface::State::Created))) {
 		mainDb->insertChatRoom(chatRoom, notifyId);
 	}
 }
@@ -487,6 +489,24 @@ void CorePrivate::loadChatRooms() {
 			insertChatRoom(chatRoom);
 		} else {
 			const auto &conference = chatRoom->getConference();
+#ifdef HAVE_DB_STORAGE
+			const auto &conferenceAddress = conference->getConferenceAddress();
+			if (conferenceAddress) {
+				auto conferenceInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
+				ConferenceInfo::participant_list_t participantInfos;
+				if (conferenceInfo) {
+					participantInfos = conferenceInfo->getParticipants();
+				} else {
+					const auto &participants = conference->getParticipants();
+					for (const auto &participant : participants) {
+						auto participantInfo = ParticipantInfo::create(participant->getAddress());
+						participantInfo->setRole(Participant::Role::Speaker);
+						participantInfos.push_back(participantInfo);
+					}
+				}
+				conference->setInvitedParticipants(participantInfos);
+			}
+#endif // HAVE_DB_STORAGE
 			const ConferenceId &conferenceId = conference->getConferenceId();
 			conferenceById.insert(std::make_pair(conferenceId, conference));
 		}

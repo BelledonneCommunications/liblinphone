@@ -126,6 +126,9 @@ public:
 	ConferenceParamsInterface::SecurityLevel getSecurityLevel() const;
 	void setSecurityLevel(ConferenceParamsInterface::SecurityLevel securityLevel);
 
+	void setCapability(const LinphoneStreamType type, bool enable);
+	bool getCapability(const LinphoneStreamType type) const;
+
 	// Used only by the tester
 	void setCreationTime(time_t time);
 
@@ -148,6 +151,8 @@ private:
 	State mState = State::New;
 	ConferenceParamsInterface::SecurityLevel mSecurityLevel = ConferenceParamsInterface::SecurityLevel::None;
 	time_t mCreationTime = (time_t)-1;
+
+	std::map<LinphoneStreamType, bool> capabilities;
 };
 
 std::ostream &operator<<(std::ostream &lhs, ConferenceInfo::State s);

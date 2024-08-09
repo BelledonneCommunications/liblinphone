@@ -149,7 +149,7 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 
 		check_conference_info_in_db(focus.getCMgr(), NULL, conference_address, organizer_address, participants_info,
 		                            start_time, duration, subject, description, 0, LinphoneConferenceInfoStateNew,
-		                            security_level, FALSE);
+		                            security_level, FALSE, TRUE, TRUE, FALSE);
 
 		conf_info = linphone_core_find_conference_information_from_uri(focus.getLc(), conference_address);
 		BC_ASSERT_PTR_NOT_NULL(conf_info);
@@ -222,7 +222,7 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 
 		check_conference_info_in_db(focus.getCMgr(), NULL, conference_address, organizer_address, participants_info,
 		                            start_time, duration, subject, description, 1, LinphoneConferenceInfoStateUpdated,
-		                            security_level, FALSE);
+		                            security_level, FALSE, TRUE, TRUE, FALSE);
 
 		conf_info = linphone_core_find_conference_information_from_uri(focus.getLc(), conference_address);
 		BC_ASSERT_PTR_NOT_NULL(conf_info);
@@ -258,7 +258,7 @@ static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
 
 		check_conference_info_in_db(focus.getCMgr(), NULL, conference_address, organizer_address, participants_info,
 		                            start_time, duration, subject, description, 2, LinphoneConferenceInfoStateCancelled,
-		                            security_level, FALSE);
+		                            security_level, FALSE, TRUE, TRUE, FALSE);
 
 	end:
 		if (conference_address) linphone_address_unref(conference_address);
@@ -351,8 +351,9 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -537,8 +538,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 
 								check_conference_info_in_db(mgr, uid, confAddr, marie.getCMgr()->identity,
 								                            participants_info, start_time, duration, initialSubject,
-								                            description, exp_sequence, exp_state, security_level,
-								                            FALSE);
+								                            description, exp_sequence, exp_state, security_level, FALSE,
+								                            TRUE, TRUE, FALSE);
 							}
 						}
 						linphone_chat_message_unref(msg);
@@ -1007,7 +1008,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 										check_conference_info_in_db(mgr, uid, confAddr, marie.getCMgr()->identity,
 										                            participants_info, start_time, duration, subject,
 										                            description2, exp_sequence, exp_state,
-										                            security_level, FALSE);
+										                            security_level, FALSE, TRUE, TRUE, FALSE);
 									}
 								}
 								linphone_chat_message_unref(msg);
@@ -1149,7 +1150,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 
 						check_conference_info_in_db(mgr, uid, confAddr, marie.getCMgr()->identity, participants_info2,
 						                            start_time, duration, exp_subject, exp_description, exp_sequence,
-						                            exp_state, security_level, FALSE);
+						                            exp_state, security_level, FALSE, TRUE, TRUE, FALSE);
 
 						bctbx_list_free_with_data(participants_info2,
 						                          (bctbx_list_free_func)linphone_participant_info_unref);
@@ -1265,8 +1266,9 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, FALSE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -1431,7 +1433,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 							check_conference_info_members(conf_info_from_original_content, uid, confAddr,
 							                              marie.getCMgr()->identity, participants_info, start_time,
 							                              duration, subject, description2, ics_sequence, exp_state,
-							                              security_level, FALSE);
+							                              security_level, FALSE, TRUE, TRUE, FALSE);
 							linphone_conference_info_unref(conf_info_from_original_content);
 						}
 					}
@@ -1475,7 +1477,8 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info,
 				                            start_time, duration, exp_subject, exp_description, exp_sequence, exp_state,
-				                            security_level, FALSE);
+				                            security_level, FALSE, TRUE,
+				                            (mgr != focus.getCMgr()) && (mgr != marie.getCMgr()), FALSE);
 			}
 			if (info) {
 				linphone_conference_info_unref(info);
@@ -1537,8 +1540,9 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, FALSE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -1663,7 +1667,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 							check_conference_info_members(conf_info_from_original_content, uid, confAddr,
 							                              marie.getCMgr()->identity, participants_info, start_time,
 							                              new_duration, initialSubject, description, ics_sequence,
-							                              exp_state, security_level, FALSE);
+							                              exp_state, security_level, FALSE, TRUE, TRUE, FALSE);
 							linphone_conference_info_unref(conf_info_from_original_content);
 						}
 					}
@@ -1824,7 +1828,8 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 							check_conference_info_members(conf_info_from_original_content, uid, confAddr,
 							                              marie.getCMgr()->identity, NULL, start_time, new_duration,
 							                              subject, description2, ics_sequence, exp_state,
-							                              security_level, FALSE);
+							                              security_level, FALSE, TRUE,
+							                              (mgr != focus.getCMgr()) && (mgr != marie.getCMgr()), FALSE);
 							linphone_conference_info_unref(conf_info_from_original_content);
 						}
 					}
@@ -1855,7 +1860,8 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 				}
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, NULL, start_time,
 				                            new_duration, exp_subject, exp_description, exp_sequence, exp_state,
-				                            security_level, FALSE);
+				                            security_level, FALSE, TRUE,
+				                            (mgr != focus.getCMgr()) && (mgr != marie.getCMgr()), FALSE);
 			}
 			if (info) {
 				linphone_conference_info_unref(info);

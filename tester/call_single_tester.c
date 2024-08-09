@@ -3750,10 +3750,6 @@ static void call_paused_resumed_from_callee_base(bool_t timeout) {
 	const rtp_stats_t *stats;
 	bool_t call_ok;
 
-	int no_rtp_timeout = 10; // seconds
-	linphone_core_set_nortp_timeout(marie->lc, no_rtp_timeout);
-	linphone_core_set_nortp_timeout(pauline->lc, no_rtp_timeout);
-
 	BC_ASSERT_TRUE((call_ok = call(pauline, marie)));
 	if (!call_ok) goto end;
 	call_marie = linphone_core_get_current_call(marie->lc);
@@ -3779,10 +3775,8 @@ static void call_paused_resumed_from_callee_base(bool_t timeout) {
 		params.mode = OrtpNetworkSimulatorOutbound;
 		RtpSession *rtp_session = linphone_call_get_stream(call_marie, LinphoneStreamTypeAudio)->sessions.rtp_session;
 		rtp_session_enable_network_simulation(rtp_session, &params);
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1,
-		                              ((1 + no_rtp_timeout) * 1000)));
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1,
-		                              ((1 + no_rtp_timeout) * 1000)));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1, 50000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1, 50000));
 	} else {
 		linphone_call_resume(call_marie);
 

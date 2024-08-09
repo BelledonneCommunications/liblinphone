@@ -179,7 +179,9 @@ create_conference_on_server(Focus &focus,
                             const char *subject,
                             const char *description,
                             bool_t send_ics,
-                            LinphoneConferenceSecurityLevel security_level) {
+                            LinphoneConferenceSecurityLevel security_level,
+                            bool_t enable_video,
+                            bool_t enable_chat) {
 	bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 	coresList = bctbx_list_append(coresList, organizer.getLc());
 	std::vector<stats> participant_stats;
@@ -238,6 +240,8 @@ create_conference_on_server(Focus &focus,
 	linphone_conference_info_set_subject(conf_info, subject);
 	linphone_conference_info_set_description(conf_info, description);
 	linphone_conference_info_set_security_level(conf_info, security_level);
+	linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeVideo, enable_video);
+	linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeText, enable_chat);
 
 	linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
 	linphone_conference_info_unref(conf_info);
@@ -359,7 +363,8 @@ create_conference_on_server(Focus &focus,
 		// This check is not reliable when the conference is dialing participants
 		check_conference_info_in_db(organizer.getCMgr(), uid, conference_address, organizer.getCMgr()->identity,
 		                            participants_info, start_time, duration, subject, description, 0,
-		                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+		                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, enable_video,
+		                            enable_chat);
 	}
 
 	idx = 0;
@@ -406,10 +411,10 @@ create_conference_on_server(Focus &focus,
 						if (!BC_ASSERT_PTR_NOT_NULL(conf_info_in_db)) {
 							goto end;
 						}
-						check_conference_info_members(conf_info_in_db, uid, conference_address, organizer_address,
-						                              participants_info, start_time, duration, subject, description, 0,
-						                              LinphoneConferenceInfoStateNew,
-						                              LinphoneConferenceSecurityLevelNone, dialout);
+						check_conference_info_members(
+						    conf_info_in_db, uid, conference_address, organizer_address, participants_info, start_time,
+						    duration, subject, description, 0, LinphoneConferenceInfoStateNew,
+						    LinphoneConferenceSecurityLevelNone, dialout, TRUE, TRUE, enable_chat);
 
 						LinphoneConferenceInfo *conf_info_from_original_content =
 						    linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(),
@@ -437,7 +442,7 @@ create_conference_on_server(Focus &focus,
 					    conf_info_in_db, uid, conference_address, organizer.getCMgr()->identity, participants_info,
 					    start_time, ((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time) / 60 : 0,
 					    subject, (!!send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew,
-					    LinphoneConferenceSecurityLevelNone, dialout);
+					    LinphoneConferenceSecurityLevelNone, dialout, TRUE, TRUE, enable_chat);
 					if (!!send_ics) {
 						for (auto &p : participants) {
 							linphone_conference_info_check_participant(conf_info_in_db, p->identity, 0);
@@ -457,7 +462,8 @@ create_conference_on_server(Focus &focus,
 	if (conference_address && !dialout) {
 		check_conference_info_in_db(organizer.getCMgr(), uid, conference_address, organizer.getCMgr()->identity,
 		                            participants_info, start_time, duration, subject, description, 0,
-		                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+		                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, enable_video,
+		                            enable_chat);
 	}
 
 	BC_ASSERT_EQUAL(organizer.getStats().number_of_LinphoneConferenceStateTerminationPending,
@@ -1283,8 +1289,9 @@ void create_conference_base(time_t start_time,
 			                                                  -1)));
 		}
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, enable_video, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 
@@ -2497,6 +2504,8 @@ void create_conference_base(time_t start_time,
 				    linphone_core_search_conference(mgr->lc, NULL, mgr->identity, confAddr, NULL);
 				BC_ASSERT_PTR_NOT_NULL(pconference);
 				if (pconference) {
+					auto info = linphone_conference_get_info(pconference);
+					check_conference_info_against_db(mgr, confAddr, info);
 					LinphoneParticipant *p =
 					    (mgr == laure.getCMgr())
 					        ? linphone_conference_get_me(pconference)
@@ -2569,7 +2578,7 @@ void create_conference_base(time_t start_time,
 				    michelle.getCMgr(), add_participant_info_to_list(&participants_info, michelle.getCMgr()->identity,
 				                                                     (listenerAllowed) ? LinphoneParticipantRoleListener
 				                                                                       : LinphoneParticipantRoleSpeaker,
-				                                                     0)));
+				                                                     -1)));
 
 				extra_participants = 1;
 
@@ -2941,10 +2950,10 @@ void create_conference_base(time_t start_time,
 				conferenceMgrs.push_back(berthe.getCMgr());
 				members.push_back(berthe.getCMgr());
 				participantList.insert(std::make_pair(
-				    berthe.getCMgr(), add_participant_info_to_list(&participants_info, michelle.getCMgr()->identity,
+				    berthe.getCMgr(), add_participant_info_to_list(&participants_info, berthe.getCMgr()->identity,
 				                                                   (listenerAllowed) ? LinphoneParticipantRoleListener
 				                                                                     : LinphoneParticipantRoleSpeaker,
-				                                                   0)));
+				                                                   -1)));
 				ms_message("%s is entering conference %s", linphone_core_get_identity(berthe.getLc()),
 				           conference_address_str);
 
@@ -3084,6 +3093,8 @@ void create_conference_base(time_t start_time,
 						BC_ASSERT_PTR_NULL(pconference);
 					}
 					if (pconference) {
+						auto info = linphone_conference_get_info(pconference);
+						check_conference_info_against_db(mgr, confAddr, info);
 						const LinphoneConferenceParams *conference_params =
 						    linphone_conference_get_current_params(pconference);
 						int no_participants = 0;
@@ -3555,6 +3566,13 @@ void create_conference_base(time_t start_time,
 				BC_ASSERT_EQUAL(bctbx_list_size(conference_infos), 1, size_t, "%zu");
 				bctbx_list_free_with_data(conference_infos, (bctbx_list_free_func)linphone_conference_info_unref);
 			}
+
+			bctbx_list_t *infos = linphone_core_get_conference_information_list(mgr->lc);
+			if (BC_ASSERT_PTR_NOT_NULL(infos)) {
+				BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 1, int, "%d");
+				bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+			}
+
 			const bctbx_list_t *call_logs = linphone_core_get_call_logs(mgr->lc);
 			BC_ASSERT_PTR_NOT_NULL(call_logs);
 			if (call_logs) {
@@ -3707,8 +3725,9 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		                                                                    : LinphoneParticipantRoleListener,
 		                                                   -1)));
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 
@@ -4805,7 +4824,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0,
 			                            initialSubject, description, 0, LinphoneConferenceInfoStateNew, security_level,
-			                            FALSE);
+			                            FALSE, TRUE, enable_video, FALSE);
 			bctbx_list_free_with_data(participants_info2, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
 
@@ -4907,8 +4926,9 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -4944,7 +4964,8 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 				check_conference_info_in_db(
 				    mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, start_time, actual_duration,
 				    initialSubject, description, 0, LinphoneConferenceInfoStateNew,
-				    (mgr == marie.getCMgr()) ? security_level : LinphoneConferenceSecurityLevelNone, FALSE);
+				    (mgr == marie.getCMgr()) ? security_level : LinphoneConferenceSecurityLevelNone, FALSE, TRUE, TRUE,
+				    FALSE);
 
 				LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 				linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
@@ -5038,7 +5059,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, start_time,
 			                            actual_duration, initialSubject, description, 0, LinphoneConferenceInfoStateNew,
-			                            security_level, FALSE);
+			                            security_level, FALSE, TRUE, TRUE, FALSE);
 
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5702,7 +5723,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0,
 			                            initialSubject, description2, 0, LinphoneConferenceInfoStateNew, security_level,
-			                            FALSE);
+			                            FALSE, TRUE, TRUE, FALSE);
 
 			bctbx_list_free_with_data(participants_info2, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
@@ -5786,8 +5807,9 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr1 = create_conference_on_server(focus, marie, participantList1, start_time1, end_time1,
-		                                                         subject1, description1, TRUE, security_level);
+		LinphoneAddress *confAddr1 =
+		    create_conference_on_server(focus, marie, participantList1, start_time1, end_time1, subject1, description1,
+		                                TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr1);
 		char *conference1_address_str = (confAddr1) ? linphone_address_as_string(confAddr1) : ms_strdup("<unknown>");
 		BC_ASSERT_PTR_NOT_NULL(confAddr1);
@@ -5948,7 +5970,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 
 		LinphoneAddress *confAddr2 =
 		    create_conference_on_server(focus, confCreator2, participantList2, start_time2, end_time2, subject2,
-		                                description2, TRUE, security_level);
+		                                description2, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr2);
 		char *conference2_address_str = (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("<unknown>");
 
@@ -6675,8 +6697,9 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -7363,8 +7386,9 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		    std::make_pair(marie.getCMgr(), add_participant_info_to_list(&participants_info, marie.getCMgr()->identity,
 		                                                                 LinphoneParticipantRoleListener, -1)));
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, -1,
-		                                                        initialSubject, description, send_ics, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, -1, initialSubject, description,
+		                                send_ics, security_level, FALSE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Berthe calls the conference server  - who knows why......
@@ -7538,7 +7562,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 			    });
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
 			                            initialSubject, (send_ics) ? description : NULL, 0,
-			                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+			                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
 
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -7668,7 +7692,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 			if (mgr != focus.getCMgr()) {
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
 				                            initialSubject, (send_ics) ? description : NULL, 0,
-				                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+				                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -7916,7 +7940,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, start_time,
 			                            0, initialSubject, (send_ics || (mgr == marie.getCMgr())) ? description : NULL,
-			                            0, LinphoneConferenceInfoStateNew, security_level, FALSE);
+			                            0, LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
 		}
 
 		// wait a bit more to detect side effect if any
@@ -8137,7 +8161,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 			if (confAddr) {
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
 				                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level,
-				                            FALSE);
+				                            FALSE, TRUE, toggle_video, FALSE);
 			}
 		}
 
@@ -8161,7 +8185,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 			                             old_stats.number_of_subject_changed + 1, liblinphone_tester_sip_timeout));
 			if (confAddr) {
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
-				                            newSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, FALSE);
+				                            newSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, FALSE,
+				                            TRUE, toggle_video, FALSE);
 			}
 			participant_stats.pop_front();
 		}
@@ -8337,7 +8362,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 
 			if (confAddr) {
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
-				                            newSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, FALSE);
+				                            newSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, FALSE,
+				                            TRUE, toggle_video, FALSE);
 			}
 		}
 
@@ -8729,7 +8755,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 			}
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, send_ics, security_level);
+		                                                        description, send_ics, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -8873,7 +8899,8 @@ void create_conference_dial_out_base(bool_t send_ics,
 				// Encryption is None because we haven't received yet the NOTIFY full state yet
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0,
 				                            initialSubject, (accept && send_ics) ? description : NULL, 0,
-				                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+				                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE,
+				                            TRUE, TRUE, FALSE);
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -8936,7 +8963,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 				}
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0,
 				                            initialSubject, (send_ics) ? description : NULL, 0,
-				                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+				                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE, FALSE);
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
 				if (pcall) {
@@ -9053,10 +9080,10 @@ void create_conference_dial_out_base(bool_t send_ics,
 							add_participant_info_to_list(&participants_info3, address, role, sequence);
 						}
 
-						check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3,
-						                            0, 0, initialSubject,
-						                            (send_ics || (mgr == marie.getCMgr())) ? description : NULL, 0,
-						                            LinphoneConferenceInfoStateNew, security_level, FALSE);
+						check_conference_info_in_db(
+						    mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0, initialSubject,
+						    (send_ics || (mgr == marie.getCMgr())) ? description : NULL, 0,
+						    LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE, FALSE);
 						bctbx_list_free_with_data(participants_info3,
 						                          (bctbx_list_free_func)linphone_participant_info_unref);
 
@@ -9457,7 +9484,8 @@ void create_conference_dial_out_base(bool_t send_ics,
 			check_conference_info_in_db(
 			    mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0, initialSubject,
 			    ((accept && send_ics) || (mgr == marie.getCMgr())) ? description : NULL, 0,
-			    LinphoneConferenceInfoStateNew, (accept) ? security_level : LinphoneConferenceSecurityLevelNone, FALSE);
+			    LinphoneConferenceInfoStateNew, (accept) ? security_level : LinphoneConferenceSecurityLevelNone, FALSE,
+			    TRUE, TRUE, FALSE);
 			bctbx_list_free_with_data(participants_info3, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
 
@@ -9534,8 +9562,9 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		    berthe.getCMgr(), add_participant_info_to_list(&participants_info, berthe.getCMgr()->identity,
 		                                                   LinphoneParticipantRoleSpeaker, -1)));
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, TRUE, FALSE);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
@@ -10112,7 +10141,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, FALSE, security_level);
+		                                                        description, FALSE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		int nb_subscriptions = 1;
@@ -10191,10 +10220,11 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 					add_participant_info_to_list(&participants_info2, address, role, -1);
 				}
 
-				check_conference_info_in_db(
-				    mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0, initialSubject, NULL, 0,
-				    LinphoneConferenceInfoStateNew,
-				    (mgr == marie.getCMgr()) ? security_level : LinphoneConferenceSecurityLevelNone, FALSE);
+				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0,
+				                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew,
+				                            (mgr == marie.getCMgr()) ? security_level
+				                                                     : LinphoneConferenceSecurityLevelNone,
+				                            FALSE, TRUE, TRUE, FALSE);
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -10234,7 +10264,8 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 			}
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
-			                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, TRUE);
+			                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level, TRUE,
+			                            TRUE, TRUE, FALSE);
 
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -10453,7 +10484,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 				if (mgr != focus.getCMgr()) {
 					check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
 					                            initialSubject, NULL, 0, LinphoneConferenceInfoStateNew, security_level,
-					                            TRUE);
+					                            TRUE, TRUE, TRUE, FALSE);
 
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -10669,7 +10700,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 			    (mgr == marie.getCMgr()) ? description : NULL, 0, LinphoneConferenceInfoStateNew,
 			    (mgr == laure.getCMgr() || mgr == berthe.getCMgr()) ? LinphoneConferenceSecurityLevelNone
 			                                                        : security_level,
-			    !((mgr == marie.getCMgr()) || mgr_declining_call));
+			    !((mgr == marie.getCMgr()) || mgr_declining_call), TRUE, TRUE, FALSE);
 
 			bctbx_list_free_with_data(participants_info2, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
@@ -10752,8 +10783,9 @@ void change_active_speaker_base(bool transfer_mode) {
 			participantList.insert(
 			    std::make_pair(p, add_participant_info_to_list(&participants_info, p->identity, role, -1)));
 		}
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS

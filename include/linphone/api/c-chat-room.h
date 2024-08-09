@@ -668,71 +668,12 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_get_muted(const LinphoneChatRoom *chat
  **/
 LINPHONE_PUBLIC void linphone_chat_room_set_muted(LinphoneChatRoom *chat_room, bool_t muted);
 
-/************ */
-/* DEPRECATED */
-/* ********** */
-
 /**
- * Creates a message attached to the given chat room.
- * @param chat_room the #LinphoneChatRoom object.
- * @param message text message, NULL if absent.
- * @param external_body_url the URL given in external body or NULL.
- * @param state the LinphoneChatMessage. State of the message.
- * @param time the time_t at which the message has been received/sent.
- * @param is_read TRUE if the message should be flagged as read, FALSE otherwise.
- * @param is_incoming TRUE if the message has been received, FALSE otherwise.
- * @return a new #LinphoneChatMessage
- * @deprecated 14/11/2017 Use #linphone_chat_room_create_message_from_utf8() instead.
- * @donotwrap
+ * Get the conference information associated to the conference
+ * @param chat_room The #LinphoneChatRoom object. @notnil
+ * @return the #LinphoneConferenceInfo. @maybenil
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage *
-linphone_chat_room_create_message_2(LinphoneChatRoom *chat_room,
-                                    const char *message,
-                                    const char *external_body_url,
-                                    LinphoneChatMessageState state,
-                                    time_t time,
-                                    bool_t is_read,
-                                    bool_t is_incoming);
-
-/**
- * Returns back pointer to #LinphoneCore object.
- * @deprecated 15/09/2017 use linphone_chat_room_get_core()
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCore *linphone_chat_room_get_lc(const LinphoneChatRoom *chat_room);
-
-/**
- * Send a message to peer member of this chat room.
- * @param chat_room #LinphoneChatRoom object
- * @param message message to be sent
- * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(LinphoneChatRoom *chat_room,
-                                                                         const char *message);
-
-/**
- * Send a message to peer member of this chat room.
- * @param chat_room #LinphoneChatRoom object
- * @param message #LinphoneChatMessage object
- * The state of the message sending will be notified via the callbacks defined in the #LinphoneChatMessageCbs object
- * that can be obtained by calling linphone_chat_message_get_callbacks(). The #LinphoneChatMessage reference is
- * transfered to the function and thus doesn't need to be unref'd by the application.
- * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(LinphoneChatRoom *chat_room,
-                                                                              LinphoneChatMessage *message);
-
-/**
- * Creates a message attached to the given chat room with a plain text content filled with the given message.
- * @param chat_room the #LinphoneChatRoom object. @notnil
- * @param message text message, NULL if absent. @maybenil
- * @return a new #LinphoneChatMessage @notnil
- * @deprecated 01/07/2020. Use linphone_chat_room_create_message_from_utf8() instead.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage *linphone_chat_room_create_message(LinphoneChatRoom *chat_room,
-                                                                                           const char *message);
+LINPHONE_PUBLIC const LinphoneConferenceInfo *linphone_chat_room_get_conference_info(LinphoneChatRoom *chat_room);
 
 /**
  * Converts a #LinphoneChatRoomState enum to a  string.
@@ -824,6 +765,72 @@ linphone_chat_room_get_history_range_events(LinphoneChatRoom *chat_room, int beg
  * @deprecated 30/07/2024. Use linphone_chat_room_get_history_size_2() instead.
  */
 LINPHONE_PUBLIC int linphone_chat_room_get_history_events_size(LinphoneChatRoom *chat_room);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Creates a message attached to the given chat room.
+ * @param chat_room the #LinphoneChatRoom object.
+ * @param message text message, NULL if absent.
+ * @param external_body_url the URL given in external body or NULL.
+ * @param state the LinphoneChatMessage. State of the message.
+ * @param time the time_t at which the message has been received/sent.
+ * @param is_read TRUE if the message should be flagged as read, FALSE otherwise.
+ * @param is_incoming TRUE if the message has been received, FALSE otherwise.
+ * @return a new #LinphoneChatMessage
+ * @deprecated 14/11/2017 Use #linphone_chat_room_create_message_from_utf8() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage *
+linphone_chat_room_create_message_2(LinphoneChatRoom *chat_room,
+                                    const char *message,
+                                    const char *external_body_url,
+                                    LinphoneChatMessageState state,
+                                    time_t time,
+                                    bool_t is_read,
+                                    bool_t is_incoming);
+
+/**
+ * Returns back pointer to #LinphoneCore object.
+ * @deprecated 15/09/2017 use linphone_chat_room_get_core()
+ * @donotwrap
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCore *linphone_chat_room_get_lc(const LinphoneChatRoom *chat_room);
+
+/**
+ * Send a message to peer member of this chat room.
+ * @param chat_room #LinphoneChatRoom object
+ * @param message message to be sent
+ * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(LinphoneChatRoom *chat_room,
+                                                                         const char *message);
+
+/**
+ * Send a message to peer member of this chat room.
+ * @param chat_room #LinphoneChatRoom object
+ * @param message #LinphoneChatMessage object
+ * The state of the message sending will be notified via the callbacks defined in the #LinphoneChatMessageCbs object
+ * that can be obtained by calling linphone_chat_message_get_callbacks(). The #LinphoneChatMessage reference is
+ * transfered to the function and thus doesn't need to be unref'd by the application.
+ * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(LinphoneChatRoom *chat_room,
+                                                                              LinphoneChatMessage *message);
+
+/**
+ * Creates a message attached to the given chat room with a plain text content filled with the given message.
+ * @param chat_room the #LinphoneChatRoom object. @notnil
+ * @param message text message, NULL if absent. @maybenil
+ * @return a new #LinphoneChatMessage @notnil
+ * @deprecated 01/07/2020. Use linphone_chat_room_create_message_from_utf8() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage *linphone_chat_room_create_message(LinphoneChatRoom *chat_room,
+                                                                                           const char *message);
 
 /**
  * @}

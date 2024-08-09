@@ -258,6 +258,8 @@ public:
 
 	virtual Imdn *getImdnHandler() const = 0;
 
+	virtual const std::shared_ptr<ConferenceInfo> getConferenceInfo() const = 0;
+
 protected:
 	explicit AbstractChatRoom(const std::shared_ptr<Core> &core);
 	virtual ~AbstractChatRoom();

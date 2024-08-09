@@ -153,8 +153,9 @@ void create_transfer_conference_base(time_t start_time,
 		    std::make_pair(marie.getCMgr(), add_participant_info_to_list(&participants_info, marie.getCMgr()->identity,
 		                                                                 LinphoneParticipantRoleSpeaker, -1)));
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
-		                                                        initialSubject, description, TRUE, security_level);
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, security_level, video_transfer, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 

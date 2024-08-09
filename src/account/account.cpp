@@ -957,7 +957,7 @@ void Account::deleteCallLogs() const {
 	mainDb->deleteCallHistoryForLocalAddress(localAddress);
 }
 
-list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos() const {
+list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos(const std::list<LinphoneStreamType> capabilities) const {
 	if (!mParams) {
 		lWarning() << "getConferenceInfos is called but no AccountParams is set on Account [" << this << "]";
 		list<shared_ptr<ConferenceInfo>> conferences;
@@ -966,7 +966,7 @@ list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos() const {
 
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-	return mainDb->getConferenceInfosForLocalAddress(localAddress);
+	return mainDb->getConferenceInfosForLocalAddress(localAddress, capabilities);
 }
 
 void Account::writeAllToConfigFile(const std::shared_ptr<Core> core) {

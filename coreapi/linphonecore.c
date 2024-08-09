@@ -9706,12 +9706,19 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t) {
+static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t, bctbx_list_t *capabilities) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	if (mainDb == NULL) return NULL;
 
-	auto list = mainDb->getConferenceInfos(t);
+	std::list<LinphoneStreamType> capabilityList;
+	if (capabilities) {
+		for (bctbx_list_t *capability = capabilities; capability != NULL; capability = capability->next) {
+			capabilityList.push_back(
+			    static_cast<LinphoneStreamType>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(capability))));
+		}
+	}
+	auto list = mainDb->getConferenceInfos(t, capabilityList);
 
 	bctbx_list_t *results = NULL;
 	for (auto &conf : list) {
@@ -9728,16 +9735,36 @@ static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t 
 #endif // _MSC_VER
 
 bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core) {
-	return get_conference_information_list(core, -1);
+	return get_conference_information_list(core, -1, NULL);
 }
+
+#if 0
+bctbx_list_t *linphone_core_get_conference_information_list_2(LinphoneCore *core, bctbx_list_t *capabilities) {
+	return get_conference_information_list(core, -1, capabilities);
+}
+#endif
 
 bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core) {
-	return get_conference_information_list(core, ms_time(NULL));
+	return get_conference_information_list(core, ms_time(NULL), NULL);
 }
 
-bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time) {
-	return get_conference_information_list(core, time);
+#if 0
+bctbx_list_t *linphone_core_get_future_conference_information_list_2(LinphoneCore *core, bctbx_list_t *capabilities) {
+	return get_conference_information_list(core, ms_time(NULL), capabilities);
 }
+#endif
+
+bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time) {
+	return get_conference_information_list(core, time, NULL);
+}
+
+#if 0
+bctbx_list_t *linphone_core_get_conference_information_list_after_time_2(LinphoneCore *core,
+                                                                         time_t time,
+                                                                         bctbx_list_t *capabilities) {
+	return get_conference_information_list(core, time, capabilities);
+}
+#endif
 
 void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info) {
 	CoreLogContextualizer logContextualizer(core);

@@ -595,7 +595,7 @@ LinphonePlayer *linphone_conference_get_player(LinphoneConference *conference) {
 	return player ? player->toC() : nullptr;
 }
 
-LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference) {
+const LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference) {
 	std::shared_ptr<ConferenceInfo> info = Conference::toCpp(conference)->createOrGetConferenceInfo();
 	return info ? info->toC() : nullptr;
 }

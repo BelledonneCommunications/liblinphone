@@ -95,7 +95,13 @@ void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteCon
 	if (remoteContact->hasParam("isfocus")) {
 		if (!getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
 			mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
-			static_pointer_cast<ClientConference>(getConference())->eventHandler->subscribe(getConferenceId());
+			auto conference = dynamic_pointer_cast<ClientConference>(getConference());
+			auto eventHandler = conference->eventHandler;
+			if (!eventHandler) {
+				conference->initializeHandlers(conference.get(), true);
+				eventHandler = conference->eventHandler;
+			}
+			eventHandler->subscribe(getConferenceId());
 		}
 	}
 }
@@ -251,8 +257,14 @@ void ClientChatRoom::onLocallyExhumedConference(const std::shared_ptr<Address> &
 	onExhumedConference(oldConfId, newConfId);
 
 	setState(ConferenceInterface::State::Created);
-	auto eventHandler = static_pointer_cast<ClientConference>(getConference())->eventHandler;
-	eventHandler->unsubscribe(); // Required for next subscribe to be sent
+	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
+	auto eventHandler = conference->eventHandler;
+	if (eventHandler) {
+		eventHandler->unsubscribe(); // Required for next subscribe to be sent
+	} else {
+		conference->initializeHandlers(conference.get(), true);
+		eventHandler = conference->eventHandler;
+	}
 	getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
 	eventHandler->subscribe(getConferenceId());
 

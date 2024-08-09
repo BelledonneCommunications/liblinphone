@@ -59,6 +59,12 @@ Participant::~Participant() {
 void Participant::configure(const std::shared_ptr<Conference> conference,
                             const std::shared_ptr<const Address> &address) {
 	setConference(conference);
+	if (conference) {
+		const auto &conferenceParams = conference->getCurrentParams();
+		if (!conferenceParams->audioEnabled() && !conferenceParams->videoEnabled()) {
+			mRole = Participant::Role::Speaker;
+		}
+	}
 	auto identityAddress = Address::create(address->getUriWithoutGruu());
 	addr = identityAddress;
 }

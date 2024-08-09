@@ -181,6 +181,17 @@ void linphone_conference_info_set_security_level(LinphoneConferenceInfo *confere
 	ConferenceInfo::toCpp(conference_info)->setSecurityLevel((ConferenceParamsInterface::SecurityLevel)security_level);
 }
 
+void linphone_conference_info_set_capability(LinphoneConferenceInfo *conference_info,
+                                             const LinphoneStreamType stream_type,
+                                             bool_t enable) {
+	return ConferenceInfo::toCpp(conference_info)->setCapability(stream_type, !!enable);
+}
+
+bool_t linphone_conference_info_get_capability(const LinphoneConferenceInfo *conference_info,
+                                               const LinphoneStreamType stream_type) {
+	return ConferenceInfo::toCpp(conference_info)->getCapability(stream_type) ? TRUE : FALSE;
+}
+
 char *linphone_conference_info_get_icalendar_string(const LinphoneConferenceInfo *conference_info) {
 	std::string tmp = ConferenceInfo::toCpp(conference_info)->toIcsString();
 	if (!tmp.empty()) {

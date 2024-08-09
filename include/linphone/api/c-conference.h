@@ -532,7 +532,7 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_conference_get_player(LinphoneConferenc
  * @param conference #LinphoneConference object. @notnil
  * @return A #LinphoneConferenceInfo object. @maybenil
  */
-LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference);
+LINPHONE_PUBLIC const LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference);
 
 /************ */
 /* DEPRECATED */

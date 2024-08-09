@@ -337,6 +337,21 @@ void ConferenceInfo::updateFrom(const std::shared_ptr<ConferenceInfo> &info) {
 	}
 }
 
+void ConferenceInfo::setCapability(const LinphoneStreamType type, bool enable) {
+	const bool idxFound = (capabilities.find(type) != capabilities.cend());
+	if (!idxFound || (capabilities[type] != enable)) {
+		capabilities[type] = enable;
+	}
+}
+
+bool ConferenceInfo::getCapability(const LinphoneStreamType type) const {
+	try {
+		return capabilities.at(type);
+	} catch (std::out_of_range &) {
+		return (type != LinphoneStreamTypeText);
+	}
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

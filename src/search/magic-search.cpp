@@ -500,7 +500,7 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromConferencesInfo(
     const string &filter, const string &withDomain, const list<std::shared_ptr<SearchResult>> &currentList) const {
 	list<std::shared_ptr<SearchResult>> resultList;
 
-	const bctbx_list_t *conferencesInfo = linphone_core_get_conference_information_list(this->getCore()->getCCore());
+	bctbx_list_t *conferencesInfo = linphone_core_get_conference_information_list(this->getCore()->getCCore());
 	for (const bctbx_list_t *f = conferencesInfo; f != nullptr; f = bctbx_list_next(f)) {
 		LinphoneConferenceInfo *info = static_cast<LinphoneConferenceInfo *>(f->data);
 		const LinphoneAddress *organizer = linphone_conference_info_get_organizer(info);
@@ -545,6 +545,10 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromConferencesInfo(
 				}
 			}
 		}
+	}
+
+	if (conferencesInfo) {
+		bctbx_list_free_with_data(conferencesInfo, (bctbx_list_free_func)linphone_conference_info_unref);
 	}
 
 	lInfo() << "[Magic Search] Found " << resultList.size() << " results in conferences info";
