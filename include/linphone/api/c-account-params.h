@@ -494,7 +494,7 @@ linphone_account_params_get_use_international_prefix_for_calls_and_chats(const L
 /**
  * Set default privacy policy for all calls routed through this proxy.
  * @param params The #LinphoneAccountParams object. @notnil
- * @param privacy #LinphonePrivacy to configure privacy
+ * @param privacy #LinphonePrivacyMask to configure privacy
  * */
 LINPHONE_PUBLIC void linphone_account_params_set_privacy(LinphoneAccountParams *params, LinphonePrivacyMask privacy);
 
