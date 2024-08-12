@@ -27,11 +27,8 @@
 #endif
 static int done = 0;
 
-static void calibration_finished(BCTBX_UNUSED(LinphoneCore *lc),
-                                 LinphoneEcCalibratorStatus status,
-                                 int delay,
-                                 BCTBX_UNUSED(void *data)) {
-	ms_message("echo calibration finished %s.", status == LinphoneEcCalibratorDone ? "successfully" : "with faillure");
+static void calibration_finished(BCTBX_UNUSED(LinphoneCore *lc), LinphoneEcCalibratorStatus status, int delay) {
+	ms_message("echo calibration finished %s.", status == LinphoneEcCalibratorDone ? "successfully" : "with failure");
 	if (status == LinphoneEcCalibratorDone) ms_message("Measured delay is %i", delay);
 	done = 1;
 }
@@ -55,14 +52,18 @@ int main(int argc, char *argv[]) {
 	if (argc > 1) parse_args(argc, argv);
 	lc = linphone_core_new(&vtable, config_file[0] ? config_file : NULL, NULL, NULL);
 
-	linphone_core_enable_logs(NULL);
+	linphone_logging_service_set_log_level(linphone_logging_service_get(), LinphoneLogLevelMessage);
 
-	linphone_core_start_echo_calibration(lc, calibration_finished, NULL, NULL, NULL);
-
+	LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(lc);
+	linphone_core_enable_echo_cancellation(lc, TRUE);
+	linphone_core_cbs_set_ec_calibration_result(cbs, calibration_finished);
+	if (linphone_core_start_echo_canceller_calibration(lc)) {
+		ms_message("Calibration failed");
+	} else ms_message("Calibrating...");
 	while (!done) {
 		linphone_core_iterate(lc);
 		ms_usleep(20000);
 	}
-	linphone_core_destroy(lc);
+	linphone_core_unref(lc);
 	return 0;
 }
