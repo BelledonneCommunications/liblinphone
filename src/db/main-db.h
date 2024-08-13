@@ -146,6 +146,7 @@ public:
 
 	std::list<std::shared_ptr<ChatMessage>> findChatMessagesToBeNotifiedAsDelivered() const;
 
+	std::shared_ptr<EventLog> findEventLog(const ConferenceId &conferenceId, const std::string &imdnMessageId) const;
 	std::shared_ptr<EventLog> searchChatMessagesByText(const ConferenceId &conferenceId,
 	                                                   const std::string &text,
 	                                                   const std::shared_ptr<const EventLog> &from,

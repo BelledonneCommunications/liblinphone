@@ -345,6 +345,16 @@ LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_find_message(LinphoneCha
                                                                      const char *message_id);
 
 /**
+ * Gets the event log sent or received in this chat room that matches a chat message with the given message_id
+ * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which the message should be
+ * retrieved @notnil
+ * @param message_id The id of the message to find @notnil
+ * @return the #LinphoneEventLog if found or NULL. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneEventLog *linphone_chat_room_find_event_log(LinphoneChatRoom *chat_room,
+                                                                    const char *message_id);
+
+/**
  * Search chat messages by text.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation that will be searched @notnil
  * @param text The text to search in messages @notnil

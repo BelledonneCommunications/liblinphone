@@ -316,6 +316,10 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId) const
 	return chatMessages.empty() ? nullptr : chatMessages.front();
 }
 
+shared_ptr<EventLog> ChatRoom::findChatMessageEventLog(const string &messageId) const {
+	return getCore()->getPrivate()->mainDb->findEventLog(getConferenceId(), messageId);
+}
+
 shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId, ChatMessage::Direction direction) const {
 	for (auto &chatMessage : findChatMessages(messageId))
 		if (chatMessage->getDirection() == direction) return chatMessage;

@@ -1840,8 +1840,11 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error, bool_t im_
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
 		LinphoneChatMessage *foundMessage = linphone_chat_room_find_message(chloeCr, messageId);
 		BC_ASSERT_PTR_NOT_NULL(foundMessage);
+		LinphoneEventLog *foundEventLog = linphone_chat_room_find_event_log(chloeCr, messageId);
+		BC_ASSERT_PTR_NOT_NULL(foundEventLog);
 		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_text(foundMessage));
 		linphone_chat_message_unref(foundMessage);
+		linphone_event_log_unref(foundEventLog);
 
 		LinphoneEventLog *event =
 		    linphone_chat_room_search_chat_message_by_text(marieCr, "Hello", NULL, LinphoneSearchDirectionUp);

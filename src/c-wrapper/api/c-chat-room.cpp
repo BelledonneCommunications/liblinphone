@@ -400,6 +400,14 @@ LinphoneChatMessage *linphone_chat_room_find_message(LinphoneChatRoom *cr, const
 	return linphone_chat_message_ref(L_GET_C_BACK_PTR(cppPtr));
 }
 
+LinphoneEventLog *linphone_chat_room_find_event_log(LinphoneChatRoom *chat_room, const char *message_id) {
+	ChatRoomLogContextualizer logContextualizer(chat_room);
+	shared_ptr<EventLog> cppPtr = AbstractChatRoom::toCpp(chat_room)->findChatMessageEventLog(message_id);
+	if (!cppPtr) return nullptr;
+
+	return linphone_event_log_ref(L_GET_C_BACK_PTR(cppPtr));
+}
+
 LinphoneEventLog *linphone_chat_room_search_chat_message_by_text(LinphoneChatRoom *cr,
                                                                  const char *text,
                                                                  const LinphoneEventLog *from,

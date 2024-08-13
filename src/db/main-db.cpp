@@ -4915,6 +4915,39 @@ shared_ptr<ChatMessage> MainDb::getLastChatMessage(const ConferenceId &conferenc
 #endif
 }
 
+shared_ptr<EventLog> MainDb::findEventLog(const ConferenceId &conferenceId, const string &imdnMessageId) const {
+#ifdef HAVE_DB_STORAGE
+	// TODO: Optimize.
+	static const string query =
+	    Statements::get(Statements::SelectConferenceEvents) + string(" AND imdn_message_id = :imdnMessageId");
+
+	/*
+	DurationLogger durationLogger(
+	    "Find event log: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
+	    ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ")."
+	);
+	*/
+	return L_DB_TRANSACTION->shared_ptr<EventLog> {
+		L_D();
+
+		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+		if (!chatRoom) return nullptr;
+
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		soci::rowset<soci::row> rows =
+		    (d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId), soci::use(imdnMessageId));
+		for (const auto &row : rows) {
+			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+			if (event) {
+				return event;
+			}
+		}
+		return nullptr;
+	};
+#endif
+	return nullptr;
+}
+
 list<shared_ptr<ChatMessage>> MainDb::findChatMessages(const ConferenceId &conferenceId,
                                                        const string &imdnMessageId) const {
 #ifdef HAVE_DB_STORAGE
