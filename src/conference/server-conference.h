@@ -236,6 +236,7 @@ protected:
 	virtual void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
 	                                       CallSession::State state,
 	                                       const std::string &message) override;
+	virtual void onCallSessionEarlyFailed(const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) override;
 
 	virtual void onAckReceived(const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
 
@@ -257,6 +258,7 @@ private:
 	std::list<std::shared_ptr<const Address>> getAllowedAddresses() const;
 	virtual void configure(SalCallOp *op) override;
 	void enableScreenSharing(const std::shared_ptr<LinphonePrivate::CallSession> &session, bool notify);
+	MediaSessionParams *updateParameterForParticipantRemoval(const std::shared_ptr<CallSession> &session) const;
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();

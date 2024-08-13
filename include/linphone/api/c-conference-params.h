@@ -318,7 +318,7 @@ LINPHONE_PUBLIC void linphone_conference_params_set_security_level(LinphoneConfe
 /**
  * Set the conference factory address of the conference.
  * By default when creating a new conference, the factory address will come from the current proxy configuration.
- * If NULL then the conference will be local else it will be a remote conference.
+ * If NULL then the conference will be local else it will be a client conference.
  * @param params The #LinphoneConferenceParams object. @notnil
  * @param address the conference factory address. @maybenil
  */

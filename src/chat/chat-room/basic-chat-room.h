@@ -37,7 +37,7 @@ public:
 	void allowMultipart(bool value) override;
 	bool canHandleCpim() const override;
 	bool canHandleMultipart() const override;
-	const std::shared_ptr<ConferenceParams> &getCurrentParams() const override;
+	std::shared_ptr<ConferenceParams> getCurrentParams() const override;
 
 	CapabilitiesMask getCapabilities() const override;
 	bool hasBeenLeft() const override;

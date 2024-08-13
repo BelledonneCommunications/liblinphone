@@ -92,7 +92,7 @@ bool BasicChatRoom::isReadOnly() const {
 	return false;
 }
 
-const std::shared_ptr<ConferenceParams> &BasicChatRoom::getCurrentParams() const {
+std::shared_ptr<ConferenceParams> BasicChatRoom::getCurrentParams() const {
 	shared_ptr<Call> call = getCall();
 	if (call && call->getCurrentParams()) {
 		mParams->getChatParams()->setRealTimeText(call->getCurrentParams()->realtimeTextEnabled());

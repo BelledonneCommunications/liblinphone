@@ -122,8 +122,8 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 					// a conference
 					if (call) {
 						const std::shared_ptr<Address> to = Address::create(op->getTo());
-						// Local conference
-						if (to->hasUriParam("conf-id")) {
+						// Server conference
+						if (to->hasUriParam(Conference::ConfIdParameter)) {
 							auto lc = q->getCore()->getCCore();
 							shared_ptr<Conference> conference =
 							    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
@@ -135,7 +135,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 						} else if (op->getRemoteContactAddress()) {
 							std::shared_ptr<Address> remoteContactAddress = Address::create();
 							remoteContactAddress->setImpl(op->getRemoteContactAddress());
-							if (remoteContactAddress->hasParam("isfocus")) {
+							if (remoteContactAddress->hasParam(Conference::IsFocusParameter)) {
 								const auto &conferenceInfo = Utils::createConferenceInfoFromOp(op, true);
 								if (conferenceInfo->getUri()->isValid()) {
 #ifdef HAVE_DB_STORAGE
@@ -961,14 +961,6 @@ void CallSessionPrivate::setContactOp() {
 	auto contactAddress = getFixedContact();
 	// Do not try to set contact address if it is not valid
 	if (contactAddress && contactAddress->isValid()) {
-		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
-		for (auto it = contactParams.begin(); it != contactParams.end(); it++) {
-			if (it->second.empty()) {
-				contactAddress->setParam(it->first);
-			} else {
-				contactAddress->setParam(it->first, it->second);
-			}
-		}
 		q->updateContactAddress(*contactAddress);
 		if (isInConference()) {
 			std::shared_ptr<Conference> conference =
@@ -1092,7 +1084,9 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 	const auto &account = getDestAccount();
 	if (op && op->getContactAddress()) {
 		/* If already choosed, don't change it */
-		return nullptr;
+		result = Address::create();
+		result->setImpl(op->getContactAddress());
+		return result;
 	} else if (pingOp && pingOp->getContactAddress()) {
 		/* If the ping OPTIONS request succeeded use the contact guessed from the received, rport */
 		lInfo() << "Contact has been fixed using OPTIONS";
@@ -2103,76 +2097,20 @@ const CallSessionParams *CallSession::getParams() const {
 }
 
 void CallSession::updateContactAddress(Address &contactAddress) const {
-	L_D();
-
-	const auto conference = getCore()->findConference(getSharedFromThis(), false);
-	if (conference) {
-		auto conferenceParams = conference->getCurrentParams();
-		if (conferenceParams->isHidden()) {
-			lInfo() << "Do not update contact address because conference " << *conference->getConferenceAddress()
-			        << " is hidden";
-			return;
-		}
-	}
-
-	const auto isInConference = d->isInConference();
-	const std::string confId(d->getConferenceId());
-	if (isInConference) {
-		// Add conference ID
-		if (!contactAddress.hasUriParam("conf-id") && !confId.empty()) {
-			contactAddress.setUriParam("conf-id", confId);
-		}
-		if (!contactAddress.hasParam("isfocus")) {
-			// If in conference and contact address doesn't have isfocus
-			contactAddress.setParam("isfocus");
-		}
-	} else {
-		// If not in conference and contact address has isfocus
-		if (contactAddress.hasUriParam("conf-id")) {
-			contactAddress.removeUriParam("conf-id");
-		}
-		if (contactAddress.hasParam("isfocus")) {
-			contactAddress.removeParam("isfocus");
-		}
-	}
-
-	bool isAdmin = false;
-	if (conference) {
-		const auto &me = conference->getMe();
-		isAdmin = me->isAdmin();
-		contactAddress.setParam("admin", Utils::toString(isAdmin));
-	} else {
-		std::shared_ptr<Address> organizer;
-		const auto sipfrag = d->op ? d->op->getContentInRemote(ContentType::SipFrag) : nullopt;
-		const auto &remoteContactSalAddress = d->op ? d->op->getRemoteContactAddress() : nullptr;
-
-		std::shared_ptr<Address> guessedConferenceAddress = Address::create();
-
-		// If remote contact address is not yet available, try with remote address
-		if (remoteContactSalAddress) {
-			guessedConferenceAddress->setImpl(remoteContactSalAddress);
-			if (sipfrag && guessedConferenceAddress->hasParam("isfocus")) {
-				auto organizerId = Utils::getSipFragAddress(sipfrag.value());
-				organizer = Address::create(organizerId);
-			}
+	auto contactUriParams = getParams()->getPrivate()->getCustomContactUriParameters();
+	for (const auto &[name, value] : contactUriParams) {
+		if (value.empty()) {
+			contactAddress.setUriParam(name);
 		} else {
-			guessedConferenceAddress = getRemoteAddress();
+			contactAddress.setUriParam(name, value);
 		}
-
-#ifdef HAVE_DB_STORAGE
-		auto &mainDb = getCore()->getPrivate()->mainDb;
-		if (mainDb && guessedConferenceAddress) {
-			const auto &confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
-			if (confInfo) {
-				organizer = confInfo->getOrganizerAddress();
-			}
-		}
-#endif
-
-		if (organizer) {
-			const auto localAddress = getLocalAddress();
-			isAdmin = (organizer->weakEqual(*localAddress));
-			contactAddress.setParam("admin", Utils::toString(isAdmin));
+	}
+	auto contactParams = getParams()->getPrivate()->getCustomContactParameters();
+	for (const auto &[name, value] : contactParams) {
+		if (value.empty()) {
+			contactAddress.setParam(name);
+		} else {
+			contactAddress.setParam(name, value);
 		}
 	}
 }

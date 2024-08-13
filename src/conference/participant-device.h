@@ -185,8 +185,8 @@ public:
 	void setWindowId(void *newWindowId);
 	void *getWindowId() const;
 
-	bool setLabel(const std::string &label, const LinphoneStreamType type);
-	const std::string &getLabel(const LinphoneStreamType type) const;
+	bool setStreamLabel(const std::string &label, const LinphoneStreamType type);
+	const std::string &getStreamLabel(const LinphoneStreamType type) const;
 	bool setThumbnailStreamLabel(const std::string &label);
 	const std::string &getThumbnailStreamLabel() const;
 

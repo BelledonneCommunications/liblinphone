@@ -8835,8 +8835,8 @@ static void group_chat_room_message_sync_between_devices_with_same_identity(void
 	                              initialMarie2Stats.number_of_LinphoneMessageReceived + 2,
 	                              liblinphone_tester_sip_timeout));
 	bctbx_list_t *messages = linphone_chat_room_get_history(marie2Cr, 0);
-	int count = (int)(bctbx_list_size(messages));
-	BC_ASSERT_EQUAL(count, 1, int, "%d");
+	size_t count = (bctbx_list_size(messages));
+	BC_ASSERT_EQUAL(count, 1, size_t, "%zu");
 	bctbx_list_free_with_data(messages, (bctbx_list_free_func)linphone_chat_message_unref);
 
 	// Clean db from chat room

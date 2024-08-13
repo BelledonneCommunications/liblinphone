@@ -83,6 +83,7 @@ class HttpClient;
 class LINPHONE_PUBLIC Core : public Object {
 	friend class Account;
 	friend class Call;
+	friend class CallLog;
 	friend class CallSession;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;

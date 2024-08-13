@@ -43,6 +43,7 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 	conferenceParams->setAccount(getAccount());
 	conferenceParams->enableAudio(conferenceInfo->getCapability(LinphoneStreamTypeAudio));
 	conferenceParams->enableVideo(conferenceInfo->getCapability(LinphoneStreamTypeVideo));
+	conferenceParams->enableChat(conferenceInfo->getCapability(LinphoneStreamTypeText));
 	conferenceParams->setSubject(mConferenceInfo->getSubject());
 	conferenceParams->setSecurityLevel(mConferenceInfo->getSecurityLevel());
 

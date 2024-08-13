@@ -33,6 +33,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class Address;
+class AbstractChatRoom;
 class ConferenceInfo;
 
 class LINPHONE_PUBLIC CallLog : public bellesip::HybridObject<LinphoneCallLog, CallLog>, public CoreAccessor {
@@ -95,7 +96,9 @@ public:
 	void setConferenceInfoId(long long conferenceInfoId);
 
 	void setConferenceInfo(std::shared_ptr<ConferenceInfo> conferenceInfo);
-	std::shared_ptr<ConferenceInfo> &getConferenceInfo();
+	std::shared_ptr<ConferenceInfo> getConferenceInfo() const;
+
+	const std::shared_ptr<AbstractChatRoom> getChatRoom() const;
 
 	std::string toString() const override;
 
@@ -120,7 +123,7 @@ private:
 	bool mVideoEnabled = false;
 
 	long long mConferenceInfoId = -1;
-	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
+	mutable std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

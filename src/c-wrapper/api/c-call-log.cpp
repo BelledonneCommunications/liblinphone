@@ -134,9 +134,14 @@ LinphoneQualityReporting *linphone_call_log_get_quality_reporting(LinphoneCallLo
 }
 
 LinphoneConferenceInfo *linphone_call_log_get_conference_info(LinphoneCallLog *call_log) {
-	auto &confInfo = CallLog::toCpp(call_log)->getConferenceInfo();
+	auto confInfo = CallLog::toCpp(call_log)->getConferenceInfo();
 	if (confInfo) return confInfo->toC();
+	return nullptr;
+}
 
+LinphoneChatRoom *linphone_call_log_get_chat_room(LinphoneCallLog *call_log) {
+	auto &chatRoom = CallLog::toCpp(call_log)->getChatRoom();
+	if (chatRoom) return chatRoom->toC();
 	return nullptr;
 }
 

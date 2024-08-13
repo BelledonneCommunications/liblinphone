@@ -48,7 +48,7 @@ void DBConferenceScheduler::createOrUpdateConference(
 		conferenceAddress = creator->clone()->toSharedPtr();
 		char confId[LinphonePrivate::ServerConference::sConfIdLength];
 		belle_sip_random_token(confId, sizeof(confId));
-		conferenceAddress->setUriParam("conf-id", confId);
+		conferenceAddress->setUriParam(Conference::ConfIdParameter, confId);
 	} else {
 		conferenceAddress = mConferenceInfo->getUri()->clone()->toSharedPtr();
 	}

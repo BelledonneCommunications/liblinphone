@@ -387,7 +387,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 				lInfo() << "MS2Audiostream::render End2End encrypted local conference";
 				setEktMode(MS_EKT_TRANSFER);
 			} else {
-				lInfo() << "MS2Audiostram::render End2End encrypted remote conference";
+				lInfo() << "MS2Audiostram::render End2End encrypted client conference";
 				setEktMode(MS_EKT_ENABLED);
 			}
 		}

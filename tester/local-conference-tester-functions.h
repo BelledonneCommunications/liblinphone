@@ -462,6 +462,11 @@ void create_conference_with_screen_sharing_base(time_t start_time,
                                                 LinphoneConferenceSecurityLevel security_level,
                                                 std::list<LinphoneParticipantRole> allowedRoles);
 
+void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_level,
+                                      bool_t server_restart,
+                                      bool_t client_restart,
+                                      bool_t join_after_termination);
+
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,
                                  LinphoneCoreManager *focus,

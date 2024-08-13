@@ -92,7 +92,7 @@ void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatM
 
 void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteContact) {
 	getConference()->onConferenceCreated(remoteContact);
-	if (remoteContact->hasParam("isfocus")) {
+	if (remoteContact->hasParam(Conference::IsFocusParameter)) {
 		if (!getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
 			mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
 			auto conference = dynamic_pointer_cast<ClientConference>(getConference());
@@ -355,6 +355,8 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 		}
 	} else {
 		lError() << "Can't send a chat message in a chat room that is in state " << Utils::toString(state);
+		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::NotDelivered,
+		                                               ::ms_time(nullptr));
 	}
 }
 

@@ -300,7 +300,7 @@ void ClientConferenceListEventHandler::addHandler(std::shared_ptr<ClientConferen
 	}
 
 	if (findHandler(conferenceId)) {
-		lWarning() << "Trying to insert an already present handler in the remote conference handler list: "
+		lWarning() << "Trying to insert an already present handler in the client conference handler list: "
 		           << conferenceId;
 		return;
 	}

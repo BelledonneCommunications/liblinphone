@@ -566,6 +566,14 @@ void _linphone_conference_notify_full_state_received(LinphoneConference *confere
 	                                         linphone_conference_cbs_get_full_state_received);
 }
 
+LinphoneChatRoom *linphone_conference_get_chat_room(const LinphoneConference *conference) {
+	auto &chatRoom = Conference::toCpp(conference)->getChatRoom();
+	if (chatRoom) {
+		return chatRoom->toC();
+	}
+	return nullptr;
+}
+
 LinphoneCore *linphone_conference_get_core(const LinphoneConference *conference) {
 	return Conference::toCpp(conference)->getCore()->getCCore();
 }

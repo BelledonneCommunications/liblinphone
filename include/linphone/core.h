@@ -4857,7 +4857,7 @@ LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const c
  */
 
 /**
- * Create a conference. Local or remote conference is determinated from the 'conference_type' variable in the 'misc'
+ * Create a conference. Local or client conference is determinated from the 'conference_type' variable in the 'misc'
  * section of the configuration, or by the factory address parameter. See
  * linphone_conference_params_set_conference_factory_address() for more details.
  * @param core The #LinphoneCore instance where the conference will be created inside. @notnil
@@ -4869,7 +4869,7 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(
                                                                                 const LinphoneConferenceParams *params);
 
 /**
- * Create a conference scheduler that can be used to schedule conferences on a remote conference service and then send
+ * Create a conference scheduler that can be used to schedule conferences on a client conference service and then send
  * conference information invitation as an ICS object through chat.
  * @param core The #LinphoneCore. @notnil
  * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
@@ -4880,7 +4880,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConferenceScheduler *
 linphone_core_create_conference_scheduler(LinphoneCore *core);
 
 /**
- * Create a conference scheduler that can be used to create remote conferences for now or later and then send conference
+ * Create a conference scheduler that can be used to create client conferences for now or later and then send conference
  * info as an ICS through chat.
  * A SipConferenceScheduler is created if the #LinphoneAccount has not defined the URL of the CCMP server, other it will
  * create a CCMPConferenceServer
@@ -4892,7 +4892,7 @@ LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_sch
                                                                                          LinphoneAccount *account);
 
 /**
- * Create a conference scheduler that can be used to create remote conferences for now or later and then send conference
+ * Create a conference scheduler that can be used to create client conferences for now or later and then send conference
  * info as an ICS through chat by specifying its type.
  * @param core The #LinphoneCore. @notnil
  * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
@@ -4903,7 +4903,7 @@ LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_sch
     LinphoneCore *core, LinphoneAccount *account, LinphoneConferenceSchedulerType scheduling_type);
 
 /**
- * Create a SIP conference scheduler that can be used to create remote conferences for now or later and then send
+ * Create a SIP conference scheduler that can be used to create client conferences for now or later and then send
  * conference info as an ICS through chat. A SipConferenceScheduler creates a conference on a server by using a SIP
  * dialog
  * @param core The #LinphoneCore. @notnil
@@ -4914,7 +4914,7 @@ LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_sip_conference
                                                                                            LinphoneAccount *account);
 
 /**
- * Create a database conference scheduler that can be used to create remote conferences for now or later and then send
+ * Create a database conference scheduler that can be used to create client conferences for now or later and then send
  * conference info as an ICS through chat. The DBConferenceScheduler only creates a conference info to be stored in the
  * database of the linphone core
  * @param core The #LinphoneCore. @notnil
@@ -4925,7 +4925,7 @@ LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_db_conference_
                                                                                           LinphoneAccount *account);
 
 /**
- * Create a SIP conference scheduler that can be used to create remote conferences for now or later and then send
+ * Create a SIP conference scheduler that can be used to create client conferences for now or later and then send
  * conference info as an ICS through chat. A CCMPConferenceScheduler creates a conference on a server by using the CCMP
  * protocol
  * @param core The #LinphoneCore. @notnil

@@ -399,8 +399,8 @@ void ServerConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Pa
 			audio.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeAudio)));
 		}
 	}
-	if (!device->getLabel(LinphoneStreamTypeAudio).empty()) {
-		audio.setLabel(device->getLabel(LinphoneStreamTypeAudio));
+	if (!device->getStreamLabel(LinphoneStreamTypeAudio).empty()) {
+		audio.setLabel(device->getStreamLabel(LinphoneStreamTypeAudio));
 	}
 	audio.setStatus(XmlUtils::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
@@ -412,8 +412,8 @@ void ServerConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Pa
 	video.setDisplayText("video");
 	video.setType("video");
 	if (videoDirection != LinphoneMediaDirectionInactive) {
-		if (!device->getLabel(LinphoneStreamTypeVideo).empty()) {
-			video.setLabel(device->getLabel(LinphoneStreamTypeVideo));
+		if (!device->getStreamLabel(LinphoneStreamTypeVideo).empty()) {
+			video.setLabel(device->getStreamLabel(LinphoneStreamTypeVideo));
 		}
 		if (device->getSsrc(LinphoneStreamTypeVideo) > 0) {
 			video.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeVideo)));
@@ -1121,7 +1121,7 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 	shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 	if (!participant) {
 		lError() << "Declining SUBSCRIBE because participant " << *participantAddress
-		         << " cannot be found in conference  [" << conferenceAddressString << "]";
+		         << " cannot be found in conference [" << conferenceAddressString << "]";
 		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
@@ -1524,9 +1524,11 @@ void ServerConferenceEventHandler::onStateChanged(LinphonePrivate::ConferenceInt
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::Created:
-		case ConferenceInterface::State::CreationFailed:
 		case ConferenceInterface::State::TerminationFailed:
 		case ConferenceInterface::State::Deleted:
+			break;
+		case ConferenceInterface::State::CreationFailed:
+			conf->getCore()->doLater([conf] { dynamic_pointer_cast<ServerConference>(conf)->requestDeletion(); });
 			break;
 		case ConferenceInterface::State::CreationPending:
 			conf->finalizeCreation();
@@ -1559,14 +1561,14 @@ ServerConferenceEventHandler::getConferenceParticipant(const std::shared_ptr<Add
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
 	std::shared_ptr<LinphonePrivate::ServerChatRoom> sgcr = nullptr;
-	if (chatRoom && (chatRoom->getConference() == conf)) {
+	if (chatRoom && (chatRoom->getConference() == conf) && !conf->supportsMedia()) {
 		sgcr = dynamic_pointer_cast<LinphonePrivate::ServerChatRoom>(chatRoom);
 	}
 
 	shared_ptr<Participant> participant = nullptr;
 	if (sgcr) {
 		// If conference belongs to a server group chat room, then search in the cached participants
-		participant = sgcr->findCachedParticipant(address);
+		participant = conf->findInvitedParticipant(address);
 	} else {
 		participant = conf->findParticipant(address);
 	}

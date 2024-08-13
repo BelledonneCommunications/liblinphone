@@ -9303,21 +9303,21 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 						factory_uri = linphone_address_clone(linphone_account_params_get_conference_factory_address(
 						    linphone_account_get_params(default_account)));
 						char *factory_uri_str = factory_uri ? linphone_address_as_string(factory_uri) : NULL;
-						lInfo() << "Creating remote conference with factory address from default account : "
+						lInfo() << "Creating client conference with factory address from default account : "
 						        << std::string(factory_uri_str);
 						ms_free(factory_uri_str);
 					} else {
-						ms_error("Cannot create a remote conference from default account : no account available");
+						ms_error("Cannot create a client conference from default account : no account available");
 						errorOnRemoteConference = true;
 					}
 				} else {
-					ms_error("Creating remote conference : '%s' is not a valid conference method", conf_method_name);
+					ms_error("Creating client conference : '%s' is not a valid conference method", conf_method_name);
 					errorOnRemoteConference = true;
 				}
 			} else { // case of: !conf_method_name && factory_uri_str != ""
 				factory_uri = linphone_address_clone(factory_uri_const);
 				char *factory_uri_str = factory_uri ? linphone_address_as_string(factory_uri) : NULL;
-				lInfo() << "Creating remote conference with factory address from conference params : "
+				lInfo() << "Creating client conference with factory address from conference params : "
 				        << std::string(factory_uri_str);
 				ms_free(factory_uri_str);
 			}

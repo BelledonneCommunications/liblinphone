@@ -127,6 +127,9 @@ public:
 	void *getUserData() const;
 	void setUserData(void *ud);
 
+	void setSequenceNumber(const int nb);
+	int getSequenceNumber() const;
+
 	void setRole(Role role);
 	Role getRole() const;
 
@@ -164,7 +167,7 @@ protected:
 
 private:
 	std::weak_ptr<Conference> mConference;
-	std::shared_ptr<Address> addr;
+	std::shared_ptr<Address> mAddress;
 	bool isThisAdmin = false;
 	bool isThisFocus = false;
 	std::shared_ptr<CallSession> session;
@@ -172,6 +175,7 @@ private:
 	time_t creationTime;
 	bool preserveSession = false;
 	Role mRole = Role::Listener;
+	int mSequence = -1;
 
 	void *mUserData = nullptr;
 

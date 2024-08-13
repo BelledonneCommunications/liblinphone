@@ -904,10 +904,10 @@ const std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const 
 	return conference->getParticipants();
 }
 
-const std::shared_ptr<ConferenceParams> &ChatRoom::getCurrentParams() const {
+std::shared_ptr<ConferenceParams> ChatRoom::getCurrentParams() const {
 	const auto conference = getConference();
 	if (!conference) {
-		return Utils::getEmptyConstRefObject<std::shared_ptr<ConferenceParams>>();
+		return nullptr;
 	}
 	auto &params = conference->getCurrentParams();
 	shared_ptr<Call> call = getCall();

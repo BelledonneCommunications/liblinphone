@@ -43,6 +43,7 @@
 #include "chat/chat-room/client-chat-room.h"
 #include "chat/chat-room/server-chat-room.h"
 #endif
+#include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
 #include "core/core-p.h"
@@ -420,6 +421,7 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
 		const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
+
 		if (chatRoomId >= 0) {
 			// The chat room is already stored in DB, but still update the notify id and the flags that might have
 			// changed
@@ -443,19 +445,22 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 			const string &subject = chatRoomParams->getUtf8Subject();
 			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
 			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
+			const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressId);
+			const long long conferenceInfoId = (dbConferenceInfoId <= 0) ? 0 : dbConferenceInfoId;
 			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
 			                                  "  peer_sip_address_id, local_sip_address_id, creation_time,"
 			                                  "  last_update_time, capabilities, subject, flags, last_notify_id, "
-			                                  "ephemeral_enabled, ephemeral_messages_lifetime"
+			                                  "ephemeral_enabled, ephemeral_messages_lifetime, conference_info_id"
 			                                  ") VALUES ("
 			                                  "  :peerSipAddressId, :localSipAddressId, :creationTime,"
 			                                  "  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, "
-			                                  ":ephemeralEnabled, :ephemeralLifeTime"
+			                                  ":ephemeralEnabled, :ephemeralLifeTime, :conferenceInfoId"
 			                                  ")",
 			    soci::use(peerSipAddressId), soci::use(localSipAddressId),
 			    soci::use(creationTime.first, creationTime.second),
 			    soci::use(lastUpdateTime.first, lastUpdateTime.second), soci::use(capabilities), soci::use(subject),
-			    soci::use(flags), soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
+			    soci::use(flags), soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime),
+			    soci::use(conferenceInfoId);
 
 			chatRoomId = dbSession.getLastInsertId();
 		}
@@ -3023,6 +3028,13 @@ void MainDbPrivate::updateSchema() {
 
 	try {
 		*session << "ALTER TABLE conference_info ADD COLUMN chat BOOLEAN NOT NULL DEFAULT 0";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'chat' already exists in table 'conference_info'";
+	}
+
+	try {
+		*session << "ALTER TABLE chat_room ADD COLUMN conference_info_id " +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL DEFAULT 0";
 	} catch (const soci::soci_error &e) {
 		lDebug() << "Caught exception " << e.what() << ": Column 'chat' already exists in table 'conference_info'";
 	}
@@ -5965,13 +5977,18 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 #endif
 }
 
-list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
+// TODO: the const attribute has been removed because of a compile error when calling selectConferenceInfo:
+// src/db/main-db.cpp:6073:102: error: passing ‘const LinphonePrivate::MainDbPrivate’ as ‘this’ argument discards
+// qualifiers [-fpermissive] 6073 |                                         shared_ptr<ConferenceInfo> confInfo =
+// d->selectConferenceInfo(row);
+
+list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 #ifdef HAVE_DB_STORAGE
 	static const string query =
 	    "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
 	    " creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
 	    " ephemeral_enabled, ephemeral_messages_lifetime,"
-	    " unread_messages_count.message_count, muted"
+	    " unread_messages_count.message_count, muted, conference_info_id"
 	    " FROM chat_room"
 	    " LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
 	    " FROM conference_chat_message_event, conference_event"
@@ -6059,6 +6076,29 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				const auto &conferenceAddress = conferenceId.getPeerAddress();
 				params->setConferenceAddress(conferenceAddress);
 
+				const long long &conferenceInfoId = d->dbSession.resolveId(row, 14);
+				shared_ptr<ConferenceInfo> confInfo;
+				if (conferenceInfoId > 0) {
+					soci::row row;
+					soci::session *session = d->dbSession.getBackendSession();
+					*session << Statements::get(Statements::SelectConferenceInfoFromId), soci::into(row),
+					    soci::use(conferenceInfoId);
+					confInfo = d->selectConferenceInfo(row);
+				}
+
+				if (confInfo) {
+					params->enableAudio(confInfo->getCapability(LinphoneStreamTypeAudio));
+					params->enableVideo(confInfo->getCapability(LinphoneStreamTypeVideo));
+					params->setDescription(confInfo->getDescription());
+					const auto startTime = confInfo->getDateTime();
+					params->setStartTime(startTime);
+					const auto duration = confInfo->getDuration();
+					if ((startTime >= 0) && (duration > 0)) {
+						// The duration of the conference is stored in minutes in the conference information
+						params->setEndTime(startTime + duration * 60);
+					}
+				}
+
 				bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 				std::shared_ptr<Conference> conference = nullptr;
 				if (!serverMode) {
@@ -6070,7 +6110,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 					conference = (new ClientConference(core, me->getAddress(), nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
 					chatRoom = conference->getChatRoom();
-					conference->setParticipants(std::move(participants));
 					if (hasBeenLeft) {
 						conference->setState(ConferenceInterface::State::Terminated);
 					} else {
@@ -6100,16 +6139,36 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 					    (new ServerConference(core, conferenceId.getLocalAddress(), nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, false);
 					chatRoom = conference->getChatRoom();
-					auto serverChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
-					for (const auto &p : participants) {
-						serverChatRoom->addCachedParticipant(p);
-					}
-					conference->setParticipants(std::move(participants));
 					conference->setState(ConferenceInterface::State::Instantiated);
 					conference->setState(ConferenceInterface::State::Created);
 				}
-				for (auto participant : conference->getParticipants()) {
+				for (auto participant : participants) {
 					participant->setConference(conference);
+					if (confInfo) {
+						const auto confInfoParticipant = confInfo->findParticipant(participant->getAddress());
+						if (confInfoParticipant) {
+							participant->setRole(confInfoParticipant->getRole());
+							participant->setSequenceNumber(confInfoParticipant->getSequenceNumber());
+						}
+					}
+				}
+				conference->setParticipants(std::move(participants));
+
+				std::list<std::shared_ptr<Participant>> invitedParticipants;
+				if (confInfo) {
+					for (const auto &participantInfo : confInfo->getParticipants()) {
+						auto participant = Participant::create(participantInfo->getAddress());
+						participant->setRole(participantInfo->getRole());
+						participant->setSequenceNumber(participantInfo->getSequenceNumber());
+						invitedParticipants.push_back(participant);
+					}
+				} else {
+					invitedParticipants = conference->getParticipants();
+				}
+				conference->setInvitedParticipants(invitedParticipants);
+
+				if (confInfo) {
+					conference->setOrganizer(confInfo->getOrganizerAddress());
 				}
 #else
 				lWarning() << "Advanced IM such as group chat is disabled!";
@@ -6126,9 +6185,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			chatRoom->setIsEmpty(lastMessageId == 0);
 			chatRoom->setIsMuted(muted, false);
 
-			bctbx_debug("Found chat room in DB: (peer=[%s] local=[%s])",
-			            conferenceId.getPeerAddress()->toStringUriOnlyOrdered().c_str(),
-			            conferenceId.getLocalAddress()->toStringUriOnlyOrdered().c_str());
+			lDebug() << "Found chat room in DB: (peer=[" << *conferenceId.getPeerAddress() << "] local=["
+			         << *conferenceId.getLocalAddress() << "])";
 
 			addChatroomToList(chatRoomsMap, chatRoom);
 		}
@@ -6138,8 +6196,11 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 		std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
 		for (const auto &[conferenceId, chatRoom] : chatRoomsMap) {
 			chatRooms.push_back(chatRoom);
+			const auto &conference = chatRoom->getConference();
+			if (conference) {
+				core->insertConference(conference);
+			}
 		}
-
 		return chatRooms;
 	};
 #else
@@ -6742,24 +6803,13 @@ MainDb::getConferenceInfosWithParticipant(BCTBX_UNUSED(const std::shared_ptr<Add
 
 std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceInfoId) {
 #ifdef HAVE_DB_STORAGE
-	static const string query =
-	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, "
-	    "chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address "
-	    "WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
-	    "conference_info.uri_sip_address_id = uri_sip_address.id AND conference_info.id = :conferenceInfoId";
-
 	return L_DB_TRANSACTION {
 		L_D();
-
-		shared_ptr<ConferenceInfo> confInfo = nullptr;
-
+		soci::row row;
 		soci::session *session = d->dbSession.getBackendSession();
-		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(conferenceInfoId));
-		const auto &row = rows.begin();
-		if (row != rows.end()) {
-			confInfo = d->selectConferenceInfo(*row);
-		}
+		*session << Statements::get(Statements::SelectConferenceInfoFromId), soci::into(row),
+		    soci::use(conferenceInfoId);
+		shared_ptr<ConferenceInfo> confInfo = d->selectConferenceInfo(row);
 
 		tr.commit();
 
@@ -6913,10 +6963,12 @@ void MainDb::deleteConferenceInfo(const std::shared_ptr<Address> &address) {
 	if (isInitialized()) {
 		L_DB_TRANSACTION {
 			L_D();
-			lInfo() << "Deleting conference information linked to conference " << *address;
-			const long long &uriSipAddressId = d->selectSipAddressId(address, false);
-			const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
-			deleteConferenceInfo(dbConferenceId);
+			if (address) {
+				lInfo() << "Deleting conference information linked to conference " << *address;
+				const long long &uriSipAddressId = d->selectSipAddressId(address, false);
+				const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
+				deleteConferenceInfo(dbConferenceId);
+			}
 			tr.commit();
 		};
 	}

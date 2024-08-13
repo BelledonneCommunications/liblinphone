@@ -330,9 +330,9 @@ bool ParticipantDevice::enableScreenSharing(bool enabled) {
 			if (enabled) {
 				char label[LinphonePrivate::Conference::sLabelLength];
 				belle_sip_random_token(label, sizeof(label));
-				setLabel(label, LinphoneStreamTypeVideo);
+				setStreamLabel(label, LinphoneStreamTypeVideo);
 			} else {
-				setLabel(getThumbnailStreamLabel(), LinphoneStreamTypeVideo);
+				setStreamLabel(getThumbnailStreamLabel(), LinphoneStreamTypeVideo);
 			}
 		}
 		_linphone_participant_device_notify_screen_sharing_enabled(toC(), enabled);
@@ -376,7 +376,7 @@ void ParticipantDevice::setSession(std::shared_ptr<CallSession> session) {
 	mSession = session;
 }
 
-const std::string &ParticipantDevice::getLabel(const LinphoneStreamType type) const {
+const std::string &ParticipantDevice::getStreamLabel(const LinphoneStreamType type) const {
 	try {
 		return streams.at(type).label;
 	} catch (std::out_of_range &) {
@@ -384,7 +384,7 @@ const std::string &ParticipantDevice::getLabel(const LinphoneStreamType type) co
 	}
 }
 
-bool ParticipantDevice::setLabel(const std::string &streamLabel, const LinphoneStreamType type) {
+bool ParticipantDevice::setStreamLabel(const std::string &streamLabel, const LinphoneStreamType type) {
 	const bool idxFound = (streams.find(type) != streams.cend());
 	if (!idxFound || (streams[type].label != streamLabel)) {
 		auto conference = getConference();
@@ -804,8 +804,8 @@ void *ParticipantDevice::createWindowId() {
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 	if (session) {
 		auto s = static_pointer_cast<MediaSession>(session);
-		const auto &label =
-		    (s->requestThumbnail(getSharedFromThis())) ? getThumbnailStreamLabel() : getLabel(LinphoneStreamTypeVideo);
+		const auto &label = (s->requestThumbnail(getSharedFromThis())) ? getThumbnailStreamLabel()
+		                                                               : getStreamLabel(LinphoneStreamTypeVideo);
 		// Empty label is used only for main stream which is handled by the call.
 		if (label.empty()) {
 			lError() << "Unable to create a window ID for device " << *getAddress()
@@ -834,8 +834,8 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 
 	if (session) {
 		auto s = static_pointer_cast<MediaSession>(session);
-		const auto &label =
-		    (s->requestThumbnail(getSharedFromThis())) ? getThumbnailStreamLabel() : getLabel(LinphoneStreamTypeVideo);
+		const auto &label = (s->requestThumbnail(getSharedFromThis())) ? getThumbnailStreamLabel()
+		                                                               : getStreamLabel(LinphoneStreamTypeVideo);
 		// Empty label is used only for main stream which is handled by the call.
 		if (label.empty()) {
 			lError() << "Unable to set window ID for device " << *getAddress()

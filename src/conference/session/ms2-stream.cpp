@@ -301,7 +301,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext &ctx) {
 		confInfo = mainDb->getConferenceInfoFromURI(getMediaSession().getRemoteAddress());
 	}
 #endif // HAVE_DB_STORAGE
-	if ((address && address->hasParam("isfocus")) || confInfo)
+	if ((address && address->hasParam(Conference::IsFocusParameter)) || confInfo)
 		localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc =
 		    mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
 

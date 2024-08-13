@@ -45,11 +45,11 @@ class ConferenceParamsInterface;
  * This interface allow an application to manage a multimedia conference. Implementation follows 2 mains rfc4579 ( SIP
  *Call Control - Conferencing for User Agents) and rfc4575 ( A Session Initiation Protocol (SIP) Event Package for
  *Conference State). It can be  either a Focus user agent (I.E local conference) or belong to a remote focus user agent
- *(I.E remote conference). <br>
+ *(I.E client conference). <br>
  *
  *	<br>
  * 	Conference is instanciated with ConferenceParams and list of initial participants. ConferenceParams allows to choose
- *beetween local or remote conference, and to set initial parameters. A conference is created either by the focus or
+ *beetween local or client conference, and to set initial parameters. A conference is created either by the focus or
  *with a remote focus. <br>
  */
 class LINPHONE_PUBLIC ConferenceInterface {
@@ -226,7 +226,7 @@ public:
 	<b>Remote focus case: </b><br>
 	*Local participant is the Participant of this conference used as From when operations are performed like subject
 	change or participant management. local participant is not included in the of participant returned by function.
-	Local participant is mandatory to create a remote conference conference.
+	Local participant is mandatory to create a client conference conference.
 	* @return The participant representing myself in the conference.
 	*/
 	virtual std::shared_ptr<Participant> getMe() const = 0;

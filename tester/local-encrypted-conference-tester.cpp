@@ -848,6 +848,10 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 	}
 }
 
+void create_encrypted_conference_with_chat(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE);
+}
+
 static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
     TEST_ONE_TAG("First notify", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("SPI info", spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
@@ -893,6 +897,7 @@ static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[
     TEST_ONE_TAG("Create simple end-to-end encrypted conference with participant added by admin",
                  create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin,
                  "End2EndConf"),
+    TEST_ONE_TAG("Create encrypted conference with chat", create_encrypted_conference_with_chat, "End2EndConf"),
 };
 
 static test_t local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests[] = {

@@ -98,6 +98,15 @@ time_t linphone_participant_device_get_time_of_disconnection(const LinphoneParti
 	return ParticipantDevice::toCpp(participant_device)->getTimeOfDisconnection();
 }
 
+const char *linphone_participant_device_get_stream_label(const LinphoneParticipantDevice *participant_device,
+                                                         const LinphoneStreamType stream_type) {
+	return L_STRING_TO_C(ParticipantDevice::toCpp(participant_device)->getStreamLabel(stream_type));
+}
+
+const char *
+linphone_participant_device_get_thumbnail_stream_label(const LinphoneParticipantDevice *participant_device) {
+	return L_STRING_TO_C(ParticipantDevice::toCpp(participant_device)->getThumbnailStreamLabel());
+}
 LinphoneMediaDirection
 linphone_participant_device_get_stream_capability(const LinphoneParticipantDevice *participant_device,
                                                   const LinphoneStreamType stream_type) {

@@ -13082,9 +13082,9 @@ test_t audio_video_conference_basic2_tests[] = {
                 conference_with_back_to_back_call_accept_without_ice),
     TEST_NO_TAG("Conference with back to back call invite and accept without ICE",
                 conference_with_back_to_back_call_invite_accept_without_ice),
-    TEST_NO_TAG("Simple remote conference", simple_remote_conference),
-    TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
-    TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference)};
+    TEST_NO_TAG("Simple client conference", simple_remote_conference),
+    TEST_NO_TAG("Simple client conference with shut down focus", simple_remote_conference_shut_down_focus),
+    TEST_NO_TAG("Eject from 3 participants in client conference", eject_from_3_participants_remote_conference)};
 
 test_t audio_conference_tests[] = {
     TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
@@ -13205,7 +13205,7 @@ test_t video_conference_layout_tests[] = {
 test_t ice_conference_tests[] = {
     TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
     TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
-    TEST_ONE_TAG("Simple ICE remote conference", simple_ice_remote_conference, "ICE"),
+    TEST_ONE_TAG("Simple ICE client conference", simple_ice_remote_conference, "ICE"),
     TEST_ONE_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice, "ICE"),
     TEST_ONE_TAG(
         "Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice, "ICE"),

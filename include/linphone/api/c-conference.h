@@ -311,7 +311,7 @@ LINPHONE_PUBLIC void linphone_conference_set_participant_admin_status(LinphoneCo
 
 /**
  * For a local conference, the local participant joins the conference
- * For a remote conference, the participant rejoins the conference after leaving it earlier on
+ * For a client conference, the participant rejoins the conference after leaving it earlier on
  * @param conference A #LinphoneConference object @notnil
  * @return 0 if succeeded. Negative number if failed
  */
@@ -319,7 +319,7 @@ LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 
 /**
  * For a local conference, the local participant leaves the conference
- * For a remote conference, the participant leaves the conference after joining it earlier on
+ * For a client conference, the participant leaves the conference after joining it earlier on
  * @param conference A #LinphoneConference object @notnil
  * @return 0 if succeeded. Negative number if failed
  */
@@ -337,7 +337,7 @@ LINPHONE_PUBLIC bool_t linphone_conference_is_me(const LinphoneConference *confe
 
 /**
  * For a local conference, it returns whether the local participant is enabled
- * For a remote conference, it return whether the remote participant has left the conference without bein removed from
+ * For a client conference, it return whether the remote participant has left the conference without bein removed from
  * it
  * @param conference A #LinphoneConference object @notnil
  * @return TRUE if the local participant is in a conference, FALSE otherwise.
@@ -412,7 +412,7 @@ LINPHONE_PUBLIC bool_t linphone_conference_is_recording(const LinphoneConference
 /**
  * Gets the call that is controlling a conference.
  * - for the local conference, it will return NULL
- * - for the remote conference, it will return call associated to the conference
+ * - for the client conference, it will return call associated to the conference
  *
  * @param conference The #LinphoneConference @notnil
  * @return the #LinphoneCall controlling the conference or NULL if none or local conference @maybenil
@@ -484,9 +484,15 @@ LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_conference_get_current_callbacks
  * Returns core for a #LinphoneConference
  * @param conference #LinphoneConference object. @notnil
  * @return back pointer to #LinphoneCore object. @notnil
- * Returns back pointer to #LinphoneCore object.
  **/
 LINPHONE_PUBLIC LinphoneCore *linphone_conference_get_core(const LinphoneConference *conference);
+
+/**
+ * Returns the #LinphoneChatRoom linked to the #LinphoneConference
+ * @param conference #LinphoneConference object. @notnil
+ * @return back pointer to #LinphoneChatRoom object. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_conference_get_chat_room(const LinphoneConference *conference);
 
 /**
  * Get the conference address of the conference.
@@ -500,7 +506,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_addres
  * Set the conference address
  * @param conference The #LinphoneConference object. @notnil
  * @param address the conference address to set. @maybenil
- * @warning This is only allowed for a remote conference if it is in state CreationPending or Instantiated
+ * @warning This is only allowed for a client conference if it is in state CreationPending or Instantiated
  */
 LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference,
                                                                 LinphoneAddress *address);

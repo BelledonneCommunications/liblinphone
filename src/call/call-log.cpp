@@ -25,6 +25,7 @@
 
 #include "address/address.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "core/core-p.h"
 #include "linphone/types.h"
 #include "linphone/utils/utils.h"
@@ -209,23 +210,32 @@ void CallLog::setConferenceInfo(std::shared_ptr<ConferenceInfo> conferenceInfo) 
 	mConferenceInfo = conferenceInfo;
 }
 
-std::shared_ptr<ConferenceInfo> &CallLog::getConferenceInfo() {
+std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo() const {
 	// The conference info stored in the database is always up to date, therefore try to update the cache all the time
 	// if there id is valid Nonetheless, the cache variable is required if the core disables the storage of information
 	// in the database.
 #ifdef HAVE_DB_STORAGE
 	auto &db = L_GET_PRIVATE(getCore())->mainDb;
 	if (mConferenceInfoId != -1) {
-		setConferenceInfo(db->getConferenceInfo(mConferenceInfoId));
+		mConferenceInfo = db->getConferenceInfo(mConferenceInfoId);
 	} else if (mTo && !mConferenceInfo) {
 		// Try to find the conference info based on the to address
 		// We enter this branch of the if-else statement only if the call cannot be started right away, for example when
 		// ICE candidates need to be gathered first
-		setConferenceInfo(db->getConferenceInfoFromURI(getRemoteAddress()));
+		mConferenceInfo = db->getConferenceInfoFromURI(getRemoteAddress());
 	}
 #endif // HAVE_DB_STORAGE
 
 	return mConferenceInfo;
+}
+
+const std::shared_ptr<AbstractChatRoom> CallLog::getChatRoom() const {
+	auto conferenceInfo = getConferenceInfo();
+	if (conferenceInfo && conferenceInfo->getCapability(LinphoneStreamTypeText)) {
+		return getCore()->getPrivate()->searchChatRoom(nullptr, nullptr, conferenceInfo->getUri(),
+		                                               std::list<std::shared_ptr<Address>>{});
+	}
+	return nullptr;
 }
 
 // =============================================================================

@@ -93,7 +93,7 @@ LINPHONE_PUBLIC void linphone_conference_scheduler_cancel_conference(LinphoneCon
 /**
  * Sets the #LinphoneConferenceInfo to use to create/update the conference, which will be done right away.
  * @param conference_scheduler the #LinphoneConferenceScheduler object. @notnil
- * @param conference_info the #LinphoneConferenceInfo object to use to start creating/updating the remote conference.
+ * @param conference_info the #LinphoneConferenceInfo object to use to start creating/updating the client conference.
  * @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_scheduler_set_info(LinphoneConferenceScheduler *conference_scheduler,

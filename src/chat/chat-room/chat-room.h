@@ -127,7 +127,7 @@ public:
 	void setSubject(const std::string &subject) override;
 	void setUtf8Subject(const std::string &subject) override;
 
-	const std::shared_ptr<ConferenceParams> &getCurrentParams() const override;
+	std::shared_ptr<ConferenceParams> getCurrentParams() const override;
 
 	bool isSubscriptionUnderWay() const override;
 

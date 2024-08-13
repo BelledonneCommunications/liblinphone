@@ -193,7 +193,7 @@ public:
 	virtual AbstractChatRoom::EphemeralMode getEphemeralMode() const = 0;
 	virtual bool ephemeralSupportedByAllParticipants() const = 0;
 
-	virtual const std::shared_ptr<ConferenceParams> &getCurrentParams() const = 0;
+	virtual std::shared_ptr<ConferenceParams> getCurrentParams() const = 0;
 
 	virtual bool isSubscriptionUnderWay() const = 0;
 

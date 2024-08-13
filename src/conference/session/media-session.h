@@ -79,7 +79,7 @@ public:
 	bool initiateOutgoing(const std::string &subject = "",
 	                      const std::shared_ptr<const Content> content = nullptr) override;
 	void iterate(time_t currentRealTime, bool oneSecondElapsed) override;
-	LinphoneStatus pauseFromConference();
+	LinphoneStatus pauseFromConference(const MediaSessionParams *msp);
 	LinphoneStatus pause();
 	LinphoneStatus resume();
 	LinphoneStatus delayResume();

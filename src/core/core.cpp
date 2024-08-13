@@ -1857,7 +1857,7 @@ std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const Cal
 	}
 
 	if (logIfNotFound) {
-		lInfo() << "Unable to find audio video conference session " << session << " (local address "
+		lInfo() << "Unable to find the conference session " << session << " (local address "
 		        << *session->getLocalAddress() << " remote address "
 		        << (session->getRemoteAddress() ? session->getRemoteAddress()->toString() : "Unknown")
 		        << ") belongs to";
@@ -1869,12 +1869,11 @@ std::shared_ptr<Conference> Core::findConference(const ConferenceId &conferenceI
 	L_D();
 	try {
 		auto conference = d->mConferenceById.at(conferenceId);
-		lInfo() << "Found audio video conference " << conference << " in RAM with conference ID " << conferenceId
-		        << ".";
+		lInfo() << "Found conference " << conference << " in RAM with conference ID " << conferenceId << ".";
 		return conference;
 	} catch (const out_of_range &) {
 		if (logIfNotFound) {
-			lInfo() << "Unable to find audio video conference with conference ID " << conferenceId << " in RAM.";
+			lInfo() << "Unable to find conference with conference ID " << conferenceId << " in RAM.";
 		}
 	}
 	return nullptr;
@@ -1906,12 +1905,11 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 	L_ASSERT(conf == nullptr || conf == conference ||
 	         linphone_core_get_global_state(getCCore()) == LinphoneGlobalStartup);
 	if (conf == nullptr) {
-		lInfo() << "Insert audio video conference " << conference << " in RAM with conference ID " << conferenceId
-		        << ".";
+		lInfo() << "Insert conference " << conference << " in RAM with conference ID " << conferenceId << ".";
 		d->mConferenceById.insert(std::make_pair(conferenceId, conference));
 	} else if (conf != conference) {
-		lWarning() << "Replacing audio video conference with conference ID " << conferenceId << " in the core map "
-		           << conf << " with " << conference << ". This might happen if your database has been corrupted";
+		lWarning() << "Replacing conference with conference ID " << conferenceId << " in the core map " << conf
+		           << " with " << conference << ". This might happen if your database has been corrupted";
 		d->mConferenceById[conferenceId] = conference;
 	}
 }
@@ -1920,7 +1918,7 @@ void Core::deleteConference(const ConferenceId &conferenceId) {
 	L_D();
 	auto it = d->mConferenceById.find(conferenceId);
 	if (it != d->mConferenceById.cend()) {
-		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
+		lInfo() << "Delete conference in RAM with conference ID " << conferenceId << ".";
 		d->mConferenceById.erase(it);
 	}
 }
@@ -1930,7 +1928,7 @@ void Core::deleteConference(const shared_ptr<const Conference> &conference) {
 	const ConferenceId &conferenceId = conference->getConferenceId();
 	auto it = d->mConferenceById.find(conferenceId);
 	if (it != d->mConferenceById.cend()) {
-		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
+		lInfo() << "Delete conference in RAM with conference ID " << conferenceId << ".";
 		d->mConferenceById.erase(it);
 	}
 }
@@ -2042,11 +2040,12 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	params.setAccount(account);
 
 	std::shared_ptr<Address> conferenceFactoryUri;
+	bool mediaEnabled = (confParams->audioEnabled() || confParams->videoEnabled());
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
 		std::shared_ptr<Address> conferenceFactoryUriRef;
-		if (confParams->audioEnabled() || confParams->videoEnabled()) {
+		if (mediaEnabled) {
 			conferenceFactoryUriRef = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
 		} else {
 			conferenceFactoryUriRef = Core::getConferenceFactoryAddress(getSharedFromThis(), localAddr);
@@ -2061,7 +2060,9 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	}
 
 	if (confParams->chatEnabled()) {
-		params.addCustomContactParameter("text");
+		if (!mediaEnabled) {
+			params.addCustomContactParameter(Conference::TextParameter);
+		}
 		params.addCustomHeader("Require", "recipient-list-invite");
 		params.addCustomHeader("One-To-One-Chat-Room", Utils::btos(!confParams->isGroup()));
 		params.addCustomHeader("End-To-End-Encrypted", Utils::btos(confParams->getChatParams()->isEncrypted()));

@@ -149,6 +149,26 @@ LINPHONE_PUBLIC const char *
 linphone_participant_device_get_disconnection_reason(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get the stream label of the device.
+ * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio,
+ * video or text).
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @param stream_type A #LinphoneStreamType
+ * @return the label of stream of type stream_type of the device @maybenil
+ */
+LINPHONE_PUBLIC const char *
+linphone_participant_device_get_stream_label(const LinphoneParticipantDevice *participant_device,
+                                             const LinphoneStreamType stream_type);
+
+/**
+ * Get the thumbnail stream label of the device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return the label of the thumbnail stream of the device @maybenil
+ */
+LINPHONE_PUBLIC const char *
+linphone_participant_device_get_thumbnail_stream_label(const LinphoneParticipantDevice *participant_device);
+
+/**
  * Get the stream capability of the device.
  * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio,
  * video or text).

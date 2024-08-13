@@ -80,6 +80,10 @@ public:
 		return customContactParameters;
 	}
 
+	const std::unordered_map<std::string, std::string> &getCustomContactUriParameters() const {
+		return customContactUriParameters;
+	}
+
 	std::shared_ptr<CallSession> getReferer() const {
 		return referer;
 	}
@@ -124,6 +128,7 @@ private:
 	std::string from = "";
 	std::string description = "";
 	std::unordered_map<std::string, std::string> customContactParameters;
+	std::unordered_map<std::string, std::string> customContactUriParameters;
 	std::shared_ptr<CallSession>
 	    referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
 	std::list<std::shared_ptr<Content>> customContents;

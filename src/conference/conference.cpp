@@ -54,6 +54,10 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 const std::string Conference::SecurityModeParameter = "conference-security-mode";
+const std::string Conference::ConfIdParameter = "conf-id";
+const std::string Conference::AdminParameter = "admin";
+const std::string Conference::IsFocusParameter = "isfocus";
+const std::string Conference::TextParameter = "text";
 
 Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<Address> &myAddress,
@@ -156,19 +160,24 @@ bool Conference::addParticipantDevice(std::shared_ptr<Call> call) {
 			shared_ptr<ParticipantDevice> device = p->addDevice(session);
 			// If there is already a call for this participant, then he/she is joining the conference
 			device->setState(ParticipantDevice::State::Joining);
-			lInfo() << "Participant with address " << *call->getRemoteAddress() << " has added device with session "
-			        << session << " (address " << *device->getAddress() << ") to conference " << conferenceAddressStr;
+			lInfo() << "Participant with address " << *remoteAddress << " has added device with session " << session
+			        << " (address " << *device->getAddress() << ") to conference " << conferenceAddressStr;
 			return true;
 		} else {
-			lDebug() << "Participant with address " << *call->getRemoteAddress() << " to conference "
-			         << conferenceAddressStr << " has already a device with session " << session;
+			lDebug() << "Participant with address " << *remoteAddress << " to conference " << conferenceAddressStr
+			         << " has already a device with session " << session;
 		}
 	}
 	return false;
 }
 
-const Address
-Conference::createParticipantAddressForResourceList(const ConferenceInfo::participant_list_t::value_type &p) {
+Address Conference::createParticipantAddressForResourceList(const std::shared_ptr<Participant> &p) {
+	Address address = *p->getAddress();
+	address.setUriParam(ParticipantInfo::roleParameter, Participant::roleToText(p->getRole()));
+	return address;
+}
+
+Address Conference::createParticipantAddressForResourceList(const ConferenceInfo::participant_list_t::value_type &p) {
 	Address address = p->getAddress()->getUri();
 	for (const auto &[name, value] : p->getAllParameters()) {
 		address.setUriParam(name, value);
@@ -249,7 +258,7 @@ bool Conference::addParticipant(std::shared_ptr<Call> call) {
 			}
 		}
 		if (toAddr && toAddr->isValid()) {
-			p->setPreserveSession(!toAddr->hasUriParam("conf-id"));
+			p->setPreserveSession(!toAddr->hasUriParam(Conference::ConfIdParameter));
 		} else {
 			p->setPreserveSession(true);
 		}
@@ -257,8 +266,8 @@ bool Conference::addParticipant(std::shared_ptr<Call> call) {
 		// Pass admin information on if it is available in the contact address
 		std::shared_ptr<Address> remoteContactAddress = Address::create(call->getRemoteContact());
 
-		if (remoteContactAddress->hasParam("admin")) {
-			bool value = Utils::stob(remoteContactAddress->getParamValue("admin"));
+		if (remoteContactAddress->hasParam(Conference::AdminParameter)) {
+			bool value = Utils::stob(remoteContactAddress->getParamValue(Conference::AdminParameter));
 			p->setAdmin(value);
 		}
 		mParticipants.push_back(p);
@@ -339,7 +348,7 @@ bool Conference::setParticipants(const std::list<std::shared_ptr<Participant>> &
 	return 0;
 }
 
-void Conference::setInvitedParticipants(const ConferenceInfo::participant_list_t &invitedParticipants) {
+void Conference::setInvitedParticipants(const std::list<std::shared_ptr<Participant>> &invitedParticipants) {
 	mInvitedParticipants = invitedParticipants;
 }
 
@@ -467,12 +476,31 @@ bool Conference::removeParticipant(const std::shared_ptr<Participant> &participa
 	return true;
 }
 
+void Conference::addInvitedParticipant(const std::shared_ptr<Participant> &participant) {
+	mInvitedParticipants.push_back(participant);
+}
+
+void Conference::fillInvitedParticipantList(const ConferenceInfo::participant_list_t infos) {
+	for (const auto &info : infos) {
+		const auto &address = info->getAddress();
+		auto participant = Participant::create(getSharedFromThis(), address);
+		participant->setRole(info->getRole());
+		participant->setSequenceNumber(info->getSequenceNumber());
+		addInvitedParticipant(participant);
+	}
+}
+
 void Conference::fillInvitedParticipantList(SalCallOp *op, const std::shared_ptr<Address> &organizer, bool cancelling) {
 	mInvitedParticipants.clear();
 	const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
 	if (resourceList && !resourceList.value().get().isEmpty()) {
 		auto invitees = Utils::parseResourceLists(resourceList);
-		mInvitedParticipants = invitees;
+		for (const auto &invitee : invitees) {
+			auto participant = Participant::create(getSharedFromThis(), invitee->getAddress());
+			participant->setRole(invitee->getRole());
+			participant->setSequenceNumber(invitee->getSequenceNumber());
+			addInvitedParticipant(participant);
+		}
 		if (!cancelling && organizer) {
 			auto organizerNotFound = std::find_if(mInvitedParticipants.begin(), mInvitedParticipants.end(),
 			                                      [&organizer](const auto &invitee) {
@@ -481,12 +509,38 @@ void Conference::fillInvitedParticipantList(SalCallOp *op, const std::shared_ptr
 			if (organizerNotFound) {
 				Participant::Role role = Participant::Role::Speaker;
 				lInfo() << "Setting role of organizer " << *organizer << " to " << role;
-				auto organizerInfo = Factory::get()->createParticipantInfo(organizer);
-				organizerInfo->setRole(role);
-				mInvitedParticipants.push_back(organizerInfo);
+				auto organizerParticipant = Participant::create(getSharedFromThis(), organizer);
+				organizerParticipant->setRole(role);
+				addInvitedParticipant(organizerParticipant);
 			}
 		}
 	}
+}
+
+shared_ptr<ParticipantDevice>
+Conference::findInvitedParticipantDevice(const shared_ptr<const CallSession> &session) const {
+
+	for (const auto &participant : mInvitedParticipants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getSession() == session) return device;
+		}
+	}
+
+	return nullptr;
+}
+
+void Conference::removeInvitedParticipant(const std::shared_ptr<Address> &address) {
+	auto c = std::find_if(mInvitedParticipants.begin(), mInvitedParticipants.end(),
+	                      [&address](const auto &p) { return (address->weakEqual(*p->getAddress())); });
+	if (c == mInvitedParticipants.end()) {
+		lDebug() << "Unable to find participant " << *address << " in the list of cached participants";
+	} else {
+		mInvitedParticipants.erase(c);
+	}
+}
+
+std::list<std::shared_ptr<Participant>> Conference::getInvitedParticipants() const {
+	return mInvitedParticipants;
 }
 
 std::list<std::shared_ptr<const Address>> Conference::getInvitedAddresses() const {
@@ -497,7 +551,7 @@ std::list<std::shared_ptr<const Address>> Conference::getInvitedAddresses() cons
 	return addresses;
 }
 
-ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
+std::list<std::shared_ptr<Participant>> Conference::getFullParticipantList() const {
 	auto participantList = mInvitedParticipants;
 	// Add participants that are not part of the invitees'list
 	for (const auto &p : getParticipants()) {
@@ -506,9 +560,7 @@ ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
 			return (pAddress->weakEqual(*participant->getAddress()));
 		});
 		if (pIt == participantList.end()) {
-			auto participantInfo = ParticipantInfo::create(pAddress);
-			participantInfo->setRole(p->getRole());
-			participantList.push_back(participantInfo);
+			participantList.push_back(p);
 		}
 	}
 	return participantList;
@@ -865,7 +917,7 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<const 
 	return nullptr;
 }
 
-std::shared_ptr<ParticipantInfo>
+std::shared_ptr<Participant>
 Conference::findInvitedParticipant(const std::shared_ptr<const Address> &participantAddress) const {
 	const auto &it = std::find_if(
 	    mInvitedParticipants.begin(), mInvitedParticipants.end(),
@@ -980,9 +1032,7 @@ void Conference::resetLastNotify() {
 
 void Conference::setConferenceId(const ConferenceId &conferenceId) {
 	mConferenceId = conferenceId;
-	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup) {
-		getCore()->insertConference(getSharedFromThis());
-	}
+	getCore()->insertConference(getSharedFromThis());
 }
 
 const ConferenceId &Conference::getConferenceId() const {
@@ -1279,7 +1329,7 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 	}
 }
 
-void Conference::setOrganizer(const std::shared_ptr<Address> &organizer) {
+void Conference::setOrganizer(const std::shared_ptr<Address> &organizer) const {
 	mOrganizer = organizer->clone()->toSharedPtr();
 }
 
@@ -1363,7 +1413,23 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 }
 
 std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomParticipantList(
-    const std::shared_ptr<Address> &organizer, const ConferenceInfo::participant_list_t invitedParticipants) const {
+    const std::shared_ptr<Address> &organizer,
+    const std::list<std::shared_ptr<Participant>> &invitedParticipants) const {
+	ConferenceInfo::participant_list_t infos;
+	for (const auto &participant : invitedParticipants) {
+		const auto &address = participant->getAddress();
+		auto info = ParticipantInfo::create(address);
+		info->setRole(participant->getRole());
+		info->setSequenceNumber(participant->getSequenceNumber());
+		for (const auto &[name, value] : address->getParams()) {
+			info->addParameter(name, value);
+		}
+		infos.push_back(info);
+	}
+	return createConferenceInfoWithCustomParticipantList(organizer, infos);
+}
+std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomParticipantList(
+    const std::shared_ptr<Address> &organizer, const ConferenceInfo::participant_list_t &invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
 	if (organizer) {
 		auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
@@ -1512,6 +1578,7 @@ bool Conference::updateParticipantInfoInConferenceInfo(std::shared_ptr<Conferenc
 	if (participantInfoIt == currentParticipants.end()) {
 		auto participantInfo = ParticipantInfo::create(participantAddress);
 		participantInfo->setRole(participantRole);
+		participantInfo->setSequenceNumber(participant->getSequenceNumber());
 		info->addParticipant(participantInfo);
 		update = true;
 	} else {
@@ -1780,14 +1847,6 @@ bool Conference::isConferenceStarted() const {
 	return conferenceStarted;
 }
 
-void Conference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
-	// Keep a reference to the conference to be able to set the state to Deleted
-	shared_ptr<Conference> ref = getSharedFromThis();
-	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
-		setState(ConferenceInterface::State::Deleted);
-	}
-}
-
 bool Conference::isSubscriptionUnderWay() const {
 	return false;
 }
@@ -1826,7 +1885,7 @@ ConferenceLogContextualizer::~ConferenceLogContextualizer() {
 void ConferenceLogContextualizer::pushTag(const Conference &conference) {
 	auto address = conference.getConferenceAddress();
 	if (address) {
-		const char *value = address->getUriParamValueCstr("conf-id");
+		const char *value = address->getUriParamValueCstr(Conference::ConfIdParameter);
 		if (!value) value = address->getUsernameCstr();
 		if (!value) value = address->getDomainCstr();
 		if (value) {

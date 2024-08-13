@@ -543,7 +543,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						} else {
 							device->setSsrc(streamType, ssrc);
 							if (!label.empty()) {
-								device->setLabel(label, streamType);
+								device->setStreamLabel(label, streamType);
 							}
 							if (device->setStreamCapability(mediaDirection, streamType)) {
 								mediaCapabilityChanged.insert(streamType);
@@ -567,7 +567,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							thumbnailEnabled = ((deviceCapability == LinphoneMediaDirectionSendOnly) ||
 							                    (deviceCapability == LinphoneMediaDirectionSendRecv));
 						}
-						device->setThumbnailStreamLabel(device->getLabel(LinphoneStreamTypeVideo));
+						device->setThumbnailStreamLabel(device->getStreamLabel(LinphoneStreamTypeVideo));
 						if (device->setThumbnailStreamCapability(thumbnailEnabled ? LinphoneMediaDirectionSendOnly
 						                                                          : LinphoneMediaDirectionInactive)) {
 							mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);

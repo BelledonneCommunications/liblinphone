@@ -388,7 +388,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				lInfo() << "MS2Videostream::render End2End encrypted local conference";
 				setEktMode(MS_EKT_TRANSFER);
 			} else {
-				lInfo() << "MS2Videostream::render End2End encrypted remote conference";
+				lInfo() << "MS2Videostream::render End2End encrypted client conference";
 				setEktMode(MS_EKT_ENABLED);
 			}
 		}

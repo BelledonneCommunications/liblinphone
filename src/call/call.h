@@ -110,7 +110,6 @@ public:
 	LinphoneStatus deferUpdate();
 	bool hasTransferPending() const;
 	void oglRender() const;
-	LinphoneStatus pauseFromConference();
 	LinphoneStatus pause();
 	LinphoneStatus redirect(const std::string &redirectUri);
 	LinphoneStatus redirect(const std::shared_ptr<Address> &redirectAddress);
@@ -350,7 +349,7 @@ private:
 	void cleanupSessionAndUnrefCObjectCall();
 
 	void updateRecordState(SalMediaRecord state);
-	void createRemoteConference(const std::shared_ptr<CallSession> &session);
+	void createClientConference(const std::shared_ptr<CallSession> &session);
 	void tryToAddToConference(std::shared_ptr<Conference> &conference, const std::shared_ptr<CallSession> &session);
 	void configureSoundCardsFromCore(const MediaSessionParams *msp);
 

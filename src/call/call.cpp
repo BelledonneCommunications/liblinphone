@@ -421,7 +421,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 		if (op->getRemoteContactAddress()) {
 			Address remoteContactAddress;
 			remoteContactAddress.setImpl(op->getRemoteContactAddress());
-			remoteContactIsFocus = (remoteContactAddress.hasParam("isfocus"));
+			remoteContactIsFocus = (remoteContactAddress.hasParam(Conference::IsFocusParameter));
 		}
 
 		if (!op->getTo().empty()) {
@@ -463,8 +463,8 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 			break;
 		case CallSession::State::UpdatedByRemote: {
 			if (op && !getConference() && remoteContactIsFocus) {
-				// Check if the request was sent by the focus (remote conference)
-				createRemoteConference(session);
+				// Check if the request was sent by the focus (client conference)
+				createClientConference(session);
 				auto conference = getConference();
 				if (conference && conference->getState() == ConferenceInterface::State::CreationPending) {
 					conference->finalizeCreation();
@@ -488,7 +488,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 					const auto &confId = session->getPrivate()->getConferenceId();
 					// Check if the request was sent by the focus
 					if (remoteContactIsFocus) {
-						createRemoteConference(session);
+						createClientConference(session);
 					} else if (!confId.empty()) {
 						auto localAddress = session->getContactAddress();
 						if (localAddress && localAddress->isValid()) {
@@ -537,7 +537,7 @@ void Call::tryToAddToConference(shared_ptr<Conference> &conference, const shared
 	}
 }
 
-void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
+void Call::createClientConference(const shared_ptr<CallSession> &session) {
 	// If the call is for a conference stored in the core, then add call to conference once ICE negotiations are
 	// terminated
 	const auto op = session->getPrivate()->getOp();
@@ -568,6 +568,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			confParams->enableAudio(md->nbActiveStreamsOfType(SalAudio) > 0);
 			confParams->enableVideo(md->nbActiveStreamsOfType(SalVideo) > 0);
 		}
+		confParams->enableChat(remoteContactAddress && remoteContactAddress->hasParam(Conference::TextParameter));
 
 		clientConference = dynamic_pointer_cast<ClientConference>(
 		    (new ClientConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))->toSharedPtr());
@@ -576,9 +577,9 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 
 	setConference(clientConference);
 
-	// Record conf-id to be used later when terminating the remote conference
-	if (remoteContactAddress->hasUriParam("conf-id")) {
-		setConferenceId(remoteContactAddress->getUriParamValue("conf-id"));
+	// Record conf-id to be used later when terminating the client conference
+	if (remoteContactAddress->hasUriParam(Conference::ConfIdParameter)) {
+		setConferenceId(remoteContactAddress->getUriParamValue(Conference::ConfIdParameter));
 	}
 }
 
@@ -886,10 +887,6 @@ bool Call::hasTransferPending() const {
 
 void Call::oglRender() const {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->oglRender();
-}
-
-LinphoneStatus Call::pauseFromConference() {
-	return static_pointer_cast<MediaSession>(getActiveSession())->pauseFromConference();
 }
 
 LinphoneStatus Call::pause() {

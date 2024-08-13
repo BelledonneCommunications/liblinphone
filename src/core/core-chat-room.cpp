@@ -476,24 +476,6 @@ void CorePrivate::loadChatRooms() {
 			insertChatRoom(chatRoom);
 		} else {
 			const auto &conference = chatRoom->getConference();
-#ifdef HAVE_DB_STORAGE
-			const auto &conferenceAddress = conference->getConferenceAddress();
-			if (conferenceAddress) {
-				auto conferenceInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
-				ConferenceInfo::participant_list_t participantInfos;
-				if (conferenceInfo) {
-					participantInfos = conferenceInfo->getParticipants();
-				} else {
-					const auto &participants = conference->getParticipants();
-					for (const auto &participant : participants) {
-						auto participantInfo = ParticipantInfo::create(participant->getAddress());
-						participantInfo->setRole(Participant::Role::Speaker);
-						participantInfos.push_back(participantInfo);
-					}
-				}
-				conference->setInvitedParticipants(participantInfos);
-			}
-#endif // HAVE_DB_STORAGE
 			const ConferenceId &conferenceId = conference->getConferenceId();
 			mConferenceById.insert(std::make_pair(conferenceId, conference));
 		}

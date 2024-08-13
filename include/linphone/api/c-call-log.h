@@ -200,6 +200,14 @@ LINPHONE_PUBLIC void linphone_call_log_set_user_data(LinphoneCallLog *call_log, 
 LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_call_log_get_conference_info(LinphoneCallLog *call_log);
 
 /**
+ * Returns the chat room associated with this call-log, if any. This method is typically useful in order to retrieve an
+ *IM conversation associated with a past conference call.
+ * @param call_log #LinphoneCallLog object. @notnil
+ * @return The #LinphoneChatRoom associated. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_call_log_get_chat_room(LinphoneCallLog *call_log);
+
+/**
  * Creates a fake #LinphoneCallLog.
  * @param core #LinphoneCore object @notnil
  * @param from #LinphoneAddress of caller @notnil

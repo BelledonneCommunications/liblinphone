@@ -483,6 +483,9 @@ static void create_simple_conference_db_conference_scheduler_base(bool_t server_
 		linphone_conference_info_set_subject(conf_info, subject);
 		linphone_conference_info_set_description(conf_info, description);
 		linphone_conference_info_set_security_level(conf_info, security_level);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeAudio, TRUE);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeVideo, TRUE);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeText, FALSE);
 
 		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
 		linphone_conference_info_unref(conf_info);
@@ -663,7 +666,7 @@ static void create_simple_conference_db_conference_scheduler_base(bool_t server_
 
 		for (auto mgr : members) {
 			const bctbx_list_t *call_logs = linphone_core_get_call_logs(mgr->lc);
-			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(call_logs), 1, unsigned int, "%u");
+			BC_ASSERT_EQUAL(bctbx_list_size(call_logs), 1, size_t, "%zu");
 
 			bctbx_list_t *mgr_focus_call_log =
 			    linphone_core_get_call_history_2(mgr->lc, focus.getCMgr()->identity, mgr->identity);
@@ -786,6 +789,9 @@ static void schedule_simple_conference_db_conference_scheduler(void) {
 		linphone_conference_info_set_subject(conf_info, subject);
 		linphone_conference_info_set_description(conf_info, description);
 		linphone_conference_info_set_security_level(conf_info, security_level);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeAudio, TRUE);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeVideo, TRUE);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeText, FALSE);
 
 		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
 		linphone_conference_info_unref(conf_info);
@@ -2980,14 +2986,6 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
 		                             focus_stat.number_of_participant_devices_joined + 3,
 		                             liblinphone_tester_sip_timeout));
-		if (organizer_codec_mismatch) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_removed,
-			                             focus_stat.number_of_participants_removed + 1,
-			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_removed,
-			                             focus_stat.number_of_participant_devices_removed + 1,
-			                             liblinphone_tester_sip_timeout));
-		}
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
 		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
@@ -4878,6 +4876,14 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 	bc_free(soundpath);
 }
 
+void create_conference_with_chat(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE);
+}
+
+void create_conference_with_chat_with_cores_restart(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE);
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_scheduled_conference_basic_tests[] = {
@@ -4941,6 +4947,9 @@ static test_t local_conference_scheduled_conference_advanced_tests[] = {
                 LinphoneTest::two_overlapping_scheduled_conferences_from_different_organizers),
     TEST_NO_TAG("Create scheduled conference with active call",
                 LinphoneTest::create_scheduled_conference_with_active_call),
+    TEST_NO_TAG("Create conference with chat", LinphoneTest::create_conference_with_chat),
+    TEST_NO_TAG("Create conference with chat with cores restart",
+                LinphoneTest::create_conference_with_chat_with_cores_restart),
     TEST_NO_TAG("Change active speaker", LinphoneTest::change_active_speaker)};
 
 static test_t local_conference_scheduled_conference_audio_only_participant_tests[] = {

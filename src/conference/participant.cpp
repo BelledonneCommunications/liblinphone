@@ -46,17 +46,19 @@ Participant::Participant(const std::shared_ptr<Conference> conference,
 	session = callSession;
 }
 
-Participant::Participant(std::shared_ptr<Address> address) : addr(address) {
+Participant::Participant(std::shared_ptr<Address> address) : mAddress(address) {
 	L_ASSERT(address->getDisplayNameCstr() == nullptr);
 	L_ASSERT(!address->hasUriParam("gr"));
 }
 
 Participant::~Participant() {
-	bctbx_debug("Destroying participant [%p] (address: %s)", this, (addr) ? addr->toString().c_str() : "sip:unknown");
+	lDebug() << "Destroying participant [" << this
+	         << "] (address: " << (mAddress ? mAddress->toString() : std::string("sip:unknown")) << ")";
 }
 
 void Participant::configure(const std::shared_ptr<Conference> conference,
                             const std::shared_ptr<const Address> &address) {
+	mAddress = Address::create(address->getUriWithoutGruu());
 	setConference(conference);
 	if (conference) {
 		const auto &conferenceParams = conference->getCurrentParams();
@@ -64,8 +66,6 @@ void Participant::configure(const std::shared_ptr<Conference> conference,
 			mRole = Participant::Role::Speaker;
 		}
 	}
-	auto identityAddress = Address::create(address->getUriWithoutGruu());
-	addr = identityAddress;
 }
 
 // =============================================================================
@@ -171,7 +171,7 @@ void Participant::clearDevices() {
 shared_ptr<ParticipantDevice>
 Participant::findDevice(const LinphoneStreamType type, const std::string &label, const bool logFailure) const {
 	for (const auto &device : devices) {
-		const auto &deviceLabel = device->getLabel(type);
+		const auto &deviceLabel = device->getStreamLabel(type);
 		const auto &thumbnailLabel = device->getThumbnailStreamLabel();
 		if (!label.empty() && ((!deviceLabel.empty() && deviceLabel.compare(label) == 0) ||
 		                       ((type == LinphoneStreamTypeVideo) && (thumbnailLabel == label)))) {
@@ -253,11 +253,11 @@ void Participant::removeDevice(const std::shared_ptr<Address> &gruu) {
 // -----------------------------------------------------------------------------
 
 void Participant::setAddress(const std::shared_ptr<Address> &newAddr) {
-	addr = Address::create(newAddr->getUriWithoutGruu());
+	mAddress = Address::create(newAddr->getUriWithoutGruu());
 }
 
 const std::shared_ptr<Address> &Participant::getAddress() const {
-	return addr;
+	return mAddress;
 }
 
 AbstractChatRoom::SecurityLevel Participant::getSecurityLevel() const {
@@ -332,6 +332,14 @@ void *Participant::getUserData() const {
 void Participant::setUserData(void *ud) {
 	mUserData = ud;
 }
+
+void Participant::setSequenceNumber(const int nb) {
+	mSequence = nb;
+};
+
+int Participant::getSequenceNumber() const {
+	return mSequence;
+};
 
 void Participant::setRole(Participant::Role role) {
 	lInfo() << "Changing role of participant " << *getAddress() << " from " << Participant::roleToText(mRole) << " to "
