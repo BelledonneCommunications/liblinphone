@@ -347,6 +347,9 @@ void Vcard::addSipAddress(const std::string &sipAddress) {
 	impp->setValue(sipAddress);
 	if (!mBelCard->addImpp(impp)) {
 		lError() << "[vCard] Couldn't add IMPP value [" << sipAddress << "] to vCard [" << toC() << "]";
+	} else {
+		// Clean cache so next call to getSipAddresses() will return the newly added one if it wasn't the first one
+		cleanCache();
 	}
 }
 
@@ -368,6 +371,9 @@ void Vcard::editMainSipAddress(const std::string &sipAddress) {
 		impp->setValue(sipAddress);
 		if (!mBelCard->addImpp(impp)) {
 			lError() << "[vCard] Couldn't add IMPP value [" << sipAddress << "] to vCard [" << toC() << "]";
+		} else {
+			// Clean cache so next call to getSipAddresses() will return the newly added one if it wasn't the first one
+			cleanCache();
 		}
 	}
 }
@@ -441,6 +447,8 @@ bool Vcard::removeSipAddress(const std::string &sipAddress) {
 
 	if (!found) {
 		lWarning() << "[vCard] SIP URI [" << sipAddress << "] to remove wasn't found in vCard's IMPP";
+	} else {
+		cleanCache();
 	}
 	return found;
 }

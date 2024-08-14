@@ -179,6 +179,9 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 
 	addr = linphone_address_new("sip:sylvain@sip.linphone.org");
 	linphone_friend_add_address(lf, addr);
+	LinphoneAddress *addr2 = linphone_address_new("sip:sylvain@sip.linphone.org");
+	linphone_friend_add_address(lf, addr2);
+	linphone_address_unref(addr2);
 	sip_addresses = linphone_friend_get_addresses(lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(sip_addresses), 1, unsigned int, "%u");
 
@@ -198,6 +201,7 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 	sip_addresses = linphone_friend_get_addresses(lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(sip_addresses), 0, unsigned int, "%u");
 
+	linphone_friend_add_phone_number(lf, "+33952636505");
 	linphone_friend_add_phone_number(lf, "+33952636505");
 	phone_numbers = linphone_friend_get_phone_numbers(lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(phone_numbers), 1, unsigned int, "%u");

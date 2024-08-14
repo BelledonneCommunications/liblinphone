@@ -505,6 +505,13 @@ LinphoneSecurityLevel Friend::getSecurityLevelForAddress(const Address &address)
 void Friend::addAddress(const std::shared_ptr<const Address> &address) {
 	if (!address) return;
 
+	for (auto &existing : getAddresses()) {
+		if (existing->weakEqual(*address)) {
+			lInfo() << "Trying to add an already existing SIP address to friend, skipping";
+			return;
+		}
+	}
+
 	std::shared_ptr<Address> newAddr = address->clone()->getSharedFromThis();
 	newAddr->clean();
 	std::string uri = newAddr->asStringUriOnly();
@@ -523,6 +530,14 @@ void Friend::addAddress(const std::shared_ptr<const Address> &address) {
 
 void Friend::addPhoneNumber(const std::string &phoneNumber) {
 	if (phoneNumber.empty()) return;
+
+	for (auto existing : getPhoneNumbers()) {
+		if (existing == phoneNumber) {
+			lInfo() << "Trying to add an already existing phone number to friend, skipping";
+			return;
+		}
+	}
+
 	if (mFriendList) {
 		const std::string uri = phoneNumberToSipUri(phoneNumber);
 		addFriendToListMapIfNotInItYet(uri);
@@ -537,6 +552,15 @@ void Friend::addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumb
 	if (!phoneNumber) return;
 	const std::string &phone = phoneNumber->getPhoneNumber();
 	if (phone.empty()) return;
+
+	const std::string &label = phoneNumber->getLabel();
+	for (auto &existing : getPhoneNumbersWithLabel()) {
+		if (existing->getPhoneNumber() == phone && existing->getLabel() == label) {
+			lInfo() << "Trying to add an already existing phone number / label to friend, skipping";
+			return;
+		}
+	}
+
 	if (mFriendList) addFriendToListMapIfNotInItYet(phoneNumberToSipUri(phone));
 	if (linphone_core_vcard_supported()) {
 		if (!mVcard) createVcard(phone);
