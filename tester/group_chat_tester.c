@@ -4350,6 +4350,9 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	if (secondDeviceForSender)
 		marie2Cr = check_creation_chat_room_client_side(coresList, marie2, &initialMarie2Stats, confAddr,
 		                                                initialSubject, 1, FALSE);
+
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 0, int, "%d");
+
 	// Marie sends a message
 	const char *textMessage = "Hello";
 	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
@@ -4361,6 +4364,27 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
 	linphone_chat_message_unref(message);
+
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 1, int, "%d");
+
+	textMessage = "Hello again";
+	message = _send_message(marieCr, textMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered,
+	                             initialMarieStats.number_of_LinphoneMessageDelivered + 2,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
+	                             initialPaulineStats.number_of_LinphoneMessageReceived + 2,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
+	linphone_chat_message_unref(message);
+
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 2, int, "%d");
+	LinphoneChatMessage *paulineMessage = pauline->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(paulineMessage);
+	if (paulineMessage) {
+		linphone_chat_message_mark_as_read(paulineMessage);
+	}
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 1, int, "%d");
 
 	if (secondDeviceForSender) linphone_core_set_network_reachable(marie2->lc, FALSE);
 	// Marie deletes the chat room

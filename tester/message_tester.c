@@ -2817,7 +2817,12 @@ static void imdn_notifications(void) {
 				const char *priority = linphone_chat_message_get_custom_header(imdn_message, "Priority");
 				if (BC_ASSERT_PTR_NOT_NULL(priority)) BC_ASSERT_STRING_EQUAL(priority, "non-urgent");
 			}
-			linphone_chat_room_mark_as_read(marie_chat_room); /* This sends the display notification */
+
+			// linphone_chat_room_mark_as_read(marie_chat_room); /* This sends the display notification */
+			BC_ASSERT_TRUE(linphone_chat_room_get_unread_messages_count(marie_chat_room) == 1);
+			linphone_chat_message_mark_as_read(received_cm); /* This sends the display notification */
+			BC_ASSERT_TRUE(linphone_chat_room_get_unread_messages_count(marie_chat_room) == 0);
+
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 2));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 0));

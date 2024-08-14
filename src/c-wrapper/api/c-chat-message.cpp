@@ -241,6 +241,10 @@ bool_t linphone_chat_message_is_read(const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isRead();
 }
 
+void linphone_chat_message_mark_as_read(LinphoneChatMessage *message) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(message)->markAsRead();
+}
+
 const char *linphone_chat_message_get_appdata(const LinphoneChatMessage *msg) {
 	return L_STRING_TO_C(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getAppdata());
 }

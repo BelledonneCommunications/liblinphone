@@ -153,6 +153,7 @@ public:
 
 	bool isRead() const;
 	bool isReadOnly() const;
+	void markAsRead();
 
 	bool getToBeStored() const;
 	virtual void setToBeStored(bool value);

@@ -1924,6 +1924,31 @@ bool ChatMessage::isReadOnly() const {
 	return d->isReadOnly;
 }
 
+void ChatMessage::markAsRead() {
+	L_D();
+
+	if (!isValid()) {
+		lError() << "Invalid storage ID [" << getStorageId() << "] associated to message [" << getSharedFromThis()
+		         << "]";
+		return;
+	}
+
+	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
+
+	d->markAsRead();
+	// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
+	if (!d->hasFileTransferContent()) {
+		const auto &meAddress = chatRoom->getMe()->getAddress();
+		d->setParticipantState(meAddress, ChatMessage::State::Displayed, ::ms_time(nullptr));
+	}
+
+	if (chatRoom->getUnreadChatMessageCount() == 0) {
+		LinphoneChatRoom *cChatRoom = static_pointer_cast<ChatRoom>(chatRoom)->getCChatRoom();
+		_linphone_chat_room_notify_chat_room_read(cChatRoom);
+		linphone_core_notify_chat_room_read(getCore()->getCCore(), cChatRoom);
+	}
+}
+
 const list<std::shared_ptr<Content>> &ChatMessage::getContents() const {
 	L_D();
 	return d->getContents();

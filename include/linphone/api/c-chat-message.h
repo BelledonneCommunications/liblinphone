@@ -300,6 +300,12 @@ LINPHONE_PUBLIC void linphone_chat_message_remove_custom_header(LinphoneChatMess
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_is_read(const LinphoneChatMessage *message);
 
+/**
+ * Marks the message as read. Only triggers #LinphoneChatRoomCbsChatRoomReadCb if it was the last unread message.
+ * @param message #LinphoneChatMessage object to mark as read. @notnil
+ */
+LINPHONE_PUBLIC void linphone_chat_message_mark_as_read(LinphoneChatMessage *message);
+
 LINPHONE_PUBLIC LinphoneReason linphone_chat_message_get_reason(const LinphoneChatMessage *message);
 
 /**

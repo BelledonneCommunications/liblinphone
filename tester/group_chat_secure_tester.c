@@ -5240,7 +5240,15 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	    linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
 
 	// Marie marks the message as read, check that the state is not yet displayed on Chloe's side
-	linphone_chat_room_mark_as_read(marieCr);
+	BC_ASSERT_TRUE(linphone_chat_room_get_unread_messages_count(marieCr) == 1);
+	LinphoneChatMessage *receivedMessageMarie = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(receivedMessageMarie);
+	if (receivedMessageMarie) {
+		linphone_chat_message_mark_as_read(receivedMessageMarie); /* This sends the display notification */
+	}
+	BC_ASSERT_TRUE(linphone_chat_room_get_unread_messages_count(marieCr) == 0);
+	// linphone_chat_room_mark_as_read(marieCr);
+
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed,
 	                              initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 0, 1000));
