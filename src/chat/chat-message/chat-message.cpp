@@ -1941,6 +1941,9 @@ void ChatMessage::markAsRead() {
 		const auto &meAddress = chatRoom->getMe()->getAddress();
 		d->setParticipantState(meAddress, ChatMessage::State::Displayed, ::ms_time(nullptr));
 	}
+	if (getState() != ChatMessage::State::Displayed) {
+		d->updateInDb();
+	}
 
 	if (chatRoom->getUnreadChatMessageCount() == 0) {
 		LinphoneChatRoom *cChatRoom = static_pointer_cast<ChatRoom>(chatRoom)->getCChatRoom();
