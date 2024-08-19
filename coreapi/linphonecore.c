@@ -4885,7 +4885,7 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 			op->setContactAddress(Address::toCpp(contact)->getImpl());
 		}
 	}
-	if (linphone_config_get_int(lc->config, "sip", "accounts_channel_isolation", 0)) {
+	if (account && linphone_config_get_int(lc->config, "sip", "accounts_channel_isolation", 0)) {
 		op->setChannelBankIdentifier(
 		    Account::toCpp(account)->getAccountParams()->getIdentityAddress()->asStringUriOnly());
 	}
