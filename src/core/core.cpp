@@ -934,9 +934,15 @@ void Core::enableLimeX3dh(bool enable) {
 std::string Core::getX3dhDbPath() const {
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 	string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
+	// If no path is configured (i.e., the returned string is empty),
+	// set the database path to the default location within the data directory.
 	if (dbAccess.empty()) {
 		dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
-	} else {
+	} // If a path is configured, check if it is set to store the database in memory.
+	  // The database will be stored in memory if the path is ":memory:".
+	else if (dbAccess != ":memory:") {
+		// If the configured path is not an absolute path, treat it as a relative path
+		// and prepend the data directory path to it.
 		char *basename = bctbx_basename(dbAccess.c_str());
 		if (strcmp(basename, dbAccess.c_str()) == 0) {
 			dbAccess = getDataPath() + dbAccess;
