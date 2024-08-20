@@ -1938,7 +1938,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	const std::string uriString = row.get<string>(2);
 	std::shared_ptr<Address> uri = Address::create(uriString);
 	conferenceInfo->setUri(uri);
-	const auto &uriStringOrdered = uri->toStringUriOnlyOrdered();
+	const auto &uriStringOrdered = uri->getUriWithoutGruu().toStringUriOnlyOrdered();
 	if (uriStringOrdered != uriString) {
 		// Update conference address to ensure that a conference info can be successfully searched by its address
 		const long long &uriSipAddressId = insertSipAddress(uri);
@@ -2660,7 +2660,6 @@ void MainDbPrivate::updateSchema() {
 	// this mechanism starting from DB version 21 and execute all MySql query at startup. Developpers must be careful
 	// either to catch exceptions or to make sure that the modification to the database is only applied once and the
 	// following restarts of the core will not do anything.
-
 #endif
 }
 
@@ -3728,6 +3727,8 @@ void MainDb::init() {
 
 		d->updateSchema();
 
+		migrateConferenceInfos();
+
 		d->updateModuleVersion("events", ModuleVersionEvents);
 		d->updateModuleVersion("friends", ModuleVersionFriends);
 	} catch (const soci::soci_error &e) {
@@ -3740,6 +3741,30 @@ void MainDb::init() {
 	session->commit();
 
 	initCleanup();
+#endif
+}
+
+void MainDb::migrateConferenceInfos() {
+#ifdef HAVE_DB_STORAGE
+	L_D();
+	// Search all conference information whose URI has the gr parameter in order to drop it.
+	// This will ensure the backward compatiblity for future releases of the SDK
+	std::string query =
+	    "SELECT conference_info.id, uri_sip_address.value  FROM conference_info, sip_address AS uri_sip_address WHERE "
+	    "conference_info.uri_sip_address_id = uri_sip_address.id AND uri_sip_address.value LIKE '%gr=%'";
+	soci::session *session = d->dbSession.getBackendSession();
+	soci::rowset<soci::row> rows = (session->prepare << query);
+
+	for (const auto &row : rows) {
+		const long long &dbConferenceInfoId = d->dbSession.resolveId(row, 0);
+		const std::string uriString = row.get<string>(1);
+		std::shared_ptr<Address> uri = Address::create(uriString);
+		// Update conference address to ensure that a conference info can be successfully searched by its
+		// address
+		const long long &uriSipAddressId = d->insertSipAddress(Address::create(uri->getUriWithoutGruu()));
+		*session << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId WHERE id = :conferenceInfoId",
+		    soci::use(uriSipAddressId), soci::use(dbConferenceInfoId);
+	}
 #endif
 }
 
@@ -5708,10 +5733,9 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos(time_t aft
 	return L_DB_TRANSACTION {
 		L_D();
 
-		list<shared_ptr<ConferenceInfo>> conferenceInfos;
-
 		soci::session *session = d->dbSession.getBackendSession();
 
+		list<shared_ptr<ConferenceInfo>> conferenceInfos;
 		// We cannot create an empty rowset so each "if" will make one
 		if (afterThisTime > -1) {
 			auto startTime = d->dbSession.getTimeWithSociIndicator(afterThisTime);

@@ -216,6 +216,7 @@ public:
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
+	void migrateConferenceInfos();
 
 	// ---------------------------------------------------------------------------
 	// Call log.
@@ -250,10 +251,12 @@ protected:
 private:
 	L_DECLARE_PRIVATE(MainDb);
 	L_DISABLE_COPY(MainDb);
-	using ChatRoomWeakCompareMap = std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
+	using ChatRoomWeakCompareMap = std::
+	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
 
 	void initCleanup();
-	void addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap, const std::shared_ptr<AbstractChatRoom> chatRoom) const;
+	void addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+	                       const std::shared_ptr<AbstractChatRoom> chatRoom) const;
 	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> chatRoom1,
 	                                                 const std::shared_ptr<AbstractChatRoom> chatRoom2) const;
 };
