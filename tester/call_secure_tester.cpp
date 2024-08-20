@@ -1581,8 +1581,7 @@ static void check_zrtp_short_code_base(LinphoneCoreManager *marie,
 	BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(marie_call));
 	BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(pauline_call));
 
-	// The correct SAS is selected by both
-	// SAS verified using linphone_call_check_authentication_token_selected
+	// Retrieve the local authentication tokens for both participants.
 	marie_local_auth_token = linphone_call_get_local_authentication_token(marie_call);
 	pauline_local_auth_token = linphone_call_get_local_authentication_token(pauline_call);
 
@@ -1591,10 +1590,12 @@ static void check_zrtp_short_code_base(LinphoneCoreManager *marie,
 
 	it = linphone_call_get_remote_authentication_tokens(marie_call);
 	if (marie_correct_sas_seleted) {
+		// If Marie is expected to select the correct SAS, iterate until the correct token is found.
 		while (it && (strcmp((const char *)it->data, pauline_local_auth_token) != 0)) {
 			it = it->next;
 		}
 	} else {
+		// Otherwise, iterate until an incorrect token is found.
 		while (it && (strcmp((const char *)it->data, pauline_local_auth_token) == 0)) {
 			it = it->next;
 		}
@@ -1603,6 +1604,7 @@ static void check_zrtp_short_code_base(LinphoneCoreManager *marie,
 	linphone_call_check_authentication_token_selected(marie_call, (const char *)it->data);
 
 	if (pauline_correct_sas_seleted) {
+		// If Pauline is expected to select the correct SAS, iterate until the correct token is found.
 		it = linphone_call_get_remote_authentication_tokens(pauline_call);
 		while (it && (strcmp((const char *)it->data, marie_local_auth_token) != 0)) {
 			it = it->next;
@@ -1610,6 +1612,7 @@ static void check_zrtp_short_code_base(LinphoneCoreManager *marie,
 		BC_ASSERT_PTR_NOT_NULL(it);
 		linphone_call_check_authentication_token_selected(pauline_call, (const char *)it->data);
 	} else {
+		// Otherwise, Pauline did not find the correct SAS, so she selects an empty token.
 		linphone_call_check_authentication_token_selected(pauline_call, "");
 	}
 
