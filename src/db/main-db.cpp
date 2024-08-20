@@ -2101,10 +2101,11 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setUri(uri);
 	const auto &conferenceUri = conferenceInfo->getUri();
 	if (conferenceUri && conferenceUri->isValid()) {
-		const auto &uriStringOrdered = conferenceUri->toStringUriOnlyOrdered();
+		const auto &uri = Address::create(conferenceUri->getUriWithoutGruu());
+		const auto &uriStringOrdered = uri->toStringUriOnlyOrdered();
 		if (uriStringOrdered != uriString) {
 			// Update conference address to ensure that a conference info can be successfully searched by its address
-			const long long &uriSipAddressId = insertSipAddress(conferenceUri);
+			const long long &uriSipAddressId = insertSipAddress(uri);
 			*dbSession.getBackendSession()
 			    << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId WHERE id = :conferenceInfoId",
 			    soci::use(uriSipAddressId), soci::use(dbConferenceInfoId);
@@ -2116,8 +2117,8 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setUtf8Subject(row.get<string>(5));
 	conferenceInfo->setUtf8Description(row.get<string>(6));
 	conferenceInfo->setState(
-	    ConferenceInfo::State(row.get<int>(7))); // state is a TinyInt in database, don't cast it to unsigned, otherwise
-	                                             // you'll get a std::bad_cast from soci.
+	    ConferenceInfo::State(row.get<int>(7))); // state is a TinyInt in database, don't cast it to unsigned,
+	                                             // otherwise you'll get a std::bad_cast from soci.
 	unsigned int icsSequence = dbSession.getUnsignedInt(row, 8, 0);
 	conferenceInfo->setIcsSequence(icsSequence);
 
@@ -2128,9 +2129,9 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setCapability(LinphoneStreamTypeVideo, (row.get<int>(12) == 0) ? false : true);
 	conferenceInfo->setCapability(LinphoneStreamTypeText, (row.get<int>(13) == 0) ? false : true);
 
-	// For backward compability purposes, get the organizer from conference_info table and set the sequence number to
-	// that of the conference info stored in the db It may be overridden if the conference organizer has been stored in
-	// table conference_info_organizer.
+	// For backward compability purposes, get the organizer from conference_info table and set the sequence number
+	// to that of the conference info stored in the db It may be overridden if the conference organizer has been
+	// stored in table conference_info_organizer.
 	std::shared_ptr<Address> organizerAddress = Address::create(row.get<string>(1));
 	ParticipantInfo::participant_params_t organizerParams;
 	organizerParams.insert(std::make_pair(ParticipantInfo::sequenceParameter, std::to_string(icsSequence)));
@@ -2475,9 +2476,10 @@ void MainDbPrivate::updateSchema() {
 #ifdef HAVE_DB_STORAGE
 	L_Q();
 
-	// MySQL : Modified display_name in order to set explicitely this column to utf8mb4, while the default character set
-	// of the table is set to ascii (this allows special characters in display name without breaking compatibility with
-	// mysql 5.5) 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
+	// MySQL : Modified display_name in order to set explicitely this column to utf8mb4, while the default character
+	// set of the table is set to ascii (this allows special characters in display name without breaking
+	// compatibility with mysql 5.5) 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset
+	// utf8mb4
 	MainDb::Backend backend = q->getBackend();
 	const string charset = backend == MainDb::Backend::Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
 
@@ -2615,24 +2617,25 @@ void MainDbPrivate::updateSchema() {
 		*session << "ALTER TABLE chat_room ADD COLUMN ephemeral_enabled BOOLEAN NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE chat_room ADD COLUMN ephemeral_messages_lifetime DOUBLE NOT NULL DEFAULT 86400";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
-		*session
-		    << "CREATE VIEW conference_event_view AS"
-		       "  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, "
-		       "imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, "
-		       "participant_sip_address_id, subject, delivery_notification_required, display_notification_required, "
-		       "security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime"
-		       "  FROM event"
-		       "  LEFT JOIN conference_event ON conference_event.event_id = event.id"
-		       "  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
-		       "  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
-		       "  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = "
-		       "event.id"
-		       "  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
-		       "  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
-		       "  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"
-		       "  LEFT JOIN chat_message_ephemeral_event ON chat_message_ephemeral_event.event_id = event.id"
-		       "  LEFT JOIN conference_ephemeral_message_event ON conference_ephemeral_message_event.event_id = "
-		       "event.id";
+		*session << "CREATE VIEW conference_event_view AS"
+		            "  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, "
+		            "imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, "
+		            "participant_sip_address_id, subject, delivery_notification_required, "
+		            "display_notification_required, "
+		            "security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, "
+		            "lifetime"
+		            "  FROM event"
+		            "  LEFT JOIN conference_event ON conference_event.event_id = event.id"
+		            "  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
+		            "  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
+		            "  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = "
+		            "event.id"
+		            "  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
+		            "  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
+		            "  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"
+		            "  LEFT JOIN chat_message_ephemeral_event ON chat_message_ephemeral_event.event_id = event.id"
+		            "  LEFT JOIN conference_ephemeral_message_event ON conference_ephemeral_message_event.event_id = "
+		            "event.id";
 	}
 
 	if (eventsDbVersionInt < makeVersion(1, 0, 13)) {
@@ -2706,9 +2709,9 @@ void MainDbPrivate::updateSchema() {
 			*session << "ALTER TABLE sip_address MODIFY COLUMN display_name VARCHAR(191) CHARACTER SET utf8mb4";
 		}
 		// In sqlite, there is no specific size limit to indexable columns, and text columns are stored in UTF-8 by
-		// default. Given this, we assume that if "ALTER TABLE sip_address ADD COLUMN display_name VARCHAR(255)" was run
-		// previously on Sqlite there is no need to alter the table to reduce the size (which would need to recreate the
-		// whole column anyway as "MODIFY COLUMN" isn't supported in sqlite)
+		// default. Given this, we assume that if "ALTER TABLE sip_address ADD COLUMN display_name VARCHAR(255)" was
+		// run previously on Sqlite there is no need to alter the table to reduce the size (which would need to
+		// recreate the whole column anyway as "MODIFY COLUMN" isn't supported in sqlite)
 	}
 
 	if (eventsDbVersionInt < makeVersion(1, 0, 19)) {
@@ -2943,9 +2946,9 @@ void MainDbPrivate::updateSchema() {
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 	//
 	// Using DB table version cause issues when updating or downgrading the SDK version. It has been decided to drop
-	// this mechanism starting from DB version 21 and execute all MySql query at startup. Developpers must be careful
-	// either to catch exceptions or to make sure that the modification to the database is only applied once and the
-	// following restarts of the core will not do anything.
+	// this mechanism starting from DB version 21 and execute all MySql query at startup. Developpers must be
+	// careful either to catch exceptions or to make sure that the modification to the database is only applied once
+	// and the following restarts of the core will not do anything.
 
 	unsigned int friendsDbVersionInt = getModuleVersion("friends");
 	Utils::Version friendsDbVersion((friendsDbVersionInt >> 16) & 0xFF, (friendsDbVersionInt >> 8) & 0xFF,
@@ -3262,19 +3265,20 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 		// Set last_message_id to the last timed message for all chat room
 		*dbSession.getBackendSession()
 		    << "UPDATE chat_room SET last_message_id = "
-		       "(SELECT COALESCE( (SELECT max(conference_event.event_id) as m " // max(conference_event.event_id) ensure
-		                                                                        // to have only one event and the last
-		                                                                        // id for the matching time
+		       "(SELECT COALESCE( (SELECT max(conference_event.event_id) as m " // max(conference_event.event_id)
+		                                                                        // ensure to have only one event and
+		                                                                        // the last id for the matching time
 		       "FROM conference_event, conference_chat_message_event,"
 		       "(SELECT max(time) as t, conference_event.chat_room_id as c " // Get Max Time for the chat room
 		       "FROM conference_event, conference_chat_message_event "
 		       "WHERE conference_event.event_id=conference_chat_message_event.event_id GROUP BY "
 		       "conference_event.chat_room_id)"
 		       "WHERE conference_chat_message_event.time=t AND "
-		       "conference_chat_message_event.event_id=conference_event.event_id AND conference_event.chat_room_id=c "
+		       "conference_chat_message_event.event_id=conference_event.event_id AND "
+		       "conference_event.chat_room_id=c "
 		       "AND conference_event.chat_room_id=chat_room.id "
-		       "GROUP BY conference_event.chat_room_id),0))"; // if there are no messages, the first is NULL. So put a 0
-		                                                      // to the ID
+		       "GROUP BY conference_event.chat_room_id),0))"; // if there are no messages, the first is NULL. So put
+		                                                      // a 0 to the ID
 		tr.commit();
 		lInfo() << "Successful import of legacy messages.";
 	};
@@ -3367,8 +3371,8 @@ void MainDb::init() {
 		 */
 		if (backend == Sqlite3) *session << string("PRAGMA secure_delete = ON");
 
-		// Charset set to ascii for mysql/mariadb to allow creation of indexed collumns of size > 191. We assume that
-		// for the given fields ascii will not cause any display issue.
+		// Charset set to ascii for mysql/mariadb to allow creation of indexed collumns of size > 191. We assume
+		// that for the given fields ascii will not cause any display issue.
 
 		// 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 
@@ -3428,8 +3432,8 @@ void MainDb::init() {
 		           "  capabilities TINYINT UNSIGNED NOT NULL,"
 
 		           // Chatroom subject.
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  subject VARCHAR(255),"
 
 		           "  last_notify_id INT UNSIGNED DEFAULT 0,"
@@ -3589,8 +3593,8 @@ void MainDb::init() {
 		           ","
 
 		           "  security_alert TINYINT UNSIGNED NOT NULL,"
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  faulty_device VARCHAR(255) NOT NULL,"
 
 		           "  FOREIGN KEY (event_id)"
@@ -3605,8 +3609,8 @@ void MainDb::init() {
 		           primaryKeyStr("BIGINT UNSIGNED") +
 		           ","
 
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  subject VARCHAR(255) NOT NULL,"
 
 		           "  FOREIGN KEY (event_id)"
@@ -3633,8 +3637,8 @@ void MainDb::init() {
 		           " ,"
 
 		           // See: https://tools.ietf.org/html/rfc5438#section-6.3
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  imdn_message_id VARCHAR(255) NOT NULL,"
 
 		           "  state TINYINT UNSIGNED NOT NULL,"
@@ -3703,13 +3707,13 @@ void MainDb::init() {
 		           primaryKeyStr("BIGINT UNSIGNED") +
 		           ","
 
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  name VARCHAR(256) NOT NULL,"
 		           "  size INT UNSIGNED NOT NULL,"
 
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  path VARCHAR(512) NOT NULL,"
 
 		           "  FOREIGN KEY (chat_message_content_id)"
@@ -3723,8 +3727,8 @@ void MainDb::init() {
 		                primaryKeyRefStr("BIGINT UNSIGNED") +
 		                ","
 
-		                "  name VARCHAR(191)," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with
-		                                       // charset utf8mb4
+		                "  name VARCHAR(191)," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7
+		                                       // with charset utf8mb4
 		                "  data BLOB NOT NULL,"
 
 		                "  PRIMARY KEY (chat_message_content_id, name),"
@@ -3739,8 +3743,8 @@ void MainDb::init() {
 		                primaryKeyRefStr("BIGINT UNSIGNED") +
 		                ","
 
-		                "  name VARCHAR(191)," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with
-		                                       // charset utf8mb4
+		                "  name VARCHAR(191)," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7
+		                                       // with charset utf8mb4
 		                "  data BLOB NOT NULL,"
 
 		                "  PRIMARY KEY (event_id, name),"
@@ -3758,9 +3762,9 @@ void MainDb::init() {
 		                "  name VARCHAR(191) UNIQUE," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql
 		                                              // < 5.7 with charset utf8mb4
 
-		                // /!\ Warning : if varchar columns > 255 are indexed, their size must be set back to 191 = max
-		                // indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in
-		                // migrations)
+		                // /!\ Warning : if varchar columns > 255 are indexed, their size must be set back to 191 =
+		                // max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both
+		                // here and in migrations)
 		                "  rls_uri VARCHAR(2047),"
 		                "  sync_uri VARCHAR(2047),"
 		                "  revision INT UNSIGNED NOT NULL"
@@ -3785,9 +3789,9 @@ void MainDb::init() {
 
 		                "  v_card MEDIUMTEXT,"
 
-		                // /!\ Warning : if these varchar columns are indexed, their size must be set back to 191 = max
-		                // indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in
-		                // migrations)
+		                // /!\ Warning : if these varchar columns are indexed, their size must be set back to 191 =
+		                // max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both
+		                // here and in migrations)
 		                "  v_card_etag VARCHAR(255),"
 		                "  v_card_sync_uri VARCHAR(2047),"
 
@@ -3805,8 +3809,8 @@ void MainDb::init() {
 		                primaryKeyRefStr("INT UNSIGNED") +
 		                ","
 
-		                "  name VARCHAR(191)," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with
-		                                       // charset utf8mb4
+		                "  name VARCHAR(191)," // 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7
+		                                       // with charset utf8mb4
 		                "  data BLOB NOT NULL,"
 
 		                "  PRIMARY KEY (friend_id, name),"
@@ -3889,9 +3893,9 @@ void MainDb::init() {
 		                ","
 		                "  duration INT UNSIGNED,"
 
-		                // /!\ Warning : if these varchar columns are indexed, their size must be set back to 191 = max
-		                // indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in
-		                // migrations)
+		                // /!\ Warning : if these varchar columns are indexed, their size must be set back to 191 =
+		                // max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both
+		                // here and in migrations)
 		                "  subject VARCHAR(256) NOT NULL,"
 		                "  description VARCHAR(2048),"
 
@@ -4061,8 +4065,8 @@ void MainDb::init() {
 		           "  body TEXT NOT NULL,"
 
 		           // See: https://tools.ietf.org/html/rfc5438#section-6.3
-		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
-		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY
+		           // or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  imdn_message_id VARCHAR(255) NOT NULL,"
 		           "  call_id VARCHAR(255) NOT NULL,"
 		           "  reaction_to_message_id VARCHAR(191) NOT NULL,"
@@ -4106,6 +4110,8 @@ void MainDb::init() {
 
 		d->updateSchema();
 
+		migrateConferenceInfos();
+
 		d->updateModuleVersion("events", ModuleVersionEvents);
 		d->updateModuleVersion("friends", ModuleVersionFriends);
 	} catch (const soci::soci_error &e) {
@@ -4118,6 +4124,31 @@ void MainDb::init() {
 	session->commit();
 
 	initCleanup();
+#endif
+}
+
+void MainDb::migrateConferenceInfos() {
+#ifdef HAVE_DB_STORAGE
+	L_D();
+	// Search all conference information whose URI has the gr parameter in order to drop it.
+	// This will ensure the backward compatiblity for future releases of the SDK
+	std::string query =
+	    "SELECT conference_info.id, uri_sip_address.value  FROM conference_info, sip_address AS uri_sip_address "
+	    "WHERE "
+	    "conference_info.uri_sip_address_id = uri_sip_address.id AND uri_sip_address.value LIKE '%gr=%'";
+	soci::session *session = d->dbSession.getBackendSession();
+	soci::rowset<soci::row> rows = (session->prepare << query);
+
+	for (const auto &row : rows) {
+		const long long &dbConferenceInfoId = d->dbSession.resolveId(row, 0);
+		const std::string uriString = row.get<string>(1);
+		std::shared_ptr<Address> uri = Address::create(uriString);
+		// Update conference address to ensure that a conference info can be successfully searched by its
+		// address
+		const long long &uriSipAddressId = d->insertSipAddress(Address::create(uri->getUriWithoutGruu()));
+		*session << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId WHERE id = :conferenceInfoId",
+		    soci::use(uriSipAddressId), soci::use(dbConferenceInfoId);
+	}
 #endif
 }
 
@@ -4652,7 +4683,8 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages() const {
 	    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 	    " LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 	    " LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
-	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
+	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = "
+	    "participant_sip_address_id"
 	    " LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
 	    " WHERE conference_event_view.id in ("
 	    " SELECT event_id"
@@ -4798,7 +4830,8 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 	    " FROM chat_message_file_content "
 	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
 	    " JOIN content_type ON content_type.id = chat_message_content.content_type_id "
-	    " JOIN conference_chat_message_event ON conference_chat_message_event.event_id = chat_message_content.event_id "
+	    " JOIN conference_chat_message_event ON conference_chat_message_event.event_id = "
+	    "chat_message_content.event_id "
 	    " JOIN conference_event ON conference_event.event_id = chat_message_content.event_id AND "
 	    " conference_event.chat_room_id = :chatRoomId "
 	    " WHERE content_type.value LIKE 'video/%' OR content_type.value LIKE 'image/%' OR content_type.value LIKE "
@@ -4839,7 +4872,8 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 	    " FROM chat_message_file_content "
 	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
 	    " JOIN content_type ON content_type.id = chat_message_content.content_type_id "
-	    " JOIN conference_chat_message_event ON conference_chat_message_event.event_id = chat_message_content.event_id "
+	    " JOIN conference_chat_message_event ON conference_chat_message_event.event_id = "
+	    "chat_message_content.event_id "
 	    " JOIN conference_event ON conference_event.event_id = chat_message_content.event_id AND "
 	    " conference_event.chat_room_id = :chatRoomId "
 	    " WHERE content_type.value LIKE 'text/%' OR content_type.value LIKE 'application/%' "
@@ -4895,7 +4929,8 @@ shared_ptr<ChatMessage> MainDb::getLastChatMessage(const ConferenceId &conferenc
 #ifdef HAVE_DB_STORAGE
 	static const string query =
 	    "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, "
-	    "from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, "
+	    "from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, "
+	    "notify_id, "
 	    "device_sip_address.value, participant_sip_address.value, conference_event_view.subject, "
 	    "delivery_notification_required, display_notification_required, peer_sip_address.value, "
 	    "local_sip_address.value, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, "
@@ -4907,7 +4942,8 @@ shared_ptr<ChatMessage> MainDb::getLastChatMessage(const ConferenceId &conferenc
 	    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 	    " LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 	    " LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
-	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
+	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = "
+	    "participant_sip_address_id"
 	    " LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
 	    " WHERE event_id = (SELECT last_message_id FROM chat_room WHERE id = :1)";
 
@@ -5071,7 +5107,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromCallId(const std::stri
 	    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 	    " LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 	    " LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
-	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
+	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = "
+	    "participant_sip_address_id"
 	    " LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
 	    " WHERE call_id = :callId";
 
@@ -5122,7 +5159,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered() 
 	    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 	    " LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 	    " LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
-	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
+	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = "
+	    "participant_sip_address_id"
 	    " LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
 	    " WHERE conference_event_view.id IN (SELECT event_id FROM conference_chat_message_event WHERE "
 	    "delivery_notification_required <> 0 AND direction = :direction)";
@@ -5279,7 +5317,8 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRangeNear(const ConferenceId &confe
 
 	// DurationLogger durationLogger(
 	//     "Get history range near of: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
-	//     ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ", before=" + Utils::toString(before)
+	//     ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ", before=" +
+	//     Utils::toString(before)
 	//     +
 	//     ", after=" + Utils::toString(after) + ", event=" + Utils::toString(event) + ").");
 
@@ -5622,8 +5661,8 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 // -----------------------------------------------------------------------------
 
 // Add a chatroom to the list passed as first argument if it is not a duplicate.
-// In case a chatroom with the same conference id (where the comparison doesn't take into account the gr parameters) is
-// already found, then a merge is executed:
+// In case a chatroom with the same conference id (where the comparison doesn't take into account the gr parameters)
+// is already found, then a merge is executed:
 // - keep the chatroom with the oldest creation time
 // - set the creation time to the earliest one
 // - assign all events preceeding the latest creation time to the kept chatroom
@@ -5691,16 +5730,17 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 	// | 24 | 2023-11-08 08:21:39 |     22      |
 	// | 27 | 2023-11-08 08:40:39 |     25      |
 	// ==========================================
-	// Obviously the most recent chat room is the one with ID 27 and therefore we should keep its line but change the
-	// creation time Unfortunately the chat rooms are not returned ordered by ID therefore it is necessary to take into
-	// account the lastNotify column if the chat room is conference based The first merge operation is the merge of chat
-	// room with ID 24 into the one with ID 27. The former chat room is deleted from the DB and the creation time of the
-	// latter chat room is updated to 2023-11-08 08:21:39 Then a second merge operation occurs between ID 1 and ID 24.
-	// The former chat room is deleted and the latter's creation time is updated to 2023-11-08 08:10:39 Ultimately the
-	// last merge operation occurs between ID 27 and ID 20. This time around, we cannot look to the creation time
-	// anymore as if we would so, we would end up with the wrong Last Notify and subject at least. We should therefore
-	// delete chat room with ID 20 and move all its conference events to chat room with ID 27 Update chatroom with the
-	// largest creation time and update its creation time with the lowest value.
+	// Obviously the most recent chat room is the one with ID 27 and therefore we should keep its line but change
+	// the creation time Unfortunately the chat rooms are not returned ordered by ID therefore it is necessary to
+	// take into account the lastNotify column if the chat room is conference based The first merge operation is the
+	// merge of chat room with ID 24 into the one with ID 27. The former chat room is deleted from the DB and the
+	// creation time of the latter chat room is updated to 2023-11-08 08:21:39 Then a second merge operation occurs
+	// between ID 1 and ID 24. The former chat room is deleted and the latter's creation time is updated to
+	// 2023-11-08 08:10:39 Ultimately the last merge operation occurs between ID 27 and ID 20. This time around, we
+	// cannot look to the creation time anymore as if we would so, we would end up with the wrong Last Notify and
+	// subject at least. We should therefore delete chat room with ID 20 and move all its conference events to chat
+	// room with ID 27 Update chatroom with the largest creation time and update its creation time with the lowest
+	// value.
 	if ((chatRoom2LastNotify < chatRoom1LastNotify) ||
 	    ((chatRoom2LastNotify == chatRoom1LastNotify) && (chatRoom2CreationTime < chatRoom1CreationTime))) {
 		chatRoomToAdd = chatRoom1;
@@ -5759,7 +5799,8 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 
 	soci::rowset<soci::row> rows =
 	    (session->prepare
-	         << "SELECT conference_event.event_id, conference_event.chat_room_id FROM conference_event, event WHERE "
+	         << "SELECT conference_event.event_id, conference_event.chat_room_id FROM conference_event, event "
+	            "WHERE "
 	            "event.id = conference_event.event_id AND conference_event.chat_room_id = :chatRoomId AND "
 	            "event.creation_time > :creationTimeMin AND event.creation_time < :creationTimeMax",
 	     soci::use(dbChatRoomToRemoveId), soci::use(oldestCreationTimeSoci.first, oldestCreationTimeSoci.second),
@@ -5933,8 +5974,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 			} else {
-				lError()
-				    << "Unable to retrieve chat room from database because its type is neither Basic nor Conference";
+				lError() << "Unable to retrieve chat room from database because its type is neither Basic nor "
+				            "Conference";
 			}
 
 			if (!chatRoom) continue; // Not fetched.
@@ -6250,7 +6291,8 @@ list<shared_ptr<Participant>> MainDb::selectChatRoomParticipants(const long long
 		static const string participantQuery =
 		    "SELECT chat_room_participant.id, sip_address.value, is_admin FROM sip_address, chat_room, "
 		    "chat_room_participant WHERE chat_room.id = :chatRoomId AND sip_address.id = "
-		    "chat_room_participant.participant_sip_address_id AND chat_room_participant.chat_room_id = chat_room.id";
+		    "chat_room_participant.participant_sip_address_id AND chat_room_participant.chat_room_id = "
+		    "chat_room.id";
 
 		// Fetch participants.
 		soci::rowset<soci::row> participantRows = (session->prepare << participantQuery, soci::use(chatRoomId));
@@ -6371,7 +6413,8 @@ shared_ptr<EventLog> MainDb::searchChatMessagesByText(const ConferenceId &confer
 	    "LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id "
 	    "LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id "
 	    "LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id "
-	    "LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id "
+	    "LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = "
+	    "participant_sip_address_id "
 	    "LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id "
 	    "LEFT JOIN chat_message_content ON chat_message_content.event_id = conference_event_view.id "
 	    "WHERE chat_room_id = :chatRoomId AND chat_message_content.content_type_id = 1 "
@@ -6446,10 +6489,9 @@ MainDb::getConferenceInfos(time_t afterThisTime, const std::list<LinphoneStreamT
 	return L_DB_TRANSACTION {
 		L_D();
 
-		list<shared_ptr<ConferenceInfo>> conferenceInfos;
-
 		soci::session *session = d->dbSession.getBackendSession();
 
+		list<shared_ptr<ConferenceInfo>> conferenceInfos;
 		// We cannot create an empty rowset so each "if" will make one
 		if (afterThisTime > -1) {
 			auto startTime = d->dbSession.getTimeWithSociIndicator(afterThisTime);

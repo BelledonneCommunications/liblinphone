@@ -579,10 +579,12 @@ static void group_chat_room_with_client_removed_added(void) {
 
 		for (const auto &mgr :
 		     {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), michelle.getCMgr(), michelle2.getCMgr()}) {
-			const auto organizerMgr = (mgr == focus.getCMgr()) ? marie.getCMgr() : mgr;
-			check_conference_info_in_db(mgr, NULL, confAddr, organizerMgr->identity, participants_info, -1, 0,
-			                            newSubject, NULL, 0, LinphoneConferenceInfoStateNew,
-			                            LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, TRUE);
+			bctbx_list_t *infos = linphone_core_get_conference_information_list(mgr->lc);
+			BC_ASSERT_PTR_NULL(infos);
+			if (infos) {
+				BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 0, int, "%d");
+				bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+			}
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_added,
@@ -624,10 +626,12 @@ static void group_chat_room_with_client_removed_added(void) {
 
 		for (const auto &mgr :
 		     {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), michelle.getCMgr(), michelle2.getCMgr()}) {
-			const auto organizerMgr = (mgr == focus.getCMgr()) ? marie.getCMgr() : mgr;
-			check_conference_info_in_db(mgr, NULL, confAddr, organizerMgr->identity, participants_info, -1, 0,
-			                            newSubject, NULL, 0, LinphoneConferenceInfoStateNew,
-			                            LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, TRUE);
+			bctbx_list_t *infos = linphone_core_get_conference_information_list(mgr->lc);
+			BC_ASSERT_PTR_NULL(infos);
+			if (infos) {
+				BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 0, int, "%d");
+				bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+			}
 		}
 
 		// wait until chatroom is deleted server side

@@ -241,6 +241,7 @@ public:
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
+	void migrateConferenceInfos();
 
 	// ---------------------------------------------------------------------------
 	// Call log.

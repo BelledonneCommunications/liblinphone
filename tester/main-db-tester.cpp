@@ -411,7 +411,9 @@ static void load_chatroom_conference(void) {
 		BC_ASSERT_EQUAL(conferenceInfos.size(), 1, size_t, "%zu");
 
 		for (const auto &conferenceInfo : conferenceInfos) {
-			BC_ASSERT_PTR_NOT_NULL(mainDb.getConferenceInfoFromURI(conferenceInfo->getUri()));
+			const auto uri = conferenceInfo->getUri();
+			BC_ASSERT_PTR_NOT_NULL(mainDb.getConferenceInfoFromURI(uri));
+			BC_ASSERT_PTR_NOT_NULL(mainDb.getConferenceInfoFromURI(Address::create(uri->getUriWithoutGruu())));
 		}
 	} else {
 		BC_FAIL("Database not initialized");
