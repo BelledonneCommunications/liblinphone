@@ -466,10 +466,10 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 			    0.5f; // This tone can be in parallel of other calls. This will be played on a lighter amplitude
 			break;
 		case LinphoneToneSasCheckRequired:
-			def.duration = 800;
-			def.frequencies[0] = 700;
-			def.interval = 500;
-			def.repeat_count = 4;
+			def.duration = 300;
+			def.frequencies[0] = 600;
+			def.interval = 100;
+			def.repeat_count = 2;
 			break;
 		default:
 			lWarning() << "[ToneManager] Unhandled tone id.";
@@ -746,7 +746,7 @@ void ToneManager::notifySecurityAlert(BCTBX_UNUSED(const std::shared_ptr<CallSes
 		    notifyToneIndication(LinphoneReasonSasCheckRequired);
 		    return true;
 	    },
-	    10000, "Security alert");
+	    30000, "Security alert");
 }
 
 void ToneManager::stopSecurityAlert() {
