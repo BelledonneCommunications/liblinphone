@@ -63,7 +63,9 @@ extern test_suite_t call_flexfec_suite;
 extern test_suite_t call_video_advanced_scenarios_test_suite;
 #endif // if VIDEO_ENABLED
 
-extern test_suite_t local_conference_test_suite_end_to_end_encryption;
+extern test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference;
+extern test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference_audio_only_participant;
+extern test_suite_t local_conference_test_suite_end_to_end_encryption_impromptu_conference;
 extern test_suite_t clonable_object_test_suite;
 extern test_suite_t conference_event_test_suite;
 extern test_suite_t conference_test_suite;
@@ -80,6 +82,7 @@ extern test_suite_t group_chat2_test_suite;
 extern test_suite_t group_chat3_test_suite;
 extern test_suite_t group_chat4_test_suite;
 extern test_suite_t secure_group_chat_test_suite;
+extern test_suite_t secure_group_chat2_test_suite;
 extern test_suite_t secure_group_chat_exhume_test_suite;
 extern test_suite_t secure_message_test_suite;
 extern test_suite_t secure_message2_test_suite;
@@ -135,6 +138,7 @@ extern test_suite_t dtls_srtp_ice_capability_negotiation_test_suite;
 extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
+extern test_suite_t call_secure2_test_suite;
 extern test_suite_t call_with_rtp_bundle_test_suite;
 extern test_suite_t shared_core_test_suite;
 extern test_suite_t lime_server_auth_test_suite;

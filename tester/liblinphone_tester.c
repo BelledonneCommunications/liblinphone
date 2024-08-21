@@ -491,17 +491,18 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&ics_test_suite, 28);
 #ifdef HAVE_LIME_X3DH
 	liblinphone_tester_add_suite_with_default_time(&lime_db_test_suite, 500);
-	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_test_suite, 506);
-	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_exhume_test_suite, 100);
-	liblinphone_tester_add_suite_with_default_time(&secure_message_test_suite, 423);
-	liblinphone_tester_add_suite_with_default_time(&secure_message2_test_suite, 204);
+	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_test_suite, 393);
+	liblinphone_tester_add_suite_with_default_time(&secure_group_chat2_test_suite, 416);
+	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_exhume_test_suite, 169);
+	liblinphone_tester_add_suite_with_default_time(&secure_message_test_suite, 482);
+	liblinphone_tester_add_suite_with_default_time(&secure_message2_test_suite, 278);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		liblinphone_tester_add_suite_with_default_time(&secure_group_chat_migration_test_suite, 40);
+		liblinphone_tester_add_suite_with_default_time(&secure_group_chat_migration_test_suite, 72);
 	}
 	liblinphone_tester_add_suite_with_default_time(&lime_server_auth_test_suite, 125);
 	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_test_suite, 514);
 	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_basic_test_suite, 189);
-#endif
+#endif // HAVE_LIME_X3DH
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_conference_edition, 150);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_basic, 540);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_advanced, 574);
@@ -519,17 +520,18 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_imdn, 315);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_ephemeral_chat, 281);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_secure_chat, 441);
-#endif
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_transferred_conference_basic, 100);
+#endif // HAVE_ADVANCED_IM
 	liblinphone_tester_add_suite_with_default_time(&tunnel_test_suite, 0);
 	liblinphone_tester_add_suite_with_default_time(&offeranswer_test_suite, 221);
-	liblinphone_tester_add_suite_with_default_time(&call_test_suite, 545);
-	liblinphone_tester_add_suite_with_default_time(&call2_test_suite, 370);
+	liblinphone_tester_add_suite_with_default_time(&call_test_suite, 777);
+	liblinphone_tester_add_suite_with_default_time(&call2_test_suite, 480);
 	bc_tester_add_suite(&call_not_established_test_suite);
 	liblinphone_tester_add_suite_with_default_time(&push_incoming_call_test_suite, 65);
 	liblinphone_tester_add_suite_with_default_time(&call_recovery_test_suite, 283);
 	liblinphone_tester_add_suite_with_default_time(&call_with_ice_test_suite, 494);
-	liblinphone_tester_add_suite_with_default_time(&call_secure_test_suite, 771);
+	liblinphone_tester_add_suite_with_default_time(&call_secure_test_suite, 747);
+	liblinphone_tester_add_suite_with_default_time(&call_secure2_test_suite, 527);
 	liblinphone_tester_add_suite_with_default_time(&capability_negotiation_test_suite, 378);
 	liblinphone_tester_add_suite_with_default_time(&capability_negotiation_parameters_test_suite, 236);
 	liblinphone_tester_add_suite_with_default_time(&capability_negotiation_no_sdp_test_suite, 266);
@@ -592,7 +594,12 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&recorder_test_suite, 33);
 	liblinphone_tester_add_suite_with_default_time(&multipart_test_suite, 20);
 #ifdef HAVE_EKT_SERVER_PLUGIN
-	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_end_to_end_encryption, 500);
+	liblinphone_tester_add_suite_with_default_time(
+	    &local_conference_test_suite_end_to_end_encryption_scheduled_conference, 516);
+	liblinphone_tester_add_suite_with_default_time(
+	    &local_conference_test_suite_end_to_end_encryption_scheduled_conference_audio_only_participant, 337);
+	liblinphone_tester_add_suite_with_default_time(
+	    &local_conference_test_suite_end_to_end_encryption_impromptu_conference, 155);
 #endif // HAVE_EKT_SERVER_PLUGIN
 	liblinphone_tester_add_suite_with_default_time(&clonable_object_test_suite, 0);
 #ifdef HAVE_DB_STORAGE

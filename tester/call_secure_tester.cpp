@@ -2176,7 +2176,7 @@ static void dtls_srtp_call_with_replaces(void) {
 	secure_call_with_replaces(LinphoneMediaEncryptionDTLS);
 }
 
-test_t call_secure_tests[] = {
+static test_t call_secure_tests[] = {
     TEST_ONE_TAG("SRTP call", srtp_call, "CRYPTO"),
     TEST_NO_TAG("SRTP call with non zero crypto suite tag", srtp_call_non_zero_tag),
 #ifdef VIDEO_ENABLED
@@ -2206,7 +2206,7 @@ test_t call_secure_tests[] = {
     TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
     TEST_ONE_TAG("ZRTP Cipher call", zrtp_cipher_call, "CRYPTO"),
     TEST_ONE_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call, "CRYPTO"),
-    TEST_NO_TAG("ZRTP Post Quantum Key Agreement call", zrtp_post_quantum_key_agreement_call),
+    TEST_ONE_TAG("ZRTP Post Quantum Key Agreement call", zrtp_post_quantum_key_agreement_call, "PQCalls"),
     TEST_NO_TAG("ZRTP Hash call", zrtp_hash_call),
     TEST_ONE_TAG("ZRTP Authentication tag call", zrtp_authtag_call, "CRYPTO"),
     TEST_NO_TAG("ZRTP call with Replaces", zrtp_call_with_replaces),
@@ -2220,6 +2220,9 @@ test_t call_secure_tests[] = {
                  none_to_dtls_srtp_call_with_several_video_switches,
                  "DTLS"),
 #endif // VIDEO_ENABLED
+};
+
+static test_t call_secure2_tests[] = {
     TEST_ONE_TAG("DTLS SRTP call with ICE", dtls_srtp_call_with_ice, "DTLS"),
     TEST_ONE_TAG(
         "DTLS SRTP call with ICE and dtls start immediatly", dtls_srtp_call_with_ice_and_dtls_start_immediate, "DTLS"),
@@ -2258,3 +2261,12 @@ test_suite_t call_secure_test_suite = {"Secure Call",
                                        sizeof(call_secure_tests) / sizeof(call_secure_tests[0]),
                                        call_secure_tests,
                                        0};
+
+test_suite_t call_secure2_test_suite = {"Secure Call2",
+                                        NULL,
+                                        NULL,
+                                        liblinphone_tester_before_each,
+                                        liblinphone_tester_after_each,
+                                        sizeof(call_secure2_tests) / sizeof(call_secure2_tests[0]),
+                                        call_secure2_tests,
+                                        0};

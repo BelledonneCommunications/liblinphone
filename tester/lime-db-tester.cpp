@@ -77,8 +77,8 @@ static void db_access_store_db_in_memory_test(void) {
 }
 
 test_t lime_db_tests[] = {
-    TEST_ONE_TAG("Data base access", db_access_test, "LimeX3DH"),
-    TEST_ONE_TAG("Data base access : Store BD in memory", db_access_store_db_in_memory_test, "LimeX3DH"),
+    TEST_NO_TAG("Data base access", db_access_test),
+    TEST_NO_TAG("Data base access : Store BD in memory", db_access_store_db_in_memory_test),
 };
 
 test_suite_t lime_db_test_suite = {"Lime data bases",

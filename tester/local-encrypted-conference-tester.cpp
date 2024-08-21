@@ -231,7 +231,7 @@ static void create_simple_end_to_end_encrypted_conference_with_screen_sharing(vo
 	    LinphoneMediaDirectionSendOnly, LinphoneConferenceSecurityLevelEndToEnd, {LinphoneParticipantRoleSpeaker});
 }
 
-static test_t local_conference_end_to_end_encryption[] = {
+static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
     TEST_ONE_TAG("First notify", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("SPI info", spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("Cipher transport", cipher_transport_ekt_xml_composing_parsing_test, "End2EndConf"),
@@ -245,11 +245,21 @@ static test_t local_conference_end_to_end_encryption[] = {
                   create_simple_end_to_end_encrypted_conference_with_client_restart,
                   "LeaksMemory",
                   "End2EndConf"),
+    TEST_TWO_TAGS("Create simple end-to-end encrypted ICE conference",
+                  create_simple_end_to_end_encrypted_ice_conference,
+                  "ICE",
+                  "End2EndConf"),
+    TEST_ONE_TAG("Create simple end-to-end encrypted conference with screen sharing override",
+                 create_simple_end_to_end_encrypted_conference_with_screen_sharing,
+                 "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with uninvited participant",
                  create_end_to_end_encrypted_conference_with_uninvited_participant,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with uninvited participant not allowed",
                  create_end_to_end_encrypted_conference_with_uninvited_participant_not_allowed,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create end-to-end encrypted conference with late participant addition declined",
+                 create_end_to_end_encrypted_conference_with_late_participant_addition_declined,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference starting immediately",
                  create_end_to_end_encrypted_conference_starting_immediately,
@@ -257,6 +267,12 @@ static test_t local_conference_end_to_end_encryption[] = {
     TEST_ONE_TAG("Create end-to-end encrypted conference starting in the past",
                  create_end_to_end_encrypted_conference_starting_in_the_past,
                  "End2EndConf"),
+    TEST_ONE_TAG("Create end-to-end encrypted conference with late participant addition",
+                 create_end_to_end_encrypted_conference_with_late_participant_addition,
+                 "End2EndConf"),
+};
+
+static test_t local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests[] = {
     TEST_ONE_TAG("Create simple end-to-end encrypted conference with audio only participant",
                  create_simple_end_to_end_encrypted_conference_with_audio_only_participant,
                  "End2EndConf"),
@@ -266,21 +282,14 @@ static test_t local_conference_end_to_end_encryption[] = {
     TEST_ONE_TAG("Create simple end-to-end encrypted conference with audio only participant enabling video",
                  create_simple_end_to_end_encrypted_conference_with_audio_only_participant_enabling_video,
                  "End2EndConf"),
-    TEST_ONE_TAG("Create end-to-end encrypted conference with late participant addition",
-                 create_end_to_end_encrypted_conference_with_late_participant_addition,
-                 "End2EndConf"),
-    TEST_ONE_TAG("Create end-to-end encrypted conference with late participant addition declined",
-                 create_end_to_end_encrypted_conference_with_late_participant_addition_declined,
-                 "End2EndConf"),
-    TEST_TWO_TAGS("Create simple end-to-end encrypted ICE conference",
-                  create_simple_end_to_end_encrypted_ice_conference,
-                  "ICE",
-                  "End2EndConf"),
-    TEST_ONE_TAG("Create simple end-to-end encrypted dial out conference",
-                 create_simple_end_to_end_encrypted_conference_dial_out,
-                 "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with audio only participants",
                  create_end_to_end_encryption_conference_with_audio_only_participants,
+                 "End2EndConf"),
+};
+
+static test_t local_conference_end_to_end_encryption_impromptu_conference_tests[] = {
+    TEST_ONE_TAG("Create simple end-to-end encrypted dial out conference",
+                 create_simple_end_to_end_encrypted_conference_dial_out,
                  "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted conference dial out with some calls declined",
                  create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_declined,
@@ -288,15 +297,40 @@ static test_t local_conference_end_to_end_encryption[] = {
     TEST_ONE_TAG("Create simple end-to-end encrypted conference dial out with some calls busy",
                  create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_busy,
                  "End2EndConf"),
-    TEST_ONE_TAG("Create simple end-to-end encrypted conference with screen sharing override",
-                 create_simple_end_to_end_encrypted_conference_with_screen_sharing,
-                 "End2EndConf")};
+};
 
-test_suite_t local_conference_test_suite_end_to_end_encryption = {"Local conference tester (End to end encryption)",
-                                                                  NULL,
-                                                                  NULL,
-                                                                  liblinphone_tester_before_each,
-                                                                  liblinphone_tester_after_each,
-                                                                  sizeof(local_conference_end_to_end_encryption) /
-                                                                      sizeof(local_conference_end_to_end_encryption[0]),
-                                                                  local_conference_end_to_end_encryption};
+test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference = {
+    "Local conference tester (Scheduled Conference End to end encryption)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_end_to_end_encryption_scheduled_conference_tests) /
+        sizeof(local_conference_end_to_end_encryption_scheduled_conference_tests[0]),
+    local_conference_end_to_end_encryption_scheduled_conference_tests,
+    0,
+    4};
+
+test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference_audio_only_participant = {
+    "Local conference tester (Audio only participants End to end encryption)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests) /
+        sizeof(local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests[0]),
+    local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests,
+    0,
+    4};
+
+test_suite_t local_conference_test_suite_end_to_end_encryption_impromptu_conference = {
+    "Local conference tester (Impromptu Conference End to end encryption)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_end_to_end_encryption_impromptu_conference_tests) /
+        sizeof(local_conference_end_to_end_encryption_impromptu_conference_tests[0]),
+    local_conference_end_to_end_encryption_impromptu_conference_tests,
+    0,
+    4};

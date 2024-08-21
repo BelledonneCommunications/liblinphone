@@ -6084,6 +6084,9 @@ test_t secure_group_chat_tests[] = {
     TEST_ONE_TAG("LIME X3DH chatroom security level downgrade resetting zrtp",
                  group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp,
                  "LimeX3DH"),
+};
+
+test_t secure_group_chat2_tests[] = {
     TEST_ONE_TAG("LIME X3DH chatroom security level self multidevices",
                  group_chat_lime_x3dh_chatroom_security_level_self_multidevices,
                  "LimeX3DH"),
@@ -6208,6 +6211,15 @@ test_suite_t secure_group_chat_test_suite = {"Secure group chat",
                                              sizeof(secure_group_chat_tests) / sizeof(secure_group_chat_tests[0]),
                                              secure_group_chat_tests,
                                              0};
+
+test_suite_t secure_group_chat2_test_suite = {"Secure group chat2",
+                                              NULL,
+                                              NULL,
+                                              liblinphone_tester_before_each,
+                                              liblinphone_tester_after_each,
+                                              sizeof(secure_group_chat2_tests) / sizeof(secure_group_chat2_tests[0]),
+                                              secure_group_chat2_tests,
+                                              0};
 
 test_suite_t secure_group_chat_exhume_test_suite = {"Secure group chat (Exhume)",
                                                     NULL,
