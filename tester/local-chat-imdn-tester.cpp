@@ -572,6 +572,10 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 				    return linphone_chat_room_get_unread_messages_count(laureCr) == 1;
 			    }));
 			linphone_chat_room_mark_as_read(laureCr);
+			// wait bit more to make sure that the IMDN of the display state has been sent out
+			CoreManagerAssert({focus, marie, pauline, michelle, michelle2, laure}).waitUntil(chrono::seconds(1), [] {
+				return false;
+			});
 			if (stop_core) {
 				ms_message("%s stops its core", linphone_core_get_identity(laure.getLc()));
 				coresList = bctbx_list_remove(coresList, laure.getLc());
