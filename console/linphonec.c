@@ -220,7 +220,7 @@ static void
 linphonec_transfer_state_changed(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState new_call_state) {
 	char *remote = linphone_call_get_remote_address_as_string(call);
 	if (new_call_state == LinphoneCallConnected) {
-		linphonec_out("The distant endpoint %s of call %i has been transfered, you can safely close the call.\n",
+		linphonec_out("The distant endpoint %s of call %i has been transferred, you can safely close the call.\n",
 		              remote, VOIDPTR_TO_INT(linphone_call_get_user_data(call)));
 	}
 	ms_free(remote);

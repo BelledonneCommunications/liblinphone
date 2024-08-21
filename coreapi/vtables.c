@@ -374,9 +374,9 @@ void linphone_core_notify_buddy_info_updated(LinphoneCore *lc, LinphoneFriend *l
 }
 
 void linphone_core_notify_transfer_state_changed(LinphoneCore *lc,
-                                                 LinphoneCall *transfered,
+                                                 LinphoneCall *transferred,
                                                  LinphoneCallState new_call_state) {
-	NOTIFY_IF_EXIST(transfer_state_changed, lc, transfered, new_call_state);
+	NOTIFY_IF_EXIST(transfer_state_changed, lc, transferred, new_call_state);
 	cleanup_dead_vtable_refs(lc);
 }
 

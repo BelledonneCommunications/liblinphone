@@ -214,9 +214,9 @@ LINPHONE_PUBLIC unsigned int linphone_chat_message_store(LinphoneChatMessage *me
 LINPHONE_PUBLIC LinphoneChatMessageState linphone_chat_message_get_state(const LinphoneChatMessage *message);
 
 /**
- * Get if the message was encrypted when transfered
+ * Get if the message was encrypted when transferred
  * @param message #LinphoneChatMessage object. @notnil
- * @return TRUE if the message was encrypted when transfered, FALSE otherwise.
+ * @return TRUE if the message was encrypted when transferred, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_is_secured(const LinphoneChatMessage *message);
 

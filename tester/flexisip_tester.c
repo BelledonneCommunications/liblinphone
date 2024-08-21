@@ -1057,7 +1057,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		content = linphone_core_create_content(pauline->lc);
 		linphone_content_set_type(content, "image");
 		linphone_content_set_subtype(content, "jpeg");
-		linphone_content_set_size(content, file_size); /*total size to be transfered*/
+		linphone_content_set_size(content, file_size); /*total size to be transferred*/
 		linphone_content_set_name(content, "nowebcamCIF.jpg");
 		linphone_content_set_user_data(content, file_to_send);
 		message = linphone_chat_room_create_file_transfer_message(chat_room, content);

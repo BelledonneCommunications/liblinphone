@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 	big_file[sizeof(big_file) - 1] = *"E";
 
 	signal(SIGINT, stop);
-//#define DEBUG_LOGS
+// #define DEBUG_LOGS
 #ifdef DEBUG_LOGS
 	linphone_core_enable_logs(NULL); /*enable liblinphone logs.*/
 #endif
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
 	content = linphone_core_create_content(lc);
 	linphone_content_set_type(content, "text");
 	linphone_content_set_subtype(content, "plain");
-	linphone_content_set_size(content, sizeof(big_file)); /*total size to be transfered*/
+	linphone_content_set_size(content, sizeof(big_file)); /*total size to be transferred*/
 	linphone_content_set_name(content, "bigfile.txt");
 
 	/*now create a chat message with custom content*/
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
 
 	/**
 	 * Fill the application callbacks. The file_transfer_received callback is used in order to get notifications
-	 * about incoming file reception, file_transfer_send to feed file to be transfered and
+	 * about incoming file reception, file_transfer_send to feed file to be transferred and
 	 * file_transfer_progress_indication to print progress.
 	 */
 	cbs = linphone_chat_message_get_callbacks(chat_message);

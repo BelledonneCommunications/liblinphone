@@ -57,7 +57,7 @@ static void enable_encryption(const uint16_t encryptionModule, const bool encryp
 		auto filename = settings.filenameGet();
 		if (encryptDbJournal == false && (filename.size() > 8) &&
 		    (filename.compare(filename.size() - 8, 8, std::string{"-journal"}) ==
-		     0)) { // This is a plain transfered file
+		     0)) { // This is a plain transferred file
 			BCTBX_SLOGI << "Encryption test: skip encryption for -journal file";
 			settings.encryptionSuiteSet(bctoolbox::EncryptionSuite::plain);
 		} else { // just call the registered cb (the one registered by the linphone_factory_set_vfs_encryption call)

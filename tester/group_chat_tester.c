@@ -427,7 +427,7 @@ static void fill_content_buffer(LinphoneContent *content, const char *sendFilePa
 	BC_ASSERT_EQUAL((int)read, (int)file_size, int, "%d");
 	linphone_content_set_buffer(content, buf, file_size);
 	ms_free(buf);
-	linphone_content_set_size(content, file_size); /*total size to be transfered*/
+	linphone_content_set_size(content, file_size); /*total size to be transferred*/
 	fclose(file_to_send);
 }
 

@@ -815,7 +815,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(Linphon
  * @param message #LinphoneChatMessage object
  * The state of the message sending will be notified via the callbacks defined in the #LinphoneChatMessageCbs object
  * that can be obtained by calling linphone_chat_message_get_callbacks(). The #LinphoneChatMessage reference is
- * transfered to the function and thus doesn't need to be unref'd by the application.
+ * transferred to the function and thus doesn't need to be unref'd by the application.
  * @deprecated 13/10/2017 Use linphone_chat_message_send() instead.
  * @donotwrap
  */

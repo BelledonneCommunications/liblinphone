@@ -1044,12 +1044,12 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 
 } // namespace LinphoneTest
 
-static test_t local_conference_encrypted_inpromptu_conference_tests[] = {
+static test_t local_conference_encrypted_impromptu_conference_tests[] = {
     TEST_NO_TAG("Create simple point-to-point encrypted dial out conference",
                 LinphoneTest::create_simple_point_to_point_encrypted_conference_dial_out),
 };
 
-static test_t local_conference_inpromptu_conference_tests[] = {
+static test_t local_conference_impromptu_conference_tests[] = {
     TEST_NO_TAG("Create simple dial out conference", LinphoneTest::create_simple_conference_dial_out),
     TEST_NO_TAG("Create simple dial out ICE conference and ICS sent",
                 LinphoneTest::create_simple_conference_dial_out_and_ics),
@@ -1072,7 +1072,7 @@ static test_t local_conference_inpromptu_conference_tests[] = {
     TEST_NO_TAG("2 overlapping dialout conferences from different organizers",
                 LinphoneTest::two_overlapping_dialout_conferences_from_different_organizers)};
 
-static test_t local_conference_inpromptu_mismatch_conference_tests[] = {
+static test_t local_conference_impromptu_mismatch_conference_tests[] = {
     TEST_NO_TAG("Create simple dial out conference with calls declined",
                 LinphoneTest::create_simple_conference_dial_out_with_calls_declined),
     TEST_NO_TAG("Create simple dial out conference with some calls declined",
@@ -1090,39 +1090,39 @@ static test_t local_conference_inpromptu_mismatch_conference_tests[] = {
     TEST_NO_TAG("Simple dial out conference with no payloads",
                 LinphoneTest::simple_dial_out_conference_with_no_payloads)};
 
-test_suite_t local_conference_test_suite_encrypted_inpromptu_conference = {
-    "Local conference tester (Inpromptu Encrypted Conference)",
+test_suite_t local_conference_test_suite_encrypted_impromptu_conference = {
+    "Local conference tester (Impromptu Encrypted Conference)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
     liblinphone_tester_after_each,
-    sizeof(local_conference_encrypted_inpromptu_conference_tests) /
-        sizeof(local_conference_encrypted_inpromptu_conference_tests[0]),
-    local_conference_encrypted_inpromptu_conference_tests,
+    sizeof(local_conference_encrypted_impromptu_conference_tests) /
+        sizeof(local_conference_encrypted_impromptu_conference_tests[0]),
+    local_conference_encrypted_impromptu_conference_tests,
     0,
     8 /*cpu_weight : video encnrypted conference uses more resources */
 };
 
-test_suite_t local_conference_test_suite_inpromptu_conference = {
-    "Local conference tester (Inpromptu Conference)",
+test_suite_t local_conference_test_suite_impromptu_conference = {
+    "Local conference tester (Impromptu Conference)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
     liblinphone_tester_after_each,
-    sizeof(local_conference_inpromptu_conference_tests) / sizeof(local_conference_inpromptu_conference_tests[0]),
-    local_conference_inpromptu_conference_tests,
+    sizeof(local_conference_impromptu_conference_tests) / sizeof(local_conference_impromptu_conference_tests[0]),
+    local_conference_impromptu_conference_tests,
     0,
     4 /*cpu_weight : video conference uses more resources */
 };
 
-test_suite_t local_conference_test_suite_inpromptu_mismatch_conference = {
-    "Local conference tester (Inpromptu Conference with mismatch)",
+test_suite_t local_conference_test_suite_impromptu_mismatch_conference = {
+    "Local conference tester (Impromptu Conference with mismatch)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
     liblinphone_tester_after_each,
-    sizeof(local_conference_inpromptu_mismatch_conference_tests) /
-        sizeof(local_conference_inpromptu_mismatch_conference_tests[0]),
-    local_conference_inpromptu_mismatch_conference_tests,
+    sizeof(local_conference_impromptu_mismatch_conference_tests) /
+        sizeof(local_conference_impromptu_mismatch_conference_tests[0]),
+    local_conference_impromptu_mismatch_conference_tests,
     0,
     4};

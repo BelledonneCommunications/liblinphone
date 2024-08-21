@@ -155,7 +155,7 @@ public:
 	 *If both found and unique found call is updated with 'isfocus' feature parameter in the Contact header field. If
 	 not found, focus add participant following the "INVITE: Adding a Participant by the Focus - Dial-Out" as described
 	 by RFC4579. <br> <b>Remote focus case: </b><br> *This operation is only available if the local participant #getMe()
-	 is admin <br>. *If found, call is transfered to the focus following " REFER: Requesting a User to Dial in to a
+	 is admin <br>. *If found, call is transferred to the focus following " REFER: Requesting a User to Dial in to a
 	 Conference Using a Conference URI" as described by RFC4579. <br> *if not found, add participant following " REFER:
 	 Requesting a Focus to Add a New Resource to a Conference(Dial Out to a New Participant)" as described by RFC4579.
 	 <br>

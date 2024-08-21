@@ -231,8 +231,8 @@ static void create_simple_end_to_end_encrypted_conference_with_screen_sharing(vo
 	    LinphoneMediaDirectionSendOnly, LinphoneConferenceSecurityLevelEndToEnd, {LinphoneParticipantRoleSpeaker});
 }
 
-test_t local_conference_end_to_end_encryption[] = {
-    TEST_ONE_TAG("First notity", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
+static test_t local_conference_end_to_end_encryption[] = {
+    TEST_ONE_TAG("First notify", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("SPI info", spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("Cipher transport", cipher_transport_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG(

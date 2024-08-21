@@ -45,9 +45,9 @@ void create_transfer_conference_base(time_t start_time,
                                      LinphoneConferenceSecurityLevel security_level,
                                      bool audio_transfer,
                                      bool video_transfer) {
-	char *pauline_recordpath = bc_tester_file("record-local_transfered_conference_with_file_player_pauline.wav");
-	char *laure_recordpath = bc_tester_file("record-local_transfered_conference_with_file_player_laure.wav");
-	char *marie_recordpath = bc_tester_file("record-local_transfered_conference_with_file_player_marie.wav");
+	char *pauline_recordpath = bc_tester_file("record-local_transferred_conference_with_file_player_pauline.wav");
+	char *laure_recordpath = bc_tester_file("record-local_transferred_conference_with_file_player_laure.wav");
+	char *marie_recordpath = bc_tester_file("record-local_transferred_conference_with_file_player_marie.wav");
 	char *pauline_soundpath = bc_tester_res("sounds/vrroom.wav");
 	char *laure_soundpath = bc_tester_res("sounds/hello8000.wav");
 	char *marie_soundpath = bc_tester_res("sounds/ahbahouaismaisbon.wav");
@@ -532,7 +532,7 @@ static void create_video_transfer_conference_active_speaker_changed(void) {
 
 } // namespace LinphoneTest
 
-static test_t local_conference_transfered_conference_basic_tests[] = {
+static test_t local_conference_transferred_conference_basic_tests[] = {
     TEST_NO_TAG("Create audio transfer conference", LinphoneTest::create_audio_transfer_conference),
     TEST_NO_TAG("Create video transfer conference", LinphoneTest::create_video_transfer_conference),
     TEST_NO_TAG("Create video transfer conference with active speaker changed",
@@ -546,15 +546,15 @@ static test_t local_conference_transfered_conference_basic_tests[] = {
 #endif // HAVE_EKT_SERVER_PLUGIN
 };
 
-test_suite_t local_conference_test_suite_transfered_conference_basic = {
-    "Local conference tester (Transfered Conference Basic)",
+test_suite_t local_conference_test_suite_transferred_conference_basic = {
+    "Local conference tester (Transferred Conference Basic)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
     liblinphone_tester_after_each,
-    sizeof(local_conference_transfered_conference_basic_tests) /
-        sizeof(local_conference_transfered_conference_basic_tests[0]),
-    local_conference_transfered_conference_basic_tests,
+    sizeof(local_conference_transferred_conference_basic_tests) /
+        sizeof(local_conference_transferred_conference_basic_tests[0]),
+    local_conference_transferred_conference_basic_tests,
     0,
     4 /*cpu_weight : video conference uses more resources */
 };

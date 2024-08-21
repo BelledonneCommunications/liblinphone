@@ -604,7 +604,7 @@ static void linphone_core_add_subscriber(LinphoneCore *lc, const char *subscribe
 	linphone_friend_add_incoming_subscription(lf, op);
 	linphone_friend_set_inc_subscribe_policy(lf, LinphoneSPAccept);
 	linphone_friend_set_inc_subscribe_pending(lf, TRUE);
-	/* the newly created "not yet" friend ownership is transfered to the lc->subscribers list*/
+	/* the newly created "not yet" friend ownership is transferred to the lc->subscribers list*/
 	lc->subscribers = bctbx_list_append(lc->subscribers, lf);
 
 	std::shared_ptr<Address> addr = Friend::getSharedFromThis(lf)->getAddress();

@@ -142,9 +142,9 @@ LINPHONE_PUBLIC LinphoneCallDir linphone_call_get_dir(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_call_log(const LinphoneCall *call);
 
 /**
- * Gets the refer-to uri (if the call was transfered).
+ * Gets the refer-to uri (if the call was transferred).
  * @param call #LinphoneCall object. @notnil
- * @return The refer-to uri of the call (if it was transfered). @maybenil
+ * @return The refer-to uri of the call (if it was transferred). @maybenil
  **/
 LINPHONE_PUBLIC const char *linphone_call_get_refer_to(const LinphoneCall *call);
 
@@ -615,17 +615,17 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_update(LinphoneCall *call, c
  * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the
  *new call at the other party. The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress,
  *#LinphoneCallOutgoingRinging and #LinphoneCallConnected.
- * @param call The call to be transfered @notnil
- * @param refer_to The #LinphoneAddress the call is to be refered to. @notnil
+ * @param call The call to be transferred @notnil
+ * @param refer_to The #LinphoneAddress the call is to be referred to. @notnil
  * @return 0 on success, -1 on failure
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, LinphoneAddress *refer_to);
 
 /**
  * Transfers a call to destination of another running call. This is used for "attended transfer" scenarios.
- * The transfered call is supposed to be in paused state, so that it is able to accept the transfer immediately.
- * The destination call is a call previously established to introduce the transfered person.
- * This method will send a transfer request to the transfered person. The phone of the transfered is then
+ * The transferred call is supposed to be in paused state, so that it is able to accept the transfer immediately.
+ * The destination call is a call previously established to introduce the transferred person.
+ * This method will send a transfer request to the transferred person. The phone of the transferred is then
  * expected to automatically call to the destination of the transfer. The receiver of the transfer will then
  *automatically close the call with us (the 'dest' call). It is possible to follow the progress of the transfer provided
  *that transferee sends notification about it. In this case, the transfer_state_changed callback of the
@@ -1038,8 +1038,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect(LinphoneCall *call, const 
  * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the
  *new call at the other party. The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress,
  *#LinphoneCallOutgoingRinging and #LinphoneCallConnected.
- * @param call The call to be transfered @notnil
- * @param refer_to The destination the call is to be refered to. @notnil
+ * @param call The call to be transferred @notnil
+ * @param refer_to The destination the call is to be referred to. @notnil
  * @return 0 on success, -1 on failure
  * @deprecated 27/10/2020. Use linphone_call_transfer_to() instead.
  **/

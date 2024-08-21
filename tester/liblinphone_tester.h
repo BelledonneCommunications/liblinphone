@@ -151,10 +151,10 @@ extern test_suite_t local_conference_test_suite_scheduled_conference_advanced;
 extern test_suite_t local_conference_test_suite_scheduled_conference_audio_only_participant;
 extern test_suite_t local_conference_test_suite_scheduled_conference_with_screen_sharing;
 extern test_suite_t local_conference_test_suite_scheduled_ice_conference;
-extern test_suite_t local_conference_test_suite_inpromptu_conference;
-extern test_suite_t local_conference_test_suite_encrypted_inpromptu_conference;
-extern test_suite_t local_conference_test_suite_inpromptu_mismatch_conference;
-extern test_suite_t local_conference_test_suite_transfered_conference_basic;
+extern test_suite_t local_conference_test_suite_impromptu_conference;
+extern test_suite_t local_conference_test_suite_encrypted_impromptu_conference;
+extern test_suite_t local_conference_test_suite_impromptu_mismatch_conference;
+extern test_suite_t local_conference_test_suite_transferred_conference_basic;
 extern test_suite_t external_domain_test_suite;
 extern test_suite_t potential_configuration_graph_test_suite;
 extern test_suite_t call_race_conditions_suite;
@@ -699,7 +699,7 @@ void registration_state_changed(struct _LinphoneCore *lc,
                                 LinphoneRegistrationState cstate,
                                 const char *message);
 void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg);
-void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
+void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transferred, LinphoneCallState new_call_state);
 void notify_presence_received(LinphoneCore *lc, LinphoneFriend *lf);
 void notify_friend_presence_received(LinphoneFriend *lf);
 void notify_presence_received_for_uri_or_tel(LinphoneCore *lc,

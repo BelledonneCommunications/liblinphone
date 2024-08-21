@@ -873,7 +873,7 @@ bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore *lc);
 void linphone_core_notify_refer_received(LinphoneCore *lc, const char *refer_to);
 void linphone_core_notify_buddy_info_updated(LinphoneCore *lc, LinphoneFriend *lf);
 void linphone_core_notify_transfer_state_changed(LinphoneCore *lc,
-                                                 LinphoneCall *transfered,
+                                                 LinphoneCall *transferred,
                                                  LinphoneCallState new_call_state);
 void linphone_core_notify_call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 void linphone_core_notify_info_received(LinphoneCore *lc, LinphoneCall *call, const LinphoneInfoMessage *msg);

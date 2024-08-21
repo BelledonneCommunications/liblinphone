@@ -187,7 +187,7 @@ typedef void (*LinphoneCallCbsStatsUpdatedCb)(LinphoneCall *call, const Linphone
 
 /**
  * Callback for notifying progresses of transfers.
- * @param call #LinphoneCall that was transfered @notnil
+ * @param call #LinphoneCall that was transferred @notnil
  * @param state The #LinphoneCallState of the call to transfer target at the far end.
  */
 typedef void (*LinphoneCallCbsTransferStateChangedCb)(LinphoneCall *call, LinphoneCallState state);

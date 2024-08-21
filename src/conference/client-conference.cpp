@@ -1116,15 +1116,15 @@ void ClientConference::onPendingCallStateChanged(std::shared_ptr<Call> call, Cal
 void ClientConference::onCallSessionTransferStateChanged(const std::shared_ptr<CallSession> &session,
                                                          CallSession::State state) {
 	auto op = session->getPrivate()->getOp();
-	shared_ptr<Call> transfered = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
-	if (transfered) {
+	shared_ptr<Call> transferred = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
+	if (transferred) {
 		switch (state) {
 			case CallSession::State::Connected:
-				mTransferingCalls.push_back(transfered);
+				mTransferingCalls.push_back(transferred);
 				break;
 			case CallSession::State::Error:
-				mTransferingCalls.remove(transfered);
-				Conference::removeParticipant(transfered);
+				mTransferingCalls.remove(transferred);
+				Conference::removeParticipant(transferred);
 				if ((mParticipants.size() + mPendingCalls.size() + mTransferingCalls.size()) == 0) terminate();
 				break;
 			default:

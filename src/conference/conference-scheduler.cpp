@@ -266,13 +266,14 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 	}
 
 	if (getState() == State::AllocationPending) {
-		lInfo() << "[Conference Scheduler] [" << this << "] Conference has been succesfully created: " << *conferenceAddress;
+		lInfo() << "[Conference Scheduler] [" << this
+		        << "] Conference has been succesfully created: " << *conferenceAddress;
 		mConferenceInfo->setUri(conferenceAddress);
 	} else {
 		// No need to update the conference address during an update
-		lInfo() << "[Conference Scheduler] [" << this << "] Conference has been succesfully updated: " << *mConferenceInfo->getUri();
+		lInfo() << "[Conference Scheduler] [" << this
+		        << "] Conference has been succesfully updated: " << *mConferenceInfo->getUri();
 	}
-
 
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -404,7 +405,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenc
 			auto newParticipantInfo = participantInfo->clone()->toSharedPtr();
 			if (newParticipantInfo->getRole() == Participant::Role::Unknown) {
 				// Search if the role of the participant info stored in the database is different.
-				// We hit this case, if a client creates an inpromptu conference on a server and sends the ICS
+				// We hit this case, if a client creates an impromptu conference on a server and sends the ICS
 				// invitation as well. If the network connection is fast enough, it may happen that that the client
 				// already received the NOTIFY full state, therefore the server already took the decision on the
 				// participant role In such a scenario, the participant information stored in the conference scheduler

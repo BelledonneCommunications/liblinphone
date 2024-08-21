@@ -321,9 +321,9 @@ set(SOURCE_FILES_CXX
 	local-chat-tester-functions.cpp
 	local-conference-tester-functions.cpp
 	local-scheduled-conference-tester.cpp
-	local-transfered-conference-tester.cpp
+	local-transferred-conference-tester.cpp
 	local-ice-conference-tester.cpp
-	local-inpromptu-conference-tester.cpp
+	local-impromptu-conference-tester.cpp
 	local-conference-edition-tester.cpp
 	local-chat-tester.cpp
 	local-chat-imdn-tester.cpp

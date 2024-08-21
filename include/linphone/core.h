@@ -7641,7 +7641,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_remove_listener(LinphoneC
  * new call at the other party. The notified states are #LinphoneCallStateOutgoingInit ,
  *#LinphoneCallStateOutgoingProgress, #LinphoneCallStateOutgoingRinging and #LinphoneCallStateConnected.
  * @param core #LinphoneCore object
- * @param call The call to be transfered
+ * @param call The call to be transferred
  * @param refer_to The destination the call is to be refered to
  * @return 0 on success, -1 on failure
  * @ingroup call_control
@@ -7655,9 +7655,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_transfer_call(L
 /**
  * @brief Transfers a call to destination of another running call. This is used for "attended transfer" scenarios.
  *
- * The transfered call is supposed to be in paused state, so that it is able to accept the transfer immediately.
- * The destination call is a call previously established to introduce the transfered person.
- * This method will send a transfer request to the transfered person. The phone of the transfered is then
+ * The transferred call is supposed to be in paused state, so that it is able to accept the transfer immediately.
+ * The destination call is a call previously established to introduce the transferred person.
+ * This method will send a transfer request to the transferred person. The phone of the transferred is then
  * expected to automatically call to the destination of the transfer. The receiver of the transfer will then
  * automatically close the call with us (the 'dest' call). It is possible to follow the progress of the transfer
  *provided that transferee sends notification about it. In this case, the transfer_state_changed callback of the
@@ -8726,7 +8726,7 @@ linphone_core_create_chat_room_5(LinphoneCore *core, const LinphoneAddress *part
 
 /**
  * Get a chat room whose peer is the supplied address. If it does not exist yet, it will be created as a basic chat
- *room. No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ *room. No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core the linphone core @notnil
  * @param addr a linphone address. @notnil
@@ -8739,7 +8739,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_roo
 
 /**
  * Get a chat room. If it does not exist yet, it will be created as a basic chat room.
- * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core the linphone core @notnil
  * @param peer_addr a linphone address. @notnil
@@ -8753,7 +8753,7 @@ linphone_core_get_chat_room_2(LinphoneCore *core, const LinphoneAddress *peer_ad
 
 /**
  * Get a chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be
- *created as a basic chat room. No reference is transfered to the application. The #LinphoneCore keeps a reference on
+ *created as a basic chat room. No reference is transferred to the application. The #LinphoneCore keeps a reference on
  *the chat room.
  * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core A #LinphoneCore object @notnil
@@ -8767,7 +8767,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_roo
 
 /**
  * Find a chat room.
- * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param core the linphone core @notnil
  * @param peer_addr a linphone address. @notnil
  * @param local_addr a linphone address. @notnil
@@ -8781,7 +8781,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_find_chat_ro
 
 /**
  * Find a one to one chat room.
- * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param core the linphone core @notnil
  * @param local_addr a linphone address. @notnil
  * @param participant_addr a linphone address. @notnil
@@ -8795,7 +8795,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_find_one_to_
 
 /**
  * Find a one to one chat room.
- * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param core the linphone core @notnil
  * @param local_addr a linphone address. @notnil
  * @param participant_addr a linphone address. @notnil

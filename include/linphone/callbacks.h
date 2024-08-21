@@ -451,11 +451,11 @@ typedef LinphoneCoreCbsBuddyInfoUpdatedCb LinphoneCoreBuddyInfoUpdatedCb;
 /**
  * Callback for notifying progresses of transfers.
  * @param core the #LinphoneCore @notnil
- * @param transfered the #LinphoneCall that was transfered @notnil
+ * @param transferred the #LinphoneCall that was transferred @notnil
  * @param call_state the #LinphoneCallState of the call to transfer target at the far end.
  */
 typedef void (*LinphoneCoreCbsTransferStateChangedCb)(LinphoneCore *core,
-                                                      LinphoneCall *transfered,
+                                                      LinphoneCall *transferred,
                                                       LinphoneCallState call_state);
 
 /**

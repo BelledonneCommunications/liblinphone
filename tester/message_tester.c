@@ -67,7 +67,7 @@ create_message_from_sintel_trailer_legacy(LinphoneChatRoom *chat_room, const cha
 	belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "sintel trailer content");
 	linphone_content_set_type(content, "video");
 	linphone_content_set_subtype(content, "mkv");
-	linphone_content_set_size(content, file_size); /*total size to be transfered*/
+	linphone_content_set_size(content, file_size); /*total size to be transferred*/
 	linphone_content_set_name(content, filename);
 	linphone_content_set_user_data(content, file_to_send);
 
@@ -102,7 +102,7 @@ LinphoneChatMessage *_create_message_from_sintel_trailer(LinphoneChatRoom *chat_
 	belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "sintel trailer content");
 	linphone_content_set_type(content, "video");
 	linphone_content_set_subtype(content, "mkv");
-	linphone_content_set_size(content, file_size); /*total size to be transfered*/
+	linphone_content_set_size(content, file_size); /*total size to be transferred*/
 	linphone_content_set_name(content, filename);
 	linphone_content_set_user_data(content, file_to_send);
 
@@ -151,7 +151,7 @@ create_file_transfer_message_from_file(LinphoneChatRoom *chat_room, const char *
 	linphone_content_set_subtype(content, "mkv");
 	linphone_content_set_name(content, filename);
 	linphone_content_set_file_path(content, send_filepath);
-	linphone_content_set_size(content, file_size); /*total size to be transfered*/
+	linphone_content_set_size(content, file_size); /*total size to be transferred*/
 
 	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
 	cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
@@ -1428,7 +1428,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 		belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "ahbahouaismaisbon content");
 		linphone_content_set_type(content, "audio");
 		linphone_content_set_subtype(content, "wav");
-		linphone_content_set_size(content, file_size); /*total size to be transfered*/
+		linphone_content_set_size(content, file_size); /*total size to be transferred*/
 		linphone_content_set_name(content, "ahbahouaismaisbon.wav");
 		linphone_content_set_user_data(content, file_to_send);
 

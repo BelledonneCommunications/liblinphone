@@ -3692,8 +3692,8 @@ void _check_friend_result_list_3(LinphoneCore *lc,
 	_check_friend_result_list_2(lc, resultList, index, uri, phone, name, LinphoneMagicSearchSourceAll);
 }
 
-void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
-	LinphoneCallLog *clog = linphone_call_get_call_log(transfered);
+void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transferred, LinphoneCallState new_call_state) {
+	LinphoneCallLog *clog = linphone_call_get_call_log(transferred);
 	char *to = linphone_address_as_string(linphone_call_log_get_to_address(clog));
 	char *from = linphone_address_as_string(linphone_call_log_get_from_address(clog));
 	stats *counters;

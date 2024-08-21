@@ -95,7 +95,7 @@ class TestMessage:
         content.type = 'video'
         content.subtype = 'mkv'
         linphonetester_logger.info("[TESTER] os.path.getsize(send_filepath)={}".format(os.path.getsize(send_filepath)))
-        content.size = os.path.getsize(send_filepath) # total size to be transfered
+        content.size = os.path.getsize(send_filepath) # total size to be transferred
         linphonetester_logger.info("[TESTER] content.size={}".format(content.size))
         content.name = 'sintel_trailer_opus_h264.mkv'
         message = chat_room.create_file_transfer_message(content)

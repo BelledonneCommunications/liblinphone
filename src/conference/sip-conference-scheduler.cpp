@@ -99,7 +99,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		            "the server";
 		setState(State::Error);
 	} else if (getState() != State::Error) {
-		// Do not try to call inpromptu conference if a participant updates its informations
+		// Do not try to call impromptu conference if a participant updates its informations
 		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
 			lInfo() << "Automatically rejoining conference " << *remoteAddress;
 			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);

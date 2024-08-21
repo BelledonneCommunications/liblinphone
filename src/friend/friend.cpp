@@ -774,7 +774,7 @@ void Friend::addFriendToListMapIfNotInItYet(const std::string &uri) {
 }
 
 void Friend::addIncomingSubscription(SalOp *op) {
-	/* Ownership of the op is transfered from sal to the Friend */
+	/* Ownership of the op is transferred from sal to the Friend */
 	mInSubs.push_back(op);
 }
 
