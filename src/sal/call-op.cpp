@@ -1889,7 +1889,7 @@ void SalCallOp::processNotify(const belle_sip_request_event_t *event,
 	if (eventHeader && (strncasecmp(belle_sip_header_get_unparsed_value(eventHeader), "refer", strlen("refer")) == 0) &&
 	    contentTypeHeader && (strcmp(belle_sip_header_content_type_get_type(contentTypeHeader), "message") == 0) &&
 	    (strcmp(belle_sip_header_content_type_get_subtype(contentTypeHeader), "sipfrag") == 0) && body) {
-		auto sipfrag = BELLE_SIP_RESPONSE(belle_sip_message_parse(body));
+		auto sipfrag = BELLE_SIP_RESPONSE(belle_sip_message_parse_sipfrag(body));
 		if (!sipfrag) {
 			lWarning() << "Cannot parse sipfrag  [" << body << "trying compatibility mode by adding CRLF";
 			string compatibilityBody(body);
