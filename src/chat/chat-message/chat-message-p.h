@@ -298,6 +298,7 @@ private:
 
 	std::weak_ptr<AbstractChatRoom> mChatRoom;
 	ConferenceId conferenceId;
+	std::shared_ptr<Address> mMeAddress;
 	std::shared_ptr<Address> fromAddress;
 	Address authenticatedFromAddress;
 	bool senderAuthenticationEnabled = true;

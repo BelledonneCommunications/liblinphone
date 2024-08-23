@@ -113,6 +113,7 @@ public:
 	long long getStorageId() const;
 	void deleteChatMessageFromCache();
 
+	const std::shared_ptr<Address> &getMeAddress() const;
 	std::shared_ptr<AbstractChatRoom> getChatRoom() const;
 
 	void send();

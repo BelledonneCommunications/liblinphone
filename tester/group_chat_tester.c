@@ -846,8 +846,12 @@ static void group_chat_room_params(void) {
 	bctbx_list_t *participantsAddresses = NULL;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	LinphoneChatRoom *marieCr = NULL;
-
 	start_core_for_conference(coresManagerList);
+
+	const LinphoneAddress *marieAddr =
+	    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc));
+	const LinphoneAddress *paulineAddr =
+	    linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
 
 	participantsAddresses =
 	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -866,6 +870,9 @@ static void group_chat_room_params(void) {
 
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 		linphone_chat_room_unref(marieCr);
+
+		BC_ASSERT_PTR_NULL(linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr));
+		BC_ASSERT_PTR_NULL(linphone_core_find_one_to_one_chat_room(pauline->lc, paulineAddr, marieAddr));
 	}
 	// Should create	a one-to-one flexisip chat
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
@@ -879,6 +886,9 @@ static void group_chat_room_params(void) {
 
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 		linphone_chat_room_unref(marieCr);
+
+		BC_ASSERT_PTR_NULL(linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr));
+		BC_ASSERT_PTR_NULL(linphone_core_find_one_to_one_chat_room(pauline->lc, paulineAddr, marieAddr));
 	}
 
 	// Should create	a group flexisip chat

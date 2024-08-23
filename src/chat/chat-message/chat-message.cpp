@@ -824,6 +824,7 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		fromAddress = peerAddress;
 		toAddress = localAddress;
 	}
+	mMeAddress = chatRoom->getMe()->getAddress()->clone()->toSharedPtr();
 }
 
 // -----------------------------------------------------------------------------
@@ -865,7 +866,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	shared_ptr<Core> core = q->getCore();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
-	const auto &meAddress = chatRoom->getMe()->getAddress();
+	const auto &meAddress = q->getMeAddress();
 
 	bool encryptionMandatory = false;
 	const auto &account = chatRoom->getAccount();
@@ -1191,7 +1192,7 @@ void ChatMessagePrivate::endMessageReception() {
 	L_Q();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 	if (!chatRoom) return;
-	const auto &meAddress = chatRoom->getMe()->getAddress();
+	const auto &meAddress = q->getMeAddress();
 	chatRoom->removeTransientChatMessage(q->getSharedFromThis());
 	// The message is set to delivered here because this code is hit if the attachment cannot be downloaded or the
 	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
@@ -1239,7 +1240,7 @@ void ChatMessagePrivate::send() {
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 	if (!chatRoom) return;
 
-	const auto &meAddress = chatRoom->getMe()->getAddress();
+	const auto &meAddress = q->getMeAddress();
 	const auto &chatRoomState = chatRoom->getState();
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	shared_ptr<Core> core = q->getCore();
@@ -1530,7 +1531,7 @@ void ChatMessagePrivate::storeInDb() {
 	const bool isFlexisipChatRoom =
 	    (chatRoomParams->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat);
 	if (isFlexisipChatRoom) {
-		setParticipantState(chatRoom->getMe()->getAddress(), state, ::ms_time(nullptr));
+		setParticipantState(q->getMeAddress(), state, ::ms_time(nullptr));
 	}
 
 	if (direction == ChatMessage::Direction::Incoming) {
@@ -1636,11 +1637,14 @@ long long ChatMessage::getStorageId() const {
 
 shared_ptr<AbstractChatRoom> ChatMessage::getChatRoom() const {
 	L_D();
-
 	shared_ptr<AbstractChatRoom> chatRoom(d->mChatRoom.lock());
 	if (!chatRoom) lError() << "Unable to get valid chat room instance for chat message " << this;
-
 	return chatRoom;
+}
+
+const std::shared_ptr<Address> &ChatMessage::getMeAddress() const {
+	L_D();
+	return d->mMeAddress;
 }
 
 // -----------------------------------------------------------------------------
@@ -1938,7 +1942,7 @@ void ChatMessage::markAsRead() {
 	d->markAsRead();
 	// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 	if (!d->hasFileTransferContent()) {
-		const auto &meAddress = chatRoom->getMe()->getAddress();
+		const auto &meAddress = getMeAddress();
 		d->setParticipantState(meAddress, ChatMessage::State::Displayed, ::ms_time(nullptr));
 	}
 	if (getState() != ChatMessage::State::Displayed) {
@@ -2072,7 +2076,7 @@ void ChatMessage::cancelFileTransfer() {
 
 		if (d->state == State::FileTransferInProgress) {
 			auto chatRoom = getChatRoom();
-			const auto &meAddress = chatRoom->getMe()->getAddress();
+			const auto &meAddress = getMeAddress();
 			lInfo() << "File transfer on message [" << getSharedFromThis() << "] was in progress, updating state";
 			// For auto download messages, set the state back to Delivered
 			if (d->isAutoFileTransferDownloadInProgress()) {
