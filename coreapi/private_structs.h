@@ -255,6 +255,7 @@ struct _EcCalibrator {
 	unsigned int rate;
 	LinphoneEcCalibratorStatus status;
 	bool_t freq1, freq2, freq3;
+	uint64_t tone_start_time[3];
 	bool_t play_cool_tones;
 };
 

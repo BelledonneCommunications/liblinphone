@@ -136,6 +136,13 @@ static void on_tone_sent(void *data, BCTBX_UNUSED(MSFilter *f), unsigned int eve
 		if (ev->tone_name[0] != '\0') {
 			ecc->acc -= ev->tone_start_time;
 			ms_message("Sent tone at %u", (unsigned int)ev->tone_start_time);
+			if (strcmp(&ev->tone_name[0], "C") == 0) {
+				ecc->tone_start_time[0] = ev->tone_start_time;
+			} else if (strcmp(&ev->tone_name[0], "D") == 0) {
+				ecc->tone_start_time[1] = ev->tone_start_time;
+			} else if (strcmp(&ev->tone_name[0], "E") == 0) {
+				ecc->tone_start_time[2] = ev->tone_start_time;
+			}
 		}
 	}
 }
@@ -143,10 +150,22 @@ static void on_tone_sent(void *data, BCTBX_UNUSED(MSFilter *f), unsigned int eve
 static bool_t is_valid_tone(EcCalibrator *ecc, MSToneDetectorEvent *ev) {
 	bool_t *toneflag = NULL;
 	if (strcmp(ev->tone_name, "freq1") == 0) {
+		if (ecc->tone_start_time[1] == 0) {
+			ms_message("False tone detection at freq1 (not sent yet), time is %d", (int)ev->tone_start_time);
+			return FALSE;
+		}
 		toneflag = &ecc->freq1;
 	} else if (strcmp(ev->tone_name, "freq2") == 0) {
+		if (ecc->tone_start_time[2] == 0) {
+			ms_message("False tone detection at freq2 (not sent yet), time is %d", (int)ev->tone_start_time);
+			return FALSE;
+		}
 		toneflag = &ecc->freq2;
 	} else if (strcmp(ev->tone_name, "freq3") == 0) {
+		if (ecc->tone_start_time[0] == 0) {
+			ms_message("False tone detection at freq3 (not sent yet), time is %d", (int)ev->tone_start_time);
+			return FALSE;
+		}
 		toneflag = &ecc->freq3;
 	} else {
 		ms_error("Calibrator bug.");
@@ -315,6 +334,9 @@ EcCalibrator *ec_calibrator_new(MSFactory *factory,
 	ecc->capt_card = ms_snd_card_ref(capt_card);
 	ecc->play_card = ms_snd_card_ref(play_card);
 	ecc->factory = factory;
+	ecc->tone_start_time[0] = 0;
+	ecc->tone_start_time[1] = 0;
+	ecc->tone_start_time[2] = 0;
 	return ecc;
 }
 
