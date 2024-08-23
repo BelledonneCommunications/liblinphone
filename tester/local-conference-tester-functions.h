@@ -448,7 +448,8 @@ void create_conference_base(time_t start_time,
                             bool_t network_restart,
                             LinphoneConferenceSecurityLevel security_level,
                             std::list<LinphoneParticipantRole> allowedRoles,
-                            bool_t add_participant_after_end);
+                            bool_t add_participant_after_end,
+                            bool_t version_mismatch);
 
 void create_conference_with_screen_sharing_base(time_t start_time,
                                                 int duration,
@@ -529,7 +530,8 @@ void create_conference_dial_out_base(bool_t send_ics,
                                      LinphoneConferenceParticipantListType participant_list_type,
                                      bool_t accept,
                                      bool_t participant_codec_mismatch,
-                                     LinphoneConferenceSecurityLevel security_level);
+                                     LinphoneConferenceSecurityLevel security_level,
+                                     bool_t version_mismatch);
 
 void create_conference_with_audio_only_participants_base(LinphoneConferenceSecurityLevel security_level);
 

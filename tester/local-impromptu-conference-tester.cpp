@@ -31,7 +31,7 @@ static void create_simple_conference_dial_out(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, FALSE);
 	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -41,7 +41,7 @@ static void create_simple_conference_dial_out_and_ics(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 	create_conference_dial_out_base(TRUE, LinphoneConferenceLayoutGrid, pol, TRUE, TRUE,
 	                                LinphoneConferenceParticipantListTypeOpen, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -51,7 +51,7 @@ static void create_simple_conference_dial_out_with_calls_declined(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutGrid, pol, TRUE, TRUE,
 	                                LinphoneConferenceParticipantListTypeOpen, FALSE, FALSE,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -61,7 +61,7 @@ static void create_simple_point_to_point_encrypted_conference_dial_out(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelPointToPoint);
+	                                LinphoneConferenceSecurityLevelPointToPoint, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -71,7 +71,7 @@ static void create_simple_conference_dial_out_participant_codec_mismatch(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, FALSE);
 	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, TRUE,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -81,7 +81,7 @@ static void create_simple_conference_dial_out_with_video_not_accepted(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -91,7 +91,7 @@ static void create_simple_conference_dial_out_with_video_not_initiated(void) {
 	linphone_video_activation_policy_set_automatically_initiate(pol, FALSE);
 	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutGrid, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 

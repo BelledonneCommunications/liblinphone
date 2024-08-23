@@ -2113,6 +2113,8 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
 
+		session->removeListener(this);
+
 		// Detach call from conference
 		if (call) {
 			call->setConference(nullptr);
@@ -2198,6 +2200,7 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 				if (lastSession) {
 					// Detach call from conference
 					auto lastOp = lastSession->getPrivate()->getOp();
+					lastSession->removeListener(this);
 					if (lastOp) {
 						shared_ptr<Call> lastSessionCall = getCore()->getCallByCallId(lastOp->getCallId());
 						if (lastSessionCall) {
@@ -2785,10 +2788,70 @@ int ServerConference::startRecording(const std::string &path) {
 	return 0;
 }
 
+/**
+ * @brief Checks if a client meets the requirements to join a conference.
+ *
+ * This function examines the client's specifications (version, capabilities) to determine if it is
+ * compatible with the current conference settings. If the client does not meet the minimum requirements
+ * (e.g., conference version or end-to-end encryption), the call is declined or terminated.
+ *
+ * @param call Shared pointer to the current call.
+ * @param remoteContactAddress Shared pointer to the remote client's contact address.
+ * @param incomingReceived Indicates if the call is incoming (true) or outgoing (false).
+ * @return true if the client is compatible with the conference, false otherwise.
+ */
+bool ServerConference::checkClientCompatibility(const shared_ptr<Call> &call,
+                                                const shared_ptr<Address> &remoteContactAddress,
+                                                bool incomingReceived) const {
+	if (remoteContactAddress->hasParam("+org.linphone.specs")) {
+		const auto linphoneSpecs = remoteContactAddress->getParamValue("+org.linphone.specs");
+		auto protocols = Utils::parseCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size() - 2));
+		if (auto attr = protocols.find("conference"); attr != protocols.end()) {
+			Utils::Version minimalVersion = Utils::Version(2, 0);
+			Utils::Version clientVersion = attr->second;
+
+			int audioMode = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sound",
+			                                        "conference_mode", MSConferenceModeMixer);
+			int videoMode = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "video",
+			                                        "conference_mode", MSConferenceModeMixer);
+
+			// Check if the server conference is in end-to-end encryption mode
+			bool isE2E = getCurrentParams()->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd;
+
+			if ((audioMode == MSConferenceModeRouterFullPacket) && (videoMode == MSConferenceModeRouterFullPacket) &&
+			    (clientVersion < minimalVersion)) {
+				// If the client does not meet the minimum version required for a full-packet router conference
+				LinphoneErrorInfo *ei = linphone_error_info_new();
+				linphone_error_info_set(ei, NULL, LinphoneReasonNotAcceptable, 488, NULL,
+				                        "Please upgrade your software in order to connect to this service");
+				if (incomingReceived) {
+					call->decline(ei);
+				} else {
+					call->terminate(ei);
+				}
+				linphone_error_info_unref(ei);
+				return false; // The client is not compatible
+			} else if (auto limeEnabled = protocols.find("lime"); limeEnabled == protocols.end() && isE2E) {
+				// If the conference requires end-to-end encryption but the client does not support LIME
+				LinphoneErrorInfo *ei = linphone_error_info_new();
+				linphone_error_info_set(ei, NULL, LinphoneReasonNotAcceptable, 488, NULL,
+				                        "Lime (end to end encryption) is required to use this service");
+				if (incomingReceived) {
+					call->decline(ei);
+				} else {
+					call->terminate(ei);
+				}
+				linphone_error_info_unref(ei);
+				return false; // The client is not compatible
+			}
+		}
+	}
+	return true; // The client is compatible
+}
+
 void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
                                                  CallSession::State state,
                                                  BCTBX_UNUSED(const std::string &message)) {
-
 	const auto &chatRoom = getChatRoom();
 	const auto conferenceAddressStr =
 	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip::unknown"));
@@ -2892,12 +2955,41 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 		const std::shared_ptr<Address> &remoteAddress = session->getRemoteAddress();
 		const auto &device = findParticipantDevice(session);
 		const auto &deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
-		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip::unknown"));
+		const auto &remoteContactAddress = session->getRemoteContactAddress();
+		auto op = session->getPrivate()->getOp();
+		auto cppCall = getCore()->getCallByCallId(op->getCallId());
+		LinphoneCallParams *params = nullptr;
 		switch (state) {
 			case CallSession::State::OutgoingRinging:
 				participantDeviceAlerting(session);
 				break;
+			case CallSession::State::IncomingReceived: {
+				if (!checkClientCompatibility(cppCall, remoteContactAddress, true)) break;
+
+				const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
+				const auto dialout = (getCurrentParams()->getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+				if (Conference::getState() != ConferenceInterface::State::Deleted &&
+				    (!resourceList || ((getOrganizer()->weakEqual(*(session->getRemoteAddress()))) && dialout))) {
+					addParticipant(cppCall);
+				} else {
+					const_cast<LinphonePrivate::CallSessionParamsPrivate *>(session->getParams()->getPrivate())
+					    ->setInConference(true);
+					const std::shared_ptr<Address> to = Address::create(op->getTo());
+					session->getPrivate()->setConferenceId(to->getUriParamValue("conf-id"));
+					// Remove listener here as the call is not going to be attached to a participant.
+					session->removeListener(this);
+				}
+
+				params = linphone_core_create_call_params(getCore()->getCCore(), cppCall->toC());
+				linphone_call_params_enable_audio(params, TRUE);
+				linphone_call_params_enable_video(
+				    params,
+				    (cppCall->getRemoteParams()->videoEnabled() && getCurrentParams()->videoEnabled()) ? TRUE : FALSE);
+				linphone_call_params_set_start_time(params, getCurrentParams()->getStartTime());
+				linphone_call_params_set_end_time(params, getCurrentParams()->getEndTime());
+				cppCall->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+				linphone_call_params_unref(params);
+			} break;
 			case CallSession::State::Connected:
 				if (getState() == ConferenceInterface::State::Created) {
 					enter();
@@ -2910,12 +3002,11 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				}
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::StreamsRunning: {
-				auto op = session->getPrivate()->getOp();
-				auto cppCall = getCore()->getCallByCallId(op->getCallId());
+				if (!checkClientCompatibility(cppCall, remoteContactAddress, false)) break;
+
 				if (!addParticipantDevice(cppCall)) {
 					// If the participant is already in the conference
 					const auto &participant = findParticipant(remoteAddress);
-					auto remoteContactAddress = session->getRemoteContactAddress();
 					if (participant) {
 						if (device && remoteContactAddress) {
 							const auto deviceAddr = device->getAddress();
@@ -2995,13 +3086,13 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 						} else {
 							participantDeviceJoined(session);
 						}
+						bool admin = remoteContactAddress && remoteContactAddress->hasParam("admin") &&
+						             Utils::stob(remoteContactAddress->getParamValue("admin"));
+						setParticipantAdminStatus(participant, admin);
 					} else {
 						lError() << "Unable to update device with address " << *remoteContactAddress
 						         << " because it was not found in conference " << conferenceAddressStr;
 					}
-					bool admin = remoteContactAddress && remoteContactAddress->hasParam("admin") &&
-					             Utils::stob(remoteContactAddress->getParamValue("admin"));
-					setParticipantAdminStatus(participant, admin);
 				} else {
 					lError() << "Unable to update admin status and device address as no participant with address "
 					         << *remoteAddress << " has been found in conference " << conferenceAddressStr;

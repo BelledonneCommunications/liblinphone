@@ -114,8 +114,6 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 			messageState = message;
 		}
 
-		auto lc = q->getCore()->getCCore();
-
 		switch (newState) {
 			case CallSession::State::IncomingReceived: {
 				if (op) {
@@ -126,51 +124,13 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 						const std::shared_ptr<Address> to = Address::create(op->getTo());
 						// Local conference
 						if (to->hasUriParam("conf-id")) {
+							auto lc = q->getCore()->getCCore();
 							shared_ptr<Conference> conference =
 							    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
 
-							std::shared_ptr<ConferenceInfo> confInfo = nullptr;
-#ifdef HAVE_DB_STORAGE
-							auto &mainDb = q->getCore()->getPrivate()->mainDb;
-							if (mainDb) {
-								confInfo = mainDb->getConferenceInfoFromURI(to);
-							}
-#endif
-
-							// If the call is for a conference stored in the core, then accept it automatically without
-							// video
-							if (conference || confInfo) {
-								const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
-								const auto dialout = conference && (conference->getCurrentParams()->getJoiningMode() ==
-								                                    ConferenceParams::JoiningMode::DialOut);
-								if (conference &&
-								    (!resourceList ||
-								     ((conference->getOrganizer()->weakEqual(*(q->getRemoteAddress()))) && dialout))) {
-									conference->addParticipant(call);
-								} else {
-									const_cast<LinphonePrivate::CallSessionParamsPrivate *>(
-									    q->getParams()->getPrivate())
-									    ->setInConference(true);
-									setConferenceId(to->getUriParamValue("conf-id"));
-								}
-								auto params = linphone_core_create_call_params(lc, call->toC());
-								linphone_call_params_enable_audio(params, TRUE);
-								const bool videoConferencing =
-								    conference ? conference->getCurrentParams()->videoEnabled() : true;
-								linphone_call_params_enable_video(
-								    params,
-								    (call->getRemoteParams()->videoEnabled() && videoConferencing) ? TRUE : FALSE);
-								const auto &startTime = conference ? conference->getCurrentParams()->getStartTime()
-								                                   : (confInfo ? confInfo->getDateTime() : -1);
-								linphone_call_params_set_start_time(params, startTime);
-								const auto &endTime = conference
-								                          ? conference->getCurrentParams()->getEndTime()
-								                          : (confInfo ? (confInfo->getDateTime() +
-								                                         static_cast<time_t>(confInfo->getDuration()))
-								                                      : -1);
-								linphone_call_params_set_end_time(params, endTime);
-								call->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
-								linphone_call_params_unref(params);
+							if (conference) {
+								// The call is for a conference stored in the core
+								ref->addListener(conference.get());
 							}
 						} else if (op->getRemoteContactAddress()) {
 							std::shared_ptr<Address> remoteContactAddress = Address::create();

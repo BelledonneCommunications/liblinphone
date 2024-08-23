@@ -1396,6 +1396,14 @@ int SalCallOp::declineWithErrorInfo(const SalErrorInfo *info, const SalAddress *
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
 		                             belle_sip_header_create("Expire", std::to_string(expire).c_str()));
 
+	if (info->warnings) {
+		size_t buffer_size = 500;
+		char *warning_text = (char *)bctbx_malloc(buffer_size * sizeof(char));
+		snprintf(warning_text, buffer_size, "399 %s \"%s\"", sal_address_get_domain(getToAddress()), info->warnings);
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), belle_sip_header_create("Warning", warning_text));
+		bctbx_free(warning_text);
+	}
+
 	if (retryAfterHeader) belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(retryAfterHeader));
 	belle_sip_server_transaction_send_response(BELLE_SIP_SERVER_TRANSACTION(transaction), response);
 	if (info->reason == SalReasonRedirect) {
@@ -1719,6 +1727,15 @@ int SalCallOp::terminate(const SalErrorInfo *info) {
 			if (info && (info->reason != SalReasonNone)) {
 				auto reasonHeader = makeReasonHeader(info);
 				belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(reasonHeader));
+				if (info->warnings) {
+					size_t buffer_size = 500;
+					char *warning_text = (char *)bctbx_malloc(buffer_size * sizeof(char));
+					snprintf(warning_text, buffer_size, "399 %s \"%s\"", sal_address_get_domain(getFromAddress()),
+					         info->warnings);
+					belle_sip_message_add_header(BELLE_SIP_MESSAGE(request),
+					                             belle_sip_header_create("Warning", warning_text));
+					bctbx_free(warning_text);
+				}
 			}
 			sendRequest(request);
 

@@ -274,6 +274,10 @@ private:
 
 	void onParticipantDeviceLeft(const std::shared_ptr<ParticipantDevice> &device);
 
+	bool checkClientCompatibility(const std::shared_ptr<Call> &call,
+	                              const std::shared_ptr<Address> &remoteContactAddress,
+	                              bool incomingReceived) const;
+
 	virtual bool sessionParamsAllowThumbnails() const override;
 };
 

@@ -629,7 +629,7 @@ static void create_simple_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_point_to_point_encrypted_conference(void) {
@@ -637,21 +637,21 @@ static void create_simple_point_to_point_encrypted_conference(void) {
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
 	                       LinphoneConferenceSecurityLevelPointToPoint,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_conference_with_server_restart(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_conference_with_client_restart(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       TRUE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_zrtp_conference(void) {
@@ -659,7 +659,7 @@ static void create_simple_zrtp_conference(void) {
 	                       LinphoneMediaEncryptionZRTP, TRUE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
 	                       LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_dtls_conference(void) {
@@ -667,21 +667,21 @@ static void create_simple_dtls_conference(void) {
 	                       LinphoneMediaEncryptionDTLS, TRUE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
 	                       LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_srtp_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_conference_with_only_speakers_and_uninvited_participant(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
-	                       LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker}, FALSE);
+	                       LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker}, FALSE, FALSE);
 }
 
 /*
@@ -697,14 +697,14 @@ static void create_conference_with_uninvited_participant(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_conference_with_uninvited_participant_added_after_end(void) {
 	create_conference_base(ms_time(NULL), 1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, TRUE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, TRUE, FALSE);
 }
 
 static void create_conference_with_uninvited_participant_not_allowed(void) {
@@ -712,14 +712,14 @@ static void create_conference_with_uninvited_participant_not_allowed(void) {
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
 	                       LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_conference_starting_immediately(void) {
 	create_conference_base(ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_conference_starting_in_the_past(void) {
@@ -727,28 +727,28 @@ static void create_conference_starting_in_the_past(void) {
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
 	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
 	                       LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_conference_with_audio_only_participant(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_conference_with_audio_only_and_uninvited_participant(void) {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_simple_conference_with_audio_only_participant_enabling_video(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE);
 }
 
 static void create_conference_with_late_participant_addition(void) {
