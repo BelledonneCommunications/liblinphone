@@ -1500,7 +1500,7 @@ static void conference_edition_with_organizer_codec_mismatch(void) {
 	conference_edition_with_simultaneous_participant_add_remove_base(TRUE);
 }
 
-static void conference_cancelled_through_edit_base(bool_t server_restart) {
+static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t enable_encryption) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -1522,6 +1522,15 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 		coresList = bctbx_list_append(coresList, laure.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());
 
+		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
+		if (!!enable_encryption) {
+			for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr()}) {
+				linphone_core_set_media_encryption_mandatory(mgr->lc, TRUE);
+				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionZRTP);
+			}
+			security_level = LinphoneConferenceSecurityLevelEndToEnd;
+		}
+
 		std::list<LinphoneCoreManager *> participants{michelle.getCMgr(), pauline.getCMgr(), laure.getCMgr()};
 
 		time_t start_time = time(NULL) + 600; // Start in 10 minutes
@@ -1529,7 +1538,6 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
 		const char *initialSubject = "Test characters: <S-F12><S-F11><S-F6> £$%§";
 		const char *description = "Testing characters";
-		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 
 		bctbx_list_t *participants_info = NULL;
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList;
@@ -1664,10 +1672,10 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 							update_sequence_number(&participants_info, {}, (mgr == focus.getCMgr()) ? 0 : 1,
 							                       (mgr == focus.getCMgr()) ? -1 : 0);
 
-							check_conference_info_members(conf_info_from_original_content, uid, confAddr,
-							                              marie.getCMgr()->identity, participants_info, start_time,
-							                              new_duration, initialSubject, description, ics_sequence,
-							                              exp_state, security_level, FALSE, TRUE, TRUE, FALSE);
+							check_conference_info_members(
+							    conf_info_from_original_content, uid, confAddr, marie.getCMgr()->identity,
+							    participants_info, start_time, new_duration, initialSubject, description, ics_sequence,
+							    exp_state, LinphoneConferenceSecurityLevelNone, FALSE, TRUE, TRUE, FALSE);
 							linphone_conference_info_unref(conf_info_from_original_content);
 						}
 					}
@@ -1828,7 +1836,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 							check_conference_info_members(conf_info_from_original_content, uid, confAddr,
 							                              marie.getCMgr()->identity, NULL, start_time, new_duration,
 							                              subject, description2, ics_sequence, exp_state,
-							                              security_level, FALSE, TRUE,
+							                              LinphoneConferenceSecurityLevelNone, FALSE, TRUE,
 							                              (mgr != focus.getCMgr()) && (mgr != marie.getCMgr()), FALSE);
 							linphone_conference_info_unref(conf_info_from_original_content);
 						}
@@ -1860,8 +1868,10 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 				}
 				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, NULL, start_time,
 				                            new_duration, exp_subject, exp_description, exp_sequence, exp_state,
-				                            security_level, FALSE, TRUE,
-				                            (mgr != focus.getCMgr()) && (mgr != marie.getCMgr()), FALSE);
+				                            ((mgr == focus.getCMgr()) || (mgr == marie.getCMgr()))
+				                                ? security_level
+				                                : LinphoneConferenceSecurityLevelNone,
+				                            FALSE, TRUE, (mgr != focus.getCMgr()) && (mgr != marie.getCMgr()), FALSE);
 			}
 			if (info) {
 				linphone_conference_info_unref(info);
@@ -1876,11 +1886,15 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 }
 
 static void conference_cancelled_through_edit(void) {
-	conference_cancelled_through_edit_base(FALSE);
+	conference_cancelled_through_edit_base(FALSE, FALSE);
+}
+
+static void zrtp_conference_cancelled_through_edit(void) {
+	conference_cancelled_through_edit_base(FALSE, TRUE);
 }
 
 static void create_conference_with_server_restart_conference_cancelled(void) {
-	conference_cancelled_through_edit_base(TRUE);
+	conference_cancelled_through_edit_base(TRUE, FALSE);
 }
 
 } // namespace LinphoneTest
@@ -1899,6 +1913,7 @@ static test_t local_conference_conference_edition_tests[] = {
     TEST_NO_TAG("Participant edits simple conference using different account",
                 LinphoneTest::participant_edits_simple_conference_using_different_account),
     TEST_NO_TAG("Conference cancelled through edit", LinphoneTest::conference_cancelled_through_edit),
+    TEST_NO_TAG("ZRTP conference cancelled through edit", LinphoneTest::zrtp_conference_cancelled_through_edit),
     TEST_NO_TAG("Conference edition with simultanoues participant added removed",
                 LinphoneTest::conference_edition_with_simultaneous_participant_add_remove),
     TEST_NO_TAG("Conference edition with participant role changed",

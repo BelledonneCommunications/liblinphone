@@ -726,8 +726,10 @@ bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDes
 	L_Q();
 	if (isEncryptionMandatory()) {
 		const auto negotiatedEncryption = getNegotiatedMediaEncryption();
-		if (!!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp",
-		                              "accept_any_encryption", 0)) {
+		const bool acceptAnyEncryption = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()),
+		                                                           "rtp", "accept_any_encryption", 0);
+		// Verify that the negotiated encryption is not None if accepting any encryption
+		if (acceptAnyEncryption) {
 			if (negotiatedEncryption == LinphoneMediaEncryptionNone) {
 				lError() << "Encryption is mandatory however the negotiated encryption is "
 				         << linphone_media_encryption_to_string(negotiatedEncryption);
@@ -2706,14 +2708,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	if (md->streams.size() > 0) {
 		localDesc = md;
 
-		if (!getParams()->getPrivate()->isConferenceCreation()) {
-			OfferAnswerContext ctx;
-			ctx.localMediaDescription = localDesc;
-			ctx.remoteMediaDescription = localIsOfferer ? nullptr : (op ? op->getRemoteMediaDescription() : nullptr);
-			ctx.localIsOfferer = localIsOfferer;
-			/* Now instanciate the streams according to the media description. */
-			getStreamsGroup().createStreams(ctx);
-		}
+		OfferAnswerContext ctx;
+		ctx.localMediaDescription = localDesc;
+		ctx.remoteMediaDescription = localIsOfferer ? nullptr : (op ? op->getRemoteMediaDescription() : nullptr);
+		ctx.localIsOfferer = localIsOfferer;
+		/* Now instanciate the streams according to the media description. */
+		getStreamsGroup().createStreams(ctx);
 
 		const auto &mdForMainStream = localIsOfferer ? md : refMd;
 		const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
