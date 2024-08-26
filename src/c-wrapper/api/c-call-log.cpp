@@ -273,6 +273,11 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	if (!lc) return NULL;
 
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		bctbx_warning("Cannot get call history as the core is not running");
+		return NULL;
+	}
+
 #ifdef HAVE_DB_STORAGE
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return lc->call_logs;

@@ -929,6 +929,11 @@ list<shared_ptr<CallLog>> Account::getCallLogs() const {
 		return callLogs;
 	}
 
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn) {
+		lWarning() << "getCallLogs is called but core is not running on Account [" << this << "]";
+		return {};
+	}
+
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
 	return mainDb->getCallHistoryForLocalAddress(localAddress, linphone_core_get_max_call_logs(getCore()->getCCore()));
@@ -939,6 +944,11 @@ list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<c
 		lWarning() << "getCallLogsForAddress is called but no AccountParams is set on Account [" << this << "]";
 		list<shared_ptr<CallLog>> callLogs;
 		return callLogs;
+	}
+
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn) {
+		lWarning() << "getCallLogsForAddress is called but core is not running on Account [" << this << "]";
+		return {};
 	}
 
 	auto localAddress = mParams->mIdentityAddress;
@@ -952,6 +962,11 @@ void Account::deleteCallLogs() const {
 		return;
 	}
 
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn) {
+		lWarning() << "deleteCallLogs is called but core is not running on Account [" << this << "]";
+		return;
+	}
+
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
 	mainDb->deleteCallHistoryForLocalAddress(localAddress);
@@ -962,6 +977,11 @@ list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos(const std::list<Lin
 		lWarning() << "getConferenceInfos is called but no AccountParams is set on Account [" << this << "]";
 		list<shared_ptr<ConferenceInfo>> conferences;
 		return conferences;
+	}
+
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn) {
+		lWarning() << "getConferenceInfos is called but core is not running on Account [" << this << "]";
+		return {};
 	}
 
 	auto localAddress = mParams->mIdentityAddress;
