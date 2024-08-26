@@ -31,6 +31,19 @@
 
 static const char *stun_address = "stun.example.org";
 
+typedef struct _CallConfig {
+	bool_t video_enabled;
+	bool_t forced_relay;
+	bool_t caller_turn_enabled;
+	bool_t callee_turn_enabled;
+	bool_t rtcp_mux_enabled;
+	bool_t ipv6;
+	bool_t turn_tcp;
+	bool_t turn_tls;
+	bool_t wrong_password;
+	LinphoneMediaEncryption mode;
+} CallConfig;
+
 static size_t test_stun_encode(char **buffer) {
 	MSStunMessage *req = ms_stun_binding_request_create();
 	UInt96 tr_id = ms_stun_message_get_tr_id(req);
@@ -95,9 +108,10 @@ end:
 	linphone_core_manager_destroy(lc_stun);
 }
 
-static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled, bool_t turn_tcp, bool_t turn_tls) {
+static void
+configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled, bool_t turn_tcp, bool_t turn_tls, bool_t wrong_password) {
 	const char *username = "liblinphone-tester";
-	const char *password = "retset-enohpnilbil";
+	const char *password = wrong_password ? "wrong_password " : "retset-enohpnilbil";
 	LinphoneAuthInfo *auth_info =
 	    linphone_core_create_auth_info(lc, username, NULL, password, NULL, "sip.linphone.org", NULL);
 	LinphoneNatPolicy *nat_policy = linphone_core_create_nat_policy(lc);
@@ -154,18 +168,6 @@ check_turn_context_statistics(MSTurnContext *turn_context1, MSTurnContext *turn_
 	}
 }
 
-typedef struct _CallConfig {
-	bool_t video_enabled;
-	bool_t forced_relay;
-	bool_t caller_turn_enabled;
-	bool_t callee_turn_enabled;
-	bool_t rtcp_mux_enabled;
-	bool_t ipv6;
-	bool_t turn_tcp;
-	bool_t turn_tls;
-	LinphoneMediaEncryption mode;
-} CallConfig;
-
 static void ice_turn_call_base(const CallConfig *config) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
@@ -192,8 +194,10 @@ static void ice_turn_call_base(const CallConfig *config) {
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed_with_dtls",
 	                        1);
 
-	configure_nat_policy(marie->lc, config->caller_turn_enabled, config->turn_tcp, config->turn_tls);
-	configure_nat_policy(pauline->lc, config->callee_turn_enabled, config->turn_tcp, config->turn_tls);
+	configure_nat_policy(marie->lc, config->caller_turn_enabled, config->turn_tcp, config->turn_tls,
+	                     config->wrong_password);
+	configure_nat_policy(pauline->lc, config->callee_turn_enabled, config->turn_tcp, config->turn_tls,
+	                     config->wrong_password);
 	if (config->forced_relay == TRUE) {
 		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
 		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
@@ -274,7 +278,7 @@ static void ice_turn_call_base(const CallConfig *config) {
 	 * Indeed, we cannot predict which relay candidates will be used, since both sides are proposing them.
 	 * We have to check that turn channel is used by either marie or pauline.
 	 */
-	if (cl1 && cl2) {
+	if (!config->wrong_password && cl1 && cl2) {
 		check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, config->forced_relay);
 		if (!config->rtcp_mux_enabled)
 			check_turn_context_statistics(cl1->rtcp_turn_context, cl2->rtcp_turn_context, config->forced_relay);
@@ -291,6 +295,16 @@ static void basic_ice_turn_call(void) {
 	CallConfig cfg = {0};
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
+	ice_turn_call_base(&cfg);
+}
+
+/* In this test, TURN won't finally be used because of wrong password. This checks that in this case
+ * all goes well with ICE and things terminate properly.*/
+static void basic_ice_turn_call_wrong_password(void) {
+	CallConfig cfg = {0};
+	cfg.caller_turn_enabled = TRUE;
+	cfg.wrong_password = TRUE;
+	cfg.callee_turn_enabled = FALSE;
 	ice_turn_call_base(&cfg);
 }
 
@@ -450,8 +464,10 @@ static void _ice_turn_dtls_call(const CallConfig *config) {
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed_with_dtls",
 	                        1);
 
-	configure_nat_policy(marie->lc, config->caller_turn_enabled, config->turn_tcp, config->turn_tls);
-	configure_nat_policy(pauline->lc, config->callee_turn_enabled, config->turn_tcp, config->turn_tls);
+	configure_nat_policy(marie->lc, config->caller_turn_enabled, config->turn_tcp, config->turn_tls,
+	                     config->wrong_password);
+	configure_nat_policy(pauline->lc, config->callee_turn_enabled, config->turn_tcp, config->turn_tls,
+	                     config->wrong_password);
 	if (config->forced_relay == TRUE) {
 		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
 		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
@@ -549,6 +565,7 @@ test_t stun_tests[] = {
     TEST_ONE_TAG("Basic Stun test (Ping/public IP)", linphone_stun_test_grab_ip, "STUN"),
     TEST_ONE_TAG("STUN encode", linphone_stun_test_encode, "STUN"),
     TEST_TWO_TAGS("Basic ICE+TURN call", basic_ice_turn_call, "ICE", "TURN"),
+    TEST_TWO_TAGS("Basic ICE+TURN call with wrong password", basic_ice_turn_call_wrong_password, "ICE", "TURN"),
     TEST_TWO_TAGS("Basic IPv6 ICE+TURN call", basic_ipv6_ice_turn_call, "ICE", "TURN"),
     TEST_TWO_TAGS("Basic ICE+TURN call with TCP", basic_ice_turn_call_tcp, "ICE", "TURN"),
     TEST_TWO_TAGS("Basic ICE+TURN call with TLS", basic_ice_turn_call_tls, "ICE", "TURN"),
