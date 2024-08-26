@@ -220,6 +220,9 @@ public:
 	const std::string &getExternalBodyUrl() const;
 	void setExternalBodyUrl(const std::string &url);
 
+	const std::string &getMessageId() const;
+	void setMessageId(const std::string &id);
+
 	const std::string &getCallId() const;
 	void setCallId(const std::string &id);
 
@@ -275,6 +278,7 @@ private:
 	Content internalContent;
 	bool isAutoDownloadAttachedFilesInProgress = false;
 	std::string callId;
+	std::string mMessageId;
 
 	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;

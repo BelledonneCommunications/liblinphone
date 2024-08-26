@@ -249,6 +249,11 @@ shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage(const string &messageId,
 	return d->chatRoom->findChatMessage(messageId, direction);
 }
 
+shared_ptr<ChatMessage> ProxyChatRoom::findChatMessageFromMessageId(const std::string &messageId) const {
+	L_D();
+	return d->chatRoom->findChatMessageFromMessageId(messageId);
+}
+
 shared_ptr<ChatMessage> ProxyChatRoom::findChatMessageFromCallId(const std::string &callId) const {
 	L_D();
 	return d->chatRoom->findChatMessageFromCallId(callId);

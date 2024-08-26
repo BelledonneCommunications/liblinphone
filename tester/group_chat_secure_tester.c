@@ -1306,17 +1306,20 @@ static void group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_messag
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 2, int, " %i");
 		if (linphone_chat_room_get_history_size(marieCr) > 1) {
 			LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(marieCr);
-			BC_ASSERT_TRUE(linphone_chat_message_is_forward(recv_msg));
+			BC_ASSERT_PTR_NOT_NULL(recv_msg);
+			if (recv_msg) {
+				BC_ASSERT_TRUE(linphone_chat_message_is_forward(recv_msg));
 
-			// for marie, forward message by anonymous
-			LinphoneChatMessage *msgFromMarie = linphone_chat_room_create_forward_message(marieCr, recv_msg);
-			linphone_chat_message_send(msgFromMarie);
+				// for marie, forward message by anonymous
+				LinphoneChatMessage *msgFromMarie = linphone_chat_room_create_forward_message(marieCr, recv_msg);
+				linphone_chat_message_send(msgFromMarie);
 
-			BC_ASSERT_TRUE(linphone_chat_message_is_forward(msgFromMarie));
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(msgFromMarie), "Anonymous");
-			linphone_chat_message_unref(msgFromMarie);
+				BC_ASSERT_TRUE(linphone_chat_message_is_forward(msgFromMarie));
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(msgFromMarie), "Anonymous");
+				linphone_chat_message_unref(msgFromMarie);
 
-			linphone_chat_message_unref(recv_msg);
+				linphone_chat_message_unref(recv_msg);
+			}
 		}
 	} else if (reply_message) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 2, int, " %i");
@@ -1499,8 +1502,7 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineReceivedMessage), textMessage);
 
 	// Pauline will react to Marie's message with love emoji
-	LinphoneChatMessageReaction *paulineReaction =
-	    linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
+	LinphoneChatMessageReaction *paulineReaction = linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
 
 	const LinphoneAddress *paulineReactionAddr = linphone_chat_message_reaction_get_from_address(paulineReaction);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineReactionAddr, pauline->identity));
@@ -1844,8 +1846,7 @@ group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_differe
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
 
 	// Now marie's second device will react
-	LinphoneChatMessageReaction *marie2Reaction =
-	    linphone_chat_message_create_reaction(marie2ReceivedMessage, "❤️");
+	LinphoneChatMessageReaction *marie2Reaction = linphone_chat_message_create_reaction(marie2ReceivedMessage, "❤️");
 	marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
 	BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
 

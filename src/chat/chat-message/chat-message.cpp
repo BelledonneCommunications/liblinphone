@@ -260,12 +260,6 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		}
 	}
 
-	// When we already marked an incoming message as displayed, start ephemeral countdown when all other recipients have
-	// displayed it as well
-	if (isEphemeral && state == ChatMessage::State::Displayed && direction == ChatMessage::Direction::Incoming) {
-		startEphemeralCountDown();
-	}
-
 	if (isMe) {
 		// Set me participant state to displayed if we are the sender, set the message as Displayed as soon as we
 		// received the 202 Accepted response
@@ -779,7 +773,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 
 	// Prevent message duplication before decoding
-	if (!callId.empty() && chatRoom && chatRoom->findChatMessageFromCallId(callId)) {
+	if (!mMessageId.empty() && chatRoom && chatRoom->findChatMessageFromMessageId(mMessageId)) {
 		lInfo() << "Duplicated SIP MESSAGE with Call-ID " << callId << ", ignored.";
 		core->getCCore()->number_of_duplicated_messages++;
 		return core->getCCore()->chat_deny_code;
@@ -1346,10 +1340,12 @@ void ChatMessagePrivate::send() {
 		chatRoom->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 	}
 
+	string callId = op->getCallId();
 	if (imdnId.empty()) {
-		setImdnMessageId(op->getCallId()); /* must be known at that time */
+		setImdnMessageId(callId); /* must be known at that time */
 	}
-	setCallId(op->getCallId());
+	setMessageId(callId);
+	setCallId(callId);
 
 	if (isResend) {
 		// If it is a resend, reset participant states to Idle.
@@ -1567,6 +1563,14 @@ const string &ChatMessagePrivate::getCallId() const {
 
 void ChatMessagePrivate::setCallId(const string &id) {
 	callId = id;
+}
+
+const string &ChatMessagePrivate::getMessageId() const {
+	return mMessageId;
+}
+
+void ChatMessagePrivate::setMessageId(const string &id) {
+	mMessageId = id;
 }
 
 void ChatMessagePrivate::setForwardInfo(const string &fInfo) {

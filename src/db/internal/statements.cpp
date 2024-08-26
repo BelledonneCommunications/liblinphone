@@ -111,7 +111,7 @@ constexpr const char *select[SelectCount] = {
 		)",
 
     /* SelectConferenceEvents */ R"(
-			SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, reply_message_id, reply_sender_address.value
+			SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, reply_message_id, reply_sender_address.value, message_id
 			FROM conference_event_view
 			LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id
 			LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id
