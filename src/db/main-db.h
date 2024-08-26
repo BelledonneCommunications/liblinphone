@@ -142,6 +142,7 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const ConferenceId &conferenceId,
 	                                                         const std::list<std::string> &imdnMessageIds) const;
 
+	std::list<std::shared_ptr<ChatMessage>> findChatMessagesFromMessageId(const std::string &messageId) const;
 	std::list<std::shared_ptr<ChatMessage>> findChatMessagesFromCallId(const std::string &callId) const;
 
 	std::list<std::shared_ptr<ChatMessage>> findChatMessagesToBeNotifiedAsDelivered() const;

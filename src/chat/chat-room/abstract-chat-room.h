@@ -172,6 +172,7 @@ public:
 	virtual std::shared_ptr<ChatMessage> findChatMessage(const std::string &messageId) const = 0;
 	virtual std::shared_ptr<ChatMessage> findChatMessage(const std::string &messageId,
 	                                                     ChatMessage::Direction direction) const = 0;
+	virtual std::shared_ptr<ChatMessage> findChatMessageFromMessageId(const std::string &messageId) const = 0;
 	virtual std::shared_ptr<ChatMessage> findChatMessageFromCallId(const std::string &callId) const = 0;
 	virtual std::list<std::shared_ptr<ChatMessage>>
 	findChatMessages(const std::list<std::string> &messageIds) const = 0;
@@ -181,7 +182,7 @@ public:
 	                                                          const std::shared_ptr<const EventLog> &from,
 	                                                          LinphoneSearchDirection direction) const = 0;
 
-	virtual void sendPendingMessages() {};
+	virtual void sendPendingMessages(){};
 
 	virtual void markAsRead() = 0;
 	virtual void enableEphemeral(bool ephem, bool updateDb) = 0;

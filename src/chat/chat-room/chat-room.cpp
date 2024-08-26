@@ -326,6 +326,11 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId, ChatM
 	return nullptr;
 }
 
+shared_ptr<ChatMessage> ChatRoom::findChatMessageFromMessageId(const std::string &messageId) const {
+	auto chatMessages = getCore()->getPrivate()->mainDb->findChatMessagesFromMessageId(messageId);
+	return chatMessages.empty() ? nullptr : chatMessages.front();
+}
+
 shared_ptr<ChatMessage> ChatRoom::findChatMessageFromCallId(const std::string &callId) const {
 	auto chatMessages = getCore()->getPrivate()->mainDb->findChatMessagesFromCallId(callId);
 	return chatMessages.empty() ? nullptr : chatMessages.front();
@@ -476,18 +481,16 @@ std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMes
 	msg->setInternalContent(content);
 
 	msg->getPrivate()->setTime(message->time);
-	ostringstream messageId, callId;
+	string callId = op->getCallId();
+	ostringstream messageId;
 	if (op->hasDialog()) {
 		/* If this message has been received part of a dialog (which is unlikely to happen for IM),
 		 * set an IMDN Message ID abitrary to be the SIP Call-ID followed by the CSeq number.
 		 * This avoids considering incoming SIP MESSAGE received within a dialog as being duplicates. */
-		messageId << op->getCallId() << "-" << op->getRemoteCSeq();
+		messageId << callId << "-" << op->getRemoteCSeq();
 	} else {
-		messageId << op->getCallId();
+		messageId << callId;
 	}
-
-	// Do the same thing for the call-id for the same reason as above.
-	callId << messageId.str();
 
 	// Don't do it for flexisip backend chat rooms, we need to know if the real message id from CPIM was retrieved or
 	// not Based on that we will send IMDNs or not In case CPIM was enabled on a Basic chat room, IMDN message ID will
@@ -496,7 +499,8 @@ std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMes
 	if (isBasicChatRoom) {
 		msg->getPrivate()->setImdnMessageId(messageId.str());
 	}
-	msg->getPrivate()->setCallId(callId.str());
+	msg->getPrivate()->setMessageId(messageId.str());
+	msg->getPrivate()->setCallId(callId);
 
 	const SalCustomHeader *ch = op->getRecvCustomHeaders();
 	if (ch) msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));

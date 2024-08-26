@@ -521,7 +521,8 @@ void CorePrivate::handleEphemeralMessages(time_t currentTime) {
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
 				LinphonePrivate::EventLog::deleteFromDatabase(event);
-				lInfo() << "[Ephemeral] Message deleted from database";
+				lInfo() << "[Ephemeral] Message " << msg << " (call ID " << msg->getPrivate()->getCallId()
+				        << ") deleted from database";
 
 				// Notify ephemeral message deleted to message if exists.
 				LinphoneChatMessage *message = L_GET_C_BACK_PTR(msg.get());
