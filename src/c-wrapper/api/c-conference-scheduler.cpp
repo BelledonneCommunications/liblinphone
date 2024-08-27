@@ -87,6 +87,13 @@ void linphone_conference_scheduler_send_invitations(LinphoneConferenceScheduler 
 	    ->sendInvitations(ConferenceParams::toCpp(chat_room_params)->getSharedFromThis());
 }
 
+void linphone_conference_scheduler_send_invitations_2(LinphoneConferenceScheduler *conference_scheduler,
+                                                      LinphoneConferenceParams *conference_params) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
+	ConferenceScheduler::toCpp(conference_scheduler)
+	    ->sendInvitations(ConferenceParams::toCpp(conference_params)->getSharedFromThis());
+}
+
 void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler,
                                                         LinphoneConferenceSchedulerState state) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ConferenceScheduler, ConferenceScheduler::toCpp(conference_scheduler),

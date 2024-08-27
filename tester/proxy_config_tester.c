@@ -623,6 +623,7 @@ static void dependent_proxy_dependency_with_core_reloaded(void) {
 	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 6);
 
 	/* Now marie's core stops and restarts. */
+	ms_message("%s stops and restarts its core", linphone_core_get_identity(marie->lc));
 	linphone_core_stop(marie->lc);
 	linphone_core_start(marie->lc);
 	linphone_core_manager_setup_dns(marie);
@@ -633,7 +634,6 @@ static void dependent_proxy_dependency_with_core_reloaded(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 8));
 
 	/* And make new call attempt */
-
 	marie_cfg = (LinphoneProxyConfig *)linphone_core_get_proxy_config_list(marie->lc)->next->data;
 	marie_dependent_cfg = (LinphoneProxyConfig *)linphone_core_get_proxy_config_list(marie->lc)->data;
 	BC_ASSERT_PTR_EQUAL(marie_cfg, linphone_proxy_config_get_dependency(marie_dependent_cfg));
@@ -1191,8 +1191,8 @@ static void proxy_config_push_notification_core_restart(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
-	int proxy_config_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
-	BC_ASSERT_EQUAL(proxy_config_count, 1, int, "%d");
+	size_t proxy_config_count = bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
+	BC_ASSERT_EQUAL(proxy_config_count, 1, size_t, "%zu");
 
 #if __ANDROID__ || TARGET_OS_IPHONE
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
@@ -1243,6 +1243,8 @@ static void proxy_config_push_notification_core_restart(void) {
 
 	linphone_core_stop(marie->lc);
 	BC_ASSERT_EQUAL(linphone_core_get_global_state(marie->lc), LinphoneGlobalOff, int, "%i");
+	proxy_config_count = bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
+	BC_ASSERT_EQUAL(proxy_config_count, 1, size_t, "%zu");
 	linphone_core_start(marie->lc);
 	linphone_core_manager_setup_dns(marie);
 	BC_ASSERT_EQUAL(linphone_core_get_global_state(marie->lc), LinphoneGlobalOn, int, "%i");

@@ -908,7 +908,6 @@ void Core::deleteChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 		CorePrivate *d = core->getPrivate();
 		d->conferenceById.erase(conferenceId);
 		d->chatRoomsById.erase(conferenceId);
-		lInfo() << __func__ << " DEBUG DEBUG db intiated " << d->mainDb->isInitialized();
 		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
 	} else {
 		lError() << "Unable to delete chat room with conference ID " << conferenceId << " because it cannot be found.";

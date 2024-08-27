@@ -306,7 +306,6 @@ LINPHONE_PUBLIC void linphone_account_clear_call_logs(const LinphoneAccount *acc
  * This list must be freed after use.
  * @param account The #LinphoneAccount object. @notnil
  * @return The list of call logs \bctbx_list{LinphoneConferenceInfo}. @maybenil
- * @deprecated 13/08/2024 Use linphone_account_get_conference_information_list_2() instead.
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_conference_information_list(const LinphoneAccount *account);
 
@@ -317,6 +316,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_conference_information_list(c
  * @param capabilities the list of conference capabilities that the conference information must has set
  *\bctbx_list{LinphoneStreamType}. @tobefreed @maybenil
  * @return The list of call logs \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
+ * @donotwrap
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_conference_information_list_2(const LinphoneAccount *account,
                                                                                  bctbx_list_t *capabilities);

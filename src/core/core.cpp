@@ -794,6 +794,7 @@ Core::~Core() {
 #ifdef HAVE_ADVANCED_IM
 	xercesc::XMLPlatformUtils::Terminate();
 #endif
+	resetAccounts();
 }
 
 shared_ptr<Core> Core::create(LinphoneCore *cCore) {
@@ -2599,6 +2600,19 @@ LinphoneStatus Core::addAccount(std::shared_ptr<Account> account) {
 	return 0;
 }
 
+void Core::resetAccounts() {
+	// The 2 for-loops below will break a circular dependency as the proxy config has a reference towards the account
+	// and the account keeps a reference of the proxy config. When the core is shutting down, awe need to break this
+	// circular referencing from all actual and deleted accounts
+	for (const auto &account : getAccounts()) {
+		account->setConfig(nullptr);
+	}
+
+	for (const auto &account : getDeletedAccounts()) {
+		account->setConfig(nullptr);
+	}
+}
+
 void Core::clearAccounts() {
 	auto accountList = mAccounts.mList;
 	for (auto &account : accountList) {
@@ -2634,17 +2648,12 @@ void Core::clearProxyConfigList() const {
 
 void Core::releaseAccounts() {
 	clearProxyConfigList();
-	// This method will break a circular dependency as the proxy config has a reference towards the account and the
-	// account keeps a reference of the proxy config. When the core is shutting down, awe need to break this circular
-	// referencing from all actual and deleted accounts
 	for (const auto &account : getAccounts()) {
 		account->releaseOps();
-		account->setConfig(nullptr);
 	}
 
 	for (const auto &account : getDeletedAccounts()) {
 		account->releaseOps();
-		account->setConfig(nullptr);
 	}
 }
 

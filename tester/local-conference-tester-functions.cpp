@@ -5793,7 +5793,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 
 		std::list<LinphoneCoreManager *> participants1{pauline.getCMgr(), laure.getCMgr()};
-		time_t start_time1 = ms_time(NULL);
+		time_t start_time1 = ms_time(NULL) - 40;
 		time_t end_time1 = (start_time1 + 60);
 		const char *subject1 = "Colleagues";
 		const char *description1 = NULL;
@@ -5940,7 +5940,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 			}
 		}
 
-		time_t start_time2 = (dialout) ? -1 : ms_time(NULL);
+		time_t start_time2 = (dialout) ? -1 : ms_time(NULL) - 40;
 		time_t end_time2 = (dialout) ? -1 : (start_time2 + 60);
 		const char *subject2 = "All Hands Q3 FY2021 - Attendance Mandatory";
 		const char *description2 = "Financial result - Internal only - Strictly confidential";
@@ -6573,12 +6573,14 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 			                             liblinphone_tester_sip_timeout));
 		}
 
-		time_t now2 = ms_time(NULL);
-		time_t time_left2 = end_time2 - now2 + linphone_core_get_conference_cleanup_period(focus.getLc());
-		if (time_left2 > 0) {
-			// wait for the conference to end
-			CoreManagerAssert({focus, marie, pauline, laure, michelle})
-			    .waitUntil(chrono::seconds((time_left2 + 1)), [] { return false; });
+		if (end_time2 > 0) {
+			time_t now2 = ms_time(NULL);
+			time_t time_left2 = end_time2 - now2 + linphone_core_get_conference_cleanup_period(focus.getLc());
+			if (time_left2 > 0) {
+				// wait for the conference to end
+				CoreManagerAssert({focus, marie, pauline, laure, michelle})
+				    .waitUntil(chrono::seconds((time_left2 + 1)), [] { return false; });
+			}
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
@@ -7392,6 +7394,8 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 
 		time_t start_time = (dialout) ? -1 : (ms_time(NULL) + 5);
+		const int duration = 0;
+		time_t end_time = -1;
 		bool_t send_ics = TRUE;
 
 		bctbx_list_t *participants_info = NULL;
@@ -7412,10 +7416,8 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		    std::make_pair(marie.getCMgr(), add_participant_info_to_list(&participants_info, marie.getCMgr()->identity,
 		                                                                 LinphoneParticipantRoleListener, -1)));
 
-		const int duration = -1;
-		time_t end_time = -1;
 		LinphoneAddress *confAddr =
-		    create_conference_on_server(focus, marie, participantList, start_time, duration, initialSubject,
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, send_ics, security_level, FALSE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
@@ -7574,27 +7576,29 @@ void create_conference_with_active_call_base(bool_t dialout) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
-			    .waitUntil(chrono::seconds(15), [&mgr, confAddr] {
-				    LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
-				    if (!conference) {
-					    return false;
-				    }
-				    if (linphone_conference_get_participant_count(conference) != 4) {
-					    return false;
-				    }
-				    bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
-				    size_t nb_devices = bctbx_list_size(devices);
-				    if (devices) {
-					    bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
-				    }
-				    if (nb_devices != 5) {
-					    return false;
-				    }
-				    return true;
-			    });
-			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
-			                            initialSubject, (send_ics) ? description : NULL, 0,
+			BC_ASSERT_TRUE(
+			    CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+			        .waitUntil(chrono::seconds(15), [&mgr, confAddr, &participants, &members, &dialout] {
+				        LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
+				        if (!conference) {
+					        return false;
+				        }
+				        if (linphone_conference_get_participant_count(conference) !=
+				            (dialout ? static_cast<int>(participants.size()) : 4)) {
+					        return false;
+				        }
+				        bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
+				        size_t nb_devices = bctbx_list_size(devices);
+				        if (devices) {
+					        bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+				        }
+				        if (nb_devices != (dialout ? members.size() : 5)) {
+					        return false;
+				        }
+				        return true;
+			        }));
+			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, start_time,
+			                            duration, initialSubject, (send_ics) ? description : NULL, 0,
 			                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
 
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
@@ -7723,8 +7727,8 @@ void create_conference_with_active_call_base(bool_t dialout) {
 			    });
 
 			if (mgr != focus.getCMgr()) {
-				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, 0, 0,
-				                            initialSubject, (send_ics) ? description : NULL, 0,
+				check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info,
+				                            start_time, duration, initialSubject, (send_ics) ? description : NULL, 0,
 				                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
@@ -7985,8 +7989,9 @@ void create_conference_with_active_call_base(bool_t dialout) {
 			}
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info, start_time,
-			                            0, initialSubject, (send_ics || (mgr == marie.getCMgr())) ? description : NULL,
-			                            0, LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
+			                            duration, initialSubject,
+			                            (send_ics || (mgr == marie.getCMgr())) ? description : NULL, 0,
+			                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, FALSE, FALSE);
 		}
 
 		// wait a bit more to detect side effect if any

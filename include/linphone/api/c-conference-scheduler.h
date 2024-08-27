@@ -105,9 +105,21 @@ LINPHONE_PUBLIC void linphone_conference_scheduler_set_info(LinphoneConferenceSc
  * @param conference_scheduler the #LinphoneConferenceScheduler object. @notnil
  * @param chat_room_params the #LinphoneChatRoomParams object to use to use/create the #LinphoneChatRoom that will be
  * used to send the invite. @notnil
+ * @deprecated 28/08/2024 Use linphone_conference_scheduler_send_invitations_2() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_scheduler_send_invitations(LinphoneConferenceScheduler *conference_scheduler,
-                                                                    LinphoneChatRoomParams *chat_room_params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void
+linphone_conference_scheduler_send_invitations(LinphoneConferenceScheduler *conference_scheduler,
+                                               LinphoneChatRoomParams *chat_room_params);
+
+/**
+ * Sends an invitation to the scheduled conference to each participant by chat, using given conference params to
+ * use/create the chat room in which to send it.
+ * @param conference_scheduler the #LinphoneConferenceScheduler object. @notnil
+ * @param conference_params the #LinphoneConferenceParams object to use to use/create the #LinphoneChatRoom that will be
+ * used to send the invite. @notnil
+ */
+LINPHONE_PUBLIC void linphone_conference_scheduler_send_invitations_2(LinphoneConferenceScheduler *conference_scheduler,
+                                                                      LinphoneConferenceParams *conference_params);
 
 /**
  * Add a listener in order to be notified of #LinphoneConferenceScheduler events.

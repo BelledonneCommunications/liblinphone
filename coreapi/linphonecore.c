@@ -3277,6 +3277,9 @@ static void linphone_core_init(LinphoneCore *lc,
 	// Needed so that mainDb does not exist during the init phase when the core has been stopped and then restarted
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb = nullptr;
 
+	// During the core initialization, the accounts are reloaded, therefore the previous accounts can be safely deleted
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->resetAccounts();
+
 	lc->is_unreffing = FALSE;
 	lc->supported_encryptions = NULL;
 	lc->config = linphone_config_ref(config);
