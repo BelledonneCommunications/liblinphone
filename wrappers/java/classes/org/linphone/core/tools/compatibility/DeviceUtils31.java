@@ -99,7 +99,7 @@ public class DeviceUtils31 {
 		try {
 			context.startForegroundService(intent);
 		} catch (Exception e) {
-			Log.e("[Device Utils 31] Can't start service with promise it will run as foreground!", e);
+			Log.e("[Device Utils 31] Can't start service with promise it will run as foreground: ", e);
 		}
     }
 
@@ -107,7 +107,7 @@ public class DeviceUtils31 {
 		try {
 			service.startForeground(notifId, notif);
 		} catch (Exception e) {
-			Log.e("[Device Utils 31] Can't start service as foreground!", e);
+			Log.e("[Device Utils 31] Can't start service as foreground: ", e);
 		}
 	}
 }

@@ -35,7 +35,7 @@ public class DeviceUtils34 {
 			}
 			service.startForeground(notifId, notif, mask);
 		} catch (Exception e) {
-			Log.e("[Device Utils 34] Can't start service as foreground!", e);
+			Log.e("[Device Utils 34] Can't start service as foreground: ", e);
 		}
 	}
 
@@ -47,7 +47,7 @@ public class DeviceUtils34 {
 				ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 			);
 		} catch (Exception e) {
-			Log.e("[Device Utils 34] Can't start service as foreground!", e);
+			Log.e("[Device Utils 34] Can't start service as foreground: ", e);
 		}
 	}
 }

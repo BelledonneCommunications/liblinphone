@@ -196,12 +196,16 @@ public class CoreManager {
 
     // Core thread may be the same as UI thread id Core was created from UI thread
     public void dispatchOnCoreThread(Runnable r) {
-        mHandler.post(r);
+        if (mHandler != null) {
+            mHandler.post(r);
+        }
     }
 
     // Core thread may be the same as UI thread id Core was created from UI thread
     public void dispatchOnCoreThreadAfter(Runnable r, long after) {
-        mHandler.postDelayed(r, after);
+        if (mHandler != null) {
+            mHandler.postDelayed(r, after);
+        }
     }
 
     public void destroy() {
@@ -234,6 +238,10 @@ public class CoreManager {
             mDisplayManager = null;
         }
 
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+            mHandler = null;
+        }
         mServiceClass = null;
         mContext = null;
         sInstance = null;
@@ -409,7 +417,7 @@ public class CoreManager {
         stopTimerToResetAutoIterateSchedule();
 
         mCore = null; // To allow the garbage colletor to free the Core
-        sInstance = null;
+        Log.i("[Core Manager] Core released");
     }
 
     public void startAutoIterate() {
@@ -447,14 +455,15 @@ public class CoreManager {
             new TimerTask() {
                 @Override
                 public void run() {
-                    dispatchOnCoreThread(new Runnable() {
+                    Runnable resetRunnable = new Runnable() {
                         @Override
                         public void run() {
                             Log.i("[Core Manager] Resetting core.iterate() schedule depending on background/foreground state");
                             stopAutoIterate();
                             startAutoIterate();
                         }
-                    });
+                    };
+                    dispatchOnCoreThread(resetRunnable);
                 }
             };
 
@@ -473,22 +482,20 @@ public class CoreManager {
 
         mIterateSchedule = schedule;
 
-        mIterateRunnable =
-            new Runnable() {
-                @Override
-                public void run() {
-                    if (mCore != null) {
-                        mCore.iterate();
-                    }
+        mIterateRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mCore != null) {
+                    mCore.iterate();
                 }
-            };
-        TimerTask lTask =
-            new TimerTask() {
-                @Override
-                public void run() {
-                    dispatchOnCoreThread(mIterateRunnable);
-                }
-            };
+            }
+        };
+        TimerTask lTask = new TimerTask() {
+            @Override
+            public void run() {
+                dispatchOnCoreThread(mIterateRunnable);
+            }
+        };
 
         /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
         mTimer = new Timer("Linphone core.iterate() scheduler");
@@ -573,7 +580,8 @@ public class CoreManager {
                 }
                 mReloadSoundDevicesScheduled = true;
 
-                mHandler.postDelayed(new Runnable() {
+            
+                Runnable reloadRunnable = new Runnable() {
                     @Override
                     public void run() {
                         Log.i("[Core Manager] Reloading sound devices");
@@ -582,7 +590,8 @@ public class CoreManager {
                             mReloadSoundDevicesScheduled = false;
                         }
                     }
-                }, delay);
+                };
+                dispatchOnCoreThreadAfter(reloadRunnable, delay);
             } else {
                 Log.w("[Core Manager] Bluetooth headset state changed but current global state is ", globalState.name(), ", skipping...");
             }
@@ -602,7 +611,7 @@ public class CoreManager {
                 }
                 mReloadSoundDevicesScheduled = true;
 
-                mHandler.post(new Runnable() {
+                Runnable reloadRunnable = new Runnable() {
                     @Override
                     public void run() {
                         Log.i("[Core Manager] Reloading sound devices");
@@ -611,7 +620,8 @@ public class CoreManager {
                             mReloadSoundDevicesScheduled = false;
                         }
                     }
-                });
+                };
+                dispatchOnCoreThread(reloadRunnable);
             } else {
                 Log.w("[Core Manager] Headset state changed but current global state is ", globalState.name(), ", skipping...");
             }
