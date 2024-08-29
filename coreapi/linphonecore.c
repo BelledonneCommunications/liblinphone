@@ -1201,7 +1201,6 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			belle_generic_uri_t *uri;
 			belle_http_request_t *req;
 			belle_sip_multipart_body_handler_t *bh;
-			char *ua;
 			char *first_part_header;
 			belle_sip_user_body_handler_t *first_part_bh;
 
@@ -1230,10 +1229,9 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			/* Insert it in a multipart body handler which will manage the boundaries of multipart message */
 			bh = belle_sip_multipart_body_handler_new(log_collection_upload_on_progress, core,
 			                                          (belle_sip_body_handler_t *)first_part_bh, NULL);
-			ua = ms_strdup_printf("%s/%s", linphone_core_get_user_agent(core), linphone_core_get_version());
 			uri = belle_generic_uri_parse(linphone_core_get_log_collection_upload_server_url(core));
-			req = belle_http_request_create("POST", uri, belle_sip_header_create("User-Agent", ua), NULL);
-			ms_free(ua);
+			req = belle_http_request_create(
+			    "POST", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(core)), NULL);
 			belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req), BELLE_SIP_BODY_HANDLER(bh));
 			cbs.process_response = process_response_from_post_file_log_collection;
 			cbs.process_io_error = process_io_error_upload_log_collection;

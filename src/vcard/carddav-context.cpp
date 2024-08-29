@@ -274,9 +274,9 @@ void CardDAVContext::sendQuery(CardDAVQuery *query) {
 		lError() << "[CardDAV] Could not create belle_http_request_t";
 		return;
 	}
-	std::stringstream ssUa;
-	ssUa << linphone_core_get_user_agent(mFriendList->getCore()->getCCore()) << "/" << linphone_core_get_version();
-	belle_sip_message_add_header((belle_sip_message_t *)req, belle_sip_header_create("User-Agent", ssUa.str().c_str()));
+	belle_sip_message_add_header(
+	    (belle_sip_message_t *)req,
+	    belle_sip_header_create("User-Agent", linphone_core_get_user_agent(mFriendList->getCore()->getCCore())));
 	if (!query->mDepth.empty())
 		belle_sip_message_add_header((belle_sip_message_t *)req,
 		                             belle_sip_header_create("Depth", query->mDepth.c_str()));
