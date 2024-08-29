@@ -213,6 +213,7 @@ void SalSubscribeOp::subscribeProcessDialogTerminatedCb(void *userCtx,
                                                         const belle_sip_dialog_terminated_event_t *event) {
 	auto op = static_cast<SalSubscribeOp *>(userCtx);
 	if (!op->mDialog) return;
+	op->ref(); // protect from destruction from callbacks, until we exit from this function.
 	if (op->mState == SalOp::State::Terminated) {
 		lInfo() << "Op [" << op << "] is terminated, nothing to do with this dialog terminated";
 	} else {
@@ -227,6 +228,7 @@ void SalSubscribeOp::subscribeProcessDialogTerminatedCb(void *userCtx,
 		}
 	}
 	op->setOrUpdateDialog(nullptr);
+	op->unref(); // protect from destruction from callbacks, until we exit from this function.
 }
 
 void SalSubscribeOp::releaseCb(SalOp *op) {

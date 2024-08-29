@@ -849,18 +849,23 @@ void SalOp::setRequestAddress(ownership::BorrowedMut<SalAddress> value) {
 string SalOp::toString(const Type type) {
 	switch (type) {
 		case Type::Register:
-			return "SalOpRegister";
+			return "Register";
 		case Type::Call:
-			return "SalOpCall";
+			return "Call";
 		case Type::Message:
-			return "SalOpMessage";
+			return "Message";
 		case Type::Presence:
-			return "SalOpPresence";
+			return "Presence";
 		case Type::Publish:
-			return "SalOpPublish";
-		default:
-			return "SalOpUnknown";
+			return "Publish";
+		case Type::Subscribe:
+			return "Subscribe";
+		case Type::Refer:
+			return "Refer";
+		case Type::Unknown:
+			return "Unknown";
 	}
+	return "<bug!>";
 }
 
 bool SalOp::isSecure() const {
