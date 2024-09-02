@@ -25,7 +25,7 @@
 
 #include "call/audio-device/audio-device.h"
 #include "linphone/api/c-types.h"
-#include "linphone/types.h"
+#include "linphone/enums/c-enums.h"
 
 // =============================================================================
 
@@ -36,7 +36,7 @@ public:
 	RecorderParams(std::shared_ptr<const AudioDevice> device,
 	               const std::string &webcamName,
 	               void *windowId,
-	               LinphoneMediaFileFormat format = LinphoneRecorderFileFormatWav,
+	               LinphoneMediaFileFormat format = LinphoneMediaFileFormatWav,
 	               const std::string &videoCodec = "");
 	RecorderParams(const RecorderParams &other);
 	~RecorderParams() = default;

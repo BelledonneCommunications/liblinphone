@@ -1966,7 +1966,7 @@ static void message_with_voice_recording_base(bool_t create_message_from_recorde
 	}
 
 	LinphoneRecorderParams *params = linphone_core_create_recorder_params(pauline->lc);
-	linphone_recorder_params_set_file_format(params, LinphoneRecorderFileFormatWav);
+	linphone_recorder_params_set_file_format(params, LinphoneMediaFileFormatWav);
 	LinphoneRecorder *recorder = linphone_core_create_recorder(pauline->lc, params);
 	linphone_recorder_params_unref(params);
 

@@ -186,7 +186,7 @@ static void record_wav_pcm_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordpcm.wav", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "pcm";
 	const char *video_mime = "";
-	record_file(filename, TRUE, audio_mime, video_mime, LinphoneRecorderFileFormatWav, FALSE);
+	record_file(filename, TRUE, audio_mime, video_mime, LinphoneMediaFileFormatWav, FALSE);
 	ms_free(filename);
 }
 
@@ -195,19 +195,19 @@ static void record_mkv_opus_h264_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordopush264.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "h264";
-	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneRecorderFileFormatMkv,
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneMediaFileFormatMkv,
 	            FALSE);
 	ms_free(filename);
 #endif
 }
 
-static void record_mkv_opus_av1_test(void) {
+static void record_smff_opus_av1_test(void) {
 #ifdef VIDEO_ENABLED
 	char *filename = bctbx_strdup_printf("%s/testrecordopusav1.smff", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "AV1";
-	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime,
-	            LinphoneRecorderFileFormatSmff, FALSE);
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneMediaFileFormatSmff,
+	            FALSE);
 	ms_free(filename);
 #endif
 }
@@ -217,7 +217,7 @@ static void record_mkv_opus_vp8_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordopusvp8.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "vp8";
-	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneRecorderFileFormatMkv,
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneMediaFileFormatMkv,
 	            FALSE);
 	ms_free(filename);
 #endif
@@ -228,7 +228,7 @@ static void record_mkv_opus_vp8_evfs_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordopusvp8evfs.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "vp8";
-	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneRecorderFileFormatMkv,
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneMediaFileFormatMkv,
 	            TRUE);
 	ms_free(filename);
 #endif
@@ -237,7 +237,7 @@ static void record_mkv_opus_vp8_evfs_test(void) {
 test_t recorder_tests[] = {TEST_NO_TAG("Recording wave", record_wav_pcm_test),
                            TEST_NO_TAG("Recording mkv opus+h264", record_mkv_opus_h264_test),
                            TEST_NO_TAG("Recording mkv opus+VP8", record_mkv_opus_vp8_test),
-                           TEST_NO_TAG("Recording smff opus+av1", record_mkv_opus_av1_test),
+                           TEST_NO_TAG("Recording smff opus+av1", record_smff_opus_av1_test),
                            TEST_NO_TAG("Recording mkv opus+VP8 using evfs", record_mkv_opus_vp8_evfs_test)};
 
 test_suite_t recorder_test_suite = {"Recorder",

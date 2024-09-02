@@ -30,7 +30,7 @@
 using namespace LinphonePrivate;
 
 LinphoneRecorderParams *linphone_recorder_params_new() {
-	return RecorderParams::createCObject(nullptr, "", nullptr, LinphoneRecorderFileFormatUnknown, "");
+	return RecorderParams::createCObject(nullptr, "", nullptr, LinphoneMediaFileFormatUnknown, "");
 }
 
 LinphoneRecorderParams *linphone_recorder_params_clone(const LinphoneRecorderParams *params) {

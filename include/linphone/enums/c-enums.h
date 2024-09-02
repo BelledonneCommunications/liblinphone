@@ -183,4 +183,21 @@ typedef enum _LinphoneAccountManagerServicesRequestType {
 	LinphoneAccountManagerServicesRequestTypeDeleteAccountAsAdmin = 102
 } LinphoneAccountManagerServicesRequestType;
 
+/*
+ * WARNING: the LinphoneRecorderFileFormat enum must match the MSFileFormat enum defined in mediastreamer2.
+ * See dangerous cast in src/recorder/recorder.cpp.
+ */
+
+/**
+ * @brief Enum representing the file format of a recording.
+ * @ingroup call_control
+ **/
+typedef enum _LinphoneMediaFileFormat {
+	LinphoneMediaFileFormatUnknown,
+	LinphoneMediaFileFormatWav, /** < WAVE file format, .wav file extension. */
+	LinphoneMediaFileFormatMkv, /** < Standard Matroska file format, supports video, .mkv or .mka file extension. */
+	LinphoneMediaFileFormatSmff /** < Simple Multimedia File Format, a proprietary format that supports video, .smff
+	                                  file extension. */
+} LinphoneMediaFileFormat;
+
 #endif

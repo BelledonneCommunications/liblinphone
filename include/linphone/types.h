@@ -262,23 +262,6 @@ typedef enum _LinphoneCallStatus {
 	LinphoneCallDeclinedElsewhere = 6  /**<The call was declined on another device*/
 } LinphoneCallStatus;
 
-/*
- * WARNING: the LinphoneRecorderFileFormat enum must match the MSFileFormat enum defined in mediastreamer2.
- * See dangerous cast in src/recorder/recorder.cpp.
- */
-
-/**
- * @brief Enum representing the file format of a recording.
- * @ingroup call_control
- **/
-typedef enum _LinphoneMediaFileFormat {
-	LinphoneRecorderFileFormatUnknown,
-	LinphoneRecorderFileFormatWav, /** < WAVE file format, .wav file extension. */
-	LinphoneRecorderFileFormatMkv, /** < Standard Matroska file format, supports video, .mkv or .mka file extension. */
-	LinphoneRecorderFileFormatSmff /** < Simple Multimedia File Format, a proprietary format that supports video, .smff
-	                                  file extension. */
-} LinphoneMediaFileFormat;
-
 /**
  * @brief Enum representing the state of a recording.
  * @ingroup call_control
