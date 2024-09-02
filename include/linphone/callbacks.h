@@ -691,6 +691,13 @@ typedef void (*LinphoneCoreCbsMessageWaitingIndicationChangedCb)(LinphoneCore *c
                                                                  const LinphoneMessageWaitingIndication *mwi);
 
 /**
+ * Callback notifying a snapshot has been taken.
+ * @param core LinphoneCore object. @notnil
+ * @param file_path the name of the saved file. @notnil
+ */
+typedef void (*LinphoneCoreCbsSnapshotTakenCb)(LinphoneCore *core, const char *file_path);
+
+/**
  * @}
  **/
 

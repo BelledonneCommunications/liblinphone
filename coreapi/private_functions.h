@@ -924,6 +924,7 @@ void linphone_core_notify_preview_display_error_occurred(LinphoneCore *lc, int e
 void linphone_core_notify_message_waiting_indication_changed(LinphoneCore *lc,
                                                              LinphoneEvent *lev,
                                                              const LinphoneMessageWaitingIndication *mwi);
+void linphone_core_notify_snapshot_taken(LinphoneCore *lc, const char *file_path);
 
 void set_playback_gain_db(AudioStream *st, float gain);
 

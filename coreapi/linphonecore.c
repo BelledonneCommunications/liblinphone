@@ -805,6 +805,14 @@ linphone_core_cbs_get_message_waiting_indication_changed(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->message_waiting_indication_changed;
 }
 
+LinphoneCoreCbsSnapshotTakenCb linphone_core_cbs_get_snapshot_taken(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->snapshot_taken;
+}
+
+void linphone_core_cbs_set_snapshot_taken(LinphoneCoreCbs *cbs, LinphoneCoreCbsSnapshotTakenCb cb) {
+	cbs->vtable->snapshot_taken = cb;
+}
+
 void lc_callback_obj_init(LCCallbackObj *obj, LinphoneCoreCbFunc func, void *ud) {
 	obj->_func = func;
 	obj->_user_data = ud;
@@ -6456,6 +6464,8 @@ static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), uns
 	switch (id) {
 		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
 			LinphoneCore *lc = (LinphoneCore *)userdata;
+			MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
+			linphone_core_notify_snapshot_taken(lc, data->filePath);
 			linphone_core_enable_video_preview(lc, FALSE);
 			break;
 		}

@@ -305,6 +305,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsAccountAddedCb account_added;
 	LinphoneCoreCbsAccountRemovedCb account_removed;
 	LinphoneCoreCbsMessageWaitingIndicationChangedCb message_waiting_indication_changed;
+	LinphoneCoreCbsSnapshotTakenCb snapshot_taken;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -1377,6 +1378,20 @@ linphone_core_cbs_set_message_waiting_indication_changed(LinphoneCoreCbs *cbs,
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageWaitingIndicationChangedCb
 linphone_core_cbs_get_message_waiting_indication_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Gets the snapshot taken callback.
+ * @param cbs The #LinphoneCoreCbs object. @notnil
+ * @return The current snapshot taken callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsSnapshotTakenCb linphone_core_cbs_get_snapshot_taken(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the snapshot taken callback.
+ * @param cbs The #LinphoneCoreCbs object. @notnil
+ * @param cb The snapshot taken callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_snapshot_taken(LinphoneCoreCbs *cbs, LinphoneCoreCbsSnapshotTakenCb cb);
 
 /**
  * @}

@@ -62,6 +62,12 @@ static void enable_disable_camera_after_camera_switches(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void snapshot_taken_cb(BCTBX_UNUSED(LinphoneCore *lc), const char *result) {
+	char *filename = bc_tester_file("test_snapshot.jpeg");
+	BC_ASSERT_STRING_EQUAL(filename, result);
+	ms_free(filename);
+}
+
 static void camera_switches_while_only_preview(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	const char *camId = liblinphone_tester_mire_id;
@@ -78,8 +84,19 @@ static void camera_switches_while_only_preview(void) {
 	}
 	linphone_core_set_video_device(marie->lc, camId);
 	linphone_core_iterate(marie->lc);
+
+	LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(marie->lc);
+	linphone_core_cbs_set_snapshot_taken(cbs, snapshot_taken_cb);
+
 	linphone_core_enable_video_preview(marie->lc, TRUE);
 	linphone_core_iterate(marie->lc); // Let time to the core to set new values
+
+	char *filename = bc_tester_file("test_snapshot.jpeg");
+	remove(filename);
+	linphone_core_take_preview_snapshot(marie->lc, filename);
+	linphone_core_iterate(marie->lc);
+	linphone_core_iterate(marie->lc);
+
 	VideoStream *vs = (VideoStream *)linphone_core_get_preview_stream(marie->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(vs) && BC_ASSERT_PTR_NOT_NULL(vs->source)) {
 		ms_filter_call_method(vs->source, MS_FILTER_SET_FPS, (void *)&fps); // Simulate camera deficiency
@@ -87,6 +104,9 @@ static void camera_switches_while_only_preview(void) {
 		wait_for_until(marie->lc, NULL, NULL, 0, 6000);
 		BC_ASSERT_TRUE(vs->cam != cam);
 	}
+
+	remove(filename);
+	ms_free(filename);
 	linphone_core_manager_destroy(marie);
 }
 
