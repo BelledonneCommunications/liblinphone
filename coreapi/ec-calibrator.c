@@ -293,6 +293,10 @@ static void ecc_play_tones(EcCalibrator *ecc) {
 			ms_error("Quite surprising calibration result, delay=%i", delay);
 			ecc->status = LinphoneEcCalibratorFailed;
 		} else {
+			// Remove a margin in ms to compensate for long delays in order to increase the probability that the
+			// echo is present in the audio sample analyzed by the AEC. The margin cannot be higher than the half
+			// window of webRTC AEC.
+			delay = delay - MIN((int)((float)delay * 0.2), 40);
 			ms_message("Echo calibration estimated delay to be %i ms", delay);
 			ecc->delay = delay;
 			ecc->status = LinphoneEcCalibratorDone;

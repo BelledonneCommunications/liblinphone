@@ -18,6 +18,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 
 ### Changed
+- Echo Canceller Calibrator improvements
 - LinphoneRecorderFileFormat enum has been renamed into LinphoneMediaFileFormat.
 - Participant devices now deal separately with the main video stream and the thumbnail stream
   linphone_participant_device_get_ssrc() for the video stream now returns the SSRC of the main stream. The SSRC of the thumbnail stream is now returned by linphone_participant_device_get_thumbnail_ssrc() 
