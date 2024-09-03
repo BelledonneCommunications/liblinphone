@@ -1191,7 +1191,7 @@ static void proxy_config_push_notification_core_restart(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
-	size_t proxy_config_count = bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
+	int proxy_config_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
 	BC_ASSERT_EQUAL(proxy_config_count, 1, size_t, "%zu");
 
 #if __ANDROID__ || TARGET_OS_IPHONE
@@ -1243,7 +1243,7 @@ static void proxy_config_push_notification_core_restart(void) {
 
 	linphone_core_stop(marie->lc);
 	BC_ASSERT_EQUAL(linphone_core_get_global_state(marie->lc), LinphoneGlobalOff, int, "%i");
-	proxy_config_count = bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
+	proxy_config_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
 	BC_ASSERT_EQUAL(proxy_config_count, 1, size_t, "%zu");
 	linphone_core_start(marie->lc);
 	linphone_core_manager_setup_dns(marie);

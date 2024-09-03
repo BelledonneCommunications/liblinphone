@@ -453,7 +453,7 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 		return std::string();
 	}
 
-	ssize_t fileSize = (ssize_t)bctbx_file_size(cf);
+	ssize_t fileSize = bctbx_file_size(cf);
 	if (fileSize < 0) {
 		lError() << "[Content] Can't read size of file " << filePath;
 		bctbx_file_close(cf);

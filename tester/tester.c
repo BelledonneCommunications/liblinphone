@@ -3136,8 +3136,8 @@ void compare_files(const char *path1, const char *path2) {
 	BC_ASSERT_PTR_NOT_NULL(f2);
 	if (f1 == NULL || f2 == NULL) return;
 
-	int64_t s1 = bctbx_file_size(f1);
-	int64_t s2 = bctbx_file_size(f2);
+	ssize_t s1 = bctbx_file_size(f1);
+	ssize_t s2 = bctbx_file_size(f2);
 
 	BC_ASSERT_EQUAL((long)s2, (long)s1, long, "%ld");
 	BC_ASSERT_TRUE(s1 != BCTBX_VFS_ERROR);

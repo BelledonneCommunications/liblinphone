@@ -1821,7 +1821,8 @@ void Core::setConferenceCleanupPeriod(long seconds) {
 }
 
 long Core::getConferenceCleanupPeriod() const {
-	return linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc", "conference_cleanup_period", -1);
+	return (long)linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc", "conference_cleanup_period",
+	                                       -1);
 }
 
 std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const CallSession> &session,
