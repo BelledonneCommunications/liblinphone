@@ -128,6 +128,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 
 		liblinphone_tester_add_grammar_loader_path(VCARD_LOCAL_GRAMMAR_LOCATION);
 		liblinphone_tester_add_grammar_loader_path(SDP_LOCAL_GRAMMAR_LOCATION);
+		liblinphone_tester_add_grammar_loader_path(SIP_LOCAL_GRAMMAR_LOCATION);
 		liblinphone_tester_add_grammar_loader_path(LIBLINPHONE_LOCAL_GRAMMARS_LOCATION);
 
 #ifdef HAVE_SOCI
