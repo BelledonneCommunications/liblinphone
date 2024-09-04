@@ -21,6 +21,7 @@
 #include "bctoolbox/defs.h"
 
 #include "mediastreamer2/msanalysedisplay.h"
+#include "mediastreamer2/msmediaplayer.h"
 #include "mediastreamer2/msmire.h"
 
 #include "call/call.h"

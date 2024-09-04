@@ -111,7 +111,8 @@ typedef struct _LinphoneAccountParams LinphoneAccountParams;
 typedef struct _LinphoneAccountCbs LinphoneAccountCbs;
 
 /**
- * Object that replaces #LinphoneAccountCreator.
+ * Creates and manage SIP user accounts remotely, using the REST API of the Flexisip Account Manager.
+ * @see https://gitlab.linphone.org/BC/public/flexisip-account-manager
  * @ingroup account_creator
  */
 typedef struct _LinphoneAccountManagerServices LinphoneAccountManagerServices;
@@ -197,14 +198,15 @@ typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
 typedef struct _LinphoneConferenceInfo LinphoneConferenceInfo;
 
 /**
- * @brief Object used to create remote conferences and send ICS to notify participants
+ * @brief Creates and manages conferences on a conferenceing service, and send conference invitations to notify
+ * participants
  *
  * @ingroup conference
  */
 typedef struct _LinphoneConferenceScheduler LinphoneConferenceScheduler;
 
 /**
- * An object to handle the callbacks of #LinphoneConferenceScheduler object.
+ * Callbacks of #LinphoneConferenceScheduler object.
  * @ingroup account
  */
 typedef struct _LinphoneConferenceSchedulerCbs LinphoneConferenceSchedulerCbs;
@@ -286,6 +288,9 @@ typedef struct _LinphoneParticipantDeviceIdentity LinphoneParticipantDeviceIdent
  * it's current #LinphoneCallParams with linphone_call_get_current_params() and
  * the latest statistics by calling linphone_call_get_audio_stats() or linphone_call_get_video_stats().
  *
+ * The application can receive the various kind of events occuring in a call through the
+ * #LinphoneCallCbs interface, see also linphone_call_add_callbacks().
+ *
  * @ingroup call_control
  */
 typedef struct _LinphoneCall LinphoneCall;
@@ -323,7 +328,7 @@ typedef struct _LinphoneCallCbs LinphoneCallCbs;
 typedef struct _LinphoneCallParams LinphoneCallParams;
 
 /**
- * @brief Object used to record the audio or video of a call.
+ * @brief Interface used to record audio and video.
  *
  * @ingroup call_control
  **/
@@ -400,7 +405,7 @@ typedef struct _LinphoneAudioDevice LinphoneAudioDevice;
 // -----------------------------------------------------------------------------
 
 /**
- * @brief An chat message is the object that is sent or received through a #LinphoneChatRoom.
+ * @brief A #LinphoneChatMessage represents an instant message that can be send or received through a #LinphoneChatRoom.
  *
  * To create a #LinphoneChatMessage, use linphone_chat_room_create_empty_message(),
  * then either add text using linphone_chat_message_add_utf8_text_content() or a
@@ -428,7 +433,7 @@ typedef struct _LinphoneChatMessage LinphoneChatMessage;
  * Once you are ready, send the reaction using linphone_chat_message_reaction_send().
  *
  * Reactions are available using linphone_chat_message_get_reactions() and will be notified using dedicated callbacks
- * either in #LinphoneCoreListener or #LinphoneChatMessageListener.
+ * either in #LinphoneCoreCbs or #LinphoneChatMessageCbs.
  * @ingroup chatroom
  */
 typedef struct _LinphoneChatMessageReaction LinphoneChatMessageReaction;
@@ -453,7 +458,7 @@ typedef struct _LinphoneChatMessageCbs LinphoneChatMessageCbs;
  *
  * All chat rooms are loaded from database when the #LinphoneCore starts, and you can get them using
  * linphone_core_get_chat_rooms(). This method doesn't return empty chat rooms nor ones for which the local address
- * doesn't match an existing #LinphoneProxyConfig identity, unless you specify otherwise in the [misc] section
+ * doesn't match an existing #LinphoneAccount identity, unless you specify otherwise in the [misc] section
  * of your configuration file by setting hide_empty_chat_rooms=0 and/or hide_chat_rooms_from_removed_proxies=0.
  * @ingroup chatroom
  */
@@ -563,7 +568,7 @@ typedef struct _LinphoneEventLog LinphoneEventLog;
 // -----------------------------------------------------------------------------
 
 /**
- * Object that represents a Linphone Ldap.
+ * Object that represents a LDAP connection.
  * Use a #LinphoneLdapParams object to configure it.
  * @ingroup ldap
  */
@@ -628,7 +633,7 @@ typedef enum _LinphoneLdapCheck {
 // -----------------------------------------------------------------------------
 
 /**
- * @brief This object holds data that can be embedded in a signaling message.
+ * @brief This object holds data that can be embedded in a signaling message or IM message.
  *
  * Use linphone_core_create_content() to create it, and then you should set at least it's
  * type and subtype and fill the buffer with your data.
@@ -636,7 +641,6 @@ typedef enum _LinphoneLdapCheck {
  * A #LinphoneContent can be multipart (contain other contents), have file information (name, path, size),
  * be encrypted, have custom headers, etc...
  *
- * It is mainly used to send information through a #LinphoneChatMessage.
  * @ingroup misc
  */
 typedef struct _LinphoneContent LinphoneContent;
@@ -653,13 +657,13 @@ typedef struct _LinphoneDialPlan LinphoneDialPlan;
  * This object is a subset of #LinphoneChatMessage, so only a few methods of it's parent are available,
  * like linphone_push_notification_message_get_text_content() and linphone_push_notification_message_get_subject(),
  * just enough to be able to build a notification to show the user.
- * @ingroup misc
+ * @ingroup chatroom
  **/
 typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
 
 /**
- * @brief Object holding push notification config that will be set in the contact URI parameters of the Contact header
- *in the REGISTER, if the #LinphoneAccountParams is configured to allow push notifications, see
+ * @brief Object holding push notification configuration that will be set in the contact URI parameters of the Contact
+ *header in the REGISTER, if the #LinphoneAccountParams is configured to allow push notifications, see
  *linphone_account_params_set_push_notification_allowed().
  *
  * This object can be accessed through the #LinphoneAccountParams object, which can be obtained from your
@@ -673,20 +677,26 @@ typedef struct _LinphonePushNotificationConfig LinphonePushNotificationConfig;
 // -----------------------------------------------------------------------------
 
 /**
- * @brief A #LinphoneMagicSearch is used to do specifics searchs
- * @ingroup misc
+ * A #LinphoneMagicSearch is used to search for contacts from various sources:
+ * - #LinphoneFriendList
+ * - Ldap connection (see #LinphoneLdap)
+ * - Call logs and existing chat rooms.
+ * @see linphone_magic_search_get_contacts_list_async()
+ * @ingroup contacts
  */
 typedef struct _LinphoneMagicSearch LinphoneMagicSearch;
 
 /**
- * @brief A #LinphoneMagicSearchCbs is used to do specifics searchs
- * @ingroup misc
+ * #LinphoneMagicSearchCbs is an interface to be notified of results
+ * of contact searches initiated from the #LinphoneMagicSearch
+ * @see linphone_magic_search_add_callbacks()
+ * @ingroup contacts
  */
 typedef struct _LinphoneMagicSearchCbs LinphoneMagicSearchCbs;
 
 /**
- * @brief The LinphoneSearchResult object represents a result of a search
- * @ingroup misc
+ * The #LinphoneSearchResult object represents a result of a search initiated from a #LinphoneMagicSearch
+ * @ingroup contacts
  */
 typedef struct _LinphoneSearchResult LinphoneSearchResult;
 
@@ -706,13 +716,13 @@ typedef struct _LinphoneDigestAuthenticationPolicy LinphoneDigestAuthenticationP
 
 /**
  * Object that represents a #LinphoneFriend's phone number.
- * @ingroup buddy_list
+ * @ingroup contacts
  */
 typedef struct _LinphoneFriendPhoneNumber LinphoneFriendPhoneNumber;
 
 /**
  * Object that represents a #LinphoneFriend's device (name, trust level) for a given SIP address.
- * @ingroup buddy_list
+ * @ingroup contacts
  */
 typedef struct _LinphoneFriendDevice LinphoneFriendDevice;
 

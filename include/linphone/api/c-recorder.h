@@ -40,7 +40,7 @@ extern "C" {
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the newly created #LinphoneRecorder object. @notnil
  */
-LINPHONE_PUBLIC LinphoneRecorder *linphone_recorder_new(LinphoneCore *core, LinphoneRecorderParams *params);
+LINPHONE_PUBLIC LinphoneRecorder *linphone_recorder_new(LinphoneCore *core, const LinphoneRecorderParams *params);
 
 /**
  * Take a reference on a #LinphoneRecorder object.

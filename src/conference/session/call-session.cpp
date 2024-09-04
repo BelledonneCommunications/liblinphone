@@ -1765,21 +1765,20 @@ LinphoneStatus CallSession::transfer(const shared_ptr<CallSession> &dest) {
 	return result;
 }
 
-LinphoneStatus CallSession::transfer(const std::shared_ptr<Address> &address) {
+LinphoneStatus CallSession::transfer(const Address &address) {
 	L_D();
-	if (!address || !address->isValid()) {
-		lError() << "Received invalid address " << (address ? address->toString() : std::string("sip:"))
-		         << " to transfer the call to";
+	if (!address.isValid()) {
+		lError() << "Received invalid address " << address << " to transfer the call to";
 		return -1;
 	}
-	d->op->refer(address->toString().c_str());
+	d->op->refer(address.toString().c_str());
 	d->setTransferState(CallSession::State::OutgoingInit);
 	return 0;
 }
 
 LinphoneStatus CallSession::transfer(const string &dest) {
-	std::shared_ptr<Address> address(getCore()->interpretUrl(dest, true));
-	return transfer(address);
+	auto address = getCore()->interpretUrl(dest, true);
+	return transfer(*address);
 }
 
 LinphoneStatus CallSession::update(const CallSessionParams *csp,

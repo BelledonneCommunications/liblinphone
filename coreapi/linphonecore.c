@@ -1529,8 +1529,6 @@ static void net_config_read(LinphoneCore *lc) {
 	linphone_core_set_download_bandwidth(lc, tmp);
 	tmp = linphone_config_get_int(config, "net", "upload_bw", 0);
 	linphone_core_set_upload_bandwidth(lc, tmp);
-	tmp = linphone_config_get_int(config, "net", "expected_bw", 0);
-	linphone_core_set_expected_bandwidth(lc, tmp);
 
 	tmpstr = linphone_config_get_string(lc->config, "net", "nat_address", NULL);
 	if (tmpstr != NULL && (strlen(tmpstr) < 1)) tmpstr = NULL;
@@ -2519,9 +2517,8 @@ void linphone_core_set_upload_bandwidth(LinphoneCore *lc, int bw) {
 	if (linphone_core_ready(lc)) linphone_config_set_int(lc->config, "net", "upload_bw", bw);
 }
 
-void linphone_core_set_expected_bandwidth(LinphoneCore *lc, int bw) {
-	ms_factory_set_expected_bandwidth(lc->factory, bw * 1000); // In linphone we use kbits/s, in ms2 bits/s
-	if (linphone_core_ready(lc)) linphone_config_set_int(lc->config, "net", "expected_bw", bw);
+void linphone_core_set_expected_bandwidth(BCTBX_UNUSED(LinphoneCore *lc), BCTBX_UNUSED(int bw)) {
+	/* TO BE REMOVED*/
 }
 
 void linphone_core_set_sip_transport_timeout(LinphoneCore *lc, int timeout_ms) {
@@ -5945,7 +5942,7 @@ LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore 
 	return params;
 }
 
-LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, LinphoneRecorderParams *params) {
+LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const LinphoneRecorderParams *params) {
 	CoreLogContextualizer logContextualizer(lc);
 	return linphone_recorder_new(lc, params);
 }
@@ -7715,19 +7712,6 @@ void linphone_core_set_rtp_transport_factories(LinphoneCore *lc, LinphoneRtpTran
 	lc->rtptf = factories;
 }
 
-int linphone_core_get_current_call_stats(LinphoneCore *lc, rtp_stats_t *local, rtp_stats_t *remote) {
-	LinphoneCall *call = linphone_core_get_current_call(lc);
-	if (call) {
-		AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-		if (astream) {
-			memset(remote, 0, sizeof(*remote));
-			audio_stream_get_local_rtp_stats(astream, local);
-			return 0;
-		}
-	}
-	return -1;
-}
-
 void _linphone_core_codec_config_write(LinphoneCore *lc) {
 	OrtpPayloadType *pt;
 	codecs_config_t *config = &lc->codecs_conf;
@@ -8839,10 +8823,6 @@ bool_t linphone_core_is_media_encryption_supported(LinphoneCore *lc, LinphoneMed
 	return supported;
 }
 
-void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *params) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->initDefault(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing);
-}
-
 void linphone_core_set_device_identifier(LinphoneCore *lc, const char *device_id) {
 	if (lc->device_id) ms_free(lc->device_id);
 	lc->device_id = ms_strdup(device_id);
@@ -9517,16 +9497,6 @@ int linphone_core_get_conference_size(LinphoneCore *lc) {
 float linphone_core_get_conference_local_input_volume(LinphoneCore *lc) {
 	if (lc->conf_ctx) return linphone_conference_get_input_volume(lc->conf_ctx);
 	else return -1.0;
-}
-
-LinphoneStatus linphone_core_start_conference_recording(LinphoneCore *lc, const char *path) {
-	if (lc->conf_ctx) return linphone_conference_start_recording(lc->conf_ctx, path);
-	return -1;
-}
-
-LinphoneStatus linphone_core_stop_conference_recording(LinphoneCore *lc) {
-	if (lc->conf_ctx) return linphone_conference_stop_recording(lc->conf_ctx);
-	return -1;
 }
 
 LinphoneConference *linphone_core_get_conference(LinphoneCore *lc) {

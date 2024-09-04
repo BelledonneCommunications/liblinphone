@@ -931,9 +931,10 @@ bool MagicSearch::checkDomain(const LinphoneFriend *lFriend,
 	    lFriend ? linphone_friend_get_presence_model_for_uri_or_tel(lFriend, addr) : nullptr;
 	char *contactPresence = presenceModel ? linphone_presence_model_get_contact(presenceModel) : nullptr;
 
-	LinphoneAddress *addrPresence = nullptr;
+	Address addrPresence;
+	;
 	if (contactPresence) {
-		addrPresence = linphone_core_create_address(this->getCore()->getCCore(), contactPresence);
+		addrPresence = Address(contactPresence);
 		bctbx_free(contactPresence);
 	}
 
@@ -944,12 +945,10 @@ bool MagicSearch::checkDomain(const LinphoneFriend *lFriend,
 	        (lAddress || presenceModel) &&
 	        // And If we don't want Sip URI only or Address match or Address presence match
 	        ((lAddress && (compareStringItems(withDomain.c_str(), linphone_address_get_domain(lAddress)) == 0)) ||
-	         (addrPresence &&
-	          (compareStringItems(withDomain.c_str(), linphone_address_get_domain(addrPresence)) == 0))));
+	         (addrPresence.isValid() &&
+	          (compareStringItems(withDomain.c_str(), addrPresence.getDomain().c_str()) == 0))));
 
-	if (addrPresence) linphone_address_unref(addrPresence);
 	ms_free(addr);
-
 	return soFarSoGood;
 }
 

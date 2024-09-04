@@ -483,8 +483,6 @@ class Core;
 	char *rec_file;                                                                                                    \
 	uint64_t prevtime_ms;                                                                                              \
 	int audio_bw;                                                                                                      \
-	LinphoneCoreWaitingCallback wait_cb;                                                                               \
-	void *wait_ctx;                                                                                                    \
 	void *video_window_id;                                                                                             \
 	void *preview_window_id;                                                                                           \
 	time_t netup_time;                                                                                                 \

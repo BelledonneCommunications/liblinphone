@@ -251,7 +251,8 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 3000));
-
+	/* wait for receiving the 200 Ok in order to check the Via */
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, 1000));
 	/* make sure transport used for the subscribe is the same as the one used for REGISTER*/
 	BC_ASSERT_STRING_NOT_EQUAL(linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)),
 	                           "udp");
@@ -267,7 +268,7 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 		BC_ASSERT_STRING_EQUAL(linphone_event_get_custom_header(pauline->lev, "My-Header"), "pouet");
 		BC_ASSERT_STRING_EQUAL(linphone_event_get_custom_header(pauline->lev, "My-Header2"), "pimpon");
 	}
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
+
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
 
 	/*make sure marie receives first notification before terminating*/

@@ -86,6 +86,11 @@
 **/
 
 /**
+ * @defgroup account Accounts
+ * @brief Management of SIP accounts, including various SIP service settings.
+**/
+
+/**
  * @defgroup logging Logging
  * @brief Logging service of Linphone.
  */
@@ -153,12 +158,19 @@
  * @defgroup linphone_address Linphone address
  * @brief SIP address parser API.
 
- * This api is useful for manipulating SIP addresses ('from' or 'to' headers).
+ * This api is useful for manipulating SIP addresses ('from' or 'to' headers or SIP URIs).
 **/
 
 /**
  * @defgroup conference Conferencing
  * @brief Making a audio/video conferences.
+ *
+ *
+**/
+
+/**
+ * @defgroup contacts Contacts
+ * @brief Create, manage and search contacts.
  *
  *
 **/
@@ -174,6 +186,11 @@
  *
  * The LinphoneEvent api allows application to control subscriptions, receive notifications and make publish to peers, in a generic manner.
  */
+
+/**
+ * @defgroup ldap LDAP server interaction
+ * @brief Making LDAP searches to lookup contacts.
+**/
 
 /**
  * @defgroup misc Misc

@@ -530,9 +530,9 @@ LinphoneStatus linphone_call_transfer(LinphoneCall *call, const char *referTo) {
 	return Call::toCpp(call)->transfer(referTo);
 }
 
-LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, LinphoneAddress *referTo) {
+LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, const LinphoneAddress *referTo) {
 	CallLogContextualizer logContextualizer(call);
-	return Call::toCpp(call)->transfer(Address::toCpp(referTo)->getSharedFromThis());
+	return Call::toCpp(call)->transfer(*Address::toCpp(referTo)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_call_transfer_to_another(LinphoneCall *call, LinphoneCall *dest) {

@@ -32,7 +32,7 @@
 
 using namespace LinphonePrivate;
 
-LinphoneRecorder *linphone_recorder_new(LinphoneCore *core, LinphoneRecorderParams *params) {
+LinphoneRecorder *linphone_recorder_new(LinphoneCore *core, const LinphoneRecorderParams *params) {
 	return Recorder::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core),
 	                               RecorderParams::toCpp(params)->getSharedFromThis());
 }

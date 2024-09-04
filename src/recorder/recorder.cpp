@@ -30,7 +30,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-Recorder::Recorder(shared_ptr<Core> core, shared_ptr<RecorderParams> params) : CoreAccessor(core), mParams(params) {
+Recorder::Recorder(shared_ptr<Core> core, shared_ptr<const RecorderParams> params)
+    : CoreAccessor(core), mParams(params) {
 	init();
 }
 

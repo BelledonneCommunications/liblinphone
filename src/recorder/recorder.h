@@ -39,7 +39,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Recorder : public bellesip::HybridObject<LinphoneRecorder, Recorder>, public CoreAccessor {
 public:
-	Recorder(std::shared_ptr<Core> core, std::shared_ptr<RecorderParams> params);
+	Recorder(std::shared_ptr<Core> core, std::shared_ptr<const RecorderParams> params);
 	~Recorder();
 
 	Recorder *clone() const override;
@@ -67,7 +67,7 @@ protected:
 
 private:
 	MSMediaRecorder *mRecorder = nullptr;
-	std::shared_ptr<RecorderParams> mParams;
+	std::shared_ptr<const RecorderParams> mParams;
 	struct timeval mStartTime;
 	struct timeval mEndTime;
 	std::string mFilePath;

@@ -60,8 +60,8 @@ static LinphoneAccountCreator *init(LinphoneCore *lc) {
 
 static void account_delete_on_api(LinphoneCore *core, string username, string password) {
 	auto *params = linphone_core_create_account_params(core);
-	LinphoneAddress *addr =
-	    linphone_core_create_address(core, string("sip:").append(username).append("@sip.example.org").c_str());
+	LinphoneAddress *addr = linphone_factory_create_address(
+	    linphone_factory_get(), string("sip:").append(username).append("@sip.example.org").c_str());
 	linphone_account_params_set_identity_address(params, addr);
 
 	auto *account = linphone_core_create_account(core, params);

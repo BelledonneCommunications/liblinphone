@@ -132,7 +132,7 @@ public:
 	LinphoneStatus takeVideoSnapshot(const std::string &file);
 	LinphoneStatus terminate(const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer(const std::shared_ptr<Call> &dest);
-	LinphoneStatus transfer(const std::shared_ptr<Address> &dest);
+	LinphoneStatus transfer(const Address &dest);
 	LinphoneStatus transfer(const std::string &dest);
 	LinphoneStatus update(const MediaSessionParams *msp = nullptr);
 	LinphoneStatus updateFromConference(const MediaSessionParams *msp = nullptr);

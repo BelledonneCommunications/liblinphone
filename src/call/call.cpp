@@ -967,7 +967,7 @@ LinphoneStatus Call::transfer(const string &dest) {
 	return getActiveSession()->transfer(dest);
 }
 
-LinphoneStatus Call::transfer(const std::shared_ptr<Address> &dest) {
+LinphoneStatus Call::transfer(const Address &dest) {
 	return getActiveSession()->transfer(dest);
 }
 
