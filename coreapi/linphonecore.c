@@ -6481,6 +6481,17 @@ static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), uns
 		}
 	}
 }
+static void
+video_filter_callback_not_turning_preview_off(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
+	switch (id) {
+		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
+			linphone_core_notify_snapshot_taken(lc, data->filePath);
+			break;
+		}
+	}
+}
 #endif
 
 LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char *file) {
@@ -6504,8 +6515,13 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 			linphone_core_enable_video_preview(lc, TRUE);
 
 			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, video_filter_callback, lc, FALSE);
-			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)file);
 		} else {
+			// video_filter_callback will turn OFF video preview, we don't want that here
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter,
+			                              video_filter_callback_not_turning_preview_off, lc, FALSE);
+		}
+
+		if (lc->previewstream) {
 			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)file);
 		}
 		return 0;
