@@ -109,7 +109,7 @@ LocalConference::LocalConference(const shared_ptr<Core> &core,
 }
 
 LocalConference::LocalConference(const std::shared_ptr<Core> &core, SalCallOp *op)
-    : Conference(core, Address::create(op->getTo()), nullptr, ConferenceParams::create(core->getCCore())) {
+    : Conference(core, Address::create(op->getTo()), nullptr, ConferenceParams::create(core)) {
 }
 
 LocalConference::~LocalConference() {

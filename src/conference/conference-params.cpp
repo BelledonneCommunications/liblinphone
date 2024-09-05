@@ -31,17 +31,41 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ConferenceParams::ConferenceParams(const LinphoneCore *core) {
+ConferenceParams::ConferenceParams(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
 	if (core) {
-		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
+		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core->getCCore());
 		enableVideo(policy->automatically_initiate);
 		setParticipantListType(
-		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
-		const auto defaultAccount = linphone_core_get_default_account(core);
-		if (defaultAccount) {
-			updateFromAccount(Account::toCpp(defaultAccount)->getSharedFromThis());
-		}
+		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core->getCCore())));
 	}
+}
+
+ConferenceParams::ConferenceParams(const ConferenceParams &other)
+    : HybridObject<LinphoneConferenceParams, ConferenceParams>(other), CoreAccessor(nullptr) {
+	try {
+		setCore(other.getCore());
+	} catch (const bad_weak_ptr &) {
+	}
+	m_enableAudio = other.m_enableAudio;
+	m_enableVideo = other.m_enableVideo;
+	m_enableChat = other.m_enableChat;
+	m_localParticipantEnabled = other.m_localParticipantEnabled;
+	m_allowOneParticipantConference = other.m_allowOneParticipantConference;
+	m_participantListType = other.m_participantListType;
+	m_joinMode = other.m_joinMode;
+	m_conferenceAddress = other.m_conferenceAddress ? other.m_conferenceAddress->clone()->toSharedPtr() : nullptr;
+	m_factoryAddress = other.m_factoryAddress ? other.m_factoryAddress->clone()->toSharedPtr() : nullptr;
+	m_securityLevel = other.m_securityLevel;
+	m_useDefaultFactoryAddress = other.m_useDefaultFactoryAddress;
+	m_subject = other.m_subject;
+	m_utf8Subject = other.m_utf8Subject;
+	m_description = other.m_description;
+	m_utf8Description = other.m_utf8Description;
+	m_me = other.m_me ? other.m_me->clone()->toSharedPtr() : nullptr;
+	m_startTime = other.m_startTime;
+	m_endTime = other.m_endTime;
+	m_account = other.m_account;
+	m_hidden = other.m_hidden;
 }
 
 void ConferenceParams::setAccount(const shared_ptr<Account> &a) {
@@ -61,10 +85,11 @@ void ConferenceParams::updateFromAccount(
 				setMe(nullptr);
 			}
 			if (m_useDefaultFactoryAddress) {
-				auto core = account->getCore();
-				m_factoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
+				const auto &audioVideoConferenceFactory = accountParams->getAudioVideoConferenceFactoryAddress();
+				m_factoryAddress =
+				    audioVideoConferenceFactory ? audioVideoConferenceFactory->clone()->toSharedPtr() : nullptr;
 				if (m_factoryAddress &&
-				    (linphone_core_get_global_state(L_GET_C_BACK_PTR(core)) != LinphoneGlobalStartup)) {
+				    (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup)) {
 					lInfo() << "Update conference parameters from account, factory: " << *m_factoryAddress;
 				}
 			}

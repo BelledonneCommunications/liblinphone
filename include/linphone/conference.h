@@ -57,7 +57,7 @@ typedef enum { LinphoneConferenceClassLocal, LinphoneConferenceClassRemote } Lin
  * @param core The #LinphoneCore to pass to the constructor. @notnil
  * @return The created #LinphoneConferenceParams. @notnil
  */
-LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_new(LinphoneCore *core);
 
 /**
  * Take a reference on a #LinphoneConferenceParams.
@@ -196,6 +196,15 @@ linphone_conference_params_is_chat_enabled(const LinphoneConferenceParams *param
  * @return TRUE if the conference supports chat capabilities, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_chat_enabled(const LinphoneConferenceParams *params);
+
+/**
+ * Sets the account for the conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param account a pointer to the account. @maybenil
+ * @warning The account can only be changed upon creation of a conference when calling
+ * linphone_core_create_conference_with_params
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_account(LinphoneConferenceParams *params, LinphoneAccount *account);
 
 /**
  * Returns the account for the conference

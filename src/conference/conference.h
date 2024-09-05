@@ -156,6 +156,7 @@ public:
 	ConferenceLayout getLayout() const;
 	void setLayout(const ConferenceLayout layout);
 
+	const std::shared_ptr<Account> getAccount();
 	time_t getStartTime() const;
 	int getDuration() const;
 

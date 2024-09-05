@@ -86,7 +86,7 @@ char *linphone_conference_state_to_string(LinphoneConferenceState state) {
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress *addr) {
 	return (new LinphonePrivate::MediaConference::LocalConference(
 	            L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::Address::toCpp(addr)->getSharedFromThis(), nullptr,
-	            ConferenceParams::create(core)))
+	            ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(core))))
 	    ->toC();
 }
 
@@ -103,7 +103,7 @@ LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneA
 	return (new LinphonePrivate::MediaConference::RemoteConference(
 	            L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::Address::toCpp(addr)->getSharedFromThis(),
 	            ConferenceId(nullptr, LinphonePrivate::Address::toCpp(addr)->getSharedFromThis()), nullptr,
-	            ConferenceParams::create(core)))
+	            ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(core))))
 	    ->toC();
 }
 
@@ -440,8 +440,8 @@ void linphone_conference_set_participant_admin_status(LinphoneConference *confer
 	MediaConference::Conference::toCpp(conference)->setParticipantAdminStatus(p, !!isAdmin);
 }
 
-LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core) {
-	LinphoneConferenceParams *conference = ConferenceParams::createCObject(core);
+LinphoneConferenceParams *linphone_conference_params_new(LinphoneCore *core) {
+	LinphoneConferenceParams *conference = ConferenceParams::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
 	return conference;
 }
 
@@ -517,8 +517,14 @@ LinphoneProxyConfig *linphone_conference_params_get_proxy_cfg(const LinphoneConf
 	    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 }
 
+void linphone_conference_params_set_account(LinphoneConferenceParams *params, LinphoneAccount *account) {
+	return ConferenceParams::toCpp(params)->setAccount(account ? Account::toCpp(account)->getSharedFromThis()
+	                                                           : nullptr);
+}
+
 LinphoneAccount *linphone_conference_params_get_account(const LinphoneConferenceParams *params) {
-	return ConferenceParams::toCpp(params)->getAccount()->toC();
+	const auto &account = ConferenceParams::toCpp(params)->getAccount();
+	return account ? account->toC() : nullptr;
 }
 
 void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable) {

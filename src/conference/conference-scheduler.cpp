@@ -218,7 +218,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	clone->setState(infoState);
 	mConferenceInfo = clone;
 
-	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore());
 	conferenceParams->enableAudio(true);
 	conferenceParams->enableVideo(true);
 	conferenceParams->setSubject(mConferenceInfo->getSubject());

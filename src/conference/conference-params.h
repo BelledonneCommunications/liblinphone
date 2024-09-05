@@ -41,13 +41,15 @@ class RemoteConference;
 } // namespace MediaConference
 
 class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>,
+                                         public CoreAccessor,
                                          public ConferenceParamsInterface {
 	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
 
 public:
-	ConferenceParams(const LinphoneCore *core = NULL);
+	ConferenceParams(const std::shared_ptr<Core> &core = NULL);
+	ConferenceParams(const ConferenceParams &other);
 
 	ConferenceParams *clone() const override {
 		return new ConferenceParams(*this);

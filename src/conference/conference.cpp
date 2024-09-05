@@ -67,6 +67,22 @@ Conference::~Conference() {
 
 // -----------------------------------------------------------------------------
 
+const std::shared_ptr<Account> Conference::getAccount() {
+	auto account = confParams->getAccount();
+	if (!account) {
+		auto cAccount = linphone_core_find_account_by_identity_address(getCore()->getCCore(),
+		                                                               conferenceId.getLocalAddress()->toC());
+		account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
+		confParams->setAccount(account);
+	}
+	if (!account) {
+		const auto &conferenceAddress = getConferenceAddress();
+		lError() << "Unable to associate account to conference [" << this << "] with address ["
+		         << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << "]";
+	}
+	return account;
+}
+
 time_t Conference::getStartTime() const {
 	return startTime;
 }
@@ -245,17 +261,26 @@ void Conference::setLocalParticipantStreamCapability(BCTBX_UNUSED(const Linphone
 }
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
-	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams &>(newParameters);
-	if (confParams && ((confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) ||
-	                   (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
-		lError() << "Trying to change frozen conference parameters:";
-		lError() << " -  factory address: actual " << confParams->getConferenceFactoryAddress() << " new value "
-		         << newConfParams.getConferenceFactoryAddress();
-		lError() << " -  conference address: actual " << confParams->getConferenceAddress() << " new value "
-		         << newConfParams.getConferenceAddress();
-		return false;
+	const ConferenceParams &newConfParams = static_cast<const ConferenceParams &>(newParameters);
+	std::shared_ptr<Account> account;
+	bool isUpdate = (confParams != nullptr);
+	if (isUpdate) {
+		if ((*confParams->getConferenceFactoryAddress() != *newConfParams.getConferenceFactoryAddress()) ||
+		    (*confParams->getConferenceAddress() != *newConfParams.getConferenceAddress())) {
+			lError() << "Trying to change frozen conference parameters:";
+			lError() << " -  factory address: actual " << *confParams->getConferenceFactoryAddress() << " new value "
+			         << *newConfParams.getConferenceFactoryAddress();
+			lError() << " -  conference address: actual " << *confParams->getConferenceAddress() << " new value "
+			         << *newConfParams.getConferenceAddress();
+			return false;
+		}
+		account = confParams->getAccount();
 	}
 	confParams = ConferenceParams::create(newConfParams);
+	// The conference parameter account should not change if the application is updating them
+	if (isUpdate) {
+		confParams->setAccount(account);
+	}
 	return true;
 };
 

@@ -249,10 +249,16 @@ public:
 	}
 
 	void registerAsParticipantDevice(ClientConference &otherMgr) {
-		const LinphoneAddress *cAddr = linphone_proxy_config_get_contact(otherMgr.getDefaultProxyConfig());
-		Address participantDevice = Address::toCpp(const_cast<LinphoneAddress *>(cAddr))->getUri();
-		Address participant = participantDevice.getUriWithoutGruu();
-		mParticipantDevices.insert({participant, participantDevice});
+		const bctbx_list_t *accounts = linphone_core_get_account_list(otherMgr.getLc());
+		for (const bctbx_list_t *accountIt = accounts; accountIt != NULL; accountIt = accountIt->next) {
+			LinphoneAccount *account = (LinphoneAccount *)bctbx_list_get_data(accountIt);
+			const LinphoneAddress *cAddr = linphone_account_get_contact_address(account);
+			if (cAddr) {
+				Address participantDevice = Address::toCpp(cAddr)->getUri();
+				Address participant = participantDevice.getUriWithoutGruu();
+				mParticipantDevices.insert({participant, participantDevice});
+			}
+		}
 		// to allow client conference to delete chatroom in its destructor
 		otherMgr.setFocus(borrowed_mut(this));
 	}

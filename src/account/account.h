@@ -53,10 +53,10 @@ class AccountCbs;
 class Address;
 class EventPublish;
 
-class Account : public bellesip::HybridObject<LinphoneAccount, Account>,
-                public UserDataAccessor,
-                public CallbacksHolder<AccountCbs>,
-                public CoreAccessor {
+class LINPHONE_PUBLIC Account : public bellesip::HybridObject<LinphoneAccount, Account>,
+                                public UserDataAccessor,
+                                public CallbacksHolder<AccountCbs>,
+                                public CoreAccessor {
 public:
 	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params);
 	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);

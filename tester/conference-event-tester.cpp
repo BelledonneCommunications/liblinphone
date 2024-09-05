@@ -777,7 +777,7 @@ public:
 };
 
 ConferenceEventTester::ConferenceEventTester(const shared_ptr<Core> &core, const std::shared_ptr<Address> &confAddr)
-    : RemoteConference(core, confAddr, nullptr, ConferenceParams::create(core->getCCore())) {
+    : RemoteConference(core, confAddr, nullptr, ConferenceParams::create(core)) {
 	handler = new RemoteConferenceEventHandler(this, this);
 }
 
@@ -844,7 +844,7 @@ public:
 	LocalConferenceTester(const std::shared_ptr<Core> &core,
 	                      const std::shared_ptr<Address> &myAddress,
 	                      CallSessionListener *listener)
-	    : LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {
+	    : LocalConference(core, myAddress, listener, ConferenceParams::create(core)) {
 	}
 	virtual ~LocalConferenceTester() {
 	}
@@ -1422,7 +1422,7 @@ void send_first_notify() {
 	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	shared_ptr<LocalConference> localConf =
-	    make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc));
+	    make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc->cppPtr));
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
@@ -1852,7 +1852,7 @@ void send_added_notify_through_call() {
 	{
 		shared_ptr<MediaConference::LocalConference> localConf = std::shared_ptr<MediaConference::LocalConference>(
 		    new MediaConference::LocalConference(pauline->lc->cppPtr, addr, nullptr,
-		                                         ConferenceParams::create(pauline->lc)),
+		                                         ConferenceParams::create(pauline->lc->cppPtr)),
 		    [](MediaConference::LocalConference *c) { c->unref(); });
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending,
@@ -1924,7 +1924,7 @@ void send_removed_notify_through_call() {
 	{
 		shared_ptr<MediaConference::LocalConference> localConf = std::shared_ptr<MediaConference::LocalConference>(
 		    new MediaConference::LocalConference(pauline->lc->cppPtr, addr, nullptr,
-		                                         ConferenceParams::create(pauline->lc)),
+		                                         ConferenceParams::create(pauline->lc->cppPtr)),
 		    [](MediaConference::LocalConference *c) { c->unref(); });
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending,
@@ -2353,7 +2353,7 @@ void one_to_one_keyword() {
 	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	shared_ptr<LocalConference> localConf =
-	    make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc));
+	    make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc->cppPtr));
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);

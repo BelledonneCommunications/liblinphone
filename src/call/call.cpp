@@ -527,7 +527,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			remoteConference->setMainSession(session);
 		}
 	} else {
-		auto confParams = ConferenceParams::create(getCore()->getCCore());
+		auto confParams = ConferenceParams::create(getCore());
 		std::shared_ptr<ConferenceInfo> conferenceInfo =
 #ifdef HAVE_DB_STORAGE
 		    getCore()->getPrivate()->mainDb

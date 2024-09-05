@@ -1509,7 +1509,7 @@ ServerGroupChatRoom::ServerGroupChatRoom(const shared_ptr<Core> &core, SalCallOp
                core,
                ChatRoomParams::getDefaults(core),
                make_shared<LocalConference>(
-                   core, Address::create(op->getTo()), nullptr, ConferenceParams::create(core->getCCore()), this)) {
+                   core, Address::create(op->getTo()), nullptr, ConferenceParams::create(core), this)) {
 	L_D();
 
 	getCore()->getPrivate()->registerListener(this);
@@ -1551,11 +1551,10 @@ ServerGroupChatRoom::ServerGroupChatRoom(const shared_ptr<Core> &core,
                                          const string &subject,
                                          list<shared_ptr<Participant>> &&participants,
                                          unsigned int lastNotifyId)
-    : ChatRoom(
-          *new ServerGroupChatRoomPrivate(capabilities),
-          core,
-          params,
-          make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()), this)) {
+    : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities),
+               core,
+               params,
+               make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core), this)) {
 	L_D();
 	cachedParticipants = std::move(participants);
 	getCore()->getPrivate()->registerListener(this);

@@ -411,7 +411,7 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
                core,
                params,
                make_shared<RemoteConference>(
-                   core, conferenceId.getLocalAddress(), nullptr, ConferenceParams::create(core->getCCore()))) {
+                   core, conferenceId.getLocalAddress(), nullptr, ConferenceParams::create(core))) {
 	L_D();
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler =
@@ -462,11 +462,10 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
                                          list<shared_ptr<Participant>> &&newParticipants,
                                          unsigned int lastNotifyId,
                                          bool hasBeenLeft)
-    : ChatRoom(
-          *new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference),
-          core,
-          params,
-          make_shared<RemoteConference>(core, me->getAddress(), nullptr, ConferenceParams::create(core->getCCore()))) {
+    : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference),
+               core,
+               params,
+               make_shared<RemoteConference>(core, me->getAddress(), nullptr, ConferenceParams::create(core))) {
 	L_D();
 
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
