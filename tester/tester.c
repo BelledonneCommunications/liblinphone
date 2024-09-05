@@ -2628,6 +2628,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 
 	if (proxy_count) {
 		const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
+		stats mgr_stats = mgr->stat;
 		int lime_enabled = 0;
 		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
 			LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
@@ -2639,11 +2640,11 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 			// Wait for lime users to be created on X3DH server
 			if (mgr->lime_failure) {
 				BC_ASSERT_TRUE(wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_X3dhUserCreationFailure,
-				                              mgr->stat.number_of_X3dhUserCreationFailure + 1,
+				                              mgr_stats.number_of_X3dhUserCreationFailure + 1,
 				                              x3dhServer_creationTimeout));
 			} else {
 				BC_ASSERT_TRUE(wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_X3dhUserCreationSuccess,
-				                              mgr->stat.number_of_X3dhUserCreationSuccess + lime_enabled,
+				                              mgr_stats.number_of_X3dhUserCreationSuccess + lime_enabled,
 				                              x3dhServer_creationTimeout));
 			}
 			if (lime_enabled == 1) {

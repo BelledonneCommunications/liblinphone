@@ -194,6 +194,15 @@ linphone_conference_params_is_chat_enabled(const LinphoneConferenceParams *param
 LINPHONE_PUBLIC bool_t linphone_conference_params_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
+ * Sets the account for the conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param account a pointer to the account. @maybenil
+ * @warning The account can only be changed upon creation of a conference when calling
+ * linphone_core_create_conference_with_params
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_account(LinphoneConferenceParams *params, LinphoneAccount *account);
+
+/**
  * Returns the account for the conference
  * @param params A #LinphoneConferenceParams @notnil
  * @return a pointer to the account or NULL if it is not set. @maybenil

@@ -645,7 +645,7 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(),
 		                            Address::create(op->getTo()));
 		newDeviceSession->startIncomingNotification(false);
-		const auto &contactAddress = mConfParams->getAccount()->getContactAddress();
+		const auto &contactAddress = getAccount()->getContactAddress();
 		std::shared_ptr<Address> addr = getConferenceAddress()->clone()->toSharedPtr();
 		if (contactAddress && contactAddress->hasUriParam("gr")) {
 			addr->setUriParam("gr", contactAddress->getUriParamValue("gr"));
@@ -1194,7 +1194,7 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 			linphone_call_params_enable_tone_indications(new_params, !chatEnabled);
 			linphone_call_params_set_in_conference(new_params, TRUE);
 			linphone_call_params_set_start_time(new_params, mConfParams->getStartTime());
-			linphone_call_params_set_account(new_params, mConfParams->getAccount()->toC());
+			linphone_call_params_set_account(new_params, getAccount()->toC());
 
 			const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 			const string &confId = conferenceAddress->getUriParamValue("conf-id");
@@ -1229,18 +1229,6 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 			if (device) {
 				device->setSession(session);
 			}
-
-			if (!mConfParams->getAccount()) {
-				// Set proxy configuration used for the conference
-				auto callAccount = session->getPrivate()->getDestAccount();
-				if (callAccount) {
-					mConfParams->setAccount(callAccount);
-				} else {
-					auto account = getCore()->lookupKnownAccount(address, true);
-					mConfParams->setAccount(account);
-				}
-			}
-
 			linphone_call_params_unref(new_params);
 		} else if (audioEnabled || videoEnabled) {
 			/* There is already a call to this address, so simply join it to the local conference if not already
@@ -1511,8 +1499,9 @@ void ServerConference::removeLocalEndpoint() {
 }
 
 bool ServerConference::tryAddMeDevice() {
-	if (mConfParams->localParticipantEnabled() && mMe->getDevices().empty() && mConfParams->getAccount()) {
-		const auto &contactAddress = mConfParams->getAccount()->getContactAddress();
+	const auto &account = getAccount();
+	if (mConfParams->localParticipantEnabled() && mMe->getDevices().empty() && account) {
+		const auto &contactAddress = account->getContactAddress();
 		if (contactAddress) {
 			std::shared_ptr<Address> devAddr = contactAddress->clone()->toSharedPtr();
 			auto meDev = mMe->addDevice(devAddr);
@@ -1732,7 +1721,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			}
 		}
 
-		if (!mConfParams->getAccount()) {
+		if (!getAccount()) {
 			// Set proxy configuration used for the conference
 			auto callAccount = call->getDestAccount();
 			if (callAccount) {
@@ -2311,9 +2300,10 @@ void ServerConference::chooseAnotherAdminIfNoneInConference() {
 
 void ServerConference::setLocalParticipantStreamCapability(const LinphoneMediaDirection &direction,
                                                            const LinphoneStreamType type) {
-	if (mConfParams->localParticipantEnabled() && !mMe->getDevices().empty() && mConfParams->getAccount() &&
+	const auto &account = getAccount();
+	if (mConfParams->localParticipantEnabled() && !mMe->getDevices().empty() && account &&
 	    (type != LinphoneStreamTypeUnknown)) {
-		const auto &contactAddress = mConfParams->getAccount()->getContactAddress();
+		const auto &contactAddress = account->getContactAddress();
 		if (contactAddress) {
 			std::shared_ptr<Address> devAddr = contactAddress->clone()->toSharedPtr();
 			const auto &meDev = mMe->findDevice(devAddr);

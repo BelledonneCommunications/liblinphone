@@ -34,7 +34,8 @@ LINPHONE_BEGIN_NAMESPACE
 class PushNotificationConfig;
 class NatPolicy;
 
-class AccountParams : public bellesip::HybridObject<LinphoneAccountParams, AccountParams>, public CustomParams {
+class LINPHONE_PUBLIC AccountParams : public bellesip::HybridObject<LinphoneAccountParams, AccountParams>,
+                                      public CustomParams {
 	friend class Account;
 
 public:

@@ -32,12 +32,10 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ConferenceParams::ConferenceParams(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
-	if (core) {
-		setAccount(core->getDefaultAccount());
-	}
 }
 
-ConferenceParams::ConferenceParams(const ConferenceParams &other) : HybridObject<LinphoneConferenceParams, ConferenceParams>(other), CoreAccessor(nullptr) {
+ConferenceParams::ConferenceParams(const ConferenceParams &other)
+    : HybridObject<LinphoneConferenceParams, ConferenceParams>(other), CoreAccessor(nullptr) {
 	try {
 		setCore(other.getCore());
 	} catch (const bad_weak_ptr &) {
@@ -113,7 +111,9 @@ void ConferenceParams::updateFromAccount(
 				setMe(nullptr);
 			}
 			if (mUseDefaultFactoryAddress) {
-				mFactoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
+				const auto &audioVideoConferenceFactory = accountParams->getAudioVideoConferenceFactoryAddress();
+				mFactoryAddress =
+				    audioVideoConferenceFactory ? audioVideoConferenceFactory->clone()->toSharedPtr() : nullptr;
 				if (mFactoryAddress &&
 				    (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup)) {
 					lInfo() << "Update conference parameters from account, factory: " << *mFactoryAddress;

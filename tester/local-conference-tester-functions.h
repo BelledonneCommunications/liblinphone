@@ -252,10 +252,16 @@ public:
 	}
 
 	void registerAsParticipantDevice(ClientConference &otherMgr) {
-		const LinphoneAddress *cAddr = linphone_account_get_contact_address(otherMgr.getDefaultAccount());
-		Address participantDevice = Address::toCpp(cAddr)->getUri();
-		Address participant = participantDevice.getUriWithoutGruu();
-		mParticipantDevices.insert({participant, std::reference_wrapper<ClientConference>(otherMgr)});
+		const bctbx_list_t *accounts = linphone_core_get_account_list(otherMgr.getLc());
+		for (const bctbx_list_t *accountIt = accounts; accountIt != NULL; accountIt = accountIt->next) {
+			LinphoneAccount *account = (LinphoneAccount *)bctbx_list_get_data(accountIt);
+			const LinphoneAddress *cAddr = linphone_account_get_contact_address(account);
+			if (cAddr) {
+				Address participantDevice = Address::toCpp(cAddr)->getUri();
+				Address participant = participantDevice.getUriWithoutGruu();
+				mParticipantDevices.insert({participant, std::reference_wrapper<ClientConference>(otherMgr)});
+			}
+		}
 		// to allow client conference to delete chatroom in its destructor
 		otherMgr.setFocus(borrowed_mut(this));
 	}
@@ -344,8 +350,8 @@ private:
 						groupchat_enabled |= (strstr(spec, "groupchat") != NULL);
 					}
 					if (groupchat_enabled) {
-						const LinphoneAddress *deviceAddr =
-						    linphone_account_get_contact_address(client.getDefaultAccount());
+						LinphoneAccount *account = linphone_core_lookup_known_account(client.getLc(), participantAddr);
+						const LinphoneAddress *deviceAddr = linphone_account_get_contact_address(account);
 						LinphoneParticipantDeviceIdentity *identity =
 						    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
 						linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);

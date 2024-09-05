@@ -107,8 +107,14 @@ LinphoneProxyConfig *linphone_conference_params_get_proxy_cfg(const LinphoneConf
 	    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 }
 
+void linphone_conference_params_set_account(LinphoneConferenceParams *params, LinphoneAccount *account) {
+	return ConferenceParams::toCpp(params)->setAccount(account ? Account::toCpp(account)->getSharedFromThis()
+	                                                           : nullptr);
+}
+
 LinphoneAccount *linphone_conference_params_get_account(const LinphoneConferenceParams *params) {
-	return ConferenceParams::toCpp(params)->getAccount()->toC();
+	const auto &account = ConferenceParams::toCpp(params)->getAccount();
+	return account ? account->toC() : nullptr;
 }
 
 void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable) {

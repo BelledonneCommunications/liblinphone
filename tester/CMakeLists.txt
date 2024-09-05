@@ -189,6 +189,7 @@ set(RC_FILES
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
+	rcfiles/multi_account2_rc
 	rcfiles/pauline_alt_rc
 	rcfiles/pauline_as_friend_rc
 	rcfiles/pauline_dtls_srtp_immediate_rc

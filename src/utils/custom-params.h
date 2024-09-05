@@ -31,7 +31,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CustomParams {
+class LINPHONE_PUBLIC CustomParams {
 
 public:
 	CustomParams();

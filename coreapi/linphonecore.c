@@ -9265,10 +9265,17 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	if (lc->conf_ctx == NULL || serverMode) {
 		bool errorOnRemoteConference = false;
 		// Get factory and identity from linphone conference params, or from default account.
-		const LinphoneAddress *factory_uri_const = linphone_conference_params_get_conference_factory_address(params);
 		LinphoneAddress *identity;
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
 		linphone_conference_params_enable_audio(params2, TRUE);
+		LinphoneAccount *conference_account = linphone_conference_params_get_account(params2);
+		LinphoneAccount *default_account = linphone_core_get_default_account(lc);
+		if (!conference_account) {
+			lWarning() << "The application didn't explicitely specified the account to use to create a conference, "
+			              "therefore the core is going to use the default account";
+			linphone_conference_params_set_account(params2, default_account);
+		}
+		const LinphoneAddress *factory_uri_const = linphone_conference_params_get_conference_factory_address(params2);
 		conf_method_name = linphone_config_get_string(lc->config, "misc", "conference_type", NULL);
 
 		// Get identity
@@ -9277,34 +9284,34 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 			identity = linphone_address_new(linphone_core_get_identity(lc));
 		} else {
 			const std::shared_ptr<LinphonePrivate::Address> &identity_address =
-			    LinphonePrivate::ConferenceParams::toCpp(params)->getMe();
+			    LinphonePrivate::ConferenceParams::toCpp(params2)->getMe();
 			if (identity_address && identity_address->isValid()) {
-				lInfo() << "Creating remote conference with identity from conference params : " << *identity_address;
+				lInfo() << "Creating conference with identity from conference params : " << *identity_address;
 				identity = linphone_address_clone(identity_address->toC());
 			} else {
 				identity = linphone_address_new(linphone_core_get_identity(lc));
-				lInfo() << "Creating remote conference with identity from default account "
+				lInfo() << "Creating conference with identity from default account "
 				        << *LinphonePrivate::Address::toCpp(identity);
 			}
 		}
 
-		// Create a local conference if:
+		// Create a server conference if:
 		// - it is a conference server
 		// - conference type is not defined and conference factory address is not defined
 		// - conference type is local
 		if (linphone_core_conference_server_enabled(lc) ||
 		    (!conf_method_name && !linphone_address_is_valid(factory_uri_const)) ||
 		    (conf_method_name && strcasecmp(conf_method_name, "local") == 0)) {
+			lInfo() << "Creating server conference ";
 			conf = linphone_local_conference_new_with_params(lc, identity, params2);
 		} else if (!serverMode) {
 			// Get Factory URI
 			LinphoneAddress *factory_uri = nullptr;
 			if (conf_method_name) { // Priority for conf method.
 				if (strcasecmp(conf_method_name, "remote") == 0) {
-					LinphoneAccount *account = linphone_core_get_default_account(lc);
-					if (account) {
+					if (default_account) {
 						factory_uri = linphone_address_clone(linphone_account_params_get_conference_factory_address(
-						    linphone_account_get_params(linphone_core_get_default_account(lc))));
+						    linphone_account_get_params(default_account)));
 						char *factory_uri_str = factory_uri ? linphone_address_as_string(factory_uri) : NULL;
 						lInfo() << "Creating remote conference with factory address from default account : "
 						        << std::string(factory_uri_str);

@@ -710,16 +710,25 @@ void Conference::setLocalParticipantStreamCapability(BCTBX_UNUSED(const Linphone
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
 	const ConferenceParams &newConfParams = static_cast<const ConferenceParams &>(newParameters);
-	if (mConfParams && ((mConfParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) ||
-	                    (mConfParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
-		lError() << "Trying to change frozen conference parameters:";
-		lError() << " -  factory address: actual " << *mConfParams->getConferenceFactoryAddress() << " new value "
-		         << *newConfParams.getConferenceFactoryAddress();
-		lError() << " -  conference address: actual " << *mConfParams->getConferenceAddress() << " new value "
-		         << *newConfParams.getConferenceAddress();
-		return false;
+	std::shared_ptr<Account> account;
+	bool isUpdate = (mConfParams != nullptr);
+	if (isUpdate) {
+		if ((*mConfParams->getConferenceFactoryAddress() != *newConfParams.getConferenceFactoryAddress()) ||
+		    (*mConfParams->getConferenceAddress() != *newConfParams.getConferenceAddress())) {
+			lError() << "Trying to change frozen conference parameters:";
+			lError() << " -  factory address: actual " << *mConfParams->getConferenceFactoryAddress() << " new value "
+			         << *newConfParams.getConferenceFactoryAddress();
+			lError() << " -  conference address: actual " << *mConfParams->getConferenceAddress() << " new value "
+			         << *newConfParams.getConferenceAddress();
+			return false;
+		}
+		account = mConfParams->getAccount();
 	}
 	mConfParams = ConferenceParams::create(newConfParams);
+	// The conference parameter account should not change if the application is updating them
+	if (isUpdate) {
+		mConfParams->setAccount(account);
+	}
 	return true;
 };
 
