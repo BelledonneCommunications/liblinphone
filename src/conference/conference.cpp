@@ -64,6 +64,8 @@ Conference::Conference(const shared_ptr<Core> &core,
 	update(*params);
 	mConfParams->setMe(myAddress);
 
+	mConferenceId = ConferenceId(Address::create("sip:"), myAddress);
+
 	if (mConfParams->videoEnabled()) {
 		// If video is enabled, then always enable audio capabilities
 		mConfParams->enableAudio(true);

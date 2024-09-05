@@ -875,7 +875,7 @@ bool ChatRoom::isMe(const std::shared_ptr<Address> &address) const {
 const std::shared_ptr<Participant> ChatRoom::getMe() const {
 	const auto conference = getConference();
 	if (!conference) {
-		return Utils::getEmptyConstRefObject<std::shared_ptr<Participant>>();
+		return nullptr;
 	}
 	return conference->getMe();
 }
@@ -883,7 +883,7 @@ const std::shared_ptr<Participant> ChatRoom::getMe() const {
 const std::shared_ptr<Address> ChatRoom::getConferenceAddress() const {
 	const auto conference = getConference();
 	if (!conference) {
-		return Utils::getEmptyConstRefObject<std::shared_ptr<Address>>();
+		return nullptr;
 	}
 	return conference->getConferenceAddress();
 }
@@ -891,7 +891,7 @@ const std::shared_ptr<Address> ChatRoom::getConferenceAddress() const {
 const std::shared_ptr<Participant> ChatRoom::findParticipant(const std::shared_ptr<Address> &address) const {
 	const auto conference = getConference();
 	if (!conference) {
-		return Utils::getEmptyConstRefObject<std::shared_ptr<Participant>>();
+		return nullptr;
 	}
 	return conference->findParticipant(address);
 }
@@ -899,7 +899,7 @@ const std::shared_ptr<Participant> ChatRoom::findParticipant(const std::shared_p
 const std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
 	const auto conference = getConference();
 	if (!conference) {
-		return Utils::getEmptyConstRefObject<std::list<std::shared_ptr<Participant>>>();
+		return std::list<std::shared_ptr<Participant>>();
 	}
 	return conference->getParticipants();
 }

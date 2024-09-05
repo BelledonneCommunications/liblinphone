@@ -118,6 +118,7 @@ LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_voice_recording_m
 
 /**
  * Get the peer address associated to this chat room.
+ * @warning This method returns an invalid address if the ChatRoom is in the Instantiated state
  * @param chat_room #LinphoneChatRoom object. @notnil
  * @return The peer address. @notnil
  */
@@ -125,9 +126,10 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_peer_address(Linph
 
 /**
  * Get the local address associated to this chat room.
- * @warning This method returns NULL if the ChatRoom is in the Instantiated state
+ * @warning This method returns a guessed address based on the me participant if the ChatRoom is in the Instantiated
+ * state
  * @param chat_room #LinphoneChatRoom object. @notnil
- * @return The local address. @maybenil
+ * @return The local address. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *chat_room);
 
