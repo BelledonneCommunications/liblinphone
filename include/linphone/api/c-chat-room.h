@@ -125,8 +125,9 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_peer_address(Linph
 
 /**
  * Get the local address associated to this chat room.
+ * @warning This method returns NULL if the ChatRoom is in the Instantiated state
  * @param chat_room #LinphoneChatRoom object. @notnil
- * @return The local address. @notnil
+ * @return The local address. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *chat_room);
 

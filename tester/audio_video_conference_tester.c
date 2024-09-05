@@ -12391,7 +12391,17 @@ static void conference_mix_created_by_merging_video_calls_base(LinphoneConferenc
 		LinphoneConference *conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
-			bctbx_list_t *participant_device_list = linphone_conference_get_participant_device_list(conference);
+			int part_counter = 0;
+			bctbx_list_t *participant_device_list = NULL;
+			do {
+				if (participant_device_list) {
+					bctbx_list_free_with_data(participant_device_list,
+					                          (void (*)(void *))linphone_participant_device_unref);
+				}
+				participant_device_list = linphone_conference_get_participant_device_list(conference);
+				part_counter++;
+				wait_for_list(lcs, NULL, 0, 100);
+			} while ((part_counter < 100) && (bctbx_list_size(participant_device_list) != (size_t)(no_parts + 1)));
 			BC_ASSERT_EQUAL(bctbx_list_size(participant_device_list), (no_parts + 1), size_t, "%0zu");
 			if (focus_mgr->lc == c) {
 				BC_ASSERT_FALSE(linphone_conference_is_in(conference));
