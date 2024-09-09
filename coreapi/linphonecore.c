@@ -2340,7 +2340,9 @@ static void codecs_config_read(LinphoneCore *lc) {
 	lc->codecs_conf.dyn_pt = 96;
 
 	/*in rtp io mode, we don't transcode audio, thus we can support a format for which we have no encoder nor decoder.*/
-	lc->codecs_conf.dont_check_audio_codec_support = linphone_config_get_int(lc->config, "sound", "rtp_io", FALSE);
+	lc->codecs_conf.dont_check_audio_codec_support =
+	    linphone_config_get_int(lc->config, "sound", "rtp_io", FALSE) ||
+	    linphone_config_get_int(lc->config, "sound", "dont_check_codecs", FALSE);
 	/*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
 	lc->codecs_conf.dont_check_video_codec_support =
 	    linphone_config_get_int(lc->config, "video", "rtp_io", FALSE) ||
