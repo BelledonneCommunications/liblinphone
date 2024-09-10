@@ -5540,6 +5540,8 @@ void linphone_core_set_consolidated_presence(LinphoneCore *lc, LinphoneConsolida
 	LinphonePresenceModel *model;
 	LinphonePresenceActivity *activity = NULL;
 
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) return;
+
 	if (presence == LinphoneConsolidatedPresenceOffline) {
 		for (auto cppAccount : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
 			if (cppAccount->getAccountParams()->getPublishEnabled()) {
