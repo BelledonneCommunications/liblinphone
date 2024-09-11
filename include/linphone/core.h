@@ -2873,7 +2873,7 @@ LINPHONE_PUBLIC void linphone_core_set_nortp_timeout(LinphoneCore *core, int sec
 LINPHONE_PUBLIC void linphone_core_set_nortp_onhold_timeout(LinphoneCore *core, int seconds);
 
 /**
- * Sets whether SIP INFO is to be used to send digits.
+ * Sets whether SIP INFO method can be used to send digits. This non-standard but common practice.
  * @param core #LinphoneCore object @notnil
  * @param use_info A boolean value telling whether to use SIP INFO to send digits
  * @ingroup media_parameters
@@ -2881,7 +2881,7 @@ LINPHONE_PUBLIC void linphone_core_set_nortp_onhold_timeout(LinphoneCore *core, 
 LINPHONE_PUBLIC void linphone_core_set_use_info_for_dtmf(LinphoneCore *core, bool_t use_info);
 
 /**
- * Indicates whether SIP INFO is used to send digits.
+ * Indicates whether SIP INFO can be used to send digits.
  * @param core #LinphoneCore object @notnil
  * @return A boolean value telling whether SIP INFO is used to send digits
  * @ingroup media_parameters
@@ -2889,7 +2889,16 @@ LINPHONE_PUBLIC void linphone_core_set_use_info_for_dtmf(LinphoneCore *core, boo
 LINPHONE_PUBLIC bool_t linphone_core_get_use_info_for_dtmf(LinphoneCore *core);
 
 /**
- * Sets whether RFC2833 is to be used to send digits.
+ * Sets whether RFC2833 or RFC4633 can be to be used to send digits.
+ * This is preferred method to reliabily transmit DTMFs codes.
+ * There are two settings relevant to dtmf sending: linphone_core_set_use_rfc2833_for_dtmf()
+ * and linphone_core_set_use_info_for_dtmf(); Resulting in 4 cases:
+ * - If neither are enabled, don't send anything.
+ * - If one is enabled but not the other, then send the DTMF using the one the that is enabled.
+ * - If both are enabled, use RFC2833, then SIP INFO as fallback only if the media does not
+ * support telephone-events. In that last sub-case, note that the DTMF will also be sent modulated
+ * into the audio signal.
+ *
  * @param core #LinphoneCore object @notnil
  * @param use_rfc2833 A boolean value telling whether to use RFC2833 to send digits
  * @ingroup media_parameters
@@ -2897,7 +2906,7 @@ LINPHONE_PUBLIC bool_t linphone_core_get_use_info_for_dtmf(LinphoneCore *core);
 LINPHONE_PUBLIC void linphone_core_set_use_rfc2833_for_dtmf(LinphoneCore *core, bool_t use_rfc2833);
 
 /**
- * Indicates whether RFC2833 is used to send digits.
+ * Indicates whether RFC2833/RFC4633 can be used to send digits.
  * @param core #LinphoneCore object @notnil
  * @return A boolean value telling whether RFC2833 is used to send digits
  * @ingroup media_parameters
@@ -3320,6 +3329,8 @@ LINPHONE_PUBLIC const char *linphone_core_get_ringer_device(LinphoneCore *core);
  * Gets the name of the currently assigned sound device for playback.
  * @param core #LinphoneCore object @notnil
  * @return The name of the currently assigned sound device for playback. @maybenil
+ * @deprecated 11/09/2024 use linphone_core_get_output_audio_device() or
+ * linphone_core_get_default_output_audio_device() instead.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC const char *linphone_core_get_playback_device(LinphoneCore *core);
@@ -3328,6 +3339,8 @@ LINPHONE_PUBLIC const char *linphone_core_get_playback_device(LinphoneCore *core
  * Gets the name of the currently assigned sound device for capture.
  * @param core #LinphoneCore object @notnil
  * @return The name of the currently assigned sound device for capture. @maybenil
+ * @deprecated 11/09/2024 use linphone_core_get_input_audio_device() or
+ * linphone_core_get_default_input_audio_device() instead.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC const char *linphone_core_get_capture_device(LinphoneCore *core);
@@ -3354,6 +3367,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *cor
  * @param core #LinphoneCore object @notnil
  * @param devid The device name as returned by linphone_core_get_sound_devices() @maybenil
  * @return 0
+ * @deprecated 11/09/2024 use linphone_core_set_output_audio_device()
+ * or linphone_core_set_default_output_audio_device() instead.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_playback_device(LinphoneCore *core, const char *devid);
@@ -3363,6 +3378,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_playback_device(LinphoneCore *c
  * @param core #LinphoneCore object @notnil
  * @param devid The device name as returned by linphone_core_get_sound_devices() @maybenil
  * @return 0
+ * @deprecated 11/09/2024 use linphone_core_set_input_audio_device() or
+ * linphone_core_set_default_input_audio_device() instead.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_capture_device(LinphoneCore *core, const char *devid);

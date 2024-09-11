@@ -105,6 +105,7 @@ LINPHONE_PUBLIC const char *linphone_recorder_params_get_video_codec(const Linph
 
 /**
  * Set the #LinphoneRecorderFileFormat.
+ * @see linphone_core_get_supported_file_formats_list() for information about supported file formats.
  * @param params The #LinphoneRecorderParams object. @notnil
  * @param format The #LinphoneRecorderFileFormat to set.
  */
@@ -119,14 +120,15 @@ LINPHONE_PUBLIC void linphone_recorder_params_set_file_format(LinphoneRecorderPa
 LINPHONE_PUBLIC LinphoneMediaFileFormat linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params);
 
 /**
- * Set the window id.
+ * Sets the window id to use to display the camera preview.
+ * @see linphone_core_set_native_window_id() for a general discussion about window ID types.
  * @param params The #LinphoneRecorderParams object. @notnil
  * @param window_id The window id to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_recorder_params_set_window_id(LinphoneRecorderParams *params, void *window_id);
 
 /**
- * Retrieves the window id.
+ * Retrieves the window id used to display the camera preview.
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the window id. @maybenil
  */

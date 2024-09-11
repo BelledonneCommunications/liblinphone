@@ -37,7 +37,7 @@ extern "C" {
  */
 
 /**
- * Acquire a reference to the call.
+ * Acquires a reference to the call.
  * An application that wishes to retain a pointer to call object
  * must use this function to unsure the pointer remains
  * valid. Once the application no more needs this pointer,
@@ -48,27 +48,27 @@ extern "C" {
 LINPHONE_PUBLIC LinphoneCall *linphone_call_ref(LinphoneCall *call);
 
 /**
- * Release reference to the call.
+ * Releases reference to the call.
  * @param call The #LinphoneCall object. @notnil
  **/
 LINPHONE_PUBLIC void linphone_call_unref(LinphoneCall *call);
 
 /**
- * Retrieve the user pointer associated with the call.
+ * Retrieves the user pointer associated with the call.
  * @param call The #LinphoneCall object. @notnil
  * @return The user pointer associated with the call. @maybenil
  **/
 LINPHONE_PUBLIC void *linphone_call_get_user_data(const LinphoneCall *call);
 
 /**
- * Assign a user pointer to the call.
+ * Assigns a user pointer to the call.
  * @param call The #LinphoneCall object. @notnil
  * @param user_data The user pointer to associate with the call. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_call_set_user_data(LinphoneCall *call, void *user_data);
 
 /**
- * Get the core that has created the specified call.
+ * Gets the core that has created the specified call.
  * @param call #LinphoneCall object. @notnil
  * @return The #LinphoneCore object that has created the specified call. @notnil
  */
@@ -82,7 +82,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_call_get_core(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneCallState linphone_call_get_state(const LinphoneCall *call);
 
 /**
- * Tell whether a call has been asked to autoanswer
+ * Tells whether a call has been asked to autoanswer
  * @param call #LinphoneCall object. @notnil
  * @return A boolean value telling whether the call has been asked to autoanswer
  **/
@@ -380,6 +380,7 @@ LINPHONE_PUBLIC void linphone_call_zoom(LinphoneCall *call, float zoom_factor, f
  * Sends the specified dtmf.
  *
  * The dtmf is automatically played to the user.
+ * @see linphone_core_set_use_rfc2833_for_dtmf()
  * @param call The #LinphoneCall object @notnil
  * @param dtmf The dtmf name specified as a char, such as '0', '#' etc...
  * @return 0 if successful, -1 on error.
@@ -391,6 +392,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmf(LinphoneCall *call, char 
  *
  * The dtmfs are automatically sent to remote, separated by some needed customizable delay.
  * Sending is canceled if the call state changes to something not LinphoneCallStreamsRunning.
+ * @see linphone_core_set_use_rfc2833_for_dtmf()
  * @param call The #LinphoneCall object @notnil
  * @param dtmfs A dtmf sequence such as '123#123123' @notnil
  * @return -2 if there is already a DTMF sequence, -1 if call is not ready, 0 otherwise.
@@ -401,7 +403,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmfs(LinphoneCall *call, cons
  * Stops current DTMF sequence sending.
  *
  * Please note that some DTMF could be already sent,
- * depending on when this function call is delayed from #linphone_call_send_dtmfs(). This
+ * depending on when this function call is delayed from linphone_call_send_dtmfs(). This
  * function will be automatically called if call state change to anything but LinphoneCallStreamsRunning.
  * @param call The #LinphoneCall object @notnil
  **/

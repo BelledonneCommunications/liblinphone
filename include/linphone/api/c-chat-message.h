@@ -43,27 +43,27 @@ extern "C" {
  */
 
 /**
- * Acquire a reference to the chat message.
+ * Acquires a reference to the chat message.
  * @param message #LinphoneChatMessage object. @notnil
  * @return The same #LinphoneChatMessage object. @notnil
  */
 LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_message_ref(LinphoneChatMessage *message);
 
 /**
- * Release reference to the chat message.
+ * Releases reference to the chat message.
  * @param message #LinphoneChatMessage object. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_unref(LinphoneChatMessage *message);
 
 /**
- * Retrieve the user pointer associated with the chat message.
+ * Retrieves the user pointer associated with the chat message.
  * @param message #LinphoneChatMessage object. @notnil
  * @return The user pointer associated with the chat message. @maybenil
  */
 LINPHONE_PUBLIC void *linphone_chat_message_get_user_data(const LinphoneChatMessage *message);
 
 /**
- * Assign a user pointer to the chat message.
+ * Assigns a user pointer to the chat message.
  * @param message #LinphoneChatMessage object. @notnil
  * @param user_data The user pointer to associate with the chat message. @maybenil
  */
@@ -79,14 +79,14 @@ LINPHONE_PUBLIC void linphone_chat_message_set_user_data(LinphoneChatMessage *me
 LINPHONE_PUBLIC LinphoneCore *linphone_chat_message_get_core(const LinphoneChatMessage *message);
 
 /**
- * Linphone message can carry external body as defined by rfc2017
+ * Messages can carry external body as defined by rfc2017
  * @param message #LinphoneChatMessage object. @notnil
  * @return external body url or NULL if not present. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_external_body_url(const LinphoneChatMessage *message);
 
 /**
- * Linphone message can carry external body as defined by rfc2017
+ * Messages can carry external body as defined by rfc2017
  *
  * @param message #LinphoneChatMessage object. @notnil
  * @param external_body_url ex: access-type=URL; URL="http://www.foo.com/file" @maybenil
@@ -95,7 +95,7 @@ LINPHONE_PUBLIC void linphone_chat_message_set_external_body_url(LinphoneChatMes
                                                                  const char *external_body_url);
 
 /**
- * Get the time the message was sent.
+ * Gets the time the message was sent.
  * @param message #LinphoneChatMessage object. @notnil
  * @return the timestamp of when the message was sent.
  */
@@ -109,28 +109,28 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_time(const LinphoneChatMessage 
 LINPHONE_PUBLIC bool_t linphone_chat_message_is_outgoing(const LinphoneChatMessage *message);
 
 /**
- * Get origin of the message
+ * Gets origin of the message
  * @param message #LinphoneChatMessage object. @notnil
  * @return the #LinphoneAddress of the sender. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_from_address(const LinphoneChatMessage *message);
 
 /**
- * Get destination of the message
+ * Gets destination of the message
  * @param message #LinphoneChatMessage object. @notnil
  * @return the #LinphoneAddress of the recipient. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_to_address(const LinphoneChatMessage *message);
 
 /**
- * Get the content type of a chat message.
+ * Gets the content type of a chat message.
  * @param message #LinphoneChatMessage object. @notnil
  * @return The content type of the chat message @notnil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type(const LinphoneChatMessage *message);
 
 /**
- * Set the content type of a chat message.
+ * Sets the content type of a chat message.
  * This content type must match a content that is text representable, such as text/plain, text/html or image/svg+xml.
  * @param message #LinphoneChatMessage object. @notnil
  * @param content_type The new content type of the chat message @notnil
@@ -138,14 +138,14 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type(const Linphon
 LINPHONE_PUBLIC void linphone_chat_message_set_content_type(LinphoneChatMessage *message, const char *content_type);
 
 /**
- * Get text part of this message. Introduced in 01/07/2020
+ * Gets text part of this message.
  * @param message #LinphoneChatMessage object. @notnil
- * @return The text in UTF8 or NULL if no text. @maybenil
+ * @return The text as UTF8 characters or NULL if no text. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_utf8_text(const LinphoneChatMessage *message);
 
 /**
- * Set a chat message text to be sent by linphone_chat_room_send_message(). Introduced in 01/07/2020
+ * Sets a text to be sent, given as a string of UTF-8 characters.
  * @param message #LinphoneChatMessage @notnil
  * @param text The text in UTF8 to set. @maybenil
  * @return 0 if succeed.
@@ -190,14 +190,14 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_chat_message_get_chat_room(const Linp
 // =============================================================================
 
 /**
- * Get if a chat message is to be stored.
+ * Gets if a chat message is to be stored.
  * @param message #LinphoneChatMessage object. @notnil
  * @return Whether or not the message is to be stored
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_get_to_be_stored(const LinphoneChatMessage *message);
 
 /**
- * Set if a chat message is to be stored.
+ * Sets if a chat message is to be stored.
  * This content type must match a content that is text representable, such as text/plain, text/html or image/svg+xml.
  * @param message #LinphoneChatMessage object. @notnil
  * @param to_be_stored Whether or not the chat message is to be stored
@@ -207,21 +207,21 @@ LINPHONE_PUBLIC void linphone_chat_message_set_to_be_stored(LinphoneChatMessage 
 LINPHONE_PUBLIC unsigned int linphone_chat_message_store(LinphoneChatMessage *message);
 
 /**
- * Get the state of the message
+ * Gets the state of the message
  * @param message #LinphoneChatMessage object. @notnil
  * @return the current #LinphoneChatMessageState of the message.
  */
 LINPHONE_PUBLIC LinphoneChatMessageState linphone_chat_message_get_state(const LinphoneChatMessage *message);
 
 /**
- * Get if the message was encrypted when transferred
+ * Gets if the message was end-to-end encrypted when transferred
  * @param message #LinphoneChatMessage object. @notnil
- * @return TRUE if the message was encrypted when transferred, FALSE otherwise.
+ * @return TRUE if the message was end-to-end encrypted when transferred, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_is_secured(const LinphoneChatMessage *message);
 
 /**
- * Get the file_transfer_information (used by call backs to recover informations during a rcs file transfer)
+ * Gets the file transfer information (used by callbacks to recover informations during a rcs file transfer)
  *
  * @param message #LinphoneChatMessage object. @notnil
  * @return a pointer to the #LinphoneContent structure or NULL if not present. @maybenil
@@ -230,7 +230,7 @@ LINPHONE_PUBLIC LinphoneContent *
 linphone_chat_message_get_file_transfer_information(const LinphoneChatMessage *message);
 
 /**
- * Start the download of the #LinphoneContent referenced in the #LinphoneChatMessage from remote server.
+ * Starts the download of the #LinphoneContent referenced in the #LinphoneChatMessage from remote server.
  * @param message #LinphoneChatMessage object. @notnil
  * @param content the #LinphoneContent object to download (must have the linphone_content_is_file_transfer() method
  * return TRUE). @notnil
@@ -239,24 +239,30 @@ linphone_chat_message_get_file_transfer_information(const LinphoneChatMessage *m
 LINPHONE_PUBLIC bool_t linphone_chat_message_download_content(LinphoneChatMessage *message, LinphoneContent *content);
 
 /**
- * Start the download of all the #LinphoneContent objects with are of type file transfer (the
- * linphone_content_is_file_transfer() method return TRUE) referenced in the #LinphoneChatMessage from remote server.
+ * Starts the download of all the #LinphoneContent objects representing file transfers included in the message
+ * (linphone_content_is_file_transfer() method returns TRUE).
  * @param message #LinphoneChatMessage object. @notnil
  * @return FALSE if there is an error, TRUE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_download_contents(LinphoneChatMessage *message);
 
 /**
- * Cancel an ongoing file transfer attached to this message.(upload or download)
+ * Cancels an ongoing file transfer attached to this message (upload or download).
  * @param message #LinphoneChatMessage object. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_cancel_file_transfer(LinphoneChatMessage *message);
 
 /**
- * Send a chat message.
+ * Sends a chat message.
  * @param message #LinphoneChatMessage object. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_send(LinphoneChatMessage *message);
+
+/**
+ * Returns the peer (remote) address of the message.
+ * @param message the #LinphoneChatMessage object @notnil
+ * @return the #LinphoneAddress of the peer address used to send/receive this message. @notnil
+ */
 
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_peer_address(const LinphoneChatMessage *message);
 
@@ -268,7 +274,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_peer_address(co
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_local_address(const LinphoneChatMessage *message);
 
 /**
- * Add custom headers to the message.
+ * Adds custom headers to the message.
  * @param message #LinphoneChatMessage object. @notnil
  * @param header_name name of the header @notnil
  * @param header_value header value @maybenil
@@ -278,7 +284,7 @@ LINPHONE_PUBLIC void linphone_chat_message_add_custom_header(LinphoneChatMessage
                                                              const char *header_value);
 
 /**
- * Retrieve a custom header value given its name.
+ * Retrieves a custom header value given its name.
  * @param message #LinphoneChatMessage object. @notnil
  * @param header_name header name searched @notnil
  * @return the custom header value or NULL if not found. @maybenil
@@ -309,7 +315,7 @@ LINPHONE_PUBLIC void linphone_chat_message_mark_as_read(LinphoneChatMessage *mes
 LINPHONE_PUBLIC LinphoneReason linphone_chat_message_get_reason(const LinphoneChatMessage *message);
 
 /**
- * Get full details about delivery error of a chat message.
+ * Gets full details about delivery error of a chat message.
  * @param message #LinphoneChatMessage object. @notnil
  * @return a #LinphoneErrorInfo describing the details. @notnil
  */
@@ -384,9 +390,15 @@ LINPHONE_PUBLIC long linphone_chat_message_get_ephemeral_lifetime(const Linphone
 LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time(const LinphoneChatMessage *message);
 
 /**
- * Fulfill a chat message char by char.
- * Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
- * To commit a message, use linphone_chat_room_send_message()
+ * Fulfills a chat message character by character and send the character immediately as real-time text
+ * (RFC4103 / T.140).
+ * The #LinphoneChatRoom the message was created from must be a real-time text capable chat room:
+ * it must be obtained by placing or receiving a call with real-time text capabilities
+ * (see linphone_call_params_enable_realtime_text() ), and getting the #LinphoneChatRoom interface from the call
+ * with linphone_call_get_chat_room().
+ * When the message is terminated (ie a new line needs to be started), use linphone_chat_message_send()
+ * in order to trigger the sending of the new line character and have the full message (comprising all characters
+ * sent so far) stored in local database.
  * @param message #LinphoneChatMessage object. @notnil
  * @param character T.140 char
  * @return 0 if succeed.
@@ -394,21 +406,21 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time(const Lin
 LINPHONE_PUBLIC LinphoneStatus linphone_chat_message_put_char(LinphoneChatMessage *message, uint32_t character);
 
 /**
- * Add a listener in order to be notified of #LinphoneChatMessage events.
+ * Adds a listener in order to be notified of #LinphoneChatMessage events.
  * @param message #LinphoneChatMessage object to monitor. @notnil
  * @param cbs A #LinphoneChatMessageCbs object holding the callbacks you need. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_add_callbacks(LinphoneChatMessage *message, LinphoneChatMessageCbs *cbs);
 
 /**
- * Remove a listener from a #LinphoneChatMessage
+ * Removes a listener from a #LinphoneChatMessage
  * @param message #LinphoneChatMessage object @notnil
  * @param cbs #LinphoneChatMessageCbs object to remove. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_remove_callbacks(LinphoneChatMessage *message, LinphoneChatMessageCbs *cbs);
 
 /**
- * Gets the current LinphoneChatMessageCbs.
+ * Gets the current #LinphoneChatMessageCbs being invoked, if any.
  * This is meant only to be called from a callback to be able to get the user_data associated with the
  * #LinphoneChatMessageCbs that is calling the callback.
  * @param message #LinphoneChatMessage object @notnil
@@ -424,9 +436,9 @@ LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_get_current_callba
 LINPHONE_PUBLIC void linphone_chat_message_add_file_content(LinphoneChatMessage *message, LinphoneContent *content);
 
 /**
- * Creates a #LinphoneContent of type PlainText with the given text as body. Introduced in 01/07/2020
+ * Creates a #LinphoneContent of type text/plain with the provided string, and attach it to the message.
  * @param message #LinphoneChatMessage object. @notnil
- * @param text The text in UTF8 to add to the message. @notnil
+ * @param text The text to add to the message. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_add_utf8_text_content(LinphoneChatMessage *message, const char *text);
 
@@ -470,9 +482,9 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_sta
                                                                                    LinphoneChatMessageState state);
 
 /**
- * Gets the callId accociated with the message
+ * Gets the SIP call-id accociated with the message
  * @param message #LinphoneChatMessage object. @notnil
- * @return the call Id @notnil
+ * @return the call-id @notnil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *message);
 

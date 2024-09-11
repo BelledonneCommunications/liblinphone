@@ -168,7 +168,7 @@ LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral(LinphoneChatRoom *chat_
 LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled(const LinphoneChatRoom *chat_room);
 
 /**
- * Set lifetime (in seconds) for all new ephemeral messages in the chat room.
+ * Sets lifetime (in seconds) for all new ephemeral messages in the chat room.
  * After the message is read, it will be deleted after "time" seconds.
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
@@ -178,7 +178,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled(const LinphoneChatRo
 LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime(LinphoneChatRoom *chat_room, long time);
 
 /**
- * Get lifetime (in seconds) for all new ephemeral messages in the chat room.
+ * Gets lifetime (in seconds) for all new ephemeral messages in the chat room.
  * After the message is read, it will be deleted after "time" seconds.
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
@@ -187,7 +187,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime(LinphoneChatRoom 
 LINPHONE_PUBLIC long linphone_chat_room_get_ephemeral_lifetime(const LinphoneChatRoom *chat_room);
 
 /**
- * Set the ephemeral mode of the chat room
+ * Sets the ephemeral mode of the chat room
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param mode The ephemeral mode #LinphoneChatRoomEphemeralMode
@@ -198,7 +198,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_mode(LinphoneChatRoom *cha
                                                            LinphoneChatRoomEphemeralMode mode);
 
 /**
- * Get the ephemeral mode of the chat room.
+ * Gets the ephemeral mode of the chat room.
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return the ephemeral mode #LinphoneChatRoomEphemeralMode
@@ -206,9 +206,10 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_mode(LinphoneChatRoom *cha
 LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_chat_room_get_ephemeral_mode(const LinphoneChatRoom *chat_room);
 
 /**
- * Uses linphone spec to check if all participants support ephemeral messages.
+ * Check if all participants support ephemeral messages.
  * It doesn't prevent to send ephemeral messages in the room but those who don't support it
  * won't delete messages after lifetime has expired.
+ * The check is done by verifying the participant's advertised capabilities (+org.linphone.specs parameter).
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return TRUE if all participants in the chat room support ephemeral messages, FALSE otherwise
@@ -358,7 +359,7 @@ LINPHONE_PUBLIC LinphoneEventLog *linphone_chat_room_find_event_log(LinphoneChat
                                                                     const char *message_id);
 
 /**
- * Search chat messages by text.
+ * Searches chat messages by text.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation that will be searched @notnil
  * @param text The text to search in messages @notnil
  * @param from The #LinphoneEventLog object corresponding to the event where to start the search @maybenil
@@ -400,9 +401,12 @@ LINPHONE_PUBLIC int linphone_chat_room_get_unread_messages_count(LinphoneChatRoo
 LINPHONE_PUBLIC LinphoneCore *linphone_chat_room_get_core(const LinphoneChatRoom *chat_room);
 
 /**
- * When realtime text is enabled linphone_call_params_realtime_text_enabled(), #LinphoneCoreIsComposingReceivedCb is
- * call everytime a char is received from peer. At the end of remote typing a regular #LinphoneChatMessage is received
- * with committed data from #LinphoneCoreCbsMessageReceivedCb.
+ * When realtime text is enabled in a #LinphoneCall (see linphone_call_params_realtime_text_enabled()),
+ * #LinphoneCoreIsComposingReceivedCb is called everytime a Real-Time Text character is received from peer.
+ * linphone_chat_room_get_char() pops a character previously received from the receive queue, and returns it.
+ * When a new line character is received, a #LinphoneChatMessage is automatically
+ * created with received characters and notified to the application through the
+ * #LinphoneCoreCbs or #LinphoneChatRoomCbs interfaces.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return  RFC 4103/T.140 char
  */
@@ -417,7 +421,7 @@ LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(LinphoneChatRoom *chat_room
 LINPHONE_PUBLIC LinphoneCall *linphone_chat_room_get_call(const LinphoneChatRoom *chat_room);
 
 /**
- * Add a listener in order to be notified of #LinphoneChatRoom events. Once an event is received, registred
+ * Adds a listener in order to be notified of #LinphoneChatRoom events. Once an event is received, registred
  * #LinphoneChatRoomCbs are invoked sequencially.
  * @param chat_room #LinphoneChatRoom object to monitor. @notnil
  * @param cbs A #LinphoneChatRoomCbs object holding the callbacks you need. A reference is taken by the
@@ -426,7 +430,7 @@ LINPHONE_PUBLIC LinphoneCall *linphone_chat_room_get_call(const LinphoneChatRoom
 LINPHONE_PUBLIC void linphone_chat_room_add_callbacks(LinphoneChatRoom *chat_room, LinphoneChatRoomCbs *cbs);
 
 /**
- * Remove a listener from a LinphoneChatRoom
+ * Removes a listener from a LinphoneChatRoom
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param cbs LinphoneChatRoomCbs object to remove. @notnil
  */
@@ -442,14 +446,14 @@ LINPHONE_PUBLIC void linphone_chat_room_remove_callbacks(LinphoneChatRoom *chat_
 LINPHONE_PUBLIC LinphoneChatRoomCbs *linphone_chat_room_get_current_callbacks(const LinphoneChatRoom *chat_room);
 
 /**
- * Get the state of the chat room.
+ * Gets the state of the chat room.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return The current #LinphoneChatRoomState of the chat room
  */
 LINPHONE_PUBLIC LinphoneChatRoomState linphone_chat_room_get_state(const LinphoneChatRoom *chat_room);
 
 /**
- * Return whether or not the chat room has been left.
+ * Returns whether or not the chat room has been left.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return TRUE if the chat room has been left, FALSE otherwise.
  * @deprecated 16/03/2022 use linphone_chat_room_is_read_only() instead.
@@ -457,7 +461,7 @@ LINPHONE_PUBLIC LinphoneChatRoomState linphone_chat_room_get_state(const Linphon
 LINPHONE_PUBLIC bool_t linphone_chat_room_has_been_left(const LinphoneChatRoom *chat_room);
 
 /**
- * Return whether or not a message can be sent using this chat room.
+ * Returns whether or not a message can be sent using this chat room.
  * A chat room may be read only until it's created, or when it's a group you have left.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return TRUE if a chat message can't be sent in it, FALSE otherwise.
@@ -465,21 +469,21 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_has_been_left(const LinphoneChatRoom *
 LINPHONE_PUBLIC bool_t linphone_chat_room_is_read_only(const LinphoneChatRoom *chat_room);
 
 /**
- * Return the creation time for the chat room
+ * Returns the creation time for the chat room
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return the time at which the chat room was created
  */
 LINPHONE_PUBLIC time_t linphone_chat_room_get_creation_time(const LinphoneChatRoom *chat_room);
 
 /**
- * Return the last updated time for the chat room
+ * Returns the last updated time for the chat room
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return the last updated time
  */
 LINPHONE_PUBLIC time_t linphone_chat_room_get_last_update_time(const LinphoneChatRoom *chat_room);
 
 /**
- * Add a participant to a chat room. This may fail if this type of chat room does not handle participants.
+ * Adds a participant to a chat room. This may fail if this type of chat room does not handle participants.
  * Use linphone_chat_room_can_handle_participants() to know if this chat room handles participants.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param addr The address of the participant to add to the chat room @notnil
@@ -487,7 +491,7 @@ LINPHONE_PUBLIC time_t linphone_chat_room_get_last_update_time(const LinphoneCha
 LINPHONE_PUBLIC void linphone_chat_room_add_participant(LinphoneChatRoom *chat_room, LinphoneAddress *addr);
 
 /**
- * Add several participants to a chat room at once. This may fail if this type of chat room does not handle
+ * Adds several participants to a chat room at once. This may fail if this type of chat room does not handle
  * participants. Use linphone_chat_room_can_handle_participants() to know if this chat room handles participants.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param addresses The participants to add. \bctbx_list{LinphoneAddress} @notnil
@@ -503,7 +507,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_add_participants(LinphoneChatRoom *cha
 LINPHONE_PUBLIC bool_t linphone_chat_room_can_handle_participants(const LinphoneChatRoom *chat_room);
 
 /**
- * Find a participant of a chat room from its address.
+ * Finds a participant of a chat room from its address.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param address The #LinphoneAddress to search in the list of participants of the chat room @notnil
  * @return The participant if found, NULL otherwise. @maybenil
@@ -512,14 +516,14 @@ LINPHONE_PUBLIC LinphoneParticipant *linphone_chat_room_find_participant(const L
                                                                          LinphoneAddress *address);
 
 /**
- * Get the capabilities of a chat room.
+ * Gets the capabilities of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The capabilities of the chat room (as a #LinphoneChatRoomCapabilitiesMask)
  */
 LINPHONE_PUBLIC LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabilities(const LinphoneChatRoom *chat_room);
 
 /**
- * Check if a chat room has given capabilities.
+ * Checks if a chat room has given capabilities.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param mask a #LinphoneChatRoomCapabilitiesMask mask
  * @return TRUE if the mask matches, FALSE otherwise
@@ -527,55 +531,55 @@ LINPHONE_PUBLIC LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabili
 LINPHONE_PUBLIC bool_t linphone_chat_room_has_capability(const LinphoneChatRoom *chat_room, int mask);
 
 /**
- * Get the conference address of the chat room.
+ * Gets the conference address of the chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The conference address of the chat room or NULL if this type of chat room is not conference based. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_conference_address(const LinphoneChatRoom *chat_room);
 
 /**
- * Get the participant representing myself in the chat room.
+ * Gets the participant representing myself in the chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The participant representing myself in the conference or NULL if me is not set. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipant *linphone_chat_room_get_me(const LinphoneChatRoom *chat_room);
 
 /**
- * Get the number of participants in the chat room (that is without ourselves).
+ * Gets the number of participants in the chat room (that is without ourselves).
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The number of participants in the chat room
  */
 LINPHONE_PUBLIC int linphone_chat_room_get_nb_participants(const LinphoneChatRoom *chat_room);
 
 /**
- * Get the list of participants of a chat room.
+ * Gets the list of participants of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return A \bctbx_list{LinphoneParticipant} of the participants @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_participants(const LinphoneChatRoom *chat_room);
 
 /**
- * Get the subject of a chat room.
+ * Gets the subject of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The subject of the chat room. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_chat_room_get_subject(const LinphoneChatRoom *chat_room);
 
 /**
- * Get the security level of a chat room.
+ * Gets the security level of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The current #LinphoneChatRoomSecurityLevel of the chat room
  */
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_chat_room_get_security_level(LinphoneChatRoom *chat_room);
 
 /**
- * Leave a chat room.
+ * Leaves a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_room_leave(LinphoneChatRoom *chat_room);
 
 /**
- * Remove a participant of a chat room.
+ * Removes a participant of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param participant The participant to remove from the chat room @notnil
  */
@@ -583,7 +587,7 @@ LINPHONE_PUBLIC void linphone_chat_room_remove_participant(LinphoneChatRoom *cha
                                                            LinphoneParticipant *participant);
 
 /**
- * Remove several participants of a chat room at once.
+ * Removes several participants of a chat room at once.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param participants The participants to remove. \bctbx_list{LinphoneParticipant} @notnil
  */
@@ -591,7 +595,7 @@ LINPHONE_PUBLIC void linphone_chat_room_remove_participants(LinphoneChatRoom *ch
                                                             const bctbx_list_t *participants);
 
 /**
- * Change the admin status of a participant of a chat room (you need to be an admin yourself to do this).
+ * Changes the admin status of a participant of a chat room (you need to be an admin yourself to do this).
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param participant The Participant for which to change the admin status @notnil
  * @param is_admin A boolean value telling whether the participant should now be an admin or not
@@ -601,7 +605,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_participant_admin_status(LinphoneCha
                                                                      bool_t is_admin);
 
 /**
- * Set the subject of a chat room.
+ * Sets the subject of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param subject The new subject to set for the chat room @maybenil
  */
@@ -615,7 +619,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_subject(LinphoneChatRoom *chat_room,
 LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom *chat_room);
 
 /**
- * Set the conference address of a group chat room. This function needs to be called from the
+ * Sets the conference address of a group chat room. This function needs to be called from the
  * #LinphoneChatRoomCbsConferenceAddressGenerationCb callback and only there.
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param chat_room A #LinphoneChatRoom object @notnil
@@ -625,7 +629,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_conference_address(LinphoneChatRoom 
                                                                LinphoneAddress *conference_address);
 
 /**
- * Set the list of participant devices in the form of SIP URIs with GRUUs for a given participant.
+ * Sets the list of participant devices in the form of SIP URIs with GRUUs for a given participant.
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param participant_address The participant address @notnil
@@ -637,7 +641,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices(LinphoneChatRoom
                                                                 const bctbx_list_t *device_identities);
 
 /**
- * Notify the chatroom that a participant device has just registered.
+ * Notifies the chatroom that a participant device has just registered.
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param participant_device list of the participant devices to be used by the group chat room @notnil
@@ -672,7 +676,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_get_muted(const LinphoneChatRoom *chat
 LINPHONE_PUBLIC void linphone_chat_room_set_muted(LinphoneChatRoom *chat_room, bool_t muted);
 
 /**
- * Get the conference information associated to the conference
+ * Gets the conference information associated to the chatroom.
  * @param chat_room The #LinphoneChatRoom object. @notnil
  * @return the #LinphoneConferenceInfo. @maybenil
  */

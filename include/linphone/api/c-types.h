@@ -165,9 +165,12 @@ typedef struct _LinphoneAddress LinphoneAddress;
  * To create (or find) a #LinphoneConference, you first need a #LinphoneConferenceParams object.
  * linphone_core_create_conference_with_params() allows you to create a conference.
  * A conference is uniquely identified by a conference address, meaning you can
- * have more than one conference between two accounts. As of now, each #LinphoneCore can host only 1 conference but it
- * can be part of many conferences as a remote participant. To find a conference among those a core is part of, you can
+ * have more than one conference between two accounts. To find a conference among those a core is part of, you can
  * call linphone_core_search_conference().
+ *
+ * A #LinphoneConference may be created automatically and implicitely when an outgoing call is made
+ * to a conference server. Thanks to the standard 'isfocus' contact parameter, the call is identified as
+ * belonging to a conference. The conference object can then be retrieved with linphone_call_get_conference().
  * @ingroup conference
  */
 typedef struct _LinphoneConference LinphoneConference;
@@ -191,7 +194,7 @@ typedef struct _LinphoneConferenceParams LinphoneConferenceParams;
 typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
 
 /**
- * @brief Object defining all information related to a conference
+ * @brief Object defining all information related to a past or future conference.
  *
  * @ingroup conference
  */
@@ -328,15 +331,15 @@ typedef struct _LinphoneCallCbs LinphoneCallCbs;
 typedef struct _LinphoneCallParams LinphoneCallParams;
 
 /**
- * @brief Interface used to record audio and video.
- *
+ * @brief Interface used to record audio and video into files.
+ * @see linphone_core_create_recorder()
  * @ingroup call_control
  **/
 typedef struct _LinphoneRecorder LinphoneRecorder;
 
 /**
  * @brief Object containing various parameters of a #LinphoneRecorder.
- *
+ * @see linphone_core_create_recorder()
  * @ingroup call_control
  **/
 typedef struct _LinphoneRecorderParams LinphoneRecorderParams;
@@ -526,7 +529,7 @@ typedef enum _LinphoneSearchDirection {
 // Ekt.
 // -----------------------------------------------------------------------------
 /**
- * @brief Object representing all informations present in an ekt event.
+ * @brief Object representing all informations present in an Encrypted Key Transport event.
  * @ingroup ekt_info_api
  */
 typedef struct _LinphoneEktInfo LinphoneEktInfo;
