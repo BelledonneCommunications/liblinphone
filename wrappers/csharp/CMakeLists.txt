@@ -39,6 +39,13 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
 )
 
+if(ENABLE_CSHARP_WRAPPER_TESTER)
+	# Add the project to the install data dir next to the LinphoneWrapper.cs
+	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/LinphoneWrapper.Tests"
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
+	)
+endif()
+
 if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 	message(CHECK_START "Generate C# wrapper html site")
 	find_program(
@@ -93,7 +100,7 @@ if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 
 		message(CHECK_PASS "generation and copy configured")
 	else()
-		message(CHECK_FAIL "docfx wansn't found, no site generated")
+		message(CHECK_FAIL "docfx wasn't found, no site generated")
 	
 	endif()
 endif()
