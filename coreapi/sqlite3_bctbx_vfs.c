@@ -277,6 +277,8 @@ sqlite3bctbx_Open(BCTBX_UNUSED(sqlite3_vfs *pVfs), const char *fName, sqlite3_fi
 #if defined(_WIN32)
 	openFlags |= O_BINARY;
 #endif
+	/* sqlite3 requires an UTF-8 encoded path, but UTF-8 may not be the
+	 * process current locale. */
 	wFname = bctbx_utf8_to_locale(fName);
 	if (wFname != NULL) {
 		pFile->pbctbx_file = bctbx_file_open2(bctbx_vfs_get_default(), wFname, openFlags);

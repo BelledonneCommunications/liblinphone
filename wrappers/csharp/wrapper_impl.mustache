@@ -22,7 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-#if __IOS__
+#if IOS
 using ObjCRuntime;
 #endif
 
@@ -35,29 +35,29 @@ namespace Linphone
 	public class LinphoneWrapper
 	{
 		public const string VERSION = "{{version}}";
-#if __IOS__
-		public const string LIB_NAME = "__Internal"; // With this, it automatically finds the frameworks
-#elif (_WIN32 || WINDOWS_UWP)
-		public const string LIB_NAME = "liblinphone"; // With this, it automatically finds liblinphone.dll
-#else
-		public const string LIB_NAME = "linphone"; // With this, it automatically finds liblinphone.so
-#endif
 
-#if (_WIN32 || WINDOWS_UWP)
-		public const string BELLE_SIP_LIB_NAME = "belle-sip";
-		public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
-		public const string MEDIASTREAMER_LIB_NAME = "mediastreamer2";
-#else
+#if IOS
+		public const string BELLE_SIP_LIB_NAME = "__Internal";
+		public const string BCTOOLBOX_LIB_NAME = "__Internal";
+		public const string MEDIASTREAMER_LIB_NAME = "__Internal";
+		public const string LIB_NAME = "__Internal";
+#elif ANDROID
+		public const string LIB_NAME = "liblinphone.so";
 		public const string BELLE_SIP_LIB_NAME = LIB_NAME;
 		public const string BCTOOLBOX_LIB_NAME = LIB_NAME;
 		public const string MEDIASTREAMER_LIB_NAME = LIB_NAME;
+#else
+		public const string BELLE_SIP_LIB_NAME = "belle-sip";
+		public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
+		public const string MEDIASTREAMER_LIB_NAME = "mediastreamer2";
+		public const string LIB_NAME = "liblinphone"; // With this, it automatically finds liblinphone.dll
 #endif
 /// https://docs.microsoft.com/fr-fr/xamarin/cross-platform/app-fundamentals/building-cross-platform-applications/platform-divergence-abstraction-divergent-implementation#android
-#if __ANDROID__
+#if ANDROID
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void setAndroidLogHandler();
 #endif
-#if __IOS__
+#if IOS
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void linphone_iphone_enable_logs();
 #endif
@@ -67,18 +67,24 @@ namespace Linphone
 		/// </summary>
 		public static void setNativeLogHandler()
 		{
-#if __ANDROID__
+#if ANDROID
 			setAndroidLogHandler();
-#elif __IOS__
+#elif IOS
 			linphone_iphone_enable_logs();
 #endif
+		}
+		
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern int linphone_force_utf8();
+		public static void forceUtf8(){
+			linphone_force_utf8();
 		}
 	}
 
 	/// <summary>
 	/// All methods that returns a LinphoneStatus with a value != 0 as an error code in C are translated in C# by throwing a LinphoneException
 	/// </summary>
-#if (_WIN32 || WINDOWS_UWP)
+#if !(ANDROID || IOS)
 	public class LinphoneException : System.Exception
 	{
 		public LinphoneException() : base() { }
@@ -108,13 +114,11 @@ namespace Linphone
 
 		internal bool isListener;
 
-		internal List<IntPtr> string_ptr_list;
-
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		internal delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-#if (_WIN32 || WINDOWS_UWP)
+#if !(IOS || ANDROID)
 		internal static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, IntPtr cb);
 #else
 		internal static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, OnLinphoneObjectDataDestroyed cb);
@@ -139,11 +143,17 @@ namespace Linphone
 		internal static extern IntPtr bctbx_list_get_data(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void bctbx_list_free(IntPtr ptr);
+
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
+		
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void bctbx_free(IntPtr elem);
 
 		internal OnLinphoneObjectDataDestroyed onLinphoneListenerObjectDestroyed;
 
-#if __IOS__
+#if IOS
 		[MonoPInvokeCallback((typeof(OnLinphoneObjectDataDestroyed)))]
 		internal static void on_linphone_cbs_data_destroyed(IntPtr data) {
 #else
@@ -206,17 +216,17 @@ namespace Linphone
 				objPtr = GCHandle.ToIntPtr(obj.handle);
 
 				if (isListener) {
-#if (_WIN32 || WINDOWS_UWP)
+#if IOS
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, on_linphone_cbs_data_destroyed);
+#elif ANDROID
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, obj.on_linphone_cbs_data_destroyed);
+#else
 					obj.onLinphoneListenerObjectDestroyed = obj.on_linphone_cbs_data_destroyed;
 					IntPtr cb = Marshal.GetFunctionPointerForDelegate(obj.onLinphoneListenerObjectDestroyed);
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, cb);
-#elif __IOS__
-					belle_sip_object_data_set(ptr, "cs_obj", objPtr, on_linphone_cbs_data_destroyed);
-#else
-					belle_sip_object_data_set(ptr, "cs_obj", objPtr, obj.on_linphone_cbs_data_destroyed);
 #endif
 				} else {
-#if (_WIN32 || WINDOWS_UWP)
+#if !(IOS || ANDROID)
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, IntPtr.Zero);
 #else
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, null);
@@ -226,6 +236,15 @@ namespace Linphone
 			}
 			return null;
 		}
+		
+		/* This is a ugly hack because Marshall.PtrToStringUTF8() and its converse fonction
+		are not available in any version of .NET Framework */
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.LPUTF8Str)]
+		internal protected static extern String linphone_pointer_to_string(IntPtr ptr);
+		
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		internal protected static extern IntPtr linphone_string_to_pointer([MarshalAs(UnmanagedType.LPUTF8Str)] String str);
 
 		internal static IEnumerable<string> MarshalStringArray(IntPtr listPtr)
 		{
@@ -239,7 +258,7 @@ namespace Linphone
 					{
 						break;
 					}
-					string key = Marshal.PtrToStringAnsi(dataPtr);
+					string key = linphone_pointer_to_string(dataPtr);
 					yield return key;
 					ptr = bctbx_list_next(ptr);
 				}
@@ -268,22 +287,21 @@ namespace Linphone
 		internal protected IntPtr StringArrayToBctbxList(IEnumerable<string> stringlist)
 		{
 			IntPtr bctbx_list = IntPtr.Zero;
-			string_ptr_list = new List<IntPtr>();
 			foreach (string s in stringlist)
 			{
-				IntPtr string_ptr = Marshal.StringToHGlobalAnsi(s);
+				IntPtr string_ptr = linphone_string_to_pointer(s);
 				bctbx_list = bctbx_list_append(bctbx_list, string_ptr);
-				string_ptr_list.Add(string_ptr);
 			}
 			return bctbx_list;
 		}
 
-		internal protected void CleanStringArrayPtrs()
+		internal protected void CleanStringArrayPtrs(IntPtr l)
 		{
-			foreach (IntPtr string_ptr in string_ptr_list)
-			{
-				Marshal.FreeHGlobal(string_ptr);
+			IntPtr elem;
+			for (elem = l; elem != null; elem = bctbx_list_next(elem)){
+				bctbx_free(bctbx_list_get_data(elem));
 			}
+			bctbx_list_free(l);
 		}
 
 		internal static IntPtr ObjectArrayToBctbxList<T>(IEnumerable<T> objlist) where T : LinphoneObject, new()
@@ -296,41 +314,6 @@ namespace Linphone
 			return bctbx_list;
 		}
 
-		/// Safely (no throw) convert a C++ char* to a .NET string (which are UTF-16).
-		/// If the raw string contains illegal UTF-8 multi-byte sequences,
-		/// replace them silently.
-		internal static string PtrToStringSafe(IntPtr str)
-		{
-			try  // the happy path first
-			{
-				return Marshal.PtrToStringAnsi(str);
-			}
-			catch (Exception)  // fallback to safe decoding
-			{
-				// Assume null-terminated and load into buffer
-				var buffer = new List<byte>();
-				byte current_byte;
-				int offset = 0;
-				do {
-					current_byte = Marshal.ReadByte(str, offset);
-					buffer.Add(current_byte);
-					offset++;
-				} while (current_byte != 0);
-				// Decode as UTF-8
-				return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
-			}
-			// Notes:
-			// We could get rid of the try{} and always use safe decoding, however:
-			//  1. Most strings are correctly encoded
-			//  2. Safe decoding is expensive: The data is copied twice (from C++
-			//     to buffer, then from buffer to string). Since this is a hot path
-			//     (used in log message callbacks), we need performance, and we can
-			//     assume builtin marshalling will be faster (untested).
-			//  3. The exception, "Illegal byte sequence encounted in the input." (sic),
-			//     seems to happen only with the Mono runtime (Xamarin).
-			//     .NET Core either does no check, or replaces invalid characters
-			//     as part of marshalling, but does not throw an exception.
-		}
 	}
 
 	public class MediastreamerFactory
@@ -422,7 +405,7 @@ namespace Linphone
 		{{#methods}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{#cb_setter}}
-#if (_WIN32 || WINDOWS_UWP)
+#if !(ANDROID || IOS)
 		static extern void {{name}}(IntPtr thiz, IntPtr cb);
 #else
 		static extern void {{name}}(IntPtr thiz, {{name_private}} cb);
@@ -450,7 +433,7 @@ namespace Linphone
 		private {{name_private}} {{var_private}};
 		private {{name_public}} {{var_public}};
 
-#if __IOS__
+#if IOS
 		[MonoPInvokeCallback(typeof({{name_private}}))]
 #endif
 		private static void {{cb_name}}({{params_private}})
@@ -476,7 +459,7 @@ namespace Linphone
 			{
 				{{var_public}} = value;
 				{{var_private}} = {{cb_name}};
-#if (_WIN32 || WINDOWS_UWP)
+#if !(IOS || ANDROID)
 				IntPtr cb = Marshal.GetFunctionPointerForDelegate({{var_private}});
 				{{c_name_setter}}(nativePtr, cb);
 #else
@@ -511,16 +494,18 @@ namespace Linphone
 	public class {{className}} : LinphoneObject
 	{
 		{{#isLinphoneFactory}}
-#if  __ANDROID__
 		static Factory()
 		{
+#if  __ANDROID__
 			Java.Lang.JavaSystem.LoadLibrary("c++_shared");
 			Java.Lang.JavaSystem.LoadLibrary("bctoolbox");
 			Java.Lang.JavaSystem.LoadLibrary("ortp");
 			Java.Lang.JavaSystem.LoadLibrary("mediastreamer2");
 			Java.Lang.JavaSystem.LoadLibrary("linphone");
-		}
 #endif
+			LinphoneWrapper.forceUtf8();
+		}
+
 		{{/isLinphoneFactory}}
 		{{#isLinphoneCall}}
 		/// Get the native window handle of the video window, casted as an unsigned long.
@@ -764,8 +749,7 @@ namespace Linphone
 			get
 			{
 				{{#is_string}}
-				IntPtr stringPtr = {{getter_c_name}}({{getter_nativePtr}});
-				return Marshal.PtrToStringAnsi(stringPtr);
+				return linphone_pointer_to_string( {{getter_c_name}}({{getter_nativePtr}}) );
 				{{/is_string}}
 				{{#is_bool}}
 				return {{getter_c_name}}({{getter_nativePtr}}) != 0;
@@ -813,8 +797,9 @@ namespace Linphone
 				{{#exception}}if (exception_result != 0) throw new LinphoneException("{{property_name}} setter returned value " + exception_result);{{/exception}}
 				{{/is_generic}}
 				{{#is_string_list}}
-				{{#exception}}int exception_result = {{/exception}}{{setter_c_name}}({{setter_nativePtr}}StringArrayToBctbxList(value));
-				CleanStringArrayPtrs();
+				IntPtr bctbxList = StringArrayToBctbxList(value);
+				{{#exception}}int exception_result = {{/exception}}{{setter_c_name}}({{setter_nativePtr}}bctbxList);
+				CleanStringArrayPtrs(bctbxList);
 				{{#exception}}if (exception_result != 0) throw new LinphoneException("{{property_name}} setter returned value " + exception_result);{{/exception}}
 				{{/is_string_list}}
 				{{#is_class_list}}
@@ -841,9 +826,9 @@ namespace Linphone
 		{{/detailedDoc}}
 		public {{static}}{{override}}{{{type}}} {{name}}({{{args}}})
 		{
+			{{#clean_string_list_ptrs}}IntPtr bctbxList = IntPtr.Zero;{{/clean_string_list_ptrs}}
 			{{#is_string}}
-			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{{c_args}}});
-			string returnVal = Marshal.PtrToStringAnsi(stringPtr);
+			string returnVal = linphone_pointer_to_string({{c_name}}({{nativePtr}}{{{c_args}}}));
 			{{/is_string}}
 			{{#is_bool}}
 			{{#hasReturn}}bool returnVal = {{/hasReturn}}{{c_name}}({{nativePtr}}{{{c_args}}}) == (char)0 ? false : true;
@@ -866,7 +851,7 @@ namespace Linphone
 			{{#is_class_list}}
 			IEnumerable<{{{list_type}}}> returnVal = MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}), {{takeRef}});
 			{{/is_class_list}}
-			{{#clean_string_list_ptrs}}CleanStringArrayPtrs();{{/clean_string_list_ptrs}}
+			{{#clean_string_list_ptrs}}CleanStringArrayPtrs(bctbxList);{{/clean_string_list_ptrs}}
 			{{#gc_keepalive}}{{{keep_alive}}}
 			{{/gc_keepalive}}
 			{{#hasReturn}}return returnVal;{{/hasReturn}}

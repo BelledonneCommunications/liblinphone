@@ -166,7 +166,7 @@ void CorePrivate::init() {
 			}
 		else {
 			backend = AbstractDb::Sqlite3;
-			string dbPath = Utils::quoteStringIfNotAlready(q->getDataPath() + LINPHONE_DB);
+			string dbPath = Utils::quoteStringIfNotAlready(q->getDataPath() + "/" + LINPHONE_DB);
 			lInfo() << "Using [" << dbPath << "] as default database path";
 			uri = dbPath;
 		}
@@ -202,7 +202,7 @@ void CorePrivate::init() {
 		// Leave this part to import the legacy call logs to MainDB
 		string calHistoryDbPath = L_C_TO_STRING(
 		    linphone_config_get_string(linphone_core_get_config(lc), "storage", "call_logs_db_uri", nullptr));
-		if (calHistoryDbPath.empty()) calHistoryDbPath = q->getDataPath() + LINPHONE_CALL_HISTORY_DB;
+		if (calHistoryDbPath.empty()) calHistoryDbPath = q->getDataPath() + "/" + LINPHONE_CALL_HISTORY_DB;
 		if (calHistoryDbPath != "null") {
 			lInfo() << "Using [" << calHistoryDbPath << "] as legacy call history database path";
 			linphone_core_set_call_logs_database_path(lc, calHistoryDbPath.c_str());
@@ -211,7 +211,7 @@ void CorePrivate::init() {
 		if (lc->zrtp_secrets_cache == NULL) {
 			string zrtpSecretsDbPath = L_C_TO_STRING(
 			    linphone_config_get_string(linphone_core_get_config(lc), "storage", "zrtp_secrets_db_uri", nullptr));
-			if (zrtpSecretsDbPath.empty()) zrtpSecretsDbPath = q->getDataPath() + LINPHONE_ZRTP_SECRETS_DB;
+			if (zrtpSecretsDbPath.empty()) zrtpSecretsDbPath = q->getDataPath() + "/" + LINPHONE_ZRTP_SECRETS_DB;
 			if (zrtpSecretsDbPath != "null") {
 				lInfo() << "Using [" << zrtpSecretsDbPath << "] as default zrtp secrets database path";
 				linphone_core_set_zrtp_secrets_file(lc, zrtpSecretsDbPath.c_str());
@@ -978,7 +978,7 @@ std::string Core::getX3dhDbPath() const {
 	// If no path is configured (i.e., the returned string is empty),
 	// set the database path to the default location within the data directory.
 	if (dbAccess.empty()) {
-		dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
+		dbAccess = getDataPath() + "/x3dh.c25519.sqlite3";
 	} // If a path is configured, check if it is set to store the database in memory.
 	  // The database will be stored in memory if the path is ":memory:".
 	else if (dbAccess != ":memory:") {

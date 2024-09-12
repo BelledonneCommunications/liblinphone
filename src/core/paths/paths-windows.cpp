@@ -20,6 +20,7 @@
 
 #define _WINSOCKAPI_ // stops windows.h including winsock.h
 #include "paths-windows.h"
+#include "bctoolbox/charconv.h"
 #include "config.h"
 #include "linphone/api/c-factory.h"
 #include "linphone/utils/utils.h"
@@ -39,8 +40,8 @@
 
 using namespace std;
 
-static bool dirExists(const std::string &dirName) {
-	DWORD ftyp = GetFileAttributesA(dirName.c_str());
+static bool dirExists(const std::wstring &dirName) {
+	DWORD ftyp = GetFileAttributesW(dirName.c_str());
 	if (ftyp == INVALID_FILE_ATTRIBUTES) return false;
 	if (ftyp & FILE_ATTRIBUTE_DIRECTORY) return true;
 	return false;
@@ -49,30 +50,40 @@ static bool dirExists(const std::string &dirName) {
 LINPHONE_BEGIN_NAMESPACE
 
 static string getPath(const GUID &id) {
+	string strPath;
+	wstring wPath;
 #if defined(ENABLE_MICROSOFT_STORE_APP) || defined(LINPHONE_WINDOWS_UWP)
-
+	/* FIXME: should rather use, but requires C++/Cx
+	 * https://learn.microsoft.com/en-us/uwp/api/windows.storage.userdatapaths.localappdata?view=winrt-26100#windows-storage-userdatapaths-localappdata
+	 */
 	// if( id ==FOLDERID_LocalAppData)
-	string strPath;
-	char *env = getenv("LOCALAPPDATA");
-	if (env != NULL) {
-		strPath = env;
-		strPath = strPath.append("/linphone/");
-		if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
+	wchar_t *env = _wgetenv(L"LOCALAPPDATA");
+	if (env) {
+		wPath = env;
 	}
-	return strPath;
+	lInfo() << "Got application data dir from env variable.";
 #else
-	string strPath;
 	LPWSTR path;
 	if (SHGetKnownFolderPath(id, KF_FLAG_DONT_VERIFY, 0, &path) == S_OK) {
-		strPath = _bstr_t(path);
-		replace(strPath.begin(), strPath.end(), '\\', '/');
+		wPath = path;
 		CoTaskMemFree(path);
 	}
+	lInfo() << "Got application data dir via SHGetKnownFolderPath: " << strPath;
+#endif
 
-	strPath = strPath.append("/linphone/");
-	if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
+	wPath = wPath.append(L"\\linphone\\");
+	char *str = bctbx_wide_string_to_string(wPath.c_str());
+	if (str) {
+		strPath = str;
+		bctbx_free(str);
+	}
+	if (!dirExists(wPath)) {
+		lInfo() << "Creating application data directory:" << strPath;
+		if (!CreateDirectoryW(wPath.c_str(), nullptr)) {
+			lError() << "Directory could not be created.";
+		}
+	}
 	return strPath;
-#endif // ENABLE_MICROSOFT_STORE_APP
 }
 
 string SysPaths::getDataPath(void *context) {

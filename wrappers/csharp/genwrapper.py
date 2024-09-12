@@ -85,6 +85,8 @@ class CsharpTranslator:
 		for arg in method.args:
 			if arg is not method.args[0] or not static:
 				methodElems['params'] += ', '
+			if arg.type.name == 'string':
+				methodElems['params'] += '[MarshalAs(UnmanagedType.LPUTF8Str)]'
 			methodElems['params'] += arg.translate(self.langTranslator)
 
 		methodDict = {}
@@ -137,7 +139,7 @@ class CsharpTranslator:
 				elif self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False)) is not None:
 					listtype = self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False))
 					if listtype == 'string':
-						methodDict['impl']['c_args'] += "StringArrayToBctbxList(" + arg.name.translate(self.nameTranslator) + ")"
+						methodDict['impl']['c_args'] += "bctbxList = StringArrayToBctbxList(" + arg.name.translate(self.nameTranslator) + ")"
 						methodDict['impl']['clean_string_list_ptrs'] = True
 					else:
 						methodDict['impl']['c_args'] += "ObjectArrayToBctbxList<" + listtype + ">(" + arg.name.translate(self.nameTranslator) + ")"
@@ -211,7 +213,6 @@ class CsharpTranslator:
 		methodDict = self.translate_property_getter(getter, name, static=static)
 		methodDictSet = self.translate_property_setter(setter, name, static)
 
-		methodDict["prototype"] = methodDict['prototype']
 		methodDict["has_second_prototype"] = True
 		methodDict["second_prototype"] = methodDictSet['prototype']
 
@@ -274,13 +275,11 @@ class CsharpTranslator:
 				listenerDict['delegate']['params'] += ', '
 
 				if normalType == dllImportType:
-					if normalType == "string":
-						dllImportType = "IntPtr"
-						listenerDict['delegate']['params'] += "PtrToStringSafe(" + argName + ")"
-					else:
 						listenerDict['delegate']['params'] += argName
 				else:
-					if normalType == "bool":
+					if normalType == "string":
+						listenerDict['delegate']['params'] += "linphone_pointer_to_string(" + argName + ")"
+					elif normalType == "bool":
 						listenerDict['delegate']['params'] += argName + " == 0"
 					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.ClassType:
 						listenerDict['delegate']['params'] += "fromNativePtr<" + normalType + ">(" + argName + ")"
@@ -299,6 +298,8 @@ class CsharpTranslator:
 				listenerDict['delegate']['params'] = 'thiz'
 
 			listenerDict['delegate']['params_public'] += normalType + " " + argName
+			if arg.type.name == 'string':
+				listenerDict['delegate']['params_private'] += '[MarshalAs(UnmanagedType.LPUTF8Str)]'
 			listenerDict['delegate']['params_private'] += dllImportType + " " + argName
 
 		listenerDict['delegate']["c_name_setter"] = c_name_setter

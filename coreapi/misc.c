@@ -26,6 +26,7 @@
 #include "core/core-p.h"
 #include "linphone/lpconfig.h"
 #include "linphone/wrapper_utils.h"
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1127,4 +1128,45 @@ void linphone_headers_add(LinphoneHeaders *obj, const char *name, const char *va
 
 void linphone_headers_remove(LinphoneHeaders *obj, const char *name) {
 	sal_custom_header_remove((SalCustomHeader *)obj, name);
+}
+
+/* For c#, the char * or const char * returned by the liblinphone API
+ * are returned as IntPtr.
+ * Indeed, the default Marshall serialization will use CoTaskMemFree() or free() (for non-windows)
+ * in order to free the returned const char* or char *, which is not acceptable as
+ * for the const char* as it will create a memory corruption.
+ * We then use linphone_pointer_to_string() to convert the IntPtr into
+ * a char* that can be consumed by the C# marshaller.
+ */
+char *linphone_pointer_to_string(const void *ptr) {
+	char *ret;
+	if (ptr == NULL) return NULL;
+#ifdef _WIN32
+	size_t len = strlen((const char *)ptr) + 1;
+	ret = (char *)CoTaskMemAlloc(len);
+	memcpy(ret, ptr, len);
+#else
+	ret = strdup((const char *)ptr);
+#endif
+	return ret;
+}
+/* return value needs to be freed with bctbx_free(). */
+void *linphone_string_to_pointer(const char *ptr) {
+	return bctbx_strdup(ptr);
+}
+
+LinphoneStatus linphone_force_utf8(void) {
+	const char *current_setting;
+	setlocale(LC_ALL, ".UTF-8");
+	current_setting = setlocale(LC_ALL, NULL);
+	if (current_setting == NULL) {
+		lError() << "setlocale() failed.";
+		return -1;
+	}
+	if (strstr(current_setting, ".utf-8") == NULL && strstr(current_setting, ".UTF-8") == NULL &&
+	    strstr(current_setting, ".utf8") == NULL) {
+		lError() << "It is unsure that UTF-8 was really set, locale is: " << current_setting;
+		return -1;
+	}
+	return 0;
 }

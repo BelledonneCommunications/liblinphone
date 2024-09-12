@@ -1439,7 +1439,7 @@ class CSharpLangTranslator(CLikeLangTranslator):
 				if type(_type.parent) is Argument:
 					return 'string'
 				else:
-					res = 'IntPtr' # Return as IntPtr and get string with Marshal.PtrToStringAnsi()
+					res = 'IntPtr' # Return as IntPtr, see linphone_pointer_to_string() in misc.c
 			else:
 				return 'string'
 		elif _type.name == 'character':
@@ -1551,3 +1551,5 @@ class PythonLangTranslator(CLangTranslator):
 			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
 			args       = ', '.join([arg.translate(self) for arg in method.args]) if not hideArguments else ''
 		)
+
+
