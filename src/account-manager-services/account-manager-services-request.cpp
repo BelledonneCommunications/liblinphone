@@ -156,6 +156,16 @@ Json::Value AccountManagerServicesRequest::parseResponseAsJson(const HttpRespons
 	Json::CharReaderBuilder builder;
 	Json::Value obj;
 
+	string contentType = response.getHeaderValue("Content-Type");
+	if (contentType != "application/json") {
+		lWarning() << "[Account Manager Services] Invalid content type [" << contentType
+		           << "] in response ('application/json' was expected), not parsing it";
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(AccountManagerServicesRequest, this,
+		                                  linphone_account_manager_services_request_cbs_get_request_error,
+		                                  response.getStatusCode(), "Invalid Content-Type in response", nullptr);
+		return Json::Value::nullSingleton();
+	}
+
 	auto content = response.getBody();
 	string body = content.getBodyAsString();
 	if (body.empty()) {
