@@ -2161,7 +2161,7 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 	BOOL fFinished = FALSE;
 	// Start searching for .dll files in the current directory.
 	szDirPath += dir;
-	szDirPath.append("\\lib*.dll");
+	szDirPath.append("\\liblinphone_*.dll");
 #ifdef UNICODE
 	std::wstring wszDirPath(szDirPath.begin(), szDirPath.end());
 	hSearch = FindFirstFileExW(wszDirPath.c_str(), FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
@@ -2265,7 +2265,8 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 #ifndef __QNX__
 		    (de->d_type == DT_REG || de->d_type == DT_UNKNOWN || de->d_type == DT_LNK) &&
 #endif
-		    (strstr(de->d_name, "lib") == de->d_name) && ((ext = strstr(de->d_name, LINPHONE_PLUGINS_EXT)) != NULL)) {
+		    (strstr(de->d_name, "liblinphone_") == de->d_name) &&
+		    ((ext = strstr(de->d_name, LINPHONE_PLUGINS_EXT)) != NULL)) {
 			std::string plugin_file_name(de->d_name);
 			if (std::find(loaded_plugins.cbegin(), loaded_plugins.cend(), plugin_file_name) != loaded_plugins.cend())
 				continue;
