@@ -67,29 +67,34 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack,
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline, *call_marie;
 	bctbx_list_t *lcs = NULL;
+	LinphoneVideoActivationPolicy *vpol;
+
 	bool_t call_ok;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_call_state_changed(cbs, call_paused_resumed_with_video_base_call_cb);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, marie->lc);
 
-	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE); /* needed to present a video mline*/
 	linphone_video_activation_policy_set_automatically_accept(vpol, FALSE);
-	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
-	linphone_core_set_video_activation_policy(marie->lc, vpol);
-	linphone_core_set_video_activation_policy(pauline->lc, vpol);
-	linphone_video_activation_policy_unref(vpol);
+	/* needed to present a video mline*/
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	linphone_video_activation_policy_unref(vpol);
 
 	BC_ASSERT_TRUE((call_ok = call(marie, pauline)));
 
@@ -174,6 +179,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 	bctbx_list_free(lcs);
 }
+
 static void call_paused_resumed_with_video(void) {
 	call_paused_resumed_with_video_base(FALSE, FALSE, FALSE, FALSE);
 }
@@ -191,37 +197,46 @@ static void call_paused_updated_resumed_with_no_sdp_ack_using_video_policy_and_a
 	call_paused_resumed_with_video_base(TRUE, TRUE, TRUE, TRUE);
 }
 
-static void call_paused_resumed_with_video_enabled(void) {
+static void _call_paused_resumed_with_video_enabled(LinphoneMediaDirection video_direction) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline, *call_marie;
 	bctbx_list_t *lcs = NULL;
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	bool_t call_ok;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	LinphoneCallParams *params;
+	VideoStream *vs;
+
 	linphone_core_cbs_set_call_state_changed(cbs, call_paused_resumed_with_video_base_call_cb);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, marie->lc);
 
-	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
 	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
-	linphone_core_set_video_activation_policy(marie->lc, vpol);
-	linphone_core_set_video_activation_policy(pauline->lc, vpol);
-	linphone_video_activation_policy_unref(vpol);
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
-	BC_ASSERT_TRUE((call_ok = call(marie, pauline)));
+	linphone_video_activation_policy_unref(vpol);
+
+	params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_set_video_direction(params, video_direction);
+
+	BC_ASSERT_TRUE((call_ok = call_with_caller_params(pauline, marie, params)));
+	linphone_call_params_unref(params);
 
 	if (!call_ok) goto end;
 
@@ -251,6 +266,13 @@ static void call_paused_resumed_with_video_enabled(void) {
 
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_marie)));
+
+	vs = (VideoStream *)linphone_call_get_stream(call_pauline, LinphoneStreamTypeVideo);
+
+	/* Make sure that the video stream restarted to stream the camera (rather than the static image place holder) */
+	BC_ASSERT_TRUE(vs->source->desc->id == MS_MIRE_ID);
+	BC_ASSERT_TRUE(vs->source->desc->id != MS_STATIC_IMAGE_ID);
+
 	end_call(marie, pauline);
 
 end:
@@ -259,6 +281,15 @@ end:
 	linphone_core_manager_destroy(pauline);
 	bctbx_list_free(lcs);
 }
+
+static void call_paused_resumed_with_video_enabled(void) {
+	_call_paused_resumed_with_video_enabled(LinphoneMediaDirectionSendRecv);
+}
+
+static void call_paused_resumed_with_video_send_only(void) {
+	_call_paused_resumed_with_video_enabled(LinphoneMediaDirectionSendOnly);
+}
+
 static void zrtp_video_call(void) {
 	call_base(LinphoneMediaEncryptionZRTP, TRUE, FALSE, LinphonePolicyNoFirewall, FALSE);
 }
@@ -3797,6 +3828,7 @@ static void call_with_video_requested_and_terminate(void) {
 static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
+    TEST_NO_TAG("Call paused resumed with video send-only", call_paused_resumed_with_video_send_only),
     TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
     TEST_NO_TAG("ZRTP video call", zrtp_video_call),
     TEST_NO_TAG("Simple video call AVPF", video_call_avpf),

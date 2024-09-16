@@ -457,11 +457,14 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				/* We were in early media, now we want to enable real media */
 				mMuted = false;
 				// when screen sharing, Camera is only used for thumbnail.
-				if (!isScreenSharing || (isMe && contentIsThumbnail)) enableCamera(cameraEnabled());
-				// Update video device
-				cam = getVideoDevice(targetState);
-				cameraChanged = cameraChanged || (currentCam && cam && (currentCam != cam));
+				if (!isScreenSharing || (isMe && contentIsThumbnail)) {
+					enableCamera(cameraEnabled());
+					currentCam = getVideoDevice(targetState);
+				}
 			}
+			// Update video device
+			cam = getVideoDevice(targetState);
+			cameraChanged = cameraChanged || (currentCam && cam && (currentCam != cam));
 		}
 
 		if (!label.empty() && label.compare(getLabel()) != 0) {
