@@ -629,6 +629,7 @@ void liblinphone_tester_add_suites(void) {
 #endif
 	liblinphone_tester_add_suite_with_default_time(&mwi_test_suite, 0);
 	bc_tester_add_suite(&bearer_auth_test_suite);
+	bc_tester_add_suite(&call_twisted_cases_suite);
 }
 
 void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, va_list args)) {

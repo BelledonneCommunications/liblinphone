@@ -597,8 +597,8 @@ void MediaSessionPrivate::remoteRinging() {
 	/* Set privacy */
 	getCurrentParams()->setPrivacy((LinphonePrivacyMask)op->getPrivacy());
 	std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
-	if (md) {
-		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+	if (md && rmd) {
 		/* Initialize the remote call params by invoking linphone_call_get_remote_params(). This is useful as the SDP
 		 * may not be present in the 200Ok */
 		q->getRemoteParams();
@@ -618,8 +618,12 @@ void MediaSessionPrivate::remoteRinging() {
 		updateStreams(md, state);
 	} else {
 		if (state == CallSession::State::OutgoingEarlyMedia) {
-			/* Already doing early media */
-			return;
+			if (!op->getNotifyAllRingings()) {
+				/* Already doing early media */
+				return;
+			}
+			/* stop the early media */
+			stopStreams();
 		}
 		setState(CallSession::State::OutgoingRinging, "Remote ringing");
 	}

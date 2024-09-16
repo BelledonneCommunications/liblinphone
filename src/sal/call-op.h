@@ -99,6 +99,12 @@ public:
 	int reply(SalReason reason) override {
 		return SalOp::replyMessage(reason);
 	}
+	void setNotifyAllRingings(bool yesno) {
+		mNotifyAllRingings = yesno;
+	}
+	bool getNotifyAllRingings() const {
+		return mNotifyAllRingings;
+	}
 
 	// This is for testing only!
 	void simulateLostAckOnDialog(bool enable);
@@ -168,11 +174,12 @@ private:
 	static const int MIN_SE = 1800; // Min-Session-Expires, in seconds
 
 	// Attributes
-	bool capabilityNegotiation = false;
 	std::shared_ptr<SalMediaDescription> mLocalMedia = nullptr;
 	std::shared_ptr<SalMediaDescription> mRemoteMedia = nullptr;
 	std::list<Content> mLocalBodies;
 	std::list<Content> mRemoteBodies;
+	bool capabilityNegotiation = false;
+	bool mNotifyAllRingings = false;
 };
 
 LINPHONE_END_NAMESPACE

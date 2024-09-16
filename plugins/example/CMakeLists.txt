@@ -22,7 +22,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.22)
-project(exampleplugin VERSION 1.1.1 LANGUAGES C CXX)
+project(linphone_exampleplugin VERSION 1.1.1 LANGUAGES C CXX)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/liblinphone/plugins")
 
@@ -31,7 +31,7 @@ set(PACKAGE_NAME "${PROJECT_NAME}")
 set(PACKAGE_VERSION "${PROJECT_VERSION}")
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "support@belledonne-communications.com")
-set(PACKAGE_TARNAME "exampleplugin")
+set(PACKAGE_TARNAME "linphone_exampleplugin")
 set(PACKAGE_URL "")
 set(VERSION "${PACKAGE_VERSION}")
 
@@ -63,44 +63,44 @@ endif()
 
 if(BUILD_SHARED_LIBS)
 	if(NOT IOS)
-		add_library(exampleplugin MODULE ${SOURCE_FILES})
+		add_library(linphone_exampleplugin MODULE ${SOURCE_FILES})
 	else()
-		add_library(exampleplugin SHARED ${SOURCE_FILES})
+		add_library(linphone_exampleplugin SHARED ${SOURCE_FILES})
 	endif()
 else()
-	add_library(exampleplugin STATIC ${SOURCE_FILES})
+	add_library(linphone_exampleplugin STATIC ${SOURCE_FILES})
 endif()
 
-target_include_directories(exampleplugin PUBLIC
+target_include_directories(linphone_exampleplugin PUBLIC
 	$<INSTALL_INTERFACE:include/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
 	PRIVATE ${INCLUDE_DIRS}
 )
-target_link_libraries(exampleplugin PRIVATE liblinphone ${LIBS})
-set_target_properties(exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(linphone_exampleplugin PRIVATE liblinphone ${LIBS})
+set_target_properties(linphone_exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
 if(APPLE)
 	if(IOS)
-		set_target_properties(exampleplugin PROPERTIES
+		set_target_properties(linphone_exampleplugin PROPERTIES
 			FRAMEWORK TRUE
-			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.exampleplugin
+			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone_exampleplugin
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
 		)
 	endif()
 endif()
 if(MSVC)
-	install(FILES $<TARGET_PDB_FILE:exampleplugin>
+	install(FILES $<TARGET_PDB_FILE:linphone_exampleplugin>
 		DESTINATION ${CMAKE_INSTALL_BINDIR}
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		CONFIGURATIONS Debug RelWithDebInfo
 	)
 	if(NOT IOS)
-		set_target_properties(exampleplugin PROPERTIES PREFIX "lib")
+		set_target_properties(linphone_exampleplugin PROPERTIES PREFIX "lib")
 	endif()
 endif()
 
-install(TARGETS exampleplugin
+install(TARGETS linphone_exampleplugin
 		RUNTIME DESTINATION ${LIBLINPHONE_PLUGINS_DIR}
 		LIBRARY DESTINATION ${LIBLINPHONE_PLUGINS_DIR}
 		ARCHIVE DESTINATION ${LIBLINPHONE_PLUGINS_DIR}

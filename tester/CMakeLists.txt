@@ -337,6 +337,7 @@ set(SOURCE_FILES_CXX
 	alerts_tester.cpp
 	vcard_tester.cpp
 	bearer-auth.cpp
+	call-twisted-cases.cpp
 )
 
 if(ENABLE_FLEXIAPI)

@@ -32,7 +32,7 @@ extern "C" {
 #else
 #define PLUGIN_EXPORT
 #endif
-PLUGIN_EXPORT void libexampleplugin_init(LinphoneCore *core) {
+PLUGIN_EXPORT void liblinphone_exampleplugin_init(LinphoneCore *core) {
 	lInfo() << "Example plugin for core " << std::string(linphone_core_get_identity(core))
 	        << " has been succesfully loaded";
 }

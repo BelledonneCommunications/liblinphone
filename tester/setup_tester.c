@@ -193,8 +193,8 @@ static void core_init_test(void) {
 		/* until we have good certificates on our test server... */
 		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
-		const char *example_plugin_name = "libexampleplugin";
-		const char *ekt_server_plugin_name = "libektserver";
+		const char *example_plugin_name = "liblinphone_exampleplugin";
+		const char *ekt_server_plugin_name = "liblinphone_ektserver";
 		const bctbx_list_t *plugins = linphone_core_get_loaded_plugins(lc);
 #if defined(HAVE_EXAMPLE_PLUGIN) || defined(HAVE_EKT_SERVER_PLUGIN)
 #ifdef __IOS__

@@ -4900,6 +4900,10 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 	}
 	op->enableCnxIpTo0000IfSendOnly(!!linphone_config_get_int(lc->config, "sip", "cnx_ip_to_0000_if_sendonly_enabled",
 	                                                          0)); /*also set in linphone_call_new_incoming*/
+	SalCallOp *callOp = dynamic_cast<SalCallOp *>(op);
+	if (callOp && linphone_config_get_int(lc->config, "sip", "notify_all_ringings", 0)) {
+		callOp->setNotifyAllRingings(true);
+	}
 }
 
 void linphone_configure_op(

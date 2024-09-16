@@ -407,9 +407,8 @@ void SalCallOp::handleSessionTimersFromResponse(belle_sip_response_t *response) 
 
 void SalCallOp::handleBodyFromResponse(belle_sip_response_t *response) {
 	Content body = extractBody(BELLE_SIP_MESSAGE(response));
-	if (mRemoteMedia) {
-		mRemoteMedia = nullptr;
-	}
+
+	mRemoteMedia = nullptr;
 
 	fillRemoteBodies(body);
 	auto sdpBody = getContentInRemote(ContentType::Sdp);
@@ -520,7 +519,8 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 						}
 					}
 
-					if (previousResponse == nullptr || (previousSdpBody.getContentType() != ContentType::Sdp)) {
+					if (op->mNotifyAllRingings || previousResponse == nullptr ||
+					    (previousSdpBody.getContentType() != ContentType::Sdp)) {
 						op->handleBodyFromResponse(response);
 						op->mRoot->mCallbacks.call_ringing(op);
 					}
@@ -1064,6 +1064,10 @@ void SalCallOp::setCallAsReleased(SalCallOp *op) {
 void SalCallOp::processDialogTerminatedCb(void *userCtx, const belle_sip_dialog_terminated_event_t *event) {
 	auto op = static_cast<SalCallOp *>(userCtx);
 	if (op->mDialog && (op->mDialog == belle_sip_dialog_terminated_event_get_dialog(event))) {
+		belle_sip_transaction_t *lastDialogTr = belle_sip_dialog_get_last_transaction(op->mDialog);
+		belle_sip_response_t *lastDialogResponse =
+		    lastDialogTr ? belle_sip_transaction_get_response(lastDialogTr) : nullptr;
+
 		lInfo() << "Dialog [" << belle_sip_dialog_terminated_event_get_dialog(event) << "] terminated for op [" << op
 		        << "]";
 		op->haltSessionTimersTimer();
@@ -1074,13 +1078,27 @@ void SalCallOp::processDialogTerminatedCb(void *userCtx, const belle_sip_dialog_
 
 		switch (belle_sip_dialog_get_previous_state(op->mDialog)) {
 			case BELLE_SIP_DIALOG_EARLY:
-			case BELLE_SIP_DIALOG_NULL:
-				if ((op->mState != State::Terminated) && (op->mState != State::Terminating)) {
+			case BELLE_SIP_DIALOG_NULL: {
+				bool authRetryPending = false;
+				int lastDialogResponseCode =
+				    lastDialogResponse ? belle_sip_response_get_status_code(lastDialogResponse) : 0;
+				auto lastOpTransactionState =
+				    op->mPendingClientTransaction
+				        ? belle_sip_transaction_get_state(BELLE_SIP_TRANSACTION(op->mPendingClientTransaction))
+				        : BELLE_SIP_TRANSACTION_TERMINATED;
+				if ((lastDialogResponseCode == 401 || lastDialogResponseCode == 407) &&
+				    (lastOpTransactionState == BELLE_SIP_TRANSACTION_CALLING ||
+				     lastOpTransactionState == BELLE_SIP_TRANSACTION_PROCEEDING)) {
+					authRetryPending = true;
+					lInfo() << "Dialog terminated but new authenticated INVITE is being tried, keeping op alive.";
+				}
+				if ((op->mState != State::Terminated) && (op->mState != State::Terminating) && !authRetryPending) {
 					// This is an early termination due to incorrect response received
 					op->mRoot->mCallbacks.call_failure(op);
 					op->mState = State::Terminating;
 				}
 				break;
+			}
 			case BELLE_SIP_DIALOG_CONFIRMED:
 				if ((op->mState != State::Terminated) && (op->mState != State::Terminating)) {
 					// This is probably a normal termination from a BYE
@@ -1092,8 +1110,10 @@ void SalCallOp::processDialogTerminatedCb(void *userCtx, const belle_sip_dialog_
 			default:
 				break;
 		}
-		belle_sip_main_loop_do_later(belle_sip_stack_get_main_loop(op->mRoot->mStack),
-		                             (belle_sip_callback_t)setCallAsReleased, op);
+		if (op->mState == State::Terminating || op->mState == State::Terminated) {
+			belle_sip_main_loop_do_later(belle_sip_stack_get_main_loop(op->mRoot->mStack),
+			                             (belle_sip_callback_t)setCallAsReleased, op);
+		}
 	} else {
 		lError() << "Dialog unknown for op";
 	}
