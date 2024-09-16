@@ -122,8 +122,8 @@ protected:
 	LinphoneCallStats *mStats = nullptr;
 	int mOutputBandwidth; // Target output bandwidth for the stream.
 	bool mUseAuxDestinations = false;
-	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with
-	                        linphone_core_enable_mic().*/
+	bool mMuted = false; /* to handle special cases where we want the media to be muted, for example early-media states,
+	                        unrelated to linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;
 
 private:

@@ -331,10 +331,10 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				lInfo() << "Early media finished, unmuting video input...";
 				/* We were in early media, now we want to enable real media */
 				enableCamera(mCameraEnabled);
-				// Update video device
-				cam = getVideoDevice(targetState);
-				cameraChanged = currentCam && cam && (currentCam != cam);
 			}
+			// Update video device
+			cam = getVideoDevice(targetState);
+			cameraChanged = currentCam && cam && (currentCam != cam);
 		}
 
 		if (!label.empty() && label.compare(getLabel()) != 0) {
