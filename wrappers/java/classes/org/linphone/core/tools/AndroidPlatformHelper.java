@@ -94,7 +94,7 @@ public class AndroidPlatformHelper {
     private Handler mHandler;
     private boolean mMonitoringEnabled;
     private InteractivityReceiver mInteractivityReceiver;
-    private String[] mDnsServers;
+    private ArrayList<String> mDnsServersList;
     private NetworkSignalMonitor mNetworkSignalMonitor;
 
     private Class mPushServiceClass;
@@ -115,6 +115,8 @@ public class AndroidPlatformHelper {
 
     private native void setNetworkReachable(long nativePtr, boolean reachable);
 
+    private native void setDnsServers(long nativePtr);
+
     private native void setHttpProxy(long nativePtr, String host, int port);
 
     private native boolean isInBackground(long nativePtr);
@@ -129,7 +131,7 @@ public class AndroidPlatformHelper {
         mNativePtr = nativePtr;
         mContext = ((Context) ctx_obj).getApplicationContext();
         mWifiOnly = wifiOnly;
-        mDnsServers = null;
+        mDnsServersList = new ArrayList<String>();
         mResources = mContext.getResources();
         
         Looper myLooper = Looper.myLooper();
@@ -248,13 +250,9 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized String[] getDnsServers() {
-        String dnsList = "";
-        for (String dns : mDnsServers) {
-            dnsList += dns;
-            dnsList += ", ";
-        }
-        Log.i("[Platform Helper] getDnsServers() returning " + dnsList);
-        return mDnsServers;
+        String[] dnsServers = new String[mDnsServersList.size()];
+        mDnsServersList.toArray(dnsServers);
+        return dnsServers;
     }
 
     public static String getDataPath(Context context) {
@@ -763,9 +761,13 @@ public class AndroidPlatformHelper {
     public synchronized void updateDnsServers(ArrayList<String> dnsServers) {
         // Do not replace previous list of DNS by an empty one, keep them to be able to try a resolution while in DOZE mode
         if (dnsServers != null && !dnsServers.isEmpty()) {
-            mDnsServers = new String[dnsServers.size()];
-            dnsServers.toArray(mDnsServers);
-            Log.i("[Platform Helper] DNS servers list updated");
+            if (!dnsServers.equals(mDnsServersList)) {
+                mDnsServersList = dnsServers;
+                Log.d("[Platform Helper] DNS servers list updated, notifying Core");
+                setDnsServers(mNativePtr);
+            } else {
+                Log.d("[Platform Helper] DNS servers list hasn't changed, doing nothing");
+            }
         }
     }
 

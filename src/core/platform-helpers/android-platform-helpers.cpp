@@ -68,6 +68,7 @@ public:
 	bool isActiveNetworkWifiOnlyCompliant() const override;
 	void onWifiOnlyEnabled(bool enabled) override;
 	void setDnsServers() override;
+	void updateDnsServers();
 	void setNetworkReachable(bool reachable) override;
 	void setHttpProxy(const string &host, int port) override;
 	void startPushService() override;
@@ -448,6 +449,10 @@ void AndroidPlatformHelpers::setHttpProxy(const string &host, int port) {
 }
 
 void AndroidPlatformHelpers::setDnsServers() {
+	// Doing nothing, Java platform helper will do the update itself when required
+}
+
+void AndroidPlatformHelpers::updateDnsServers() {
 	if (!mJavaHelper) {
 		lError() << "[Android Platform Helper] mJavaHelper is null.";
 		return;
@@ -470,16 +475,21 @@ void AndroidPlatformHelpers::setDnsServers() {
 
 		if (jservers != nullptr) {
 			int count = env->GetArrayLength(jservers);
+			ostringstream ostr;
 
 			for (int i = 0; i < count; i++) {
 				jstring jserver = (jstring)env->GetObjectArrayElement(jservers, i);
 				const char *str = GetStringUTFChars(env, jserver);
 				if (str) {
-					lInfo() << "[Android Platform Helper] Found DNS server " << str;
+					lDebug() << "[Android Platform Helper] Found DNS server " << str;
+					if (i != 0) ostr << ", ";
+					ostr << str;
 					l = bctbx_list_append(l, ms_strdup(str));
 					ReleaseStringUTFChars(env, jserver, str);
 				}
 			}
+
+			lInfo() << "[Android Platform Helper] Known DNS servers are: " << ostr.str();
 		} else {
 			lError() << "[Android Platform Helper] setDnsServers() failed to get DNS servers list";
 			return;
@@ -752,6 +762,13 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	const std::function<void()> fun = [androidPlatformHelper, reachable]() {
 		androidPlatformHelper->setNetworkReachable(reachable);
 	};
+	androidPlatformHelper->getCore()->doLater(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setDnsServers(
+    BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
+	const std::function<void()> fun = [androidPlatformHelper]() { androidPlatformHelper->updateDnsServers(); };
 	androidPlatformHelper->getCore()->doLater(fun);
 }
 
