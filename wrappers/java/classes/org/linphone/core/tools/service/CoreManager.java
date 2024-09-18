@@ -733,13 +733,14 @@ public class CoreManager {
 
     private void startService() {
         Log.i("[Core Manager] Starting service ", mServiceClass.getName());
-        mContext.startService(new Intent().setClass(mContext, mServiceClass));
+        DeviceUtils.startForegroundService(mContext, new Intent().setClass(mContext, mServiceClass));
     }
 
     public void setServiceRunning(boolean running) {
+        if (running == mServiceRunning) return;
         mServiceRunning = running;
         
-        if (mServiceRunningInForeground) {
+        if (running) {
             Log.i("[Core Manager] CoreService is now running");
         } else {
             Log.i("[Core Manager] CoreService is no longer running");
@@ -747,6 +748,7 @@ public class CoreManager {
     }
 
     public void setServiceRunningAsForeground(boolean foreground) {
+        if (foreground == mServiceRunningInForeground) return;
         mServiceRunningInForeground = foreground;
         
         if (mServiceRunningInForeground) {
