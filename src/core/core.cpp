@@ -1991,7 +1991,7 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 	BOOL fFinished = FALSE;
 	// Start searching for .dll files in the current directory.
 	szDirPath += dir;
-	szDirPath.append("\\lib*.dll");
+	szDirPath.append("\\liblinphone_*.dll");
 #ifdef UNICODE
 	std::wstring wszDirPath(szDirPath.begin(), szDirPath.end());
 	hSearch = FindFirstFileExW(wszDirPath.c_str(), FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
@@ -1999,7 +1999,7 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 	hSearch = FindFirstFileExA(szDirPath.c_str(), FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
 #endif
 	if (hSearch == INVALID_HANDLE_VALUE) {
-		lInfo() << "no plugin (*.dll) found in [" << szDirPath << "] [" << (int)GetLastError() << "].";
+		lInfo() << "no plugin (liblinphone_*.dll) found in [" << szDirPath << "] [" << (int)GetLastError() << "].";
 		return 0;
 	}
 
