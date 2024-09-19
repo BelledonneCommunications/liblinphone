@@ -763,10 +763,10 @@ public class AndroidPlatformHelper {
         if (dnsServers != null && !dnsServers.isEmpty()) {
             if (!dnsServers.equals(mDnsServersList)) {
                 mDnsServersList = dnsServers;
-                Log.d("[Platform Helper] DNS servers list updated, notifying Core");
+                Log.i("[Platform Helper] DNS servers list updated, notifying Core");
                 setDnsServers(mNativePtr);
             } else {
-                Log.d("[Platform Helper] DNS servers list hasn't changed, doing nothing");
+                Log.i("[Platform Helper] DNS servers list hasn't changed, doing nothing");
             }
         }
     }

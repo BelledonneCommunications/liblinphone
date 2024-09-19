@@ -156,6 +156,7 @@ private:
 
 	bool mNetworkReachable = false;
 	string mDownloadPath = "";
+	bctbx_list_t *mDnsServersList = nullptr;
 };
 
 static const char *GetStringUTFChars(JNIEnv *env, jstring string) {
@@ -293,6 +294,10 @@ AndroidPlatformHelpers::~AndroidPlatformHelpers() {
 		belle_sip_wake_lock_uninit(env);
 		env->DeleteGlobalRef(mJavaHelper);
 		mJavaHelper = nullptr;
+		if (mDnsServersList) {
+			bctbx_list_free_with_data(mDnsServersList, ms_free);
+			mDnsServersList = nullptr;
+		}
 	}
 	lInfo() << "[Android Platform Helper] AndroidPlatformHelper has been destroyed.";
 }
@@ -449,7 +454,20 @@ void AndroidPlatformHelpers::setHttpProxy(const string &host, int port) {
 }
 
 void AndroidPlatformHelpers::setDnsServers() {
-	// Doing nothing, Java platform helper will do the update itself when required
+	if (linphone_core_get_dns_set_by_app(getCore()->getCCore())) {
+		lWarning() << "[Android Platform Helper] DNS servers have been overriden by app";
+		return;
+	}
+
+	if (!mDnsServersList) {
+		updateDnsServers();
+	}
+
+	if (mDnsServersList) {
+		linphone_core_set_dns_servers(getCore()->getCCore(), mDnsServersList);
+	} else {
+		lError() << "[Android Platform Helper] No DNS server available!";
+	}
 }
 
 void AndroidPlatformHelpers::updateDnsServers() {
@@ -458,15 +476,10 @@ void AndroidPlatformHelpers::updateDnsServers() {
 		return;
 	}
 
-	if (linphone_core_get_dns_set_by_app(getCore()->getCCore())) {
-		lWarning() << "[Android Platform Helper] Detected DNS servers have been overriden by app.";
-		return;
-	}
-
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
 		jobjectArray jservers = (jobjectArray)env->CallObjectMethod(mJavaHelper, mGetDnsServersId);
-		bctbx_list_t *l = nullptr;
+		bctbx_list_t *dns_servers_list = nullptr;
 		if (env->ExceptionCheck()) {
 			env->ExceptionClear();
 			lError() << "[Android Platform Helper] setDnsServers() exception.";
@@ -481,10 +494,9 @@ void AndroidPlatformHelpers::updateDnsServers() {
 				jstring jserver = (jstring)env->GetObjectArrayElement(jservers, i);
 				const char *str = GetStringUTFChars(env, jserver);
 				if (str) {
-					lDebug() << "[Android Platform Helper] Found DNS server " << str;
 					if (i != 0) ostr << ", ";
 					ostr << str;
-					l = bctbx_list_append(l, ms_strdup(str));
+					dns_servers_list = bctbx_list_append(dns_servers_list, ms_strdup(str));
 					ReleaseStringUTFChars(env, jserver, str);
 				}
 			}
@@ -495,8 +507,11 @@ void AndroidPlatformHelpers::updateDnsServers() {
 			return;
 		}
 
-		linphone_core_set_dns_servers(getCore()->getCCore(), l);
-		bctbx_list_free_with_data(l, ms_free);
+		if (mDnsServersList) {
+			bctbx_list_free_with_data(mDnsServersList, ms_free);
+			mDnsServersList = nullptr;
+		}
+		mDnsServersList = dns_servers_list;
 	}
 }
 
@@ -768,7 +783,10 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setDnsServers(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
-	const std::function<void()> fun = [androidPlatformHelper]() { androidPlatformHelper->updateDnsServers(); };
+	const std::function<void()> fun = [androidPlatformHelper]() {
+		androidPlatformHelper->updateDnsServers();
+		androidPlatformHelper->setDnsServers();
+	};
 	androidPlatformHelper->getCore()->doLater(fun);
 }
 
