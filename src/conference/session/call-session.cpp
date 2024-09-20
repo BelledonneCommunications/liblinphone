@@ -544,6 +544,9 @@ void CallSessionPrivate::updateToFromAssertedIdentity() {
 			lInfo() << "Using P-Asserted-Identity [" << pAssertedId << "] instead of to [" << op->getTo().c_str()
 			        << "].";
 			log->setToAddress(pAssertedIdAddr);
+
+			auto &mainDb = q->getCore()->getPrivate()->mainDb;
+			if (mainDb != nullptr) mainDb->updateCallLog(log);
 		} else {
 			lWarning() << "Unsupported P-Asserted-Identity header";
 		}

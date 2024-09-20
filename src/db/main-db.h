@@ -236,7 +236,8 @@ public:
 	std::list<std::shared_ptr<ConferenceInfo>>
 	getConferenceInfos(time_t afterThisTime = -1, const std::list<LinphoneStreamType> capabilities = {});
 	std::list<std::shared_ptr<ConferenceInfo>>
-	getConferenceInfosWithParticipant(const std::shared_ptr<Address> &address, const std::list<LinphoneStreamType> capabilities = {});
+	getConferenceInfosWithParticipant(const std::shared_ptr<Address> &address,
+	                                  const std::list<LinphoneStreamType> capabilities = {});
 	std::shared_ptr<ConferenceInfo> getConferenceInfo(long long conferenceInfoId);
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromCcmpUri(const std::string &uri);
@@ -252,6 +253,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	long long insertCallLog(const std::shared_ptr<CallLog> &callLog);
+	void updateCallLog(const std::shared_ptr<CallLog> &callLog);
 	void deleteCallLog(const std::shared_ptr<CallLog> &callLog);
 
 	std::shared_ptr<CallLog> getCallLog(const std::string &callId, int limit);

@@ -95,6 +95,7 @@ private:
 
 	long long insertOrUpdateConferenceCall(const std::shared_ptr<CallLog> &callLog,
 	                                       const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
+	long long updateConferenceCall(const std::shared_ptr<CallLog> &callLog);
 	long long insertOrUpdateFriend(const std::shared_ptr<Friend> &f);
 	long long insertOrUpdateFriendList(const std::shared_ptr<FriendList> &list);
 	long long insertOrUpdateDevice(const std::shared_ptr<Address> &addressWithGruu, const std::string &displayName);

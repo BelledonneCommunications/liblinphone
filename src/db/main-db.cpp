@@ -642,7 +642,15 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		lInfo() << "Insert new conference info in database.";
 
 		*dbSession.getBackendSession()
-		    << "INSERT INTO conference_info (audio, video, chat, ccmp_uri, organizer_sip_address_id, uri_sip_address_id, start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level) VALUES (:audioEnabled, :videoEnabled, :chatEnabled, :ccmpUri, :organizerSipAddressId, :uriSipAddressId, :startTime, :duration, :subject, :description, :state, :sequence, :uid, :security_level)", soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(ccmpUri),  soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid), soci::use(security_level);
+		    << "INSERT INTO conference_info (audio, video, chat, ccmp_uri, organizer_sip_address_id, "
+		       "uri_sip_address_id, start_time, duration, subject, description, state, ics_sequence, ics_uid, "
+		       "security_level) VALUES (:audioEnabled, :videoEnabled, :chatEnabled, :ccmpUri, :organizerSipAddressId, "
+		       ":uriSipAddressId, :startTime, :duration, :subject, :description, :state, :sequence, :uid, "
+		       ":security_level)",
+		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(ccmpUri),
+		    soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second),
+		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
+		    soci::use(uid), soci::use(security_level);
 
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
@@ -844,6 +852,44 @@ long long MainDbPrivate::insertOrUpdateConferenceCall(const std::shared_ptr<Call
 		    soci::use(duration), soci::use(connectedTime.first, connectedTime.second), soci::use(status),
 		    soci::use(videoEnabled), soci::use(quality), soci::use(callId), soci::use(refKey),
 		    soci::use(conferenceInfoId, confInfoInd), soci::use(conferenceCallId);
+	}
+
+	cache(callLog, conferenceCallId);
+
+	return conferenceCallId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::updateConferenceCall(const std::shared_ptr<CallLog> &callLog) {
+#ifdef HAVE_DB_STORAGE
+	int duration = callLog->getDuration();
+	auto connectedTime = dbSession.getTimeWithSociIndicator(callLog->getConnectedTime());
+	int status = callLog->getStatus();
+	int videoEnabled = callLog->isVideoEnabled() ? 1 : 0;
+	double quality = static_cast<double>(callLog->getQuality());
+	const string &callId = callLog->getCallId();
+	const string &refKey = callLog->getRefKey();
+
+	long long conferenceCallId = selectConferenceCallId(callLog->getCallId());
+	if (conferenceCallId >= 0) {
+		lInfo() << "Update conference call in database: " << callLog->getCallId();
+
+		std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
+		const long long fromSipAddressId = insertSipAddress(from);
+		std::shared_ptr<Address> to = callLog->getToAddress() ? callLog->getToAddress() : nullptr;
+		const long long toSipAddressId = insertSipAddress(to);
+
+		*dbSession.getBackendSession()
+		    << "UPDATE conference_call SET"
+		       "  from_sip_address_id = :fromSipAddressId, to_sip_address_id = :toSipAddressId,"
+		       "  duration = :duration, connected_time = :connectedTime, status =  :status,"
+		       "  video_enabled = :videoEnabled, quality = :quality, call_id = :callId, refkey = :refKey"
+		       " WHERE id = :conferenceCallId",
+		    soci::use(fromSipAddressId), soci::use(toSipAddressId), soci::use(duration),
+		    soci::use(connectedTime.first, connectedTime.second), soci::use(status), soci::use(videoEnabled),
+		    soci::use(quality), soci::use(callId), soci::use(refKey), soci::use(conferenceCallId);
 	}
 
 	cache(callLog, conferenceCallId);
@@ -6637,7 +6683,9 @@ std::string MainDb::getConferenceInfoTypeQuery(const std::list<LinphoneStreamTyp
 	return capabilitiesQuery;
 }
 
-std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfosWithParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &address), BCTBX_UNUSED(const std::list<LinphoneStreamType> capabilities)) {
+std::list<std::shared_ptr<ConferenceInfo>>
+MainDb::getConferenceInfosWithParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &address),
+                                          BCTBX_UNUSED(const std::list<LinphoneStreamType> capabilities)) {
 #ifdef HAVE_DB_STORAGE
 	// In order to ensure the compatibility with SQLite3 and MySQL, we have ot define two variable sipAddressId and
 	// sipAddressId2 that have the same value. The SOCI backend of SQLite3 understands that it will only need one
@@ -6890,6 +6938,17 @@ long long MainDb::insertCallLog(const std::shared_ptr<CallLog> &callLog) {
 	};
 #else
 	return -1;
+#endif
+}
+
+void MainDb::updateCallLog(const std::shared_ptr<CallLog> &callLog) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		d->updateConferenceCall(callLog);
+		tr.commit();
+	};
 #endif
 }
 
