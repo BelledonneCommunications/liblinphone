@@ -235,8 +235,9 @@ void MediaSessionPrivate::accepted() {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::Connected:
-			if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
-				lInfo() << "Initializing local media description according to remote offer in 200Ok";
+			if (q->getCore()->getCCore()->sip_conf.sdp_200_ack || q->getCore()->getCCore()->sal->mediaDisabled()) {
+				if (!q->getCore()->getCCore()->sal->mediaDisabled())
+					lInfo() << "Initializing local media description according to remote offer in 200Ok";
 				if (!localIsOfferer) {
 					// We were waiting for an incoming offer. Now prepare the local media description according to
 					// remote offer.
@@ -273,6 +274,11 @@ void MediaSessionPrivate::accepted() {
 		if (!md && (prevState == CallSession::State::OutgoingEarlyMedia) && resultDesc) {
 			lInfo() << "Using early media SDP since none was received with the 200 OK";
 			md = resultDesc;
+		}
+
+		if (!md && op->getSal()->mediaDisabled()) {
+			lInfo() << "Using remote SDP as media is disabled";
+			md = rmd;
 		}
 
 		const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
@@ -358,7 +364,7 @@ void MediaSessionPrivate::accepted() {
 				// If capability negotiation is enabled, a second invite must be sent if the selected configuration is
 				// not the actual one. It normally occurs after moving to state StreamsRunning. However, if ICE
 				// negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-				if (localDesc->getParams().capabilityNegotiationSupported() &&
+				if (!op->getSal()->mediaDisabled() && localDesc->getParams().capabilityNegotiationSupported() &&
 				    (nextState == CallSession::State::StreamsRunning) && localIsOfferer &&
 				    capabilityNegotiationReInviteEnabled) {
 					// If no ICE session or checklist has completed, then send re-INVITE
@@ -996,7 +1002,8 @@ shared_ptr<Participant> MediaSessionPrivate::getMe() const {
 
 void MediaSessionPrivate::setState(CallSession::State newState, const string &message) {
 	L_Q();
-	q->getCore()->getPrivate()->getToneManager().notifyState(q->getSharedFromThis(), newState);
+	if (!op || !op->getSal()->mediaDisabled())
+		q->getCore()->getPrivate()->getToneManager().notifyState(q->getSharedFromThis(), newState);
 	// Take a ref on the session otherwise it might get destroyed during the call to setState
 	shared_ptr<CallSession> sessionRef = q->getSharedFromThis();
 	if ((newState != state) && (newState != CallSession::State::StreamsRunning)) q->cancelDtmfs();
@@ -2705,7 +2712,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		ctx.remoteMediaDescription = localIsOfferer ? nullptr : (op ? op->getRemoteMediaDescription() : nullptr);
 		ctx.localIsOfferer = localIsOfferer;
 		/* Now instanciate the streams according to the media description. */
-		getStreamsGroup().createStreams(ctx);
+		if (!q->getCore()->getCCore()->sal->mediaDisabled()) getStreamsGroup().createStreams(ctx);
 
 		const auto &mdForMainStream = localIsOfferer ? md : refMd;
 		const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
@@ -3304,6 +3311,8 @@ void MediaSessionPrivate::updateFrozenPayloads(std::shared_ptr<SalMediaDescripti
 void MediaSessionPrivate::updateStreams(std::shared_ptr<SalMediaDescription> &newMd, CallSession::State targetState) {
 	L_Q();
 
+	if (q->getCore()->getCCore()->sal->mediaDisabled()) return;
+
 	if (!newMd) {
 		lError() << "updateStreams() called with null media description";
 		return;
@@ -3646,7 +3655,8 @@ LinphoneStatus MediaSessionPrivate::startUpdate(const CallSession::UpdateMethod 
 	L_Q();
 
 	const bool doNotAddSdpToInvite =
-	    q->getCore()->getCCore()->sip_conf.sdp_200_ack && !getParams()->getPrivate()->getInternalCallUpdate();
+	    (q->getCore()->getCCore()->sip_conf.sdp_200_ack && !getParams()->getPrivate()->getInternalCallUpdate()) ||
+	    op->getSal()->mediaDisabled();
 	if (doNotAddSdpToInvite) {
 		op->setLocalMediaDescription(nullptr);
 	}
@@ -3955,7 +3965,7 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 	}
 
 	std::shared_ptr<SalMediaDescription> &newMd = op->getFinalMediaDescription();
-	if (newMd) {
+	if (newMd || op->getSal()->mediaDisabled()) {
 		// If negotiated media description doesn't contain a video stream after the first INVITE message sequence, then
 		// disable video in the local call parameters
 		if (getParams()->videoEnabled() &&
@@ -3977,7 +3987,8 @@ LinphoneMediaDirection MediaSessionPrivate::computeNewVideoDirection(LinphoneMed
 	    ((op->getRemoteMediaDescription() &&
 	      ((state == CallSession::State::IncomingReceived) || (state == CallSession::State::UpdatedByRemote) ||
 	       (state == CallSession::State::EarlyUpdatedByRemote) || (state == CallSession::State::IncomingEarlyMedia))) ||
-	     (state == CallSession::State::StreamsRunning && q->getCore()->getCCore()->sip_conf.sdp_200_ack))) {
+	     (state == CallSession::State::StreamsRunning &&
+	      (q->getCore()->getCCore()->sip_conf.sdp_200_ack || op->getSal()->mediaDisabled())))) {
 		// We are accepting an offer
 		auto videoEnabled = getParams()->videoEnabled();
 		if (!videoEnabled) {
@@ -4463,13 +4474,13 @@ bool MediaSession::initiateOutgoing(const string &subject, const std::shared_ptr
 	bool defer = CallSession::initiateOutgoing(subject, content);
 
 	if (!d->op) d->createOp();
-	if (!getCore()->getCCore()->sip_conf.sdp_200_ack) {
+	if (!(getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled())) {
 		d->makeLocalMediaDescription(true, isCapabilityNegotiationEnabled(), false);
 		lInfo() << "Created local media description.";
 	}
 
 	if (d->natPolicy && d->natPolicy->iceEnabled()) {
-		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
+		if (getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled())
 			lWarning() << "ICE is not supported when sending INVITE without SDP";
 		else {
 			/* Defer the start of the call after the ICE gathering process */
@@ -4588,7 +4599,7 @@ LinphoneStatus MediaSession::resume() {
 
 			d->makeLocalMediaDescription(true, false, true);
 
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled()) {
 				d->op->setLocalMediaDescription(nullptr);
 			} else {
 				d->op->setLocalMediaDescription(d->localDesc);
@@ -4596,7 +4607,7 @@ LinphoneStatus MediaSession::resume() {
 
 			const auto res = d->op->update(subject.c_str(), false);
 
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled()) {
 				/* We are NOT offering, set local media description after sending the call so that we are ready to
 				 * process the remote offer when it will arrive. */
 				d->op->setLocalMediaDescription(d->localDesc);
@@ -4922,7 +4933,8 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		bool addCapabilityNegotiationAttributesToLocalMd =
 		    isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
-		bool isOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
+		bool isOfferer = isCapabilityNegotiationUpdate ||
+		                 !(getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled());
 		d->localIsOfferer = isOfferer;
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd,
 		                             isCapabilityNegotiationReInvite);
@@ -4948,9 +4960,10 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			// therefore the local description must be updated to include ICE candidates for every stream
 			const auto currentLocalDesc = d->localDesc;
 			d->localDesc = localDesc;
-			d->updateLocalMediaDescriptionFromIce(!getCore()->getCCore()->sip_conf.sdp_200_ack);
+			d->updateLocalMediaDescriptionFromIce(
+			    !(getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled()));
 
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled()) {
 				d->op->setLocalMediaDescription(nullptr);
 			} else {
 				d->op->setLocalMediaDescription(d->localDesc);
@@ -4958,7 +4971,7 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			LinphoneStatus res = d->startUpdate(method, subject);
 
 			d->localDesc = currentLocalDesc;
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled()) {
 				/* We are NOT offering, set local media description after sending the call so that we are ready to
 				 * process the remote offer when it will arrive. */
 				d->op->setLocalMediaDescription(d->localDesc);
@@ -4971,21 +4984,24 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			return res;
 		};
 
-		const auto preparingStreams = d->getStreamsGroup().prepare();
-		// reINVITE sent after full state must be sent after ICE negotiations are completed if ICE is enabled
-		if (d->natPolicy && d->natPolicy->iceEnabled() && preparingStreams) {
-			lInfo() << "Defer CallSession " << this << " (local address " << *getLocalAddress() << " remote address "
-			        << *getRemoteAddress() << ") update to gather ICE candidates";
-			d->queueIceGatheringTask(updateCompletionTask);
-			return 0;
-		} else if (isIceRunning) {
-			// ICE negotiations are ongoing hence the update cannot be send right now
-			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession "
-			        << this << " (local address " << *getLocalAddress() << " remote address " << *getRemoteAddress()
-			        << ") update until Ice negotiations are completed.";
-			d->queueIceCompletionTask(updateCompletionTask);
-			return 0;
+		if (!d->op->getSal()->mediaDisabled()) {
+			const auto preparingStreams = d->getStreamsGroup().prepare();
+			// reINVITE sent after full state must be sent after ICE negotiations are completed if ICE is enabled
+			if (d->natPolicy && d->natPolicy->iceEnabled() && preparingStreams) {
+				lInfo() << "Defer CallSession " << this << " (local address " << *getLocalAddress()
+				        << " remote address " << *getRemoteAddress() << ") update to gather ICE candidates";
+				d->queueIceGatheringTask(updateCompletionTask);
+				return 0;
+			} else if (isIceRunning) {
+				// ICE negotiations are ongoing hence the update cannot be send right now
+				lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession "
+				        << this << " (local address " << *getLocalAddress() << " remote address " << *getRemoteAddress()
+				        << ") update until Ice negotiations are completed.";
+				d->queueIceCompletionTask(updateCompletionTask);
+				return 0;
+			}
 		}
+
 		result = updateCompletionTask();
 	} else if (d->state == CallSession::State::StreamsRunning) {
 		const sound_config_t &soundConfig = getCore()->getCCore()->sound_conf;
@@ -5465,7 +5481,9 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 		const list<Content> &additionnalContents = d->op->getRemoteBodies();
 		for (auto &content : additionnalContents) {
 			if (!params) params = new MediaSessionParams();
-			if (content.getContentType() != ContentType::Sdp) params->addCustomContent(Content::create(content));
+			// Always add the sdp content if media is disabled
+			if (d->op->getSal()->mediaDisabled() || content.getContentType() != ContentType::Sdp)
+				params->addCustomContent(Content::create(content));
 		}
 		d->setRemoteParams(params);
 		if (!params) {
@@ -5580,7 +5598,9 @@ void MediaSession::setParams(const MediaSessionParams *msp) {
 			d->setParams(msp ? new MediaSessionParams(*msp) : nullptr);
 			// Update the local media description.
 			d->makeLocalMediaDescription(
-			    (d->state == CallSession::State::OutgoingInit ? !getCore()->getCCore()->sip_conf.sdp_200_ack : false),
+			    (d->state == CallSession::State::OutgoingInit
+			         ? !(getCore()->getCCore()->sip_conf.sdp_200_ack || getCore()->getCCore()->sal->mediaDisabled())
+			         : false),
 			    isCapabilityNegotiationEnabled(), false);
 			break;
 		default:

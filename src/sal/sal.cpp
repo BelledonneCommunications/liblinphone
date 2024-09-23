@@ -947,6 +947,14 @@ void Sal::setRefreshWindow(const int min_value, const int max_value) {
 	}
 }
 
+void Sal::disableMedia(bool enable) {
+	mDisableMedia = enable;
+}
+
+bool Sal::mediaDisabled() const {
+	return mDisableMedia;
+}
+
 //***********************************
 // Global functions implementation
 //***********************************

@@ -426,6 +426,10 @@ public:
 	createTimer(belle_sip_source_func_t func, void *data, unsigned int timeoutValueMs, const std::string &timerName);
 	void cancelTimer(belle_sip_source_t *timer);
 
+	// Media
+	void disableMedia(bool enable);
+	bool mediaDisabled() const;
+
 	// utils
 	static int findCryptoIndexFromAlgo(const std::vector<SalSrtpCryptoAlgo> &crypto, const MSCryptoSuite suite);
 	OfferAnswerEngine &getOfferAnswerEngine() {
@@ -502,6 +506,7 @@ private:
 	bool mEnableTestFeatures = false;
 	bool mNoInitialRoute = false;
 	bool mEnableSipUpdate = true;
+	bool mDisableMedia = false;
 	SalOpSDPHandling mDefaultSdpHandling = SalOpSDPNormal;
 	bool mPendingTransactionChecking = true; // For testing purposes
 	void *mSslConfig = nullptr;

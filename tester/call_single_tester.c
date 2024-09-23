@@ -7847,6 +7847,232 @@ static void call_with_custom_m_line(void) {
 	linphone_core_manager_destroy(laure);
 }
 
+void call_with_core_without_media(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc_without_media");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	// Reduce the nortp timeout to end the test faster
+	linphone_core_set_nortp_timeout(pauline->lc, 3);
+
+	disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
+
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneContent *content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "sdp");
+	linphone_content_set_utf8_text(
+	    content,
+	    "v=0\r\n"
+	    "o=- 6646531434124232327 2 IN IP4 127.0.0.1\r\n"
+	    "s=-\r\n"
+	    "t=0 0\r\n"
+	    "a=group:BUNDLE 0 1\r\n"
+	    "a=extmap-allow-mixed\r\n"
+	    "a=msid-semantic: WMS dee12576-f30b-4893-83d3-eac27ee10d8d\r\n"
+	    "m=audio 9 UDP/TLS/RTP/SAVPF 111 63 9 0 8 13 110 126\r\n"
+	    "c=IN IP4 0.0.0.0\r\n"
+	    "a=rtcp:9 IN IP4 0.0.0.0\r\n"
+	    "a=ice-ufrag:eQJT\r\n"
+	    "a=ice-pwd:WIC+snfuYSyendsry0+rQEO1\r\n"
+	    "a=ice-options:trickle\r\n"
+	    "a=fingerprint:sha-256 "
+	    "EE:D5:B7:7C:2B:07:E6:C3:D8:76:A8:6F:E3:CF:E0:E6:AB:42:29:DE:AD:A1:8E:55:11:E7:81:4B:4C:0D:F1:46\r\n"
+	    "a=setup:actpass\r\n"
+	    "a=mid:0\r\n"
+	    "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\n"
+	    "a=extmap:2 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n"
+	    "a=extmap:3 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\r\n"
+	    "a=extmap:4 urn:ietf:params:rtp-hdrext:sdes:mid\r\n"
+	    "a=sendrecv\r\n"
+	    "a=msid:dee12576-f30b-4893-83d3-eac27ee10d8d d4ad49b2-f4ab-48b9-8aa8-621361146f2c\r\n"
+	    "a=rtcp-mux\r\n"
+	    "a=rtcp-rsize\r\n"
+	    "a=rtpmap:111 opus/48000/2\r\n"
+	    "a=rtcp-fb:111 transport-cc\r\n"
+	    "a=fmtp:111 minptime=10;useinbandfec=1\r\n"
+	    "a=rtpmap:63 red/48000/2\r\n"
+	    "a=fmtp:63 111/111\r\n"
+	    "a=rtpmap:9 G722/8000\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:13 CN/8000\r\n"
+	    "a=rtpmap:110 telephone-event/48000\r\n"
+	    "a=rtpmap:126 telephone-event/8000\r\n"
+	    "a=ssrc:2557628080 cname:mPaUVqJCMZayFJgz\r\n"
+	    "a=ssrc:2557628080 msid:dee12576-f30b-4893-83d3-eac27ee10d8d d4ad49b2-f4ab-48b9-8aa8-621361146f2c\r\n"
+	    "m=video 9 UDP/TLS/RTP/SAVPF 96 97 102 103 104 105 106 107 108 109 127 125 39 40 45 46 98 99 100 101 "
+	    "112 113 116 117 118\r\n"
+	    "c=IN IP4 0.0.0.0\r\n"
+	    "a=rtcp:9 IN IP4 0.0.0.0\r\n"
+	    "a=ice-ufrag:eQJT\r\n"
+	    "a=ice-pwd:WIC+snfuYSyendsry0+rQEO1\r\n"
+	    "a=ice-options:trickle\r\n"
+	    "a=fingerprint:sha-256 "
+	    "EE:D5:B7:7C:2B:07:E6:C3:D8:76:A8:6F:E3:CF:E0:E6:AB:42:29:DE:AD:A1:8E:55:11:E7:81:4B:4C:0D:F1:46\r\n"
+	    "a=setup:actpass\r\n"
+	    "a=mid:1\r\n"
+	    "a=extmap:14 urn:ietf:params:rtp-hdrext:toffset\r\n"
+	    "a=extmap:2 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n"
+	    "a=extmap:13 urn:3gpp:video-orientation\r\n"
+	    "a=extmap:3 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\r\n"
+	    "a=extmap:5 http://www.webrtc.org/experiments/rtp-hdrext/playout-delay\r\n"
+	    "a=extmap:6 http://www.webrtc.org/experiments/rtp-hdrext/video-content-type\r\n"
+	    "a=extmap:7 http://www.webrtc.org/experiments/rtp-hdrext/video-timing\r\n"
+	    "a=extmap:8 http://www.webrtc.org/experiments/rtp-hdrext/color-space\r\n"
+	    "a=extmap:4 urn:ietf:params:rtp-hdrext:sdes:mid\r\n"
+	    "a=extmap:10 urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id\r\n"
+	    "a=extmap:11 urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id\r\n"
+	    "a=sendrecv\r\n"
+	    "a=msid:dee12576-f30b-4893-83d3-eac27ee10d8d e879805a-7d32-4872-9781-3b0a5ae539ff\r\n"
+	    "a=rtcp-mux\r\n"
+	    "a=rtcp-rsize\r\n"
+	    "a=rtpmap:96 VP8/90000\r\n"
+	    "a=rtcp-fb:96 goog-remb\r\n"
+	    "a=rtcp-fb:96 transport-cc\r\n"
+	    "a=rtcp-fb:96 ccm fir\r\n"
+	    "a=rtcp-fb:96 nack\r\n"
+	    "a=rtcp-fb:96 nack pli\r\n"
+	    "a=rtpmap:97 rtx/90000\r\n"
+	    "a=fmtp:97 apt=96\r\n"
+	    "a=rtpmap:102 H264/90000\r\n"
+	    "a=rtcp-fb:102 goog-remb\r\n"
+	    "a=rtcp-fb:102 transport-cc\r\n"
+	    "a=rtcp-fb:102 ccm fir\r\n"
+	    "a=rtcp-fb:102 nack\r\n"
+	    "a=rtcp-fb:102 nack pli\r\n"
+	    "a=fmtp:102 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f\r\n"
+	    "a=rtpmap:103 rtx/90000\r\n"
+	    "a=fmtp:103 apt=102\r\n"
+	    "a=rtpmap:104 H264/90000\r\n"
+	    "a=rtcp-fb:104 goog-remb\r\n"
+	    "a=rtcp-fb:104 transport-cc\r\n"
+	    "a=rtcp-fb:104 ccm fir\r\n"
+	    "a=rtcp-fb:104 nack\r\n"
+	    "a=rtcp-fb:104 nack pli\r\n"
+	    "a=fmtp:104 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42001f\r\n"
+	    "a=rtpmap:105 rtx/90000\r\n"
+	    "a=fmtp:105 apt=104\r\n"
+	    "a=rtpmap:106 H264/90000\r\n"
+	    "a=rtcp-fb:106 goog-remb\r\n"
+	    "a=rtcp-fb:106 transport-cc\r\n"
+	    "a=rtcp-fb:106 ccm fir\r\n"
+	    "a=rtcp-fb:106 nack\r\n"
+	    "a=rtcp-fb:106 nack pli\r\n"
+	    "a=fmtp:106 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\n"
+	    "a=rtpmap:107 rtx/90000\r\n"
+	    "a=fmtp:107 apt=106\r\n"
+	    "a=rtpmap:108 H264/90000\r\n"
+	    "a=rtcp-fb:108 goog-remb\r\n"
+	    "a=rtcp-fb:108 transport-cc\r\n"
+	    "a=rtcp-fb:108 ccm fir\r\n"
+	    "a=rtcp-fb:108 nack\r\n"
+	    "a=rtcp-fb:108 nack pli\r\n"
+	    "a=fmtp:108 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\r\n"
+	    "a=rtpmap:109 rtx/90000\r\n"
+	    "a=fmtp:109 apt=108\r\n"
+	    "a=rtpmap:127 H264/90000\r\n"
+	    "a=rtcp-fb:127 goog-remb\r\n"
+	    "a=rtcp-fb:127 transport-cc\r\n"
+	    "a=rtcp-fb:127 ccm fir\r\n"
+	    "a=rtcp-fb:127 nack\r\n"
+	    "a=rtcp-fb:127 nack pli\r\n"
+	    "a=fmtp:127 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=4d001f\r\n"
+	    "a=rtpmap:125 rtx/90000\r\n"
+	    "a=fmtp:125 apt=127\r\n"
+	    "a=rtpmap:39 H264/90000\r\n"
+	    "a=rtcp-fb:39 goog-remb\r\n"
+	    "a=rtcp-fb:39 transport-cc\r\n"
+	    "a=rtcp-fb:39 ccm fir\r\n"
+	    "a=rtcp-fb:39 nack\r\n"
+	    "a=rtcp-fb:39 nack pli\r\n"
+	    "a=fmtp:39 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=4d001f\r\n"
+	    "a=rtpmap:40 rtx/90000\r\n"
+	    "a=fmtp:40 apt=39\r\n"
+	    "a=rtpmap:45 AV1/90000\r\n"
+	    "a=rtcp-fb:45 goog-remb\r\n"
+	    "a=rtcp-fb:45 transport-cc\r\n"
+	    "a=rtcp-fb:45 ccm fir\r\n"
+	    "a=rtcp-fb:45 nack\r\n"
+	    "a=rtcp-fb:45 nack pli\r\n"
+	    "a=fmtp:45 level-idx=5;profile=0;tier=0\r\n"
+	    "a=rtpmap:46 rtx/90000\r\n"
+	    "a=fmtp:46 apt=45\r\n"
+	    "a=rtpmap:98 VP9/90000\r\n"
+	    "a=rtcp-fb:98 goog-remb\r\n"
+	    "a=rtcp-fb:98 transport-cc\r\n"
+	    "a=rtcp-fb:98 ccm fir\r\n"
+	    "a=rtcp-fb:98 nack\r\n"
+	    "a=rtcp-fb:98 nack pli\r\n"
+	    "a=fmtp:98 profile-id=0\r\n"
+	    "a=rtpmap:99 rtx/90000\r\n"
+	    "a=fmtp:99 apt=98\r\n"
+	    "a=rtpmap:100 VP9/90000\r\n"
+	    "a=rtcp-fb:100 goog-remb\r\n"
+	    "a=rtcp-fb:100 transport-cc\r\n"
+	    "a=rtcp-fb:100 ccm fir\r\n"
+	    "a=rtcp-fb:100 nack\r\n"
+	    "a=rtcp-fb:100 nack pli\r\n"
+	    "a=fmtp:100 profile-id=2\r\n"
+	    "a=rtpmap:101 rtx/90000\r\n"
+	    "a=fmtp:101 apt=100\r\n"
+	    "a=rtpmap:112 H264/90000\r\n"
+	    "a=rtcp-fb:112 goog-remb\r\n"
+	    "a=rtcp-fb:112 transport-cc\r\n"
+	    "a=rtcp-fb:112 ccm fir\r\n"
+	    "a=rtcp-fb:112 nack\r\n"
+	    "a=rtcp-fb:112 nack pli\r\n"
+	    "a=fmtp:112 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=64001f\r\n"
+	    "a=rtpmap:113 rtx/90000\r\n"
+	    "a=fmtp:113 apt=112\r\n"
+	    "a=rtpmap:116 red/90000\r\n"
+	    "a=rtpmap:117 rtx/90000\r\n"
+	    "a=fmtp:117 apt=116\r\n"
+	    "a=rtpmap:118 ulpfec/90000\r\n"
+	    "a=ssrc-group:FID 489109307 1592583860\r\n"
+	    "a=ssrc:489109307 cname:mPaUVqJCMZayFJgz\r\n"
+	    "a=ssrc:489109307 msid:dee12576-f30b-4893-83d3-eac27ee10d8d e879805a-7d32-4872-9781-3b0a5ae539ff\r\n"
+	    "a=ssrc:1592583860 cname:mPaUVqJCMZayFJgz\r\n"
+	    "a=ssrc:1592583860 msid:dee12576-f30b-4893-83d3-eac27ee10d8d e879805a-7d32-4872-9781-3b0a5ae539ff\r\n");
+
+	BC_ASSERT_PTR_NOT_NULL(
+	    linphone_core_invite_address_with_params_2(marie->lc, pauline->identity, params, "Coucou", content));
+	linphone_content_unref(content);
+	linphone_call_params_unref(params);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1,
+	                              liblinphone_tester_sip_timeout));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+
+	linphone_call_accept(pauline_call);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1,
+	                              liblinphone_tester_sip_timeout));
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+
+	// Nortp timeout result in a LinphoneReasonIOError
+	BC_ASSERT_EQUAL(linphone_call_get_reason(pauline_call), LinphoneReasonIOError, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static test_t call_tests[] = {
     TEST_NO_TAG("Simple double call", simple_double_call),
     TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -7998,7 +8224,8 @@ static test_t call_not_established_tests[] = {
     TEST_NO_TAG("Call cancelled with reason", cancel_call_with_error),
     TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
     TEST_NO_TAG("Call with malformed from", call_with_maformed_from),
-    TEST_NO_TAG("Call rejected with 403", call_rejected_with_403)};
+    TEST_NO_TAG("Call rejected with 403", call_rejected_with_403),
+    TEST_NO_TAG("Call with core without media", call_with_core_without_media)};
 
 test_suite_t call_test_suite = {"Single Call",
                                 NULL,

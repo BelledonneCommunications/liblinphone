@@ -163,15 +163,18 @@ void SalCallOp::fillInvite(belle_sip_request_t *invite) {
 		sdpContent.setBody(std::move(buffer));
 	} else mSdpOffering = false;
 
-	/* The SDP content must be replaced by the one generated from mLocalMedia */
-	auto it = std::find_if(mLocalBodies.begin(), mLocalBodies.end(),
-	                       [](const Content &content) { return (content.getContentType() == ContentType::Sdp); });
-	if (it != mLocalBodies.end()) {
-		if (sdpContent.isValid()) *it = std::move(sdpContent); // replace with the new SDP
-		else mLocalBodies.erase(it);
-	} else {
-		if (sdpContent.isValid()) mLocalBodies.emplace_back(sdpContent);
+	if (!getSal()->mediaDisabled()) {
+		/* The SDP content must be replaced by the one generated from mLocalMedia */
+		auto it = std::find_if(mLocalBodies.begin(), mLocalBodies.end(),
+		                       [](const Content &content) { return (content.getContentType() == ContentType::Sdp); });
+		if (it != mLocalBodies.end()) {
+			if (sdpContent.isValid()) *it = std::move(sdpContent); // replace with the new SDP
+			else mLocalBodies.erase(it);
+		} else {
+			if (sdpContent.isValid()) mLocalBodies.emplace_back(sdpContent);
+		}
 	}
+
 	if (mLocalBodies.size() > 1) {
 		list<Content *> contents;
 
@@ -335,6 +338,11 @@ void SalCallOp::sdpProcess() {
 
 	// If SDP was invalid
 	if (!mRemoteMedia) return;
+
+	if (getSal()->mediaDisabled()) {
+		lInfo() << "Media is disabled, no result SDP is generated";
+		return;
+	}
 
 	if (mSdpOffering) {
 		mResult = mRoot->mOfferAnswerEngine.initiateOutgoing(mLocalMedia, mRemoteMedia);

@@ -171,6 +171,7 @@ set(RC_FILES
 	rcfiles/marie_rtp_port_range_rc
 	rcfiles/marie_os_defined_rtp_ports_rc
 	rcfiles/marie_rc_rtcp_xr
+	rcfiles/marie_rc_without_media
 	rcfiles/marie_remote_404_rc
 	rcfiles/marie_remote_default_values_rc
 	rcfiles/marie_remote_https_rc

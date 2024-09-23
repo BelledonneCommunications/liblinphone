@@ -1999,6 +1999,10 @@ static void sip_config_read(LinphoneCore *lc) {
 	/*this is to filter out unsupported encryption schemes*/
 	linphone_core_set_media_encryption(lc, linphone_core_get_media_encryption(lc));
 
+	/*disable media by ignoring sdp*/
+	lc->sal->disableMedia(!!linphone_config_get_int(lc->config, "sip", "disable_media", 0));
+	if (lc->sal->mediaDisabled()) ms_message("Media has been disabled");
+
 	/*enable the reconnection to the primary server when it is up again asap*/
 	lc->sal->enableReconnectToPrimaryAsap(!!linphone_config_get_int(lc->config, "sip", "reconnect_to_primary_asap", 0));
 
