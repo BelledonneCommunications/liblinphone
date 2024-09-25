@@ -915,10 +915,6 @@ const std::string &AccountParams::getLimeServerUrl() const {
 }
 
 void AccountParams::setLimeAlgo(const std::string &algo) {
-	std::set<std::string> validAlgo{"", "c25519", "c448", "c25519k512"};
-	if (validAlgo.find(algo) == validAlgo.end()) {
-		lWarning() << "AccountParans::setLimeAlgo invalid input value [" << algo << "]";
-	}
 	mLimeAlgo = algo;
 }
 

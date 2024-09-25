@@ -243,32 +243,14 @@ extern const char *file_transfer_url_digest_auth_any_domain;
 extern const char *file_transfer_url_small_files;
 extern const char *file_transfer_get_proxy;
 extern const char *file_transfer_get_proxy_external_domain;
-extern const char *lime_server_c25519_url;
-extern const char *lime_server_c448_url;
-extern const char *lime_server_c25519k512_url;
-extern const char *lime_server_any_domain_c25519_url;
-extern const char *lime_server_any_domain_c448_url;
-extern const char *lime_server_any_domain_c25519k512_url;
 
-extern const char *lime_server_c25519_tlsauth_opt_url;
-extern const char *lime_server_c448_tlsauth_opt_url;
-extern const char *lime_server_c25519k512_tlsauth_opt_url;
-
-extern const char *lime_server_c25519_tlsauth_req_url;
-extern const char *lime_server_c448_tlsauth_req_url;
-extern const char *lime_server_c25519k512_tlsauth_req_url;
-
-extern const char *lime_server_c25519_dual_auth_url;
-extern const char *lime_server_c448_dual_auth_url;
-extern const char *lime_server_c25519k512_dual_auth_url;
-
-extern const char *lime_server_c25519_external_url;
-extern const char *lime_server_c448_external_url;
-extern const char *lime_server_c25519k512_external_url;
-
-extern const char *lime_server_c25519_external_dual_auth_url;
-extern const char *lime_server_c448_external_dual_auth_url;
-extern const char *lime_server_c25519k512_external_dual_auth_url;
+extern const char *lime_server_url;
+extern const char *lime_server_any_domain_url;
+extern const char *lime_server_tlsauth_opt_url;
+extern const char *lime_server_tlsauth_req_url;
+extern const char *lime_server_dual_auth_url;
+extern const char *lime_server_external_url;
+extern const char *lime_server_external_dual_auth_url;
 
 extern bool_t liblinphone_tester_keep_uuid;
 extern bool_t liblinphone_tester_tls_support_disabled;
@@ -1178,6 +1160,7 @@ extern MSSndCardDesc dummy_capture_test_snd_card_desc;
  * the encryption engine (only if the given url is different than the current one). It will thus parse
  * again the curve setting that is changed BEFORE.
  */
+const char *limeCurveIdInt2String(const int curveId);
 void set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager);
 void legacy_set_lime_server_and_curve(const int curveId,
                                       LinphoneCoreManager *manager); // Set the lime server url in the [lime] section so

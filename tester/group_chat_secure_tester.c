@@ -107,7 +107,7 @@ static void group_chat_lime_x3dh_create_multialgo_users(void) {
 	if (eric_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(eric_account));
 		linphone_account_params_set_lime_algo(params, "c25519");
-		linphone_account_params_set_lime_server_url(params, lime_server_c25519_url);
+		linphone_account_params_set_lime_server_url(params, lime_server_url);
 		linphone_account_set_params(eric_account, params);
 		linphone_account_params_unref(params);
 	}
@@ -118,10 +118,10 @@ static void group_chat_lime_x3dh_create_multialgo_users(void) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(roger_account));
 		if (liblinphone_tester_is_lime_PQ_available()) {
 			linphone_account_params_set_lime_algo(params, "c25519k512");
-			linphone_account_params_set_lime_server_url(params, lime_server_c25519k512_url);
+			linphone_account_params_set_lime_server_url(params, lime_server_url);
 		} else { // when PQ is not available, assign curve 448 to user roger
 			linphone_account_params_set_lime_algo(params, "c448");
-			linphone_account_params_set_lime_server_url(params, lime_server_c448_url);
+			linphone_account_params_set_lime_server_url(params, lime_server_url);
 		}
 		linphone_account_set_params(roger_account, params);
 		linphone_account_params_unref(params);

@@ -229,6 +229,7 @@ static void identity_in_altName_one_DNS_entry(void) {
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, false);
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, false);
+		create_user_sip_client_cert_chain(25519512, tls_mandatory, certProv, cert_path, key_path, false);
 	}
 }
 
@@ -241,6 +242,7 @@ static void identity_in_subject_CN(void) {
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, false, "user_2");
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, false, "user_2");
+		create_user_sip_client_cert_chain(25519512, tls_mandatory, certProv, cert_path, key_path, false, "user_2");
 	}
 }
 
@@ -254,6 +256,7 @@ static void identity_in_altName_multiple_DNS_entry(void) {
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, false);
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, false);
+		create_user_sip_client_cert_chain(25519512, tls_mandatory, certProv, cert_path, key_path, false);
 	}
 }
 
@@ -266,6 +269,7 @@ static void revoked_certificate(void) {
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, true, "user_2");
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, true, "user_2");
+		create_user_sip_client_cert_chain(25519512, tls_mandatory, certProv, cert_path, key_path, true, "user_2");
 	}
 }
 
@@ -279,6 +283,7 @@ static void TLS_mandatory_CN_UserId_mismatch(void) {
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, true);
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, true);
+		create_user_sip_client_cert_chain(25519512, tls_mandatory, certProv, cert_path, key_path, true);
 	}
 }
 
@@ -292,6 +297,7 @@ static void TLS_optional_CN_UserId_mismatch(void) {
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_optional, certProv, cert_path, key_path, true);
 		create_user_sip_client_cert_chain(448, tls_optional, certProv, cert_path, key_path, true);
+		create_user_sip_client_cert_chain(25519512, tls_optional, certProv, cert_path, key_path, true);
 	}
 }
 
@@ -303,6 +309,7 @@ static void TLS_optional_No_certificate(void) {
 	/* just use the config_sip method, each method shall actually just do nothing when given an empty certificate */
 	create_user_sip_client_cert_chain(25519, tls_optional, certProvider::config_sip, empty, empty, false);
 	create_user_sip_client_cert_chain(448, tls_optional, certProvider::config_sip, empty, empty, false);
+	create_user_sip_client_cert_chain(25519512, tls_optional, certProvider::config_sip, empty, empty, false);
 }
 
 /**
@@ -313,13 +320,14 @@ static void TLS_mandatory_No_certificate(void) {
 	/* just use the config_sip method, each method shall actually just do nothing when given an empty certificate */
 	create_user_sip_client_cert_chain(25519, tls_mandatory, certProvider::config_sip, empty, empty, true);
 	create_user_sip_client_cert_chain(448, tls_mandatory, certProvider::config_sip, empty, empty, true);
+	create_user_sip_client_cert_chain(25519512, tls_mandatory, certProvider::config_sip, empty, empty, true);
 }
 
 static void local_set_lime_server_and_curve(LinphoneCoreManager *manager, const char *curve, const char *server) {
-	linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", curve);
 	LinphoneAccount *account = linphone_core_get_default_account(manager->lc);
 	const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 	LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+	linphone_account_params_set_lime_algo(new_account_params, curve);
 	linphone_account_params_set_lime_server_url(new_account_params, server);
 	linphone_account_set_params(account, new_account_params);
 	linphone_account_params_unref(new_account_params);
@@ -338,13 +346,8 @@ static void Digest_Auth_multidomains_curve(const int curveId) {
 	coresManagerList = bctbx_list_append(coresManagerList, libtester);
 
 	// We use a specific server here, so do not use the generic set_lime_server_and_curve function
-	if (curveId == 448) {
-		local_set_lime_server_and_curve(marie, "c448", lime_server_any_domain_c448_url);
-		local_set_lime_server_and_curve(libtester, "c448", lime_server_any_domain_c448_url);
-	} else {
-		local_set_lime_server_and_curve(marie, "c25519", lime_server_any_domain_c25519_url);
-		local_set_lime_server_and_curve(libtester, "c25519", lime_server_any_domain_c25519_url);
-	}
+	local_set_lime_server_and_curve(marie, limeCurveIdInt2String(curveId), lime_server_any_domain_url);
+	local_set_lime_server_and_curve(libtester, limeCurveIdInt2String(curveId), lime_server_any_domain_url);
 
 	stats initialMarieStats = marie->stat;
 	stats initialLibtesterStats = libtester->stat;
@@ -367,6 +370,7 @@ static void Digest_Auth_multidomains_curve(const int curveId) {
 static void Digest_Auth_multidomains(void) {
 	Digest_Auth_multidomains_curve(25519);
 	Digest_Auth_multidomains_curve(448);
+	Digest_Auth_multidomains_curve(25519512);
 }
 
 static void Digest_Auth_multiservers_curve(const int curveId) {
@@ -374,21 +378,12 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, manager);
 
-	if (curveId == 448) {
-		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c448");
-	} else {
-		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519");
-	}
-
 	LinphoneAccount *marie_account = linphone_core_get_account_by_idkey(manager->lc, "eric");
 	BC_ASSERT_PTR_NOT_NULL(marie_account);
 	if (marie_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(marie_account));
-		if (curveId == 448) {
-			linphone_account_params_set_lime_server_url(params, lime_server_c448_url);
-		} else {
-			linphone_account_params_set_lime_server_url(params, lime_server_c25519_url);
-		}
+		linphone_account_params_set_lime_algo(params, limeCurveIdInt2String(curveId));
+		linphone_account_params_set_lime_server_url(params, lime_server_url);
 		linphone_account_set_params(marie_account, params);
 		linphone_account_params_unref(params);
 	}
@@ -397,11 +392,8 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_account);
 	if (pauline_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(pauline_account));
-		if (curveId == 448) {
-			linphone_account_params_set_lime_server_url(params, lime_server_any_domain_c448_url);
-		} else {
-			linphone_account_params_set_lime_server_url(params, lime_server_any_domain_c25519_url);
-		}
+		linphone_account_params_set_lime_algo(params, limeCurveIdInt2String(curveId));
+		linphone_account_params_set_lime_server_url(params, lime_server_any_domain_url);
 		linphone_account_set_params(pauline_account, params);
 		linphone_account_params_unref(params);
 	}
@@ -423,9 +415,10 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 static void Digest_Auth_multiservers(void) {
 	Digest_Auth_multiservers_curve(25519);
 	Digest_Auth_multiservers_curve(448);
+	Digest_Auth_multiservers_curve(25519512);
 }
 
-const char *wrong_lime_server = "https://lime.wildcard8.linphone.org:8443/lime-server-%s/lime-server.php";
+const char *wrong_lime_server = "https://lime.wildcard8.linphone.org:8443/lime-server/lime-server.php";
 
 static void invalid_lime_server_in_account_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
@@ -433,17 +426,12 @@ static void invalid_lime_server_in_account_curve(const int curveId) {
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 
-	const char *curve = (curveId == 448) ? "c448" : "c25519";
-	linphone_config_set_string(linphone_core_get_config(marie->lc), "lime", "curve", curve);
-
-	char lime_server_url[80];
-	sprintf(lime_server_url, wrong_lime_server, curve);
-
 	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_account);
 	if (marie_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(marie_account));
-		linphone_account_params_set_lime_server_url(params, lime_server_url);
+		linphone_account_params_set_lime_algo(params, limeCurveIdInt2String(curveId));
+		linphone_account_params_set_lime_server_url(params, wrong_lime_server);
 		linphone_account_set_params(marie_account, params);
 		linphone_account_params_unref(params);
 	}
@@ -467,6 +455,7 @@ static void invalid_lime_server_in_account_curve(const int curveId) {
 static void invalid_lime_server_in_account(void) {
 	invalid_lime_server_in_account_curve(25519);
 	invalid_lime_server_in_account_curve(448);
+	invalid_lime_server_in_account_curve(25519512);
 }
 
 test_t lime_server_auth_tests[] = {
