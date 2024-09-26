@@ -358,7 +358,6 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 			const auto &domain = params->getDomain();
 			if (!domain.empty()) {
 				string strTmp = d->mFilter;
-				setlocale(LC_ALL, "");
 				bool apply_prefix = params->getUseInternationalPrefixForCallsAndChats();
 				LinphoneAddress *lastResult =
 				    linphone_core_interpret_url_2(this->getCore()->getCCore(), strTmp.c_str(), apply_prefix);
@@ -883,7 +882,6 @@ MagicSearch::searchInAddress(const LinphoneAddress *lAddress, const string &filt
 
 unsigned int MagicSearch::getWeight(const string &stringWords, const string &filter) const {
 	locale loc;
-	setlocale(LC_ALL, "");
 	string filterLC = filter;
 	string stringWordsLC = stringWords;
 	size_t weight = string::npos;
