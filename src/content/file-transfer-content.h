@@ -52,9 +52,6 @@ public:
 	void setFileName(const std::string &name); // App Locale
 	const std::string &getFileName() const;
 
-	void setFileNameSys(const std::string &name); // System Locale
-	std::string getFileNameSys() const;
-
 	void setFileNameUtf8(const std::string &name); // UTF8
 	std::string getFileNameUtf8() const;
 
@@ -63,9 +60,6 @@ public:
 
 	void setFilePath(const std::string &path) override; // App Locale
 	const std::string &getFilePath() const override;
-
-	void setFilePathSys(const std::string &path); // System Locale
-	std::string getFilePathSys() const;
 
 	void setFilePathUtf8(const std::string &path); // UTF8
 	std::string getFilePathUtf8() const;

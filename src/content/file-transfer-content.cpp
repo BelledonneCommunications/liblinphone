@@ -110,14 +110,6 @@ const string &FileTransferContent::getFileName() const {
 	return mFileName;
 }
 
-void FileTransferContent::setFileNameSys(const string &name) {
-	setFileName(Utils::convert(name, "", bctbx_get_default_encoding()));
-}
-
-string FileTransferContent::getFileNameSys() const {
-	return Utils::convert(getFileName(), bctbx_get_default_encoding(), "");
-}
-
 void FileTransferContent::setFileNameUtf8(const string &name) {
 	setFileName(Utils::utf8ToLocale(name));
 }
@@ -140,14 +132,6 @@ void FileTransferContent::setFilePath(const string &path) {
 
 const string &FileTransferContent::getFilePath() const {
 	return mFilePath;
-}
-
-void FileTransferContent::setFilePathSys(const string &path) {
-	setFilePath(Utils::convert(path, "", bctbx_get_default_encoding()));
-}
-
-string FileTransferContent::getFilePathSys() const {
-	return Utils::convert(getFilePath(), bctbx_get_default_encoding(), "");
 }
 
 void FileTransferContent::setFilePathUtf8(const string &path) {
@@ -223,11 +207,11 @@ bool FileTransferContent::isFileTransfer() const {
 }
 
 bool FileTransferContent::isEncrypted() const {
-	return isFileEncrypted(getFilePathSys());
+	return isFileEncrypted(getFilePath());
 }
 
 const string FileTransferContent::exportPlainFile() const {
-	return Utils::convert(exportPlainFileFromEncryptedFile(getFilePathSys()), "", bctbx_get_default_encoding());
+	return exportPlainFileFromEncryptedFile(getFilePath());
 }
 
 LINPHONE_END_NAMESPACE

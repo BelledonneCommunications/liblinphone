@@ -281,7 +281,7 @@ FileTransferChatMessageModifier::prepare_upload_body_handler(shared_ptr<ChatMess
 		// No need to add again the callback for progression, otherwise it will be called twice
 
 		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(
-		    currentFileContentToTransfer->getFilePathSys().c_str(), nullptr, this, BELLE_SIP_DIRECTION_SEND);
+		    currentFileContentToTransfer->getFilePath().c_str(), nullptr, this, BELLE_SIP_DIRECTION_SEND);
 		belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)first_part_bh, body_handler);
 		// Ensure the file size has been set to the correct value
 		currentFileTransferContent->setFileSize(
@@ -694,7 +694,7 @@ static void _chat_message_on_recv_end(belle_sip_user_body_handler_t *bh, void *d
 }
 
 static void renameFileAfterAutoDownload(shared_ptr<Core> core, shared_ptr<FileContent> fileContent) {
-	string file = fileContent->getFileNameSys();
+	string file = fileContent->getFileName();
 	size_t foundDot = file.find_last_of(".");
 	string fileName = file;
 	string fileExt = "";
@@ -716,11 +716,11 @@ static void renameFileAfterAutoDownload(shared_ptr<Core> core, shared_ptr<FileCo
 		filepath = sstr.str();
 		prefix += 1;
 	}
-	lInfo() << "Renaming downloaded file from [" << fileContent->getFilePathSys() << "] to [" << filepath << "]";
-	if (std::rename(fileContent->getFilePathSys().c_str(), filepath.c_str())) {
+	lInfo() << "Renaming downloaded file from [" << fileContent->getFilePath() << "] to [" << filepath << "]";
+	if (std::rename(fileContent->getFilePath().c_str(), filepath.c_str())) {
 		lError() << "Error while renaming file! [" << strerror(errno) << "]";
 	} else {
-		fileContent->setFilePathSys(filepath.c_str());
+		fileContent->setFilePath(filepath.c_str());
 	}
 }
 
@@ -873,8 +873,8 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 			                                    _chat_message_on_recv_body, nullptr, _chat_message_on_recv_end, this);
 
 			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(
-			    currentFileContentToTransfer->getFilePathSys().c_str(), 16, _chat_message_file_transfer_on_progress,
-			    this, BELLE_SIP_DIRECTION_RECV);
+			    currentFileContentToTransfer->getFilePath().c_str(), 16, _chat_message_file_transfer_on_progress, this,
+			    BELLE_SIP_DIRECTION_RECV);
 			if (belle_sip_body_handler_get_size((belle_sip_body_handler_t *)body_handler) == 0) {
 				// If the size of the body has not been initialized from the file stat, use the one from the
 				// file_transfer_information.
@@ -1043,7 +1043,7 @@ void FileTransferChatMessageModifier::cancelFileTransfer() {
 
 	if (!belle_http_request_is_cancelled(httpRequest)) {
 		if (currentFileContentToTransfer) {
-			string filePath = currentFileContentToTransfer->getFilePathSys();
+			string filePath = currentFileContentToTransfer->getFilePath();
 			shared_ptr<ChatMessage> message = chatMessage.lock();
 			if (!filePath.empty()) {
 				lInfo() << "Canceling file transfer using file: " << filePath;
