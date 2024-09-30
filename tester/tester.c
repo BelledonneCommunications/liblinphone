@@ -5033,6 +5033,12 @@ static void linphone_notify_received_internal(LinphoneCore *lc,
 	else mgr->stat.number_of_NotifyReceived++;
 }
 
+void on_player_eof(LinphonePlayer *player) {
+	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
+	LinphoneCoreManager *marie = (LinphoneCoreManager *)linphone_player_cbs_get_user_data(cbs);
+	marie->stat.number_of_player_eof++;
+}
+
 LinphoneConferenceServer *linphone_conference_server_new(const char *rc_file, bool_t do_registration) {
 	LinphoneConferenceServer *conf_srv = (LinphoneConferenceServer *)ms_new0(LinphoneConferenceServer, 1);
 	LinphoneCoreManager *lm = (LinphoneCoreManager *)conf_srv;

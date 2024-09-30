@@ -395,7 +395,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 	if (basicChangesHandled) {
 		if (getState() == Running) {
-
 			bool muted = mMuted;
 			MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
 			if (muted && !mMuted) {

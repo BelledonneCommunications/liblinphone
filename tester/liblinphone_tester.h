@@ -1123,6 +1123,7 @@ void enable_stun_in_account(LinphoneCoreManager *mgr,
                             const bool_t enable_stun,
                             const bool_t enable_ice);
 void enable_stun_in_core(LinphoneCoreManager *mgr, const bool_t enable_stun, const bool_t enable_ice);
+void on_player_eof(LinphonePlayer *player);
 void linphone_conf_event_notify(LinphoneEvent *lev);
 void _check_friend_result_list(
     LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char *uri, const char *phone);

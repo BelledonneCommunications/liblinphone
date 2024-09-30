@@ -4006,12 +4006,6 @@ static void call_with_privacy2(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void on_eof(LinphonePlayer *player) {
-	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
-	LinphoneCoreManager *marie = (LinphoneCoreManager *)linphone_player_cbs_get_user_data(cbs);
-	marie->stat.number_of_player_eof++;
-}
-
 static void call_with_file_player(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
@@ -4052,7 +4046,7 @@ static void call_with_file_player(void) {
 		BC_ASSERT_PTR_NOT_NULL(player);
 		if (player) {
 			cbs = linphone_factory_create_player_cbs(linphone_factory_get());
-			linphone_player_cbs_set_eof_reached(cbs, on_eof);
+			linphone_player_cbs_set_eof_reached(cbs, on_player_eof);
 			linphone_player_cbs_set_user_data(cbs, marie);
 			linphone_player_add_callbacks(player, cbs);
 			BC_ASSERT_EQUAL(linphone_player_open(player, hellopath), 0, int, "%d");
@@ -4125,7 +4119,7 @@ static void call_with_mkv_file_player(void) {
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if (player) {
 		cbs = linphone_factory_create_player_cbs(linphone_factory_get());
-		linphone_player_cbs_set_eof_reached(cbs, on_eof);
+		linphone_player_cbs_set_eof_reached(cbs, on_player_eof);
 		linphone_player_cbs_set_user_data(cbs, marie);
 		linphone_player_add_callbacks(player, cbs);
 		int res = linphone_player_open(player, hellomkv);
@@ -6019,7 +6013,7 @@ static void call_with_rtp_io_mode(void) {
 		BC_ASSERT_PTR_NOT_NULL(player);
 		if (player) {
 			cbs = linphone_factory_create_player_cbs(linphone_factory_get());
-			linphone_player_cbs_set_eof_reached(cbs, on_eof);
+			linphone_player_cbs_set_eof_reached(cbs, on_player_eof);
 			linphone_player_cbs_set_user_data(cbs, marie);
 			linphone_player_add_callbacks(player, cbs);
 			BC_ASSERT_EQUAL(linphone_player_open(player, hellopath), 0, int, "%d");
@@ -6330,7 +6324,7 @@ static void custom_rtp_modifier(bool_t pauseResumeTest, bool_t recordTest) {
 		if (player) {
 			// This will ask pauline to play the file
 			player_cbs = linphone_factory_create_player_cbs(linphone_factory_get());
-			linphone_player_cbs_set_eof_reached(player_cbs, on_eof);
+			linphone_player_cbs_set_eof_reached(player_cbs, on_player_eof);
 			linphone_player_cbs_set_user_data(player_cbs, pauline);
 			linphone_player_add_callbacks(player, player_cbs);
 			BC_ASSERT_EQUAL(linphone_player_open(player, hellopath), 0, int, "%d");

@@ -1714,7 +1714,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 	if (canAddParticipant) {
 		auto session = call->getMediaSession();
 		const auto &remoteContactAddress = session->getRemoteContactAddress();
-		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
+		const auto &state = call->getState();
 
 		auto participantDevice = (remoteContactAddress && remoteContactAddress->isValid())
 		                             ? findParticipantDevice(session->getRemoteAddress(), remoteContactAddress)
@@ -1757,14 +1757,16 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 
 		// Add participant to the conference participant list
 		switch (state) {
-			case LinphoneCallOutgoingInit:
-			case LinphoneCallOutgoingProgress:
-			case LinphoneCallOutgoingRinging:
-			case LinphoneCallIncomingReceived:
-			case LinphoneCallPausing:
-			case LinphoneCallPaused:
-			case LinphoneCallResuming:
-			case LinphoneCallStreamsRunning: {
+			case CallSession::State::OutgoingInit:
+			case CallSession::State::OutgoingProgress:
+			case CallSession::State::OutgoingRinging:
+			case CallSession::State::OutgoingEarlyMedia:
+			case CallSession::State::IncomingReceived:
+			case CallSession::State::IncomingEarlyMedia:
+			case CallSession::State::Pausing:
+			case CallSession::State::Paused:
+			case CallSession::State::Resuming:
+			case CallSession::State::StreamsRunning: {
 				if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 					L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 				mMixerSession->joinStreamsGroup(session->getStreamsGroup());
@@ -1830,24 +1832,24 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 		// Update call
 		auto device = findParticipantDevice(session);
 		switch (state) {
-			case LinphoneCallPausing:
+			case CallSession::State::Pausing:
 				// Call cannot be resumed immediately, hence delay it until next state change
 				session->delayResume();
 				break;
-			case LinphoneCallOutgoingInit:
-			case LinphoneCallOutgoingProgress:
-			case LinphoneCallOutgoingRinging:
-			case LinphoneCallIncomingReceived:
+			case CallSession::State::OutgoingInit:
+			case CallSession::State::OutgoingProgress:
+			case CallSession::State::OutgoingRinging:
+			case CallSession::State::IncomingReceived:
 				break;
-			case LinphoneCallPaused:
+			case CallSession::State::Paused:
 				// Conference resumes call that previously paused in order to add the participant
 				getCore()->doLater([call] { call->resume(); });
 				break;
-			case LinphoneCallStreamsRunning:
+			case CallSession::State::StreamsRunning:
 				// Calling enter here because update will lock sound resources
 				enter();
 				BCTBX_NO_BREAK; /* Intentional no break */
-			case LinphoneCallResuming: {
+			case CallSession::State::Resuming: {
 				if (contactAddress && contactAddress->isValid() && !contactAddress->hasParam("isfocus")) {
 					lInfo() << "Call " << call << " (local address " << *call->getLocalAddress() << " remote address "
 					        << (remoteAddress ? remoteAddress->toString() : "Unknown") << " because contact address "
@@ -2901,6 +2903,12 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					enter();
 				}
 				break;
+			case CallSession::State::IncomingEarlyMedia:
+			case CallSession::State::OutgoingEarlyMedia:
+				if (!mConfParams->isHidden()) {
+					break;
+				}
+				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::StreamsRunning: {
 				auto op = session->getPrivate()->getOp();
 				auto cppCall = getCore()->getCallByCallId(op->getCallId());
@@ -2909,7 +2917,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					const auto &participant = findParticipant(remoteAddress);
 					auto remoteContactAddress = session->getRemoteContactAddress();
 					if (participant) {
-						if (device) {
+						if (device && remoteContactAddress) {
 							const auto deviceAddr = device->getAddress();
 							const std::shared_ptr<Address> newDeviceAddress = remoteContactAddress;
 
@@ -2919,36 +2927,38 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 							bool hasCallContactChanged =
 							    (deviceAddr->toStringOrdered() != newDeviceAddress->toStringOrdered());
 							if (hasCallContactChanged) {
-								// The remote contact address of the device changed during the call. This may be caused
-								// by a call that started before the registration was completed
+								// The remote contact address of the device changed during the call. This may be
+								// caused by a call that started before the registration was completed
 								lInfo() << "Updating address of participant device " << device << " with session "
 								        << device->getSession() << " from " << *deviceAddr << " to "
 								        << *newDeviceAddress;
 								auto otherDevice = participant->findDevice(newDeviceAddress);
-								// If a device with the same address has been found, then remove it from the participant
-								// list and copy subscription event. Otherwise, notify that it has been added
+								// If a device with the same address has been found, then remove it from the
+								// participant list and copy subscription event. Otherwise, notify that it has been
+								// added
 								if (otherDevice && (otherDevice != device)) {
 									time_t creationTime = time(nullptr);
 									device->setTimeOfDisconnection(creationTime);
 									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Booted);
 									const auto reason("Reason: SIP;text=address changed");
 									device->setDisconnectionReason(reason);
-									// As the device changed address, notify that the current device has been removed
+									// As the device changed address, notify that the current device has been
+									// removed
 									notifyParticipantDeviceRemoved(creationTime, false, participant, device);
 
 									if (!device->getConferenceSubscribeEvent() &&
 									    otherDevice->getConferenceSubscribeEvent()) {
 										// Move subscription event pointer to device.
-										// This is required because if the call starts before the registration process,
-										// the device address may have an unresolved address whereas the subscription
-										// may have started after the device is fully registered, hence the full device
-										// address is known.
+										// This is required because if the call starts before the registration
+										// process, the device address may have an unresolved address whereas the
+										// subscription may have started after the device is fully registered, hence
+										// the full device address is known.
 										device->setConferenceSubscribeEvent(otherDevice->getConferenceSubscribeEvent());
 										otherDevice->setConferenceSubscribeEvent(nullptr);
 									}
 									// Delete device having the same address
-									// First remove device from the device list to avoid sending a participant device
-									// removed
+									// First remove device from the device list to avoid sending a participant
+									// device removed
 									participant->removeDevice(newDeviceAddress);
 									auto otherDeviceSession = otherDevice->getSession();
 									if (otherDeviceSession) {
@@ -2989,7 +2999,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 						lError() << "Unable to update device with address " << *remoteContactAddress
 						         << " because it was not found in conference " << conferenceAddressStr;
 					}
-					bool admin = remoteContactAddress->hasParam("admin") &&
+					bool admin = remoteContactAddress && remoteContactAddress->hasParam("admin") &&
 					             Utils::stob(remoteContactAddress->getParamValue("admin"));
 					setParticipantAdminStatus(participant, admin);
 				} else {
