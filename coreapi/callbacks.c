@@ -151,7 +151,6 @@ static void call_received(SalCallOp *h) {
 	std::shared_ptr<Address> to = Address::create(h->getTo());
 
 	std::shared_ptr<LinphonePrivate::Core> core = lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr;
-	shared_ptr<Conference> serverConference = nullptr;
 
 	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 #ifdef HAVE_ADVANCED_IM
@@ -298,8 +297,7 @@ static void call_received(SalCallOp *h) {
 
 					if ((startTime != -1) || (endTime != -1)) {
 						// If start time or end time is not -1, then the client wants to update the conference
-						serverConference = static_pointer_cast<ServerConference>(conference);
-						static_pointer_cast<ServerConference>(serverConference)->updateConferenceInformation(h);
+						static_pointer_cast<ServerConference>(conference)->updateConferenceInformation(h);
 					}
 				}
 			} else {
@@ -313,8 +311,8 @@ static void call_received(SalCallOp *h) {
 				        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(to)
 				        : nullptr;
 				if (confInfo) {
-					serverConference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
-					serverConference->init(h);
+					conference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
+					conference->init(h);
 				} else
 #endif // HAVE_DB_STORAGE
 				{
@@ -332,9 +330,9 @@ static void call_received(SalCallOp *h) {
 						linphone_error_info_unref(ei);
 						return;
 					} else {
-						serverConference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
-						serverConference->init(h);
-						static_pointer_cast<ServerConference>(serverConference)->confirmCreation();
+						conference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
+						conference->init(h);
+						static_pointer_cast<ServerConference>(conference)->confirmCreation();
 						return;
 					}
 				}
@@ -407,9 +405,6 @@ static void call_received(SalCallOp *h) {
 	}
 
 	auto call = call_get_or_create(lc, h, from, to);
-	if (serverConference) {
-		call->getMediaSession()->getSharedFromThis()->addListener(serverConference.get());
-	}
 	if (call) call->startIncomingNotification();
 }
 

@@ -506,7 +506,11 @@ void Call::tryToAddToConference(shared_ptr<Conference> &conference, const shared
 				conference->finalizeParticipantAddition(getSharedFromThis());
 			}
 		} else {
-			conference->addParticipant(getSharedFromThis());
+			auto conferenceInfo = conference->createOrGetConferenceInfo();
+			if ((!Conference::isTerminationState(conference->getState())) &&
+			    (conferenceInfo->getState() != ConferenceInfo::State::Cancelled)) {
+				conference->addParticipant(getSharedFromThis());
+			}
 		}
 	}
 }

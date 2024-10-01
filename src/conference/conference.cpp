@@ -1298,14 +1298,10 @@ const std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() co
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
-		std::shared_ptr<ConferenceInfo> conferenceInfo;
 		if (mConferenceInfoId == -1) {
 			mConferenceInfo = mainDb->getConferenceInfoFromURI(getConferenceAddress());
 		} else {
 			mConferenceInfo = mainDb->getConferenceInfo(mConferenceInfoId);
-		}
-		if (conferenceInfo) {
-			return conferenceInfo;
 		}
 	}
 #endif // HAVE_DB_STORAGE
