@@ -117,6 +117,7 @@ extern test_suite_t recorder_test_suite;
 extern test_suite_t register_test_suite;
 extern test_suite_t remote_provisioning_test_suite;
 extern test_suite_t setup_test_suite;
+extern test_suite_t log_file_test_suite;
 extern test_suite_t stun_test_suite;
 extern test_suite_t tunnel_test_suite;
 extern test_suite_t upnp_test_suite;

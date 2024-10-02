@@ -39,6 +39,7 @@ struct _LinphoneLoggingService {
 	LinphoneLoggingServiceCbs *cbs; // Deprecated, use a list of Cbs instead
 	bctbx_list_t *callbacks;
 	bctbx_log_handler_t *log_handler;
+	bctbx_log_handler_t *file_log_handler;
 	char *domain;
 };
 
@@ -150,6 +151,7 @@ static void _log_handler_destroy_cb(bctbx_log_handler_t *handler) {
 	LinphoneLoggingService *service = (LinphoneLoggingService *)bctbx_log_handler_get_user_data(handler);
 	bctbx_free(service->log_handler);
 	service->log_handler = NULL;
+	service->file_log_handler = NULL;
 }
 
 static LinphoneLoggingService *_linphone_logging_service_new(void) {
@@ -158,6 +160,7 @@ static LinphoneLoggingService *_linphone_logging_service_new(void) {
 	    bctbx_create_log_handler(_log_handler_on_message_written_cb, _log_handler_destroy_cb, service);
 	service->cbs = _linphone_logging_service_cbs_new();
 	bctbx_add_log_handler(service->log_handler);
+	service->file_log_handler = NULL;
 	return service;
 }
 
@@ -268,12 +271,18 @@ unsigned int linphone_logging_service_get_log_level_mask(BCTBX_UNUSED(const Linp
 	return _bctbx_log_mask_to_linphone_log_mask(bctbx_get_log_level_mask(BCTBX_LOG_DOMAIN));
 }
 
-void linphone_logging_service_set_log_file(BCTBX_UNUSED(const LinphoneLoggingService *service),
+void linphone_logging_service_set_log_file(LinphoneLoggingService *service,
                                            const char *dir,
                                            const char *filename,
                                            size_t max_size) {
+	if (service->file_log_handler) {
+		bctbx_remove_log_handler(service->file_log_handler);
+		service->file_log_handler = NULL;
+	}
+	if (!filename) return;
 	bctbx_log_handler_t *log_handler = bctbx_create_file_log_handler((uint64_t)max_size, dir, filename);
 	bctbx_add_log_handler(log_handler);
+	service->file_log_handler = log_handler;
 }
 
 void linphone_logging_service_set_domain(LinphoneLoggingService *log_service, const char *domain) {

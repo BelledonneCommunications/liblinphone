@@ -160,7 +160,7 @@ LINPHONE_PUBLIC unsigned int linphone_logging_service_get_log_level_mask(const L
  * @param max_size The maximal size of each part of the log. The log rotating is triggered
  * each time the currently opened log part reach that limit.
  */
-LINPHONE_PUBLIC void linphone_logging_service_set_log_file(const LinphoneLoggingService *log_service,
+LINPHONE_PUBLIC void linphone_logging_service_set_log_file(LinphoneLoggingService *log_service,
                                                            const char *dir,
                                                            const char *filename,
                                                            size_t max_size);

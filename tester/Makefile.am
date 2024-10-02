@@ -138,6 +138,7 @@ liblinphonetester_la_SOURCES = \
 				eventapi_tester.c \
 				flexisip_tester.c \
 				log_collection_tester.c \
+				log_file_tester.c \
 				message_tester.c \
 				offeranswer_tester.c \
 				player_tester.c \

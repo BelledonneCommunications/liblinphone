@@ -482,6 +482,7 @@ void liblinphone_tester_add_suite_with_default_time(test_suite_t *suite, int ave
 
 void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&setup_test_suite, 282);
+	liblinphone_tester_add_suite_with_default_time(&log_file_test_suite, 5);
 	liblinphone_tester_add_suite_with_default_time(&register_test_suite, 267);
 #ifdef HAVE_ADVANCED_IM
 	liblinphone_tester_add_suite_with_default_time(&group_chat_test_suite, 230);

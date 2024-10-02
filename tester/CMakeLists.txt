@@ -271,6 +271,7 @@ set(SOURCE_FILES_C
 	group_chat_secure_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
+	log_file_tester.c
 	message_tester.c
 	player_tester.c
 	presence_server_tester.c
