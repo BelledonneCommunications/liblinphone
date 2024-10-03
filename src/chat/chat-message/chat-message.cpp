@@ -810,6 +810,11 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		localAddress = conferenceId.getLocalAddress();
 	}
 	const auto peerAddress = conferenceId.getPeerAddress();
+	const bool isBasicChatRoom =
+	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+	if (isBasicChatRoom) {
+		localAddress = Address::create(localAddress->getUriWithoutGruu());
+	}
 	if (direction == ChatMessage::Direction::Outgoing) {
 		fromAddress = localAddress;
 		toAddress = peerAddress;
