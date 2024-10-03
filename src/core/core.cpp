@@ -133,6 +133,7 @@ typedef void (*init_func_t)(LinphoneCore *core);
 void CorePrivate::init() {
 	L_Q();
 
+	coreStartupTask.start(q->getSharedFromThis(), 60);
 	q->initPlugins();
 
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
@@ -405,8 +406,8 @@ void CorePrivate::shutdown() {
 
 	unregisterAccounts();
 
-	pushReceivedBackgroundTask.stop();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
+	pushReceivedBackgroundTask.stop();
 }
 
 void CorePrivate::unregisterAccounts() {
@@ -480,8 +481,8 @@ void CorePrivate::uninit() {
 	conferenceById.clear();
 
 	listeners.clear();
-	pushReceivedBackgroundTask.stop();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
+	pushReceivedBackgroundTask.stop();
 	mLdapServers.clear();
 
 	q->mPublishByEtag.clear();
@@ -521,9 +522,6 @@ void CorePrivate::stopStartupBgTask() {
 void CorePrivate::notifyGlobalStateChanged(LinphoneGlobalState state) {
 	L_Q();
 	switch (state) {
-		case LinphoneGlobalStartup:
-			coreStartupTask.start(q->getSharedFromThis(), 60);
-			break;
 		case LinphoneGlobalOn:
 			q->doLater([this] { stopStartupBgTask(); });
 			break;
@@ -531,6 +529,7 @@ void CorePrivate::notifyGlobalStateChanged(LinphoneGlobalState state) {
 		case LinphoneGlobalShutdown:
 			coreStartupTask.stop();
 			break;
+		case LinphoneGlobalStartup:
 		case LinphoneGlobalConfiguring:
 		case LinphoneGlobalReady:
 			/* nothing to do here */
@@ -1451,13 +1450,11 @@ std::shared_ptr<AudioDevice> Core::getDefaultOutputAudioDevice() const {
  */
 void Core::pushNotificationReceived(const string &callId, const string &payload, bool isCoreStarting) {
 	L_D();
-
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
-	// Stop any previous background task we might already have
-	d->pushReceivedBackgroundTask.stop();
 
 	LinphoneCore *lc = getCCore();
 	bool found = false;
+	bool refreshedPushBackgroundTask = false;
 	if (!callId.empty()) {
 		for (const auto &call : d->calls) {
 			auto callLog = call->getLog();
@@ -1478,11 +1475,20 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 		}
 
 		if (!found) {
+			lInfo() << "Call/Chat message with Call-ID [" << callId << "] not found, restarting background task";
+			// (Re) Start a background task for 20 seconds to ensure we have time to process the push
+			if (d->pushReceivedBackgroundTask.hasStarted()) {
+				d->pushReceivedBackgroundTask.restart();
+			} else {
+				d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
+			}
+			refreshedPushBackgroundTask = true;
+
 			d->lastPushReceivedCallId = callId;
 			static_cast<PlatformHelpers *>(lc->platform_helper)->startPushService();
-			// Start a background task for 20 seconds to ensure we have time to process the push
-			d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
 		}
+	} else {
+		lWarning() << "No given Call-ID, can't know if a background task is necessary or not...";
 	}
 
 	linphone_core_notify_push_notification_received(lc, payload.c_str());
@@ -1497,6 +1503,12 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 	}
 
 	healNetworkConnections();
+
+	if (!refreshedPushBackgroundTask) {
+		// Stop any previous background task we might already have
+		lInfo() << "Stopping push notification background task if it exists, doesn't seem necessary anymore";
+		d->pushReceivedBackgroundTask.stop();
+	}
 }
 
 void Core::healNetworkConnections() {

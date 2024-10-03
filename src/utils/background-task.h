@@ -63,6 +63,7 @@ public:
 	 */
 	void start(const std::shared_ptr<Core> &core, int maxDurationSeconds = 15 * 60); // 15 min by default, like on iOS
 	void stop();
+	void restart();
 
 protected:
 	// Called when the system decides to stop the background task. It may happen before the "soft timeout", or may not
@@ -79,6 +80,7 @@ private:
 	std::weak_ptr<Sal> mSal;
 	std::string mName;
 	unsigned long mId = 0;
+	int mMaxDuration = 15 * 60;
 };
 
 /* A background task that takes std::function<> parameters to notify when the background task expires.*/

@@ -53,6 +53,7 @@ void BackgroundTask::start(const shared_ptr<Core> &core, int maxDurationSeconds)
 		lError() << "No name was set on background task";
 		return;
 	}
+	mMaxDuration = maxDurationSeconds;
 
 	unsigned long newId = sal_begin_background_task(mName.c_str(), sHandleTimeout, this);
 	stop();
@@ -86,6 +87,24 @@ void BackgroundTask::stop() {
 		mTimeout = nullptr;
 	}
 	mId = 0;
+}
+
+void BackgroundTask::restart() {
+	if (mId == 0) return;
+
+	lInfo() << "Re-starting background task [" << mId << "] with name [" << mName << "] for another [" << mMaxDuration
+	        << "]";
+	shared_ptr<Sal> sal = mSal.lock();
+	if (sal) {
+		if (mTimeout) {
+			sal->cancelTimer(mTimeout);
+			belle_sip_object_unref(mTimeout);
+			mTimeout = nullptr;
+		}
+		mTimeout = sal->createTimer(sHandleSalTimeout, this, (unsigned int)mMaxDuration * 1000, mName.c_str());
+	} else {
+		lError() << "Sal is null, can't re-schedule background task expiration timer";
+	}
 }
 
 void BackgroundTask::handleHardTimeout() {
