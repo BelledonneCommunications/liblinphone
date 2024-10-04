@@ -163,6 +163,7 @@ public:
 	std::shared_ptr<CallSession> getReferer() const;
 	const std::string &getReferTo() const;
 	const std::shared_ptr<Address> getReferToAddress() const;
+	std::shared_ptr<const Address> getReferredBy() const;
 	const std::shared_ptr<Address> getRemoteAddress() const;
 	const std::string &getRemoteContact() const;
 	const std::shared_ptr<Address> getRemoteContactAddress() const;
@@ -204,7 +205,6 @@ public:
 	void notifyAlert(std::shared_ptr<Alert> &alert);
 	void notifyCallSessionStateChanged(CallSession::State newState, const std::string &message);
 	void notifyCallSessionTransferStateChanged(CallSession::State newState);
-	void notifyCallSessionReferRequested(const std::shared_ptr<Address> &address);
 	void notifyCallSessionStateChangedForReporting();
 	void notifyStartRingtone();
 	void notifyIncomingCallSessionTimeoutCheck(int elapsed, bool oneSecondElapsed);
@@ -214,7 +214,6 @@ public:
 	void notifyCallSessionAccepting();
 	void notifyCallSessionAccepted();
 	void notifyCallSessionEarlyFailed(LinphoneErrorInfo *ei);
-	void notifyCallSessionStartReferred();
 	void notifyCallSessionSetTerminated();
 	void notifyCallSessionSetReleased();
 	void notifyCheckForAcceptation();

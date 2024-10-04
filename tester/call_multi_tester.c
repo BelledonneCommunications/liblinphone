@@ -355,6 +355,8 @@ static void unattended_call_transfer(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
 	LinphoneCall *pauline_called_by_marie;
+	LinphoneCall *laure_call;
+	const LinphoneAddress *referred_by;
 
 	char *laure_identity = linphone_address_as_string(laure->identity);
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
@@ -382,8 +384,13 @@ static void unattended_call_transfer(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 1, 3000));
-	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc))) goto end;
-	linphone_call_accept(linphone_core_get_current_call(laure->lc));
+	laure_call = linphone_core_get_current_call(laure->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(laure_call)) goto end;
+	linphone_call_accept(laure_call);
+	referred_by = linphone_call_get_referred_by_address(laure_call);
+	if (BC_ASSERT_PTR_NOT_NULL(referred_by)) {
+		BC_ASSERT_TRUE(linphone_address_weak_equal(referred_by, marie->identity));
+	}
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallConnected, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 3000));
@@ -545,7 +552,7 @@ static void call_transfer_existing_call(bool_t outgoing_call,
 		linphone_call_transfer_to_another(marie_call_pauline, marie_call_laure);
 		if (security_level_downgraded) {
 			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReferRequested, 1, 2000));
-			linphone_call_accept_refer(pauline_called_by_marie);
+			linphone_call_accept_transfer(pauline_called_by_marie);
 		}
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallRefered, 1, 2000));
 
@@ -1453,6 +1460,81 @@ end:
 	bctbx_list_free(lcs);
 }
 
+static void on_notify_response(LinphoneEvent *ev) {
+	LinphoneEventCbs *cbs = linphone_event_get_current_callbacks(ev);
+	int *number_of_notify_response = (int *)linphone_event_cbs_get_user_data(cbs);
+	(*number_of_notify_response)++;
+}
+
+static void call_transfer_for_b2bua(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneAddress *referTo = linphone_address_new("sip:inexistant@anonymous.invalid");
+	LinphoneCall *pauline_call;
+	LinphoneEvent *notify_event = NULL;
+	LinphoneEventCbs *event_cbs = NULL;
+	int number_of_notify_response = 0;
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "auto_accept_refer", FALSE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "terminate_call_upon_transfer_completion",
+	                        FALSE);
+
+	if (!BC_ASSERT_TRUE(call(marie, pauline))) {
+		goto end;
+	}
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_transfer_to(linphone_core_get_current_call(marie->lc), referTo);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallRefered, 1));
+	/* do not execute the transfer but manually create the NOTIFY request to notify the progress of the transfer call */
+	linphone_call_pause(pauline_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPaused, 1));
+	/* make sure Pauline does not attempt to create the tranfer call */
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallOutgoingInit, 0, int, "%i");
+
+	notify_event = linphone_call_create_notify(pauline_call, "refer");
+	event_cbs = linphone_factory_create_event_cbs(linphone_factory_get());
+	linphone_event_cbs_set_notify_response(event_cbs, on_notify_response);
+	linphone_event_cbs_set_user_data(event_cbs, &number_of_notify_response);
+
+	if (BC_ASSERT_PTR_NOT_NULL(notify_event)) {
+		LinphoneContent *content = linphone_factory_create_content(linphone_factory_get());
+
+		linphone_event_add_callbacks(notify_event, event_cbs);
+
+		linphone_content_set_type(content, "message");
+		linphone_content_set_subtype(content, "sipfrag");
+		linphone_content_set_utf8_text(content, "SIP/2.0 100 Trying\r\n");
+		linphone_event_notify(notify_event, content);
+		linphone_content_unref(content);
+		BC_ASSERT_TRUE(
+		    wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneTransferCallOutgoingProgress, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &number_of_notify_response, 1));
+
+		content = linphone_factory_create_content(linphone_factory_get());
+		linphone_content_set_type(content, "message");
+		linphone_content_set_subtype(content, "sipfrag");
+		linphone_content_set_utf8_text(content, "SIP/2.0 200 Ringing\r\n");
+		linphone_event_notify(notify_event, content);
+		linphone_content_unref(content);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneTransferCallConnected, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &number_of_notify_response, 2));
+	}
+	/* Marie shall not automatically terminate the call, per the configuration key set at the beginning of the test */
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1, 1000));
+	end_call(marie, pauline);
+
+end:
+	if (notify_event) {
+		linphone_event_terminate(notify_event);
+		linphone_event_unref(notify_event);
+	}
+	if (event_cbs) linphone_event_cbs_unref(event_cbs);
+	linphone_address_unref(referTo);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t multi_call_tests[] = {
     TEST_NO_TAG("Call waiting indication", call_waiting_indication),
     TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
@@ -1492,7 +1574,8 @@ test_t multi_call_tests[] = {
                 stop_ringing_when_accepting_call_while_holding_another_with_ice),
     TEST_NO_TAG("Stop ringing when accepting call while holding another without ICE",
                 stop_ringing_when_accepting_call_while_holding_another_without_ice),
-    TEST_NO_TAG("Stop paused tone when second call is accepted with early media", second_call_with_early_media)};
+    TEST_NO_TAG("Stop paused tone when second call is accepted with early media", second_call_with_early_media),
+    TEST_NO_TAG("Call transfer for back to back user agent", call_transfer_for_b2bua)};
 
 test_suite_t multi_call_test_suite = {"Multi call",
                                       NULL,

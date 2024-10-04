@@ -80,7 +80,6 @@ public:
 	virtual bool failure();
 	void infoReceived(SalBodyHandler *bodyHandler);
 	void pingReply();
-	void setReferToAddress(const std::shared_ptr<Address> &referToAddr);
 	void referred(const std::shared_ptr<Address> &referToAddr);
 	virtual void remoteRinging();
 	virtual void replaceOp(SalCallOp *newOp);
@@ -148,6 +147,7 @@ protected:
 	std::shared_ptr<Address> referToAddress;
 	mutable std::shared_ptr<Address> requestAddress;
 	mutable std::shared_ptr<Address> mRemoteContactAddress;
+	mutable std::shared_ptr<Address> mReferredBy;
 	// This counter is used to keep active track of reINVITEs and UPDATEs under processing at any given time.
 	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction
 	// queue is popped after receiving the 100 Trying and not the 200 Ok

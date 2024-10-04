@@ -167,9 +167,7 @@ already here */
 LinphoneChatRoom *linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc, const char *chat_room_addr) {
 	std::shared_ptr<ChatRoom> cppChatRoom =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(L_C_TO_STRING(chat_room_addr));
-	LinphoneChatRoom *chatRoom = cppChatRoom->toC();
-
-	return chatRoom;
+	return toC(cppChatRoom);
 }
 
 bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore *lc) {

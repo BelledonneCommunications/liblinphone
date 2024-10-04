@@ -255,6 +255,14 @@ void CallSessionPrivate::setTransferState(CallSession::State newState) {
 
 	transferState = newState;
 	q->notifyCallSessionTransferStateChanged(newState);
+
+	if (newState == LinphonePrivate::CallSession::State::Connected) {
+		if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
+		                            "terminate_call_upon_transfer_completion", 1)) {
+			lInfo() << "Automatically terminating call " << *q << " because transfer has completed successfully.";
+			q->terminate();
+		}
+	}
 }
 
 void CallSessionPrivate::handleIncoming(bool tryStartRingtone) {
@@ -479,16 +487,10 @@ void CallSessionPrivate::pingReply() {
 	}
 }
 
-void CallSessionPrivate::setReferToAddress(const std::shared_ptr<Address> &referToAddr) {
-	referToAddress = referToAddr;
-}
-
 void CallSessionPrivate::referred(const std::shared_ptr<Address> &referToAddr) {
-	L_Q();
 	if (referToAddr) referToAddress = referToAddr;
 	referPending = true;
 	setState(CallSession::State::Referred, "Referred");
-	if (referPending) q->notifyCallSessionStartReferred();
 }
 
 void CallSessionPrivate::updateToFromAssertedIdentity() {
@@ -587,8 +589,6 @@ void CallSessionPrivate::terminated() {
 		default:
 			break;
 	}
-	if (referPending) q->notifyCallSessionStartReferred();
-
 	setState(CallSession::State::End, "Call ended");
 }
 
@@ -1902,6 +1902,17 @@ const std::shared_ptr<Address> CallSession::getReferToAddress() const {
 	return d->referToAddress;
 }
 
+std::shared_ptr<const Address> CallSession::getReferredBy() const {
+	L_D();
+	if (d->op) {
+		auto addr = d->op->getReferredBy();
+		if (addr) {
+			d->mReferredBy = (new Address(addr))->toSharedPtr();
+		}
+	}
+	return d->mReferredBy;
+}
+
 const std::shared_ptr<Address> CallSession::getRemoteAddress() const {
 	L_D();
 	return (d->log) ? (d->direction == LinphoneCallIncoming) ? d->log->getFromAddress() : d->log->getToAddress()
@@ -2362,16 +2373,6 @@ void CallSession::notifyCallSessionTransferStateChanged(CallSession::State newSt
 	}
 }
 
-void CallSession::notifyCallSessionReferRequested(const shared_ptr<Address> &address) {
-	L_D();
-	// Copy list of listeners as the callback might delete one
-	auto listeners = d->listeners;
-	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionReferRequested(getSharedFromThis(), address);
-	}
-}
-
 void CallSession::notifyCallSessionStateChangedForReporting() {
 	L_D();
 	// Copy list of listeners as the callback might delete one
@@ -2459,16 +2460,6 @@ void CallSession::notifyCallSessionAccepting() {
 	for (const auto &listener : listeners) {
 		auto logContext = listener->getLogContextualizer();
 		listener->onCallSessionAccepting(getSharedFromThis());
-	}
-}
-
-void CallSession::notifyCallSessionStartReferred() {
-	L_D();
-	// Copy list of listeners as the callback might delete one
-	auto listeners = d->listeners;
-	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionStartReferred(getSharedFromThis());
 	}
 }
 

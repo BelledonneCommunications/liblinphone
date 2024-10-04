@@ -212,10 +212,6 @@ struct _LinphoneToneDescription {
 	/*Note that some tones are not affected to any error, in which case it is affected LinphoneReasonNone*/
 };
 
-struct _LinphoneTaskList {
-	MSList *hooks;
-};
-
 struct _LinphoneCoreCbs {
 	belle_sip_object_t base;
 	LinphoneCoreVTable *vtable;
@@ -488,7 +484,6 @@ class Core;
 	time_t netup_time;                                                                                                 \
 	struct _EcCalibrator *ecc;                                                                                         \
 	struct _EchoTester *ect;                                                                                           \
-	LinphoneTaskList hooks;                                                                                            \
 	LinphoneConference *conf_ctx;                                                                                      \
 	bctbx_list_t *plugin_list;                                                                                         \
 	char *zrtp_secrets_cache;                                                                                          \

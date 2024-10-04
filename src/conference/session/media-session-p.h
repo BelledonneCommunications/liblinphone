@@ -55,7 +55,6 @@ public:
 	static const std::string ScreenSharingContentAttribute;
 
 	static int resumeAfterFailedTransfer(void *userData, unsigned int);
-	static bool_t startPendingRefer(void *userData);
 	static void stunAuthRequestedCb(void *userData,
 	                                const char *realm,
 	                                const char *nonce,
@@ -77,7 +76,6 @@ public:
 	bool rejectMediaSession(const std::shared_ptr<SalMediaDescription> &localMd,
 	                        const std::shared_ptr<SalMediaDescription> &remoteMd,
 	                        const std::shared_ptr<SalMediaDescription> &finalMd) const;
-	void startPendingRefer();
 	void telephoneEventReceived(int event);
 	void terminated() override;
 	void updated(bool isUpdate);

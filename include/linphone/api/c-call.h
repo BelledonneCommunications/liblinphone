@@ -149,6 +149,22 @@ LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_call_log(const LinphoneCall *
 LINPHONE_PUBLIC const char *linphone_call_get_refer_to(const LinphoneCall *call);
 
 /**
+ * Gets the refer-to uri (if the call was transferred).
+ * @param call #LinphoneCall object. @notnil
+ * @return The refer-to uri of the call (if it was transferred). @maybenil
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_refer_to_address(const LinphoneCall *call);
+
+/**
+ * Gets the referred-by address, which is set when an incoming call is received
+ * as a consequence of a call transfer operation by a third party.
+ * The referred-by address is the sip identity of the one who initiated the transfer.
+ * @param call The #LinphoneCall @notnil
+ * @return The referred-by address @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_referred_by_address(const LinphoneCall *call);
+
+/**
  * Returns if this calls has received a transfer that has not been
  * executed yet.
  * Pending transfers are executed when this call is being paused or closed,
@@ -1048,11 +1064,20 @@ LINPHONE_PUBLIC const LinphoneVideoSourceDescriptor *linphone_call_get_video_sou
 LINPHONE_PUBLIC void linphone_call_confirm_go_clear(const LinphoneCall *call);
 
 /**
- * Accepts a transfer, to use when [sip] accept_auto_refer property is false.
- * Default behaviour is to accept and execute the transfer automatically.
+ * Accepts and execute a transfer (ie an incoming REFER request), to use when [sip] 'auto_accept_refer' property is
+ * false. Default behaviour is to accept and execute the transfer automatically.
  * @param call The #LinphoneCall to be transferred @notnil
  */
-LINPHONE_PUBLIC void linphone_call_accept_refer(LinphoneCall *call);
+LINPHONE_PUBLIC void linphone_call_accept_transfer(LinphoneCall *call);
+
+/**
+ * Create a #LinphoneEvent in order to send NOTIFY requests through the SIP dialog created by the call.
+ * The call state must have passed through #LinphoneCallStateConnected.
+ * @param call The #LinphoneCall object @notnil
+ * @param event The event type to be notified.
+ * @return a new #LinphoneEvent @maybenil
+ */
+LINPHONE_PUBLIC LinphoneEvent *linphone_call_create_notify(LinphoneCall *call, const char *event);
 
 /************ */
 /* DEPRECATED */

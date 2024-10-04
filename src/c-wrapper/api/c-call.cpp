@@ -236,9 +236,14 @@ const char *linphone_call_get_refer_to(const LinphoneCall *call) {
 	return L_STRING_TO_C(Call::toCpp(call)->getReferTo());
 }
 
-LinphoneAddress *linphone_call_get_refer_to_address(const LinphoneCall *call) {
+const LinphoneAddress *linphone_call_get_refer_to_address(const LinphoneCall *call) {
 	const auto &referToAddress = Call::toCpp(call)->getReferToAddress();
 	return referToAddress && referToAddress->isValid() ? referToAddress->toC() : nullptr;
+}
+
+const LinphoneAddress *linphone_call_get_referred_by_address(const LinphoneCall *call) {
+	auto addr = Call::toCpp(call)->getReferredBy();
+	return toC(addr);
 }
 
 bool_t linphone_call_has_transfer_pending(const LinphoneCall *call) {
@@ -520,9 +525,9 @@ LinphoneStatus linphone_call_accept_update(LinphoneCall *call, const LinphoneCal
 	return Call::toCpp(call)->acceptUpdate(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
-void linphone_call_accept_refer(LinphoneCall *call) {
+void linphone_call_accept_transfer(LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
-	return Call::toCpp(call)->acceptRefer();
+	return Call::toCpp(call)->executeTransfer();
 }
 
 LinphoneStatus linphone_call_transfer(LinphoneCall *call, const char *referTo) {
@@ -862,4 +867,11 @@ void linphone_call_confirm_go_clear(const LinphoneCall *call) {
 #else // HAVE_GOCLEAR
 	(void)call;
 #endif
+}
+
+LinphoneEvent *linphone_call_create_notify(LinphoneCall *call, const char *event) {
+	CallLogContextualizer logContextualizer(call);
+	auto ev = Call::toCpp(call)->createNotify(event);
+	if (ev) ev->ref();
+	return toC(ev);
 }

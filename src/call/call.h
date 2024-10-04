@@ -178,6 +178,7 @@ public:
 	std::shared_ptr<Call> getReferer() const;
 	const std::string &getReferTo() const;
 	const std::shared_ptr<Address> getReferToAddress() const;
+	std::shared_ptr<const Address> getReferredBy() const;
 	const std::shared_ptr<Address> getRemoteAddress() const;
 	const std::shared_ptr<Address> getRemoteContactAddress() const;
 	const std::string &getRemoteContact() const;
@@ -232,7 +233,8 @@ public:
 	int startInvite(const std::shared_ptr<Address> &destination,
 	                const std::string subject = std::string(),
 	                const std::shared_ptr<const Content> content = nullptr);
-	void acceptRefer();
+	void executeTransfer();
+	void scheduleTransfer();
 	std::shared_ptr<Call> startReferredCall(const MediaSessionParams *params);
 
 	// -----------------------------------------------------------------------------
@@ -273,14 +275,11 @@ public:
 	void onCallSessionEarlyFailed(const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) override;
 	void onCallSessionSetReleased(const std::shared_ptr<CallSession> &session) override;
 	void onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) override;
-	void onCallSessionStartReferred(const std::shared_ptr<CallSession> &session) override;
 	void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
 	                               CallSession::State state,
 	                               const std::string &message) override;
 	void onCallSessionTransferStateChanged(const std::shared_ptr<CallSession> &session,
 	                                       CallSession::State state) override;
-	void onCallSessionReferRequested(const std::shared_ptr<CallSession> &session,
-	                                 const std::shared_ptr<Address> &address) override;
 	void onCheckForAcceptation(const std::shared_ptr<CallSession> &session) override;
 	void onDtmfReceived(const std::shared_ptr<CallSession> &session, char dtmf) override;
 	void onIncomingCallSessionNotified(const std::shared_ptr<CallSession> &session) override;
@@ -337,6 +336,8 @@ public:
 	 * @param[in] ekt_params	All data needed to set the EKT
 	 */
 	void setEkt(const MSEKTParametersSet *ekt_params) const;
+
+	std::shared_ptr<Event> createNotify(const std::string &eventName);
 
 private:
 	std::shared_ptr<Participant> mParticipant;

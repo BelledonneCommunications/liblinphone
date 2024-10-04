@@ -1058,51 +1058,6 @@ const char *linphone_tunnel_mode_to_string(LinphoneTunnelMode mode) {
 	return "invalid";
 }
 
-typedef struct Hook {
-	LinphoneCoreIterateHook fun;
-	void *data;
-} Hook;
-
-void linphone_task_list_init(LinphoneTaskList *t) {
-	t->hooks = NULL;
-}
-
-static Hook *hook_new(LinphoneCoreIterateHook hook, void *hook_data) {
-	Hook *h = ms_new0(Hook, 1);
-	h->fun = hook;
-	h->data = hook_data;
-	return h;
-}
-
-static void hook_invoke(Hook *h) {
-	h->fun(h->data);
-}
-
-void linphone_task_list_add(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data) {
-	t->hooks = bctbx_list_append(t->hooks, hook_new(hook, hook_data));
-}
-
-void linphone_task_list_remove(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data) {
-	bctbx_list_t *elem;
-	for (elem = t->hooks; elem != NULL; elem = elem->next) {
-		Hook *h = (Hook *)elem->data;
-		if (h->fun == hook && h->data == hook_data) {
-			t->hooks = bctbx_list_erase_link(t->hooks, elem);
-			ms_free(h);
-			return;
-		}
-	}
-	ms_error("linphone_task_list_remove(): No such hook found.");
-}
-
-void linphone_task_list_run(LinphoneTaskList *t) {
-	bctbx_list_for_each(t->hooks, (void (*)(void *))hook_invoke);
-}
-
-void linphone_task_list_free(LinphoneTaskList *t) {
-	t->hooks = bctbx_list_free_with_data(t->hooks, (void (*)(void *))ms_free);
-}
-
 /* Functions to mainpulate the LinphoneRange structure */
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneRange);

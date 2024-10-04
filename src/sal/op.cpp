@@ -612,7 +612,7 @@ void SalOp::setReasonErrorInfo(belle_sip_message_t *message) {
 void SalOp::setReferredBy(belle_sip_header_referred_by_t *referredByHeader) {
 	if (mReferredBy) belle_sip_object_unref(mReferredBy);
 	mReferredBy = referredByHeader;
-	belle_sip_object_ref(mReferredBy);
+	if (mReferredBy) belle_sip_object_ref(mReferredBy);
 }
 
 void SalOp::setReplaces(belle_sip_header_replaces_t *replacesHeader) {

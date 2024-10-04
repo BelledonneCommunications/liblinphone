@@ -227,8 +227,18 @@ int Call::startInvite(const std::shared_ptr<Address> &destination,
 	return getActiveSession()->startInvite(destination, subject, content);
 }
 
-void Call::acceptRefer() {
-	getActiveSession()->getPrivate()->referred(nullptr);
+void Call::scheduleTransfer() {
+	LinphoneCore *lc = getCore()->getCCore();
+	shared_ptr<Call> self = getSharedFromThis();
+	if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "auto_accept_refer", 1)) {
+		getCore()->doLater([self]() { self->executeTransfer(); });
+	}
+}
+
+void Call::executeTransfer() {
+	if (getMediaSession()->hasTransferPending()) {
+		startReferredCall(getMediaSession()->getMediaParams());
+	}
 }
 
 shared_ptr<Call> Call::startReferredCall(const MediaSessionParams *params) {
@@ -380,10 +390,6 @@ void Call::onCallSessionSetTerminated(BCTBX_UNUSED(const shared_ptr<CallSession>
 	}
 }
 
-void Call::onCallSessionStartReferred(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
-	startReferredCall(getMediaSession()->getMediaParams());
-}
-
 void Call::reenterLocalConference(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
 	auto conference = getConference();
 	if (conference) {
@@ -427,6 +433,9 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 				linphone_core_notify_first_call_started(lc);
 			}
 			break;
+		case CallSession::State::End:
+			if (session->hasTransferPending()) scheduleTransfer();
+			break;
 		case CallSession::State::Released:
 			getPlatformHelpers(lc)->releaseWifiLock();
 			getPlatformHelpers(lc)->releaseMcastLock();
@@ -443,6 +452,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 					tryToAddToConference(conference, session);
 				}
 			}
+			if (session->hasTransferPending()) scheduleTransfer();
 			break;
 		case CallSession::State::UpdatedByRemote: {
 			if (op && !getConference() && remoteContactIsFocus) {
@@ -454,6 +464,11 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 				}
 			}
 		} break;
+		case CallSession::State::Referred:
+			/* This is somewhat redundant with call_state_changed(LinphoneCallStateReferred) notification */
+			linphone_call_notify_refer_requested(this->toC(), session->getReferToAddress()->toC());
+			if (session->hasTransferPending()) scheduleTransfer();
+			break;
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning: {
 			if (op && !getConference()) {
@@ -563,11 +578,6 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 void Call::onCallSessionTransferStateChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &session),
                                              CallSession::State state) {
 	linphone_call_notify_transfer_state_changed(this->toC(), static_cast<LinphoneCallState>(state));
-}
-
-void Call::onCallSessionReferRequested(BCTBX_UNUSED(const shared_ptr<CallSession> &session),
-                                       const shared_ptr<Address> &address) {
-	linphone_call_notify_refer_requested(this->toC(), address->toC());
 }
 
 void Call::onCheckForAcceptation(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
@@ -1199,6 +1209,10 @@ const std::shared_ptr<Address> Call::getReferToAddress() const {
 	return getActiveSession()->getReferToAddress();
 }
 
+std::shared_ptr<const Address> Call::getReferredBy() const {
+	return getActiveSession()->getReferredBy();
+}
+
 const std::shared_ptr<Address> Call::getRemoteAddress() const {
 	return getActiveSession()->getRemoteAddress();
 }
@@ -1402,8 +1416,6 @@ void Call::setEndpoint(MSAudioEndpoint *endpoint) {
 	mEndpoint = endpoint;
 }
 
-// -----------------------------------------------------------------------------
-
 void Call::setVideoSource(std::shared_ptr<const VideoSourceDescriptor> descriptor) {
 	getMediaSession()->setVideoSource(descriptor);
 }
@@ -1411,6 +1423,23 @@ void Call::setVideoSource(std::shared_ptr<const VideoSourceDescriptor> descripto
 std::shared_ptr<const VideoSourceDescriptor> Call::getVideoSource() const {
 	return getMediaSession()->getVideoSource();
 }
+
+std::shared_ptr<Event> Call::createNotify(const std::string &eventName) {
+	SalOp *callOp = getMediaSession()->getPrivate()->getOp();
+	if (callOp == nullptr) {
+		lError() << "Call::createNotify(): no op for this call.";
+		return nullptr;
+	}
+	if (!callOp->hasDialog()) {
+		lError() << "Call::createNotify(): no dialog established for this call.";
+		return nullptr;
+	}
+	SalSubscribeOp *op = new SalSubscribeOp(callOp, eventName);
+	return (new EventSubscribe(getCore()->getSharedFromThis(), LinphoneSubscriptionIncoming, eventName, op))
+	    ->toSharedPtr();
+}
+
+// -----------------------------------------------------------------------------
 
 CallLogContextualizer::~CallLogContextualizer() {
 	if (mPushed) bctbx_pop_log_tag(sTagIdentifier);

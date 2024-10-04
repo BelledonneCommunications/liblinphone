@@ -41,6 +41,10 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 	mOp = op;
 	mName = name;
 	mOp->setUserPointer(this->toC());
+	if (mOp->isDialogEstablished()) {
+		/*already established dialog */
+		setState(LinphoneSubscriptionActive);
+	}
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
@@ -242,7 +246,7 @@ void EventSubscribe::terminate() {
 
 	if (mDir == LinphoneSubscriptionIncoming) {
 		auto op = dynamic_cast<SalSubscribeOp *>(mOp);
-		if (op) {
+		if (op && op->isDialogEstablished()) {
 			op->closeNotify();
 		}
 	} else if (mDir == LinphoneSubscriptionOutgoing) {

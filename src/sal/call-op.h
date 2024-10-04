@@ -74,6 +74,7 @@ public:
 	int refer(const std::string &referToUri);
 	int referWithReplaces(SalCallOp *otherCallOp);
 	int setReferrer(SalCallOp *referredCall);
+	const SalAddress *getReferredBy() const;
 	SalCallOp *getReplaces() const;
 	int sendDtmf(char dtmf);
 	int terminate(const SalErrorInfo *info = nullptr);

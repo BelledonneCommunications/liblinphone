@@ -643,12 +643,7 @@ static void call_refer_received(SalOp *op, const SalAddress *referTo) {
 	LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
 	if (session && (method.empty() || (method == "INVITE"))) {
 		auto sessionRef = session->getSharedFromThis();
-		if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "auto_accept_refer", 1)) {
-			L_GET_PRIVATE(sessionRef)->referred(referToAddr);
-		} else {
-			L_GET_PRIVATE(sessionRef)->setReferToAddress(referToAddr);
-			session->notifyCallSessionReferRequested(referToAddr);
-		}
+		L_GET_PRIVATE(sessionRef)->referred(referToAddr);
 	} else {
 		linphone_core_notify_refer_received(lc, L_STRING_TO_C(referToAddr->toString()));
 	}
@@ -873,8 +868,6 @@ static void notify_refer(SalOp *op, SalReferStatus status) {
 			break;
 	}
 	L_GET_PRIVATE(sessionRef)->setTransferState(cstate);
-	if (cstate == LinphonePrivate::CallSession::State::Connected)
-		sessionRef->terminate(); // Automatically terminate the call as the transfer is complete
 }
 
 static LinphoneChatMessageState

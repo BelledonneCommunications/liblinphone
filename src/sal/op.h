@@ -214,7 +214,10 @@ public:
 	int refresh();
 	bool hasDialog() const {
 		return mDialog != nullptr;
-	};
+	}
+	bool isDialogEstablished() {
+		return mDialog != nullptr && belle_sip_dialog_get_state(mDialog) == BELLE_SIP_DIALOG_CONFIRMED;
+	}
 	void killDialog();
 	// Returns the remote CSeq, only in case the op has a dialog.
 	unsigned int getRemoteCSeq();
@@ -244,6 +247,10 @@ public:
 	int processRedirect();
 	/* to restrict the use of connections for this op, see in belle-sip. */
 	void setChannelBankIdentifier(const std::string &identifier);
+
+	belle_sip_dialog_t *getDialog() const {
+		return mDialog;
+	}
 
 protected:
 	enum class State {
@@ -391,6 +398,7 @@ protected:
 	bool mHasAuthPending = false;
 	bool mSupportsSessionTimers = false;
 	bool mOpReleased = false;
+	bool mOwnsDialog = true;
 
 	friend class Sal;
 	friend class Call;

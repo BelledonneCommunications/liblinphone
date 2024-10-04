@@ -50,7 +50,7 @@ void SalSubscribeOp::subscribeResponseEventCb(void *userCtx, const belle_sip_res
 
 	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(clientTransaction));
 
-	op->setOrUpdateDialog(belle_sip_response_event_get_dialog(event));
+	if (op->mOwnsDialog) op->setOrUpdateDialog(belle_sip_response_event_get_dialog(event));
 
 	const string method(belle_sip_request_get_method(request));
 	if (op->mDialog) {
@@ -150,7 +150,7 @@ void SalSubscribeOp::subscribeProcessRequestEventCb(void *userCtx, const belle_s
 
 	if (!op->mDialog && dialog && method == "NOTIFY") {
 		/* case where the dialog is created by the initial NOTIFY because the 200 Ok of the SUBSCRIBE did not arrive.*/
-		op->setOrUpdateDialog(dialog);
+		if (op->mOwnsDialog) op->setOrUpdateDialog(dialog);
 	}
 
 	if (!op->mDialog) {
@@ -227,7 +227,7 @@ void SalSubscribeOp::subscribeProcessDialogTerminatedCb(void *userCtx,
 			op->mRoot->mCallbacks.notify(op, SalSubscribeTerminated, eventName, nullptr);
 		}
 	}
-	op->setOrUpdateDialog(nullptr);
+	if (op->mOwnsDialog) op->setOrUpdateDialog(nullptr);
 	op->unref(); // protect from destruction from callbacks, until we exit from this function.
 }
 
@@ -237,14 +237,31 @@ void SalSubscribeOp::releaseCb(SalOp *op) {
 		belle_sip_refresher_stop(subscribeOp->mRefresher);
 		belle_sip_object_unref(subscribeOp->mRefresher);
 		subscribeOp->mRefresher = nullptr;
-		subscribeOp->setOrUpdateDialog(
-		    nullptr); // Only if we have refresher. else dialog terminated event will remove association
+		// Only if we have refresher. else dialog terminated event will remove association
+		subscribeOp->setOrUpdateDialog(nullptr);
+	} else if (subscribeOp->mDialog && !subscribeOp->mOwnsDialog) {
+		belle_sip_object_unref(subscribeOp->mDialog);
+		subscribeOp->mDialog = nullptr;
 	}
 }
 
 SalSubscribeOp::SalSubscribeOp(Sal *sal) : SalEventOp(sal) {
 	mType = Type::Subscribe;
 	mReleaseCb = releaseCb;
+}
+
+SalSubscribeOp::SalSubscribeOp(SalOp *other_op, const std::string &eventName) : SalEventOp(other_op->getSal()) {
+	mType = Type::Subscribe;
+	mReleaseCb = releaseCb;
+	mDialog = (belle_sip_dialog_t *)belle_sip_object_ref(other_op->getDialog());
+	mEvent = belle_sip_header_event_create(eventName.c_str());
+	const auto from = other_op->getFromAddress();
+	const auto to = other_op->getToAddress();
+	setFromAddress(other_op->getDir() == SalOp::Dir::Incoming ? to : from);
+	setToAddress(other_op->getDir() == SalOp::Dir::Incoming ? from : to);
+	belle_sip_object_ref(mEvent);
+	fillCallbacks();
+	mOwnsDialog = false;
 }
 
 void SalSubscribeOp::fillCallbacks() {
@@ -264,7 +281,7 @@ void SalSubscribeOp::subscribeRefresherListenerCb(
     belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry) {
 	auto op = static_cast<SalSubscribeOp *>(userCtx);
 	auto transaction = BELLE_SIP_TRANSACTION(belle_sip_refresher_get_transaction(refresher));
-	op->setOrUpdateDialog(belle_sip_transaction_get_dialog(transaction));
+	if (op->mOwnsDialog) op->setOrUpdateDialog(belle_sip_transaction_get_dialog(transaction));
 	lInfo() << "Subscribe refresher [" << statusCode << "] reason [" << (reasonPhrase ? reasonPhrase : "none") << "]";
 	op->handleSubscribeResponse(statusCode, reasonPhrase, willRetry);
 }

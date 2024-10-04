@@ -388,7 +388,12 @@ int TunnelManager::customRecvfrom(
 TunnelManager::TunnelManager(LinphoneCore *lc)
     : mCore(lc), mMode(LinphoneTunnelModeDisable), mTunnelClient(NULL), mHttpProxyPort(0), mCoreCbs(NULL),
       mLongRunningTaskId(0), mSimulateUdpLoss(false), mUseDualClient(false) {
-	linphone_core_add_iterate_hook(mCore, (LinphoneCoreIterateHook)sOnIterate, this);
+	mIterateTimer = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createTimer(
+	    [this]() -> bool {
+		    this->onIterate();
+		    return true;
+	    },
+	    20, "Tunnel timer");
 	mTransportFactories.audio_rtcp_func = sCreateRtpTransport;
 	mTransportFactories.audio_rtcp_func_data = this;
 	mTransportFactories.audio_rtp_func = sCreateRtpTransport;
@@ -414,7 +419,10 @@ TunnelManager::TunnelManager(LinphoneCore *lc)
 void TunnelManager::unlinkLinphoneCore() {
 	if (mCore) {
 		stopClient();
-		if (mCore->sal) mCore->sal->setTunnel(NULL);
+		if (mCore->sal) {
+			mCore->sal->setTunnel(NULL);
+			L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->destroyTimer(mIterateTimer);
+		}
 		linphone_core_remove_callbacks(mCore, mCoreCbs);
 		linphone_core_cbs_unref(mCoreCbs);
 		mCore = nullptr;
@@ -567,12 +575,6 @@ void TunnelManager::onIterate() {
 		mMutex.lock();
 	}
 	mMutex.unlock();
-}
-
-/*invoked from linphone_core_iterate() */
-bool_t TunnelManager::sOnIterate(TunnelManager *zis) {
-	zis->onIterate();
-	return TRUE;
 }
 
 LinphoneTunnelMode TunnelManager::getMode() const {

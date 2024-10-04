@@ -561,12 +561,6 @@ _linphone_participant_imdn_state_from_cpp_obj(const LinphonePrivate::Participant
 LinphoneToneDescription *linphone_tone_description_new(LinphoneToneID id, const char *audiofile);
 void linphone_tone_description_destroy(LinphoneToneDescription *obj);
 
-void linphone_task_list_init(LinphoneTaskList *t);
-void linphone_task_list_add(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data);
-void linphone_task_list_remove(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data);
-void linphone_task_list_run(LinphoneTaskList *t);
-void linphone_task_list_free(LinphoneTaskList *t);
-
 LinphoneCoreCbs *_linphone_core_cbs_new(void);
 void _linphone_core_cbs_set_v_table(LinphoneCoreCbs *cbs, LinphoneCoreVTable *vtable, bool_t autorelease);
 

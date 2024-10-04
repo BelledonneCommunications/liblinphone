@@ -229,8 +229,6 @@ void MediaSessionPrivate::accepted() {
 	auto logContext = getLogContextualizer();
 
 	CallSessionPrivate::accepted();
-	LinphoneTaskList tl;
-	linphone_task_list_init(&tl);
 
 	switch (state) {
 		case CallSession::State::OutgoingProgress:
@@ -330,7 +328,7 @@ void MediaSessionPrivate::accepted() {
 					 */
 					nextState = CallSession::State::Paused;
 					nextStateMsg = "Call paused";
-					if (referPending) linphone_task_list_add(&tl, &MediaSessionPrivate::startPendingRefer, q);
+
 					break;
 				default:
 					lError() << "accepted(): don't know what to do in state [" << Utils::toString(state) << "]";
@@ -455,9 +453,6 @@ void MediaSessionPrivate::accepted() {
 	}
 
 	getCurrentParams()->getPrivate()->setInConference(getParams()->getPrivate()->getInConference());
-
-	linphone_task_list_run(&tl);
-	linphone_task_list_free(&tl);
 }
 
 void MediaSessionPrivate::ackReceived(LinphoneHeaders *headers) {
@@ -652,11 +647,6 @@ int MediaSessionPrivate::resumeAfterFailedTransfer() {
 void MediaSessionPrivate::resumed() {
 	auto logContext = getLogContextualizer();
 	acceptUpdate(nullptr, CallSession::State::StreamsRunning, "Connected (streams running)");
-}
-
-void MediaSessionPrivate::startPendingRefer() {
-	L_Q();
-	q->notifyCallSessionStartReferred();
 }
 
 void MediaSessionPrivate::telephoneEventReceived(int event) {
@@ -4172,15 +4162,6 @@ int MediaSessionPrivate::resumeAfterFailedTransfer(void *userData, unsigned int)
 		return -1;
 	}
 	return session->getPrivate()->resumeAfterFailedTransfer();
-}
-
-bool_t MediaSessionPrivate::startPendingRefer(void *userData) {
-	MediaSession *session = static_cast<MediaSession *>(userData);
-	if (!session) {
-		return FALSE;
-	}
-	session->getPrivate()->startPendingRefer();
-	return TRUE;
 }
 
 void MediaSessionPrivate::stunAuthRequestedCb(const char *realm,

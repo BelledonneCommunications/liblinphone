@@ -196,8 +196,6 @@ typedef bool_t (*LinphoneCoreIterateHook)(void *data);
 
 LINPHONE_PUBLIC void linphone_core_add_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data);
 
-LINPHONE_PUBLIC void linphone_core_remove_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data);
-
 LINPHONE_PUBLIC const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_get_callbacks_list(const LinphoneFriend *linphone_friend);

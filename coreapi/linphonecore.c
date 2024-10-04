@@ -180,7 +180,6 @@ static size_t liblinphone_log_collection_file_size = 0;
 static bool_t liblinphone_serialize_logs = FALSE;
 static void set_sip_network_reachable(LinphoneCore *lc, bool_t isReachable, time_t curtime);
 static void set_media_network_reachable(LinphoneCore *lc, bool_t isReachable);
-static void linphone_core_run_hooks(LinphoneCore *lc);
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc);
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
 static LinphoneStatus
@@ -3377,8 +3376,6 @@ static void linphone_core_init(LinphoneCore *lc,
 	belr::GrammarLoader::get().addPath(
 	    std::string(linphone_factory_get_top_resources_dir(lfactory)).append("/belr/grammars"));
 
-	linphone_task_list_init(&lc->hooks);
-
 	_linphone_core_init_account_creator_service(lc);
 
 	linphone_core_cbs_set_notify_received(internal_cbs, linphone_core_internal_notify_received);
@@ -4522,8 +4519,6 @@ void linphone_core_iterate(LinphoneCore *lc) {
 	} else {
 		if (lc->previewstream != NULL) toggle_video_preview(lc, FALSE);
 	}
-
-	linphone_core_run_hooks(lc);
 	linphone_core_do_plugin_tasks(lc);
 
 	if (lc->sip_network_state.global_state && lc->netup_time != 0 && (current_real_time - lc->netup_time) >= 2) {
@@ -7845,8 +7840,6 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 		ms_message("Core [%p] is already stopped", lc);
 		return;
 	}
-
-	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->shutdown();
@@ -8374,18 +8367,6 @@ int linphone_core_get_max_calls(LinphoneCore *lc) {
 
 void linphone_core_set_max_calls(LinphoneCore *lc, int max) {
 	lc->max_calls = max;
-}
-
-void linphone_core_add_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data) {
-	linphone_task_list_add(&lc->hooks, hook, hook_data);
-}
-
-static void linphone_core_run_hooks(LinphoneCore *lc) {
-	linphone_task_list_run(&lc->hooks);
-}
-
-void linphone_core_remove_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data) {
-	linphone_task_list_remove(&lc->hooks, hook, hook_data);
 }
 
 // =============================================================================
@@ -9981,4 +9962,11 @@ char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const Lin
 
 LinphoneAccountManagerServices *linphone_core_create_account_manager_services(LinphoneCore *core) {
 	return _linphone_account_manager_services_new(core);
+}
+
+void linphone_core_add_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data) {
+	shared_ptr<Core> coreCpp = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	belle_sip_source_t *timer =
+	    coreCpp->createTimer([hook, hook_data]() -> bool { return !!hook(hook_data); }, 20, "iterateHook");
+	belle_sip_object_unref(timer);
 }

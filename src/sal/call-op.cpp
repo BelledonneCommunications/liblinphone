@@ -901,6 +901,10 @@ void SalCallOp::processRequestEventCb(void *userCtx, const belle_sip_request_eve
 					lWarning() << "Replace header already set";
 				}
 
+				auto referredByHeader =
+				    belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_referred_by_t);
+				if (!op->mReferredBy) op->setReferredBy(referredByHeader);
+
 				SalReason reason = op->processBodyForInvite(request);
 				if (reason == SalReasonNone) {
 					auto callInfoHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Call-Info");
@@ -1844,7 +1848,7 @@ int SalCallOp::notifyReferState(SalCallOp *newCallOp) {
 			sendNotifyForRefer(100, "Trying");
 			break;
 		case BELLE_SIP_DIALOG_CONFIRMED:
-			sendNotifyForRefer(200, "Ok", "terminated", "reason=noresource");
+			sendNotifyForRefer(200, "Ok", "terminated", "noresource");
 			break;
 		case BELLE_SIP_DIALOG_TERMINATED:
 		case BELLE_SIP_DIALOG_NULL:
@@ -1875,6 +1879,10 @@ const char *SalCallOp::getRemoteTag() {
 void SalCallOp::setSdpHandling(SalOpSDPHandling handling) {
 	if (handling != SalOpSDPNormal) lInfo() << "Enabling special SDP handling for SalOp [" << this << "]!";
 	mSdpHandling = handling;
+}
+
+const SalAddress *SalCallOp::getReferredBy() const {
+	return mReferredBy ? (SalAddress *)BELLE_SIP_HEADER_ADDRESS(mReferredBy) : nullptr;
 }
 
 void SalCallOp::processRefer(const belle_sip_request_event_t *event,

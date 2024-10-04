@@ -59,17 +59,12 @@ public:
 	}
 	virtual void onCallSessionSetTerminated(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 	}
-	virtual void onCallSessionStartReferred(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
-	}
 	virtual void onCallSessionStateChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                       BCTBX_UNUSED(CallSession::State state),
 	                                       BCTBX_UNUSED(const std::string &message)) {
 	}
 	virtual void onCallSessionTransferStateChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                               BCTBX_UNUSED(CallSession::State state)) {
-	}
-	virtual void onCallSessionReferRequested(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
-	                                         BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
 	}
 	virtual void onCheckForAcceptation(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 	}

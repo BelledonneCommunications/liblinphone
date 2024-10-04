@@ -36,7 +36,8 @@ public:
 class LINPHONE_PUBLIC SalSubscribeOp : public SalEventOp {
 public:
 	SalSubscribeOp(Sal *sal);
-
+	/* create a server SubSubscribeOp that uses the dialog established by another op in order to send NOTIFY */
+	SalSubscribeOp(SalOp *other_op, const std::string &eventName);
 	int subscribe(const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
 	int unsubscribe() {
 		return SalOp::unsubscribe();

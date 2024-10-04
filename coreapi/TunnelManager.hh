@@ -11,18 +11,14 @@
 #ifndef __TUNNEL_CLIENT_MANAGER_H__
 #define __TUNNEL_CLIENT_MANAGER_H__
 #include "bctoolbox/crypto.h"
+#include "core/core.h"
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
+
+#include "tunnel/client.hh"
+#include "tunnel/udp_mirror.hh"
 #include <list>
 #include <string>
-#include <tunnel/client.hh>
-#include <tunnel/udp_mirror.hh>
-
-#ifndef USE_BELLESIP
-extern "C" {
-#include <eXosip2/eXosip_transport_hook.h>
-}
-#endif
 
 namespace belledonnecomm {
 /**
@@ -218,7 +214,6 @@ private:
 	customRecvfrom(struct _RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen);
 	static void tunnelCallback(bool connected, void *zis);
 	static void tunnelCallback2(TunnelDirection direction, bool connected, void *zis);
-	static bool_t sOnIterate(TunnelManager *zis);
 	static void sUdpMirrorClientCallback(bool result, void *data);
 	static void networkReachableCb(LinphoneCore *lc, bool_t reachable);
 	static void globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
@@ -271,6 +266,7 @@ private:
 	unsigned long mLongRunningTaskId;
 	State mTargetState;
 	State mState;
+	belle_sip_source_t *mIterateTimer;
 	bool mVerifyServerCertificate;
 	bool mStarted;
 	bool mAutodetectionRunning;
