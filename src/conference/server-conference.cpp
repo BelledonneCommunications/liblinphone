@@ -2783,7 +2783,7 @@ int ServerConference::startRecording(const std::string &path) {
 bool ServerConference::checkClientCompatibility(const shared_ptr<Call> &call,
                                                 const shared_ptr<Address> &remoteContactAddress,
                                                 bool incomingReceived) const {
-	if (remoteContactAddress->hasParam("+org.linphone.specs")) {
+	if (remoteContactAddress && remoteContactAddress->hasParam("+org.linphone.specs")) {
 		const auto linphoneSpecs = remoteContactAddress->getParamValue("+org.linphone.specs");
 		auto protocols = Utils::parseCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size() - 2));
 		if (auto attr = protocols.find("conference"); attr != protocols.end()) {

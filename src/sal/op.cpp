@@ -707,6 +707,12 @@ belle_sip_header_contact_t *SalOp::createContact(bool forceSipInstance) {
 	return contactHeader;
 }
 
+belle_sip_header_t *SalOp::createWarningHeader(const SalErrorInfo *ei, const SalAddress *serverAddr) {
+	ostringstream warningText;
+	warningText << "399 " << sal_address_get_domain(serverAddr) << " \"" << ei->warnings << "\"";
+	return belle_sip_header_create("Warning", warningText.str().c_str());
+}
+
 void SalOp::unlinkOpFromDialog(belle_sip_dialog_t *dialog) {
 	belle_sip_dialog_set_application_data(dialog, nullptr);
 	unref();

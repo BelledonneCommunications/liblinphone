@@ -301,6 +301,7 @@ protected:
 		return mRoot->createResponseFromRequest(request, code);
 	}
 	belle_sip_header_contact_t *createContact(bool forceSipInstance = false);
+	belle_sip_header_t *createWarningHeader(const SalErrorInfo *ei, const SalAddress *serverAddr);
 
 	void setOrUpdateDialog(belle_sip_dialog_t *dialog);
 	belle_sip_dialog_t *linkOpWithDialog(belle_sip_dialog_t *dialog);
