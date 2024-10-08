@@ -1451,10 +1451,16 @@ std::shared_ptr<AudioDevice> Core::getDefaultOutputAudioDevice() const {
 void Core::pushNotificationReceived(const string &callId, const string &payload, bool isCoreStarting) {
 	L_D();
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
+	// (Re) Start a background task for 20 seconds to ensure we have time to process the push
+	if (d->pushReceivedBackgroundTask.hasStarted()) {
+		d->pushReceivedBackgroundTask.restart();
+	} else {
+		d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
+	}
 
 	LinphoneCore *lc = getCCore();
 	bool found = false;
-	bool refreshedPushBackgroundTask = false;
+	bool keepBackgroundTaskUntilTimeout = false;
 	if (!callId.empty()) {
 		for (const auto &call : d->calls) {
 			auto callLog = call->getLog();
@@ -1475,14 +1481,8 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 		}
 
 		if (!found) {
-			lInfo() << "Call/Chat message with Call-ID [" << callId << "] not found, restarting background task";
-			// (Re) Start a background task for 20 seconds to ensure we have time to process the push
-			if (d->pushReceivedBackgroundTask.hasStarted()) {
-				d->pushReceivedBackgroundTask.restart();
-			} else {
-				d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
-			}
-			refreshedPushBackgroundTask = true;
+			lInfo() << "Call/Chat message with Call-ID [" << callId << "] not found";
+			keepBackgroundTaskUntilTimeout = true;
 
 			d->lastPushReceivedCallId = callId;
 			static_cast<PlatformHelpers *>(lc->platform_helper)->startPushService();
@@ -1504,8 +1504,7 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 
 	healNetworkConnections();
 
-	if (!refreshedPushBackgroundTask) {
-		// Stop any previous background task we might already have
+	if (!keepBackgroundTaskUntilTimeout) {
 		lInfo() << "Stopping push notification background task if it exists, doesn't seem necessary anymore";
 		d->pushReceivedBackgroundTask.stop();
 	}
