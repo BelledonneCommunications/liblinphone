@@ -927,7 +927,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_mwi_server_address(LinphoneAcco
                                                                     LinphoneAddress *address);
 
 /**
- * Get the Message Waiting Indication server address.
+ * Gets the Message Waiting Indication server address.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The Message Waiting Indication server address. @maybenil
  */
@@ -935,7 +935,23 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_account_params_get_mwi_server_address(const LinphoneAccountParams *params);
 
 /**
- * Check if encryption is mandatory for instant messages or not.
+ * Sets the Voicemail address.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param address The Voicemail address. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_voicemail_address(LinphoneAccountParams *params,
+                                                                   LinphoneAddress *address);
+
+/**
+ * Gets the Voicemail address.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The Voicemail address. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *
+linphone_account_params_get_voicemail_address(const LinphoneAccountParams *params);
+
+/**
+ * Checks if encryption is mandatory for instant messages or not.
  * @param params #LinphoneAccountParams object. @notnil
  * @return TRUE if encryption is mandatory; FALSE otherwise.
  */
@@ -943,7 +959,7 @@ LINPHONE_PUBLIC bool_t
 linphone_account_params_get_instant_messaging_encryption_mandatory(const LinphoneAccountParams *params);
 
 /**
- * Define whether the encryption of instant messages is mandatory. If it is, clear text messages will be denied.
+ * Defines whether the encryption of instant messages is mandatory. If it is, clear text messages will be denied.
  * @param params #LinphoneAccountParams object. @notnil
  * @param mandatory TRUE to set it mandatory; FALSE otherwise.
  */

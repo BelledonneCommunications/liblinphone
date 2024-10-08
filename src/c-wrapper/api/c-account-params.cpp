@@ -487,6 +487,15 @@ const LinphoneAddress *linphone_account_params_get_mwi_server_address(const Linp
 	return addr ? addr->toC() : nullptr;
 }
 
+void linphone_account_params_set_voicemail_address(LinphoneAccountParams *params, LinphoneAddress *address) {
+	AccountParams::toCpp(params)->setVoicemailAddress(address ? Address::toCpp(address)->getSharedFromThis() : nullptr);
+}
+
+const LinphoneAddress *linphone_account_params_get_voicemail_address(const LinphoneAccountParams *params) {
+	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getVoicemailAddress();
+	return addr ? addr->toC() : nullptr;
+}
+
 bool_t linphone_account_params_get_instant_messaging_encryption_mandatory(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->isInstantMessagingEncryptionMandatory();
 }

@@ -291,6 +291,11 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	if (!mwiServerUri.empty()) {
 		setMwiServerAddress(Address::create(mwiServerUri));
 	}
+	string voicemailUri = linphone_config_get_string(config, key, "voicemail_uri", "");
+	mVoicemailAddress = nullptr;
+	if (!voicemailUri.empty()) {
+		setVoicemailAddress(Address::create(voicemailUri));
+	}
 
 	mInstantMessagingEncryptionMandatory = !!linphone_config_get_bool(config, key, "im_encryption_mandatory", false);
 
@@ -377,6 +382,11 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	} else {
 		mMwiServerAddress = nullptr;
 	}
+	if (other.mVoicemailAddress) {
+		mVoicemailAddress = other.mVoicemailAddress->clone()->toSharedPtr();
+	} else {
+		mVoicemailAddress = nullptr;
+	}
 
 	mInstantMessagingEncryptionMandatory = other.mInstantMessagingEncryptionMandatory;
 }
@@ -389,6 +399,10 @@ AccountParams::~AccountParams() {
 	if (mMwiServerAddressCstr) {
 		ms_free(mMwiServerAddressCstr);
 		mMwiServerAddressCstr = nullptr;
+	}
+	if (mVoicemailAddressCstr) {
+		ms_free(mVoicemailAddressCstr);
+		mVoicemailAddressCstr = nullptr;
 	}
 	if (mCcmpServerUrlCstr) {
 		ms_free(mCcmpServerUrlCstr);
@@ -916,6 +930,14 @@ const std::shared_ptr<Address> &AccountParams::getMwiServerAddress() const {
 	return mMwiServerAddress;
 }
 
+void AccountParams::setVoicemailAddress(const std::shared_ptr<Address> &address) {
+	mVoicemailAddress = address;
+}
+
+const std::shared_ptr<Address> &AccountParams::getVoicemailAddress() const {
+	return mVoicemailAddress;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> serverAddr) {
@@ -995,6 +1017,17 @@ const char *AccountParams::getMwiServerAddressCstr() const {
 		mMwiServerAddressCstr = mMwiServerAddress->asStringUriOnlyCstr();
 	}
 	return mMwiServerAddressCstr;
+}
+
+const char *AccountParams::getVoicemailAddressCstr() const {
+	if (mVoicemailAddressCstr) {
+		ms_free(mVoicemailAddressCstr);
+		mVoicemailAddressCstr = nullptr;
+	}
+	if (mVoicemailAddress) {
+		mVoicemailAddressCstr = mVoicemailAddress->asStringUriOnlyCstr();
+	}
+	return mVoicemailAddressCstr;
 }
 
 bool AccountParams::isInstantMessagingEncryptionMandatory() const {
@@ -1094,6 +1127,9 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	linphone_config_set_string(config, key, "picture_uri", mPictureUri.c_str());
 	if (mMwiServerAddress) {
 		linphone_config_set_string(config, key, "mwi_server_uri", getMwiServerAddressCstr());
+	}
+	if (mVoicemailAddress) {
+		linphone_config_set_string(config, key, "voicemail_uri", getVoicemailAddressCstr());
 	}
 
 	linphone_config_set_bool(config, key, "im_encryption_mandatory", mInstantMessagingEncryptionMandatory);

@@ -95,6 +95,7 @@ public:
 	void setLimeAlgo(const std::string &algo);
 	void setPictureUri(const std::string &uri);
 	void setMwiServerAddress(const std::shared_ptr<Address> &address);
+	void setVoicemailAddress(const std::shared_ptr<Address> &address);
 	void setInstantMessagingEncryptionMandatory(bool mandatory);
 
 	// Getters
@@ -149,6 +150,7 @@ public:
 	const std::string &getLimeAlgo() const;
 	const std::string &getPictureUri() const;
 	const std::shared_ptr<Address> &getMwiServerAddress() const;
+	const std::shared_ptr<Address> &getVoicemailAddress() const;
 	bool isInstantMessagingEncryptionMandatory() const;
 
 	// Other
@@ -167,6 +169,7 @@ private:
 	void updateRoutesCString();
 	void setCustomContact(const std::string &contact);
 	const char *getMwiServerAddressCstr() const;
+	const char *getVoicemailAddressCstr() const;
 
 	int mExpires;
 	int mQualityReportingInterval;
@@ -191,6 +194,7 @@ private:
 
 	mutable char *mConferenceFactoryAddressCstr = nullptr;
 	mutable char *mMwiServerAddressCstr = nullptr;
+	mutable char *mVoicemailAddressCstr = nullptr;
 	mutable char *mCcmpServerUrlCstr = nullptr;
 
 	std::string mInternationalPrefix;
@@ -229,6 +233,7 @@ private:
 	std::shared_ptr<Address> mAudioVideoConferenceFactoryAddress = nullptr;
 	std::shared_ptr<Address> mCustomContact = nullptr;
 	std::shared_ptr<Address> mMwiServerAddress = nullptr;
+	std::shared_ptr<Address> mVoicemailAddress = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
