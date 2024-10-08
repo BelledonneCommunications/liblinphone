@@ -802,17 +802,18 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 	// conference ID. Note that the conference ID's local address may not have the "gr" parameter hence this may lead to
 	// issues such as IMDN not received
 	std::shared_ptr<Address> localAddress = nullptr;
-	if (account) {
+	if (account && account->getContactAddress()) {
 		localAddress = account->getContactAddress();
 	} else {
 		lInfo() << "It looks that chatroom " << chatRoom << " with ID " << conferenceId
-		        << " has no account associated to, setting conference ID's local address as message local address";
+		        << " has no account associated to or the contact address is not available yet, setting conference ID's "
+		           "local address as message local address";
 		localAddress = conferenceId.getLocalAddress();
 	}
 	const auto peerAddress = conferenceId.getPeerAddress();
 	const bool isBasicChatRoom =
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
-	if (isBasicChatRoom) {
+	if (isBasicChatRoom && localAddress) {
 		localAddress = Address::create(localAddress->getUriWithoutGruu());
 	}
 	if (direction == ChatMessage::Direction::Outgoing) {
