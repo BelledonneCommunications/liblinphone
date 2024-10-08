@@ -199,6 +199,12 @@ const bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *accou
 	return Account::toCpp(account)->getChatRoomsCList();
 }
 
+bctbx_list_t *linphone_account_filter_chat_rooms(const LinphoneAccount *account, const char *filter) {
+	AccountLogContextualizer logContextualizer(account);
+	const auto list = Account::toCpp(account)->filterChatRooms(L_C_TO_STRING(filter));
+	return ChatRoom::getCListFromCppList(list);
+}
+
 int linphone_account_get_missed_calls_count(const LinphoneAccount *account) {
 	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getMissedCallsCount();

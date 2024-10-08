@@ -32,6 +32,7 @@
 #include "conference/session/tone-manager.h"
 #include "core.h"
 #include "db/main-db.h"
+#include "friend/friend-list.h"
 #include "object/object-p.h"
 #include "sal/call-op.h"
 #include "utils/background-task.h"
@@ -232,6 +233,8 @@ private:
 	std::string logLabel;
 	LinphoneCodecPriorityPolicy videoCodecPriorityPolicy = LinphoneCodecPriorityPolicyAuto;
 	std::unique_ptr<HttpClient> httpClient;
+
+	std::list<std::shared_ptr<FriendList>> friendLists;
 
 	L_DECLARE_PUBLIC(Core);
 };

@@ -36,6 +36,7 @@
 #include "conference/encryption/ekt-info.h"
 #endif // HAVE_ADVANCED_IM
 #include "event-log/event-log.h"
+#include "friend/friend-list.h"
 #include "linphone/enums/c-enums.h"
 #include "linphone/types.h"
 #include "object/object.h"
@@ -438,6 +439,15 @@ public:
 	 * so we have to destroy the HttpClient before the belle_sip_stack_t is destroyed.
 	 * This is to be removed when C Core and C++ Core are unified */
 	void stopHttpClient();
+
+	// ---------------------------------------------------------------------------
+	// Friend Lists
+	// ---------------------------------------------------------------------------
+
+	void addFriendList(const std::shared_ptr<FriendList> &list);
+	void removeFriendList(const std::shared_ptr<FriendList> &list);
+	void clearFriendLists();
+	const std::list<std::shared_ptr<FriendList>> &getFriendLists() const;
 
 private:
 	Core();

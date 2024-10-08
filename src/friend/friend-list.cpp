@@ -224,9 +224,15 @@ void FriendList::exportFriendsAsVcard4File(const std::string &vcardFile) const {
 }
 
 std::shared_ptr<Friend> FriendList::findFriendByAddress(const std::shared_ptr<const Address> &address) const {
-	std::shared_ptr<Address> cleanAddress = address->clone()->toSharedPtr();
-	if (cleanAddress->hasUriParam("gr")) cleanAddress->removeUriParam("gr");
-	std::shared_ptr<Friend> lf = findFriendByUri(cleanAddress->asStringUriOnly());
+	string cleanUri;
+	if (address->hasUriParam("gr")) {
+		Address cleanAddress = *address->clone();
+		cleanAddress.removeUriParam("gr");
+		cleanUri = cleanAddress.asStringUriOnly();
+	} else {
+		cleanUri = address->asStringUriOnly();
+	}
+	std::shared_ptr<Friend> lf = findFriendByUri(cleanUri);
 	return lf;
 }
 

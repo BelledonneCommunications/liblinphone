@@ -916,6 +916,7 @@ int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
 
 	// First remove all the orphan friends from the DB (friends that are not in a friend list)
 	mainDb->deleteOrphanFriends();
+	lc->cppPtr->clearFriendLists();
 
 	std::list<std::shared_ptr<FriendList>> friendLists = mainDb->getFriendLists();
 	if (!friendLists.empty()) {

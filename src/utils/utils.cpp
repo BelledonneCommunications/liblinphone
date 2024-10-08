@@ -140,10 +140,10 @@ bool Utils::stob(const string &str) {
 
 string Utils::replaceAll(const string &source, const string &pattern, const string &replaceBy) {
 	string copy = source;
-	size_t pos = copy.find(pattern); 
-	while (pos != string::npos) { 
+	size_t pos = copy.find(pattern);
+	while (pos != string::npos) {
 		copy.replace(pos, pattern.size(), replaceBy);
-		pos = copy.find(pattern, pos + replaceBy.size()); 
+		pos = copy.find(pattern, pos + replaceBy.size());
 	}
 	return copy;
 }
@@ -152,6 +152,12 @@ string Utils::stringToLower(const string &str) {
 	string result(str.size(), ' ');
 	transform(str.cbegin(), str.cend(), result.begin(), ::tolower);
 	return result;
+}
+
+bool Utils::containsInsensitive(const string &haystack, const string &needle) {
+	string lowercaseHaystack = stringToLower(haystack);
+	string lowercaseNeedle = stringToLower(needle);
+	return lowercaseHaystack.find(lowercaseNeedle) != std::string::npos;
 }
 
 std::vector<string> Utils::stringToLower(const std::vector<string> &strs) {

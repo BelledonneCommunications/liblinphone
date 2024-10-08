@@ -114,6 +114,7 @@ public:
 	int getUnreadChatMessageCount() const;
 	const std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms() const;
 	const bctbx_list_t *getChatRoomsCList() const;
+	const std::list<std::shared_ptr<AbstractChatRoom>> filterChatRooms(const std::string &filter) const;
 
 	int getMissedCallsCount() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogs() const;

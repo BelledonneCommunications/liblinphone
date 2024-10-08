@@ -3840,7 +3840,11 @@ LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	bctbx_list_t *elem = bctbx_list_find(lc->friends_lists, list);
 	if (elem == NULL) return;
-	FriendList::toCpp(list)->removeFromDb();
+
+	FriendList *cppList = FriendList::toCpp(list);
+	lc->cppPtr->removeFriendList(cppList->getSharedFromThis());
+	cppList->removeFromDb();
+
 	linphone_core_notify_friend_list_removed(lc, list);
 	linphone_friend_list_unref(list);
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
@@ -3860,7 +3864,11 @@ void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	CoreLogContextualizer logContextualizer(lc);
 	lc->friends_lists = bctbx_list_append(lc->friends_lists, linphone_friend_list_ref(list));
-	FriendList::toCpp(list)->saveInDb();
+
+	FriendList *cppList = FriendList::toCpp(list);
+	lc->cppPtr->addFriendList(cppList->getSharedFromThis());
+	cppList->saveInDb();
+
 	linphone_core_notify_friend_list_created(lc, list);
 }
 

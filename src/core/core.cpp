@@ -2955,4 +2955,28 @@ string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
 }
 #endif // HAVE_ADVANCED_IM
 
+void Core::addFriendList(const shared_ptr<FriendList> &list) {
+	L_D();
+
+	d->friendLists.push_back(list);
+}
+
+void Core::removeFriendList(const shared_ptr<FriendList> &list) {
+	L_D();
+
+	d->friendLists.remove(list);
+}
+
+void Core::clearFriendLists() {
+	L_D();
+
+	d->friendLists.clear();
+}
+
+const list<shared_ptr<FriendList>> &Core::getFriendLists() const {
+	L_D();
+
+	return d->friendLists;
+}
+
 LINPHONE_END_NAMESPACE
