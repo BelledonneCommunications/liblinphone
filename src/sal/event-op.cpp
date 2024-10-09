@@ -442,15 +442,6 @@ void SalPublishOp::publishProcessRequestEventCb(void *userCtx, const belle_sip_r
 		return;
 	}
 
-	if (strcasecmp(belle_sip_header_get_unparsed_value(header), "Conference") != 0 &&
-	    !op->mRoot->isEnabledTestFeatures()) {
-		lWarning() << "Unsuported  event : " << belle_sip_header_get_unparsed_value(header);
-		auto response = op->createResponseFromRequest(request, 489);
-		belle_sip_server_transaction_send_response(serverTransaction, response);
-		if (!op->mDialog) op->release();
-		return;
-	}
-
 	/* 3. The ESC examines the SIP-If-Match header field of the PUBLISH request. */
 
 	belle_sip_header_t *sipIfMatch = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "SIP-If-Match");
