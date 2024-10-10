@@ -77,6 +77,10 @@ bool CorePrivate::canWeAddCall() const {
 	return false;
 }
 
+void CorePrivate::addReleasingCall(const shared_ptr<Call> &call) {
+	mReleasingCalls.push_back(call);
+}
+
 bool CorePrivate::inviteReplacesABrokenCall(SalCallOp *op) {
 	CallSession *replacedSession = nullptr;
 	SalCallOp *replacedOp = op->getReplaces();
@@ -96,7 +100,11 @@ bool CorePrivate::inviteReplacesABrokenCall(SalCallOp *op) {
 
 bool CorePrivate::isAlreadyInCallWithAddress(const std::shared_ptr<Address> &addr) const {
 	for (const auto &call : calls) {
-		if (call->isOpConfigured() && call->getRemoteAddress()->weakEqual(*addr)) return true;
+		const auto &state = call->getState();
+		// The core can accept calls from the same User Agent if the actual one is in the End or Released state
+		if (call->isOpConfigured() && call->getRemoteAddress()->weakEqual(*addr) &&
+		    (state != CallSession::State::End) && (state != CallSession::State::Released))
+			return true;
 	}
 	return false;
 }
@@ -143,16 +151,24 @@ int CorePrivate::removeCall(const shared_ptr<Call> &call) {
 	L_ASSERT(call);
 	auto iter = find(calls.begin(), calls.end(), call);
 	if (iter == calls.end()) {
-		lWarning() << "Could not find the call (local address " << call->getLocalAddress()->toString()
-		           << " remote address " << call->getRemoteAddress()->toString() << ") to remove";
+		lWarning() << "Could not find the call (local address " << *call->getLocalAddress() << " remote address "
+		           << *call->getRemoteAddress() << ") to remove";
 		return -1;
 	}
-	lInfo() << "Removing the call (local address " << call->getLocalAddress()->toString() << " remote address "
+	lInfo() << "Removing the call (local address " << *call->getLocalAddress() << " remote address "
 	        << (call->getRemoteAddress() ? call->getRemoteAddress()->toString() : "Unknown")
 	        << ") from the list attached to the core";
-
 	calls.erase(iter);
 	return 0;
+}
+
+void CorePrivate::removeReleasingCall(const shared_ptr<Call> &call) {
+	L_ASSERT(call);
+	auto iter = find(mReleasingCalls.begin(), mReleasingCalls.end(), call);
+	if (iter == mReleasingCalls.end()) {
+		return;
+	}
+	mReleasingCalls.erase(iter);
 }
 
 #ifndef _MSC_VER
@@ -260,7 +276,7 @@ bool Core::areSoundResourcesLocked() const {
 shared_ptr<Call> Core::getCallByRemoteAddress(const std::shared_ptr<const Address> &addr) const {
 	L_D();
 	for (const auto &call : d->calls) {
-		if (call->getRemoteAddress()->weakEqual(*addr)) return call;
+		if (call->getRemoteAddress()->weakEqual(*addr) && (call->getState() != CallSession::State::End)) return call;
 	}
 	return nullptr;
 }

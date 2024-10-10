@@ -93,8 +93,8 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 		// or irrecoverable errors in the application.
 		if ((state == CallSession::State::End) || (state == CallSession::State::Error)) {
 			if (newState != CallSession::State::Released) {
-				lFatal() << "Abnormal call resurection from " << Utils::toString(state) << " to "
-				         << Utils::toString(newState) << " , aborting";
+				lFatal() << "Abnormal resurection from " << Utils::toString(state) << " to "
+				         << Utils::toString(newState) << " of call session [" << q << "], aborting";
 				return;
 			}
 		} else if ((newState == CallSession::State::Released) && (prevState != CallSession::State::Error) &&
@@ -130,7 +130,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 
 							if (conference) {
 								// The call is for a conference stored in the core
-								ref->addListener(conference.get());
+								ref->addListener(conference);
 							}
 						} else if (op->getRemoteContactAddress()) {
 							std::shared_ptr<Address> remoteContactAddress = Address::create();
@@ -892,19 +892,26 @@ LinphoneStatus CallSessionPrivate::startUpdate(const CallSession::UpdateMethod m
 }
 
 void CallSessionPrivate::terminate() {
-	if ((state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia)) {
-		LinphoneReason reason = linphone_error_info_get_reason(ei);
-		if (reason == LinphoneReasonNone) {
-			linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
-			nonOpError = true;
-		} else if (reason != LinphoneReasonNotAnswered) {
-			nonOpError = true;
-		}
+	switch (state) {
+		case CallSession::State::IncomingReceived:
+		case CallSession::State::IncomingEarlyMedia: {
+			LinphoneReason reason = linphone_error_info_get_reason(ei);
+			if (reason == LinphoneReasonNone) {
+				linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
+				nonOpError = true;
+			} else if (reason != LinphoneReasonNotAnswered) {
+				nonOpError = true;
+			}
+		} break;
+		default:
+			break;
 	}
 
 	setState(CallSession::State::End, "Call terminated");
 
-	if (op && !op->hasDialog()) {
+	// The op pointer might be NULL if the core is still gathering the ICE candidates by the time the call session is
+	// terminated
+	if (!op || (op && !op->hasDialog())) {
 		setState(CallSession::State::Released, "Call released");
 	}
 }
@@ -1282,11 +1289,10 @@ void CallSessionPrivate::repairIfBroken() {
 
 // =============================================================================
 
-CallSession::CallSession(const shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener)
+CallSession::CallSession(const shared_ptr<Core> &core, const CallSessionParams *params)
     : Object(*new CallSessionPrivate), CoreAccessor(core) {
 	L_D();
 	getCore()->getPrivate()->registerListener(d);
-	addListener(listener);
 	if (params) d->setParams(new CallSessionParams(*params));
 	d->init();
 	lInfo() << "New CallSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version()
@@ -1314,22 +1320,27 @@ CallSession::~CallSession() {
 
 // -----------------------------------------------------------------------------
 
-void CallSession::addListener(CallSessionListener *listener) {
+void CallSession::addListener(std::shared_ptr<CallSessionListener> listener) {
 	L_D();
 	if (listener) {
 		// Avoid adding twice the same listener
 		// This should never happen but just in case....
-		const auto it = std::find(d->listeners.cbegin(), d->listeners.cend(), listener);
+		const auto it = std::find_if(d->listeners.cbegin(), d->listeners.cend(),
+		                             [&listener](const auto &l) { return l.lock() == listener; });
 		if (it == d->listeners.cend()) {
 			d->listeners.push_back(listener);
 		}
 	}
 }
 
-void CallSession::removeListener(CallSessionListener *listener) {
+void CallSession::removeListener(const std::shared_ptr<CallSessionListener> &listener) {
 	L_D();
 	if (listener) {
-		d->listeners.remove(listener);
+		const auto it = std::find_if(d->listeners.cbegin(), d->listeners.cend(),
+		                             [&listener](const auto &l) { return l.lock() == listener; });
+		if (it != d->listeners.cend()) {
+			d->listeners.erase(it);
+		}
 	}
 }
 
@@ -1688,9 +1699,6 @@ void CallSession::startBasicIncomingNotification(bool notifyRinging) {
 	d->notifyRinging = notifyRinging;
 	notifyIncomingCallSessionNotified();
 	notifyBackgroundTaskToBeStarted();
-	/* Prevent the CallSession from being destroyed while we are notifying, if the user declines within the state
-	 * callback */
-	shared_ptr<CallSession> ref = getSharedFromThis();
 }
 
 void CallSession::startPushIncomingNotification() {
@@ -2231,8 +2239,11 @@ bool CallSession::areSoundResourcesAvailable() {
 	auto listeners = d->listeners;
 	bool available = (listeners.size() > 0);
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		available &= listener->areSoundResourcesAvailable(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			available &= listenerRef->areSoundResourcesAvailable(getSharedFromThis());
+		}
 	}
 	return available;
 }
@@ -2243,8 +2254,11 @@ bool CallSession::isPlayingRingbackTone() {
 	auto listeners = d->listeners;
 	bool playing = (listeners.size() > 0);
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		playing &= listener->isPlayingRingbackTone(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			playing &= listenerRef->isPlayingRingbackTone(getSharedFromThis());
+		}
 	}
 	return playing;
 }
@@ -2254,8 +2268,11 @@ void CallSession::notifyCameraNotWorking(const char *cameraName) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCameraNotWorking(getSharedFromThis(), cameraName);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCameraNotWorking(getSharedFromThis(), cameraName);
+		}
 	}
 }
 
@@ -2264,8 +2281,11 @@ void CallSession::notifyResetFirstVideoFrameDecoded() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onResetFirstVideoFrameDecoded(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onResetFirstVideoFrameDecoded(getSharedFromThis());
+		}
 	}
 }
 
@@ -2274,8 +2294,11 @@ void CallSession::notifyFirstVideoFrameDecoded() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onFirstVideoFrameDecoded(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onFirstVideoFrameDecoded(getSharedFromThis());
+		}
 	}
 }
 
@@ -2284,8 +2307,11 @@ void CallSession::notifySnapshotTaken(const char *filepath) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onSnapshotTaken(getSharedFromThis(), filepath);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onSnapshotTaken(getSharedFromThis(), filepath);
+		}
 	}
 }
 
@@ -2294,8 +2320,11 @@ void CallSession::notifyRealTimeTextCharacterReceived(RealtimeTextReceivedCharac
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onRealTimeTextCharacterReceived(getSharedFromThis(), data);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onRealTimeTextCharacterReceived(getSharedFromThis(), data);
+		}
 	}
 }
 
@@ -2304,8 +2333,11 @@ void CallSession::notifyLossOfMediaDetected() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onLossOfMediaDetected(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onLossOfMediaDetected(getSharedFromThis());
+		}
 	}
 }
 
@@ -2314,8 +2346,11 @@ void CallSession::notifySendMasterKeyChanged(const std::string key) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onSendMasterKeyChanged(getSharedFromThis(), key);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onSendMasterKeyChanged(getSharedFromThis(), key);
+		}
 	}
 }
 
@@ -2324,7 +2359,10 @@ void CallSession::notifyReceiveMasterKeyChanged(const std::string key) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		listener->onReceiveMasterKeyChanged(getSharedFromThis(), key);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			listenerRef->onReceiveMasterKeyChanged(getSharedFromThis(), key);
+		}
 	}
 }
 
@@ -2333,8 +2371,11 @@ void CallSession::notifyUpdateMediaInfoForReporting(const int type) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onUpdateMediaInfoForReporting(getSharedFromThis(), type);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onUpdateMediaInfoForReporting(getSharedFromThis(), type);
+		}
 	}
 }
 
@@ -2343,8 +2384,11 @@ void CallSession::notifyRtcpUpdateForReporting(SalStreamType type) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onRtcpUpdateForReporting(getSharedFromThis(), type);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onRtcpUpdateForReporting(getSharedFromThis(), type);
+		}
 	}
 }
 
@@ -2353,8 +2397,11 @@ void CallSession::notifyStatsUpdated(const shared_ptr<CallStats> &stats) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onStatsUpdated(getSharedFromThis(), stats);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onStatsUpdated(getSharedFromThis(), stats);
+		}
 	}
 }
 
@@ -2363,8 +2410,11 @@ void CallSession::notifyTmmbrReceived(const int index, const int max_bitrate) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onTmmbrReceived(getSharedFromThis(), index, max_bitrate);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onTmmbrReceived(getSharedFromThis(), index, max_bitrate);
+		}
 	}
 }
 
@@ -2373,8 +2423,11 @@ void CallSession::notifyAlert(std::shared_ptr<Alert> &alert) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onAlertNotified(alert);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onAlertNotified(alert);
+		}
 	}
 }
 
@@ -2383,8 +2436,11 @@ void CallSession::notifyCallSessionStateChanged(CallSession::State newState, con
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionStateChanged(getSharedFromThis(), newState, message);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionStateChanged(getSharedFromThis(), newState, message);
+		}
 	}
 }
 
@@ -2393,8 +2449,11 @@ void CallSession::notifyCallSessionTransferStateChanged(CallSession::State newSt
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionTransferStateChanged(getSharedFromThis(), newState);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionTransferStateChanged(getSharedFromThis(), newState);
+		}
 	}
 }
 
@@ -2403,8 +2462,11 @@ void CallSession::notifyCallSessionStateChangedForReporting() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionStateChangedForReporting(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionStateChangedForReporting(getSharedFromThis());
+		}
 	}
 }
 
@@ -2413,8 +2475,11 @@ void CallSession::notifyCallSessionEarlyFailed(LinphoneErrorInfo *ei) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+		}
 	}
 }
 
@@ -2423,8 +2488,11 @@ void CallSession::notifyStartRingtone() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onStartRingtone(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onStartRingtone(getSharedFromThis());
+		}
 	}
 }
 
@@ -2433,8 +2501,11 @@ void CallSession::notifyIncomingCallSessionTimeoutCheck(int elapsed, bool oneSec
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onIncomingCallSessionTimeoutCheck(getSharedFromThis(), elapsed, oneSecondElapsed);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onIncomingCallSessionTimeoutCheck(getSharedFromThis(), elapsed, oneSecondElapsed);
+		}
 	}
 }
 
@@ -2443,8 +2514,11 @@ void CallSession::notifyPushCallSessionTimeoutCheck(int elapsed) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onPushCallSessionTimeoutCheck(getSharedFromThis(), elapsed);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onPushCallSessionTimeoutCheck(getSharedFromThis(), elapsed);
+		}
 	}
 }
 
@@ -2453,8 +2527,11 @@ void CallSession::notifyIncomingCallSessionNotified() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onIncomingCallSessionNotified(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onIncomingCallSessionNotified(getSharedFromThis());
+		}
 	}
 }
 
@@ -2463,8 +2540,11 @@ void CallSession::notifyIncomingCallSessionStarted() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onIncomingCallSessionStarted(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onIncomingCallSessionStarted(getSharedFromThis());
+		}
 	}
 }
 
@@ -2473,8 +2553,11 @@ void CallSession::notifyCallSessionAccepted() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionAccepted(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionAccepted(getSharedFromThis());
+		}
 	}
 }
 
@@ -2483,8 +2566,11 @@ void CallSession::notifyCallSessionAccepting() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionAccepting(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionAccepting(getSharedFromThis());
+		}
 	}
 }
 
@@ -2493,8 +2579,11 @@ void CallSession::notifyCallSessionSetTerminated() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionSetTerminated(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionSetTerminated(getSharedFromThis());
+		}
 	}
 }
 
@@ -2503,8 +2592,11 @@ void CallSession::notifyCallSessionSetReleased() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCallSessionSetReleased(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCallSessionSetReleased(getSharedFromThis());
+		}
 	}
 }
 
@@ -2513,8 +2605,11 @@ void CallSession::notifyCheckForAcceptation() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onCheckForAcceptation(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onCheckForAcceptation(getSharedFromThis());
+		}
 	}
 }
 
@@ -2523,8 +2618,11 @@ void CallSession::notifyGoClearAckSent() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onGoClearAckSent();
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onGoClearAckSent();
+		}
 	}
 }
 
@@ -2533,8 +2631,11 @@ void CallSession::notifyAckBeingSent(LinphoneHeaders *headers) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onAckBeingSent(getSharedFromThis(), headers);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onAckBeingSent(getSharedFromThis(), headers);
+		}
 	}
 }
 
@@ -2543,8 +2644,11 @@ void CallSession::notifyAckReceived(LinphoneHeaders *headers) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onAckReceived(getSharedFromThis(), headers);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onAckReceived(getSharedFromThis(), headers);
+		}
 	}
 }
 
@@ -2553,8 +2657,11 @@ void CallSession::notifyBackgroundTaskToBeStarted() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onBackgroundTaskToBeStarted(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onBackgroundTaskToBeStarted(getSharedFromThis());
+		}
 	}
 }
 
@@ -2563,8 +2670,11 @@ void CallSession::notifyBackgroundTaskToBeStopped() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onBackgroundTaskToBeStopped(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onBackgroundTaskToBeStopped(getSharedFromThis());
+		}
 	}
 }
 
@@ -2573,8 +2683,11 @@ void CallSession::notifyInfoReceived(LinphoneInfoMessage *info) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onInfoReceived(getSharedFromThis(), info);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onInfoReceived(getSharedFromThis(), info);
+		}
 	}
 }
 
@@ -2583,8 +2696,11 @@ void CallSession::notifySetCurrentSession() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onSetCurrentSession(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onSetCurrentSession(getSharedFromThis());
+		}
 	}
 }
 
@@ -2593,8 +2709,11 @@ void CallSession::notifyResetCurrentSession() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onResetCurrentSession(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onResetCurrentSession(getSharedFromThis());
+		}
 	}
 }
 
@@ -2603,8 +2722,11 @@ void CallSession::notifyDtmfReceived(char dtmf) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onDtmfReceived(getSharedFromThis(), dtmf);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onDtmfReceived(getSharedFromThis(), dtmf);
+		}
 	}
 }
 
@@ -2613,8 +2735,11 @@ void CallSession::notifyRemoteRecording(bool isRecording) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onRemoteRecording(getSharedFromThis(), isRecording);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onRemoteRecording(getSharedFromThis(), isRecording);
+		}
 	}
 }
 
@@ -2623,8 +2748,11 @@ void CallSession::notifySecurityLevelDowngraded() {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onSecurityLevelDowngraded(getSharedFromThis());
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onSecurityLevelDowngraded(getSharedFromThis());
+		}
 	}
 }
 
@@ -2633,8 +2761,11 @@ void CallSession::notifyEncryptionChanged(bool activated, const std::string &aut
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onEncryptionChanged(getSharedFromThis(), activated, authToken);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onEncryptionChanged(getSharedFromThis(), activated, authToken);
+		}
 	}
 }
 
@@ -2643,8 +2774,11 @@ void CallSession::notifyAuthenticationTokenVerified(bool verified) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onAuthenticationTokenVerified(getSharedFromThis(), verified);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onAuthenticationTokenVerified(getSharedFromThis(), verified);
+		}
 	}
 }
 
@@ -2653,8 +2787,11 @@ void CallSession::notifyVideoDisplayErrorOccurred(int errorCode) {
 	// Copy list of listeners as the callback might delete one
 	auto listeners = d->listeners;
 	for (const auto &listener : listeners) {
-		auto logContext = listener->getLogContextualizer();
-		listener->onVideoDisplayErrorOccurred(getSharedFromThis(), errorCode);
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onVideoDisplayErrorOccurred(getSharedFromThis(), errorCode);
+		}
 	}
 }
 

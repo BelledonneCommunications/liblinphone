@@ -755,8 +755,10 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			return focus.getCore().getChatRooms().size() == 1;
 		}));
 
+		LinphoneAddress *confAddr = NULL;
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			linphone_chat_room_set_user_data(chatRoom->toC(), marie.getCMgr());
+			confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(chatRoom->toC()));
 		}
 
 		for (const auto &client : shutdownNetworkClients) {
@@ -784,7 +786,6 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 
 		check_create_chat_room_client_side(coresList, marie.getCMgr(), marieCr, &initialMarieStats,
 		                                   participantsAddresses, initialSubject, 2);
-		LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 		// Check that the chat room is correctly created on Pauline's and Michelle's side and that the participants are
 		// added
 		LinphoneChatRoom *michelleCr = check_creation_chat_room_client_side(

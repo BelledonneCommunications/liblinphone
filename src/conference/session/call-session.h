@@ -102,9 +102,9 @@ public:
 
 	static const std::map<PredefinedSubjectType, std::string> predefinedSubject;
 
-	CallSession(const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
-	void addListener(CallSessionListener *listener);
-	void removeListener(CallSessionListener *listener);
+	CallSession(const std::shared_ptr<Core> &core, const CallSessionParams *params);
+	void addListener(std::shared_ptr<CallSessionListener> listener);
+	void removeListener(const std::shared_ptr<CallSessionListener> &listener);
 	void clearListeners();
 	void setStateToEnded();
 	~CallSession();

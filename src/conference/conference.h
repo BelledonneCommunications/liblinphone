@@ -342,7 +342,7 @@ public:
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
 	                    const std::shared_ptr<Address> &myAddress,
-	                    CallSessionListener *callSessionListener,
+	                    std::shared_ptr<CallSessionListener> callSessionListener,
 	                    const std::shared_ptr<const ConferenceParams> params);
 
 	std::list<std::shared_ptr<Participant>> mParticipants;
@@ -353,7 +353,7 @@ protected:
 
 	std::list<std::shared_ptr<ConferenceListenerInterface>> mConfListeners;
 
-	CallSessionListener *mCallSessionListener = nullptr;
+	std::weak_ptr<CallSessionListener> mCallSessionListener;
 
 	std::map<ConferenceMediaCapabilities, bool> getMediaCapabilities() const;
 

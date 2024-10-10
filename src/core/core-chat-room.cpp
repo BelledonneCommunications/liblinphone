@@ -444,14 +444,14 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::shared_ptr<c
 void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom);
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
-	auto it = chatRoomsById.find(conferenceId);
-	L_ASSERT(it == chatRoomsById.end() || it->second == chatRoom);
-	if (it == chatRoomsById.end()) {
+	auto it = mChatRoomsById.find(conferenceId);
+	L_ASSERT(it == mChatRoomsById.end() || it->second == chatRoom);
+	if (it == mChatRoomsById.end()) {
 		// Remove chat room from workaround cache.
 		if (linphone_core_get_global_state(getCCore()) != LinphoneGlobalStartup) {
 			lInfo() << "Insert chat room " << chatRoom << " (id " << conferenceId << ") to core map";
 		}
-		chatRoomsById[conferenceId] = chatRoom;
+		mChatRoomsById[conferenceId] = chatRoom;
 	}
 }
 
@@ -464,7 +464,7 @@ void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatR
 }
 
 void CorePrivate::loadChatRooms() {
-	chatRoomsById.clear();
+	mChatRoomsById.clear();
 #ifdef HAVE_ADVANCED_IM
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
 #endif
@@ -495,7 +495,7 @@ void CorePrivate::loadChatRooms() {
 			}
 #endif // HAVE_DB_STORAGE
 			const ConferenceId &conferenceId = conference->getConferenceId();
-			conferenceById.insert(std::make_pair(conferenceId, conference));
+			mConferenceById.insert(std::make_pair(conferenceId, conference));
 		}
 
 		// TODO FIXME: Remove later when devices for friends will be notified through presence
@@ -685,8 +685,8 @@ void CorePrivate::updateChatRoomConferenceId(const shared_ptr<AbstractChatRoom> 
 	const ConferenceId &newConferenceId = chatRoom->getConferenceId();
 	lInfo() << "Chat room [" << oldConferenceId << "] has been exhumed into [" << newConferenceId << "]";
 
-	conferenceById.erase(oldConferenceId);
-	conferenceById[newConferenceId] = chatRoom->getConference();
+	mConferenceById.erase(oldConferenceId);
+	mConferenceById[newConferenceId] = chatRoom->getConference();
 
 	mainDb->updateChatRoomConferenceId(oldConferenceId, newConferenceId);
 #endif
@@ -726,14 +726,14 @@ const std::shared_ptr<Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(co
 std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList() const {
 	L_D();
 	std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
-	for (const auto &[id, conference] : d->conferenceById) {
+	for (const auto &[id, conference] : d->mConferenceById) {
 		const auto &chatRoom = conference->getChatRoom();
 		if (chatRoom) {
 			chatRooms.push_back(chatRoom);
 		}
 	}
 
-	for (const auto &chatRoomPair : d->chatRoomsById) {
+	for (const auto &chatRoomPair : d->mChatRoomsById) {
 		const auto &chatRoom = chatRoomPair.second;
 		if (chatRoom) {
 			chatRooms.push_back(chatRoom);
@@ -911,8 +911,8 @@ void Core::deleteChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	auto chatRoomInCoreMap = core->findChatRoom(conferenceId);
 	if (chatRoomInCoreMap) {
 		CorePrivate *d = core->getPrivate();
-		d->conferenceById.erase(conferenceId);
-		d->chatRoomsById.erase(conferenceId);
+		d->mConferenceById.erase(conferenceId);
+		d->mChatRoomsById.erase(conferenceId);
 		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
 	} else {
 		lError() << "Unable to delete chat room with conference ID " << conferenceId << " because it cannot be found.";

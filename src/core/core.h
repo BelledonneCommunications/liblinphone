@@ -366,7 +366,13 @@ public:
 	                                                              const std::shared_ptr<const Address> &localAddr,
 	                                                              const std::list<Address> &participants,
 	                                                              const std::shared_ptr<Address> &confAddr,
-	                                                              CallSessionListener *listener);
+	                                                              std::shared_ptr<CallSessionListener> listener);
+
+	void removeConferencePendingCreation(const std::shared_ptr<Conference> &conference);
+	void addConferencePendingCreation(const std::shared_ptr<Conference> &conference);
+
+	void removeConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler);
+	void addConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler);
 
 	bool isCurrentlyAggregatingChatMessages();
 	// ---------------------------------------------------------------------------
@@ -470,6 +476,8 @@ private:
 	int loadPlugins(const std::string &dir);
 	bool_t dlopenPlugin(const std::string &plugin_path, const std::string plugin_name);
 
+	std::list<std::shared_ptr<Conference>> mConferencesPendingCreation;
+	std::list<std::shared_ptr<ConferenceScheduler>> mSipConferenceSchedulers;
 	std::map<std::string, std::shared_ptr<LinphonePrivate::EventPublish>> mPublishByEtag;
 
 	mutable ListHolder<AbstractChatRoom> mChatRooms;

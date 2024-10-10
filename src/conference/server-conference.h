@@ -47,7 +47,7 @@ public:
 
 	ServerConference(const std::shared_ptr<Core> &core,
 	                 const std::shared_ptr<Address> &myAddress,
-	                 CallSessionListener *listener,
+	                 std::shared_ptr<CallSessionListener> listener,
 	                 const std::shared_ptr<ConferenceParams> params);
 	virtual ~ServerConference();
 

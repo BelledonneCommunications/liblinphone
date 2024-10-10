@@ -36,12 +36,6 @@ SIPConferenceScheduler::SIPConferenceScheduler(const shared_ptr<Core> &core, con
     : ConferenceScheduler(core, account) {
 }
 
-SIPConferenceScheduler::~SIPConferenceScheduler() {
-	if (mSession != nullptr) {
-		mSession->removeListener(this);
-	}
-}
-
 void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
                                                       const std::shared_ptr<Address> &creator) {
 
@@ -65,14 +59,20 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 		invitees.push_back(Conference::createParticipantAddressForResourceList(p));
 	}
 
+	auto ref = getSharedFromThis();
 	const auto &conferenceAddress = conferenceInfo->getUri();
-	mSession =
-	    getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress, this);
+	mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress,
+	                                                       dynamic_pointer_cast<SIPConferenceScheduler>(ref));
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
 		setState(State::Error);
 		return;
 	}
+
+	// Add the conference listener to the list held by the core in order to ensure that listener function are correctly
+	// called. In fact, object CallSession takes a weak reference of the ConferenceScheduler therefore the core must
+	// hold a strong one
+	getCore()->addConferenceScheduler(ref);
 
 	if ((mConferenceInfo->getDateTime() <= 0) && (getState() == State::AllocationPending)) {
 		// Set start time only if a conference is going to be created
@@ -138,6 +138,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		auto conferenceAddress = remoteAddress;
 		setConferenceAddress(conferenceAddress);
 	}
+	getCore()->removeConferenceScheduler(getSharedFromThis());
 }
 
 void SIPConferenceScheduler::onCallSessionStateChanged(const shared_ptr<CallSession> &session,

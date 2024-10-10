@@ -253,8 +253,11 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 #ifdef _WIN32
 	result = _mkgmtime(&tCopy);
 #elif defined(TARGET_IPHONE_SIMULATOR) || defined(__linux__)
-	// tCopy.tm_gmtoff is reset by timegm even though it doesn't take it into account
-	offset = -tCopy.tm_gmtoff;
+	if (!tCopy.tm_zone) {
+		// tCopy.tm_gmtoff is reset by timegm even though it doesn't take it into account
+		// No need to apply offset if tm_zone is set as  timegm takes into account the timezone.
+		offset = -tCopy.tm_gmtoff;
+	}
 	result = timegm(&tCopy);
 #else
 	// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
@@ -284,7 +287,11 @@ std::string Utils::getTimeAsString(const std::string &format, time_t t) {
 time_t Utils::getStringToTime(const std::string &format, const std::string &s) {
 #ifndef _WIN32
 	tm dateTime;
-
+#ifdef __linux__
+	// strptime doesn't fill tm_zone fields therefore it is left uninitialized
+	dateTime.tm_zone = nullptr;
+	dateTime.tm_gmtoff = 0;
+#endif
 	if (strptime(s.c_str(), format.c_str(), &dateTime)) {
 		return getTmAsTimeT(dateTime);
 	}

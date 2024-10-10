@@ -57,7 +57,7 @@ const std::string Conference::SecurityModeParameter = "conference-security-mode"
 
 Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<Address> &myAddress,
-                       CallSessionListener *callSessionListener,
+                       std::shared_ptr<CallSessionListener> callSessionListener,
                        const std::shared_ptr<const ConferenceParams> params)
     : CoreAccessor(core) {
 	mCallSessionListener = callSessionListener;
@@ -95,21 +95,6 @@ Conference::Conference(const shared_ptr<Core> &core,
 Conference::~Conference() {
 	setChatRoom(nullptr);
 	mConfListeners.clear();
-	// Make sure that when the conference is destroyed, it unregisters from all session participant and participant
-	// devices are attached to It may happen that an application terminates a conference by calling
-	// linphone_core_terminate_all_calls and therefore we must make sure that everything is properly cleaned up
-	for (const auto &p : getParticipants()) {
-		const auto &pSession = p->getSession();
-		if (pSession) {
-			pSession->removeListener(this);
-		}
-		for (const auto &d : p->getDevices()) {
-			const auto &dSession = d->getSession();
-			if (dSession) {
-				dSession->removeListener(this);
-			}
-		}
-	}
 }
 
 // -----------------------------------------------------------------------------
@@ -300,7 +285,8 @@ bool Conference::addParticipant(const std::shared_ptr<const Address> &participan
 		return false;
 	}
 	participant = Participant::create(getSharedFromThis(), participantAddress);
-	participant->createSession(*this, nullptr, true, mCallSessionListener);
+	auto session = participant->createSession(*this, nullptr, true);
+	session->addListener(getSharedFromThis());
 	const auto confAddr = getConferenceAddress();
 	bool isFocus = participantAddress && confAddr && (*participantAddress == *confAddr);
 	participant->setFocus(isFocus);
@@ -388,9 +374,6 @@ int Conference::removeParticipantDevice(const std::shared_ptr<CallSession> &sess
 			        << " in conference " << *getConferenceAddress();
 			p->removeDevice(session);
 
-			// Try to remove listener here even though it is likely that this operation will be only done by conferences
-			// of type ServerConference.
-			session->removeListener(this);
 			auto op = session->getPrivate()->getOp();
 			shared_ptr<Call> call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
 			if (call) {
@@ -465,11 +448,6 @@ bool Conference::removeParticipant(const std::shared_ptr<Participant> &participa
 				ev->terminate();
 			}
 
-			const auto &dSession = device->getSession();
-			if (dSession) {
-				dSession->removeListener(this);
-			}
-
 			time_t creationTime = time(nullptr);
 			notifyParticipantDeviceRemoved(creationTime, false, conferenceParticipant, device);
 		}
@@ -483,7 +461,6 @@ bool Conference::removeParticipant(const std::shared_ptr<Participant> &participa
 			if (pSessionCall) {
 				pSessionCall->setConference(nullptr);
 			}
-			pSession->removeListener(this);
 		}
 	}
 	mParticipants.remove(conferenceParticipant);

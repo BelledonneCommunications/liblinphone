@@ -40,7 +40,7 @@ class LINPHONE_PUBLIC ClientConference : public Conference, public ConferenceLis
 public:
 	ClientConference(const std::shared_ptr<Core> &core,
 	                 const std::shared_ptr<Address> &meAddr,
-	                 CallSessionListener *listener,
+	                 std::shared_ptr<CallSessionListener> listener,
 	                 const std::shared_ptr<const ConferenceParams> params);
 	virtual ~ClientConference();
 

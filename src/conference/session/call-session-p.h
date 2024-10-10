@@ -126,7 +126,7 @@ public:
 	void updateToFromAssertedIdentity();
 
 protected:
-	std::list<CallSessionListener *> listeners;
+	std::list<std::weak_ptr<CallSessionListener>> listeners;
 	CallSessionParams *params = nullptr;
 	mutable CallSessionParams *currentParams = nullptr;
 	mutable CallSessionParams *remoteParams = nullptr;

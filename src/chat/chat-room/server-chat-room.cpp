@@ -105,7 +105,8 @@ void ServerChatRoom::confirmRecreation(SalCallOp *op) {
 
 	lInfo() << this << " is re-joined by " << *participant->getAddress();
 	shared_ptr<Participant> me = getConference()->getMe();
-	shared_ptr<CallSession> session = me->createSession(*getConference().get(), nullptr, false, getConference().get());
+	shared_ptr<CallSession> session = me->createSession(*getConference().get(), nullptr, false);
+	session->addListener(getConference());
 	session->configure(LinphoneCallIncoming, nullptr, op, from, to);
 	session->startIncomingNotification(false);
 	auto confAddr = *getConference()->getConferenceAddress();

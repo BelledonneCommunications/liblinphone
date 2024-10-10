@@ -867,7 +867,7 @@ class ServerConferenceTester : public ServerConference {
 public:
 	ServerConferenceTester(const std::shared_ptr<Core> &core,
 	                       const std::shared_ptr<Address> &myAddress,
-	                       CallSessionListener *listener)
+	                       std::shared_ptr<CallSessionListener> listener)
 	    : ServerConference(core, myAddress, listener, ConferenceParams::create(core)) {
 		getCurrentParams()->enableLocalParticipant(false);
 		getCurrentParams()->enableAudio(true);

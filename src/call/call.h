@@ -86,18 +86,11 @@ class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>,
 	friend class Conference;
 
 public:
-	Call(std::shared_ptr<Core> core,
-	     LinphoneCallDir direction,
-	     const std::shared_ptr<const Address> &from,
-	     const std::shared_ptr<const Address> &to,
-	     const std::shared_ptr<Account> &account,
-	     SalCallOp *op,
-	     const MediaSessionParams *msp);
-
-	Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const std::string &callid);
+	Call(std::shared_ptr<Core> core);
 
 	virtual ~Call() = default;
 
+	void configure(LinphoneCallDir direction, const std::string &callid);
 	void configure(LinphoneCallDir direction,
 	               const std::shared_ptr<const Address> &from,
 	               const std::shared_ptr<const Address> &to,

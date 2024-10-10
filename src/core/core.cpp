@@ -340,8 +340,8 @@ void CorePrivate::createConferenceCleanupTimer() {
 	const auto period = q->getConferenceCleanupPeriod();
 	if (period > 0) {
 		auto onConferenceCleanup = [this]() -> bool {
-			auto it = conferenceById.begin();
-			while (it != conferenceById.end()) {
+			auto it = mConferenceById.begin();
+			while (it != mConferenceById.end()) {
 				auto [id, conference] = (*it);
 				it++;
 				const auto conferenceIsEnded = conference->isConferenceEnded();
@@ -464,21 +464,23 @@ void CorePrivate::uninit() {
 		}
 	}
 
-	chatRoomsById.clear();
+	mChatRoomsById.clear();
 
 	// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
 #if __GNUC__ == 7
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif //  __GNUC__ == 7
-	for (const auto &[id, conference] : conferenceById) {
+	for (const auto &[id, conference] : mConferenceById) {
 #if __GNUC__ == 7
 #pragma GCC diagnostic pop
 #endif //  __GNUC__ == 7
        // Terminate audio video conferences just before core is stopped
 		conference->terminate();
 	}
-	conferenceById.clear();
+	mConferenceById.clear();
+	q->mConferencesPendingCreation.clear();
+	q->mSipConferenceSchedulers.clear();
 
 	listeners.clear();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
@@ -670,7 +672,7 @@ bool CorePrivate::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice
 		}
 	}
 
-	for (const auto &[id, conference] : conferenceById) {
+	for (const auto &[id, conference] : mConferenceById) {
 		auto audioControlInterface = conference->getAudioControlInterface();
 		if (audioControlInterface) {
 			audioControlInterface->setInputDevice(audioDevice);
@@ -694,7 +696,7 @@ bool CorePrivate::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevic
 		}
 	}
 
-	for (const auto &[id, conference] : conferenceById) {
+	for (const auto &[id, conference] : mConferenceById) {
 		auto audioControlInterface = conference->getAudioControlInterface();
 		if (audioControlInterface) {
 			audioControlInterface->setOutputDevice(audioDevice);
@@ -1801,13 +1803,13 @@ void Core::destroyTimer(belle_sip_source_t *timer) {
 
 void Core::invalidateAccountInConferencesAndChatRooms(const std::shared_ptr<Account> &account) {
 	L_D();
-	for (const auto &[id, conference] : d->conferenceById) {
+	for (const auto &[id, conference] : d->mConferenceById) {
 		if (account == conference->getAccount()) {
 			conference->invalidateAccount();
 		}
 	}
 
-	for (const auto &[id, chatRoom] : d->chatRoomsById) {
+	for (const auto &[id, chatRoom] : d->mChatRoomsById) {
 		if (account == chatRoom->getAccount()) {
 			chatRoom->invalidateAccount();
 		}
@@ -1840,7 +1842,7 @@ std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const Cal
                                                  bool logIfNotFound) const {
 
 	L_D();
-	for (const auto &[id, conference] : d->conferenceById) {
+	for (const auto &[id, conference] : d->mConferenceById) {
 		if (session == conference->getMainSession()) {
 			return conference;
 		}
@@ -1866,7 +1868,7 @@ std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const Cal
 std::shared_ptr<Conference> Core::findConference(const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
 	try {
-		auto conference = d->conferenceById.at(conferenceId);
+		auto conference = d->mConferenceById.at(conferenceId);
 		lInfo() << "Found audio video conference " << conference << " in RAM with conference ID " << conferenceId
 		        << ".";
 		return conference;
@@ -1906,30 +1908,30 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 	if (conf == nullptr) {
 		lInfo() << "Insert audio video conference " << conference << " in RAM with conference ID " << conferenceId
 		        << ".";
-		d->conferenceById.insert(std::make_pair(conferenceId, conference));
+		d->mConferenceById.insert(std::make_pair(conferenceId, conference));
 	} else if (conf != conference) {
 		lWarning() << "Replacing audio video conference with conference ID " << conferenceId << " in the core map "
 		           << conf << " with " << conference << ". This might happen if your database has been corrupted";
-		d->conferenceById[conferenceId] = conference;
+		d->mConferenceById[conferenceId] = conference;
 	}
 }
 
 void Core::deleteConference(const ConferenceId &conferenceId) {
 	L_D();
-	auto it = d->conferenceById.find(conferenceId);
-	if (it != d->conferenceById.cend()) {
+	auto it = d->mConferenceById.find(conferenceId);
+	if (it != d->mConferenceById.cend()) {
 		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
-		d->conferenceById.erase(it);
+		d->mConferenceById.erase(it);
 	}
 }
 
 void Core::deleteConference(const shared_ptr<const Conference> &conference) {
 	L_D();
 	const ConferenceId &conferenceId = conference->getConferenceId();
-	auto it = d->conferenceById.find(conferenceId);
-	if (it != d->conferenceById.cend()) {
+	auto it = d->mConferenceById.find(conferenceId);
+	if (it != d->mConferenceById.cend()) {
 		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
-		d->conferenceById.erase(it);
+		d->mConferenceById.erase(it);
 	}
 }
 
@@ -1940,7 +1942,7 @@ shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams>
 	L_D();
 	auto localAddressUri = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
 	auto remoteAddressUri = (remoteAddress) ? remoteAddress->getUriWithoutGruu() : Address();
-	const auto it = std::find_if(d->conferenceById.begin(), d->conferenceById.end(), [&](const auto &p) {
+	const auto it = std::find_if(d->mConferenceById.begin(), d->mConferenceById.end(), [&](const auto &p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
 		const auto &conference = p.second;
 		const ConferenceId &conferenceId = conference->getConferenceId();
@@ -1975,7 +1977,7 @@ shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams>
 	});
 
 	shared_ptr<Conference> conference = nullptr;
-	if (it != d->conferenceById.cend()) {
+	if (it != d->mConferenceById.cend()) {
 		conference = it->second;
 	}
 
@@ -1986,7 +1988,7 @@ shared_ptr<Conference> Core::searchConference(const std::shared_ptr<const Addres
 	L_D();
 
 	if (!conferenceAddress || !conferenceAddress->isValid()) return nullptr;
-	const auto it = std::find_if(d->conferenceById.begin(), d->conferenceById.end(), [&](const auto &p) {
+	const auto it = std::find_if(d->mConferenceById.begin(), d->mConferenceById.end(), [&](const auto &p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
 		const auto &conference = p.second;
 		const auto curConferenceAddress = conference->getConferenceAddress();
@@ -1994,18 +1996,40 @@ shared_ptr<Conference> Core::searchConference(const std::shared_ptr<const Addres
 	});
 
 	shared_ptr<Conference> conference = nullptr;
-	if (it != d->conferenceById.cend()) {
+	if (it != d->mConferenceById.cend()) {
 		conference = it->second;
 	}
 
 	return conference;
 }
 
+void Core::removeConferencePendingCreation(const std::shared_ptr<Conference> &conference) {
+	mConferencesPendingCreation.remove(conference);
+}
+
+void Core::addConferencePendingCreation(const std::shared_ptr<Conference> &conference) {
+	auto it = std::find(mConferencesPendingCreation.begin(), mConferencesPendingCreation.end(), conference);
+	if (it == mConferencesPendingCreation.end()) {
+		mConferencesPendingCreation.push_back(conference);
+	}
+}
+
+void Core::removeConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler) {
+	mSipConferenceSchedulers.remove(scheduler);
+}
+
+void Core::addConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler) {
+	auto it = std::find(mSipConferenceSchedulers.begin(), mSipConferenceSchedulers.end(), scheduler);
+	if (it == mSipConferenceSchedulers.end()) {
+		mSipConferenceSchedulers.push_back(scheduler);
+	}
+}
+
 shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
                                                                const std::shared_ptr<const Address> &localAddr,
                                                                const std::list<Address> &participants,
                                                                const std::shared_ptr<Address> &confAddr,
-                                                               CallSessionListener *listener) {
+                                                               std::shared_ptr<CallSessionListener> listener) {
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
 		return nullptr;
@@ -2071,7 +2095,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	params.getPrivate()->enableToneIndications(false);
 
 	auto participant = Participant::create(nullptr, localAddr);
-	auto session = participant->createSession(getSharedFromThis(), &params, true, listener);
+	auto session = participant->createSession(getSharedFromThis(), &params, true);
+	session->addListener(listener);
 	bool isMediaSession = (dynamic_pointer_cast<MediaSession>(session) != nullptr);
 
 	if (!session) {

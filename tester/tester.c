@@ -2254,11 +2254,19 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs,
 			BC_ASSERT_PTR_NULL(conference);
 		}
 
-		if (m != conf_mgr) {
+		if (m == conf_mgr) {
+			for (bctbx_list_t *it2 = lcs; it2; it2 = bctbx_list_next(it2)) {
+				LinphoneCore *c2 = (LinphoneCore *)bctbx_list_get_data(it2);
+				LinphoneCoreManager *m2 = get_manager(c2);
+				if (m2 != conf_mgr) {
+					LinphoneCall *conference_call =
+					    linphone_core_get_call_by_remote_address2(conf_mgr->lc, m2->identity);
+					BC_ASSERT_PTR_NULL(conference_call);
+				}
+			}
+		} else {
 			LinphoneCall *participant_call = linphone_core_get_call_by_remote_address2(m->lc, conf_mgr->identity);
 			BC_ASSERT_PTR_NULL(participant_call);
-			LinphoneCall *conference_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
-			BC_ASSERT_PTR_NULL(conference_call);
 		}
 
 		idx++;
@@ -4559,8 +4567,8 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 
 	if (!did_receive_call) return 0;
 
-	if (linphone_core_get_calls_nb(callee_mgr->lc) <= 1)
-		BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
+	int calls_nb = linphone_core_get_calls_nb(callee_mgr->lc);
+	if (calls_nb <= 1) BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
 	BC_ASSERT_GREATER(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,
 	                  initial_caller.number_of_LinphoneCallOutgoingProgress, int, "%d");
 
@@ -4579,10 +4587,10 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 	               (caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia ==
 	                initial_caller.number_of_LinphoneCallOutgoingEarlyMedia + 1));
 
-	if (linphone_core_get_calls_nb(callee_mgr->lc) == 1)
-		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(
-		    callee_mgr->lc)); /*only relevant if one call, otherwise, not always set*/
-
+	if (calls_nb == 1) {
+		/*only relevant if one call, otherwise, not always set*/
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(callee_mgr->lc));
+	}
 	LinphoneAddress *callee_from = NULL;
 	if (caller_params) {
 		const char *callee_from_str = linphone_call_params_get_from_header(caller_params);

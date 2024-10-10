@@ -197,7 +197,9 @@ LinphoneCoreManager *create_core_mgr_with_capability_negotiation_setup(const cha
 #ifdef VIDEO_ENABLED
 		// important: VP8 has really poor performances with the mire camera, at least
 		// on iOS - so when ever h264 is available, let's use it instead
-		if (linphone_core_get_payload_type(mgr->lc, "h264", -1, -1) != NULL) {
+		LinphonePayloadType *type = linphone_core_get_payload_type(mgr->lc, "h264", -1, -1);
+		if (type != NULL) {
+			linphone_payload_type_unref(type);
 			disable_all_video_codecs_except_one(mgr->lc, "h264");
 		}
 

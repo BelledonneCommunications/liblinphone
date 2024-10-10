@@ -54,7 +54,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 ClientConference::ClientConference(const shared_ptr<Core> &core,
                                    const std::shared_ptr<Address> &myAddress,
-                                   CallSessionListener *listener,
+                                   std::shared_ptr<CallSessionListener> listener,
                                    const std::shared_ptr<const ConferenceParams> params)
     : Conference(core, myAddress, listener, params) {
 }
@@ -71,7 +71,7 @@ void ClientConference::createFocus(const std::shared_ptr<Address> focusAddr,
                                    const std::shared_ptr<CallSession> focusSession) {
 	mFocus = Participant::create(getSharedFromThis(), focusAddr, focusSession);
 	if (focusSession) {
-		focusSession->addListener(this);
+		focusSession->addListener(getSharedFromThis());
 	}
 	lInfo() << "Create focus '" << *mFocus->getAddress() << "' from address : " << *focusAddr;
 }
@@ -307,7 +307,8 @@ std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared
 	csp.getPrivate()->enableToneIndications(mConfParams->audioEnabled() || mConfParams->videoEnabled());
 
 	auto chatRoom = getChatRoom();
-	shared_ptr<CallSession> session = mFocus->createSession(*this, &csp, TRUE, this);
+	shared_ptr<CallSession> session = mFocus->createSession(*this, &csp, TRUE);
+	session->addListener(getSharedFromThis());
 	std::shared_ptr<Address> meCleanedAddress = Address::create(getMe()->getAddress()->getUriWithoutGruu());
 
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, sessionTo);
@@ -358,7 +359,8 @@ void ClientConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		}
 	}
 
-	auto session = mFocus->createSession(*this, nullptr, TRUE, this);
+	auto session = mFocus->createSession(*this, nullptr, TRUE);
+	session->addListener(getSharedFromThis());
 	session->configure(LinphoneCallIncoming, nullptr, op, from, to);
 	session->startIncomingNotification(false);
 	setConferenceAddress(remoteContact);
@@ -784,11 +786,6 @@ void ClientConference::endConference() {
 		Conference::terminate();
 		setState(ConferenceInterface::State::Terminated);
 	}
-
-	auto session = dynamic_pointer_cast<MediaSession>(getMainSession());
-	auto op = session->getPrivate()->getOp();
-	auto sessionCall = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
-	session->removeListener(this);
 }
 
 bool ClientConference::focusIsReady() const {
@@ -934,7 +931,6 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					setState(ConferenceInterface::State::Terminated);
 					chatRoom->deleteFromDb();
 				}
-				session->removeListener(this);
 			} else if (chatRoomState == ConferenceInterface::State::TerminationPending) {
 				if (reason == LinphoneReasonNotFound) {
 					// Somehow the chat room is no longer known on the server, so terminate it
@@ -1199,10 +1195,6 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 			break;
 		case ConferenceInterface::State::Deleted:
 			reset();
-			const auto &mainSession = getMainSession();
-			if (mainSession) {
-				mainSession->removeListener(this);
-			}
 			break;
 	}
 }
@@ -1963,6 +1955,8 @@ int ClientConference::inviteAddresses(const std::list<std::shared_ptr<const Addr
 	mConfParams->setStartTime(-1);
 	mConfParams->setEndTime(-1);
 
+	auto ref = getSharedFromThis();
+	getCore()->addConferencePendingCreation(ref);
 	std::list<Address> invitees;
 	for (const auto &address : addresses) {
 		auto participantInfo = ParticipantInfo::create(address);
@@ -1974,7 +1968,7 @@ int ClientConference::inviteAddresses(const std::list<std::shared_ptr<const Addr
 	// The main session for the time being is the one used to create the conference. It will later replaced by the
 	// actual session used to join the conference
 	auto session =
-	    getCore()->createOrUpdateConferenceOnServer(mConfParams, organizer, invitees, getConferenceAddress(), this);
+	    getCore()->createOrUpdateConferenceOnServer(mConfParams, organizer, invitees, getConferenceAddress(), ref);
 	if (!session) {
 		lInfo() << "Aborting creation of conference " << this << " because the call session cannot be established";
 		setState(ConferenceInterface::State::CreationFailed);
@@ -2217,12 +2211,6 @@ int ClientConference::terminate() {
 	}
 
 	if (mConfParams->chatEnabled()) {
-		shared_ptr<CallSession> session = (mFocus) ? mFocus->getSession() : nullptr;
-		if (session) session->removeListener(this);
-		for (const auto &participant : getParticipants()) {
-			session = participant->getSession();
-			if (session) session->removeListener(this);
-		}
 		setChatRoom(nullptr);
 	}
 
@@ -2284,7 +2272,7 @@ int ClientConference::enter() {
 		auto cppCall = Call::toCpp(cCall);
 		cppCall->setConference(getSharedFromThis());
 		auto callSession = cppCall->getActiveSession();
-		callSession->addListener(this);
+		callSession->addListener(getSharedFromThis());
 		mFocus->setSession(callSession);
 	}
 	return 0;
@@ -2484,6 +2472,8 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 
 	if (!getConferenceAddress() || isLocalExhume) {
 		const std::shared_ptr<Address> remoteAddress = session->getRemoteContactAddress();
+		auto ref = getSharedFromThis();
+		getCore()->removeConferencePendingCreation(ref);
 		if (remoteAddress == nullptr) {
 			lError() << "[Conference] [" << this
 			         << "] The session to update the conference information did not succesfully establish hence it is "
@@ -2529,7 +2519,6 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			addressesList.sort([](const auto &addr1, const auto &addr2) { return addr1 < addr2; });
 			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1.weakEqual(addr2); });
 
-			bool supportsMedia = mConfParams->audioEnabled() || mConfParams->videoEnabled();
 			std::shared_ptr<Content> content = nullptr;
 			if (!addressesList.empty()) {
 				auto resourceList = Content::create();
@@ -2543,14 +2532,14 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 				// Adding a custom content to the call params allows to create a multipart message body.
 				// For audio video conferences it is requires as the client has to initiate a media session. The chat
 				// room code, instead, makes the assumption that the participant list is the body itself
-				if (supportsMedia) {
+				if (supportsMedia()) {
 					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
 				} else {
 					content = resourceList;
 				}
 			}
 
-			if (!supportsMedia) {
+			if (mConfParams->chatEnabled()) {
 				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("text");
 				if (!mConfParams->isGroup()) {
 					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("One-To-One-Chat-Room", "true");
@@ -2565,7 +2554,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					                      to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
 				}
 			}
-			linphone_call_params_enable_tone_indications(new_params, supportsMedia);
+			linphone_call_params_enable_tone_indications(new_params, supportsMedia());
 
 			const auto cCore = getCore()->getCCore();
 			const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(cCore);
@@ -2585,13 +2574,13 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			linphone_call_params_enable_realtime_text(new_params, FALSE);
 
 			const auto subject = mConfParams->getSubject();
-			if (supportsMedia) {
+			if (supportsMedia()) {
 				LinphoneCall *call = linphone_core_invite_address_with_params_2(cCore, remoteAddress->toC(), new_params,
 				                                                                L_STRING_TO_C(subject),
 				                                                                content ? content->toC() : nullptr);
 				auto session = Call::toCpp(call)->getActiveSession();
 				setMainSession(session);
-				session->addListener(this);
+				session->addListener(getSharedFromThis());
 			} else {
 				const auto &confAccount = mConfParams->getAccount();
 				const auto &account =
@@ -2605,8 +2594,9 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					linphone_call_params_unref(new_params);
 					return;
 				}
-				auto session = mMe->createSession(getCore(), L_GET_CPP_PTR_FROM_C_OBJECT(new_params), TRUE, this);
+				auto session = mMe->createSession(getCore(), L_GET_CPP_PTR_FROM_C_OBJECT(new_params), TRUE);
 				setMainSession(session);
+				session->addListener(getSharedFromThis());
 				session->configure(LinphoneCallOutgoing, account, nullptr, from, remoteAddress);
 				bool defer = session->initiateOutgoing(subject, content);
 				if (!defer) {
@@ -2663,9 +2653,11 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 
 	bool creationFailed = (mState == ConferenceInterface::State::CreationFailed);
 	if ((session == getMainSession()) || creationFailed) {
-		if (mConfParams->audioEnabled() || mConfParams->videoEnabled()
+		if (mConfParams->audioEnabled() ||
+		    mConfParams->videoEnabled()
 #ifdef HAVE_ADVANCED_IM
-		    || (clientGroupChatRoom && (creationFailed || clientGroupChatRoom->getDeletionOnTerminationEnabled()))
+		    // || (clientGroupChatRoom && (creationFailed || clientGroupChatRoom->getDeletionOnTerminationEnabled()))
+		    || (clientGroupChatRoom && clientGroupChatRoom->getDeletionOnTerminationEnabled())
 #endif // HAVE_ADVANCED_IM
 		) {
 			shared_ptr<Conference> ref = getSharedFromThis();
@@ -2678,7 +2670,6 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 #endif // HAVE_ADVANCED_IM
 		}
 		setMainSession(nullptr);
-		session->removeListener(this);
 		mFocus->removeSession();
 	}
 }

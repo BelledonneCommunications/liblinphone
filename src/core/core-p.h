@@ -84,6 +84,7 @@ public:
 	void enableMessageWaitingIndicationSubscription(bool enable);
 
 	int addCall(const std::shared_ptr<Call> &call);
+	void addReleasingCall(const std::shared_ptr<Call> &call);
 	bool canWeAddCall() const;
 	bool hasCalls() const {
 		return !calls.empty();
@@ -93,6 +94,7 @@ public:
 	void iterateCalls(time_t currentRealTime, bool oneSecondElapsed) const;
 	void notifySoundcardUsage(bool used);
 	int removeCall(const std::shared_ptr<Call> &call);
+	void removeReleasingCall(const std::shared_ptr<Call> &call);
 	void setCurrentCall(const std::shared_ptr<Call> &call);
 	void setVideoWindowId(bool preview, void *id);
 
@@ -198,13 +200,17 @@ private:
 
 	std::list<CoreListener *> listeners;
 
+	// This list holds the last reference to a Call object after it reaches the End state. In fact a call is a listener
+	// of the CallSession object which doesn't hold a strong reference to it
+	std::list<std::shared_ptr<Call>> mReleasingCalls;
+
 	std::list<std::shared_ptr<Call>> calls;
 	std::shared_ptr<Call> currentCall;
 
 	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
-	    chatRoomsById;
+	    mChatRoomsById;
 	std::unordered_map<ConferenceId, std::shared_ptr<Conference>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
-	    conferenceById;
+	    mConferenceById;
 
 	std::unique_ptr<EncryptionEngine> imee;
 

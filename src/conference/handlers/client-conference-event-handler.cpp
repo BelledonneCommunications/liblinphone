@@ -953,6 +953,7 @@ time_t ClientConferenceEventHandler::dateTimeToTimeT(const Xsd::XmlSchema::DateT
 		timeStruct.tm_min += xsdTime.zone_minutes();
 	}
 #ifdef __linux__
+	timeStruct.tm_zone = nullptr;
 	timeStruct.tm_gmtoff = 0;
 #endif
 	return Utils::getTmAsTimeT(timeStruct);

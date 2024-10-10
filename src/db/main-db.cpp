@@ -6693,7 +6693,7 @@ MainDb::getConferenceInfosWithParticipant(BCTBX_UNUSED(const std::shared_ptr<Add
 	// In order to ensure the compatibility with SQLite3 and MySQL, we have ot define two variable sipAddressId and
 	// sipAddressId2 that have the same value. The SOCI backend of SQLite3 understands that it will only need one
 	// argument if we define only one variable name. Nonetheless MySQL needs two. Even though the MySQL backend doesn't
-	// complain when the twi variables have the sale nale (e.g. sipAddressId), SQLite3 does
+	// complain when the twi variables have the sale name (e.g. sipAddressId), SQLite3 does
 	string query =
 	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value, start_time, duration, subject, "
 	    "description, state, ics_sequence, ics_uid, security_level, audio, video, chat, ccmp_uri FROM conference_info, "

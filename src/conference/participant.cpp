@@ -70,22 +70,17 @@ void Participant::configure(const std::shared_ptr<Conference> conference,
 
 // =============================================================================
 
-shared_ptr<CallSession> Participant::createSession(const Conference &conference,
-                                                   const CallSessionParams *params,
-                                                   bool hasMedia,
-                                                   CallSessionListener *listener) {
-	session = createSession(conference.getCore(), params, hasMedia, listener);
-	return session;
+shared_ptr<CallSession>
+Participant::createSession(const Conference &conference, const CallSessionParams *params, bool hasMedia) {
+	return createSession(conference.getCore(), params, hasMedia);
 }
 
-shared_ptr<CallSession> Participant::createSession(const std::shared_ptr<Core> &core,
-                                                   const CallSessionParams *params,
-                                                   bool hasMedia,
-                                                   CallSessionListener *listener) {
+shared_ptr<CallSession>
+Participant::createSession(const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia) {
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
-		session = make_shared<MediaSession>(core, getSharedFromThis(), params, listener);
+		session = make_shared<MediaSession>(core, getSharedFromThis(), params);
 	} else {
-		session = make_shared<CallSession>(core, params, listener);
+		session = make_shared<CallSession>(core, params);
 	}
 	return session;
 }

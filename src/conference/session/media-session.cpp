@@ -81,9 +81,11 @@ const string MediaSessionPrivate::ScreenSharingContentAttribute = "slides";
 // =============================================================================
 
 std::unique_ptr<LogContextualizer> MediaSessionPrivate::getLogContextualizer() const {
-	if (listeners.size() > 0) {
-		auto listener = listeners.front();
-		if (listener) return listener->getLogContextualizer();
+	for (const auto &listener : listeners) {
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			return listenerRef->getLogContextualizer();
+		}
 	}
 	return nullptr;
 }
@@ -2600,7 +2602,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 			enableVideoStream = enableVideoStreamTmp;
 			videoDir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(linphoneVideoDir);
 			if (videoDir == SalStreamInactive) {
-				lWarning() << *q << "Video may have been enable in the local media parameters but device "
+				lWarning() << *q << " Video may have been enable in the local media parameters but device "
 				           << ((participantDevice) ? participantDevice->getAddress()->toString()
 				                                   : std::string("sip:unknown"))
 				           << " may not be able to send video streams or an old video stream is just being copied";
@@ -4221,12 +4223,10 @@ IceSession *MediaSessionPrivate::getIceSession() const {
 // =============================================================================
 MediaSession::MediaSession(const shared_ptr<Core> &core,
                            std::shared_ptr<Participant> me,
-                           const CallSessionParams *params,
-                           CallSessionListener *listener)
+                           const CallSessionParams *params)
     : CallSession(*new MediaSessionPrivate, core) {
 	L_D();
 	d->me = me;
-	addListener(listener);
 
 	if (params) {
 		d->setParams(new MediaSessionParams(*(static_cast<const MediaSessionParams *>(params))));

@@ -777,11 +777,10 @@ LinphoneCall *linphone_call_new_outgoing(LinphoneCore *lc,
                                          const LinphoneAddress *to,
                                          const LinphoneCallParams *params,
                                          LinphoneAccount *account) {
-	LinphoneCall *lcall = Call::createCObject(
-	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing, Address::toCpp(from)->getSharedFromThis(),
-	    Address::toCpp(to)->getSharedFromThis(), account ? Account::toCpp(account)->getSharedFromThis() : nullptr,
-	    nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
-
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	Call::toCpp(lcall)->configure(
+	    LinphoneCallOutgoing, Address::toCpp(from)->getSharedFromThis(), Address::toCpp(to)->getSharedFromThis(),
+	    account ? Account::toCpp(account)->getSharedFromThis() : nullptr, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
 	return lcall;
 }
 
@@ -789,15 +788,16 @@ LinphoneCall *linphone_call_new_incoming(LinphoneCore *lc,
                                          const LinphoneAddress *from,
                                          const LinphoneAddress *to,
                                          LinphonePrivate::SalCallOp *op) {
-	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
-	                                          Address::toCpp(from)->getSharedFromThis(),
-	                                          Address::toCpp(to)->getSharedFromThis(), nullptr, op, nullptr);
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	Call::toCpp(lcall)->configure(LinphoneCallIncoming, Address::toCpp(from)->getSharedFromThis(),
+	                              Address::toCpp(to)->getSharedFromThis(), nullptr, op, nullptr);
 	Call::toCpp(lcall)->initiateIncoming();
 	return lcall;
 }
 
 LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid) {
-	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming, callid);
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	Call::toCpp(lcall)->configure(LinphoneCallIncoming, callid);
 	return lcall;
 }
 

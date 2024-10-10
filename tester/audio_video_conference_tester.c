@@ -5016,6 +5016,10 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie,
 		                             initial_laure_stat.number_of_LinphoneCallEnd + 2, 3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd,
 		                             initial_marie_stat.number_of_LinphoneCallEnd + 3, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased,
+		                             initial_laure_stat.number_of_LinphoneCallReleased + 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased,
+		                             initial_marie_stat.number_of_LinphoneCallReleased + 3, 3000));
 
 		int marie_call_no = (int)bctbx_list_size(linphone_core_get_calls(marie->lc));
 		BC_ASSERT_EQUAL(marie_call_no, 0, int, "%0d");

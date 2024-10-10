@@ -187,11 +187,11 @@ void Call::initiateIncoming() {
 
 bool Call::initiateOutgoing(const string &subject, const std::shared_ptr<const Content> content) {
 	shared_ptr<CallSession> session = getActiveSession();
+	session->addListener(getSharedFromThis());
 	bool defer = session->initiateOutgoing(subject, content);
 	// initiateOutgoing creates the Streams (through makeLocalMediaDescription())
 	// the configuration of sound devices must be done after streams are created.
 	configureSoundCardsFromCore(static_cast<const MediaSessionParams *>(getActiveSession()->getParams()));
-
 	return defer;
 }
 
@@ -206,7 +206,10 @@ void Call::notifyRinging() {
 }
 
 void Call::startIncomingNotification() {
-	getActiveSession()->startIncomingNotification();
+	auto ref = getSharedFromThis();
+	shared_ptr<CallSession> session = getActiveSession();
+	session->addListener(ref);
+	session->startIncomingNotification();
 }
 
 void Call::startPushIncomingNotification() {
@@ -214,7 +217,10 @@ void Call::startPushIncomingNotification() {
 }
 
 void Call::startBasicIncomingNotification() {
-	getActiveSession()->startBasicIncomingNotification();
+	auto ref = getSharedFromThis();
+	shared_ptr<CallSession> session = getActiveSession();
+	session->addListener(ref);
+	session->startBasicIncomingNotification();
 }
 
 void Call::pauseForTransfer() {
@@ -326,8 +332,6 @@ bool Call::setOutputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audio
 }
 
 void Call::cleanupSessionAndUnrefCObjectCall() {
-	auto session = getActiveSession();
-	if (session) session->removeListener(this);
 	linphone_call_unref(this->toC());
 }
 
@@ -366,28 +370,31 @@ void Call::onCallSessionEarlyFailed(const shared_ptr<CallSession> &session, Linp
 }
 
 void Call::onCallSessionSetReleased(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
+	getCore()->getPrivate()->removeReleasingCall(getSharedFromThis());
 	cleanupSessionAndUnrefCObjectCall();
 }
 
 void Call::onCallSessionSetTerminated(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
-	LinphoneCore *core = getCore()->getCCore();
 	if (getSharedFromThis() == getCore()->getCurrentCall()) {
 		lInfo() << "Resetting the current call";
 		getCore()->getPrivate()->setCurrentCall(nullptr);
 	}
 
-	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
-		lError() << "Could not remove the call from the list!!!";
-#if 0
-	if (mChatRoom)
-		linphone_chat_room_set_call(mChatRoom, nullptr);
-#endif // if 0
+	auto ref = getSharedFromThis();
+
+	// This is the last reference to the call therefore delete it as late as possible to ensure that also listener
+	// methods notifying the termination of a call are called
+	if (getCore()->getPrivate()->removeCall(ref) != 0) lError() << "Could not remove the call from the list!!!";
+
+	LinphoneCore *core = getCore()->getCCore();
 	if (!getCore()->getPrivate()->hasCalls()) ms_bandwidth_controller_reset_state(core->bw_controller);
 
 	if (linphone_core_get_calls_nb(core) == 0) {
 		getCore()->getPrivate()->notifySoundcardUsage(false);
 		linphone_core_notify_last_call_ended(core);
 	}
+
+	getCore()->getPrivate()->addReleasingCall(ref);
 }
 
 void Call::reenterLocalConference(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
@@ -614,7 +621,8 @@ void Call::onIncomingCallSessionNotified(BCTBX_UNUSED(const shared_ptr<CallSessi
 }
 
 void Call::onIncomingCallSessionStarted(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
-	if (linphone_core_get_calls_nb(getCore()->getCCore()) == 1 && !isInConference()) {
+	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
+	if (!currentCall && !isInConference()) {
 		L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(getSharedFromThis());
 	}
 }
@@ -779,34 +787,11 @@ std::unique_ptr<LogContextualizer> Call::getLogContextualizer() {
 
 // =============================================================================
 
-Call::Call(shared_ptr<Core> core,
-           LinphoneCallDir direction,
-           const std::shared_ptr<const Address> &from,
-           const std::shared_ptr<const Address> &to,
-           const std::shared_ptr<Account> &account,
-           SalCallOp *op,
-           const MediaSessionParams *msp)
-    : CoreAccessor(core) {
+Call::Call(std::shared_ptr<Core> core) : CoreAccessor(core) {
 	mNextVideoFrameDecoded._func = nullptr;
 	mNextVideoFrameDecoded._user_data = nullptr;
 
 	mBgTask.setName("Liblinphone call notification");
-
-	// create session
-	mParticipant = Participant::create(nullptr, ((direction == LinphoneCallIncoming) ? to : from));
-	mParticipant->createSession(getCore(), msp, TRUE, this);
-	mParticipant->getSession()->configure(direction, account, op, from, to);
-}
-
-Call::Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const string &callid) : CoreAccessor(core) {
-	mNextVideoFrameDecoded._func = nullptr;
-	mNextVideoFrameDecoded._user_data = nullptr;
-
-	mBgTask.setName("Liblinphone call notification");
-
-	mParticipant = Participant::create();
-	mParticipant->createSession(getCore(), nullptr, TRUE, this);
-	mParticipant->getSession()->configure(direction, callid);
 }
 
 void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
@@ -838,12 +823,25 @@ void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
 	if (inputAudioDevice) setInputAudioDevicePrivate(inputAudioDevice);
 }
 
+void Call::configure(LinphoneCallDir direction, const string &callid) {
+	mParticipant = Participant::create();
+	mParticipant->createSession(getCore(), nullptr, TRUE);
+	mParticipant->getSession()->configure(direction, callid);
+}
+
 void Call::configure(LinphoneCallDir direction,
                      const std::shared_ptr<const Address> &from,
                      const std::shared_ptr<const Address> &to,
                      const std::shared_ptr<Account> &account,
                      SalCallOp *op,
                      BCTBX_UNUSED(const MediaSessionParams *msp)) {
+
+	if (!mParticipant) {
+		// create session
+		mParticipant = Participant::create(nullptr, ((direction == LinphoneCallIncoming) ? to : from));
+		mParticipant->createSession(getCore(), msp, TRUE);
+	}
+
 	mParticipant->configure(nullptr, (direction == LinphoneCallIncoming) ? to : from);
 	mParticipant->getSession()->configure(direction, account, op, from, to);
 }
@@ -966,10 +964,7 @@ LinphoneStatus Call::takeVideoSnapshot(const string &file) {
 }
 
 LinphoneStatus Call::terminate(const LinphoneErrorInfo *ei) {
-	bool cleanCall = getActiveSession()->getState() == CallSession::State::OutgoingInit;
-	LinphoneStatus status = getActiveSession()->terminate(ei);
-	if (cleanCall && !status) unref();
-	return status;
+	return getActiveSession()->terminate(ei);
 }
 
 LinphoneStatus Call::transfer(const shared_ptr<Call> &dest) {

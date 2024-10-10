@@ -135,17 +135,13 @@ protected:
 	std::shared_ptr<Conference> getConference() const;
 	void setConference(const std::shared_ptr<Conference> conference);
 
-	std::shared_ptr<CallSession> createSession(const Conference &conference,
-	                                           const CallSessionParams *params,
-	                                           bool hasMedia,
-	                                           CallSessionListener *listener);
+	std::shared_ptr<CallSession>
+	createSession(const Conference &conference, const CallSessionParams *params, bool hasMedia);
 
 	// TODO: Delete
 	// Temporary method to unify audio video conference and conference codes for group chats
-	std::shared_ptr<CallSession> createSession(const std::shared_ptr<Core> &core,
-	                                           const CallSessionParams *params,
-	                                           bool hasMedia,
-	                                           CallSessionListener *listener);
+	std::shared_ptr<CallSession>
+	createSession(const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia);
 	inline void setSession(std::shared_ptr<CallSession> callSession) {
 		session = callSession;
 	}

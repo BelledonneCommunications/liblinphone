@@ -56,7 +56,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 ServerConference::ServerConference(const shared_ptr<Core> &core,
                                    const std::shared_ptr<Address> &myAddress,
-                                   CallSessionListener *listener,
+                                   std::shared_ptr<CallSessionListener> listener,
                                    const std::shared_ptr<ConferenceParams> params)
     : Conference(core, myAddress, listener, params) {
 }
@@ -105,7 +105,8 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		if (op) {
 			const auto from = Address::create(op->getFrom());
 			const auto to = Address::create(op->getTo());
-			shared_ptr<CallSession> session = getMe()->createSession(*this, nullptr, true, this);
+			shared_ptr<CallSession> session = getMe()->createSession(*this, nullptr, true);
+			session->addListener(getSharedFromThis());
 			session->configure(LinphoneCallIncoming, nullptr, op, from, to);
 		}
 		mConfParams->enableLocalParticipant(false);
@@ -490,7 +491,7 @@ void ServerConference::configure(SalCallOp *op) {
 		msp->getPrivate()->setInConference(true);
 		msp->getPrivate()->setStartTime(startTime);
 		msp->getPrivate()->setEndTime(endTime);
-		shared_ptr<CallSession> session = getMe()->createSession(*this, msp, true, nullptr);
+		shared_ptr<CallSession> session = getMe()->createSession(*this, msp, true);
 		session->configure(LinphoneCallIncoming, nullptr, op, mOrganizer, conferenceAddress);
 		delete msp;
 	}
@@ -620,7 +621,8 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 	const auto &deviceAddress = device->getAddress();
 	auto rejectSession = false;
 	if (serverGroupChatRoom && (!deviceSession || (deviceSession->getPrivate()->getOp() != op))) {
-		newDeviceSession = participant->createSession(*getSharedFromThis(), nullptr, true, this);
+		newDeviceSession = participant->createSession(*getSharedFromThis(), nullptr, true);
+		newDeviceSession->addListener(getSharedFromThis());
 		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(),
 		                            Address::create(op->getTo()));
 		newDeviceSession->startIncomingNotification(false);
@@ -644,10 +646,17 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 			        << "therefore the session is likely to be immediately terminated";
 		} else {
 			if (deviceSession) {
+				// Search for the matching cached device and update it as well. In fact cache devices are used in the
+				// callback onCallSessionStateChanged to retrieve the device
+				shared_ptr<ParticipantDevice> cachedDevice =
+				    serverGroupChatRoom->findCachedParticipantDevice(deviceSession);
+				if (cachedDevice) {
+					cachedDevice->setSession(newDeviceSession);
+				}
+
 				// The client changed the session possibly following a loss the network
 				lInfo() << "Device " << *deviceAddress << " is replacing its session in chatroom " << *addr
 				        << ", hence the old one " << deviceSession << " is immediately terminated";
-				deviceSession->removeListener(this);
 				deviceSession->terminate();
 			}
 			lInfo() << "Setting session " << newDeviceSession << " to device " << *deviceAddress
@@ -1190,7 +1199,7 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 				                    lc, address->toC(), new_params, L_STRING_TO_C(mConfParams->getUtf8Subject()), NULL))
 				        ->getSharedFromThis();
 				session = call->getActiveSession();
-				session->addListener(this);
+				session->addListener(getSharedFromThis());
 
 				tryAddMeDevice();
 
@@ -1335,7 +1344,8 @@ shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<Part
 		if (!confId.empty()) {
 			currentParams->getPrivate()->setConferenceId(confId);
 		}
-		session = participant->createSession(*this, currentParams, true, this);
+		session = participant->createSession(*this, currentParams, true);
+		session->addListener(getSharedFromThis());
 		delete currentParams;
 		session->configure(LinphoneCallOutgoing, nullptr, nullptr, conferenceAddress, device->getAddress());
 		device->setSession(session);
@@ -1662,7 +1672,6 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference not started yet", NULL);
 			call->terminate(ei);
-			session->removeListener(this);
 			linphone_error_info_unref(ei);
 			return false;
 		}
@@ -1673,7 +1682,6 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference already terminated", NULL);
 			call->terminate(ei);
-			session->removeListener(this);
 			linphone_error_info_unref(ei);
 			return false;
 		}
@@ -1883,7 +1891,9 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			}
 			dialOutAddresses(addresses);
 		}
-
+		lInfo() << "Call [" << call << "] (local address " << *call->getLocalAddress() << " remote address "
+		        << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") with session [" << session
+		        << "] has been added to conference " << *conferenceAddress;
 		return true;
 	}
 
@@ -2034,7 +2044,7 @@ bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
 	if (success) {
 		call->setConference(getSharedFromThis());
 		auto session = call->getActiveSession();
-		session->addListener(this);
+		session->addListener(getSharedFromThis());
 		auto device = findParticipantDevice(session);
 		if (device) {
 			device->setJoiningMethod((call->getDirection() == LinphoneCallIncoming)
@@ -2092,8 +2102,6 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 	}
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
-		session->removeListener(this);
-
 		// Detach call from conference
 		if (call) {
 			call->setConference(nullptr);
@@ -2180,7 +2188,6 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 				if (lastSession) {
 					// Detach call from conference
 					auto lastOp = lastSession->getPrivate()->getOp();
-					lastSession->removeListener(this);
 					if (lastOp) {
 						shared_ptr<Call> lastSessionCall = getCore()->getCallByCallId(lastOp->getCallId());
 						if (lastSessionCall) {
@@ -2231,10 +2238,17 @@ bool ServerConference::removeParticipant(const std::shared_ptr<Participant> &par
 #endif // HAVE_ADVANCED_IM
 
 	bool success = true;
-	if ((mConfParams->audioEnabled() || mConfParams->videoEnabled()) && !participantHasNoDevices) {
+	if (supportsMedia() && !participantHasNoDevices) {
 		for (const auto &d : devices) {
-			success &= (removeParticipant(d->getSession(), false) == 0);
+			auto session = d->getSession();
+			if (session) {
+				session->removeListener(getSharedFromThis());
+				success &= (removeParticipant(session, false) == 0);
+			} else {
+				success = false;
+			}
 		}
+		success = true;
 	} else {
 		success = Conference::removeParticipant(participant);
 	}
@@ -2346,13 +2360,6 @@ void ServerConference::setSubject(const std::string &subject) {
 void ServerConference::cleanup() {
 	if (mMixerSession) {
 		mMixerSession.reset();
-	}
-	// Detach conference from the session if not already done
-	for (const auto &device : getParticipantDevices()) {
-		auto session = device->getSession();
-		if (session) {
-			session->removeListener(this);
-		}
 	}
 	try {
 #ifdef HAVE_ADVANCED_IM
@@ -2854,7 +2861,6 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				setState(ConferenceInterface::State::TerminationPending);
 				setState(ConferenceInterface::State::Terminated);
 				requestDeletion();
-				session->removeListener(this);
 			}
 			return;
 		}
@@ -2917,7 +2923,6 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 						byeDevice(device);
 					}
 				}
-				session->removeListener(this);
 				break;
 			case CallSession::State::UpdatedByRemote: {
 				shared_ptr<Participant> participant = findParticipant(session);
@@ -2962,8 +2967,12 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					    ->setInConference(true);
 					const std::shared_ptr<Address> to = Address::create(op->getTo());
 					session->getPrivate()->setConferenceId(to->getUriParamValue("conf-id"));
-					// Remove listener here as the call is not going to be attached to a participant.
-					session->removeListener(this);
+					// The call will not be attached to any participant as the client created the session just to update
+					// a conference. The object call session adds the conference as a listener, but the conference deals
+					// with the session immediately by looking at the SDP. There is no need for it to be notified of
+					// subsequent state changes as it is expected that the client ends the call upon reception of the
+					// 200 OK
+					session->removeListener(getSharedFromThis());
 				}
 
 				const auto allowedAddresses = getAllowedAddresses();
@@ -3256,9 +3265,6 @@ void ServerConference::onParticipantDeviceLeft(BCTBX_UNUSED(const std::shared_pt
 		lInfo() << "Conference " << *getConferenceAddress() << ": Participant device '" << *device->getAddress()
 		        << "' left";
 
-		auto session = device->getSession();
-		if (session) session->removeListener(this);
-
 		if (getCurrentParams()->isGroup() || serverGroupChatRoom->getProtocolVersion() >= Utils::Version(1, 1)) {
 			shared_ptr<Participant> participant =
 			    const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
@@ -3526,10 +3532,6 @@ void ServerConference::requestDeletion() {
 		 */
 		for (auto participant : getParticipants()) {
 			serverGroupChatRoom->unSubscribeRegistrationForParticipant(participant->getAddress());
-			for (auto devices : participant->getDevices()) {
-				auto session = devices->getSession();
-				if (session) session->removeListener(this);
-			}
 		}
 		const auto &registrationSubscriptions = serverGroupChatRoom->getRegistrationSubscriptions();
 		if (!registrationSubscriptions.empty()) {
