@@ -561,7 +561,15 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
-	const string &localDeviceId = account->getContactAddress()->asStringUriOnly();
+	const auto &accountContactAddress = account->getContactAddress();
+	const auto &localDevice =
+	    accountContactAddress ? accountContactAddress : chatRoom->getConferenceId().getLocalAddress();
+	if (!localDevice) {
+		lWarning() << "Receiving encrypted message but the local device address is unknown";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Error;
+	}
+	const string &localDeviceId = localDevice->asStringUriOnly();
 
 	// ---------------------------------------------- CPIM
 

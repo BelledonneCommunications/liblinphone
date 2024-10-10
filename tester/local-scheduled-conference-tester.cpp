@@ -1115,8 +1115,8 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 		focus_stat = focus.getStats();
 
 		const bctbx_list_t *focus_calls = linphone_core_get_calls(focus.getLc());
-		int focus_calls_nb = static_cast<int>(bctbx_list_size(focus_calls));
-		BC_ASSERT_EQUAL(focus_calls_nb, 2, int, "%d");
+		size_t focus_calls_nb = bctbx_list_size(focus_calls);
+		BC_ASSERT_EQUAL(focus_calls_nb, 2, size_t, "%zu");
 
 		// wait bit more to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(10), [] { return false; });
@@ -1198,20 +1198,22 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
-		                             focus_stat.number_of_LinphoneCallEnd + focus_calls_nb,
+		                             focus_stat.number_of_LinphoneCallEnd + static_cast<int>(focus_calls_nb),
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
-		                             focus_stat.number_of_LinphoneCallReleased + focus_calls_nb,
+		                             focus_stat.number_of_LinphoneCallReleased + static_cast<int>(focus_calls_nb),
 		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionTerminated,
-		                             focus_stat.number_of_LinphoneSubscriptionTerminated + focus_calls_nb,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionTerminated,
+		                  focus_stat.number_of_LinphoneSubscriptionTerminated + static_cast<int>(focus_calls_nb),
+		                  liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_removed,
-		                             focus_stat.number_of_participants_removed + focus_calls_nb,
+		                             focus_stat.number_of_participants_removed + static_cast<int>(focus_calls_nb),
 		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_removed,
-		                             focus_stat.number_of_participant_devices_removed + focus_calls_nb,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &focus.getStats().number_of_participant_devices_removed,
+		                  focus_stat.number_of_participant_devices_removed + static_cast<int>(focus_calls_nb),
+		                  liblinphone_tester_sip_timeout));
 
 		for (auto mgr : {focus.getCMgr()}) {
 			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
@@ -2163,7 +2165,8 @@ void conference_with_screen_sharing_participant_only(void) {
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
 
-		int nortp_timeout = 5;
+		// Set the no RTP timeout to 6 in order to prevent false positives. In fact RTCP packets are sent every 5s
+		int nortp_timeout = 6;
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);

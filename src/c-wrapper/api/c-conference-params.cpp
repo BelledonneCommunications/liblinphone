@@ -244,6 +244,7 @@ void linphone_conference_params_enable_group(LinphoneConferenceParams *params, b
 	ConferenceParams::toCpp(params)->setGroup(!!group);
 }
 
-LinphoneChatParams *linphone_conference_params_get_chat_prams(LinphoneConferenceParams *params) {
-	return ConferenceParams::toCpp(params)->getChatParams()->toC();
+LinphoneChatParams *linphone_conference_params_get_chat_params(LinphoneConferenceParams *params) {
+	auto &chatParams = ConferenceParams::toCpp(params)->getChatParams();
+	return chatParams ? chatParams->toC() : nullptr;
 }

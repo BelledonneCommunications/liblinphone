@@ -3115,16 +3115,34 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 	const LinphoneAddress *marie_conference_address = linphone_conference_get_conference_address(conf);
 	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager *m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-
 		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(m->lc));
 		LinphoneConference *conference =
 		    linphone_core_search_conference(m->lc, NULL, uri, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
-
 		if (conference) {
 			BC_ASSERT_STRING_EQUAL(original_subject, linphone_conference_get_subject(conference));
 		}
+
+		// Wait for all participants to have the expected video availability
+		int ret = FALSE;
+		int part_counter = 0;
+		do {
+			part_counter++;
+			bctbx_list_t *participant_devices = linphone_conference_get_participant_device_list(conference);
+			ret = (bctbx_list_size(participant_devices) == bctbx_list_size(all_manangers_in_conf));
+			for (bctbx_list_t *d_it = participant_devices; d_it; d_it = bctbx_list_next(d_it)) {
+				LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
+				BC_ASSERT_PTR_NOT_NULL(d);
+				if (d) {
+					ret &= (linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) ==
+					        enable_video);
+				}
+			}
+			bctbx_list_free_with_data(participant_devices, (void (*)(void *))linphone_participant_device_unref);
+			wait_for_list(lcs, NULL, 0, 100);
+		} while ((part_counter < 100) && (ret == FALSE));
+		BC_ASSERT_TRUE(ret);
 	}
 
 	stats marie_stats = marie->stat;
@@ -3146,8 +3164,11 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 
 	LinphoneCall *conf_call = linphone_core_get_call_by_remote_address2(michelle->lc, focus_mgr->identity);
 	LinphoneCallParams *new_params = linphone_core_create_call_params(michelle->lc, conf_call);
-	linphone_call_params_enable_video(new_params,
-	                                  !linphone_call_params_video_enabled(linphone_call_get_current_params(conf_call)));
+	bool_t michelle_enable_video =
+	    !!linphone_call_params_video_enabled(linphone_call_get_current_params(conf_call)) ? FALSE : TRUE;
+	linphone_call_params_enable_video(new_params, michelle_enable_video);
+	ms_message("%s toggles video capabilities (video is now %s)", linphone_core_get_identity(michelle->lc),
+	           (michelle_enable_video ? "enabled" : "disabled"));
 	linphone_call_update(conf_call, new_params);
 	linphone_call_params_unref(new_params);
 
