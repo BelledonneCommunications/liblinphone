@@ -533,7 +533,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(L
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
-	flexiAPIClient->accountPasswordChange(creator->algorithm, creator->password, new_pwd)
+	flexiAPIClient->accountPasswordChange(creator->algorithm, new_pwd, creator->password)
 	    ->then([creator](BCTBX_UNUSED(FlexiAPIClient::Response response)) {
 		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusRequestOk,
 		                                    response.body.c_str())
