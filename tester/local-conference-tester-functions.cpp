@@ -187,6 +187,10 @@ create_conference_on_server(Focus &focus,
 	std::map<LinphoneCoreManager *, LinphoneCall *> previous_calls;
 	bctbx_list_t *participants_info = NULL;
 	std::list<LinphoneCoreManager *> participants;
+	const bctbx_list_t *organizer_call_logs = NULL;
+	const bctbx_list_t *initial_organizer_call_logs = linphone_core_get_call_logs(organizer.getLc());
+	const bctbx_list_t *focus_call_logs = NULL;
+	const bctbx_list_t *initial_focus_call_logs = linphone_core_get_call_logs(focus.getLc());
 	const LinphoneConferenceInfo *updated_conf_info = NULL;
 	bool focus_organizer_common_payload = have_common_audio_payload(organizer.getCMgr(), focus.getCMgr());
 	bool dialout = ((end_time <= 0) && (start_time <= 0));
@@ -482,6 +486,27 @@ create_conference_on_server(Focus &focus,
 	ms_message("%s is creating conference %s on server %s", linphone_core_get_identity(organizer.getLc()),
 	           conference_address_str, linphone_core_get_identity(focus.getLc()));
 	ms_free(conference_address_str);
+
+	// The following asserts might fail for dial out conference because the client automatically calls the server after
+	// scheduling the conference. Indeed, by the time the verification below is carried out the client might have
+	// already called the server therefore a genuine and valid call log may have already been created
+	if (!dialout) {
+		organizer_call_logs = linphone_core_get_call_logs(organizer.getLc());
+		if (organizer_call_logs && initial_organizer_call_logs) {
+			BC_ASSERT_EQUAL(bctbx_list_size(organizer_call_logs), bctbx_list_size(initial_organizer_call_logs), size_t,
+			                "%zu");
+		} else {
+			BC_ASSERT_PTR_NULL(organizer_call_logs);
+			BC_ASSERT_PTR_NULL(initial_organizer_call_logs);
+		}
+		focus_call_logs = linphone_core_get_call_logs(focus.getLc());
+		if (focus_call_logs && initial_focus_call_logs) {
+			BC_ASSERT_EQUAL(bctbx_list_size(focus_call_logs), bctbx_list_size(initial_focus_call_logs), size_t, "%zu");
+		} else {
+			BC_ASSERT_PTR_NULL(focus_call_logs);
+			BC_ASSERT_PTR_NULL(initial_focus_call_logs);
+		}
+	}
 
 end:
 	if (uid) {

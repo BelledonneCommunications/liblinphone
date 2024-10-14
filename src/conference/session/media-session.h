@@ -76,6 +76,7 @@ public:
 	               SalCallOp *op,
 	               const std::shared_ptr<const Address> &from,
 	               const std::shared_ptr<const Address> &to) override;
+	void configure(LinphoneCallDir direction, const std::string &callid) override;
 	LinphoneStatus deferUpdate() override;
 	void initiateIncoming() override;
 	bool initiateOutgoing(const std::string &subject = "",

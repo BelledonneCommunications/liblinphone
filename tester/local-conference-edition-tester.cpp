@@ -475,6 +475,15 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			                             liblinphone_tester_sip_timeout));
 
 			for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), lise.getCMgr()}) {
+				const bctbx_list_t *call_logs = linphone_core_get_call_logs(mgr->lc);
+				if (mgr == focus.getCMgr()) {
+					BC_ASSERT_PTR_NOT_NULL(call_logs);
+					if (call_logs) {
+						BC_ASSERT_EQUAL(bctbx_list_size(call_logs), 1, size_t, "%zu");
+					}
+				} else {
+					BC_ASSERT_PTR_NULL(call_logs);
+				}
 				auto old_stats = participant_stats.front();
 				if ((mgr != focus.getCMgr()) && (mgr != marie.getCMgr())) {
 					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceived,

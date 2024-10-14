@@ -480,17 +480,17 @@ void ServerConference::configure(SalCallOp *op) {
 
 	if (admin && !createdConference) {
 		std::shared_ptr<Address> conferenceAddress = Address::create(op->getTo());
-		shared_ptr<CallSession> session = getMe()->createSession(*this, nullptr, true, nullptr);
-		session->configure(LinphoneCallIncoming, nullptr, op, mOrganizer, conferenceAddress);
-		auto msp = dynamic_pointer_cast<MediaSession>(session)->getMediaParams()->clone();
+		MediaSessionParams *msp = new MediaSessionParams();
+		msp->initDefault(getCore(), LinphoneCallIncoming);
 		msp->enableAudio(audioEnabled);
 		msp->enableVideo(videoEnabled);
 		msp->getPrivate()->enableToneIndications(false);
+		msp->getPrivate()->setConferenceCreation(true);
 		msp->getPrivate()->setInConference(true);
 		msp->getPrivate()->setStartTime(startTime);
 		msp->getPrivate()->setEndTime(endTime);
-		// Set parameters here in order to set the start and end time as well disabling tone notifications
-		dynamic_pointer_cast<MediaSession>(session)->setParams(msp);
+		shared_ptr<CallSession> session = getMe()->createSession(*this, msp, true, nullptr);
+		session->configure(LinphoneCallIncoming, nullptr, op, mOrganizer, conferenceAddress);
 		delete msp;
 	}
 

@@ -118,7 +118,7 @@ public:
 	                       SalCallOp *op,
 	                       const std::shared_ptr<const Address> &from,
 	                       const std::shared_ptr<const Address> &to);
-	void configure(LinphoneCallDir direction, const std::string &callid);
+	virtual void configure(LinphoneCallDir direction, const std::string &callid);
 	bool isOpConfigured();
 	LinphoneStatus decline(LinphoneReason reason);
 	LinphoneStatus decline(const LinphoneErrorInfo *ei);

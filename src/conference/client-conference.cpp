@@ -2310,7 +2310,7 @@ void ClientConference::leave() {
 				break;
 			case CallSession::State::StreamsRunning:
 				lInfo() << *meAddress << " is leaving conference " << *getConferenceAddress()
-				        << ". Focus call is going to be paused.";
+				        << ". focus call is going to be paused.";
 				session->pause();
 				participantDeviceLeft(mMe, mMe->getDevices().front());
 				break;

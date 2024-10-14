@@ -189,7 +189,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 			case CallSession::State::Connected:
 				log->setStatus(LinphoneCallSuccess);
 				log->setConnectedTime(ms_time(nullptr));
-				if (q->sdpFoundInRemoteBody() || q->sdpFoundInLocalBody()) {
+				if ((q->sdpFoundInRemoteBody() || q->sdpFoundInLocalBody()) && reportEvents()) {
 					q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallConnected, log, nullptr);
 				}
 				break;
@@ -1020,6 +1020,28 @@ void CallSessionPrivate::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
 }
 
 // -----------------------------------------------------------------------------
+bool CallSessionPrivate::reportEvents() const {
+	L_Q();
+	const auto &contactAddress = q->getContactAddress();
+	const auto localAddress = q->getLocalAddress();
+	const auto serverConferenceGuessedAddress =
+	    (contactAddress && contactAddress->hasUriParam("conf-id")) ? contactAddress : localAddress;
+	const auto &remoteContactAddress = q->getRemoteContactAddress();
+	const auto remoteAddress = q->getRemoteAddress();
+	const auto clientConferenceGuessedAddress =
+	    (remoteContactAddress && remoteContactAddress->hasUriParam("conf-id")) ? remoteContactAddress : remoteAddress;
+	const auto &peerAddress = isInConference() ? serverConferenceGuessedAddress : clientConferenceGuessedAddress;
+	const auto conference =
+	    q->getCore()->searchConference(nullptr, nullptr, peerAddress, std::list<std::shared_ptr<Address>>());
+	ConferenceInterface::State conferenceState =
+	    (conference) ? conference->getState() : ConferenceInterface::State::Instantiated;
+	bool conferenceCreated = !((conferenceState == ConferenceInterface::State::Instantiated) ||
+	                           (conferenceState == ConferenceInterface::State::CreationPending));
+	// Add logs to the databse if it is a regular call.
+	// The core should store call session linked to the creation or update of chat room and conferences
+	return !q->getParams()->getPrivate()->isConferenceCreation() &&
+	       (!conference || (conferenceCreated && conference->supportsMedia()));
+}
 
 void CallSessionPrivate::completeLog() {
 	L_Q();
@@ -1034,9 +1056,7 @@ void CallSessionPrivate::completeLog() {
 			q->getCore()->getCCore()->missed_calls++;
 		}
 	}
-	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
-	bool reportCallEndedEvent = !conference || conference->supportsMedia();
-	if (reportCallEndedEvent) {
+	if (reportEvents()) {
 		q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, log, nullptr);
 	}
 }
@@ -1372,13 +1392,13 @@ void CallSession::configure(LinphoneCallDir direction,
 	if (direction == LinphoneCallOutgoing) {
 		if (d->params->getPrivate()->getReferer()) d->referer = d->params->getPrivate()->getReferer();
 		d->startPing();
-	} else if (direction == LinphoneCallIncoming) {
+	} else if (!getParams() && (direction == LinphoneCallIncoming)) {
 		d->setParams(new CallSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 	}
 
 	assignAccount(account);
-	if ((direction == LinphoneCallIncoming) && sdpFoundInRemoteBody()) {
+	if ((direction == LinphoneCallIncoming) && sdpFoundInRemoteBody() && d->reportEvents()) {
 		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 	}
 }
@@ -1391,6 +1411,11 @@ void CallSession::configure(LinphoneCallDir direction, const string &callid) {
 	const auto anonymous = Address::create("Anonymous <sip:anonymous@anonymous.invalid>");
 	d->log = CallLog::create(getCore(), direction, anonymous, anonymous);
 	d->log->setCallId(callid);
+
+	if (!getParams()) {
+		d->setParams(new CallSessionParams());
+		d->params->initDefault(getCore(), LinphoneCallIncoming);
+	}
 }
 
 void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
@@ -1708,7 +1733,7 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 	} else {
 		d->log->setCallId(d->op->getCallId()); /* Must be known at that time */
 		d->setState(CallSession::State::OutgoingProgress, "Outgoing call in progress");
-		if (sdpFoundInLocalBody()) {
+		if (sdpFoundInLocalBody() && d->reportEvents()) {
 			getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 		}
 	}

@@ -4219,8 +4219,6 @@ MediaSession::MediaSession(const shared_ptr<Core> &core,
 
 	if (params) {
 		d->setParams(new MediaSessionParams(*(static_cast<const MediaSessionParams *>(params))));
-	} else {
-		d->setParams(new MediaSessionParams());
 	}
 	d->setCurrentParams(new MediaSessionParams());
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
@@ -4347,6 +4345,12 @@ void MediaSession::configure(LinphoneCallDir direction,
 	L_D();
 	std::shared_ptr<Address> remote;
 
+	// Create parameters before calling CallSession::configure to avoid being erased by the CallSession object
+	if ((direction == LinphoneCallIncoming) && !getParams()) {
+		d->setParams(new MediaSessionParams());
+		d->params->initDefault(getCore(), direction);
+	}
+
 	CallSession::configure(direction, account, op, from, to);
 
 	if (direction == LinphoneCallOutgoing) {
@@ -4357,14 +4361,11 @@ void MediaSession::configure(LinphoneCallDir direction,
 		 * well. */
 		remote = from->clone()->toSharedPtr();
 		remote->clean();
-		d->setParams(new MediaSessionParams());
-		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
 		/* For incoming calls, the bundle enablement is set according to remote call params and core's policy,
 		 * in fixCallParams() */
 	}
 
-	assignAccount(account);
 	// At this point, the account is set if found
 	const auto &selectedAccount = d->params->getAccount();
 	const auto &accountParams = selectedAccount ? selectedAccount->getAccountParams() : nullptr;
@@ -4398,6 +4399,18 @@ void MediaSession::configure(LinphoneCallDir direction,
 
 	if (d->natPolicy) d->runStunTestsIfNeeded();
 	d->discoverMtu(remote);
+}
+
+void MediaSession::configure(LinphoneCallDir direction, const std::string &callid) {
+	L_D();
+
+	// Create parameters before calling CallSession::configure to avoid being erased by the CallSession object
+	if (!getParams()) {
+		d->setParams(new MediaSessionParams());
+		d->params->initDefault(getCore(), direction);
+	}
+
+	CallSession::configure(direction, callid);
 }
 
 LinphoneStatus MediaSession::deferUpdate() {
@@ -4668,9 +4681,7 @@ void MediaSession::sendVfuRequest() {
 	L_D();
 	MediaSessionParams *curParams = getCurrentParams();
 
-	if ((curParams->avpfEnabled() ||
-	     curParams->getPrivate()->implicitRtcpFbEnabled())) { // || sal_media_description_has_implicit_avpf((const
-		                                                      // std::shared_ptr<SalMediaDescription> )call->resultdesc)
+	if ((curParams->avpfEnabled() || curParams->getPrivate()->implicitRtcpFbEnabled())) {
 		lInfo() << "Request Full Intra Request on CallSession [" << this << "]";
 		d->getStreamsGroup().forEach<VideoControlInterface>([](VideoControlInterface *i) { i->sendVfuRequest(); });
 	} else if (getCore()->getCCore()->sip_conf.vfu_with_info) {
