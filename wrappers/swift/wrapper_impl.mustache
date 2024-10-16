@@ -627,6 +627,7 @@ public class {{className}} : LinphoneObject
 		for data in newValue {
 			cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
 		}
+		withExtendedLifetime(newValue){}
 		let exception_result = {{setter_c_name}}(cPtr, cList)
 		bctbx_list_free(cList)
 		{{/is_class_list}}
