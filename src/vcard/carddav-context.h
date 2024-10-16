@@ -22,6 +22,7 @@
 #define _L_CARDDAV_CONTEXT_H_
 
 #include "c-wrapper/c-wrapper.h"
+#include "http/http-client.h"
 
 // =============================================================================
 
@@ -78,9 +79,6 @@ private:
 	void addressBookUrlAndCtagRetrieved(const std::list<CardDAVResponse> &list);
 	void addressBookCtagRetrieved(std::string ctag);
 
-	void setSchemeAndHostIfNotDoneYet(CardDAVQuery *query);
-	void processRedirect(CardDAVQuery *query, belle_sip_message_t *message);
-
 	void fetchVcards();
 	void pullVcards(const std::list<CardDAVResponse> &list);
 
@@ -91,6 +89,9 @@ private:
 	void retrieveAddressBookCtag();
 
 	void sendQuery(CardDAVQuery *query);
+	void setSchemeAndHostIfNotDoneYet(CardDAVQuery *query);
+	void processRedirect(CardDAVQuery *query, const std::string &location);
+	void processQueryResponse(CardDAVQuery *query, const HttpResponse &response);
 	void serverToClientSyncDone(bool success, const std::string &msg);
 	void vcardsFetched(const std::list<CardDAVResponse> &vCards);
 	void vcardsPulled(const std::list<CardDAVResponse> &vCards);
@@ -102,9 +103,6 @@ private:
 	static std::string parseAddressBookCtagValueFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
-	static void processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event);
-	static void processIoErrorFromCarddavRequest(void *data, const belle_sip_io_error_event_t *event);
-	static void processResponseFromCarddavRequest(void *data, const belle_http_response_event_t *event);
 
 	std::shared_ptr<FriendList> mFriendList = nullptr;
 	std::string mCtag = "";

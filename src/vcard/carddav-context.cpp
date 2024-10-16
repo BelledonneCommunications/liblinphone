@@ -26,7 +26,6 @@
 #include "core/core.h"
 #include "friend/friend-list.h"
 #include "friend/friend.h"
-#include "http/http-client.h"
 #include "vcard-context.h"
 #include "vcard.h"
 #include "xml/xml-parsing-context.h"
@@ -255,47 +254,143 @@ void CardDAVContext::queryWellKnown(CardDAVQuery *query) {
 }
 
 void CardDAVContext::sendQuery(CardDAVQuery *query) {
-	belle_generic_uri_t *uri = belle_generic_uri_parse(query->mUrl.c_str());
-	if (!uri) {
-		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, "Could not send request, URL is invalid");
-		lError() << "[CardDAV] Could not send request, URL [" << query->mUrl << "] is invalid";
-		return;
-	}
-	belle_sip_header_content_type_t *content_type;
-	if (query->mMethod == "PUT") {
-		content_type = belle_sip_header_content_type_create("text", "vcard; charset=utf-8");
-	} else {
-		content_type = belle_sip_header_content_type_create("application", "xml; charset=utf-8");
-	}
-	belle_http_request_t *req = belle_http_request_create(query->mMethod.c_str(), uri, content_type, nullptr);
-	if (!req) {
-		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, "Could not create belle_http_request_t");
-		belle_sip_object_unref(uri);
-		lError() << "[CardDAV] Could not create belle_http_request_t";
-		return;
-	}
-	belle_sip_message_add_header(
-	    (belle_sip_message_t *)req,
-	    belle_sip_header_create("User-Agent", linphone_core_get_user_agent(mFriendList->getCore()->getCCore())));
-	if (!query->mDepth.empty())
-		belle_sip_message_add_header((belle_sip_message_t *)req,
-		                             belle_sip_header_create("Depth", query->mDepth.c_str()));
-	else if (!query->mIfmatch.empty())
-		belle_sip_message_add_header((belle_sip_message_t *)req,
-		                             belle_sip_header_create("If-Match", query->mIfmatch.c_str()));
-	if (!query->mBody.empty()) {
-		belle_sip_memory_body_handler_t *bh = belle_sip_memory_body_handler_new_copy_from_buffer(
-		    query->mBody.c_str(), query->mBody.size(), nullptr, nullptr);
-		belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req), bh ? BELLE_SIP_BODY_HANDLER(bh) : nullptr);
+	auto &httpRequest = mFriendList->getCore()->getHttpClient().createRequest(query->mMethod, query->mUrl);
+
+	if (!query->mDepth.empty()) {
+		httpRequest.addHeader("Depth", query->mDepth);
+	} else if (!query->mIfmatch.empty()) {
+		httpRequest.addHeader("If-Match", query->mIfmatch);
 	}
 
-	belle_http_request_listener_callbacks_t cbs = {0};
-	cbs.process_response = processResponseFromCarddavRequest;
-	cbs.process_io_error = processIoErrorFromCarddavRequest;
-	cbs.process_auth_requested = processAuthRequestedFromCarddavRequest;
-	query->mHttpRequestListener = belle_http_request_listener_create_from_callbacks(&cbs, query);
-	belle_http_provider_send_request(mFriendList->getCore()->getHttpClient().getProvider(), req,
-	                                 query->mHttpRequestListener);
+	ContentType contentType = ContentType("application/xml");
+	if (query->mMethod == "PUT") {
+		contentType = ContentType("text/vcard");
+	}
+	contentType.addParameter("charset", "utf-8");
+
+	if (!query->mBody.empty()) {
+		auto content = Content(ContentType(contentType), query->mBody);
+		httpRequest.setBody(content);
+	}
+
+	auto context = this;
+	httpRequest.execute([query, context](const HttpResponse &response) {
+		int code = response.getStatusCode();
+		if (code == 301 || code == 302 || code == 307 || code == 308) {
+			string location = response.getHeaderValue("Location");
+			if (location.empty()) {
+				context->serverToClientSyncDone(false, "HTTP Redirect without location header.");
+			} else {
+				context->processRedirect(query, location);
+			}
+			return;
+		}
+
+		context->processQueryResponse(query, response);
+		delete query;
+	});
+}
+
+void CardDAVContext::setSchemeAndHostIfNotDoneYet(CardDAVQuery *query) {
+	if (mHost.empty()) {
+		belle_generic_uri_t *uri = belle_generic_uri_parse(query->mUrl.c_str());
+		mScheme = belle_generic_uri_get_scheme(uri);
+		mHost = belle_generic_uri_get_host(uri);
+		lInfo() << "[CardDAV] Extracted scheme [" << mScheme << "] and host [" << mHost << "] from latest query";
+	}
+}
+
+void CardDAVContext::processRedirect(CardDAVQuery *query, const std::string &location) {
+	lInfo() << "[CardDAV] Location header directs towards: " << location;
+	string newLocation = location;
+	if (newLocation.rfind(mScheme, 0) != 0 && newLocation.rfind("/", 0) == 0) {
+		// If newLocation doesn't start with http scheme but only starts with '/', recompute full URL
+		newLocation = mScheme + "://" + mHost + newLocation;
+	}
+	lInfo() << "[CardDAV] Redirecting query from [" << query->mUrl << "] to [" << newLocation << "]";
+	query->mUrl = newLocation;
+	sendQuery(query);
+}
+
+void CardDAVContext::processQueryResponse(CardDAVQuery *query, const HttpResponse &response) {
+	query->mContext->setSchemeAndHostIfNotDoneYet(query);
+	int code = response.getStatusCode();
+	if (code == 207 || code == 200 || code == 201 || code == 204) {
+		auto content = response.getBody();
+		string body = content.getBodyAsString();
+		switch (query->mType) {
+			case CardDAVQuery::Type::Propfind:
+				switch (query->mPropfindType) {
+					case CardDAVQuery::PropfindType::UserPrincipal:
+						query->mContext->userPrincipalUrlRetrieved(parseUserPrincipalUrlValueFromXmlResponse(body));
+						break;
+					case CardDAVQuery::PropfindType::UserAddressBooksHome:
+						query->mContext->userAddressBookHomeUrlRetrieved(
+						    parseUserAddressBookUrlValueFromXmlResponse(body));
+						break;
+					case CardDAVQuery::PropfindType::AddressBookUrlAndCTAG:
+						query->mContext->addressBookUrlAndCtagRetrieved(
+						    parseAddressBookUrlAndCtagValueFromXmlResponse(body));
+						break;
+					case CardDAVQuery::PropfindType::AddressBookCTAG:
+						query->mContext->addressBookCtagRetrieved(parseAddressBookCtagValueFromXmlResponse(body));
+						break;
+				}
+				break;
+			case CardDAVQuery::Type::AddressbookQuery:
+				query->mContext->vcardsFetched(parseVcardsEtagsFromXmlResponse(body));
+				break;
+			case CardDAVQuery::Type::AddressbookMultiget:
+				query->mContext->vcardsPulled(parseVcardsFromXmlResponse(body));
+				break;
+			case CardDAVQuery::Type::Put: {
+				std::shared_ptr<Friend> f =
+				    Friend::getSharedFromThis(static_cast<LinphoneFriend *>(query->getUserData()));
+				f->unref();
+				std::shared_ptr<Vcard> vcard = f->getVcard();
+				if (vcard) {
+					string etag = response.getHeaderValue("ETag");
+					if (!etag.empty()) {
+						if (vcard->getEtag().empty()) {
+							lInfo() << "[CardDAV] eTag for newly created vCard is [" << etag << "]";
+						} else {
+							lInfo() << "[CardDAV] eTag for updated vCard is [" << etag << "]";
+						}
+						vcard->setEtag(etag);
+						query->mContext->clientToServerSyncDone(true, "");
+					} else {
+						// For some reason, server didn't return the eTag of the updated/created vCard
+						// We need to do a GET on the vCard to get the correct one
+						std::list<CardDAVResponse> list;
+						CardDAVResponse response;
+						response.mUrl = vcard->getUrl();
+						list.push_back(std::move(response));
+						query->mContext->pullVcards(list);
+					}
+				} else {
+					query->mContext->clientToServerSyncDone(false,
+					                                        "No LinphoneFriend found in user_data field of query");
+				}
+			} break;
+			case CardDAVQuery::Type::Delete:
+				query->mContext->clientToServerSyncDone(true, "");
+				break;
+			default:
+				lError() << "[CardDAV] Unknown request: " << static_cast<int>(query->mType);
+				break;
+		}
+	} else {
+		if (query->mContext->mWellKnownQueried) {
+			std::stringstream ssMsg;
+			ssMsg << "Unexpected HTTP response code: " << code;
+			if (query->isClientToServerSync()) query->mContext->clientToServerSyncDone(false, ssMsg.str().c_str());
+			else query->mContext->serverToClientSyncDone(false, ssMsg.str().c_str());
+		} else {
+			lWarning() << "Query HTTP result code was [" << code << "], trying well-known";
+			query->mContext->queryWellKnown(query);
+			return; // Prevents deleting the query
+		}
+	}
 }
 
 void CardDAVContext::serverToClientSyncDone(bool success, const std::string &msg) {
@@ -620,161 +715,5 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(BCTBX_UNUS
 }
 
 #endif /* HAVE_XML2 */
-
-void CardDAVContext::processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) {
-	CardDAVQuery *query = static_cast<CardDAVQuery *>(data);
-	LinphoneCore *lc = query->mContext->mFriendList->getCore()->getCCore();
-
-	belle_sip_auth_mode_t mode = belle_sip_auth_event_get_mode(event);
-	lInfo() << "[CardDAV] Authentication requested with mode [" << belle_sip_auth_event_mode_to_string(mode) << "]";
-
-	if (linphone_core_fill_belle_sip_auth_event(lc, event, NULL, NULL)) {
-	} else {
-		lError() << "[CardDAV] Authentication requested during CardDAV request sending, and username/password weren't "
-		            "provided";
-		if (query->isClientToServerSync()) {
-			query->mContext->clientToServerSyncDone(
-			    false,
-			    "Authentication requested during CardDAV request sending, and username/password weren't provided");
-		} else {
-			query->mContext->serverToClientSyncDone(
-			    false,
-			    "Authentication requested during CardDAV request sending, and username/password weren't provided");
-		}
-		delete query;
-	}
-}
-
-void CardDAVContext::processIoErrorFromCarddavRequest(void *data,
-                                                      BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
-	CardDAVQuery *query = static_cast<CardDAVQuery *>(data);
-	lError() << "[CardDAV] I/O error during CardDAV request sending";
-	if (query->isClientToServerSync()) {
-		query->mContext->clientToServerSyncDone(false, "I/O error during CardDAV request sending");
-	} else {
-		query->mContext->serverToClientSyncDone(false, "I/O error during CardDAV request sending");
-	}
-	delete query;
-}
-
-void CardDAVContext::setSchemeAndHostIfNotDoneYet(CardDAVQuery *query) {
-	if (mHost.empty()) {
-		belle_generic_uri_t *uri = belle_generic_uri_parse(query->mUrl.c_str());
-		mScheme = belle_generic_uri_get_scheme(uri);
-		mHost = belle_generic_uri_get_host(uri);
-		lInfo() << "[CardDAV] Extracted scheme [" << mScheme << "] and host [" << mHost << "] from latest query";
-	}
-}
-
-void CardDAVContext::processRedirect(CardDAVQuery *query, belle_sip_message_t *message) {
-	const char *location_value;
-	belle_sip_header_t *location = belle_sip_message_get_header(message, "Location");
-	if (!location || (location_value = belle_sip_header_get_unparsed_value(location)) == NULL) {
-		query->mContext->serverToClientSyncDone(false, "HTTP Redirect without location header.");
-	} else {
-		std::string newLocation = location_value;
-		lInfo() << "[CardDAV] Location header directs towards: " << newLocation;
-		if (newLocation.rfind(mScheme, 0) != 0 && newLocation.rfind("/", 0) == 0) {
-			// If newLocation doesn't start with http scheme but only starts with '/', recompute full URL
-			newLocation = mScheme + "://" + mHost + newLocation;
-		}
-		lInfo() << "[CardDAV] Redirecting query from [" << query->mUrl << "] to [" << newLocation << "]";
-		query->mUrl = newLocation;
-		sendQuery(query);
-	}
-}
-
-void CardDAVContext::processResponseFromCarddavRequest(void *data, const belle_http_response_event_t *event) {
-	CardDAVQuery *query = static_cast<CardDAVQuery *>(data);
-	if (event->response) {
-		query->mContext->setSchemeAndHostIfNotDoneYet(query);
-		int code = belle_http_response_get_status_code(event->response);
-		if (code == 301 || code == 302 || code == 307 || code == 308) {
-			query->mContext->processRedirect(query, BELLE_SIP_MESSAGE(event->response));
-			return;
-		} else if (code == 207 || code == 200 || code == 201 || code == 204) {
-			const std::string body = L_C_TO_STRING(belle_sip_message_get_body((belle_sip_message_t *)event->response));
-			switch (query->mType) {
-				case CardDAVQuery::Type::Propfind:
-					switch (query->mPropfindType) {
-						case CardDAVQuery::PropfindType::UserPrincipal:
-							query->mContext->userPrincipalUrlRetrieved(parseUserPrincipalUrlValueFromXmlResponse(body));
-							break;
-						case CardDAVQuery::PropfindType::UserAddressBooksHome:
-							query->mContext->userAddressBookHomeUrlRetrieved(
-							    parseUserAddressBookUrlValueFromXmlResponse(body));
-							break;
-						case CardDAVQuery::PropfindType::AddressBookUrlAndCTAG:
-							query->mContext->addressBookUrlAndCtagRetrieved(
-							    parseAddressBookUrlAndCtagValueFromXmlResponse(body));
-							break;
-						case CardDAVQuery::PropfindType::AddressBookCTAG:
-							query->mContext->addressBookCtagRetrieved(parseAddressBookCtagValueFromXmlResponse(body));
-							break;
-					}
-					break;
-				case CardDAVQuery::Type::AddressbookQuery:
-					query->mContext->vcardsFetched(parseVcardsEtagsFromXmlResponse(body));
-					break;
-				case CardDAVQuery::Type::AddressbookMultiget:
-					query->mContext->vcardsPulled(parseVcardsFromXmlResponse(body));
-					break;
-				case CardDAVQuery::Type::Put: {
-					belle_sip_header_t *header =
-					    belle_sip_message_get_header((belle_sip_message_t *)event->response, "ETag");
-					std::shared_ptr<Friend> f =
-					    Friend::getSharedFromThis(static_cast<LinphoneFriend *>(query->getUserData()));
-					f->unref();
-					std::shared_ptr<Vcard> vcard = f->getVcard();
-					if (vcard) {
-						if (header) {
-							const std::string etag = belle_sip_header_get_unparsed_value(header);
-							if (vcard->getEtag().empty()) {
-								lInfo() << "[CardDAV] eTag for newly created vCard is [" << etag << "]";
-							} else {
-								lInfo() << "[CardDAV] eTag for updated vCard is [" << etag << "]";
-							}
-							vcard->setEtag(etag);
-							query->mContext->clientToServerSyncDone(true, "");
-						} else {
-							// For some reason, server didn't return the eTag of the updated/created vCard
-							// We need to do a GET on the vCard to get the correct one
-							std::list<CardDAVResponse> list;
-							CardDAVResponse response;
-							response.mUrl = vcard->getUrl();
-							list.push_back(std::move(response));
-							query->mContext->pullVcards(list);
-						}
-					} else {
-						query->mContext->clientToServerSyncDone(false,
-						                                        "No LinphoneFriend found in user_data field of query");
-					}
-				} break;
-				case CardDAVQuery::Type::Delete:
-					query->mContext->clientToServerSyncDone(true, "");
-					break;
-				default:
-					lError() << "[CardDAV] Unknown request: " << static_cast<int>(query->mType);
-					break;
-			}
-		} else {
-			if (query->mContext->mWellKnownQueried) {
-				std::stringstream ssMsg;
-				ssMsg << "Unexpected HTTP response code: " << code;
-				if (query->isClientToServerSync()) query->mContext->clientToServerSyncDone(false, ssMsg.str().c_str());
-				else query->mContext->serverToClientSyncDone(false, ssMsg.str().c_str());
-			} else {
-				lWarning() << "Query HTTP result code was [" << code << "], trying well-known";
-				query->mContext->queryWellKnown(query);
-				return; // Prevents deleting the query
-			}
-		}
-	} else {
-		if (query->isClientToServerSync()) query->mContext->clientToServerSyncDone(false, "No response found");
-		else query->mContext->serverToClientSyncDone(false, "No response found");
-	}
-
-	delete query;
-}
 
 LINPHONE_END_NAMESPACE
