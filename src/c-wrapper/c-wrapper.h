@@ -144,7 +144,6 @@ LINPHONE_END_NAMESPACE
 	F(Core, Core)                                                                                                      \
 	F(Content, Content)                                                                                                \
 	F(EventLog, EventLog)                                                                                              \
-	F(MagicSearch, MagicSearch)                                                                                        \
 	F(MediaSessionParams, CallParams)                                                                                  \
 	F(ParticipantDeviceIdentity, ParticipantDeviceIdentity)                                                            \
 	F(ParticipantImdnState, ParticipantImdnState)                                                                      \
@@ -201,6 +200,7 @@ BELLE_SIP_TYPE_ID(LinphoneLDAPContactProvider),
 BELLE_SIP_TYPE_ID(LinphoneLDAPContactSearch),
 BELLE_SIP_TYPE_ID(LinphoneLoggingService),
 BELLE_SIP_TYPE_ID(LinphoneLoggingServiceCbs),
+BELLE_SIP_TYPE_ID(LinphoneMagicSearch),
 BELLE_SIP_TYPE_ID(LinphoneMagicSearchCbs),
 BELLE_SIP_TYPE_ID(LinphoneParticipant),
 BELLE_SIP_TYPE_ID(LinphoneParticipantDevice),

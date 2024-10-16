@@ -213,8 +213,7 @@ LinphoneFriendListStatus linphone_friend_list_remove_friend(LinphoneFriendList *
 }
 
 const bctbx_list_t *linphone_friend_list_get_friends(const LinphoneFriendList *list) {
-	FriendList::toCpp(list)->getFriends();
-	return FriendList::toCpp(list)->mBctbxFriends;
+	return FriendList::toCpp(list)->getFriendsCList();
 }
 
 void linphone_friend_list_update_dirty_friends(LinphoneFriendList *list) {

@@ -25,17 +25,18 @@
 #include <iomanip>
 #include <iostream>
 
+#include "bctoolbox/crypto.hh"
 #include "contact_providers_priv.h"
+#include "friend/friend.h"
 #include "ldap-config-keys.h"
 #include "ldap-contact-fields.h"
 #include "ldap-contact-search.h"
 #include "ldap-params.h"
 #include "ldap.h"
+#include "search/search-result.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
 #include "linphone/api/c-types.h"
-
-#include "bctoolbox/crypto.hh"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -371,7 +372,7 @@ void LdapContactProvider::computeLastRequestTime(const std::list<SearchRequest> 
 
 // Create a search object and store the request to be used when the provider is ready
 bool LdapContactProvider::search(const std::string &predicate,
-                                 ContactSearchCallback cb,
+                                 MagicSearchCallback cb,
                                  void *cbData,
                                  const std::list<SearchRequest> &requestHistory) {
 	if (configValueToInt("min_chars") <= (int)predicate.length()) {
@@ -733,7 +734,6 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 			case LDAP_RES_SEARCH_ENTRY:
 			case LDAP_RES_EXTENDED: {
 				LDAPMessage *entry = ldap_first_entry(mLd, message);
-				LinphoneCore *lc = mCore->getCCore();
 				// Message can be a list. Loop on entries
 				while (entry != NULL) {
 					LdapContactFields ldapData;
@@ -764,32 +764,29 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 					}
 					contact_complete = buildContact(&ldapData, attributes);
 					if (contact_complete) {
-						LinphoneFriend *lfriend = linphone_core_create_friend(lc);
-						linphone_friend_set_name(lfriend, ldapData.mName.first.c_str());
-
+						std::shared_ptr<Friend> lFriend = Friend::create(mCore, ldapData.mName.first);
 						for (auto sipAddress : ldapData.mSip) {
-							LinphoneAddress *la = linphone_core_interpret_url(lc, sipAddress.first.c_str());
-							if (la) {
-								linphone_address_set_display_name(la, ldapData.mName.first.c_str());
-								linphone_friend_add_address(lfriend, la);
-								linphone_friend_add_phone_number(lfriend, L_STRING_TO_C(sipAddress.second));
+							std::shared_ptr<Address> addr = mCore->interpretUrl(sipAddress.first, false);
+							if (addr) {
+								addr->setDisplayName(ldapData.mName.first);
+								lFriend->addAddress(addr);
+								if (!sipAddress.second.empty()) {
+									lFriend->addPhoneNumber(sipAddress.second);
+								}
 
 								int maxResults = atoi(mConfig["max_results"][0].c_str());
 								if (maxResults == 0 || req->mFoundCount < (unsigned int)maxResults) {
-									std::shared_ptr<SearchResult> searchResult = SearchResult::create(
-									    (unsigned int)0, Address::toCpp(la)->getSharedFromThis(), sipAddress.second,
-									    lfriend, LinphoneMagicSearchSourceLdapServers);
+									std::shared_ptr<SearchResult> searchResult =
+									    SearchResult::create((unsigned int)0, addr, sipAddress.second, lFriend,
+									                         LinphoneMagicSearchSourceLdapServers);
 									req->mFoundEntries.push_back(searchResult);
 									++req->mFoundCount;
 								} else { // Have more result (requested max_results+1). Do not store this result to
 									     // avoid missunderstanding from user.
 									req->mHaveMoreResults = true;
 								}
-								linphone_address_unref(la);
 							}
 						}
-
-						linphone_friend_unref(lfriend);
 					}
 					if (ber) ber_free(ber, 0);
 					if (attr) ldap_memfree(attr);

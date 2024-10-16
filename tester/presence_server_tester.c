@@ -2570,7 +2570,8 @@ static void notify_search_result_capabilities_with_alias(void) {
 		BC_ASSERT_TRUE(linphone_friend_has_capability(marieFriend, LinphoneFriendCapabilityLimeX3dh));
 
 		magicSearch = linphone_magic_search_new(pauline->lc);
-		resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+		resultList = linphone_magic_search_get_contacts_list(magicSearch, "", "", LinphoneMagicSearchSourceAll,
+		                                                     LinphoneMagicSearchAggregationNone);
 
 		if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");

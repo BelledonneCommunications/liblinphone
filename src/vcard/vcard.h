@@ -111,8 +111,7 @@ private:
 	std::string mUrl;
 	std::array<unsigned char, VCARD_MD5_HASH_SIZE> mMd5;
 #endif /* VCARD_ENABLED */
-	mutable std::list<std::shared_ptr<Address>> mSipAddressesCache;
-	mutable bctbx_list_t *mBctbxSipAddressesCache = nullptr;
+	mutable ListHolder<Address> mSipAddresses;
 
 	bool mUseVCard3Grammar = false;
 };

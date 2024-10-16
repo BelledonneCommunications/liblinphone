@@ -19,66 +19,48 @@
  */
 
 #include "linphone/api/c-magic-search-cbs.h"
-
 #include "c-wrapper/c-wrapper.h"
+#include "search/magic-search.h"
 
-// =============================================================================
-
-struct _LinphoneMagicSearchCbs {
-	belle_sip_object_t base;
-	void *userData;
-	LinphoneMagicSearchCbsSearchResultsReceivedCb search_results_received;
-	LinphoneMagicSearchCbsLdapHaveMoreResultsCb ldap_have_more_results;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneMagicSearchCbs);
-
-BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneMagicSearchCbs);
-
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneMagicSearchCbs,
-                           belle_sip_object_t,
-                           NULL, // destroy
-                           NULL, // clone
-                           NULL, // marshal
-                           FALSE);
+using namespace LinphonePrivate;
 
 // =============================================================================
 
 LinphoneMagicSearchCbs *linphone_magic_search_cbs_new(void) {
-	return belle_sip_object_new(LinphoneMagicSearchCbs);
+	return MagicSearchCbs::createCObject();
 }
 
 LinphoneMagicSearchCbs *linphone_magic_search_cbs_ref(LinphoneMagicSearchCbs *cbs) {
-	belle_sip_object_ref(cbs);
+	MagicSearchCbs::toCpp(cbs)->ref();
 	return cbs;
 }
 
 void linphone_magic_search_cbs_unref(LinphoneMagicSearchCbs *cbs) {
-	belle_sip_object_unref(cbs);
+	MagicSearchCbs::toCpp(cbs)->unref();
 }
 
 void *linphone_magic_search_cbs_get_user_data(const LinphoneMagicSearchCbs *cbs) {
-	return cbs->userData;
+	return MagicSearchCbs::toCpp(cbs)->getUserData();
 }
 
 void linphone_magic_search_cbs_set_user_data(LinphoneMagicSearchCbs *cbs, void *ud) {
-	cbs->userData = ud;
+	MagicSearchCbs::toCpp(cbs)->setUserData(ud);
 }
 
 LinphoneMagicSearchCbsSearchResultsReceivedCb
 linphone_magic_search_cbs_get_search_results_received(const LinphoneMagicSearchCbs *cbs) {
-	return cbs->search_results_received;
+	return MagicSearchCbs::toCpp(cbs)->getResultsReceived();
 }
 void linphone_magic_search_cbs_set_search_results_received(LinphoneMagicSearchCbs *cbs,
                                                            LinphoneMagicSearchCbsSearchResultsReceivedCb cb) {
-	cbs->search_results_received = cb;
+	MagicSearchCbs::toCpp(cbs)->setResultsReceived(cb);
 }
 
 LinphoneMagicSearchCbsLdapHaveMoreResultsCb
 linphone_magic_search_cbs_get_ldap_have_more_results(const LinphoneMagicSearchCbs *cbs) {
-	return cbs->ldap_have_more_results;
+	return MagicSearchCbs::toCpp(cbs)->getMoreResultsAvailable();
 }
 void linphone_magic_search_cbs_set_ldap_have_more_results(LinphoneMagicSearchCbs *cbs,
                                                           LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb) {
-	cbs->ldap_have_more_results = cb;
+	MagicSearchCbs::toCpp(cbs)->setMoreResultsAvailable(cb);
 }

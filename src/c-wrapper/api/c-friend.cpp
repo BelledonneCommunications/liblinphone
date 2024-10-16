@@ -111,7 +111,7 @@ const LinphoneAddress *linphone_friend_get_address(const LinphoneFriend *lf) {
 const bctbx_list_t *linphone_friend_get_addresses(const LinphoneFriend *lf) {
 	if (!lf) return nullptr;
 	Friend::toCpp(lf)->getAddresses();
-	return Friend::toCpp(lf)->mBctbxAddresses;
+	return Friend::toCpp(lf)->getAddressesCList();
 }
 
 bctbx_list_t *linphone_friend_get_devices(const LinphoneFriend *lf) {
@@ -668,6 +668,7 @@ LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf) {
 void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf) {
 	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(lc);
 	if (!friendList) {
+		ms_warning("No default friend list yet, creating it now");
 		friendList = linphone_core_create_friend_list(lc);
 		linphone_core_add_friend_list(lc, friendList);
 		linphone_friend_list_unref(friendList);
@@ -916,12 +917,12 @@ int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
 
 	// First remove all the orphan friends from the DB (friends that are not in a friend list)
 	mainDb->deleteOrphanFriends();
-	lc->cppPtr->clearFriendLists();
 
 	std::list<std::shared_ptr<FriendList>> friendLists = mainDb->getFriendLists();
 	if (!friendLists.empty()) {
 		lc->friends_lists =
 		    bctbx_list_free_with_data(lc->friends_lists, (bctbx_list_free_func)linphone_friend_list_unref);
+		lc->cppPtr->clearFriendLists();
 
 		for (auto &friendList : friendLists) {
 			linphone_core_add_friend_list(lc, friendList->toC());

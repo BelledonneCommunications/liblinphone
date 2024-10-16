@@ -267,6 +267,7 @@ static void friends_sqlite_storage(void) {
 	LinphoneCoreManager *lcm;
 	const bctbx_list_t *friends = NULL;
 	bctbx_list_t *friends_from_db = NULL;
+	const bctbx_list_t *friends_from_friendlist = NULL;
 	bctbx_list_t *friends_lists_from_db = NULL;
 	char *friends_db = bc_tester_file(vcard_friends_db_file);
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)ms_new0(LinphoneFriendListStats, 1);
@@ -312,10 +313,10 @@ static void friends_sqlite_storage(void) {
 
 	friends_lists_from_db = linphone_core_fetch_friends_lists_from_db(lc);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(friends_lists_from_db), 1, unsigned int, "%u");
-	friends_from_db =
-	    *linphone_friend_list_get_friends_attribute((LinphoneFriendList *)bctbx_list_get_data(friends_lists_from_db));
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(friends_from_db), 1, unsigned int, "%u");
-	lf2 = (LinphoneFriend *)friends_from_db->data;
+	friends_from_friendlist =
+	    linphone_friend_list_get_friends((LinphoneFriendList *)bctbx_list_get_data(friends_lists_from_db));
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(friends_from_friendlist), 1, unsigned int, "%u");
+	lf2 = (LinphoneFriend *)friends_from_friendlist->data;
 	BC_ASSERT_PTR_NOT_NULL(linphone_friend_get_core(lf2));
 	BC_ASSERT_PTR_NOT_NULL(linphone_friend_get_friend_list(lf2));
 	friends_lists_from_db =

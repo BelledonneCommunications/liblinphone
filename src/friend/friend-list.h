@@ -78,7 +78,6 @@ public:
 	friend LinphoneEvent * ::linphone_friend_list_get_event(const LinphoneFriendList *list);
 	friend int ::linphone_friend_list_get_expected_notification_version(const LinphoneFriendList *list);
 	friend const bctbx_list_t * ::linphone_friend_list_get_friends(const LinphoneFriendList *list);
-	friend bctbx_list_t ** ::linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl);
 	friend const char * ::linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
 	friend long long ::linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
 	friend void ::linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
@@ -102,6 +101,7 @@ public:
 	// Getters
 	const std::string &getDisplayName() const;
 	const std::list<std::shared_ptr<Friend>> &getFriends() const;
+	const bctbx_list_t *getFriendsCList() const;
 	const std::shared_ptr<Address> &getRlsAddress() const;
 	const std::string &getRlsUri() const;
 	LinphoneFriendListType getType() const;
@@ -176,8 +176,7 @@ private:
 	std::string mDisplayName;
 	std::string mRlsUri; // This field must be kept in sync with mRlsAddr
 	std::shared_ptr<Address> mRlsAddr;
-	std::list<std::shared_ptr<Friend>> mFriends;
-	mutable bctbx_list_t *mBctbxFriends = nullptr; // This field must be kept in sync with mFriends
+	mutable ListHolder<Friend> mFriendsList;
 	std::map<std::string, std::shared_ptr<Friend>> mFriendsMapByRefKey;
 	std::multimap<std::string, std::shared_ptr<Friend>> mFriendsMapByUri;
 	std::array<unsigned char, 16> *mContentDigest = nullptr;

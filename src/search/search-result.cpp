@@ -20,8 +20,8 @@
 
 #include "address/address.h"
 #include "c-wrapper/internal/c-tools.h"
-#include "linphone/friend.h"
-#include "linphone/presence.h"
+#include "friend/friend.h"
+#include "presence/presence-model.h"
 
 #include "search-result.h"
 
@@ -35,18 +35,17 @@ void SearchResult::updateCapabilities() {
 	if (!mFriend) return;
 
 	mCapabilities = LinphoneFriendCapabilityNone;
-	const LinphonePresenceModel *presenceModel = nullptr;
+	shared_ptr<PresenceModel> presenceModel = nullptr;
 
 	if (mAddress) {
-		std::string addressString = mAddress->asStringUriOnly();
-		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, L_STRING_TO_C(addressString));
+		presenceModel = mFriend->getPresenceModelForAddress(mAddress);
 	}
 
 	if (!presenceModel && !mPhoneNumber.empty()) {
-		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, mPhoneNumber.c_str());
+		presenceModel = mFriend->getPresenceModelForUriOrTel(mPhoneNumber);
 	}
 
-	if (presenceModel) mCapabilities = linphone_presence_model_get_capabilities(presenceModel);
+	if (presenceModel) mCapabilities = presenceModel->getCapabilities();
 }
 
 // ------------------------------------------------------------------------------
@@ -58,15 +57,14 @@ SearchResult::SearchResult() {
 }
 
 SearchResult::SearchResult(const unsigned int weight,
-                           std::shared_ptr<const Address> address,
+                           shared_ptr<const Address> address,
                            const string &phoneNumber,
-                           LinphoneFriend *linphoneFriend,
+                           shared_ptr<Friend> linphoneFriend,
                            int sourceFlags) {
 	mWeight = weight;
 	mAddress = (address) ? address->clone()->toSharedPtr() : nullptr;
 	mPhoneNumber = phoneNumber;
 	mFriend = linphoneFriend;
-	if (mFriend) linphone_friend_ref(mFriend);
 	mSourceFlags = sourceFlags;
 	updateCapabilities();
 }
@@ -76,14 +74,11 @@ SearchResult::SearchResult(const SearchResult &sr) : HybridObject(sr) {
 	mAddress = sr.getAddress()->clone()->toSharedPtr();
 	mPhoneNumber = sr.getPhoneNumber();
 	mFriend = sr.getFriend();
-	if (mFriend) linphone_friend_ref(mFriend);
 	mSourceFlags = sr.getSourceFlags();
 	mCapabilities = sr.getCapabilities();
 }
 
-SearchResult::~SearchResult() {
-	if (mFriend) linphone_friend_unref(mFriend);
-};
+SearchResult::~SearchResult() {};
 
 bool SearchResult::operator<(const SearchResult &other) const {
 	return getWeight() < other.getWeight();
@@ -118,27 +113,28 @@ std::string SearchResult::toString() const {
 	return ss.str();
 }
 
-const char *SearchResult::getDisplayName() const {
-	const char *name = NULL;
-	if (getFriend()) {
-		name = linphone_friend_get_name(getFriend());
+string SearchResult::getDisplayName() const {
+	if (mFriend && !mFriend->getName().empty()) {
+		return mFriend->getName();
 	}
+
 	const auto &addr = getAddress();
-	if (!name && addr) {
-		const char *displayName = addr->getDisplayNameCstr();
-		name = displayName ? displayName : addr->getUsernameCstr();
+	if (addr) {
+		if (!addr->getDisplayName().empty()) {
+			return addr->getDisplayName();
+		}
+		if (!addr->getUsername().empty()) {
+			return addr->getUsername();
+		}
 	}
-	if (!name) {
-		return getPhoneNumber().c_str();
-	}
-	return name;
+	return getPhoneNumber();
 }
 
-LinphoneFriend *SearchResult::getFriend() const {
+shared_ptr<Friend> SearchResult::getFriend() const {
 	return mFriend;
 }
 
-const std::shared_ptr<Address> SearchResult::getAddress() const {
+shared_ptr<Address> SearchResult::getAddress() const {
 	return mAddress;
 }
 
@@ -180,12 +176,13 @@ void SearchResult::merge(const std::shared_ptr<SearchResult> &withResult) {
 
 	if (doOverride || mPhoneNumber.empty()) mPhoneNumber = withResult->getPhoneNumber();
 
-	LinphoneFriend *other = withResult->getFriend();
+	const shared_ptr<Friend> &other = withResult->getFriend();
 	if (other && other != mFriend) { // There is a new data
-		if (doOverride && mFriend) linphone_friend_unref(mFriend);
+		if (doOverride && mFriend) {
+			mFriend.reset();
+		}
 		if (doOverride || !mFriend) {
 			mFriend = other;
-			linphone_friend_ref(mFriend);
 		}
 	}
 

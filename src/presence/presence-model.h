@@ -82,7 +82,7 @@ public:
 	int getCapabilities() const;
 	float getCapabilityVersion(const LinphoneFriendCapability capability) const;
 	LinphoneConsolidatedPresence getConsolidatedPresence() const;
-	std::string getContact() const;
+	const std::string &getContact() const;
 	time_t getLatestActivityTimestamp() const;
 	unsigned int getNbActivities() const;
 	unsigned int getNbPersons() const;

@@ -20,6 +20,7 @@
 
 #include "linphone/api/c-search-result.h"
 #include "c-wrapper/c-wrapper.h"
+#include "friend/friend.h"
 #include "search/search-result.h"
 
 using namespace LinphonePrivate;
@@ -34,11 +35,12 @@ void linphone_search_result_unref(LinphoneSearchResult *searchResult) {
 }
 
 LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *searchResult) {
-	return SearchResult::toCpp(searchResult)->getFriend();
+	auto lf = SearchResult::toCpp(searchResult)->getFriend();
+	return lf ? lf->toC() : nullptr;
 }
 
 const LinphoneAddress *linphone_search_result_get_address(const LinphoneSearchResult *searchResult) {
-	auto &cppAddr = SearchResult::toCpp(searchResult)->getAddress();
+	auto cppAddr = SearchResult::toCpp(searchResult)->getAddress();
 	return cppAddr ? cppAddr->toC() : nullptr;
 }
 

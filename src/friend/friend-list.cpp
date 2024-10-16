@@ -62,10 +62,7 @@ FriendList::FriendList(std::shared_ptr<Core> core) : CoreAccessor(core) {
 
 FriendList::~FriendList() {
 	if (mEvent) mEvent->terminate();
-	for (auto &f : mFriends)
-		f->releaseOps();
 	if (mContentDigest) delete mContentDigest;
-	if (mBctbxFriends) bctbx_list_free(mBctbxFriends);
 	if (mBctbxDirtyFriendsToUpdate) bctbx_list_free(mBctbxDirtyFriendsToUpdate);
 	release();
 }
@@ -81,6 +78,9 @@ void FriendList::release() {
 		mCardDavContext = nullptr;
 	}
 #endif
+	for (auto &f : mFriendsList.mList) {
+		f->releaseOps();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -124,8 +124,11 @@ const std::string &FriendList::getDisplayName() const {
 }
 
 const std::list<std::shared_ptr<Friend>> &FriendList::getFriends() const {
-	syncBctbxFriends();
-	return mFriends;
+	return mFriendsList.mList;
+}
+
+const bctbx_list_t *FriendList::getFriendsCList() const {
+	return mFriendsList.getCList();
 }
 
 const std::shared_ptr<Address> &FriendList::getRlsAddress() const {
@@ -182,7 +185,7 @@ void FriendList::enableDatabaseStorage(bool enable) {
 	} else if (!mStoreInDb && enable) {
 		mStoreInDb = enable;
 		saveInDb();
-		for (const auto &f : mFriends) {
+		for (const auto &f : mFriendsList.mList) {
 			lWarning() << "Found existing friend [" << f->getName() << "] in list [" << mDisplayName
 			           << "] that was added before the list was configured to be saved in DB, doing it now";
 			f->saveInDb();
@@ -310,7 +313,7 @@ LinphoneStatus FriendList::importFriendsFromVcard4File(const std::string &vcardF
 }
 
 void FriendList::notifyPresence(const std::shared_ptr<PresenceModel> &model) const {
-	for (const auto &f : mFriends)
+	for (const auto &f : mFriendsList.mList)
 		f->notify(model);
 }
 
@@ -472,7 +475,7 @@ LinphoneFriendListStatus FriendList::addFriend(const std::shared_ptr<Friend> &lf
 
 	const std::shared_ptr<Address> addr = lf->getAddress();
 	std::list<std::string> phoneNumbers = lf->getPhoneNumbers();
-	if (!addr && !lf->getVcard() && phoneNumbers.empty()) {
+	if (!addr && lf->getAddresses().empty() && !lf->getVcard() && phoneNumbers.empty()) {
 		lError() << "FriendList::addFriend(): invalid friend, no vCard, SIP URI or phone number";
 		return LinphoneFriendListInvalidFriend;
 	}
@@ -481,8 +484,9 @@ LinphoneFriendListStatus FriendList::addFriend(const std::shared_ptr<Friend> &lf
 	bool present = false;
 	const std::string refKey = lf->getRefKey();
 	if (refKey.empty()) {
-		const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) { return f == lf; });
-		present = it != mFriends.cend();
+		const auto it = std::find_if(mFriendsList.mList.cbegin(), mFriendsList.mList.cend(),
+		                             [&](const auto &f) { return f == lf; });
+		present = it != mFriendsList.mList.cend();
 	} else {
 		present = (findFriendByRefKey(refKey) != nullptr);
 	}
@@ -507,7 +511,7 @@ void FriendList::closeSubscriptions() {
 		mEvent->terminate();
 		mEvent = nullptr;
 	}
-	for (const auto &f : mFriends)
+	for (const auto &f : mFriendsList.mList)
 		f->closeSubscriptions();
 }
 
@@ -576,26 +580,26 @@ std::string FriendList::createResourceListXml() const {
 #endif
 
 std::shared_ptr<Friend> FriendList::findFriendByIncSubscribe(SalOp *op) const {
-	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) {
+	const auto it = std::find_if(mFriendsList.mList.cbegin(), mFriendsList.mList.cend(), [&](const auto &f) {
 		const auto subIt =
 		    std::find_if(f->mInSubs.cbegin(), f->mInSubs.cend(), [&](const SalOp *inSubOp) { return inSubOp == op; });
 		return (subIt != f->mInSubs.cend());
 	});
-	return (it == mFriends.cend()) ? nullptr : *it;
+	return (it == mFriendsList.mList.cend()) ? nullptr : *it;
 }
 
 std::shared_ptr<Friend> FriendList::findFriendByOutSubscribe(SalOp *op) const {
-	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) {
+	const auto it = std::find_if(mFriendsList.mList.cbegin(), mFriendsList.mList.cend(), [&](const auto &f) {
 		return (f->mOutSub && ((f->mOutSub == op) || f->mOutSub->isForkedOf(op)));
 	});
-	return (it == mFriends.cend()) ? nullptr : *it;
+	return (it == mFriendsList.mList.cend()) ? nullptr : *it;
 }
 
 std::shared_ptr<Friend> FriendList::findFriendByPhoneNumber(const std::shared_ptr<Account> &account,
                                                             const std::string &normalizedPhoneNumber) const {
-	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(),
+	const auto it = std::find_if(mFriendsList.mList.cbegin(), mFriendsList.mList.cend(),
 	                             [&](const auto &f) { return f->hasPhoneNumber(account, normalizedPhoneNumber); });
-	return (it == mFriends.cend()) ? nullptr : *it;
+	return (it == mFriendsList.mList.cend()) ? nullptr : *it;
 }
 
 std::shared_ptr<Address> FriendList::getRlsAddressWithCoreFallback() const {
@@ -614,7 +618,7 @@ std::shared_ptr<Address> FriendList::getRlsAddressWithCoreFallback() const {
 
 bool FriendList::hasSubscribeInactive() const {
 	if (mBodylessSubscription) return true;
-	for (const auto &lf : mFriends) {
+	for (const auto &lf : mFriendsList.mList) {
 		if (!lf->mSubscribeActive) return true;
 	}
 	return false;
@@ -626,7 +630,7 @@ LinphoneFriendListStatus FriendList::importFriend(const std::shared_ptr<Friend> 
 		return LinphoneFriendListInvalidFriend;
 	}
 	lf->mFriendList = this;
-	mFriends.push_front(lf);
+	mFriendsList.mList.push_front(lf);
 	lf->addAddressesAndNumbersIntoMaps(getSharedFromThis());
 	if (synchronize) {
 		mDirtyFriendsToUpdate.push_front(lf);
@@ -654,7 +658,7 @@ LinphoneStatus FriendList::importFriendsFromVcard4(const std::list<std::shared_p
 void FriendList::invalidateFriendsMaps() {
 	mFriendsMapByRefKey.clear();
 	mFriendsMapByUri.clear();
-	for (const auto &f : mFriends)
+	for (const auto &f : mFriendsList.mList)
 		f->addAddressesAndNumbersIntoMaps(getSharedFromThis());
 }
 
@@ -665,7 +669,7 @@ void FriendList::invalidateSubscriptions() {
 		mEvent->terminate();
 		mEvent = nullptr;
 	}
-	for (const auto &f : mFriends)
+	for (const auto &f : mFriendsList.mList)
 		f->invalidateSubscription();
 }
 
@@ -731,7 +735,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 		std::string fullStateString(fullStateStr);
 		if ((fullStateString == "true") || (fullStateString == "1")) {
 			fullState = true;
-			for (const auto &lf : mFriends)
+			for (const auto &lf : mFriendsList.mList)
 				lf->clearPresenceModels();
 		}
 		if ((mExpectedNotificationVersion == 0) && !fullState)
@@ -897,18 +901,19 @@ void FriendList::deleteFriend(const std::shared_ptr<Friend> &lf, bool removeFrom
 }
 
 void FriendList::removeFriends(bool removeFromServer) {
-	for (auto &lf : mFriends) {
+	for (auto &lf : mFriendsList.mList) {
 		deleteFriend(lf, removeFromServer);
 	}
-	mFriends.clear();
+	mFriendsList.mList.clear();
 }
 
 LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer) {
-	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) { return f == lf; });
-	if (it == mFriends.cend()) return LinphoneFriendListNonExistentFriend;
+	const auto it =
+	    std::find_if(mFriendsList.mList.cbegin(), mFriendsList.mList.cend(), [&](const auto &f) { return f == lf; });
+	if (it == mFriendsList.mList.cend()) return LinphoneFriendListNonExistentFriend;
 
 	deleteFriend(lf, removeFromServer);
-	mFriends.erase(it);
+	mFriendsList.mList.erase(it);
 	return LinphoneFriendListOK;
 }
 
@@ -925,7 +930,11 @@ void FriendList::saveInDb() {
 	try {
 		if (getCore() && databaseStorageEnabled()) {
 			std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
-			if (mainDb) mStorageId = mainDb->insertFriendList(getSharedFromThis());
+			if (mainDb) {
+				mStorageId = mainDb->insertFriendList(getSharedFromThis());
+			}
+		} else {
+			lError() << "Can't save friend list in DB, either Core is not available or database storage is disabled";
 		}
 	} catch (std::bad_weak_ptr &) {
 	}
@@ -976,7 +985,7 @@ void FriendList::sendListSubscriptionWithBody(const std::shared_ptr<Address> &ad
 			content->setContentEncoding("deflate");
 			mEvent->addCustomHeader("Accept-Encoding", "deflate");
 		}
-		for (auto &lf : mFriends)
+		for (auto &lf : mFriendsList.mList)
 			lf->mSubscribeActive = true;
 		mEvent->send(content);
 		mEvent->setUserData(this);
@@ -995,23 +1004,14 @@ void FriendList::sendListSubscriptionWithoutBody(const std::shared_ptr<Address> 
 	mEvent->addCustomHeader("Accept", "multipart/related, application/pidf+xml, application/rlmi+xml");
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
 		mEvent->addCustomHeader("Accept-Encoding", "deflate");
-	for (auto &lf : mFriends)
+	for (auto &lf : mFriendsList.mList)
 		lf->mSubscribeActive = true;
 	linphone_event_send_subscribe(mEvent->toC(), nullptr);
 	mEvent->setUserData(this);
 }
 
 void FriendList::setFriends(const std::list<std::shared_ptr<Friend>> &friends) {
-	mFriends = friends;
-}
-
-void FriendList::syncBctbxFriends() const {
-	if (mBctbxFriends) {
-		bctbx_list_free(mBctbxFriends), mBctbxFriends = nullptr;
-	}
-	for (const auto &f : mFriends) {
-		mBctbxFriends = bctbx_list_append(mBctbxFriends, f->toC());
-	}
+	mFriendsList.mList = friends;
 }
 
 void FriendList::updateSubscriptions() {
@@ -1047,7 +1047,7 @@ void FriendList::updateSubscriptions() {
 		}
 	} else if (mSubscriptionsEnabled) {
 		lInfo() << "Updating friend list's [" << toC() << "] friends subscribes";
-		for (auto &lf : mFriends)
+		for (auto &lf : mFriendsList.mList)
 			lf->updateSubscribes(onlyWhenRegistered);
 	}
 }
@@ -1094,9 +1094,10 @@ void FriendList::carddavRemoved(const CardDAVContext *context, const std::shared
 void FriendList::carddavUpdated(const CardDAVContext *context,
                                 const std::shared_ptr<Friend> &newFriend,
                                 const std::shared_ptr<Friend> &oldFriend) {
-	auto it = std::find_if(context->mFriendList->mFriends.begin(), context->mFriendList->mFriends.end(),
-	                       [&](const auto &elem) { return elem == oldFriend; });
-	if (it != context->mFriendList->mFriends.end()) *it = newFriend;
+	auto it =
+	    std::find_if(context->mFriendList->mFriendsList.mList.begin(), context->mFriendList->mFriendsList.mList.end(),
+	                 [&](const auto &elem) { return elem == oldFriend; });
+	if (it != context->mFriendList->mFriendsList.mList.end()) *it = newFriend;
 	newFriend->saveInDb();
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, context->mFriendList, linphone_friend_list_cbs_get_contact_updated,
 	                                  newFriend->toC(), oldFriend->toC());

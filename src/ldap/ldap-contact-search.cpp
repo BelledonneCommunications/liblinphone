@@ -37,7 +37,7 @@ LdapContactSearch::LdapContactSearch(const int &msgId) {
 
 LdapContactSearch::LdapContactSearch(LdapContactProvider *parent,
                                      std::string predicate,
-                                     ContactSearchCallback cb,
+                                     MagicSearchCallback cb,
                                      void *cbData) {
 	mPredicate = predicate; // Save original predicate
 	mCb = cb;
@@ -72,10 +72,6 @@ LdapContactSearch::~LdapContactSearch() {
 }
 
 void LdapContactSearch::callCallback() {
-	bctbx_list_t *results = SearchResult::getCListFromCppList(mFoundEntries, false);
-	mCb(NULL, results, mCbData, mHaveMoreResults);
-	if (results) {
-		bctbx_list_free(results);
-	}
+	mCb(mFoundEntries, mCbData, mHaveMoreResults);
 }
 LINPHONE_END_NAMESPACE

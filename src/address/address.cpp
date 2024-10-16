@@ -382,6 +382,10 @@ bool Address::weakEqual(const Address &address) const {
 	return !!sal_address_weak_equals(mImpl, address.mImpl);
 }
 
+bool Address::weakEqual(const shared_ptr<const Address> address) const {
+	return address && weakEqual(*address);
+}
+
 bool Address::uriEqual(const Address &other) const {
 	return !!sal_address_uri_equals(mImpl, other.mImpl);
 }

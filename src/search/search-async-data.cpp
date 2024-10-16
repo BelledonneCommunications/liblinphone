@@ -20,7 +20,6 @@
 
 #include "search-async-data.h"
 #include "logger/logger.h"
-#include "magic-search-p.h"
 #include "magic-search.h"
 
 #include "bctoolbox/defs.h"
@@ -30,47 +29,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SearchAsyncData::CbData::~CbData() {
-}
-
-void SearchAsyncData::CbData::resultsCb(BCTBX_UNUSED(LinphoneContactSearch *id),
-                                        bctbx_list_t *searchResults,
-                                        void *data,
-                                        bool_t haveMoreResults) {
-	SearchAsyncData::CbData *cbData = (SearchAsyncData::CbData *)data;
-	std::list<std::shared_ptr<SearchResult>> results = SearchResult::getCppListFromCList(searchResults);
-	for (auto searchResult : results) {
-		if (searchResult) {
-			if (cbData->mFilter.empty() && cbData->mWithDomain.empty()) {
-				searchResult->setWeight(0);
-				cbData->mResult->push_back(searchResult);
-			} else { // We have constraints : add result with weight
-				unsigned int weight = cbData->mParent->searchInAddress(searchResult->getAddress()->toC(),
-				                                                       cbData->mFilter, cbData->mWithDomain);
-				if (weight >= cbData->mParent->getMinWeight()) {
-					searchResult->setWeight(weight);
-					cbData->mResult->push_back(searchResult);
-				}
-			}
-		}
-	}
-	lInfo() << "[Magic Search] Found " << cbData->mResult->size() << " results in LDAP."
-	        << (haveMoreResults ? " More results are available." : "");
-	cbData->mHaveMoreResults = haveMoreResults;
-	cbData->mEnd = TRUE;
-}
-
 SearchAsyncData::SearchAsyncData() {
 	ms_mutex_init(&mLockQueue, NULL);
-	mSearchResults = nullptr;
-}
-SearchAsyncData::~SearchAsyncData() {
-	ms_mutex_destroy(&mLockQueue);
 }
 
-std::list<std::shared_ptr<SearchResult>> *SearchAsyncData::createResult(std::list<std::shared_ptr<SearchResult>> data) {
-	mProviderResults.push_back(data);
-	return &mProviderResults.back();
+SearchAsyncData::~SearchAsyncData() {
+	ms_mutex_destroy(&mLockQueue);
 }
 
 bool SearchAsyncData::getCurrentRequest(SearchRequest *result) {
@@ -80,10 +44,6 @@ bool SearchAsyncData::getCurrentRequest(SearchRequest *result) {
 	else haveRequest = false;
 	ms_mutex_unlock(&mLockQueue);
 	return haveRequest;
-}
-
-const std::list<SearchRequest> &SearchAsyncData::getRequestHistory() const {
-	return mRequestHistory;
 }
 
 bool SearchAsyncData::keepOneRequest() {
@@ -105,10 +65,6 @@ int SearchAsyncData::pushRequest(const SearchRequest &request) {
 	return currentSize;
 }
 
-void SearchAsyncData::pushData(std::shared_ptr<CbData> data) {
-	mProvidersCbData.push_back(data);
-}
-
 void SearchAsyncData::initStartTime() {
 	bctbx_get_cur_time(&mStartTime);
 	ms_mutex_lock(&mLockQueue);
@@ -117,28 +73,21 @@ void SearchAsyncData::initStartTime() {
 	ms_mutex_unlock(&mLockQueue);
 }
 
-bctoolboxTimeSpec SearchAsyncData::getStartTime() const {
-	return mStartTime;
-}
-const std::vector<std::shared_ptr<SearchAsyncData::CbData>> &SearchAsyncData::getData() const {
-	return mProvidersCbData;
-}
-std::vector<std::shared_ptr<SearchAsyncData::CbData>> &SearchAsyncData::getData() {
-	return mProvidersCbData;
-}
-
 void SearchAsyncData::clear() {
-	mProvidersCbData.clear();
-	mProviderResults.clear();
+	mSearchResults.clear();
 }
 
-void SearchAsyncData::setSearchRequest(const SearchRequest &request) {
-	mSearchRequest = request;
-}
-
-bool SearchAsyncData::setSearchResults(std::shared_ptr<list<std::shared_ptr<SearchResult>>> resultList) {
+bool SearchAsyncData::setSearchResults(list<std::shared_ptr<SearchResult>> &resultList) {
 	mSearchResults = resultList;
-	return mSearchResults != nullptr;
+	return !mSearchResults.empty();
+}
+
+void SearchAsyncData::addToResults(std::list<std::shared_ptr<SearchResult>> &data) {
+	if (mSearchResults.empty()) {
+		mSearchResults = data;
+	} else {
+		mSearchResults.splice(mSearchResults.end(), data);
+	}
 }
 
 LINPHONE_END_NAMESPACE

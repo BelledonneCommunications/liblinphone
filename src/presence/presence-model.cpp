@@ -41,6 +41,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+static const std::string emptyString;
+
 PresenceModel::PresenceModel(LinphonePresenceActivityType activityType, const std::string &description) {
 	setBasicStatus(LinphonePresenceBasicStatusOpen);
 	setActivity(activityType, description);
@@ -134,12 +136,12 @@ LinphoneConsolidatedPresence PresenceModel::getConsolidatedPresence() const {
 	return LinphoneConsolidatedPresenceBusy;
 }
 
-std::string PresenceModel::getContact() const {
+const std::string &PresenceModel::getContact() const {
 	for (const auto &service : mServices) {
 		const std::string &contact = service->getContact();
 		if (!contact.empty()) return contact;
 	}
-	return std::string();
+	return emptyString;
 }
 
 time_t PresenceModel::getLatestActivityTimestamp() const {

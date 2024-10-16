@@ -32,14 +32,16 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class Address;
+class Friend;
 
+/** Class that represents a single result for a request made using the MagicSearch object. */
 class LINPHONE_PUBLIC SearchResult : public bellesip::HybridObject<LinphoneSearchResult, SearchResult> {
 public:
 	SearchResult();
 	SearchResult(const unsigned int weight,
 	             std::shared_ptr<const Address> a,
 	             const std::string &pn,
-	             LinphoneFriend *f,
+	             std::shared_ptr<Friend> f,
 	             int sourceFlags);
 	SearchResult(const SearchResult &other);
 	~SearchResult();
@@ -59,17 +61,21 @@ public:
 
 	std::string toString() const override;
 
-	const char *getDisplayName() const;
+	/**
+	 * @return a display name for this results, using the friend's name if possible, otherwise the username from the
+	 *address if any, and finally the phone number.
+	 **/
+	std::string getDisplayName() const;
 
 	/**
 	 * @return LinphoneFriend associed
 	 **/
-	LinphoneFriend *getFriend() const;
+	std::shared_ptr<Friend> getFriend() const;
 
 	/**
 	 * @return LinphoneAddress associed
 	 **/
-	const std::shared_ptr<Address> getAddress() const;
+	std::shared_ptr<Address> getAddress() const;
 
 	/**
 	 * @return Phone Number associed
@@ -111,7 +117,7 @@ private:
 	void updateCapabilities();
 
 	int mSourceFlags;
-	LinphoneFriend *mFriend;
+	std::shared_ptr<Friend> mFriend;
 	std::shared_ptr<Address> mAddress;
 	std::string mPhoneNumber;
 	int mCapabilities = LinphoneFriendCapabilityGroupChat | LinphoneFriendCapabilityLimeX3dh |

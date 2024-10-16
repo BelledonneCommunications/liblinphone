@@ -3605,7 +3605,11 @@ void _check_friend_result_list_2(LinphoneCore *lc,
 				char *fa = linphone_address_as_string_uri_only(la);
 				bool ldap_available = !!linphone_core_ldap_available(lc);
 				if (ldap_available) {
-					BC_ASSERT_TRUE(strcasecmp(fa, uri) == 0);
+					int result = strcasecmp(fa, uri);
+					BC_ASSERT_TRUE(result == 0);
+					if (result != 0) {
+						ms_error("Expected [%s], got [%s]", uri, fa);
+					}
 				} else {
 					BC_ASSERT_STRING_EQUAL(fa, uri);
 				}

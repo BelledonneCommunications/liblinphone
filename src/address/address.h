@@ -145,6 +145,7 @@ public:
 
 	bool clean();
 	bool weakEqual(const Address &other) const;
+	bool weakEqual(const std::shared_ptr<const Address> address) const;
 	bool uriEqual(const Address &other) const;
 
 	inline const SalAddress *getImpl() const {

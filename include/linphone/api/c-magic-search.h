@@ -214,7 +214,6 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_magic_search_get_contacts_list(LinphoneMa
  * @param sourceFlags Flags that specify where to search : #LinphoneMagicSearchSource
  * @param aggregation a #LinphoneMagicSearchAggregation mode to indicate how to merge results
  **/
-// typedef void (MagicSearchCb)(const void *, void *);
 LINPHONE_PUBLIC void linphone_magic_search_get_contacts_list_async(LinphoneMagicSearch *magic_search,
                                                                    const char *filter,
                                                                    const char *domain,
@@ -228,89 +227,6 @@ LINPHONE_PUBLIC void linphone_magic_search_get_contacts_list_async(LinphoneMagic
  *
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_magic_search_get_last_search(const LinphoneMagicSearch *magic_search);
-
-/************ */
-/* DEPRECATED */
-/* ********** */
-
-/**
- * Create a sorted list of SearchResult which match with a filter word, from SipUri in this order :
- ** Contact's display name, address username, address domain and phone number.
- * The last item list will be an address formed with "filter" if a proxy config exist and requested in sourceFlags
- * During the first search, a cache is created and used for the next search
- * Use linphone_magic_search_reset_search_cache() to begin a new search
- * @param magic_search a #LinphoneMagicSearch object @notnil
- * @param filter word we search @maybenil
- * @param domain domain which we want to search only @maybenil
- ** - NULL or "" for searching in all contact
- ** - "*" for searching in contact with sip SipUri
- ** - "yourdomain" for searching in contact from "yourdomain" domain
- * @param sourceFlags Flags that specify where to search : #LinphoneMagicSearchSource
- * @return sorted list of \bctbx_list{LinphoneSearchResult} @tobefreed @notnil
- ** @deprecated 08/04/2022 Use linphone_magic_search_get_contacts_list() instead.
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_magic_search_get_contacts(LinphoneMagicSearch *magic_search,
-                                                                                     const char *filter,
-                                                                                     const char *domain,
-                                                                                     int sourceFlags);
-
-/**
- * This is the asynchronous version of linphone_magic_search_get_contacts().
- * Create a sorted list of SearchResult which match with a filter word, from SipUri in this order :
- ** Contact's display name, address username, address domain and phone number.
- * The last item list will be an address formed with "filter" if a proxy config exist and requested in sourceFlags
- * During the first search, a cache is created and used for the next search
- * Use linphone_magic_search_reset_search_cache() to begin a new search
- * @param magic_search a #LinphoneMagicSearch object @notnil
- * @param filter word we search @maybenil
- * @param domain domain which we want to search only @maybenil
- ** - NULL or "" for searching in all contact
- ** - "*" for searching in contact with sip SipUri
- ** - "yourdomain" for searching in contact from "yourdomain" domain
- * @param sourceFlags Flags that specify where to search : #LinphoneMagicSearchSource
- ** @deprecated 08/04/2022 Use linphone_magic_search_get_contacts_list_async() instead.
- **/
-// typedef void (MagicSearchCb)(const void *, void *);
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_magic_search_get_contacts_async(LinphoneMagicSearch *magic_search,
-                                                                                  const char *filter,
-                                                                                  const char *domain,
-                                                                                  int sourceFlags);
-
-/**
- * Create a sorted list of SearchResult from SipUri, Contact name,
- * Contact displayname, Contact phone number, which match with a filter word
- * The last item list will be an address formed with "filter" if a proxy config exist
- * During the first search, a cache is created and used for the next search
- * Use linphone_magic_search_reset_search_cache() to begin a new search
- * @param magic_search a #LinphoneMagicSearch object @notnil
- * @param filter word we search @maybenil
- * @param domain domain which we want to search only @maybenil
- * - NULL or "" for searching in all contact
- * - "*" for searching in contact with sip SipUri
- * - "yourdomain" for searching in contact from "yourdomain" domain
- * @return sorted list of \bctbx_list{LinphoneSearchResult} @tobefreed @notnil
- ** @deprecated 22/03/2022 Use linphone_magic_search_get_contacts() instead.
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_magic_search_get_contact_list_from_filter(
-    LinphoneMagicSearch *magic_search, const char *filter, const char *domain);
-
-/**
- * Create a sorted list of SearchResult asynchronous from SipUri, Contact name,
- * Contact displayname, Contact phone number, which match with a filter word
- * The last item list will be an address formed with "filter" if a proxy config exist
- * During the first search, a cache is created and used for the next search
- * Use linphone_magic_search_reset_search_cache() to begin a new search
- * @param magic_search a #LinphoneMagicSearch object @notnil
- * @param filter word we search @maybenil
- * @param domain domain which we want to search only @maybenil
- ** NULL or "" for searching in all contact
- ** "*" for searching in contact with sip SipUri
- ** "yourdomain" for searching in contact from "yourdomain" domain
- ** @deprecated 22/03/2022 Use linphone_magic_search_get_contacts_async() instead.
- **/
-// typedef void (MagicSearchCb)(const void *, void *);
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_magic_search_get_contact_list_from_filter_async(
-    LinphoneMagicSearch *magic_search, const char *filter, const char *domain);
 
 /**
  * @}

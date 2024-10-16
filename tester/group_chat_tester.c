@@ -7081,7 +7081,8 @@ static void search_friend_chat_room_participants(void) {
 	if (!BC_ASSERT_PTR_NOT_NULL(laureCr)) goto end;
 
 	magicSearch = linphone_magic_search_new(pauline->lc);
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "", "", LinphoneMagicSearchSourceAll,
+	                                                     LinphoneMagicSearchAggregationNone);
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, size_t, "%zu");
 		_check_friend_result_list_2(pauline->lc, resultList, 0, laureI, NULL, NULL, LinphoneMagicSearchSourceChatRooms);

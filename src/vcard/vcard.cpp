@@ -248,7 +248,7 @@ const std::string &Vcard::getPhoto() const {
 }
 
 const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
-	if (mSipAddressesCache.empty()) {
+	if (mSipAddresses.mList.empty()) {
 		for (auto &impp : mBelCard->getImpp()) {
 			std::string value = impp->getValue();
 			// Only parse SIP URIs or URIs without a scheme
@@ -257,13 +257,12 @@ const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
 				if (addr) {
 					auto displayName = mBelCard->getFullName();
 					if (addr->getDisplayName().empty() && displayName) addr->setDisplayName(displayName->getValue());
-					mSipAddressesCache.push_back(addr);
-					mBctbxSipAddressesCache = bctbx_list_append(mBctbxSipAddressesCache, addr->toC());
+					mSipAddresses.mList.push_back(addr);
 				}
 			}
 		}
 	}
-	return mSipAddressesCache;
+	return mSipAddresses.mList;
 }
 
 std::list<std::string> Vcard::getImppAddresses() const {
@@ -467,8 +466,7 @@ void Vcard::computeMd5Hash() {
 }
 
 void Vcard::cleanCache() {
-	mSipAddressesCache.clear();
-	bctbx_list_free(mBctbxSipAddressesCache), mBctbxSipAddressesCache = nullptr;
+	mSipAddresses.mList.clear();
 }
 
 void *Vcard::getBelcard() {
@@ -564,7 +562,7 @@ const std::string &Vcard::getPhoto() const {
 }
 
 const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
-	return mSipAddressesCache;
+	return mSipAddresses.mList;
 }
 
 std::list<std::string> Vcard::getImppAddresses() const {

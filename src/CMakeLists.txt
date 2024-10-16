@@ -285,7 +285,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	sal/offeranswer.h
 	sal/potential_config_graph.h
 	search/search-async-data.h
-	search/magic-search-p.h
+	search/magic-search-plugin.h
 	search/magic-search.h
 	search/search-request.h
 	search/search-result.h
@@ -334,6 +334,7 @@ if(ENABLE_LDAP)
 		ldap/ldap-contact-fields.h
 		ldap/ldap-contact-provider.h
 		ldap/ldap-contact-search.h
+		ldap/ldap-magic-search-plugin.h
 		)
 endif()
 
@@ -609,6 +610,7 @@ if(ENABLE_LDAP)
 		ldap/ldap-contact-fields.cpp
 		ldap/ldap-contact-provider.cpp
 		ldap/ldap-contact-search.cpp
+		ldap/ldap-magic-search-plugin.cpp
 		)
 endif()
 

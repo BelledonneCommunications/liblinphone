@@ -112,11 +112,6 @@ LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf) {
 	return friendList ? friendList->toC() : nullptr;
 }
 
-bctbx_list_t **linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl) {
-	FriendList::toCpp(lfl)->getFriends();
-	return &FriendList::toCpp(lfl)->mBctbxFriends;
-}
-
 const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl) {
 	return FriendList::toCpp(lfl)->mBctbxDirtyFriendsToUpdate;
 }

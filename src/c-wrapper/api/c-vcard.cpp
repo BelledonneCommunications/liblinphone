@@ -104,7 +104,7 @@ void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_
 const bctbx_list_t *linphone_vcard_get_sip_addresses(LinphoneVcard *vCard) {
 	if (!vCard) return nullptr;
 	Vcard::toCpp(vCard)->getSipAddresses();
-	return Vcard::toCpp(vCard)->mBctbxSipAddressesCache;
+	return Vcard::toCpp(vCard)->mSipAddresses.getCList();
 }
 
 void linphone_vcard_add_phone_number(LinphoneVcard *vCard, const char *phone) {
