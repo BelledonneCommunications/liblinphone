@@ -516,11 +516,13 @@ public class {{className}} : LinphoneObject
 			{{setter_c_name}}(cPtr, cList)
 			{{/is_string_list}}
 			{{#is_class_list}}
-			var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
-			for data in newValue {
-				cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+			withExtendedLifetime(newValue) {
+				var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+				for data in newValue {
+					cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+				}
+				{{setter_c_name}}(cPtr, cList)
 			}
-			{{setter_c_name}}(cPtr, cList)
 			{{/is_class_list}}
 		}{{/exception}}{{/has_setter}}
 	}{{/has_property}}{{#has_setter}}{{#exception}}{{#setter_deprecated}}
@@ -555,13 +557,15 @@ public class {{className}} : LinphoneObject
 		bctbx_list_free(cList)
 		{{/is_string_list}}
 		{{#is_class_list}}
-		var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
-		for data in newValue {
-			cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+		var exception_result: LinphoneStatus = 0
+		withExtendedLifetime(newValue){
+			var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+			for data in newValue {
+				cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+			}
+			exception_result = {{setter_c_name}}(cPtr, cList)
+			bctbx_list_free(cList)
 		}
-		withExtendedLifetime(newValue){}
-		let exception_result = {{setter_c_name}}(cPtr, cList)
-		bctbx_list_free(cList)
 		{{/is_class_list}}
 		guard exception_result == 0 else {
 			throw LinphoneError.exception(result: "username setter returned value \(exception_result)")
