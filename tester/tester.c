@@ -5600,7 +5600,9 @@ static void set_lime_server_and_curve_tls(
 		case 0: // explicitely disable lime
 			sprintf(algo, "%s", "unset");
 			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "enabled", FALSE);
-			break;
+			linphone_core_set_lime_x3dh_server_url(manager->lc, NULL);
+			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "unset");
+			return;
 		default:
 			BC_FAIL("Unknown lime curve setting");
 			return;
@@ -5628,10 +5630,11 @@ static void set_lime_server_and_curve_tls(
 			linphone_account_params_unref(new_account_params);
 			accountList = accountList->next;
 		}
-	} else { // this is legacy behavior, just for testing. Set the lime server url in the core [lime] setting
-		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", algo);
-		linphone_core_set_lime_x3dh_server_url(manager->lc, server);
 	}
+	// this is legacy behavior: Set the lime server url in the core [lime] setting
+	// we must set it too as it is used to populate the legacy Ik attribute still in use for testing
+	linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", algo);
+	linphone_core_set_lime_x3dh_server_url(manager->lc, server);
 }
 
 void set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager) {

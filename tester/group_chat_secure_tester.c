@@ -1797,6 +1797,8 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 		coresList = bctbx_list_remove(coresList, laure->lc);
 		linphone_core_manager_reinit(laure);
 		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, laure);
+		// lime account config is not saved -> reconfigure it
+		set_lime_server_and_curve_list(curveId, tmpCoresManagerList);
 		bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_concat(coresList, tmpCoresList);

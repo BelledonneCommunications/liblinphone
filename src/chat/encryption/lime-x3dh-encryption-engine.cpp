@@ -19,6 +19,9 @@
  */
 
 #include <climits>
+#include <iostream>
+#include <sstream>
+#include <unordered_set>
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/crypto.hh"
@@ -48,30 +51,40 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 namespace { // local function
-lime::CurveId string2CurveId(const std::string &algo) {
-	lime::CurveId curve = lime::CurveId::unset; // default to unset
-	if (algo.compare("c448") == 0) {
-		curve = lime::CurveId::c448;
-	} else if (algo.compare("c25519k512") == 0) {
-		curve = lime::CurveId::c25519k512;
-	} else if (algo.compare("c25519") == 0) {
-		curve = lime::CurveId::c25519;
+
+AbstractChatRoom::SecurityLevel limeStatus2ChatRoomSecLevel(const lime::PeerDeviceStatus status) {
+	switch (status) {
+		case lime::PeerDeviceStatus::unknown:
+			return AbstractChatRoom::SecurityLevel::Encrypted;
+		case lime::PeerDeviceStatus::untrusted:
+			return AbstractChatRoom::SecurityLevel::Encrypted;
+		case lime::PeerDeviceStatus::trusted:
+			return AbstractChatRoom::SecurityLevel::Safe;
+		case lime::PeerDeviceStatus::unsafe:
+		default:
+			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
-	return curve;
 }
 
-const std::string CurveId2String(const lime::CurveId algo) {
-	switch (algo) {
-		case lime::CurveId::c25519:
-			return "c25519";
-		case lime::CurveId::c448:
-			return "c448";
-		case lime::CurveId::c25519k512:
-			return "c25519k512";
-		case lime::CurveId::unset:
-		default:
-			return "unset";
+/**
+ * Parse a CSV list of base algorithms
+ */
+std::vector<lime::CurveId> parseBaseAlgo(const std::string &csv) {
+	std::vector<lime::CurveId> algos;
+	std::stringstream lineStream(csv);
+	std::string algoString;
+
+	// Split line by commas
+	while (std::getline(lineStream, algoString, ',')) {
+		auto algo = lime::string2CurveId(algoString);
+		// check the algo is valid
+		if (algo == lime::CurveId::unset) {
+			lWarning() << "Invalid lime algo[" << algoString << "] skip it";
+		} else {
+			algos.push_back(algo);
+		}
 	}
+	return algos;
 }
 } // namespace
 
@@ -180,10 +193,12 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
     : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
 	auto cCore = core->getCCore();
-	// Default curve core config is c25519 - keep it for retrocompatibility [june 2024] but when the move
-	// to account based setting for this feature is completed, it should default to unset
+	// Default curve core config is c25519 - keep it for retrocompatibility
+	// it is still in use for the transition period: use it to produce the a=ik SDP parameter
+	// the lime-Iks parameter, allowing support for several curves is used by updated [oct 2024] clients
+	// when the transition of all client is completed, it should default to unset
 	const std::string curveConfig = linphone_config_get_string(cCore->config, "lime", "curve", "c25519");
-	coreCurve = string2CurveId(curveConfig);
+	coreCurve = lime::string2CurveId(curveConfig);
 	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is ["
 	        << core->getX3dhServerUrl() << "] and default curve [" << curveConfig << "] DB path: " << dbAccess;
 	_dbAccess = dbAccess;
@@ -218,8 +233,7 @@ void LimeX3dhEncryptionEngine::rawEncrypt(
 	try {
 		// this buffer will not be used as we stick to DRMessage encryption policy
 		shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
-		limeManager->encrypt(
-		    localDeviceId, associatedData, recipients, plainMessage, cipherMessage,
+		auto encryptionCallback = std::make_shared<lime::limeCallback>(
 		    [localDeviceId, recipients, callback](lime::CallbackReturn returnCode, string errorMessage) {
 			    std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts{};
 			    if (returnCode == lime::CallbackReturn::success) {
@@ -236,8 +250,9 @@ void LimeX3dhEncryptionEngine::rawEncrypt(
 				    lError() << "Raw encrypt from " << localDeviceId << " failed: " << errorMessage;
 				    callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
 			    }
-		    },
-		    lime::EncryptionPolicy::DRMessage);
+		    });
+		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), associatedData, recipients, plainMessage,
+		                     cipherMessage, encryptionCallback, lime::EncryptionPolicy::DRMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while raw encrypting message";
 		callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
@@ -436,8 +451,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 		for (const auto &address : recipientAddresses) {
 			recipients->emplace_back(address.asStringUriOnly());
 		}
-		limeManager->encrypt(
-		    localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage,
+
+		auto encryptionCallback = std::make_shared<lime::limeCallback>(
 		    [localDeviceId, recipients, cipherMessage, message, result,
 		     compressedPlain](lime::CallbackReturn returnCode, string errorMessage) {
 			    if (returnCode == lime::CallbackReturn::success) {
@@ -526,8 +541,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				        ChatMessage::State::NotDelivered, ::ms_time(nullptr));
 				    *result = ChatMessageModifier::Result::Error;
 			    }
-		    },
-		    lime::EncryptionPolicy::cipherMessage);
+		    });
+
+		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), recipientUserId, recipients, plainMessage,
+		                     cipherMessage, encryptionCallback, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
@@ -701,8 +718,19 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 }
 
 void LimeX3dhEncryptionEngine::update(const std::string localDeviceId) {
-	lime::limeCallback callback = setLimeCallback("Keys update");
-	limeManager->update(localDeviceId, callback);
+	auto callback =
+	    std::make_shared<lime::limeCallback>([localDeviceId](lime::CallbackReturn returnCode, string anythingToSay) {
+		    if (returnCode == lime::CallbackReturn::success) {
+			    lInfo() << "[LIME] Update successful for " << localDeviceId << " : " << anythingToSay;
+		    } else {
+			    lInfo() << "[LIME] Update failed for " << localDeviceId << " : " << anythingToSay;
+		    }
+	    });
+	try {
+		limeManager->update(localDeviceId, usersAlgos.at(localDeviceId), callback);
+	} catch (const exception &e) {
+		lInfo() << "[LIME] Update failed for " << localDeviceId << " : " << e.what();
+	}
 }
 
 bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -807,22 +835,6 @@ EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType() {
 	return engineType;
 }
 
-namespace {
-AbstractChatRoom::SecurityLevel limeStatus2ChatRoomSecLevel(const lime::PeerDeviceStatus status) {
-	switch (status) {
-		case lime::PeerDeviceStatus::unknown:
-			return AbstractChatRoom::SecurityLevel::Encrypted;
-		case lime::PeerDeviceStatus::untrusted:
-			return AbstractChatRoom::SecurityLevel::Encrypted;
-		case lime::PeerDeviceStatus::trusted:
-			return AbstractChatRoom::SecurityLevel::Safe;
-		case lime::PeerDeviceStatus::unsafe:
-		default:
-			return AbstractChatRoom::SecurityLevel::Unsafe;
-	}
-}
-} // namespace
-
 AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel(const string &deviceId) const {
 	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
 }
@@ -853,26 +865,79 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(cons
 	}
 
 	string localDeviceId = contactAddress->asStringUriOnly();
-	vector<uint8_t> Ik;
+	std::map<lime::CurveId, std::vector<uint8_t>> Iks;
 	try {
-		limeManager->get_selfIdentityKey(localDeviceId, Ik);
+		limeManager->get_selfIdentityKey(localDeviceId, usersAlgos.at(localDeviceId), Iks);
 	} catch (const exception &e) {
-		lInfo() << "[LIME] " << e.what() << " while setting up identity key for ZRTP auxiliary secret";
+		lInfo() << "[LIME] " << e.what() << " while getting identity key for ZRTP auxiliary secret";
 		return {};
 	}
 
-	if (Ik.empty()) {
+	if (Iks.empty()) {
 		lWarning() << "[LIME] No identity key available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 
-	// Encode to base64 and append to the parameter list
+	// Build an attribute lime-Iks:ALGO1:base64key;ALGO2:base64Key
+	// If we have a coreCurve (deprecated setting), use it to produce a Ik:base64Ik for compatibility with old version
+	std::string limeIksAttr{};
 	list<pair<string, string>> paramList;
-	string IkB64 = bctoolbox::encodeBase64(Ik);
-	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
-	// Switch here to lime-Ik to start publishing lime-Ik instead of Ik
-	paramList.push_back(make_pair("Ik", IkB64));
+	for (const auto &pair : Iks) {
+		// Encode to base64
+		string IkB64 = bctoolbox::encodeBase64(pair.second);
+		// Do we need to use it to produce the deprecated Ik attribute?
+		// Note: when not present in account, the usersAlgos[localDeviceId] is populated with coreCurve
+		// so if the setting was not updated, this produce a Ik and lime-Iks with the same keys.
+		if (pair.first == coreCurve) {
+			paramList.push_back(make_pair("Ik", IkB64));
+		}
+		limeIksAttr.append(lime::CurveId2String(pair.first)).append(":").append(IkB64).append(";");
+	}
+	if (!limeIksAttr.empty()) {
+		paramList.push_back(make_pair("lime-Iks", limeIksAttr));
+	}
 	return paramList;
+}
+
+namespace {
+// parse an attribute in the form: AlgoName:base64Ik;AlgoName:base64Ik;
+// return a vector of curveId/Ik(vector form)
+std::vector<std::pair<lime::CurveId, std::vector<uint8_t>>> parseLimeIks(const char *attr) {
+	std::vector<std::pair<lime::CurveId, std::vector<uint8_t>>> algoIks;
+	std::stringstream lineStream{std::string(attr)};
+	std::string algoIkString;
+
+	// Split line by semi colon fields
+	while (std::getline(lineStream, algoIkString, ';')) {
+		// split the field found by colon
+		std::string algoString, Ikb64;
+		std::stringstream algoIkStream(algoIkString);
+		std::getline(algoIkStream, algoString, ':');
+		std::getline(algoIkStream, Ikb64);
+
+		auto algo = lime::string2CurveId(algoString);
+		// check the algo is valid
+		if (algo == lime::CurveId::unset) {
+			lWarning() << "Invalid lime algo[" << algoString << "] skip it";
+		} else {
+			// convert b64 Ik to actual vector
+			vector<uint8_t> Ik = bctoolbox::decodeBase64(Ikb64);
+			algoIks.emplace_back(algo, Ik);
+		}
+	}
+	return algoIks;
+}
+} // anonymous namespace
+
+// return a vector with all supported algorithm - from all users, in no specific order
+std::vector<lime::CurveId> LimeX3dhEncryptionEngine::getAllConfiguredAlgos() {
+	std::unordered_set<lime::CurveId> allSupportedBaseAlgo{};
+	for (const auto &userAlgos : usersAlgos) {          // loop all registered users
+		for (const auto &userAlgo : userAlgos.second) { // loop all algos registered to them
+			allSupportedBaseAlgo.insert(userAlgo);      // unordered_set will filter out duplicates
+		}
+	}
+	return std::vector<lime::CurveId>(allSupportedBaseAlgo.begin(), allSupportedBaseAlgo.end());
 }
 
 void LimeX3dhEncryptionEngine::mutualAuthentication(MSZrtpContext *zrtpContext,
@@ -885,53 +950,59 @@ void LimeX3dhEncryptionEngine::mutualAuthentication(MSZrtpContext *zrtpContext,
 		           "auxiliary secret from identity keys";
 		return;
 	}
+	// Store local and remote parts in vectors, then they are concatenated to create the aux secret
+	vector<uint8_t> localPart{};
+	vector<uint8_t> remotePart{};
 
-	// Get local and remote identity keys from sdp attributes
-	std::string LocalIkB64;
-	const char *charLocalLimeIk =
-	    sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "lime-Ik");
-	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
-	if (!charLocalLimeIk) {
+	// Historic version pre-multialgo support are using an attribute called Ik
+	// since oct 2024, lime multi algo support produce an attribute called lime-Iks
+	// First check if both ends support the lime-Iks attribute. In that case we can ignore the Ik one
+	const char *charLocalLimeIks =
+	    sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "lime-Iks");
+	const char *charRemoteLimeIks =
+	    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Iks");
+
+	if (charLocalLimeIks && charRemoteLimeIks) {
+		// both ends support the lime multi algo attribute, use it
+		auto local = parseLimeIks(charLocalLimeIks);
+		auto remote = parseLimeIks(charRemoteLimeIks);
+
+		// serialize them
+		for (const auto &algoIk : local) {
+			localPart.push_back(static_cast<uint8_t>(algoIk.first));
+			localPart.insert(localPart.end(), algoIk.second.cbegin(), algoIk.second.cend());
+		}
+		for (const auto &algoIk : remote) {
+			remotePart.push_back(static_cast<uint8_t>(algoIk.first));
+			remotePart.insert(remotePart.end(), algoIk.second.cbegin(), algoIk.second.cend());
+		}
+	} else {
+		// at least one end does not support the lime-Iks attribute
+		// check they still both use the Ik one (and hope is was for the same base algo)
 		const char *charLocalIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "Ik");
-		if (charLocalIk) {
-			LocalIkB64 = charLocalIk;
-		}
-	} else {
-		LocalIkB64 = charLocalLimeIk;
-	}
-
-	std::string RemoteIkB64;
-	const char *charRemoteLimeIk =
-	    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
-	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
-	if (!charRemoteLimeIk) {
 		const char *charRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
-		if (charRemoteIk) {
-			RemoteIkB64 = charRemoteIk;
+		if (charLocalIk && charRemoteIk) {
+			// both ends support the Ik attribute(but not the lime-Iks one), use it
+			localPart = bctoolbox::decodeBase64(std::string(charLocalIk));
+			remotePart = bctoolbox::decodeBase64(std::string(charRemoteIk));
 		}
-	} else {
-		RemoteIkB64 = charRemoteLimeIk;
 	}
 
 	// This sdp might be from a non lime aware device
-	if (LocalIkB64.size() == 0 || RemoteIkB64.size() == 0) {
+	if (localPart.size() == 0 || remotePart.size() == 0) {
 		lInfo()
 		    << "[LIME] Missing identity keys for mutual authentication, do not set auxiliary secret from identity keys";
 		return;
 	}
 
-	// Convert to vectors and decode base64
-	vector<uint8_t> localIk = bctoolbox::decodeBase64(LocalIkB64);
-	vector<uint8_t> remoteIk = bctoolbox::decodeBase64(RemoteIkB64);
-
-	// Concatenate identity keys in the right order
+	// Concatenate parts in the right order
 	vector<uint8_t> vectorAuxSharedSecret;
 	if (direction == LinphoneCallDir::LinphoneCallOutgoing) {
-		localIk.insert(localIk.end(), remoteIk.begin(), remoteIk.end());
-		vectorAuxSharedSecret = localIk;
+		localPart.insert(localPart.end(), remotePart.cbegin(), remotePart.cend());
+		vectorAuxSharedSecret = std::move(localPart);
 	} else if (direction == LinphoneCallDir::LinphoneCallIncoming) {
-		remoteIk.insert(remoteIk.end(), localIk.begin(), localIk.end());
-		vectorAuxSharedSecret = remoteIk;
+		remotePart.insert(remotePart.end(), localPart.cbegin(), localPart.cend());
+		vectorAuxSharedSecret = std::move(remotePart);
 	} else {
 		lError() << "[LIME] Unknown call direction for mutual authentication";
 		return;
@@ -955,34 +1026,42 @@ void LimeX3dhEncryptionEngine::authenticationVerified(
     MSZrtpContext *zrtpContext,
     const std::shared_ptr<SalMediaDescription> &remoteMediaDescription,
     const char *peerDeviceId) {
-	// Get peer's Ik
-	string remoteIkB64;
-	const char *sdpRemoteLimeIk =
-	    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
-	if (sdpRemoteLimeIk) {
-		remoteIkB64 = sdpRemoteLimeIk;
-	} else { /* legacy: check deprecated Ik attribute */
-		const char *sdpRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
-		if (sdpRemoteIk) {
-			remoteIkB64 = sdpRemoteIk;
-		}
-	}
-
-	vector<uint8_t> remoteIk = bctoolbox::decodeBase64(remoteIkB64);
-	const std::shared_ptr<Address> peerDeviceAddr = Address::create(peerDeviceId);
-
 	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2 /*BZRTP_AUXSECRET_UNSET*/) {
 		lInfo() << "[LIME] No auxiliary shared secret exchanged check from SDP if Ik were exchanged";
+		return;
 	}
+
 	// SAS is verified and the auxiliary secret matches so we can trust this peer device
-	else if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0 /*BZRTP_AUXSECRET_MATCH*/) {
+	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0 /*BZRTP_AUXSECRET_MATCH*/) {
+		// Get peer's Ik(s)
+		std::vector<std::pair<lime::CurveId, std::vector<uint8_t>>> remoteIks;
+
+		// This version uses lime-Iks always. So if peer has lime-Iks, we built the aux secret with both
+		// of them, so peer's lime-Iks is verified
+		const char *charRemoteLimeIks =
+		    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Iks");
+		if (charRemoteLimeIks) {
+			remoteIks = parseLimeIks(charRemoteLimeIks);
+		} else { /* legacy: peer does not have lime-Iks. check deprecated Ik attribute, and hope peer uses the same
+			        legacy base algorithm we do */
+			const char *charRemoteIk =
+			    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
+			if (charRemoteIk) {
+				remoteIks.emplace_back(coreCurve, bctoolbox::decodeBase64(charRemoteIk));
+			}
+		}
+
 		try {
 			lInfo() << "[LIME] SAS verified and Ik exchange successful";
-			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
+			for (const auto &remoteIk : remoteIks) {
+				limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk.first, remoteIk.second,
+				                                  lime::PeerDeviceStatus::trusted);
+			}
 		} catch (const BctbxException &e) {
 			lInfo() << "[LIME] exception" << e.what();
 			// Ik error occured, the stored Ik is different from this Ik
 			lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(peerDeviceId);
+			const std::shared_ptr<Address> peerDeviceAddr = Address::create(peerDeviceId);
 			switch (status) {
 				case lime::PeerDeviceStatus::unsafe:
 					lWarning() << "[LIME] peer device " << peerDeviceId
@@ -1006,9 +1085,13 @@ void LimeX3dhEncryptionEngine::authenticationVerified(
 					lError() << "[LIME] peer device " << peerDeviceId << " is unknown but its identity key has changed";
 					break;
 			}
-			// Delete current peer device data and replace it with the new Ik and a trusted status
+			// Delete current peer device data(all known base algo variants) and replace it with the new Ik and a
+			// trusted status
 			limeManager->delete_peerDevice(peerDeviceId);
-			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
+			for (const auto &remoteIk : remoteIks) {
+				limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk.first, remoteIk.second,
+				                                  lime::PeerDeviceStatus::trusted);
+			}
 		} catch (const exception &e) {
 			lError() << "[LIME] exception" << e.what();
 			return;
@@ -1016,10 +1099,13 @@ void LimeX3dhEncryptionEngine::authenticationVerified(
 	}
 	// SAS is verified but the auxiliary secret mismatches
 	else /*BZRTP_AUXSECRET_MISMATCH*/ {
-		lError() << "[LIME] SAS is verified but the auxiliary secret mismatches, removing trust";
+		lError() << "[LIME] SAS is verified but the auxiliary secret mismatches, removing trust for " << peerDeviceId;
 		ms_zrtp_sas_reset_verified(zrtpContext);
-		limeManager->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
-		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
+		// We do not know wich local device was involved and we cannot trust the lime-Iks content :
+		// remove trust for all device with any supported algo from any user on our side
+		limeManager->set_peerDeviceStatus(peerDeviceId, getAllConfiguredAlgos(), lime::PeerDeviceStatus::unsafe);
+		addSecurityEventInChatrooms(Address::create(peerDeviceId),
+		                            ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 	}
 }
 
@@ -1042,7 +1128,9 @@ void LimeX3dhEncryptionEngine::authenticationRejected(const char *peerDeviceId) 
 		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 	}
 
-	limeManager->set_peerDeviceStatus(peerDeviceId, statusIfSASrefused);
+	// We do not know wich local device was involved and we cannot trust the lime-Iks content :
+	// remove trust for all device with any supported algo from any user on our side
+	limeManager->set_peerDeviceStatus(peerDeviceId, getAllConfiguredAlgos(), statusIfSASrefused);
 }
 
 void LimeX3dhEncryptionEngine::addSecurityEventInChatrooms(
@@ -1080,7 +1168,7 @@ LimeX3dhEncryptionEngine::onDeviceAdded(const std::shared_ptr<Address> &newDevic
 		securityEvent = make_shared<ConferenceSecurityEvent>(
 		    time(nullptr), chatRoom->getConferenceId(),
 		    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded, newDeviceAddr);
-		limeManager->set_peerDeviceStatus(deviceId, lime::PeerDeviceStatus::unsafe);
+		limeManager->set_peerDeviceStatus(deviceId, getAllConfiguredAlgos(), lime::PeerDeviceStatus::unsafe);
 	}
 
 	// Otherwise if the chatroom security level was degraded a corresponding security event is created
@@ -1106,28 +1194,16 @@ std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager() {
 
 void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, const std::string peerDeviceId) {
 	try {
-		limeManager->stale_sessions(localDeviceId, peerDeviceId);
+		limeManager->stale_sessions(localDeviceId, usersAlgos.at(localDeviceId), peerDeviceId);
 	} catch (const BctbxException &e) {
 		lError() << "[LIME] fail to stale session between local [" << localDeviceId << "] and "
 		         << " remote [" << peerDeviceId << "]. lime says: " << e.what();
 	}
 }
 
-lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback(string operation) {
-	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
-		if (returnCode == lime::CallbackReturn::success) {
-			lInfo() << "[LIME] operation successful: " << operation << " : " << anythingToSay;
-		} else {
-			lInfo() << "[LIME] operation failed: " << operation << " : " << anythingToSay;
-		}
-	});
-	return callback;
-}
-
-lime::limeCallback LimeX3dhEncryptionEngine::setLimeUserCreationCallback(LinphoneCore *lc,
-                                                                         const std::string localDeviceId,
-                                                                         shared_ptr<Account> &account) {
-	lime::limeCallback callback([lc, localDeviceId, account](lime::CallbackReturn returnCode, string info) {
+std::shared_ptr<lime::limeCallback> LimeX3dhEncryptionEngine::setLimeUserCreationCallback(
+    LinphoneCore *lc, const std::string localDeviceId, shared_ptr<Account> &account) {
+	return make_shared<lime::limeCallback>([lc, localDeviceId, account](lime::CallbackReturn returnCode, string info) {
 		if (returnCode == lime::CallbackReturn::success) {
 			lInfo() << "[LIME] user " << localDeviceId << " creation successful";
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreated);
@@ -1140,8 +1216,6 @@ lime::limeCallback LimeX3dhEncryptionEngine::setLimeUserCreationCallback(Linphon
 		linphone_core_notify_imee_user_registration(lc, returnCode == lime::CallbackReturn::success,
 		                                            localDeviceId.data(), info.data());
 	});
-
-	return callback;
 }
 
 void LimeX3dhEncryptionEngine::onNetworkReachable(BCTBX_UNUSED(bool sipNetworkReachable),
@@ -1153,20 +1227,6 @@ void LimeX3dhEncryptionEngine::onAccountRegistrationStateChanged(std::shared_ptr
                                                                  BCTBX_UNUSED(const string &message)) {
 	if (state != LinphoneRegistrationState::LinphoneRegistrationOk) return;
 
-	auto accountParams = account->getAccountParams();
-	// The LIME server URL set in the account parameters is preferred to that set in the core parameters
-	string accountLimeServerUrl = accountParams->getLimeServerUrl();
-	if (accountLimeServerUrl.empty()) {
-		accountLimeServerUrl = getCore()->getX3dhServerUrl();
-		lWarning()
-		    << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL ["
-		    << accountLimeServerUrl << "]";
-	}
-	if (accountLimeServerUrl.empty()) {
-		lWarning() << "[LIME] Server URL unavailable for encryption engine: can't create user";
-		return;
-	}
-
 	const std::shared_ptr<Address> &contactAddress = account->getContactAddress();
 	if (!contactAddress) {
 		lWarning() << "[LIME] Unable to load LIME user because the contact address of account [" << account
@@ -1175,42 +1235,24 @@ void LimeX3dhEncryptionEngine::onAccountRegistrationStateChanged(std::shared_ptr
 	}
 	string localDeviceId = contactAddress->asStringUriOnly();
 
-	lInfo() << "[LIME] Load lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl
-	        << "]";
-
-	try {
-		if (limeManager->is_user(localDeviceId)) {
-			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
-			update(localDeviceId);
-		} else {
-			lError() << "[LIME] Lime user isn't created for device" << localDeviceId << "with server URL ["
-			         << accountLimeServerUrl << "]";
+	if (usersAlgos.find(localDeviceId) != usersAlgos.end()) {
+		try {
+			lInfo() << "[LIME] device [" << localDeviceId << "] registered. Check it exists with algos ["
+			        << lime::CurveId2String(usersAlgos.at(localDeviceId)) << "]";
+			if (limeManager->is_user(localDeviceId, usersAlgos[localDeviceId])) {
+				update(localDeviceId);
+			} else {
+				lError() << "[LIME] Lime user isn't created for device" << localDeviceId << " and algos ["
+				         << lime::CurveId2String(usersAlgos[localDeviceId]) << "]";
+			}
+		} catch (const exception &e) {
+			lError() << "[LIME] user for id [" << localDeviceId << "] cannot be updated " << e.what();
 		}
-	} catch (const exception &e) {
-		lError() << "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
 	}
 }
 
 void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &account, const std::string &limeServerUrl) {
-
-	auto accountParams = account->getAccountParams();
-	// The LIME server URL set in the account parameters is preferred to that set in the core parameters
-	string accountLimeServerUrl = limeServerUrl;
-	if (accountLimeServerUrl.empty()) {
-		accountLimeServerUrl = getCore()->getX3dhServerUrl();
-		lWarning()
-		    << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL ["
-		    << accountLimeServerUrl << "]";
-	}
-	// The LIME base algorithm set in the account parameters is preferred to that set in the core parameters
-	lime::CurveId accountLimeAlgo = string2CurveId(accountParams->getLimeAlgo());
-	if (accountLimeAlgo == lime::CurveId::unset) {
-		accountLimeAlgo = coreCurve;
-		lWarning() << "[LIME] No LIME algo in account params. Fallback on Core's default LIME algo ["
-		           << CurveId2String(accountLimeAlgo) << "]";
-	}
-
-	// Can take into account LIME server changed when the contact address is not known
+	// Can't take into account LIME server changed when the contact address is not known
 	auto contactAddress = account->getContactAddress();
 	if (!contactAddress) {
 		lWarning() << "[LIME] Unable to update LIME user because contact address of account [" << account
@@ -1219,39 +1261,57 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 	}
 	string localDeviceId = contactAddress->asStringUriOnly();
 
-	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
+	string accountLimeServerUrl = limeServerUrl;
+	if (accountLimeServerUrl.empty()) {
+		accountLimeServerUrl = getCore()->getX3dhServerUrl();
+		lWarning()
+		    << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL ["
+		    << accountLimeServerUrl << "]";
+	}
+	if (accountLimeServerUrl.empty()) {
+		lWarning() << "[LIME] Server URL unavailable for encryption engine: can't update user [" << localDeviceId
+		           << "]";
+		return;
+	}
+	// Also reload the user's algo setting (as there is no callback for this change)
+	auto accountLimeAlgo = parseBaseAlgo(account->getAccountParams()->getLimeAlgo());
+	if (accountLimeAlgo.empty() && (coreCurve != lime::CurveId::unset)) {
+		accountLimeAlgo = std::vector<lime::CurveId>{coreCurve};
+		lWarning() << "[LIME] No LIME algo in account params. Fallback on Core's default LIME algo ["
+		           << CurveId2String(coreCurve) << "]";
+	}
+	if (accountLimeAlgo.empty()) {
+		lWarning() << "[LIME] Algo unavailable for encryption engine: can't update user server URL for user ["
+		           << localDeviceId << "]";
+		return;
+	}
+	/* update this user prefered algo list */
+	usersAlgos[localDeviceId] = accountLimeAlgo;
 
 	lInfo() << "[LIME] Trying to update lime user for device " << localDeviceId << " with server URL ["
 	        << accountLimeServerUrl << "] on base algorithm [" << CurveId2String(accountLimeAlgo) << "]";
 
 	try {
-		if (!accountLimeServerUrl.empty()) {
-			if (!limeManager->is_user(localDeviceId)) {
-				if (accountLimeAlgo != lime::CurveId::unset) {
-					lime::limeCallback callback = setLimeUserCreationCallback(lc, localDeviceId, account);
-					// create user if not exist
-					limeManager->create_user(localDeviceId, accountLimeServerUrl, accountLimeAlgo, callback);
-				} else {
-					lError() << "[LIME] user for id [" << localDeviceId
-					         << "] cannot be created as base algorithm is unset";
-					return;
-				}
-			} else {
-				limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
-				update(localDeviceId);
-			}
+		if (!limeManager->is_user(localDeviceId, accountLimeAlgo)) {
+			LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
+			auto callback = setLimeUserCreationCallback(lc, localDeviceId, account);
+			// create user if not exist
+			limeManager->create_user(localDeviceId, accountLimeAlgo, accountLimeServerUrl, callback);
+		} else {
+			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeAlgo, accountLimeServerUrl);
+			update(localDeviceId);
 		}
 	} catch (const exception &e) {
-		lError() << "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
+		lError() << "[LIME] user for id [" << localDeviceId << "] cannot update its server url : " << e.what();
 	}
 }
 
 void LimeX3dhEncryptionEngine::setTestForceDecryptionFailureFlag(bool flag) {
 	forceFailure = flag;
 }
+namespace {}
 
 void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, const string &gruu) {
-	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 	string accountLimeServerUrl = account->getAccountParams()->getLimeServerUrl();
 	if (accountLimeServerUrl.empty()) {
 		accountLimeServerUrl = getCore()->getX3dhServerUrl();
@@ -1265,26 +1325,28 @@ void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, cons
 		return;
 	}
 
-	lime::CurveId accountLimeAlgo = string2CurveId(account->getAccountParams()->getLimeAlgo());
-	if (accountLimeAlgo == lime::CurveId::unset) {
-		accountLimeAlgo = coreCurve;
+	auto accountLimeAlgo = parseBaseAlgo(account->getAccountParams()->getLimeAlgo());
+	if (accountLimeAlgo.empty() && (coreCurve != lime::CurveId::unset)) {
+		accountLimeAlgo = std::vector<lime::CurveId>{coreCurve};
 		lWarning() << "[LIME] No LIME algo in account params. Fallback on Core's default LIME algo ["
-		           << CurveId2String(accountLimeAlgo) << "]";
+		           << CurveId2String(coreCurve) << "]";
 	}
-	if (accountLimeAlgo == lime::CurveId::unset) {
+	if (accountLimeAlgo.empty()) {
 		lWarning() << "[LIME] Algo unavailable for encryption engine: can't create user";
 		account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
 		return;
 	}
+	/* store this users prefered algo list */
+	usersAlgos[gruu] = accountLimeAlgo;
 
 	try {
-		if (!limeManager->is_user(gruu)) {
+		LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
+		if (!limeManager->is_user(gruu, accountLimeAlgo)) {
 			lInfo() << "[LIME] Try to create lime user for device " << gruu << " with server URL ["
 			        << accountLimeServerUrl << "] on base algorithm [" << CurveId2String(accountLimeAlgo) << "]";
-
-			lime::limeCallback callback = setLimeUserCreationCallback(lc, gruu, account);
+			auto callback = setLimeUserCreationCallback(lc, gruu, account);
 			// create user if not exist
-			limeManager->create_user(gruu, accountLimeServerUrl, accountLimeAlgo, callback);
+			limeManager->create_user(gruu, accountLimeAlgo, accountLimeServerUrl, callback);
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountIsCreating);
 		} else {
 			string info = "";

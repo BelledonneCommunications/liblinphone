@@ -52,9 +52,6 @@ public:
 	~LimeX3dhEncryptionEngine();
 
 	std::shared_ptr<LimeManager> getLimeManager();
-	lime::limeCallback setLimeCallback(std::string operation);
-	lime::limeCallback
-	setLimeUserCreationCallback(LinphoneCore *lc, const std::string localDeviceId, std::shared_ptr<Account> &account);
 
 	// EncryptionEngine overrides
 
@@ -143,11 +140,19 @@ public:
 	bool participantListRequired() const override;
 
 private:
+	std::shared_ptr<lime::limeCallback>
+	setLimeUserCreationCallback(LinphoneCore *lc, const std::string localDeviceId, std::shared_ptr<Account> &account);
 	void update(const std::string localDeviceId);
-	std::shared_ptr<LimeManager> limeManager;
-	std::string _dbAccess;
-	lime::CurveId coreCurve;
-	bool forceFailure = false;
+	std::vector<lime::CurveId>
+	getAllConfiguredAlgos(); /**< return a vector with all supported algorithm - from all users, in no specific order */
+	std::shared_ptr<LimeManager>
+	    limeManager;         /**< the actual lime manager - only one is intanciated, it will manage all lime users */
+	std::string _dbAccess;   /**< lime DB path */
+	lime::CurveId coreCurve; /**< default base algo setting found in core, this is deprecated so it can store one
+	                            algorithm only */
+	std::unordered_map<std::string, std::vector<lime::CurveId>>
+	    usersAlgos;            /**< each user(GRUU) maps to an ordered list of supported base algorithms */
+	bool forceFailure = false; /**< test purpose */
 };
 
 LINPHONE_END_NAMESPACE
