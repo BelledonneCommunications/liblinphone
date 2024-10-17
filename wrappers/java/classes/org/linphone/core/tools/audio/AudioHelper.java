@@ -47,7 +47,7 @@ import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.receiver.HeadsetReceiver;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 public class AudioHelper implements OnAudioFocusChangeListener {
     private AudioManager mAudioManager;
@@ -182,8 +182,8 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
     public void requestRingingAudioFocus() {
         boolean nativeRinging = true;
-        if (CoreManager.isReady()) {
-            nativeRinging = CoreManager.instance().getCore().isNativeRingingEnabled();
+        if (AndroidPlatformHelper.isReady()) {
+            nativeRinging = AndroidPlatformHelper.instance().getCore().isNativeRingingEnabled();
             if (!nativeRinging) {
                 Log.w("[Audio Helper] Native ringing was disabled, so ringing audio focus will be requested even if it is disabled in config");
             }
@@ -301,15 +301,15 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
                 Log.w("[Audio Helper] Focus lost");
-                if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
+                if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onAudioFocusLost();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 Log.w("[Audio Helper] Focus lost (transient)");
-                if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
+                if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onAudioFocusLost();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 Log.w("[Audio Helper] Focus lost (transient, can duck)");
-                //if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
+                //if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onAudioFocusLost();
                 break;
         }
     }
@@ -325,30 +325,30 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     public  void restorePreviousAudioRoute() {
-        if (!CoreManager.isReady()) {
-            Log.e("[Audio Helper] CoreManager has been destroyed already!");
+        if (!AndroidPlatformHelper.isReady()) {
+            Log.e("[Audio Helper] AndroidPlatformHelper has been destroyed already!");
             return;
         }
 
         // Let's restore the default output device before the echo calibration or test
-        Core core = CoreManager.instance().getCore();
+        Core core = AndroidPlatformHelper.instance().getCore();
         if (core != null) {
             core.setDefaultOutputAudioDevice(mPreviousDefaultOutputAudioDevice);
             Log.i("[Audio Helper] Restored previous default output audio device: " + mPreviousDefaultOutputAudioDevice);
             mPreviousDefaultOutputAudioDevice = null;
         } else {
-            Log.e("[Audio Helper] CoreManager instance found but Core is null!");
+            Log.e("[Audio Helper] AndroidPlatformHelper instance found but Core is null!");
         }
     }
 
     public  void routeAudioToSpeaker() {
-        if (!CoreManager.isReady()) {
-            Log.e("[Audio Helper] CoreManager has been destroyed already!");
+        if (!AndroidPlatformHelper.isReady()) {
+            Log.e("[Audio Helper] AndroidPlatformHelper has been destroyed already!");
             return;
         }
 
         // For echo canceller calibration & echo tester, we can't change the soundcard dynamically as the stream isn't created yet...
-        Core core = CoreManager.instance().getCore();
+        Core core = AndroidPlatformHelper.instance().getCore();
         if (core != null) {
             mPreviousDefaultOutputAudioDevice = core.getDefaultOutputAudioDevice();
             if (mPreviousDefaultOutputAudioDevice.getType() == AudioDevice.Type.Speaker) {
@@ -366,7 +366,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             }
             Log.e("[Audio Helper] Couldn't find speaker audio device");
         } else {
-            Log.e("[Audio Helper] CoreManager instance found but Core is null!");
+            Log.e("[Audio Helper] AndroidPlatformHelper instance found but Core is null!");
         }
     }
 
@@ -397,12 +397,12 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     private boolean isAudioFocusDisabled() {
-        if (!CoreManager.isReady()) {
-            Log.e("[Audio Helper] CoreManager has been destroyed already!");
+        if (!AndroidPlatformHelper.isReady()) {
+            Log.e("[Audio Helper] AndroidPlatformHelper has been destroyed already!");
             return false;
         }
 
-        Core core = CoreManager.instance().getCore();
+        Core core = AndroidPlatformHelper.instance().getCore();
         if (core != null) {
             return core.getConfig().getBool("audio", "android_disable_audio_focus_requests", false);
         }

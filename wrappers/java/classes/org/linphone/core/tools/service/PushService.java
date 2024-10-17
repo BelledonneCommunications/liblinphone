@@ -37,6 +37,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.linphone.core.Factory;
+import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.mediastream.Version;
@@ -80,8 +81,8 @@ public class PushService extends Service {
 
         Log.i("[Push Service] Started");
         startForeground();
-        if (CoreManager.isReady()) {
-            CoreManager.instance().healNetwork();
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().healNetwork();
         }
 
         TimerTask lTask =

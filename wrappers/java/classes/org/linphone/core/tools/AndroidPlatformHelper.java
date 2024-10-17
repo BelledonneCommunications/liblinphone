@@ -45,6 +45,15 @@ import android.os.PowerManager.WakeLock;
 import android.view.Surface;
 import android.view.TextureView;
 
+import android.app.Application;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.hardware.display.DisplayManager;
+import android.media.AudioManager;
+import android.view.Display;
+
 import org.linphone.core.SignalType;
 import org.linphone.core.SignalStrengthUnit;
 import org.linphone.core.tools.compatibility.DeviceUtils;
@@ -57,12 +66,25 @@ import org.linphone.core.tools.network.NetworkManagerInterface;
 import org.linphone.core.tools.network.NetworkSignalMonitor;
 import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.service.ActivityMonitor;
+import org.linphone.core.tools.service.CoreService;
 import org.linphone.core.tools.service.PushService;
 import org.linphone.core.tools.service.FileTransferService;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
 import org.linphone.mediastream.Version;
+
+import org.linphone.core.AudioDevice;
+import org.linphone.core.Call;
+import org.linphone.core.Config;
+import org.linphone.core.Core;
+import org.linphone.core.CoreListenerStub;
+import org.linphone.core.GlobalState;
+import org.linphone.core.tools.Log;
+import org.linphone.core.tools.PushNotificationUtils;
+import org.linphone.core.tools.audio.AudioHelper;
+import org.linphone.core.tools.audio.BluetoothHelper;
+import org.linphone.core.tools.receiver.ShutdownReceiver;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,12 +94,38 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
+import java.lang.Error;
+import java.lang.reflect.Constructor;
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * This class is instanciated directly by the linphone library in order to access specific features only accessible in java.
  **/
 public class AndroidPlatformHelper {
+    private static int mTempCountWifi = 0;
+    private static int mTempCountMCast = 0;
+    private static int mTempCountCPU = 0;
+    
+    private static final int AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED = 20; // 20ms
+    private static final int AUTO_ITERATE_TIMER_RESET_AFTER = 20000; // 20s
+
+    private static AndroidPlatformHelper sInstance;
+
+    public static boolean isReady() {
+        return sInstance != null;
+    }
+
+    public static AndroidPlatformHelper instance() {
+        if (isReady()) return sInstance;
+        Log.e("[Platform Helper] Trying to access instance that doesn't exists!");
+        throw new RuntimeException("AndroidPlatformHelper not instantiated yet");
+    }
+
     private long mNativePtr;
     private Context mContext;
+    protected Core mCore;
+
     private WifiManager.WifiLock mWifiLock;
     private WifiManager.MulticastLock mMcastLock;
     private ConnectivityManager mConnectivityManager;
@@ -103,9 +151,36 @@ public class AndroidPlatformHelper {
     private Class mFileTransferServiceClass;
     private boolean mFileTransferServiceStarted;
 
-    private static int mTempCountWifi = 0;
-    private static int mTempCountMCast = 0;
-    private static int mTempCountCPU = 0;
+    private Class mServiceClass;
+
+    private Timer mTimer;
+    private Timer mForcedIterateTimer;
+    private Runnable mIterateRunnable;
+    private int mIterateSchedule;
+    private Application.ActivityLifecycleCallbacks mActivityCallbacks;
+
+    private CoreListenerStub mListener;
+    private AudioHelper mAudioHelper;
+    private BluetoothHelper mBluetoothHelper;
+    private ShutdownReceiver mShutdownReceiver;
+    private boolean mReloadSoundDevicesScheduled;
+
+    private DisplayManager mDisplayManager;
+    private DisplayManager.DisplayListener mDisplayListener;
+
+    // These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
+    private native void updatePushNotificationInformation(long ptr, String appId, String token);
+    private native void stopCore(long ptr);
+    private native void leaveConference(long ptr);
+    private native void pauseAllCalls(long ptr);
+    private native void reloadSoundDevices(long ptr);
+    private native void enterBackground(long ptr);
+    private native void enterForeground(long ptr);
+    private native void processPushNotification(long ptr, String callId, String payload, boolean isCoreStarting);
+    private native void healNetworkConnections(long ptr);
+
+    private boolean mServiceRunning;
+    private boolean mServiceRunningInForeground;
 
     private native void setNativePreviewWindowId(long nativePtr, Object view);
 
@@ -127,12 +202,16 @@ public class AndroidPlatformHelper {
 
     private native void setSignalInfo(long nativePtr, int type, int unit, int value, String details);
 
-    public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
+    public AndroidPlatformHelper(long nativePtr, Object ctx_obj, Core core, boolean wifiOnly) {
         mNativePtr = nativePtr;
         mContext = ((Context) ctx_obj).getApplicationContext();
+        mCore = core;
         mWifiOnly = wifiOnly;
         mDnsServersList = new ArrayList<String>();
         mResources = mContext.getResources();
+        mServiceRunning = false;
+        mServiceRunningInForeground = false;
+        mReloadSoundDevicesScheduled = false;
         
         Looper myLooper = Looper.myLooper();
         if (myLooper == null) {
@@ -142,11 +221,23 @@ public class AndroidPlatformHelper {
         mHandler = new Handler(myLooper);
 
         MediastreamerAndroidContext.setContext(mContext);
+        mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+
+        Thread thread = myLooper.getThread();
+        boolean isMainThread = myLooper == Looper.getMainLooper();
+        if (isMainThread) {
+            Log.i("[Platform Helper] Linphone SDK Android classes will use main thread: [", thread.getName(), "], id=", thread.getId());
+        } else {
+            Log.i("[Platform Helper] Linphone SDK Android classes won't use main thread: [", thread.getName(), "], id=", thread.getId());
+        }
+        sInstance = this;
 
         Log.i("[Platform Helper] Created, wifi only mode is " + (mWifiOnly ? "enabled" : "disabled"));
+    }
 
+    public void init() {
+        Log.i("[Platform Helper] Initialization started");
         WifiManager wifiMgr = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-        mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
         mConnectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AndroidPlatformHelper");
@@ -175,12 +266,6 @@ public class AndroidPlatformHelper {
         NetworkManagerInterface nm = createNetworkManager();
         nm.updateDnsServers();
 
-        if (Version.sdkAboveOrEqual(Version.API29_ANDROID_10)) {
-            mNetworkSignalMonitor = new NetworkSignalMonitor(mContext, this);
-        } else {
-            Log.w("[Platform Helper] Device is running Android < 10, can't use network signal strength monitoring");
-        }
-
         mPushServiceClass = getPushServiceClass();
         if (mPushServiceClass == null) {
             mPushServiceClass = org.linphone.core.tools.service.PushService.class;
@@ -190,15 +275,192 @@ public class AndroidPlatformHelper {
         if (mFileTransferServiceClass == null) {
             mFileTransferServiceClass = org.linphone.core.tools.service.FileTransferService.class;
         }
+        
+        // DO NOT ADD A LISTENER ON THE CORE HERE!
+        // Wait for onLinphoneCoreStart()
+
+        // Dump some debugging information to the logs
+        dumpDeviceInformation();
+        dumpLinphoneInformation();
+        DeviceUtils.logPreviousCrashesIfAny(mContext); // Android 11 only
+
+        mActivityCallbacks = new ActivityMonitor();
+        ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
+
+        PushNotificationUtils.init(mContext);
+        if (!PushNotificationUtils.isAvailable(mContext)) {
+            Log.w("[Platform Helper] Push notifications aren't available (see push utils log)");
+        }
+        
+        if (isAndroidXMediaAvailable()) {
+            mAudioHelper = new AudioHelper(mContext);
+        } else {
+            Log.w("[Platform Helper] Do you have a dependency on androidx.media:media:1.2.0 or newer?");
+        }
+        mBluetoothHelper = new BluetoothHelper(mContext);
+
+        mDisplayListener = new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+                Log.d("[Platform Helper] Display added: ", displayId);
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+                Log.d("[Platform Helper] Display changed: ", displayId);
+                updateOrientation(displayId);
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                Log.d("[Platform Helper] Display removed: ", displayId);
+            }
+        };
+        mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+        mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
+
+        IntentFilter shutdownIntentFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
+        // Without that the broadcast timeout might be reached before we were called
+        shutdownIntentFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
+        mShutdownReceiver = new ShutdownReceiver();
+        Log.i("[Platform Helper] Registering shutdown receiver");
+        mContext.registerReceiver(mShutdownReceiver, shutdownIntentFilter);
+
+        mServiceClass = getServiceClass();
+        if (mServiceClass == null) mServiceClass = CoreService.class;
+
+        Log.i("[Platform Helper] Initialization done");
     }
 
-    public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
+    public void onLinphoneCoreStart(boolean monitoringEnabled) {
         Log.i("[Platform Helper] onLinphoneCoreStart, network monitoring is " + monitoringEnabled);
         mMonitoringEnabled = monitoringEnabled;
+
+        if (!isAndroidXMediaAvailable() && mCore.isNativeRingingEnabled()) {
+            Log.e("[Platform Helper] Native ringing was enabled but condition isn't met (androidx.media:media dependency), disabling it.");
+            mCore.setNativeRingingEnabled(false);
+        }
+
+        if (mCore.isAutoIterateEnabled()) {
+            // Force the core.iterate() scheduling to a low value to ensure the Core will be ready as quickly as possible
+            Log.i("[Platform Helper] Core is starting, scheduling core.iterate() every " + AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED + "ms");
+            startAutoIterate(AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED);
+            createTimerToResetAutoIterateSchedule();
+        } else {
+            Log.w("[Platform Helper] Auto core.iterate() isn't enabled, ensure you do it in your application!");
+        }
+
+        mListener = new CoreListenerStub() {
+            @Override
+            public void onFirstCallStarted(Core core) {
+                Log.i("[Platform Helper] First call started");
+                // Ensure Service is running. It will take care by itself to start as foreground.
+                if (!mServiceRunning) {
+                    Log.w("[Platform Helper] Service isn't running, let's start it");
+                    try {
+                        startService();
+                    } catch (IllegalStateException ise) {
+                        Log.w("[Platform Helper] Failed to start service: ", ise);
+                    }
+                } else {
+                    Log.i("[Platform Helper] Service appears to be running, everything is fine");
+                }
+            }
+
+            @Override
+            public void onLastCallEnded(Core core) {
+                Log.i("[Platform Helper] Last call ended");
+                if (mAudioHelper == null) return;
+                if (core.isNativeRingingEnabled()) {
+                    mAudioHelper.stopRinging();
+                } else {
+                    mAudioHelper.releaseRingingAudioFocus();
+                }
+                mAudioHelper.releaseCallAudioFocus();
+            }
+
+            @Override
+            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (mAudioHelper == null) return;
+                if (call.getState() != state) {
+                    // This can happen if a listener set earlier than this one in the app automatically accepts an incoming call for example.
+                    if (state == Call.State.IncomingReceived && call.getState() == Call.State.IncomingEarlyMedia) {
+                        Log.w("[Platform Helper] It seems call was accepted with early-media during the incoming received call state changed, continuing anyway");
+                    } else {
+                        Log.w("[Platform Helper] Call state changed callback state variable doesn't match current call state, skipping");
+                        return;
+                    }
+                }
+
+                if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
+                    if (core.isNativeRingingEnabled()) {
+                        if (core.getConfig().getInt("sound", "disable_ringing", 0) == 1) {
+                            Log.w("[Platform Helper] Ringing was disabled in configuration (disable_ringing item in [sound] section is set to 1)");
+                        } else {
+                            Log.i("[Platform Helper] Incoming call received, no other call, start ringing");
+                            mAudioHelper.startRinging(mContext, core.getRing(), call.getRemoteAddress());
+                        }
+                    } else {
+                        Log.i("[Platform Helper] Incoming call received, no other call, acquire ringing audio focus");
+                        mAudioHelper.requestRingingAudioFocus();
+                    }
+                } else if (state == Call.State.IncomingEarlyMedia && core.getCallsNb() == 1) {
+                    if (core.getRingDuringIncomingEarlyMedia()) {
+                        Log.i("[Platform Helper] Incoming call is early media and ringing is allowed");
+                    } else {
+                        if (core.isNativeRingingEnabled()) {
+                            Log.w("[Platform Helper] Incoming call is early media and ringing is disabled, stop ringing");
+                            mAudioHelper.stopRinging();
+                        } else {
+                            Log.i("[Platform Helper] Incoming call is early media and ringing is disabled, keep ringing audio focus as sound card will be using RING stream");
+                        }
+                    }
+                } else if (state == Call.State.Connected) {
+                    if (call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
+                        Log.i("[Platform Helper] Stop incoming call ringing");
+                        mAudioHelper.stopRinging();
+                    } else {
+                        Log.i("[Platform Helper] Stop incoming call ringing audio focus");
+                        mAudioHelper.releaseRingingAudioFocus();
+                    }
+                } else if (state == Call.State.OutgoingInit && core.getCallsNb() == 1) {
+                    Log.i("[Platform Helper] Outgoing call in progress, no other call, acquire ringing audio focus for ringback");
+                    mAudioHelper.requestRingingAudioFocus();
+                } else if (state == Call.State.StreamsRunning) {
+                    Log.i("[Platform Helper] Call active, ensure audio focus granted");
+                    mAudioHelper.requestCallAudioFocus(false);
+                } else if (state == Call.State.Resuming) {
+                    Log.i("[Platform Helper] Call resuming, ensure audio focus granted");
+                    mAudioHelper.requestCallAudioFocus(false);
+                }
+            }
+        };
+        
+        mCore.addListener(mListener);
+
+        SharedPreferences sharedPref = mContext.getSharedPreferences("push_notification_storage", Context.MODE_PRIVATE);
+        String callId = sharedPref.getString("call-id", "");
+        String payload = sharedPref.getString("payload", "");
+        if (!callId.isEmpty()) {
+            Log.i("[Platform Helper] Push notification information retrieved from storage, Call-ID is [" + callId + "]");
+            processPushNotification(callId, payload, true);
+
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("call-id", "");
+            editor.putString("payload", "");
+            editor.apply();
+            Log.i("[Platform Helper] Push information cleared from storage");
+        }
+        
         startNetworkMonitoring();
     }
 
-    public synchronized void onLinphoneCoreStop() {
+    public void stop() {
+        Log.i("[Platform Helper] Stopping");
+        stopCore(mCore.getNativePointer());
+    }
+
+    public void onLinphoneCoreStop() {
         Log.i("[Platform Helper] onLinphoneCoreStop, network monitoring is " + mMonitoringEnabled);
 
         // The following will prevent a crash if a video view hasn't been set to null before the Core stops
@@ -224,19 +486,76 @@ public class AndroidPlatformHelper {
         mNativePtr = 0;
         mHandler.removeCallbacksAndMessages(null);
         stopNetworkMonitoring();
+
+        if (mServiceRunning) {
+            Log.i("[Platform Helper] Stopping service ", mServiceClass.getName());
+            mContext.stopService(new Intent().setClass(mContext, mServiceClass));
+        }
+
+        mCore.removeListener(mListener);
+
+        stopAutoIterate();
+        stopTimerToResetAutoIterateSchedule();
+
+        mCore = null; // To allow the garbage colletor to free the Core
+        Log.i("[Platform Helper] Core released");
     }
 
-    public synchronized void requestWifiSignalStrengthUpdate() {
+    public void destroy() {
+        Log.i("[Platform Helper] Destroying");
+
+        if (mActivityCallbacks != null) {
+            ((Application) mContext).unregisterActivityLifecycleCallbacks(mActivityCallbacks);
+            mActivityCallbacks = null;
+        }
+
+        if (mBluetoothHelper != null) {
+            mBluetoothHelper.destroy(mContext);
+            mBluetoothHelper = null;
+        }
+
+        if (mShutdownReceiver != null) {
+            Log.i("[Platform Helper] Unregistering shutdown receiver");
+            mContext.unregisterReceiver(mShutdownReceiver);
+            mShutdownReceiver = null;
+        }
+        
+        if (mAudioHelper != null) {
+            mAudioHelper.destroy(mContext);
+            mAudioHelper = null;
+        }
+
+        if (mDisplayManager != null && mDisplayListener != null) {
+            mDisplayManager.unregisterDisplayListener(mDisplayListener);
+            mDisplayListener = null;
+            mDisplayManager = null;
+        }
+
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+            mHandler = null;
+        }
+        mServiceClass = null;
+        mContext = null;
+        sInstance = null;
+        Log.i("[Platform Helper] Destroyed");
+    }
+
+    public synchronized Core getCore() {
+        return mCore;
+    }
+
+    public void requestWifiSignalStrengthUpdate() {
         if (mNetworkSignalMonitor != null) {
             mNetworkSignalMonitor.updateWifiConnectionSignalStrength();
         }
     }
 
-    public synchronized void setSignalInfo(SignalType type, SignalStrengthUnit unit, int value, String details) {
+    public void setSignalInfo(SignalType type, SignalStrengthUnit unit, int value, String details) {
         setSignalInfo(mNativePtr, type.toInt(), unit.toInt(), value, details);
     }
 
-    public synchronized void onWifiOnlyEnabled(boolean enabled) {
+    public void onWifiOnlyEnabled(boolean enabled) {
         mWifiOnly = enabled;
         Log.i("[Platform Helper] Wifi only mode is now " + (mWifiOnly ? "enabled" : "disabled"));
         if (mNetworkManager != null) {
@@ -288,7 +607,7 @@ public class AndroidPlatformHelper {
         return info.nativeLibraryDir;
     }
 
-    public synchronized void acquireWifiLock() {
+    public void acquireWifiLock() {
         mTempCountWifi++;
         Log.d("[Platform Helper] acquireWifiLock(). count = " + mTempCountWifi);
         if (!mWifiLock.isHeld()) {
@@ -296,7 +615,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void releaseWifiLock() {
+    public void releaseWifiLock() {
         mTempCountWifi--;
         Log.d("[Platform Helper] releaseWifiLock(). count = " + mTempCountWifi);
         if (mWifiLock.isHeld()) {
@@ -304,7 +623,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void acquireMcastLock() {
+    public void acquireMcastLock() {
         mTempCountMCast++;
         Log.d("[Platform Helper] acquireMcastLock(). count = " + mTempCountMCast);
         if (!mMcastLock.isHeld()) {
@@ -312,7 +631,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void releaseMcastLock() {
+    public void releaseMcastLock() {
         mTempCountMCast--;
         Log.d("[Platform Helper] releaseMcastLock(). count = " + mTempCountMCast);
         if (mMcastLock.isHeld()) {
@@ -320,7 +639,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void acquireCpuLock() {
+    public void acquireCpuLock() {
         mTempCountCPU++;
         Log.d("[Platform Helper] acquireCpuLock(). count = " + mTempCountCPU);
         if (!mWakeLock.isHeld()) {
@@ -328,7 +647,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void releaseCpuLock() {
+    public void releaseCpuLock() {
         mTempCountCPU--;
         Log.d("[Platform Helper] releaseCpuLock(). count = " + mTempCountCPU);
         if (mWakeLock.isHeld()) {
@@ -455,7 +774,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    private synchronized void setNativePreviewWindowIdOnCoreThread(TextureView view) {
+    private void setNativePreviewWindowIdOnCoreThread(TextureView view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -465,7 +784,7 @@ public class AndroidPlatformHelper {
         mHandler.post(runnable);
     }
 
-    public synchronized void setVideoPreviewView(Object view) {
+    public void setVideoPreviewView(Object view) {
         if (mPreviewTextureView != null) {
             Log.w("[Platform Helper] Found an existing preview TextureView, let's destroy it first");
             mPreviewTextureView.setSurfaceTextureListener(null);
@@ -543,7 +862,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    private synchronized void setNativeVideoWindowIdOnCoreThread(SurfaceTexture view) {
+    private void setNativeVideoWindowIdOnCoreThread(SurfaceTexture view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -553,7 +872,7 @@ public class AndroidPlatformHelper {
         mHandler.post(runnable);
     }
 
-    public synchronized void setVideoRenderingView(Object view) {
+    public void setVideoRenderingView(Object view) {
         if (mVideoTextureView != null) {
             Log.w("[Platform Helper] Found an existing video TextureView [", mVideoTextureView, "], let's destroy it first");
             mVideoTextureView.setSurfaceTextureListener(null);
@@ -632,7 +951,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    private synchronized void setParticipantDeviceNativeVideoWindowIdOnCoreThread(long participantDevice, SurfaceTexture view) {
+    private void setParticipantDeviceNativeVideoWindowIdOnCoreThread(long participantDevice, SurfaceTexture view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -642,7 +961,7 @@ public class AndroidPlatformHelper {
         mHandler.post(runnable);
     }
 
-    public synchronized void setParticipantDeviceVideoRenderingView(long participantDevice, Object view) {
+    public void setParticipantDeviceVideoRenderingView(long participantDevice, Object view) {
         if (mParticipantTextureView == null) {
             mParticipantTextureView = new HashMap<Long, TextureView>();
         }
@@ -715,7 +1034,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void resizeVideoPreview(int width, int height) {
+    public void resizeVideoPreview(int width, int height) {
         if (mPreviewTextureView != null && mPreviewTextureView instanceof CaptureTextureView) {
             Log.i("[Platform Helper] Found CaptureTextureView, setting video capture size to " + width + "x" + height);
             ((CaptureTextureView) mPreviewTextureView).setAspectRatio(width, height);
@@ -731,11 +1050,9 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized boolean isInBackground() {
-        if (CoreManager.isReady()) {
-            if (CoreManager.instance().isServiceRunningAsForeground()) {
-                Log.i("[Platform Helper] CoreService seems to be running as foreground, consider app is in foreground");
-                return false;
-            }
+        if (mServiceRunningInForeground) {
+            Log.i("[Platform Helper] CoreService seems to be running as foreground, consider app is in foreground");
+            return false;
         }
 
         return isInBackground(mNativePtr);
@@ -758,7 +1075,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void updateDnsServers(ArrayList<String> dnsServers) {
+    public void updateDnsServers(ArrayList<String> dnsServers) {
         // Do not replace previous list of DNS by an empty one, keep them to be able to try a resolution while in DOZE mode
         if (dnsServers != null && !dnsServers.isEmpty()) {
             if (!dnsServers.equals(mDnsServersList)) {
@@ -799,7 +1116,7 @@ public class AndroidPlatformHelper {
         return false;
     }
 
-    public synchronized void updateNetworkReachability() {
+    public void updateNetworkReachability() {
         if (mNativePtr == 0) {
             Log.w("[Platform Helper] Native pointer has been reset, stopping there");
             return;
@@ -888,7 +1205,7 @@ public class AndroidPlatformHelper {
         return networkManager;
     }
 
-    private synchronized void startNetworkMonitoring() {
+    private void startNetworkMonitoring() {
         if (!mMonitoringEnabled) return;
 
         mNetworkManager = createNetworkManager();
@@ -908,10 +1225,16 @@ public class AndroidPlatformHelper {
         Log.i("[Platform Helper] Registering interactivity receiver");
         mContext.registerReceiver(mInteractivityReceiver, interactivityIntentFilter);
 
+        if (Version.sdkAboveOrEqual(Version.API29_ANDROID_10)) {
+            mNetworkSignalMonitor = new NetworkSignalMonitor(mContext, this);
+        } else {
+            Log.w("[Platform Helper] Device is running Android < 10, can't use network signal strength monitoring");
+        }
+
         updateNetworkReachability();
     }
 
-    private synchronized void stopNetworkMonitoring() {
+    private void stopNetworkMonitoring() {
         if (mInteractivityReceiver != null) {
             Log.i("[Platform Helper] Unregistering interactivity receiver");
             mContext.unregisterReceiver(mInteractivityReceiver);
@@ -933,7 +1256,7 @@ public class AndroidPlatformHelper {
         mMonitoringEnabled = false;
     }
 
-    public synchronized void disableAudioRouteChanges(boolean disable) {
+    public void disableAudioRouteChanges(boolean disable) {
         if (disable) {
             Log.i("[Platform Helper] Disabling audio route changes in mediastreamer2");
         } else {
@@ -942,7 +1265,7 @@ public class AndroidPlatformHelper {
         MediastreamerAndroidContext.disableAudioRouteChanges(disable);
     }
 
-    public synchronized void startPushService() {
+    public void startPushService() {
         boolean connected = false;
         if (mNetworkManager != null) {
             connected = mNetworkManager.isCurrentlyConnected(mContext);
@@ -958,7 +1281,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void stopPushService() {
+    public void stopPushService() {
         if (mPushServiceStarted) {
             Log.i("[Platform Helper] Foreground push service is no longer required");
             Intent i = new Intent(mContext, mPushServiceClass);
@@ -967,7 +1290,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void startFileTransferService() {
+    public void startFileTransferService() {
         if (!mFileTransferServiceStarted) {
             Log.i("[Platform Helper] Starting foreground file transfer service");
             Intent i = new Intent(mContext, mFileTransferServiceClass);
@@ -976,12 +1299,455 @@ public class AndroidPlatformHelper {
         }
     }
 
-    public synchronized void stopFileTransferService() {
+    public void stopFileTransferService() {
         if (mFileTransferServiceStarted) {
             Log.i("[Platform Helper] Foreground file transfer service is no longer required");
             Intent i = new Intent(mContext, mFileTransferServiceClass);
             mContext.stopService(i);
             mFileTransferServiceStarted = false;
+        }
+    }
+
+    // Core thread may be the same as UI thread id Core was created from UI thread
+    public void dispatchOnCoreThread(Runnable r) {
+        if (mHandler != null) {
+            mHandler.post(r);
+        }
+    }
+
+    // Core thread may be the same as UI thread id Core was created from UI thread
+    public void dispatchOnCoreThreadAfter(Runnable r, long after) {
+        if (mHandler != null) {
+            mHandler.postDelayed(r, after);
+        }
+    }
+
+    public void processPushNotification(String callId, String payload, boolean isCoreStarting) {
+        if (mCore.isAutoIterateEnabled() && mCore.isInBackground()) {
+            // Force the core.iterate() scheduling to a low value to ensure the Core will process what triggered the push notification as quickly as possible
+            Log.i("[Platform Helper] Push notification received, scheduling core.iterate() every " + AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED + "ms");
+            startAutoIterate(AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED);
+            createTimerToResetAutoIterateSchedule();
+        }
+
+        Log.i("[Platform Helper] Notifying Core a push with Call-ID [" + callId + "] has been received");
+        processPushNotification(mCore.getNativePointer(), callId, payload, isCoreStarting);
+    }
+
+    public void startAutoIterate() {
+        if (mCore == null) return;
+        
+        if (mCore.isAutoIterateEnabled()) {
+            if (mTimer != null) {
+                Log.w("[Platform Helper] core.iterate() scheduling is already active");
+                return;
+            }
+
+            if (mCore.isInBackground()) {
+                Log.i("[Platform Helper] Start core.iterate() scheduling with background timer");
+                startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+            } else {
+                Log.i("[Platform Helper] Start core.iterate() scheduling with foreground timer");
+                startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+            }
+        }
+    }
+
+    private void stopTimerToResetAutoIterateSchedule() {
+        if (mForcedIterateTimer != null) {
+            mForcedIterateTimer.cancel();
+            mForcedIterateTimer.purge();
+            mForcedIterateTimer = null;
+        }
+    }
+
+    private void createTimerToResetAutoIterateSchedule() {
+        // When we force the scheduling of the core.iterate(), reset it to the proper value (depending on background state) after a few seconds
+        stopTimerToResetAutoIterateSchedule();
+
+        TimerTask lTask =
+            new TimerTask() {
+                @Override
+                public void run() {
+                    Runnable resetRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.i("[Platform Helper] Resetting core.iterate() schedule depending on background/foreground state");
+                            stopAutoIterate();
+                            startAutoIterate();
+                        }
+                    };
+                    dispatchOnCoreThread(resetRunnable);
+                }
+            };
+
+        mForcedIterateTimer = new Timer("Linphone core.iterate() reset scheduler");
+        mForcedIterateTimer.schedule(lTask, AUTO_ITERATE_TIMER_RESET_AFTER);
+        Log.i("[Platform Helper] Iterate scheduler will be reset in " + (AUTO_ITERATE_TIMER_RESET_AFTER / 1000) + " seconds");
+    }
+
+    private void startAutoIterate(int schedule) {
+        if (mTimer != null && schedule == mIterateSchedule) {
+            Log.i("[Platform Helper] core.iterate() is already scheduled every " + schedule + " ms");
+            return;
+        }
+
+        stopAutoIterate();
+
+        mIterateSchedule = schedule;
+
+        mIterateRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mCore != null) {
+                    mCore.iterate();
+                }
+            }
+        };
+        TimerTask lTask = new TimerTask() {
+            @Override
+            public void run() {
+                dispatchOnCoreThread(mIterateRunnable);
+            }
+        };
+
+        /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
+        mTimer = new Timer("Linphone core.iterate() scheduler");
+        mTimer.schedule(lTask, 0, mIterateSchedule);
+        Log.i("[Platform Helper] Call to core.iterate() scheduled every " + mIterateSchedule + " ms");
+    }
+
+    public void stopAutoIterate() {
+        if (mTimer != null) {
+            Log.i("[Platform Helper] Stopping scheduling of core.iterate() every " + mIterateSchedule + " ms");
+            mTimer.cancel();
+            mTimer.purge();
+            mTimer = null;
+            Log.i("[Platform Helper] core.iterate() scheduler stopped");
+        } else {
+            Log.w("[Platform Helper] core.iterate() scheduling wasn't started or already stopped");
+        }
+    }
+
+    public void healNetwork() {
+        if (mCore != null) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    healNetworkConnections(mCore.getNativePointer());
+                }
+            };
+            dispatchOnCoreThread(runnable);
+        }
+    }
+
+    public void startAudioForEchoTestOrCalibration() {
+        if (mAudioHelper == null) return;
+        mAudioHelper.startAudioForEchoTestOrCalibration();
+    }
+
+    public void stopAudioForEchoTestOrCalibration() {
+        if (mAudioHelper == null) return;
+        mAudioHelper.stopAudioForEchoTestOrCalibration();
+    }
+
+    public void routeAudioToSpeaker () {
+        if (mAudioHelper == null) return;
+        mAudioHelper.routeAudioToSpeaker();
+    }
+
+    public void restorePreviousAudioRoute() {
+        if (mAudioHelper == null) return;
+        mAudioHelper.restorePreviousAudioRoute();
+    }
+
+    public void onAudioFocusLost() {
+        if (mCore != null) {
+            boolean pauseCallsWhenAudioFocusIsLost = mCore.getConfig().getBool("audio", "android_pause_calls_when_audio_focus_lost", true);
+            if (pauseCallsWhenAudioFocusIsLost) {
+                if (mCore.isInConference()) {
+                    Log.i("[Platform Helper] App has lost audio focus, leaving conference");
+                    leaveConference(mCore.getNativePointer());
+                } else {
+                    Log.i("[Platform Helper] App has lost audio focus, pausing all calls");
+                    pauseAllCalls(mCore.getNativePointer());
+                }
+                mAudioHelper.releaseCallAudioFocus();
+            } else {
+                Log.w("[Platform Helper] Audio focus lost but keeping calls running");
+            }
+        }
+    }
+
+    public void onBluetoothAdapterTurnedOn() {
+        if (DeviceUtils.isBluetoothConnectPermissionGranted(mContext)) {
+            onBluetoothHeadsetStateChanged();
+        } else {
+            Log.w("[Platform Helper] Bluetooth Connect permission isn't granted, waiting longer before reloading sound devices to increase chances to get bluetooth device");
+            onBluetoothHeadsetStateChanged(5000);
+        }
+    }
+
+
+    public void onBluetoothHeadsetStateChanged() {
+        onBluetoothHeadsetStateChanged(500);
+    }
+
+    private void onBluetoothHeadsetStateChanged(int delay) {
+        if (mCore != null) {
+            if (mCore.getConfig().getInt("audio", "android_monitor_audio_devices", 1) == 0) return;
+            
+            GlobalState globalState = mCore.getGlobalState();
+            if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
+                Log.i("[Platform Helper] Bluetooth headset state changed, waiting for " + delay + " ms before reloading sound devices");
+                if (mReloadSoundDevicesScheduled) {
+                    Log.w("[Platform Helper] Sound devices reload is already pending, skipping...");
+                    return;
+                }
+                mReloadSoundDevicesScheduled = true;
+
+            
+                Runnable reloadRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Platform Helper] Reloading sound devices");
+                        if (mCore != null) {
+                            reloadSoundDevices(mCore.getNativePointer());
+                            mReloadSoundDevicesScheduled = false;
+                        }
+                    }
+                };
+                dispatchOnCoreThreadAfter(reloadRunnable, delay);
+            } else {
+                Log.w("[Platform Helper] Bluetooth headset state changed but current global state is ", globalState.name(), ", skipping...");
+            }
+        }
+    }
+
+    public void onHeadsetStateChanged(boolean connected) {
+        if (mCore != null) {
+            if (mCore.getConfig().getInt("audio", "android_monitor_audio_devices", 1) == 0) return;
+
+            GlobalState globalState = mCore.getGlobalState();
+            if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
+                Log.i("[Platform Helper] Headset state changed, waiting for 500ms before reloading sound devices");
+                if (mReloadSoundDevicesScheduled) {
+                    Log.w("[Platform Helper] Sound devices reload is already pending, skipping...");
+                    return;
+                }
+                mReloadSoundDevicesScheduled = true;
+
+                Runnable reloadRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Platform Helper] Reloading sound devices");
+                        if (mCore != null) {
+                            reloadSoundDevices(mCore.getNativePointer());
+                            mReloadSoundDevicesScheduled = false;
+                        }
+                    }
+                };
+                dispatchOnCoreThread(reloadRunnable);
+            } else {
+                Log.w("[Platform Helper] Headset state changed but current global state is ", globalState.name(), ", skipping...");
+            }
+        }
+    }
+
+    public void onBackgroundMode() {
+        Runnable backgroundRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.i("[Platform Helper] App has entered background mode");
+                if (mCore != null) {
+                    enterBackground(mCore.getNativePointer());
+                    if (mCore.isAutoIterateEnabled()) {
+                        stopTimerToResetAutoIterateSchedule();
+                        Log.i("[Platform Helper] Restarting core.iterate() schedule with background timer");
+                        startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+                    }
+                }
+            }
+        };
+        dispatchOnCoreThread(backgroundRunnable);
+    }
+
+    public void onForegroundMode() {
+        Runnable foregroundRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.i("[Platform Helper] App has left background mode");
+                if (mCore != null) {
+                    enterForeground(mCore.getNativePointer());
+                    updateOrientation(Display.DEFAULT_DISPLAY);
+
+                    if (mCore.isAutoIterateEnabled()) {
+                        stopTimerToResetAutoIterateSchedule();
+                        Log.i("[Platform Helper] Restarting core.iterate() schedule with foreground timer");
+                        startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+                    }
+                }
+            }
+        };
+        dispatchOnCoreThread(foregroundRunnable);
+    }
+
+    public void setPushToken(String token) {
+        int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
+        String appId = mContext.getString(resId);
+        Log.i("[Platform Helper] Push notification app id is [", appId, "] and token is [", token, "]");
+        if (mCore != null) {
+            updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
+        }
+    }
+
+    public void setAudioManagerInCommunicationMode() {
+        if (mAudioHelper != null) mAudioHelper.setAudioManagerInCommunicationMode();
+    }
+
+    public void setAudioManagerInNormalMode() {
+        if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
+    }
+
+    public synchronized boolean isRingingAllowed() {
+        AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        int ringerMode = audioManager.getRingerMode();
+        if (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
+            Log.w("[Platform Helper] Ringer mode is set to silent or vibrate (", ringerMode, ")");
+            return false;
+        }
+        Log.i("[Platform Helper] Ringer mode is set to normal (", ringerMode, ")");
+        return true;
+    }
+
+    public void stopRinging() {
+        if (mAudioHelper != null) mAudioHelper.stopRinging();
+    }
+
+    private synchronized Class getServiceClass() {
+        // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one
+        try {
+            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
+            ServiceInfo[] services = packageInfo.services;
+            if (services != null) {
+                for (ServiceInfo service : services) {
+                    String serviceName = service.name;
+                    try {
+                        Class serviceClass = Class.forName(serviceName);
+                        if (CoreService.class.isAssignableFrom(serviceClass)) {
+                            Log.i("[Platform Helper] Found a service that herits from org.linphone.core.tools.service.CoreService: ", serviceName);
+                            return serviceClass;
+                        }
+                    } catch (Exception exception) {
+                        Log.e("[Platform Helper] Exception trying to get Class from name [", serviceName, "]: ", exception);
+                    } catch (Error error) {
+                        Log.e("[Platform Helper] Error trying to get Class from name [", serviceName, "]: ", error);
+                    }
+                }
+            } else {
+                Log.w("[Platform Helper] No Service found in package info, continuing without it...");
+                return null;
+            }
+        } catch (Exception e) {
+            Log.e("[Platform Helper] Exception thrown while trying to find available Services: ", e);
+            return null;
+        }
+
+        Log.w("[Platform Helper] Failed to find a valid Service, continuing without it...");
+        return null;
+    }
+
+    private void startService() {
+        Log.i("[Platform Helper] Starting service ", mServiceClass.getName());
+        DeviceUtils.startForegroundService(mContext, new Intent().setClass(mContext, mServiceClass));
+    }
+
+    public void setServiceRunning(boolean running) {
+        if (running == mServiceRunning) return;
+        mServiceRunning = running;
+        
+        if (running) {
+            Log.i("[Platform Helper] CoreService is now running");
+        } else {
+            Log.i("[Platform Helper] CoreService is no longer running");
+        }
+    }
+
+    public void setServiceRunningAsForeground(boolean foreground) {
+        if (foreground == mServiceRunningInForeground) return;
+        mServiceRunningInForeground = foreground;
+        
+        if (mServiceRunningInForeground) {
+            Log.i("[Platform Helper] CoreService is now running in foreground");
+        } else {
+            Log.i("[Platform Helper] CoreService is no longer running in foreground");
+        }
+    }
+
+    private synchronized boolean isAndroidXMediaAvailable() {
+        boolean available = false;
+        try {
+            Class audioAttributesCompat = Class.forName("androidx.media.AudioAttributesCompat");
+            Class audioFocusRequestCompat = Class.forName("androidx.media.AudioFocusRequestCompat");
+            Class audioManagerCompat = Class.forName("androidx.media.AudioManagerCompat");
+            available = true;
+        } catch (ClassNotFoundException e) {
+            Log.w("[Platform Helper] Couldn't find class: ", e);
+        } catch (Exception e) {
+            Log.w("[Platform Helper] Exception: " + e);
+        }
+        return available;
+    }
+
+    private void dumpDeviceInformation() {
+        Log.i("==== Phone information dump ====");
+        Log.i("DEVICE=" + Build.DEVICE);
+        Log.i("MODEL=" + Build.MODEL);
+        Log.i("MANUFACTURER=" + Build.MANUFACTURER);
+        Log.i("ANDROID SDK=" + Build.VERSION.SDK_INT);
+        Log.i("PERFORMANCE CLASS=" + DeviceUtils.getPerformanceClass());
+        StringBuilder sb = new StringBuilder();
+        sb.append("ABIs=");
+        for (String abi : Version.getCpuAbis()) {
+            sb.append(abi).append(", ");
+        }
+        Log.i(sb.substring(0, sb.length() - 2));
+        Log.i("=========================================");
+    }
+
+    private void dumpLinphoneInformation() {
+        Log.i("==== Linphone SDK information dump ====");
+        Log.i("VERSION=", mContext.getString(org.linphone.core.R.string.linphone_sdk_version));
+        Log.i("BRANCH=", mContext.getString(org.linphone.core.R.string.linphone_sdk_branch));
+        StringBuilder sb = new StringBuilder();
+        sb.append("PLUGINS=");
+        for (String plugin : org.linphone.core.BuildConfig.PLUGINS_ARRAY) {
+            sb.append(plugin).append(", ");
+        }
+        Log.i(sb.substring(0, sb.length() - 2));
+        Log.i("PACKAGE=", org.linphone.core.BuildConfig.LIBRARY_PACKAGE_NAME);
+        Log.i("BUILD TYPE=", org.linphone.core.BuildConfig.BUILD_TYPE);
+        Log.i("=========================================");
+    }
+
+    private void updateOrientation(int displayId) {
+        if (mCore == null) {
+            Log.e("[Platform Helper] Core is null, don't notify device rotation");
+            return;
+        }
+
+        if (mDisplayManager != null) {
+            Display display = mDisplayManager.getDisplay(displayId);
+            if (display != null) {
+                int orientation = display.getRotation();
+                int degrees = orientation * 90;
+                Log.i("[Platform Helper] Device computed rotation is [", degrees, "] device display id is [", displayId, "])");
+                mCore.setDeviceRotation(degrees);
+            } else {
+                Log.e("[Platform Helper] Display manager returned null display for id [", displayId, "], can't update device rotation!");
+            }
+        } else {
+            Log.e("[Platform Helper] Android's display manager not available yet");
         }
     }
 

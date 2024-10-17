@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 
+import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
 
 import java.util.ArrayList;
@@ -107,15 +108,15 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
     private void onBackgroundMode() {
         Log.i("[Activity Monitor] App has entered background mode");
-        if (CoreManager.isReady()) {
-            CoreManager.instance().onBackgroundMode();
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().onBackgroundMode();
         }
     }
 
     private void onForegroundMode() {
         Log.i("[Activity Monitor] App has left background mode");
-        if (CoreManager.isReady()) {
-            CoreManager.instance().onForegroundMode();
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().onForegroundMode();
         }
     }
 
@@ -132,8 +133,8 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
         @Override
         public void run() {
-            if (CoreManager.isReady()) {
-                synchronized (CoreManager.instance()) {
+            if (AndroidPlatformHelper.isReady()) {
+                synchronized (AndroidPlatformHelper.instance()) {
                     if (!isCanceled) {
                         if (ActivityMonitor.this.mRunningActivities == 0 && mActive) {
                             mActive = false;

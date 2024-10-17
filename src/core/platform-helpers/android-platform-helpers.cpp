@@ -104,17 +104,15 @@ private:
 	int callVoidMethod(jmethodID id);
 	static jmethodID getMethodId(JNIEnv *env, jclass klass, const char *method, const char *signature);
 	string getNativeLibraryDir();
-	void createCoreManager(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
-	void destroyCoreManager();
 
 	jobject mJavaHelper = nullptr;
 	jobject mSystemContext = nullptr;
-	jobject mJavaCoreManager = nullptr;
 	jobject mPreviewVideoWindow = nullptr;
 	jobject mVideoWindow = nullptr;
 	unordered_map<long, jobject> mParticipantDeviceVideoWindows;
 
 	// PlatformHelper methods
+	jmethodID mInitPlatformHelper = nullptr;
 	jmethodID mWifiLockAcquireId = nullptr;
 	jmethodID mWifiLockReleaseId = nullptr;
 	jmethodID mMcastLockAcquireId = nullptr;
@@ -139,10 +137,6 @@ private:
 	jmethodID mStartFileTransferService = nullptr;
 	jmethodID mStopFileTransferService = nullptr;
 
-	// CoreManager methods
-	jmethodID mCoreManagerDestroyId = nullptr;
-	jmethodID mCoreManagerOnLinphoneCoreStartId = nullptr;
-	jmethodID mCoreManagerOnLinphoneCoreStopId = nullptr;
 	jmethodID mStartAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mStopAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mRouteAudioToSpeakerId = nullptr;
@@ -153,10 +147,13 @@ private:
 	jmethodID mSetAudioManagerNormalMode = nullptr;
 	jmethodID mIsRingingAllowed = nullptr;
 	jmethodID mStopRingingId = nullptr;
+	jmethodID mDestroyPlatformHelperId = nullptr;
 
 	bool mNetworkReachable = false;
 	string mDownloadPath = "";
 	bctbx_list_t *mDnsServersList = nullptr;
+
+	BackgroundTask androidBackgroundTask{"Core (android) startup background task"};
 };
 
 static const char *GetStringUTFChars(JNIEnv *env, jstring string) {
@@ -179,64 +176,19 @@ jmethodID AndroidPlatformHelpers::getMethodId(JNIEnv *env, jclass klass, const c
 
 extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref, bool_t is_const);
 
-void AndroidPlatformHelpers::createCoreManager(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
-	JNIEnv *env = ms_get_jni_env();
-	jclass klass = env->FindClass("org/linphone/core/tools/service/CoreManager");
-	if (!klass) {
-		lError() << "[Android Platform Helper] Could not find java CoreManager class.";
-		return;
-	}
-
-	jmethodID ctor = env->GetMethodID(klass, "<init>", "(Ljava/lang/Object;Lorg/linphone/core/Core;)V");
-	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
-	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE, FALSE);
-	mJavaCoreManager = env->NewObject(klass, ctor, (jobject)systemContext, (jobject)javaCore);
-	if (!mJavaCoreManager) {
-		lError() << "[Android Platform Helper] Could not instanciate CoreManager object.";
-		return;
-	}
-	mJavaCoreManager = (jobject)env->NewGlobalRef(mJavaCoreManager);
-
-	mCoreManagerDestroyId = getMethodId(env, klass, "destroy", "()V");
-	mCoreManagerOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "()V");
-	mCoreManagerOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
-
-	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
-	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
-	mRouteAudioToSpeakerId = getMethodId(env, klass, "routeAudioToSpeaker", "()V");
-	mRestorePreviousAudioRouteId = getMethodId(env, klass, "restorePreviousAudioRoute", "()V");
-	mStartAutoIterateId = getMethodId(env, klass, "startAutoIterate", "()V");
-	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
-	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
-	mSetAudioManagerNormalMode = getMethodId(env, klass, "setAudioManagerInNormalMode", "()V");
-	mIsRingingAllowed = getMethodId(env, klass, "isRingingAllowed", "()Z");
-	mStopRingingId = getMethodId(env, klass, "stopRinging", "()V");
-
-	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
-}
-
-void AndroidPlatformHelpers::destroyCoreManager() {
-	if (mJavaCoreManager) {
-		JNIEnv *env = ms_get_jni_env();
-		env->CallVoidMethod(mJavaCoreManager, mCoreManagerDestroyId);
-		env->DeleteGlobalRef(mJavaCoreManager);
-		mJavaCoreManager = nullptr;
-		lInfo() << "[Android Platform Helper] CoreManager has been destroyed.";
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext)
     : GenericPlatformHelpers(core) {
-	createCoreManager(core, systemContext);
-
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass) lFatal() << "[Android Platform Helper] Could not find java AndroidPlatformHelper class.";
 
-	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
-	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext,
+	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
+	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE, FALSE);
+
+	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Lorg/linphone/core/Core;Z)V");
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jobject)javaCore,
 	                             (jboolean)linphone_core_wifi_only_enabled(getCore()->getCCore()));
 	if (!mJavaHelper) {
 		lError() << "[Android Platform Helper] Could not instanciate AndroidPlatformHelper object.";
@@ -245,6 +197,12 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 	mJavaHelper = (jobject)env->NewGlobalRef(mJavaHelper);
 	mSystemContext = (jobject)systemContext;
 
+	mGetPowerManagerId = getMethodId(env, klass, "getPowerManager", "()Ljava/lang/Object;");
+	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
+	belle_sip_wake_lock_init(env, pm);
+	androidBackgroundTask.start(core, 20);
+
+	mInitPlatformHelper = getMethodId(env, klass, "init", "()V");
 	mWifiLockAcquireId = getMethodId(env, klass, "acquireWifiLock", "()V");
 	mWifiLockReleaseId = getMethodId(env, klass, "releaseWifiLock", "()V");
 	mMcastLockAcquireId = getMethodId(env, klass, "acquireMcastLock", "()V");
@@ -252,7 +210,6 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 	mCpuLockAcquireId = getMethodId(env, klass, "acquireCpuLock", "()V");
 	mCpuLockReleaseId = getMethodId(env, klass, "releaseCpuLock", "()V");
 	mGetDnsServersId = getMethodId(env, klass, "getDnsServers", "()[Ljava/lang/String;");
-	mGetPowerManagerId = getMethodId(env, klass, "getPowerManager", "()Ljava/lang/Object;");
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
@@ -270,16 +227,29 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 	mStartFileTransferService = getMethodId(env, klass, "startFileTransferService", "()V");
 	mStopFileTransferService = getMethodId(env, klass, "stopFileTransferService", "()V");
 
-	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
-	belle_sip_wake_lock_init(env, pm);
+	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
+	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
+	mRouteAudioToSpeakerId = getMethodId(env, klass, "routeAudioToSpeaker", "()V");
+	mRestorePreviousAudioRouteId = getMethodId(env, klass, "restorePreviousAudioRoute", "()V");
+	mStartAutoIterateId = getMethodId(env, klass, "startAutoIterate", "()V");
+	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
+	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
+	mSetAudioManagerNormalMode = getMethodId(env, klass, "setAudioManagerInNormalMode", "()V");
+	mIsRingingAllowed = getMethodId(env, klass, "isRingingAllowed", "()Z");
+	mStopRingingId = getMethodId(env, klass, "stopRinging", "()V");
+
+	mDestroyPlatformHelperId = getMethodId(env, klass, "destroy", "()V");
+
+	env->CallVoidMethod(mJavaHelper, mInitPlatformHelper);
 
 	linphone_factory_set_top_resources_dir(linphone_factory_get(), getDataPath().append("share").c_str());
 	linphone_factory_set_msplugins_dir(linphone_factory_get(), getNativeLibraryDir().c_str());
-	lInfo() << "[Android Platform Helper] AndroidPlatformHelper is fully initialised.";
 
 	mPreviewVideoWindow = nullptr;
 	mVideoWindow = nullptr;
 	mNetworkReachable = false;
+
+	lInfo() << "[Android Platform Helper] AndroidPlatformHelper is fully initialised.";
 
 	LinphoneConfig *config = linphone_core_get_config(getCore()->getCCore());
 	if (linphone_config_get_bool(config, "sound", "android_disable_audio_route_changes", FALSE) == TRUE) {
@@ -288,9 +258,9 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers() {
-	destroyCoreManager();
 	if (mJavaHelper) {
 		JNIEnv *env = ms_get_jni_env();
+		env->CallVoidMethod(mJavaHelper, mDestroyPlatformHelperId);
 		belle_sip_wake_lock_uninit(env);
 		env->DeleteGlobalRef(mJavaHelper);
 		mJavaHelper = nullptr;
@@ -553,21 +523,16 @@ void AndroidPlatformHelpers::stopFileTransferService() {
 void AndroidPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mCoreManagerOnLinphoneCoreStartId);
-		}
 		if (mJavaHelper) {
 			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
 		}
 	}
+	androidBackgroundTask.stop();
 }
 
 void AndroidPlatformHelpers::onLinphoneCoreStop() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mCoreManagerOnLinphoneCoreStopId);
-		}
 		if (mJavaHelper) {
 			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
 		}
@@ -577,8 +542,8 @@ void AndroidPlatformHelpers::onLinphoneCoreStop() {
 void AndroidPlatformHelpers::startAudioForEchoTestOrCalibration() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mStartAudioForEchoTestOrCalibrationId);
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mStartAudioForEchoTestOrCalibrationId);
 		}
 	}
 }
@@ -586,8 +551,8 @@ void AndroidPlatformHelpers::startAudioForEchoTestOrCalibration() {
 void AndroidPlatformHelpers::stopAudioForEchoTestOrCalibration() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mStopAudioForEchoTestOrCalibrationId);
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mStopAudioForEchoTestOrCalibrationId);
 		}
 	}
 }
@@ -595,8 +560,8 @@ void AndroidPlatformHelpers::stopAudioForEchoTestOrCalibration() {
 void AndroidPlatformHelpers::routeAudioToSpeaker() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mRouteAudioToSpeakerId);
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mRouteAudioToSpeakerId);
 		}
 	}
 }
@@ -604,8 +569,8 @@ void AndroidPlatformHelpers::routeAudioToSpeaker() {
 void AndroidPlatformHelpers::restorePreviousAudioRoute() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mRestorePreviousAudioRouteId);
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mRestorePreviousAudioRouteId);
 		}
 	}
 }
@@ -613,11 +578,11 @@ void AndroidPlatformHelpers::restorePreviousAudioRoute() {
 void AndroidPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
+		if (mJavaHelper) {
 			if (autoIterateEnabled) {
-				env->CallVoidMethod(mJavaCoreManager, mStartAutoIterateId);
+				env->CallVoidMethod(mJavaHelper, mStartAutoIterateId);
 			} else {
-				env->CallVoidMethod(mJavaCoreManager, mStopAutoIterateId);
+				env->CallVoidMethod(mJavaHelper, mStopAutoIterateId);
 			}
 		}
 	}
@@ -632,8 +597,8 @@ void AndroidPlatformHelpers::onRecordingPaused() const {
 bool AndroidPlatformHelpers::isRingingAllowed() const {
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
-		if (mJavaCoreManager) {
-			return env->CallBooleanMethod(mJavaCoreManager, mIsRingingAllowed);
+		if (mJavaHelper) {
+			return env->CallBooleanMethod(mJavaHelper, mIsRingingAllowed);
 		}
 	}
 	return false;
@@ -644,8 +609,8 @@ void AndroidPlatformHelpers::stopRinging() const {
 	if (linphone_core_is_native_ringing_enabled(lc) == TRUE) {
 		JNIEnv *env = ms_get_jni_env();
 		if (env) {
-			if (mJavaCoreManager) {
-				env->CallVoidMethod(mJavaCoreManager, mStopRingingId);
+			if (mJavaHelper) {
+				env->CallVoidMethod(mJavaHelper, mStopRingingId);
 			}
 		}
 	}
@@ -823,7 +788,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	linphone_core_enable_keep_alive(androidPlatformHelper->getCore()->getCCore(), enable ? TRUE : FALSE);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_updatePushNotificationInformation(
     JNIEnv *env, BCTBX_UNUSED(jobject thiz), jlong ptr, jstring jparam, jstring jprid) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	const char *paramC = GetStringUTFChars(env, jparam);
@@ -840,16 +805,15 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	ReleaseStringUTFChars(env, jparam, paramC);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_stopCore(BCTBX_UNUSED(JNIEnv *env),
-                                                                                            BCTBX_UNUSED(jobject thiz),
-                                                                                            jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_stopCore(
+    BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 
 	const std::function<void()> fun = [core]() { linphone_core_stop(core); };
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_leaveConference(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_leaveConference(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 
@@ -857,7 +821,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_pauseAllCalls(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_pauseAllCalls(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 
@@ -865,7 +829,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_reloadSoundDevices(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_reloadSoundDevices(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 
@@ -873,7 +837,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterBackground(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_enterBackground(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 
@@ -881,7 +845,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterForeground(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_enterForeground(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 
@@ -889,7 +853,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_processPushNotification(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_processPushNotification(
     JNIEnv *env, BCTBX_UNUSED(jobject thiz), jlong ptr, jstring callId, jstring payload, jboolean isCoreStarting) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	const char *c_callId = GetStringUTFChars(env, callId);
@@ -919,7 +883,7 @@ Java_org_linphone_core_tools_AndroidPlatformHelper_setSignalInfo(BCTBX_UNUSED(JN
 	ReleaseStringUTFChars(env, details, c_details);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_healNetworkConnections(
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_healNetworkConnections(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->healNetworkConnections();

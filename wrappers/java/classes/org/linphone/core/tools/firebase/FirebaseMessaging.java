@@ -34,7 +34,7 @@ import org.linphone.core.Core;
 import org.linphone.core.GlobalState;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.service.AndroidDispatcher;
 
 import java.lang.StringBuilder;
@@ -53,14 +53,14 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     @Override
     public void onNewToken(final String token) {
         android.util.Log.i("FirebaseIdService", "[Push Notification] Refreshed token: " + token);
-        if (CoreManager.isReady()) {
+        if (AndroidPlatformHelper.isReady()) {
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
-                    CoreManager.instance().setPushToken(token);
+                    AndroidPlatformHelper.instance().setPushToken(token);
                 }
             };
-            CoreManager.instance().dispatchOnCoreThread(runnable);
+            AndroidPlatformHelper.instance().dispatchOnCoreThread(runnable);
         }
     }
 
@@ -78,7 +78,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     }
 
     private void onPushReceived(RemoteMessage remoteMessage) {
-        if (!CoreManager.isReady()) {
+        if (!AndroidPlatformHelper.isReady()) {
             storePushRemoteMessage(remoteMessage);
             notifyAppPushReceivedWithoutCoreAvailable();
         } else {
@@ -86,13 +86,13 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 @Override
                 public void run() {
                     Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
-                    Core core = CoreManager.instance().getCore();
+                    Core core = AndroidPlatformHelper.instance().getCore();
                     if (core != null && core.getGlobalState() == GlobalState.On) {
                         Map<String, String> data = remoteMessage.getData();
                         String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
                         String payload = new JSONObject(data).toString();
                         Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
-                        CoreManager.instance().processPushNotification(callId, payload, false);
+                        AndroidPlatformHelper.instance().processPushNotification(callId, payload, false);
                     } else {
                         if (core == null) {
                             Log.w("[Push Notification] No Core found, notifying application directly");
@@ -110,7 +110,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                     }
                 }
             };
-            CoreManager.instance().dispatchOnCoreThread(runnable);
+            AndroidPlatformHelper.instance().dispatchOnCoreThread(runnable);
         }
     }
 

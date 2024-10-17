@@ -32,7 +32,7 @@ import android.media.AudioManager;
 
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.receiver.BluetoothReceiver;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 public class BluetoothHelper {
     private AudioManager mAudioManager;

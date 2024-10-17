@@ -25,13 +25,13 @@ import android.content.Intent;
 import androidx.core.content.ContextCompat;
 
 import org.linphone.core.tools.Log;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 public class ShutdownReceiver extends BroadcastReceiver {
     public ShutdownReceiver() { }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (CoreManager.isReady()) CoreManager.instance().stop();
+        if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().stop();
     }
 }

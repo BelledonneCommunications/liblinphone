@@ -40,6 +40,7 @@ import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
+import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.mediastream.Version;
@@ -138,8 +139,8 @@ public class CoreService extends Service {
         if (!mIsListenerAdded) {
             addCoreListener();
         }
-        if (CoreManager.isReady()) {
-            CoreManager.instance().setServiceRunning(true);
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().setServiceRunning(true);
         }
 
         return START_STICKY;
@@ -155,8 +156,8 @@ public class CoreService extends Service {
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
 
-        if (CoreManager.isReady()) {
-            CoreManager.instance().setServiceRunning(false);
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().setServiceRunning(false);
         }
         if (mIsListenerAdded) {
             removeCoreListener();
@@ -174,24 +175,25 @@ public class CoreService extends Service {
         Runnable coreListenerRunnable = new Runnable() {
             @Override
             public void run() {
-                if (CoreManager.isReady()) {
-                    Core core = CoreManager.instance().getCore();
+                if (AndroidPlatformHelper.isReady()) {
+                    Core core = AndroidPlatformHelper.instance().getCore();
                     if (core != null) {
                         Log.i("[Core Service] Core Manager found, removing our listener");
                         core.removeListener(mListener);
+                        mIsListenerAdded = false;
                     }
-                    CoreManager.instance().setServiceRunningAsForeground(false);
+                    AndroidPlatformHelper.instance().setServiceRunningAsForeground(false);
                 } else {
-                    Log.w("[Core Service] CoreManager isn't available anymore...");
+                    Log.w("[Core Service] AndroidPlatformHelper isn't available anymore...");
                 }
             }
         };
 
         Log.i("[Core Service] Trying to remove the Service's CoreListener from the Core...");
-        if (CoreManager.isReady()) {
-            CoreManager.instance().dispatchOnCoreThread(coreListenerRunnable);
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().dispatchOnCoreThread(coreListenerRunnable);
         } else {
-            Log.w("[Core Service] CoreManager isn't available anymore...");
+            Log.w("[Core Service] AndroidPlatformHelper isn't available anymore...");
         }
     }
 
@@ -199,9 +201,11 @@ public class CoreService extends Service {
         Runnable coreListenerRunnable = new Runnable() {
             @Override
             public void run() {
-                if (CoreManager.isReady()) {
-                    Core core = CoreManager.instance().getCore();
+                if (AndroidPlatformHelper.isReady()) {
+                    Core core = AndroidPlatformHelper.instance().getCore();
                     if (core != null) {
+                        if (mIsListenerAdded) return;
+
                         Log.i("[Core Service] Core Manager found, adding our listener");
                         core.addListener(mListener);
                         mIsListenerAdded = true;
@@ -226,19 +230,19 @@ public class CoreService extends Service {
                             }
                         }
                     } else {
-                        Log.e("[Core Service] CoreManager instance found but Core is null!");
+                        Log.e("[Core Service] AndroidPlatformHelper instance found but Core is null!");
                     }
                 } else {
-                    Log.w("[Core Service] CoreManager isn't ready yet...");
+                    Log.w("[Core Service] AndroidPlatformHelper isn't ready yet...");
                 }
             }
         };
 
         Log.i("[Core Service] Trying to add the Service's CoreListener to the Core...");
-        if (CoreManager.isReady()) {
-            CoreManager.instance().dispatchOnCoreThread(coreListenerRunnable);
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().dispatchOnCoreThread(coreListenerRunnable);
         } else {
-            Log.w("[Core Service] CoreManager isn't ready yet...");
+            Log.w("[Core Service] AndroidPlatformHelper isn't ready yet...");
         }
     }
 
@@ -302,8 +306,8 @@ public class CoreService extends Service {
         showForegroundServiceNotification(isVideoCall);
         mIsInForegroundMode = true;
 
-        if (CoreManager.isReady()) {
-            CoreManager.instance().setServiceRunningAsForeground(mIsInForegroundMode);
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().setServiceRunningAsForeground(mIsInForegroundMode);
         }
     }
 
@@ -317,8 +321,8 @@ public class CoreService extends Service {
         hideForegroundServiceNotification();
         mIsInForegroundMode = false;
 
-        if (CoreManager.isReady()) {
-            CoreManager.instance().setServiceRunningAsForeground(mIsInForegroundMode);
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().setServiceRunningAsForeground(mIsInForegroundMode);
         }
     }
 

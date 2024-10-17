@@ -32,7 +32,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 @Keep
 /**
@@ -59,14 +59,14 @@ public class FirebasePushHelper implements PushNotificationUtils.PushHelperInter
                                     }
                                     String token = task.getResult();
                                     Log.i("[Push Notification] Token fetched from Firebase: " + token);
-                                    if (CoreManager.isReady()) {
+                                    if (AndroidPlatformHelper.isReady()) {
                                         Runnable runnable = new Runnable() {
                                             @Override
                                             public void run() {
-                                                CoreManager.instance().setPushToken(token);
+                                                AndroidPlatformHelper.instance().setPushToken(token);
                                             }
                                         };
-                                        CoreManager.instance().dispatchOnCoreThread(runnable);
+                                        AndroidPlatformHelper.instance().dispatchOnCoreThread(runnable);
                                     }
                                 }
                             });

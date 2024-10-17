@@ -29,7 +29,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 
 import org.linphone.core.tools.Log;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 public class BluetoothReceiver extends BroadcastReceiver {
     public BluetoothReceiver() {
@@ -47,14 +47,14 @@ public class BluetoothReceiver extends BroadcastReceiver {
             switch (state) {
                 case BluetoothAdapter.STATE_OFF:
                     Log.w("[Bluetooth] Adapter has been turned off");
-                    if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
+                    if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onBluetoothHeadsetStateChanged();
                     break;
                 case BluetoothAdapter.STATE_TURNING_OFF:
                     Log.w("[Bluetooth] Adapter is being turned off");
                     break;
                 case BluetoothAdapter.STATE_ON:
                     Log.i("[Bluetooth] Adapter has been turned on");
-                    if (CoreManager.isReady()) CoreManager.instance().onBluetoothAdapterTurnedOn();
+                    if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onBluetoothAdapterTurnedOn();
                     break;
                 case BluetoothAdapter.STATE_TURNING_ON:
                     Log.i("[Bluetooth] Adapter is being turned on");
@@ -75,14 +75,14 @@ public class BluetoothReceiver extends BroadcastReceiver {
                 } else {
                     Log.i("[Bluetooth] Bluetooth headset connected: [unknown device]");
                 }
-                if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
+                if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onBluetoothHeadsetStateChanged();
             } else if (state == BluetoothHeadset.STATE_DISCONNECTED) {
                 if (device != null) {
                     Log.i("[Bluetooth] Bluetooth headset disconnected: [", device.getName(), "]");
                 } else {
                     Log.i("[Bluetooth] Bluetooth headset disconnected: [unknown device]");
                 }
-                if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
+                if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onBluetoothHeadsetStateChanged();
             } else if (state == BluetoothHeadset.STATE_CONNECTING) {
                 Log.i("[Bluetooth] Bluetooth headset connecting");
             } else {

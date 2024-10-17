@@ -25,7 +25,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 
 import org.linphone.core.tools.Log;
-import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 public class HeadsetReceiver extends BroadcastReceiver {
     public HeadsetReceiver() {
@@ -56,7 +56,7 @@ public class HeadsetReceiver extends BroadcastReceiver {
                 Log.w("[Headset] Unknown headset plugged state: " + state);
             }
 
-            if (CoreManager.isReady()) CoreManager.instance().onHeadsetStateChanged(state == 1);
+            if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().onHeadsetStateChanged(state == 1);
         }
     }
 }
