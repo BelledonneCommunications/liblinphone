@@ -253,23 +253,22 @@ void AccountManagerServicesRequest::handleSuccess(const HttpResponse &response) 
 	         << response.getStatusCode() << "), data is [" << data << "]";
 
 	if (mType == LinphoneAccountManagerServicesRequestTypeGetDevicesList) {
-		mDevicesList.clear();
 		auto json = parseResponseAsJson(response);
 		if (json != Json::Value::nullSingleton()) {
+			list<shared_ptr<AccountDevice>> devices;
 			for (auto const &uuid : json.getMemberNames()) {
 				auto device = json[uuid];
 				string updateTime = device["update_time"].asString();
 				string userAgent = device["user_agent"].asString();
 				shared_ptr<AccountDevice> accountDevice =
 				    (new AccountDevice(uuid, updateTime, userAgent))->toSharedPtr();
-				mDevicesList.push_back(accountDevice);
+				devices.push_back(accountDevice);
 			}
 
-			ListHolder<AccountDevice> list;
-			list.mList = mDevicesList;
+			mDevicesList.mList = devices;
 			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(AccountManagerServicesRequest, this,
 			                                  linphone_account_manager_services_request_cbs_get_devices_list_fetched,
-			                                  list.getCList());
+			                                  mDevicesList.getCList());
 		}
 	}
 

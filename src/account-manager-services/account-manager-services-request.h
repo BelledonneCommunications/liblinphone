@@ -89,7 +89,7 @@ private:
 	std::string mFrom;
 	std::string mLanguage;
 
-	std::list<std::shared_ptr<AccountDevice>> mDevicesList;
+	mutable ListHolder<AccountDevice> mDevicesList;
 };
 
 class AccountManagerServicesRequestCbs
