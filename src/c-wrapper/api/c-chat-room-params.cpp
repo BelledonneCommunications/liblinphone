@@ -38,13 +38,14 @@ LinphoneChatRoomParams *linphone_chat_room_params_new(void) {
 
 LinphoneChatRoomParams *linphone_chat_room_params_new_with_core(LinphoneCore *core) {
 	LinphoneChatRoomParams *params = linphone_conference_params_new(core);
-	ConferenceParams::toCpp(params)->enableChat(true);
-	ConferenceParams::toCpp(params)->setGroup(false);
-	ConferenceParams::toCpp(params)->getChatParams()->setBackend(ChatParams::Backend::Basic);
-	ConferenceParams::toCpp(params)->getChatParams()->setEncryptionBackend(ChatParams::EncryptionBackend::None);
-	ConferenceParams::toCpp(params)->getChatParams()->setRealTimeText(false);
-	ConferenceParams::toCpp(params)->getChatParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);
-	ConferenceParams::toCpp(params)->getChatParams()->setEphemeralLifetime(0);
+	linphone_conference_params_enable_chat(params, TRUE);
+	linphone_conference_params_enable_group(params, FALSE);
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_set_backend(chat_params, LinphoneChatRoomBackendBasic);
+	linphone_chat_params_set_encryption_backend(chat_params, LinphoneChatRoomEncryptionBackendNone);
+	linphone_chat_params_enable_rtt(chat_params, FALSE);
+	linphone_chat_params_set_ephemeral_mode(chat_params, LinphoneChatRoomEphemeralModeDeviceManaged);
+	linphone_chat_params_set_ephemeral_lifetime(chat_params, 0);
 	return params;
 }
 
@@ -55,90 +56,96 @@ LinphoneChatRoomParams *linphone_chat_room_params_new_and_init(LinphoneCore *cor
 }
 
 LinphoneChatRoomParams *linphone_chat_room_params_clone(const LinphoneChatRoomParams *params) {
-	return ConferenceParams::toCpp(params)->clone()->toC();
+	return linphone_conference_params_clone(params);
 }
 
 LinphoneChatRoomParams *linphone_chat_room_params_ref(LinphoneChatRoomParams *params) {
-	ConferenceParams::toCpp(params)->ref();
+	linphone_conference_params_ref(params);
 	return params;
 }
 
 void linphone_chat_room_params_unref(LinphoneChatRoomParams *params) {
-	ConferenceParams::toCpp(params)->unref();
+	linphone_conference_params_unref(params);
 }
 
 bool_t linphone_chat_room_params_is_valid(const LinphoneChatRoomParams *params) {
-	return ConferenceParams::toCpp(params)->isValid();
+	return linphone_conference_params_is_valid(params);
 }
 
 LinphoneChatRoomBackend linphone_chat_room_params_get_backend(const LinphoneChatRoomParams *params) {
-	return static_cast<LinphoneChatRoomBackend>(
-	    const_cast<ConferenceParams *>(ConferenceParams::toCpp(params))->getChatParams()->getBackend());
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	return linphone_chat_params_get_backend(chat_params);
 }
 
 LinphoneChatRoomEncryptionBackend
 linphone_chat_room_params_get_encryption_backend(const LinphoneChatRoomParams *params) {
-	return static_cast<LinphoneChatRoomEncryptionBackend>(
-	    const_cast<ConferenceParams *>(ConferenceParams::toCpp(params))->getChatParams()->getEncryptionBackend());
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	return linphone_chat_params_get_encryption_backend(chat_params);
 }
 
 bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *params) {
-	return ConferenceParams::toCpp(params)->isGroup();
+	return linphone_conference_params_group_enabled(params);
 }
 
 LinphoneChatRoomEphemeralMode linphone_chat_room_params_get_ephemeral_mode(const LinphoneChatRoomParams *params) {
-	return static_cast<LinphoneChatRoomEphemeralMode>(
-	    const_cast<ConferenceParams *>(ConferenceParams::toCpp(params))->getChatParams()->getEphemeralMode());
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	return linphone_chat_params_get_ephemeral_mode(chat_params);
 }
 
 long linphone_chat_room_params_get_ephemeral_lifetime(const LinphoneChatRoomParams *params) {
-	return const_cast<ConferenceParams *>(ConferenceParams::toCpp(params))->getChatParams()->getEphemeralLifetime();
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	return linphone_chat_params_get_ephemeral_lifetime(chat_params);
 }
 
 bool_t linphone_chat_room_params_encryption_enabled(const LinphoneChatRoomParams *params) {
-	return const_cast<ConferenceParams *>(ConferenceParams::toCpp(params))->getChatParams()->isEncrypted();
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	return linphone_chat_params_encryption_enabled(chat_params);
 }
 
 bool_t linphone_chat_room_params_rtt_enabled(const LinphoneChatRoomParams *params) {
-	return const_cast<ConferenceParams *>(ConferenceParams::toCpp(params))->getChatParams()->isRealTimeText();
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	return linphone_chat_params_rtt_enabled(chat_params);
 }
 
 void linphone_chat_room_params_set_backend(LinphoneChatRoomParams *params, LinphoneChatRoomBackend backend) {
-	ConferenceParams::toCpp(params)->getChatParams()->setBackend(static_cast<ChatParams::Backend>(backend));
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_set_backend(chat_params, backend);
 }
 
 void linphone_chat_room_params_set_encryption_backend(LinphoneChatRoomParams *params,
                                                       LinphoneChatRoomEncryptionBackend backend) {
-	ConferenceParams::toCpp(params)->getChatParams()->setEncryptionBackend(
-	    static_cast<ChatParams::EncryptionBackend>(backend));
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_set_encryption_backend(chat_params, backend);
 }
 
 void linphone_chat_room_params_enable_group(LinphoneChatRoomParams *params, bool_t group) {
-	ConferenceParams::toCpp(params)->setGroup(!!group);
+	linphone_conference_params_enable_group(params, group);
 }
 
 void linphone_chat_room_params_set_ephemeral_mode(LinphoneChatRoomParams *params, LinphoneChatRoomEphemeralMode mode) {
-	ConferenceParams::toCpp(params)->getChatParams()->setEphemeralMode(
-	    static_cast<AbstractChatRoom::EphemeralMode>(mode));
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_set_ephemeral_mode(chat_params, mode);
 }
 
 void linphone_chat_room_params_set_ephemeral_lifetime(LinphoneChatRoomParams *params, long lifetime) {
-	ConferenceParams::toCpp(params)->getChatParams()->setEphemeralLifetime(lifetime);
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_set_ephemeral_lifetime(chat_params, lifetime);
 }
 
 void linphone_chat_room_params_enable_encryption(LinphoneChatRoomParams *params, bool_t encrypted) {
-	ConferenceParams::toCpp(params)->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
-	                                                            : ConferenceParams::SecurityLevel::None);
+	linphone_conference_params_set_security_level(params, encrypted ? LinphoneConferenceSecurityLevelEndToEnd
+	                                                                : LinphoneConferenceSecurityLevelNone);
 }
 
 void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams *params, bool_t rtt) {
-	ConferenceParams::toCpp(params)->getChatParams()->setRealTimeText(!!rtt);
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_enable_rtt(chat_params, rtt);
 }
 
 const char *linphone_chat_room_params_get_subject(const LinphoneChatRoomParams *params) {
-	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getSubject());
+	return linphone_conference_params_get_subject(params);
 }
 
 void linphone_chat_room_params_set_subject(LinphoneChatRoomParams *params, const char *subject) {
-	ConferenceParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
+	linphone_conference_params_set_subject(params, subject);
 }

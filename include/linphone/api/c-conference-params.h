@@ -421,7 +421,7 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_group(LinphoneConferenceP
  * @param params The #LinphoneConferenceParams object. @notnil
  * @return the chat parameters if chat capabilities are on, NULL otherwise @maybenil
  **/
-LINPHONE_PUBLIC LinphoneChatParams *linphone_conference_params_get_chat_params(LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LinphoneChatParams *linphone_conference_params_get_chat_params(const LinphoneConferenceParams *params);
 
 /**
  * @}

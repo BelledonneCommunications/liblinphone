@@ -782,13 +782,15 @@ create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *
                                                                   int expectedParticipantSize,
                                                                   bool_t encrypted,
                                                                   LinphoneChatRoomEphemeralMode mode) {
+	LinphoneConferenceParams *params = linphone_conference_params_new(lcm->lc);
+	linphone_conference_params_enable_chat(params, TRUE);
+	linphone_conference_params_set_security_level(params, encrypted ? LinphoneConferenceSecurityLevelEndToEnd
+	                                                                : LinphoneConferenceSecurityLevelNone);
 	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
-	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lcm->lc);
-
-	linphone_chat_room_params_enable_encryption(params, encrypted);
-	linphone_chat_room_params_set_ephemeral_mode(params, mode);
-	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
-	linphone_chat_room_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
+	linphone_conference_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_chat_params_set_backend(chat_params, LinphoneChatRoomBackendFlexisipChat);
+	linphone_chat_params_set_ephemeral_mode(chat_params, mode);
 	LinphoneChatRoom *chatRoom =
 	    linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
 	linphone_chat_room_params_unref(params);

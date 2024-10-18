@@ -69,14 +69,6 @@ LINPHONE_PUBLIC LinphoneChatParams *linphone_chat_params_ref(LinphoneChatParams 
 LINPHONE_PUBLIC void linphone_chat_params_unref(LinphoneChatParams *params);
 
 /**
- * Free a #LinphoneChatParams
- * @param params #LinphoneChatParams to free @notnil
- * @deprecated 17/03/2017 Use linphone_chat_params_unref() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_params_free(LinphoneChatParams *params);
-
-/**
  * Clone a #LinphoneChatParams
  * @param params The #LinphoneChatParams to clone @notnil
  * @return An allocated #LinphoneChatParams with the same parameters than params @notnil

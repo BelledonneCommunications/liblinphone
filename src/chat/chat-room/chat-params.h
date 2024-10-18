@@ -51,6 +51,7 @@ public:
 	    "LinphoneChatRoomEncryptionBackend and ChatParams::EncryptionBackend are not synchronized, fix this !");
 
 	ChatParams() = default;
+	ChatParams(const std::shared_ptr<Core> &core);
 	ChatParams(const ChatParams &other) = default;
 
 	void setChatDefaults(const std::shared_ptr<Core> &core);

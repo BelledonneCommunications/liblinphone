@@ -179,7 +179,7 @@ public:
 		return mSecurityLevel;
 	};
 
-	std::shared_ptr<ChatParams> &getChatParams() {
+	std::shared_ptr<ChatParams> &getChatParams() const {
 		return mChatParams;
 	};
 
@@ -216,7 +216,7 @@ private:
 	bool mGroup = true; // group chat
 	std::weak_ptr<Account> mAccount;
 	bool mHidden = false;
-	std::shared_ptr<ChatParams> mChatParams = nullptr;
+	mutable std::shared_ptr<ChatParams> mChatParams = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

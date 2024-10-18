@@ -37,10 +37,6 @@ void linphone_chat_params_unref(LinphoneChatParams *params) {
 	ChatParams::toCpp(params)->unref();
 }
 
-void linphone_chat_params_free(LinphoneChatParams *params) {
-	ChatParams::toCpp(params)->unref();
-}
-
 LinphoneChatParams *linphone_chat_params_clone(const LinphoneChatParams *params) {
 	return static_cast<ChatParams *>(ChatParams::toCpp(params)->clone())->toC();
 }

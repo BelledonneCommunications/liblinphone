@@ -9363,6 +9363,8 @@ LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_with_type
 #ifdef HAVE_DB_STORAGE
 			return (new LinphonePrivate::DBConferenceScheduler(cppCore, cppAccount))->toC();
 #else
+			ms_error("Could not create a database conference scheduler because macro HAVE_DB_STORAGE has not been "
+			         "defined at compile time");
 			return NULL;
 #endif // HAVE_DB_STORAGE
 		case LinphoneConferenceSchedulerTypeCCMP:

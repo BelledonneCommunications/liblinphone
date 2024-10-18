@@ -29,6 +29,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+ChatParams::ChatParams(const std::shared_ptr<Core> &core) {
+	setChatDefaults(core);
+}
+
 void ChatParams::setChatDefaults(const std::shared_ptr<Core> &core) {
 	auto cCore = core ? core->getCCore() : nullptr;
 	if (cCore) {

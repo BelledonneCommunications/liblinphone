@@ -49,7 +49,7 @@ void linphone_conference_params_free(LinphoneConferenceParams *params) {
 }
 
 LinphoneConferenceParams *linphone_conference_params_clone(const LinphoneConferenceParams *params) {
-	return static_cast<ConferenceParams *>(ConferenceParams::toCpp(params)->clone())->toC();
+	return ConferenceParams::toCpp(params)->clone()->toC();
 }
 
 void linphone_conference_params_set_audio_enabled(LinphoneConferenceParams *params, bool_t enable) {
@@ -244,7 +244,7 @@ void linphone_conference_params_enable_group(LinphoneConferenceParams *params, b
 	ConferenceParams::toCpp(params)->setGroup(!!group);
 }
 
-LinphoneChatParams *linphone_conference_params_get_chat_params(LinphoneConferenceParams *params) {
+LinphoneChatParams *linphone_conference_params_get_chat_params(const LinphoneConferenceParams *params) {
 	auto &chatParams = ConferenceParams::toCpp(params)->getChatParams();
 	return chatParams ? chatParams->toC() : nullptr;
 }

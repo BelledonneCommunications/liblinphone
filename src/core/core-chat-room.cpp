@@ -334,6 +334,10 @@ CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
 		lWarning() << "Trying to create chat room with null parameters";
 		return nullptr;
 	}
+	if (!params->chatEnabled()) {
+		lWarning() << "Trying to create chat room when the chat capability is disabled in the conference parameters";
+		return nullptr;
+	}
 	if (!params->isValid()) {
 		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
 		return nullptr;

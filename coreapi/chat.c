@@ -131,6 +131,13 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const LinphoneAddress *localAddr,
                                                    const bctbx_list_t *participants) {
+	return linphone_core_create_chat_room_7(lc, params, localAddr, participants);
+}
+
+LinphoneChatRoom *linphone_core_create_chat_room_7(LinphoneCore *lc,
+                                                   const LinphoneConferenceParams *params,
+                                                   const LinphoneAddress *localAddr,
+                                                   const bctbx_list_t *participants) {
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
@@ -160,6 +167,15 @@ LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc,
                                                  const LinphoneAddress *localAddr,
                                                  const LinphoneAddress *remoteAddr,
                                                  const bctbx_list_t *participants) {
+	return linphone_core_search_chat_room_2(lc, params, localAddr, remoteAddr, participants);
+}
+
+LinphoneChatRoom *linphone_core_search_chat_room_2(const LinphoneCore *lc,
+                                                   const LinphoneConferenceParams *params,
+                                                   const LinphoneAddress *localAddr,
+                                                   const LinphoneAddress *remoteAddr,
+                                                   const bctbx_list_t *participants) {
+
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;

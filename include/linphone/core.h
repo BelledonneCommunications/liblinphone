@@ -6175,9 +6175,26 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_linphone_specs_list(LinphoneCore
  * @param localAddr #LinphoneAddress of a local #LinphoneAccount identity or NULL @maybenil
  * @param participants The initial list of participants of the chat room. \bctbx_list{LinphoneAddress} @notnil
  * @return The newly created chat room (can be an existing one if backend is Basic) or NULL. @maybenil
+ * @deprecated 22/10/2024, use linphone_core_create_chat_room_7() instead
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *core,
                                                                    const LinphoneChatRoomParams *params,
+                                                                   const LinphoneAddress *localAddr,
+                                                                   const bctbx_list_t *participants);
+
+/**
+ * Create a chat room.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param params The chat room creation parameters #LinphoneConferenceParams @notnil
+ * @param localAddr #LinphoneAddress of a local #LinphoneAccount identity or NULL @maybenil
+ * @param participants The initial list of participants of the chat room. \bctbx_list{LinphoneAddress} @notnil
+ * @return The newly created chat room (can be an existing one if backend is Basic) or NULL. @maybenil
+ * @ingroup chatroom
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_7(LinphoneCore *core,
+                                                                   const LinphoneConferenceParams *params,
                                                                    const LinphoneAddress *localAddr,
                                                                    const bctbx_list_t *participants);
 
@@ -6191,12 +6208,31 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore 
  * @param participants The participants that must be present in the chat room to find. \bctbx_list{LinphoneAddress}
  * @maybenil
  * @return A matching chat room or NULL if none matches. @maybenil
+ * @deprecated 22/10/2024, use linphone_core_search_chat_room_2() instead
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *core,
                                                                  const LinphoneChatRoomParams *params,
                                                                  const LinphoneAddress *localAddr,
                                                                  const LinphoneAddress *remoteAddr,
                                                                  const bctbx_list_t *participants);
+
+/**
+ * Find a chat room.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param params The chat room parameters to match #LinphoneChatRoomParams or NULL @maybenil
+ * @param localAddr #LinphoneAddress of a local #LinphoneAccount identity or NULL @maybenil
+ * @param remoteAddr #LinphoneAddress to search for or NULL @maybenil
+ * @param participants The participants that must be present in the chat room to find. \bctbx_list{LinphoneAddress}
+ * @maybenil
+ * @return A matching chat room or NULL if none matches. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room_2(const LinphoneCore *core,
+                                                                   const LinphoneConferenceParams *params,
+                                                                   const LinphoneAddress *localAddr,
+                                                                   const LinphoneAddress *remoteAddr,
+                                                                   const bctbx_list_t *participants);
 
 /**
  * Removes a chatroom including all message history from the LinphoneCore.

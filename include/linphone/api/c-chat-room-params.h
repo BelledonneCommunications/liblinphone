@@ -88,7 +88,7 @@ linphone_chat_room_params_get_encryption_backend(const LinphoneChatRoomParams *p
  * Get the group chat status of the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
  * @return TRUE if group chat is enabled, FALSE if one-to-one
- * @deprecated 20/05/2024. Use linphone_conference_params_get_group_enabled() instead.
+ * @deprecated 20/05/2024. Use linphone_conference_params_group_enabled() instead.
  **/
 LINPHONE_PUBLIC bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *params);
 

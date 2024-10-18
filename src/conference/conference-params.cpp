@@ -86,7 +86,12 @@ void ConferenceParams::setChatDefaults() {
 void ConferenceParams::enableChat(bool enable) {
 	mEnableChat = enable;
 	if (!mChatParams) {
-		mChatParams = ChatParams::create();
+		std::shared_ptr<Core> core;
+		try {
+			core = getCore();
+		} catch (const bad_weak_ptr &) {
+		}
+		mChatParams = ChatParams::create(core);
 	}
 };
 
