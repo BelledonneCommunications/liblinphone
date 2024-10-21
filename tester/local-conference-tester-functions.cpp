@@ -1593,6 +1593,11 @@ void create_conference_base(time_t start_time,
 					BC_ASSERT_TRUE(linphone_conference_is_in(pconference));
 					LinphoneCall *current_call = linphone_core_get_current_call(mgr->lc);
 					BC_ASSERT_PTR_NOT_NULL(current_call);
+					if (enable_video && video_direction == LinphoneMediaDirectionSendRecv &&
+					    layout == LinphoneConferenceLayoutActiveSpeaker) {
+						BC_ASSERT_PTR_NOT_NULL(linphone_call_params_get_used_video_payload_type(
+						    linphone_call_get_current_params(current_call)));
+					}
 					if (current_call) {
 						BC_ASSERT_EQUAL((int)linphone_call_get_state(current_call),
 						                (int)LinphoneCallStateStreamsRunning, int, "%0d");

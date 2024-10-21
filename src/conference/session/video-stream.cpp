@@ -815,7 +815,7 @@ void MS2VideoStream::stop() {
 	 * later use, keeping the sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = video_stream_new_with_sessions(getCCore()->factory, &mSessions);
 
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(nullptr);
+	if (isMain()) getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(nullptr);
 }
 
 void MS2VideoStream::handleEvent(const OrtpEvent *ev) {
