@@ -1017,6 +1017,18 @@ void Conference::notifyFullState() {
 		l->onFullStateReceived();
 	}
 }
+shared_ptr<ConferenceNotifiedEvent> Conference::notifyAllowedParticipantListChanged(time_t creationTime,
+                                                                                    const bool isFullState) {
+	shared_ptr<ConferenceNotifiedEvent> event = make_shared<ConferenceNotifiedEvent>(
+	    EventLog::Type::ConferenceAllowedParticipantListChanged, creationTime, mConferenceId);
+	event->setFullState(isFullState);
+	event->setNotifyId(mLastNotify);
+
+	for (const auto &l : mConfListeners) {
+		l->onAllowedParticipantListChanged(event);
+	}
+	return event;
+}
 
 shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded(
     time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) {

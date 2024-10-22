@@ -1269,6 +1269,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent(const ConferenceId
 		case EventLog::Type::ConferenceCallStarted:
 		case EventLog::Type::ConferenceCallConnected:
 		case EventLog::Type::ConferenceCallEnded:
+		case EventLog::Type::ConferenceAllowedParticipantListChanged:
 			return nullptr;
 
 		case EventLog::Type::ConferenceCreated:
@@ -4279,6 +4280,7 @@ bool MainDb::addEvent(const shared_ptr<EventLog> &eventLog) {
 		lInfo() << "MainDb::addEvent() of type " << type << " (value " << static_cast<int>(type) << ")";
 		switch (type) {
 			case EventLog::Type::None:
+			case EventLog::Type::ConferenceAllowedParticipantListChanged:
 				return false;
 
 			case EventLog::Type::ConferenceCreated:
@@ -4400,6 +4402,7 @@ bool MainDb::updateEvent(const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
 			case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
 			case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
+			case EventLog::Type::ConferenceAllowedParticipantListChanged:
 				return false;
 		}
 

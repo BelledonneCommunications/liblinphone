@@ -745,12 +745,20 @@ bool ClientConference::addParticipants(const list<std::shared_ptr<const Address>
 			SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal.get());
 			LinphoneAddress *lAddr = getConferenceAddress()->toC();
 			linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, true);
+
+			const auto &factoryAddress = mConfParams->getConferenceFactoryAddress();
+			std::list<std::string> addressParams;
+			if ((mConfParams->audioEnabled() || mConfParams->videoEnabled()) && !factoryAddress) {
+				addressParams.push_back("isfocus");
+			}
+			if (isChat) {
+				addressParams.push_back("text");
+			}
+
 			for (const auto &addr : addresses) {
 				std::shared_ptr<Address> referToAddr = addr->clone()->toSharedPtr();
-				if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
-					referToAddr->setParam("isfocus");
-				} else if (isChat) {
-					referToAddr->setParam("text");
+				for (const auto &param : addressParams) {
+					referToAddr->setParam(param);
 				}
 				referOp->sendRefer(referToAddr->getImpl());
 			}
@@ -2401,6 +2409,17 @@ AudioStream *ClientConference::getAudioStream() {
 
 bool ClientConference::hasBeenLeft() const {
 	return (mState != State::Created);
+}
+
+void ClientConference::handleRefer(SalReferOp *op,
+                                   const std::shared_ptr<LinphonePrivate::Address> &referAddr,
+                                   const std::string method) {
+	if (method == "BYE") {
+		lInfo() << "The server requested " << *referAddr << " to leave the conference";
+		// The server asks a participant to leave a chat room
+		leave();
+		op->reply(SalReasonNone);
+	}
 }
 
 bool ClientConference::sessionParamsAllowThumbnails() const {

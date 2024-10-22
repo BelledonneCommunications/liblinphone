@@ -45,6 +45,7 @@ static bool isConferenceType(LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceChatMessage:
 		case LinphoneEventLogTypeConferenceCreated:
 		case LinphoneEventLogTypeConferenceTerminated:
+		case LinphoneEventLogTypeConferenceAllowedParticipantListChanged:
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
@@ -96,6 +97,7 @@ static bool isConferenceChatMessageType(LinphoneEventLogType type) {
 
 static bool isConferenceNotifiedType(LinphoneEventLogType type) {
 	switch (type) {
+		case LinphoneEventLogTypeConferenceAllowedParticipantListChanged:
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:

@@ -33,6 +33,7 @@ class LINPHONE_PUBLIC ConferenceNotifiedEvent : public ConferenceEvent {
 	friend class MainDbPrivate;
 	friend class ClientChatRoom;
 	friend class ClientConference;
+	friend class Conference;
 
 public:
 	ConferenceNotifiedEvent(Type type, time_t creationTime, const ConferenceId &conferenceId);

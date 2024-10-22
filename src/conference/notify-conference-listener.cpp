@@ -31,6 +31,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+void NotifyConferenceListener::onAllowedParticipantListChanged(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceNotifiedEvent> &event)) {
+	_linphone_conference_notify_allowed_participant_list_changed(conf->toC());
+}
+
 void NotifyConferenceListener::onParticipantAdded(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),
     const std::shared_ptr<Participant> &participant) {

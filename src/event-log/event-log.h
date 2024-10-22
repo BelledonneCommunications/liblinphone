@@ -47,6 +47,7 @@ public:
 		ConferenceCallConnected = LinphoneEventLogTypeConferenceConnected,
 		ConferenceCallEnded = LinphoneEventLogTypeConferenceCallEnded,
 		ConferenceChatMessage = LinphoneEventLogTypeConferenceChatMessage,
+		ConferenceAllowedParticipantListChanged = LinphoneEventLogTypeConferenceAllowedParticipantListChanged,
 		ConferenceParticipantAdded = LinphoneEventLogTypeConferenceParticipantAdded,
 		ConferenceParticipantRemoved = LinphoneEventLogTypeConferenceParticipantRemoved,
 		ConferenceParticipantRoleUnknown = LinphoneEventLogTypeConferenceParticipantRoleUnknown,

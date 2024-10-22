@@ -206,6 +206,8 @@ public:
 	notifyEphemeralMessageEnabled(time_t creationTime, const bool isFullState, const bool enable);
 	virtual std::shared_ptr<ConferenceEphemeralMessageEvent>
 	notifyEphemeralLifetimeChanged(time_t creationTime, const bool isFullState, const long lifetime);
+	virtual std::shared_ptr<ConferenceNotifiedEvent> notifyAllowedParticipantListChanged(time_t creationTime,
+	                                                                                     const bool isFullState);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
 	notifyParticipantDeviceAdded(time_t creationTime,
 	                             const bool isFullState,
@@ -332,6 +334,10 @@ public:
 	virtual const std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 
 	bool supportsMedia() const;
+
+	virtual void handleRefer(SalReferOp *op,
+	                         const std::shared_ptr<LinphonePrivate::Address> &referAddr,
+	                         const std::string method) = 0;
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,

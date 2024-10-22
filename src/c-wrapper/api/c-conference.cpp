@@ -455,6 +455,11 @@ const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConfere
 	return Conference::toCpp(conference)->getCCallbacksList();
 }
 
+void _linphone_conference_notify_allowed_participant_list_changed(LinphoneConference *conference) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Conference, Conference::toCpp(conference),
+	                                         linphone_conference_cbs_get_allowed_participant_list_changed);
+}
+
 void _linphone_conference_notify_participant_added(LinphoneConference *conference, LinphoneParticipant *participant) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, Conference::toCpp(conference),
 	                                  linphone_conference_cbs_get_participant_added, participant);

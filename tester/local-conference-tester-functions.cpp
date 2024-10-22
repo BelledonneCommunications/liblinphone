@@ -622,15 +622,18 @@ static void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
 			firstClientEktCtx = firstClientConf->getClientEktManager()->getEktCtx();
 			BC_ASSERT_PTR_NOT_NULL(firstClientEktCtx);
 			for (auto member : members) {
-				auto rcConf = dynamic_cast<const LinphonePrivate::ClientConference *>(
-				    Conference::toCpp(linphone_core_search_conference_2(member.first->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_PTR_NOT_NULL(rcEktCtx);
-					BC_ASSERT_EQUAL(firstClientEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(firstClientEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(firstClientEktCtx->getEkt() == rcEktCtx->getEkt());
+				auto conf = linphone_core_search_conference_2(member.first->lc, confAddr);
+				BC_ASSERT_PTR_NOT_NULL(conf);
+				if (conf) {
+					auto rcConf = dynamic_cast<const LinphonePrivate::ClientConference *>(Conference::toCpp(conf));
+					BC_ASSERT_PTR_NOT_NULL(rcConf);
+					if (rcConf) {
+						auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
+						BC_ASSERT_PTR_NOT_NULL(rcEktCtx);
+						BC_ASSERT_EQUAL(firstClientEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
+						BC_ASSERT_TRUE(firstClientEktCtx->getCSpi() == rcEktCtx->getCSpi());
+						BC_ASSERT_TRUE(firstClientEktCtx->getEkt() == rcEktCtx->getEkt());
+					}
 				}
 			}
 		}
@@ -3852,7 +3855,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 4,
 		                             liblinphone_tester_sip_timeout));
 
 		for (auto mgr : members) {

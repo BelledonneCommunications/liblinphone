@@ -48,6 +48,16 @@ void linphone_conference_cbs_set_user_data(LinphoneConferenceCbs *cbs, void *ud)
 	ConferenceCbs::toCpp(cbs)->setUserData(ud);
 }
 
+LinphoneConferenceCbsAllowedParticipantListChangedCb
+linphone_conference_cbs_get_allowed_participant_list_changed(const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->allowedParticipantListChangedCb;
+}
+
+void linphone_conference_cbs_set_allowed_participant_list_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAllowedParticipantListChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->allowedParticipantListChangedCb = cb;
+}
+
 LinphoneConferenceCbsParticipantAddedCb
 linphone_conference_cbs_get_participant_added(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantAddedCb;

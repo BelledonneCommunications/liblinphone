@@ -401,6 +401,7 @@ void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj);
 
 /* conference */
 LINPHONE_PUBLIC bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant);
+void _linphone_conference_notify_allowed_participant_list_changed(LinphoneConference *conference);
 void _linphone_conference_notify_participant_added(LinphoneConference *conference, LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_removed(LinphoneConference *conference,
                                                      const LinphoneParticipant *participant);

@@ -34,6 +34,12 @@ public:
 	virtual ~NotifyConferenceListener() = default;
 
 	/*
+	 * This fonction is called each time the list of allowed participant is changed while the conference is active
+	 * @param[in] event informations related to the change of the participant allowed to join the conference. @notnil
+	 */
+	virtual void onAllowedParticipantListChanged(const std::shared_ptr<ConferenceNotifiedEvent> &event) override;
+
+	/*
 	 * This fonction is called each time a new participant is added by the focus after full state notification.
 	 * @param[in] event informations related to the added participant. @notnil
 	 * @param[in] participant participant added to conference or chat room. @notnil

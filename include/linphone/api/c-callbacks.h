@@ -742,6 +742,12 @@ typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage *message,
  */
 
 /**
+ * Callback used to notify a conference that the list of participants allowed to join the conference has changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ */
+typedef void (*LinphoneConferenceCbsAllowedParticipantListChangedCb)(LinphoneConference *conference);
+
+/**
  * Callback used to notify a conference that a participant has been added.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] participant #LinphoneParticipant that has been added to the conference @notnil

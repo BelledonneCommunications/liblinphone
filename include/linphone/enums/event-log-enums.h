@@ -32,13 +32,15 @@
  * @ingroup events
  */
 typedef enum _EventLogType {
-	LinphoneEventLogTypeNone = 0,                                /**< No defined event */
-	LinphoneEventLogTypeConferenceCreated = 1,                   /**< Conference (created) event */
-	LinphoneEventLogTypeConferenceTerminated = 2,                /**< Conference (terminated) event */
-	LinphoneEventLogTypeConferenceCallStarted = 3,               /**< Conference call (start) event */
-	LinphoneEventLogTypeConferenceConnected = 21,                /**< Conference call (connected) event */
-	LinphoneEventLogTypeConferenceCallEnded = 4,                 /**< Conference call (end) event */
-	LinphoneEventLogTypeConferenceChatMessage = 5,               /**< Conference chat message event */
+	LinphoneEventLogTypeNone = 0,                  /**< No defined event */
+	LinphoneEventLogTypeConferenceCreated = 1,     /**< Conference (created) event */
+	LinphoneEventLogTypeConferenceTerminated = 2,  /**< Conference (terminated) event */
+	LinphoneEventLogTypeConferenceCallStarted = 3, /**< Conference call (start) event */
+	LinphoneEventLogTypeConferenceConnected = 21,  /**< Conference call (connected) event */
+	LinphoneEventLogTypeConferenceCallEnded = 4,   /**< Conference call (end) event */
+	LinphoneEventLogTypeConferenceChatMessage = 5, /**< Conference chat message event */
+	LinphoneEventLogTypeConferenceAllowedParticipantListChanged =
+	    28,                                                      /**< Conference allowed participant changed event */
 	LinphoneEventLogTypeConferenceParticipantAdded = 6,          /**< Conference participant (added) event */
 	LinphoneEventLogTypeConferenceParticipantRemoved = 7,        /**< Conference participant (removed) event */
 	LinphoneEventLogTypeConferenceParticipantRoleUnknown = 25,   /**< Conference participant (role unknown) event */

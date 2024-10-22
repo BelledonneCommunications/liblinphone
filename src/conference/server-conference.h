@@ -277,6 +277,9 @@ private:
 	                              const std::shared_ptr<Address> &remoteContactAddress,
 	                              bool incomingReceived) const;
 
+	virtual void handleRefer(SalReferOp *op,
+	                         const std::shared_ptr<LinphonePrivate::Address> &referAddr,
+	                         const std::string method) override;
 	virtual bool sessionParamsAllowThumbnails() const override;
 };
 

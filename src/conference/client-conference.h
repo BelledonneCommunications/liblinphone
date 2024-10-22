@@ -219,6 +219,9 @@ private:
 	                                bool addToListEventHandler = false) override;
 	void initializeHandlers(ConferenceListener *confListener, bool addToListEventHandler);
 
+	virtual void handleRefer(SalReferOp *op,
+	                         const std::shared_ptr<LinphonePrivate::Address> &referAddr,
+	                         const std::string method) override;
 	virtual bool sessionParamsAllowThumbnails() const override;
 
 	bool mFinalized = false;

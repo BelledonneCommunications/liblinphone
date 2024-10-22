@@ -149,10 +149,9 @@ static void call_received(SalCallOp *h) {
 
 	if (!from) from = Address::create(h->getFrom());
 	std::shared_ptr<Address> to = Address::create(h->getTo());
-
+	const SalAddress *remoteContactAddress = h->getRemoteContactAddress();
 	std::shared_ptr<LinphonePrivate::Core> core = lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr;
-
-	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
+	if (sal_address_has_param(remoteContactAddress, "text")) {
 #ifdef HAVE_ADVANCED_IM
 		string endToEndEncrypted =
 		    L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
@@ -278,9 +277,9 @@ static void call_received(SalCallOp *h) {
 		ms_warning("Advanced IM such as group chat is disabled!");
 		return;
 #endif
-	} else if ((sal_address_has_uri_param(h->getToAddress(), "conf-id")) ||
-	           ((sal_address_has_param(h->getRemoteContactAddress(), "admin") &&
-	             (strcmp(sal_address_get_param(h->getRemoteContactAddress(), "admin"), "1") == 0)))) {
+	} else if (to->hasUriParam("conf-id") || sal_address_has_uri_param(remoteContactAddress, "conf-id") ||
+	           ((sal_address_has_param(remoteContactAddress, "admin") &&
+	             (strcmp(sal_address_get_param(remoteContactAddress, "admin"), "1") == 0)))) {
 		// Create a conference if remote is trying to schedule one or it is calling a conference focus
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<Conference> conference = core->findConference(ConferenceId(to, to));
@@ -1119,112 +1118,29 @@ static void refer_received(SalOp *op, const SalAddress *refer_to) {
 	char *refer_uri = sal_address_as_string(refer_to);
 	std::shared_ptr<LinphonePrivate::Address> referAddr = LinphonePrivate::Address::create(refer_uri);
 	bctbx_free(refer_uri);
-	LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
-	std::shared_ptr<LinphonePrivate::Address> to = LinphonePrivate::Address::create(op->getTo());
-	std::shared_ptr<LinphonePrivate::Address> from = LinphonePrivate::Address::create(op->getFrom());
-	if (sal_address_has_param(refer_to, "text")) {
-		if (referAddr && referAddr->isValid()) {
-
-			if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
-				static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
-				return;
-			}
-
-			if (referAddr->hasUriParam("method") && (referAddr->getUriParamValue("method") == "BYE")) {
-				if (linphone_core_conference_server_enabled(lc)) {
-					// Removal of a participant at the server side
-					shared_ptr<Conference> chatRoom =
-					    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
-					if (chatRoom) {
-						std::shared_ptr<Participant> participant = chatRoom->findParticipant(from);
-						if (!participant || !participant->isAdmin()) {
-							static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
-							return;
-						}
-						participant = chatRoom->findParticipant(referAddr);
-						if (participant) chatRoom->removeParticipant(participant);
-						static_cast<SalReferOp *>(op)->reply(SalReasonNone);
-						return;
-					}
-				} else {
-					// The server asks a participant to leave a chat room
-					auto chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(referAddr, to));
-					if (chatRoom) {
-						chatRoom->leave();
-						static_cast<SalReferOp *>(op)->reply(SalReasonNone);
-						return;
-					}
-					static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
-				}
-			} else {
-				if (linphone_core_conference_server_enabled(lc)) {
-#ifdef HAVE_ADVANCED_IM
-					shared_ptr<Conference> chatRoom =
-					    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
-					if (chatRoom) {
-						shared_ptr<Participant> participant = chatRoom->findParticipant(from);
-						if (!participant || !participant->isAdmin()) {
-							static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
-							return;
-						}
-						if (referAddr->hasParam("admin")) {
-							participant = chatRoom->findParticipant(referAddr);
-							if (participant) {
-								bool value = Utils::stob(referAddr->getParamValue("admin"));
-								chatRoom->setParticipantAdminStatus(participant, value);
-								static_cast<SalReferOp *>(op)->reply(SalReasonNone);
-								return;
-							}
-						} else {
-							participant = static_pointer_cast<ServerConference>(chatRoom)->findParticipant(referAddr);
-							if (!participant) {
-								bool ret = static_pointer_cast<ServerConference>(chatRoom)->addParticipant(referAddr);
-								static_cast<SalReferOp *>(op)->reply(ret ? SalReasonNone : SalReasonNotAcceptable);
-								return;
-							}
-							lInfo() << "Participant with address " << *referAddr << " is already a member of chatroom "
-							        << *chatRoom->getConferenceAddress();
-						}
-					}
-#else
-					ms_warning("Advanced IM such as group chat is disabled!");
-#endif
-				}
-			}
+	if (referAddr && referAddr->isValid()) {
+		LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
+		if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+			static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
+			return;
 		}
-	} else {
-		shared_ptr<Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
 
-		if (conference) {
-			auto participant = conference->findParticipant(from);
-			if (!participant || !participant->isAdmin()) {
-				static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
-				return;
-			}
-
-			if (referAddr->hasUriParam("method") && (referAddr->getUriParamValue("method") == "BYE")) {
-				if (participant) conference->removeParticipant(referAddr);
-				static_cast<SalReferOp *>(op)->reply(SalReasonNone);
-				return;
-			} else {
-				auto participant = conference->findParticipant(referAddr);
-				if (referAddr->hasParam("admin")) {
-					if (participant) {
-						bool value = Utils::stob(referAddr->getParamValue("admin"));
-						conference->setParticipantAdminStatus(participant, value);
-						static_cast<SalReferOp *>(op)->reply(SalReasonNone);
-						return;
-					}
-				} else {
-					if (!participant) {
-						auto participantInfo = Factory::get()->createParticipantInfo(referAddr);
-						participantInfo->setRole(Participant::Role::Speaker);
-						bool ret = conference->addParticipant(participantInfo);
-						static_cast<SalReferOp *>(op)->reply(ret ? SalReasonNone : SalReasonNotAcceptable);
-						return;
-					}
-				}
-			}
+		std::string method;
+		if (referAddr->hasUriParam("method")) {
+			method = referAddr->getUriParamValue("method");
+		}
+		std::shared_ptr<LinphonePrivate::Address> to = LinphonePrivate::Address::create(op->getTo());
+		shared_ptr<Conference> conference;
+		if (linphone_core_conference_server_enabled(lc)) {
+			// Removal of a participant at the server side
+			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
+		} else {
+			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(referAddr, to));
+		}
+		SalReferOp *referOp = dynamic_cast<SalReferOp *>(op);
+		if (conference && referOp) {
+			conference->handleRefer(referOp, referAddr, method);
+			return;
 		}
 	}
 	static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);

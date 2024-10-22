@@ -37,6 +37,7 @@
 #include "linphone/api/c-event.h"
 #include "logger/logger.h"
 #include "participant.h"
+#include "sal/refer-op.h"
 #include "server-conference.h"
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/server-chat-room.h"
@@ -1038,7 +1039,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> ServerConference::notifyParticipant
     const std::shared_ptr<Participant> &participant,
     const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++mLastNotify;
+	incrementLastNotify();
 	return Conference::notifyParticipantDeviceScreenSharingChanged(creationTime, isFullState, participant,
 	                                                               participantDevice);
 }
@@ -1893,78 +1894,77 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 }
 
 bool ServerConference::addParticipant(const std::shared_ptr<const Address> &participantAddress) {
-	bool ret = false;
-	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
-		auto participantInfo = Factory::get()->createParticipantInfo(participantAddress);
-		// Participants invited after the start of a conference through the address can only listen to it
-		participantInfo->setRole(Participant::Role::Listener);
-		ret = addParticipant(participantInfo);
-	} else {
-#ifdef HAVE_ADVANCED_IM
-		const auto &chatRoom = getChatRoom();
-		auto serverGroupChatRoom = chatRoom ? dynamic_pointer_cast<ServerChatRoom>(chatRoom) : nullptr;
-		if (mConfParams->chatEnabled() && serverGroupChatRoom) {
-			if (participantAddress->hasUriParam("gr")) {
-				lInfo() << "Conference " << *getConferenceAddress() << ": Not adding participant '"
-				        << *participantAddress << "' because it is a gruu address.";
-				return false;
-			}
-
-			if (findParticipant(participantAddress)) {
-				lInfo() << "Conference " << *getConferenceAddress() << ": Not adding participant '"
-				        << *participantAddress << "' because it is already a participant";
-				return false;
-			}
-
-			shared_ptr<Participant> participant = serverGroupChatRoom->findCachedParticipant(participantAddress);
-
-			if (participant == nullptr && !mConfParams->isGroup() && getParticipantCount() == 2) {
-				lInfo() << "Conference " << *getConferenceAddress() << ": Not adding participant '"
-				        << *participantAddress << "' because this OneToOne chat room already has 2 participants";
-				return false;
-			}
-
-			/* Handle the case where a participant is removed then re-added to chat room. In such case, until all
-			 * devices have left the chatroom, the participant is still referenced in the chatroom, with devices either
-			 * left or leaving. Furthermore, registration subscription is still active, so we don't need to wait for a
-			 * notify, and we can instead proceed immediately with the INVITE of its devices.
-			 */
-			if (participant) {
-				resumeParticipant(participant);
-			} else {
-				lInfo() << "Conference " << *getConferenceAddress() << ": Requested to add participant '"
-				        << *participantAddress << "', checking capabilities first.";
-				list<std::shared_ptr<const Address>> participantsList;
-				participantsList.push_back(participantAddress);
-				serverGroupChatRoom->subscribeRegistrationForParticipants(participantsList, true);
-			}
-			ret = true;
-		}
-#endif // HAVE_ADVANCED_IM
-	}
-	return ret;
+	auto participantInfo = Factory::get()->createParticipantInfo(participantAddress);
+	// Participants invited after the start of a conference through the address can only listen to it
+	participantInfo->setRole(Participant::Role::Listener);
+	return addParticipant(participantInfo);
 }
 
 bool ServerConference::addParticipant(const std::shared_ptr<ParticipantInfo> &info) {
 	const auto &participantAddress = info->getAddress();
 	if (!isConferenceEnded() && isConferenceStarted()) {
-		const auto initialState = getState();
-		if ((initialState == ConferenceInterface::State::CreationPending) ||
-		    (initialState == ConferenceInterface::State::Created)) {
+		if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
+			const auto initialState = getState();
+			if ((initialState == ConferenceInterface::State::CreationPending) ||
+			    (initialState == ConferenceInterface::State::Created)) {
 
-			const auto allowedAddresses = getAllowedAddresses();
-			auto p = std::find_if(
-			    allowedAddresses.begin(), allowedAddresses.end(),
-			    [&participantAddress](const auto &address) { return (participantAddress->weakEqual(*address)); });
-			if (p == allowedAddresses.end()) {
-				auto participantInfo = info->clone()->toSharedPtr();
-				participantInfo->setSequenceNumber(-1);
-				mInvitedParticipants.push_back(participantInfo);
+				const auto allowedAddresses = getAllowedAddresses();
+				auto p = std::find_if(
+				    allowedAddresses.begin(), allowedAddresses.end(),
+				    [&participantAddress](const auto &address) { return (participantAddress->weakEqual(*address)); });
+				if (p == allowedAddresses.end()) {
+					auto participantInfo = info->clone()->toSharedPtr();
+					participantInfo->setSequenceNumber(-1);
+					mInvitedParticipants.push_back(participantInfo);
+				}
+
+				std::list<std::shared_ptr<const Address>> addressesList{participantAddress};
+				return dialOutAddresses(addressesList);
 			}
+		} else {
+#ifdef HAVE_ADVANCED_IM
+			const auto &chatRoom = getChatRoom();
+			auto serverGroupChatRoom = chatRoom ? dynamic_pointer_cast<ServerChatRoom>(chatRoom) : nullptr;
+			if (mConfParams->chatEnabled() && serverGroupChatRoom) {
+				if (participantAddress->hasUriParam("gr")) {
+					lInfo() << "Conference " << *getConferenceAddress() << ": Not adding participant '"
+					        << *participantAddress << "' because it is a gruu address.";
+					return false;
+				}
 
-			std::list<std::shared_ptr<const Address>> addressesList{participantAddress};
-			return dialOutAddresses(addressesList);
+				if (findParticipant(participantAddress)) {
+					lInfo() << "Conference " << *getConferenceAddress() << ": Not adding participant '"
+					        << *participantAddress << "' because it is already a participant";
+					return false;
+				}
+
+				shared_ptr<Participant> participant = serverGroupChatRoom->findCachedParticipant(participantAddress);
+
+				if (participant == nullptr && !mConfParams->isGroup() && getParticipantCount() == 2) {
+					lInfo() << "Conference " << *getConferenceAddress() << ": Not adding participant '"
+					        << *participantAddress << "' because this OneToOne chat room already has 2 participants";
+					return false;
+				}
+
+				/* Handle the case where a participant is removed then re-added to chat room. In such case, until all
+				 * devices have left the chatroom, the participant is still referenced in the chatroom, with devices
+				 * either left or leaving. Furthermore, registration subscription is still active, so we don't need to
+				 * wait for a notify, and we can instead proceed immediately with the INVITE of its devices.
+				 */
+				if (participant) {
+					resumeParticipant(participant);
+				} else {
+					lInfo() << "Conference " << *getConferenceAddress() << ": Requested to add participant '"
+					        << *participantAddress << "', checking capabilities first.";
+					list<std::shared_ptr<const Address>> participantsList;
+					participantsList.push_back(participantAddress);
+					serverGroupChatRoom->subscribeRegistrationForParticipants(participantsList, true);
+				}
+				return true;
+			}
+#endif // HAVE_ADVANCED_IM
 		}
+
 	} else {
 		const auto &endTime = mConfParams->getEndTime();
 		const auto &startTime = mConfParams->getStartTime();
@@ -2079,7 +2079,6 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 	const std::shared_ptr<Address> &remoteAddress = session->getRemoteAddress();
 	std::shared_ptr<Participant> participant = findParticipant(remoteAddress);
 	if (participant) {
-		Conference::removeParticipant(session, preserveSession);
 		if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
 			auto &streamsGroup = dynamic_pointer_cast<MediaSession>(session)->getStreamsGroup();
 			mMixerSession->unjoinStreamsGroup(streamsGroup);
@@ -2129,6 +2128,7 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 				err = static_pointer_cast<MediaSession>(session)->terminate();
 			}
 		}
+		Conference::removeParticipant(session, preserveSession);
 
 		/*
 		 * Handle the case where only the local participant and a unique remote participant are remaining.
@@ -2193,6 +2193,8 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 				return success ? 0 : -1;
 			}
 		}
+	} else {
+		Conference::removeParticipant(session, preserveSession);
 	}
 
 	// If call that we are trying to remove from the conference is in paused by remote state, then it temporarely left
@@ -3542,6 +3544,57 @@ void ServerConference::requestDeletion() {
 std::shared_ptr<Player> ServerConference::getPlayer() const {
 	AudioControlInterface *intf = getAudioControlInterface();
 	return intf ? intf->getPlayer() : nullptr;
+}
+
+void ServerConference::handleRefer(SalReferOp *op,
+                                   const std::shared_ptr<LinphonePrivate::Address> &referAddr,
+                                   const std::string method) {
+	std::shared_ptr<Address> from = Address::create(op->getFrom());
+	std::shared_ptr<Participant> fromParticipant = findParticipant(from);
+	if (!fromParticipant || !fromParticipant->isAdmin()) {
+		op->reply(SalReasonForbidden);
+		return;
+	}
+
+	auto referParticipant = findParticipant(referAddr);
+	bool ret = false;
+	if (method == "BYE") {
+		if (referParticipant) {
+			removeParticipant(referParticipant);
+			notifyAllowedParticipantListChanged(ms_time(NULL), false);
+		} else {
+			lInfo() << "Participant with address " << *referAddr << " is not found in conference "
+			        << *getConferenceAddress();
+		}
+		ret = true;
+	} else {
+		if (referParticipant) {
+			lInfo() << "Participant with address " << *referAddr << " is already a member of conference "
+			        << *getConferenceAddress();
+			ret = true;
+		} else {
+			const auto allowedAddresses = getAllowedAddresses();
+			auto p = std::find_if(allowedAddresses.begin(), allowedAddresses.end(),
+			                      [&referAddr](const auto &address) { return (referAddr->weakEqual(*address)); });
+			bool allowedParticipantNotFound = (p == allowedAddresses.end());
+
+			auto participantInfo = Factory::get()->createParticipantInfo(referAddr);
+			// Participants invited after the start of a conference through the address can only listen to it
+			participantInfo->setRole(Participant::Role::Speaker);
+			ret = addParticipant(participantInfo);
+			if (allowedParticipantNotFound) {
+				notifyAllowedParticipantListChanged(ms_time(NULL), false);
+			}
+		}
+		if (referAddr->hasParam("admin")) {
+			referParticipant = findParticipant(referAddr);
+			if (referParticipant) {
+				bool value = Utils::stob(referAddr->getParamValue("admin"));
+				setParticipantAdminStatus(referParticipant, value);
+			}
+		}
+	}
+	op->reply(ret ? SalReasonNone : SalReasonNotAcceptable);
 }
 
 bool ServerConference::sessionParamsAllowThumbnails() const {
