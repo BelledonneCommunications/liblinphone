@@ -1331,6 +1331,15 @@ void create_conference_base(time_t start_time,
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
 
+		char *uid = NULL;
+		if (confAddr) {
+			LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);
+			if (BC_ASSERT_PTR_NOT_NULL(info)) {
+				uid = ms_strdup(linphone_conference_info_get_ics_uid(info));
+				linphone_conference_info_unref(info);
+			}
+		}
+
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
@@ -1515,6 +1524,14 @@ void create_conference_base(time_t start_time,
 		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
 		wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs, focus.getCMgr(),
 		                            memberList, confAddr, enable_video);
+
+		update_sequence_number(&participants_info, {}, 0, -1);
+		for (auto mgr : members) {
+			const int duration2 = (duration < 0) ? 0 : duration;
+			check_conference_info_in_db(mgr, uid, confAddr, marie.getCMgr()->identity, participants_info, start_time,
+			                            duration2, initialSubject, description, 0, LinphoneConferenceInfoStateNew,
+			                            security_level, FALSE, TRUE, enable_video, FALSE);
+		}
 
 		for (const auto &mgr : conferenceMgrs) {
 			BC_ASSERT_TRUE(check_conference_info_by_participant(mgr, members, 0, confAddr));
@@ -2772,6 +2789,22 @@ void create_conference_base(time_t start_time,
 				wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs,
 				                            focus.getCMgr(), memberList, confAddr, enable_video);
 
+				for (auto mgr : members) {
+					const int duration2 = (duration < 0) ? 0 : duration;
+					const char *description2 = (mgr == michelle.getCMgr()) ? NULL : description;
+					const char *uid2 = (mgr == michelle.getCMgr()) ? NULL : uid;
+					if (mgr == michelle.getCMgr()) {
+						update_sequence_number(&participants_info, {}, -1, -1);
+					} else {
+						update_sequence_number(&participants_info, {michelle.getCMgr()->identity}, 0, -1);
+					}
+					check_conference_info_in_db(mgr, uid2, confAddr, marie.getCMgr()->identity, participants_info,
+					                            start_time, duration2, initialSubject, description2, 0,
+					                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE,
+					                            enable_video, FALSE);
+				}
+				update_sequence_number(&participants_info, {michelle.getCMgr()->identity}, 0, -1);
+
 			} else if (participant_list_type == LinphoneConferenceParticipantListTypeClosed) {
 				extra_participants = 0;
 
@@ -3678,6 +3711,7 @@ void create_conference_base(time_t start_time,
 			return false;
 		});
 
+		ms_free(uid);
 		ms_free(conference_address_str);
 		linphone_address_unref(confAddr);
 		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);

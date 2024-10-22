@@ -97,7 +97,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 	// Remote conference sets last notify to 0 in its constructor
 	setLastNotify(1);
 	mMe = Participant::create(getSharedFromThis(), mConfParams->getMe());
-	mOrganizer = op ? Address::create(op->getFrom()) : mMe->getAddress();
+	setOrganizer(op ? Address::create(op->getFrom()) : mMe->getAddress());
 
 	createEventHandler(confListener);
 	if (mConfParams->chatEnabled()) {
@@ -432,7 +432,7 @@ void ServerConference::configure(SalCallOp *op) {
 		if (!op->getSubject().empty()) {
 			subject = op->getSubject();
 		}
-		mOrganizer = Address::create(op->getFrom());
+		setOrganizer(Address::create(op->getFrom()));
 
 		startTime = startTimeSdp;
 		if (startTime <= 0) {
@@ -445,7 +445,7 @@ void ServerConference::configure(SalCallOp *op) {
 		fillInvitedParticipantList(op, mOrganizer, false);
 	} else if (info) {
 		subject = info->getSubject();
-		mOrganizer = info->getOrganizerAddress();
+		setOrganizer(info->getOrganizerAddress());
 
 		startTime = info->getDateTime();
 		const auto duration = info->getDuration();
@@ -2716,7 +2716,7 @@ int ServerConference::enter() {
 
 		const auto &meAddress = mMe->getAddress();
 		lInfo() << *meAddress << " is rejoining conference " << *getConferenceAddress();
-		mOrganizer = meAddress;
+		setOrganizer(meAddress);
 
 		addLocalEndpoint();
 		if (mMe->getDevices().size() > 0) {

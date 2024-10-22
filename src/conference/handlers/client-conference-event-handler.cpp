@@ -126,6 +126,11 @@ void ClientConferenceEventHandler::fillParticipantAttributes(
 				getConference()->notifyParticipantSetRole(creationTime, isFullState, participant, role);
 			}
 		}
+
+		bool isOrganizer = (find(entry, "organizer") != entry.end() ? true : false);
+		if (isOrganizer) {
+			getConference()->setOrganizer(participant->getAddress());
+		}
 	}
 }
 

@@ -336,10 +336,18 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	// Add potential other devices of the sender participant
 	int nbDevice = 0;
-	const auto &localAddress = account->getContactAddress();
+	const auto &accountContactAddress = account->getContactAddress();
+	const auto &localDevice =
+	    accountContactAddress ? accountContactAddress : chatRoom->getConferenceId().getLocalAddress();
+	if (!localDevice) {
+		lWarning() << "Sending an encrypted message but the local device address is unknown";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Error;
+	}
+
 	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getDevices();
 	for (const auto &senderDevice : senderDevices) {
-		if (*senderDevice->getAddress() != *localAddress) {
+		if (*senderDevice->getAddress() != *localDevice) {
 			Address address(*senderDevice->getAddress());
 			auto [it, inserted] = recipientAddresses.insert(address);
 			if (inserted) {
@@ -420,7 +428,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
-		const string localDeviceId = localAddress->asStringUriOnly();
+		const string localDeviceId = localDevice->asStringUriOnly();
 		auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
 		shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.asStringUriOnly());
 		errorCode = 0; // no need to specify error code because not used later

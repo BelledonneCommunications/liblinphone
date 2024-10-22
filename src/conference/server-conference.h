@@ -244,7 +244,6 @@ private:
 
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
-	std::shared_ptr<Address> mOrganizer;
 
 	bool initializeParticipants(const std::shared_ptr<Participant> &initiator, SalCallOp *op);
 	void addParticipantDevice(const std::shared_ptr<Participant> &participant,

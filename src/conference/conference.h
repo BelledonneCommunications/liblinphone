@@ -303,6 +303,7 @@ public:
 	virtual int enter() = 0;
 
 	virtual const std::shared_ptr<Address> getOrganizer() const = 0;
+	virtual void setOrganizer(const std::shared_ptr<Address> &organizer);
 
 	bool isConferenceEnded() const;
 	bool isConferenceStarted() const;
@@ -363,6 +364,7 @@ protected:
 	unsigned int mLastNotify = 0;
 
 	std::string mUsername = "";
+	std::shared_ptr<Address> mOrganizer;
 
 	long long mConferenceInfoId = -1;
 

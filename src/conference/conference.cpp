@@ -1290,6 +1290,10 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 	}
 }
 
+void Conference::setOrganizer(const std::shared_ptr<Address> &organizer) {
+	mOrganizer = organizer->clone()->toSharedPtr();
+}
+
 const std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
 	// Do not create conference infos if the conference doesn't have audio or video capabilities
 	// Pure chatrooms do not need a conference information

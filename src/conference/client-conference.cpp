@@ -255,6 +255,12 @@ void ClientConference::updateAndSaveConferenceInformations() {
 		conferenceInfo->setCapability(LinphoneStreamTypeVideo, mConfParams->videoEnabled());
 		conferenceInfo->setCapability(LinphoneStreamTypeText, mConfParams->chatEnabled());
 	}
+	// Update the organizer if it is not the same as the one guessed earlier on
+	const auto organizer = getOrganizer();
+	const auto infoOrganizer = conferenceInfo->getOrganizerAddress();
+	if (!organizer->weakEqual(*infoOrganizer)) {
+		conferenceInfo->setOrganizer(organizer);
+	}
 
 #ifdef HAVE_DB_STORAGE
 	// Store into DB after the start incoming notification in order to have a valid conference address being the contact
@@ -2339,40 +2345,36 @@ void ClientConference::leave() {
 }
 
 const std::shared_ptr<Address> ClientConference::getOrganizer() const {
-	std::shared_ptr<Address> organizer = nullptr;
+	if (mOrganizer) {
+		return mOrganizer;
+	}
+
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		const auto &confInfo = mainDb->getConferenceInfoFromURI(getConferenceAddress());
 		// me is admin if the organizer is the same as me
 		if (confInfo) {
-			organizer = confInfo->getOrganizerAddress();
+			return confInfo->getOrganizerAddress();
 		}
 	}
 #endif
 
 	// The me participant is designed as organizer as a last resort in our guesses, therefore it may not be right.
 	// A search for a participant which joined the conference as focus owner is therefore needed.
-	if (!organizer) {
-		const auto focusOwnerDevice = getFocusOwnerDevice();
-		if (focusOwnerDevice) {
-			organizer = focusOwnerDevice->getParticipant()->getAddress();
-		}
+	const auto focusOwnerDevice = getFocusOwnerDevice();
+	if (focusOwnerDevice) {
+		return focusOwnerDevice->getParticipant()->getAddress();
 	}
 
-	if (!organizer) {
-		auto session = static_pointer_cast<MediaSession>(getMainSession());
-		const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
-		if (referer) {
-			organizer = referer->getRemoteAddress();
-		}
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
+	if (referer) {
+		return referer->getRemoteAddress();
 	}
 
-	if (!organizer) {
-		// Guess the organizer and as last resort set it to ourselves
-		organizer = getMe()->getAddress();
-	}
-	return organizer;
+	// Guess the organizer and as last resort set it to ourselves
+	return getMe()->getAddress();
 }
 
 AudioControlInterface *ClientConference::getAudioControlInterface() const {

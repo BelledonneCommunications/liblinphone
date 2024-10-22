@@ -224,13 +224,20 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 		}
 	}
 
+	auto organizer = conf->getOrganizer();
+
 	for (const auto &participant : participants) {
 		UserType user = UserType();
 		UserRolesType roles;
 		UserType::EndpointSequence endpoints;
 		user.setRoles(roles);
 		user.setEndpoint(endpoints);
-		user.setEntity(participant->getAddress()->asStringUriOnly());
+		const auto &participantAddress = participant->getAddress();
+		user.setEntity(participantAddress->asStringUriOnly());
+		bool isOrganizer = organizer && organizer->weakEqual(*participantAddress);
+		if (isOrganizer) {
+			user.getRoles()->getEntry().push_back("organizer");
+		}
 		user.getRoles()->getEntry().push_back(participant->isAdmin() ? "admin" : "participant");
 		user.getRoles()->getEntry().push_back(Participant::roleToText(participant->getRole()));
 		user.setState(StateType::full);
