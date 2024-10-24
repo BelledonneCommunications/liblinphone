@@ -955,22 +955,24 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		}
 	}
 	linphone_event_ref(lev);
-	{
-		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
-		linphone_core_notify_notify_received(lc, lev, eventname, ct);
-		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_notify_received, ct);
-		if (ct) {
-			linphone_content_unref(ct);
-		}
+	if ((!out_of_dialog) && (st != SalSubscribeNone)) {
+		linphone_event_set_state(lev, linphone_subscription_state_from_sal(st));
 	}
-	if (out_of_dialog) {
-		/*out of dialog NOTIFY do not create an implicit subscription*/
-		linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
-	} else if (st != SalSubscribeNone) {
-		/* Take into account that the subscription may have been closed by app already within
-		 * linphone_core_notify_notify_received() */
-		if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated) {
-			linphone_event_set_state(lev, linphone_subscription_state_from_sal(st));
+
+	/* Take into account that the subscription may have been closed by app already within the callback of
+	 * linphone_event_set_state() */
+	if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated) {
+		{
+			LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
+			linphone_core_notify_notify_received(lc, lev, eventname, ct);
+			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_notify_received, ct);
+			if (ct) {
+				linphone_content_unref(ct);
+			}
+		}
+		if (out_of_dialog) {
+			/*out of dialog NOTIFY do not create an implicit subscription*/
+			linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 		}
 	}
 	linphone_event_unref(lev);
