@@ -253,6 +253,8 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 #ifdef _WIN32
 	result = _mkgmtime(&tCopy);
 #elif defined(TARGET_IPHONE_SIMULATOR) || defined(__linux__)
+	// tCopy.tm_gmtoff is reset by timegm even though it doesn't take it into account
+	offset = -tCopy.tm_gmtoff;
 	result = timegm(&tCopy);
 #else
 	// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
@@ -268,7 +270,6 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 		lError() << "timegm/mktime failed: " << strerror(errno);
 		return time_t(-1);
 	}
-
 	return result - offset;
 }
 
@@ -289,6 +290,38 @@ time_t Utils::getStringToTime(const std::string &format, const std::string &s) {
 	}
 #endif
 	return 0;
+}
+
+std::string removeIso8601FractionalPart(const std::string &updateTime) {
+	auto prunedUpdateTime = updateTime;
+	// According to ISO8601, factional part separator can be either a dot on the baseline or a comma. Hence test for
+	// both to make sure we do not miss anything
+	const auto dotPos = prunedUpdateTime.find_last_of('.');
+	const auto commaPos = prunedUpdateTime.find_last_of(',');
+	const auto fractionalPartPos = (dotPos != std::string::npos) ? dotPos : commaPos;
+	if (fractionalPartPos != std::string::npos) {
+		for (const auto c : {'Z', '+', '-'}) {
+			const auto charPos = prunedUpdateTime.find_last_of(c);
+			if ((charPos != std::string::npos) && (charPos > fractionalPartPos)) {
+				auto beginIt = std::begin(prunedUpdateTime);
+				auto fractionalPartDifferenceType = static_cast<decltype(beginIt)::difference_type>(fractionalPartPos);
+				auto charPosDifferenceType = static_cast<decltype(beginIt)::difference_type>(charPos);
+				prunedUpdateTime.erase(beginIt + fractionalPartDifferenceType, beginIt + charPosDifferenceType);
+				break;
+			}
+		}
+	}
+	return prunedUpdateTime;
+}
+
+time_t Utils::iso8601ToTime(const std::string &iso8601datetime) {
+	std::string format = "%FT%T%z";
+	return Utils::getStringToTime(format, removeIso8601FractionalPart(iso8601datetime));
+}
+
+std::string Utils::timeToIso8601(time_t t) {
+	std::string format = "%FT%T%z";
+	return Utils::getTimeAsString(format, t);
 }
 
 // -----------------------------------------------------------------------------

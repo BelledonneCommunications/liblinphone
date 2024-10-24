@@ -29,7 +29,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 AccountDevice::AccountDevice(const string &uuid, const string &updateTime, const string &userAgent) {
 	mUUID = uuid;
-	mUpdateTime = updateTime;
 	mUserAgent = userAgent;
 	mDeviceName = "";
 
@@ -41,7 +40,8 @@ AccountDevice::AccountDevice(const string &uuid, const string &updateTime, const
 		}
 	}
 
-	mUpdateTimestamp = Utils::getStringToTime("%FT%T%Z", mUpdateTime);
+	mUpdateTime = updateTime;
+	mUpdateTimestamp = Utils::iso8601ToTime(mUpdateTime);
 	if (mUpdateTimestamp == 0) {
 		lError() << "[Account Device] Couldn't parse [" << mUpdateTime << "] as a time_t!";
 	} else {

@@ -93,6 +93,55 @@ static void version_comparisons(void) {
 	BC_ASSERT_TRUE(Version("1.0.0") < Version("1.0.1-pre.1"));
 }
 
+static void timestamp_pruning(void) {
+	// UTC
+	// No fractional part
+	std::string utcTimestamp = "2024-10-23T14:02:13,000000Z";
+	long long expectedUtcTimestamp = 1729692133;
+	auto convertedUtcTimestamp = Utils::iso8601ToTime(utcTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedUtcTimestamp, expectedUtcTimestamp, long long, "%lld");
+	auto backConvertedUtcTimestamp = Utils::timeToIso8601(convertedUtcTimestamp);
+	std::string utcTimestampBackConvertion = "2024-10-23T14:02:13+0000";
+	BC_ASSERT_STRING_EQUAL(backConvertedUtcTimestamp.c_str(), utcTimestampBackConvertion.c_str());
+
+	// With fractional part
+	std::string utcCommaTimestamp = "2024-10-23T14:02:13,000000Z";
+	auto convertedUtcCommaTimestamp = Utils::iso8601ToTime(utcCommaTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedUtcCommaTimestamp, expectedUtcTimestamp, long long, "%lld");
+	auto backConvertedFractionalUtcTimestamp = Utils::timeToIso8601(convertedUtcCommaTimestamp);
+	BC_ASSERT_STRING_EQUAL(backConvertedFractionalUtcTimestamp.c_str(), utcTimestampBackConvertion.c_str());
+
+	std::string utcDotTimestamp = "2024-10-23T14:02:13.000000Z";
+	auto convertedUtcDotTimestamp = Utils::iso8601ToTime(utcDotTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedUtcDotTimestamp, expectedUtcTimestamp, long long, "%lld");
+
+	// Positive offset
+	std::string offsetPlusCommaTimestamp = "2024-10-23T14:02:13,000000+0100";
+	long long expectedOffsetPlusTimestamp = 1729695733;
+	auto convertedOffsetPlusCommaTimestamp = Utils::iso8601ToTime(offsetPlusCommaTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedOffsetPlusCommaTimestamp, expectedOffsetPlusTimestamp, long long, "%lld");
+	auto backConvertedOffsetPlusTimestamp = Utils::timeToIso8601(convertedOffsetPlusCommaTimestamp);
+	std::string offsetPlusTimestampBackConvertion = "2024-10-23T15:02:13+0000";
+	BC_ASSERT_STRING_EQUAL(backConvertedOffsetPlusTimestamp.c_str(), offsetPlusTimestampBackConvertion.c_str());
+
+	std::string offsetPlusDotTimestamp = "2024-10-23T14:02:13.000000+01";
+	auto convertedOffsetPlusDotTimestamp = Utils::iso8601ToTime(offsetPlusDotTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedOffsetPlusDotTimestamp, expectedOffsetPlusTimestamp, long long, "%lld");
+
+	// Negative offset
+	std::string offsetMinusCommaTimestamp = "2024-10-23T14:02:13,000000-0100";
+	long long expectedOffsetMinusTimestamp = 1729688533;
+	auto convertedOffsetMinusCommaTimestamp = Utils::iso8601ToTime(offsetMinusCommaTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedOffsetMinusCommaTimestamp, expectedOffsetMinusTimestamp, long long, "%lld");
+	auto backConvertedOffsetMinusTimestamp = Utils::timeToIso8601(convertedOffsetMinusCommaTimestamp);
+	std::string offsetMinusTimestampBackConvertion = "2024-10-23T13:02:13+0000";
+	BC_ASSERT_STRING_EQUAL(backConvertedOffsetMinusTimestamp.c_str(), offsetMinusTimestampBackConvertion.c_str());
+
+	std::string offsetMinusDotTimestamp = "2024-10-23T14:02:13.000000-01";
+	auto convertedOffsetMinusDotTimestamp = Utils::iso8601ToTime(offsetMinusDotTimestamp);
+	BC_ASSERT_EQUAL((long long)convertedOffsetMinusDotTimestamp, expectedOffsetMinusTimestamp, long long, "%lld");
+}
+
 static void address_comparisons(void) {
 	Address a1("sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
 	BC_ASSERT_TRUE(a1.isValid());
@@ -155,6 +204,7 @@ static void parse_capabilities(void) {
 test_t utils_tests[] = {
     TEST_NO_TAG("split", split),
     TEST_NO_TAG("trim", trim),
+    TEST_NO_TAG("Timestamp pruning", timestamp_pruning),
     TEST_NO_TAG("Version comparisons", version_comparisons),
     TEST_NO_TAG("Address comparisons", address_comparisons),
     TEST_NO_TAG("Conference ID comparisons", conferenceId_comparisons),
