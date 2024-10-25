@@ -3232,7 +3232,7 @@ static void real_time_text(bool_t audio_stream_enabled,
 		linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
 	}
 
-	linphone_core_realtime_text_set_keepalive_interval(pauline->lc, 500);
+	linphone_core_set_realtime_text_keepalive_interval(pauline->lc, 500);
 
 	marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_realtime_text(marie_params, TRUE);

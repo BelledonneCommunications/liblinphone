@@ -5923,7 +5923,7 @@ LINPHONE_PUBLIC void linphone_core_enable_realtime_text(LinphoneCore *core, bool
  * @return keep alive interval of real time text.
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC unsigned int linphone_core_realtime_text_get_keepalive_interval(const LinphoneCore *core);
+LINPHONE_PUBLIC unsigned int linphone_core_get_realtime_text_keepalive_interval(const LinphoneCore *core);
 
 /**
  * Set keep alive interval for real time text (RFC4103).
@@ -5931,7 +5931,7 @@ LINPHONE_PUBLIC unsigned int linphone_core_realtime_text_get_keepalive_interval(
  * @param interval The keep alive interval of real time text, 25000 by default.
  * @ingroup network_parameters
  */
-LINPHONE_PUBLIC void linphone_core_realtime_text_set_keepalive_interval(LinphoneCore *core, unsigned int interval);
+LINPHONE_PUBLIC void linphone_core_set_realtime_text_keepalive_interval(LinphoneCore *core, unsigned int interval);
 
 /**
  * Sets http proxy address to be used for signaling during next channel connection. Use

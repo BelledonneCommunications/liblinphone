@@ -9145,11 +9145,11 @@ void linphone_core_enable_realtime_text(LinphoneCore *lc, bool_t value) {
 	lc->text_conf.enabled = value;
 }
 
-unsigned int linphone_core_realtime_text_get_keepalive_interval(const LinphoneCore *lc) {
+unsigned int linphone_core_get_realtime_text_keepalive_interval(const LinphoneCore *lc) {
 	return lc->text_conf.keepalive_interval;
 }
 
-void linphone_core_realtime_text_set_keepalive_interval(LinphoneCore *lc, unsigned int interval) {
+void linphone_core_set_realtime_text_keepalive_interval(LinphoneCore *lc, unsigned int interval) {
 	lc->text_conf.keepalive_interval = interval;
 }
 

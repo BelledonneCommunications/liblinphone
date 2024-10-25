@@ -285,7 +285,7 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 		d->videoEnabled = false;
 	}
 	d->realtimeTextEnabled = !!linphone_core_realtime_text_enabled(cCore);
-	d->realtimeTextKeepaliveInterval = linphone_core_realtime_text_get_keepalive_interval(cCore);
+	d->realtimeTextKeepaliveInterval = linphone_core_get_realtime_text_keepalive_interval(cCore);
 	d->encryption = linphone_core_get_media_encryption(cCore);
 	d->avpfEnabled = (linphone_core_get_avpf_mode(cCore) == LinphoneAVPFEnabled);
 	d->hasAvpfEnabledBeenSet = false;
