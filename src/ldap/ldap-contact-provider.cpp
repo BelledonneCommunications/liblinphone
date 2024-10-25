@@ -215,12 +215,23 @@ void LdapContactProvider::ldapTlsConnection() {
 	}
 }
 
+static void onLdapLog(const char *msg) {
+	if (msg) {
+		std::string cppMsg(msg);
+		// Remove trailing \n from openldap logs.
+		if (cppMsg.size() != 0 && cppMsg[cppMsg.size() - 1] == '\n') cppMsg.resize(cppMsg.size() - 1);
+		lInfo() << "libldap: " << cppMsg;
+	}
+}
+
 void LdapContactProvider::initializeLdap() {
 	int proto_version = LDAP_VERSION3;
 	int ret = ldap_set_option(NULL, LDAP_OPT_PROTOCOL_VERSION, &proto_version);
 	int debLevel = 0;
 	struct timeval timeout = {configValueToInt("timeout"), 0};
 	mCurrentAction = ACTION_NONE;
+
+	ber_set_option(NULL, LBER_OPT_LOG_PRINT_FN, (const void *)onLdapLog);
 
 	if (ret != LDAP_SUCCESS)
 		lError() << "[LDAP] Problem initializing default Protocol version to 3 : " << ret << ", ("
@@ -230,13 +241,18 @@ void LdapContactProvider::initializeLdap() {
 		lError() << "[LDAP] Problem initializing default timeout to " << timeout.tv_sec << " : " << ret << " ("
 		         << ldap_err2string(ret) << ")";
 	// Setting global options for the next initialization. These options cannot be done with the LDAP instance directly.
-	if (mConfig.count("debug") > 0 &&
-	    LinphoneLdapDebugLevelVerbose == static_cast<LinphoneLdapDebugLevel>(atoi(mConfig["debug"][0].c_str())))
-		debLevel = 7;
+	// if (mConfig.count("debug") > 0 &&
+	//    LinphoneLdapDebugLevelVerbose == static_cast<LinphoneLdapDebugLevel>(atoi(mConfig["debug"][0].c_str())))
+	// Note that openldap library does not report any error log, only debug logs.
+	if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_MESSAGE)) {
+		debLevel = 0xffff; // There is debug level definition in openLDAP.
+	} else {
+		debLevel = 0;
+	}
 	ret = ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debLevel);
 	if (ret != LDAP_SUCCESS)
-		lError() << "[LDAP] Problem initializing debug options to mode 7 : " << ret << " (" << ldap_err2string(ret)
-		         << ")";
+		lError() << "[LDAP] Problem initializing debug options LDAP_OPT_DEBUG_LEVEL : " << ret << " ("
+		         << ldap_err2string(ret) << ")";
 	if (mConfig.count("use_tls") > 0 && mConfig["use_tls"][0] == "1") {
 		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
 		bool enableVerification = true;

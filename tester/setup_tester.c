@@ -2869,6 +2869,7 @@ static void ldap_search(void) {
 		_check_friend_result_list(manager->lc, resultList, 4, "sip:u@sip.example.org", NULL);
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	} else {
+		ms_warning("LDAP not available.");
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, NULL, "+33655667788");
 		_check_friend_result_list(manager->lc, resultList, 1, "sip:pauline@sip.example.org", NULL);

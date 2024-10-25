@@ -41,8 +41,10 @@ static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys = {
     {"sip_attribute", LdapConfigKeys("mobile,telephonenumber,homephone,sn", ',', false)},
     {"sip_domain", LdapConfigKeys("", '\0', false)},
     {"enable", LdapConfigKeys("0", '\0', false)},
-    {"use_sal", LdapConfigKeys("0", '\0', false)},
+    // Use our own DNS resolver, which is asynchronous. Much better than openldap blocking getaddrinfo().
+    {"use_sal", LdapConfigKeys("1", '\0', false)},
     {"use_tls", LdapConfigKeys("1", '\0', false)},
+    // deprecated: LDAP debug logs are now set according to the liblinphone log level.
     {"debug", LdapConfigKeys(Utils::toString((int)LinphoneLdapDebugLevelOff), '\0', false)},
     {"verify_server_certificates", LdapConfigKeys(Utils::toString((int)LinphoneLdapCertVerificationDefault),
                                                   '\0',
