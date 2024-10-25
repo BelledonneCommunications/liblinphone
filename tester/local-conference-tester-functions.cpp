@@ -3517,6 +3517,13 @@ void create_conference_base(time_t start_time,
 						BC_ASSERT_PTR_NOT_NULL(pconference);
 					}
 					if (pconference) {
+						BC_ASSERT_TRUE(
+						    CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+						        .waitUntil(chrono::seconds(10), [&mgr, &focus, &pconference, &extra_participants] {
+							        return (linphone_conference_get_participant_count(pconference) ==
+							                ((mgr == focus.getCMgr()) ? (extra_participants + 1) : extra_participants));
+						        }));
+
 						BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pconference),
 						                ((mgr == focus.getCMgr()) ? (extra_participants + 1) : extra_participants), int,
 						                "%0d");
