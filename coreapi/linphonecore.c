@@ -4818,7 +4818,9 @@ LinphoneCall *linphone_core_invite(LinphoneCore *lc, const char *url) {
 LinphoneCall *linphone_core_invite_with_params(LinphoneCore *lc, const char *url, const LinphoneCallParams *p) {
 	CoreLogContextualizer logContextualizer(lc);
 	bool_t apply_prefix = TRUE;
-	LinphoneAccount *account = linphone_core_get_default_account(lc);
+	LinphoneAccount *call_account_account = linphone_call_params_get_account(p);
+	LinphoneAccount *default_account = linphone_core_get_default_account(lc);
+	LinphoneAccount *account = call_account_account ? call_account_account : default_account;
 	if (account) {
 		const LinphoneAccountParams *params = linphone_account_get_params(account);
 		apply_prefix = linphone_account_params_get_use_international_prefix_for_calls_and_chats(params);

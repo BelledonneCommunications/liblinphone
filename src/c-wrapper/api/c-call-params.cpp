@@ -450,7 +450,8 @@ LinphoneProxyConfig *linphone_call_params_get_proxy_config(const LinphoneCallPar
 }
 
 void linphone_call_params_set_account(LinphoneCallParams *params, LinphoneAccount *account) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setAccount(LinphonePrivate::Account::toCpp(account)->getSharedFromThis());
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setAccount(
+	    account ? LinphonePrivate::Account::toCpp(account)->getSharedFromThis() : nullptr);
 }
 
 LinphoneAccount *linphone_call_params_get_account(const LinphoneCallParams *params) {

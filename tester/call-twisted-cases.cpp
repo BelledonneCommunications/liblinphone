@@ -144,15 +144,48 @@ static void call_early_media_followed_by_ringing_alternate_behavior(void) {
 	_call_early_media_followed_by_ringing(TRUE);
 }
 
-static void call_challenged_after_180(void) {
+static void call_challenged_after_180_base(bool_t with_account) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("empty_rc");
 	bellesip::QuickSipAgent agent("sip.example.org", "tcp");
 	LinphoneCall *call;
+
 	LinphoneAuthInfo *ai =
-	    linphone_factory_create_auth_info(linphone_factory_get(), "bob", NULL, "secret", NULL, NULL, NULL);
+	    linphone_factory_create_auth_info(linphone_factory_get(), "bob", NULL, "secret", NULL, NULL, "sip.example.org");
 	linphone_core_enable_video_capture(marie->lc, FALSE);
 	linphone_core_enable_video_display(marie->lc, FALSE);
 	linphone_core_add_auth_info(marie->lc, ai);
+
+	LinphoneAddress *server_address = NULL;
+	LinphoneAddress *identity_address = NULL;
+
+	if (!!with_account) {
+		const char *auth_username = linphone_auth_info_get_username(ai);
+		const char *auth_domain = linphone_auth_info_get_domain(ai);
+		char identity[256];
+		snprintf(identity, sizeof(identity), "sip:%s@%s", auth_username, auth_domain);
+		identity_address = linphone_address_new(identity);
+		const char *realm = linphone_auth_info_get_realm(ai);
+
+		LinphoneAccountParams *account_params = linphone_account_params_new(marie->lc);
+		char *agent_listening_uri = ms_strdup(agent.getListeningUriAsString().c_str());
+		server_address = linphone_address_new(agent_listening_uri);
+		linphone_account_params_set_server_address(account_params, server_address);
+		bctbx_list_t *routes = bctbx_list_new(server_address);
+		ms_message("Adding route %s to the default account", agent_listening_uri);
+		linphone_account_params_set_routes_addresses(account_params, routes);
+		bctbx_list_free(routes);
+
+		ms_free(agent_listening_uri);
+		linphone_account_params_set_register_enabled(account_params, FALSE);
+		linphone_account_params_set_identity_address(account_params, identity_address);
+		linphone_account_params_set_realm(account_params, realm);
+		LinphoneAccount *account = linphone_account_new(marie->lc, account_params);
+		linphone_account_params_unref(account_params);
+		linphone_core_add_account(marie->lc, account);
+		linphone_core_set_default_account(marie->lc, account);
+		linphone_account_unref(account);
+	}
+
 	linphone_auth_info_unref(ai);
 
 	linphone_core_set_label(marie->lc, "liblinphone");
@@ -165,7 +198,7 @@ static void call_challenged_after_180(void) {
 		    belle_sip_provider_create_server_transaction(ag.getProv(), belle_sip_request_event_get_request(ev));
 		belle_sip_server_transaction_send_response(tr, resp);
 		ag.doLater(
-		    "send 407",
+		    "send 401",
 		    [tr]() {
 			    belle_sip_response_t *resp = belle_sip_response_create_from_request(
 			        belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(tr)), 401);
@@ -182,7 +215,11 @@ static void call_challenged_after_180(void) {
 		return false;
 	});
 
-	call = linphone_core_invite(marie->lc, agent.getListeningUriAsString().c_str());
+	LinphoneCallParams *call_params = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneAccount *default_account = linphone_core_get_default_account(marie->lc);
+	linphone_call_params_set_account(call_params, default_account);
+	call = linphone_core_invite_with_params(marie->lc, agent.getListeningUriAsString().c_str(), call_params);
+	linphone_call_params_unref(call_params);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
 	/* we shall receive a new INVITE with Authorization, this time answer it with 200 OK */
@@ -238,13 +275,24 @@ static void call_challenged_after_180(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallReleased, 1));
 	linphone_core_manager_destroy(marie);
+	if (identity_address) linphone_address_unref(identity_address);
+	if (server_address) linphone_address_unref(server_address);
+}
+
+static void call_challenged_after_180(void) {
+	call_challenged_after_180_base(FALSE);
+}
+
+static void call_challenged_after_180_with_account(void) {
+	call_challenged_after_180_base(TRUE);
 }
 
 static test_t call_twisted_cases_tests[] = {
     {"Call being answered with 183 then 180", call_early_media_followed_by_ringing},
     {"Call being answered with 183 then 180 - alternate behavior",
      call_early_media_followed_by_ringing_alternate_behavior},
-    {"Call challenged after 180", call_challenged_after_180}};
+    {"Call challenged after 180", call_challenged_after_180},
+    {"Call challenged after 180 with account", call_challenged_after_180_with_account}};
 
 test_suite_t call_twisted_cases_suite = {"Call twisted cases",
                                          NULL,
