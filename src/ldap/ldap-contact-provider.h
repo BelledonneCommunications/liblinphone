@@ -207,6 +207,11 @@ private:
 	 */
 	void fallbackToNextServerUrl();
 
+	/*
+	 * Randomness provider, required by openLDAP's mbedtls TLS implementation.
+	 */
+	static int randomProvider(void *buffer, int bytes);
+
 	std::shared_ptr<Core> mCore;
 	std::shared_ptr<Ldap> mLdapServer; // The LDAP server coming from core if set. Useful to know what server is using.
 	std::map<std::string, std::vector<std::string>> mConfig;

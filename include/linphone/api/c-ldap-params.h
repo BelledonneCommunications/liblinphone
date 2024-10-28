@@ -373,21 +373,19 @@ LINPHONE_PUBLIC bool_t linphone_ldap_params_get_enabled(const LinphoneLdapParams
 /*************************************************************************************/
 
 /**
- * @brief The dns resolution is done by Linphone using Sal. It will pass an IP to LDAP. By doing that, the TLS
- *negociation could not check the hostname. You may deactivate the verifications if wanted to force the connection.
- * Default value : FALSE.
+ * @brief Handle the DNS resolution using liblinphone's own resolver, which allows to use DNS SRV records.
+ * Default value : TRUE.
  *
  * @param params The #LinphoneLdapParams object. @notnil
- * @param enable Enable or not the use of sal.
+ * @param enable Enable or not the use of own DNS resolver.
  **/
 LINPHONE_PUBLIC void linphone_ldap_params_enable_sal(LinphoneLdapParams *params, bool_t enable);
 
 /**
- * @brief Return if the dns resolution is done by Linphone using Sal. It will pass an IP to LDAP. By doing that, the TLS
- *negociation could not check the hostname. You may deactivate the verifications if wanted to force the connection.
+ * @brief Handle the DNS resolution using liblinphone's own resolver, which allows to use DNS SRV records.
  *
  * @param params The #LinphoneLdapParams object. @notnil
- * @return Enable or not the use of sal.
+ * @return whether liblinphone'own DNS resolver is used.
  **/
 LINPHONE_PUBLIC bool_t linphone_ldap_params_sal_enabled(const LinphoneLdapParams *params);
 
