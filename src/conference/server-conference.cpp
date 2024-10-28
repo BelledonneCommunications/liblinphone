@@ -54,6 +54,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+constexpr int SERVER_CONFIGURATION_FAILED = 1;
+
 ServerConference::ServerConference(const shared_ptr<Core> &core,
                                    const std::shared_ptr<Address> &myAddress,
                                    std::shared_ptr<CallSessionListener> listener,
@@ -705,6 +707,31 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 #endif // HAVE_ADVANCED_IM
 }
 
+int ServerConference::checkServerConfiguration(const shared_ptr<Address> &remoteContactAddress,
+                                               shared_ptr<MediaSession> &session) {
+	if (!getChatRoom() && mConfParams->getSecurityLevel() == ConferenceParams::SecurityLevel::EndToEnd) {
+		int audioMode = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sound",
+		                                        "conference_mode", MSConferenceModeMixer);
+		int videoMode = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "video",
+		                                        "conference_mode", MSConferenceModeMixer);
+		if (audioMode != MSConferenceModeRouterFullPacket || videoMode != MSConferenceModeRouterFullPacket) {
+			lError() << *remoteContactAddress
+			         << " attempts to establish an end-to-end encrypted conference, but focus is not operating in "
+			            "full packet router mode";
+			setState(ConferenceInterface::State::CreationFailed);
+			auto errorInfo = linphone_error_info_new();
+			linphone_error_info_set(errorInfo, nullptr, LinphoneReasonNotAcceptable, 488,
+			                        "Attempt to establish an end-to-end encrypted conference, but focus is not "
+			                        "operating in full packet router mode",
+			                        nullptr);
+			session->decline(errorInfo);
+			linphone_error_info_unref(errorInfo);
+			return SERVER_CONFIGURATION_FAILED;
+		}
+	}
+	return 0;
+}
+
 void ServerConference::confirmCreation() {
 	if ((mState != ConferenceInterface::State::Instantiated) &&
 	    (mState != ConferenceInterface::State::CreationPending)) {
@@ -725,8 +752,8 @@ void ServerConference::confirmCreation() {
 		session->initiateIncoming();
 		session->startIncomingNotification(false);
 
-#ifdef HAVE_ADVANCED_IM
 		const auto &remoteContactAddress = session->getRemoteContactAddress();
+#ifdef HAVE_ADVANCED_IM
 		if (mConfParams->chatEnabled() && remoteContactAddress->hasParam("+org.linphone.specs")) {
 			const auto linphoneSpecs = remoteContactAddress->getParamValue("+org.linphone.specs");
 			// The creator of the chatroom must have the capability "groupchat"
@@ -777,7 +804,29 @@ void ServerConference::confirmCreation() {
 		}
 #endif // HAVE_ADVANCED_IM
 
+		if (checkServerConfiguration(remoteContactAddress, session) == SERVER_CONFIGURATION_FAILED) return;
+
 		const auto &conferenceInfo = createOrGetConferenceInfo();
+
+#ifdef HAVE_DB_STORAGE
+		// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
+		// doesn't have any of the codecs the server supports
+		if ((mConfParams->audioEnabled() || mConfParams->videoEnabled()) &&
+		    (getState() != ConferenceInterface::State::CreationFailed)) {
+			// Store into DB after the start incoming notification in order to have a valid conference address being the
+			// contact address of the call
+			auto &mainDb = getCore()->getPrivate()->mainDb;
+			if (mainDb) {
+				const auto conferenceAddressStr =
+				    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip::unknown"));
+				lInfo()
+				    << "Inserting conference information to database in order to be able to recreate the conference "
+				    << conferenceAddressStr << " in case of restart";
+				mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
+			}
+		}
+#endif // HAVE_DB_STORAGE
+
 		auto callLog = session->getLog();
 		if (callLog) {
 			callLog->setConferenceInfo(conferenceInfo);

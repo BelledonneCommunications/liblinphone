@@ -509,20 +509,14 @@ static void create_video_transfer_conference(void) {
 }
 
 #ifdef HAVE_EKT_SERVER_PLUGIN
-static void create_audio_encrypted_conference(void) {
-	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
-	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
-	                                LinphoneConferenceSecurityLevelEndToEnd, true, false);
-}
-
-static void create_audio_encrypted_conference_multi_encrypt(void) {
+static void create_audio_video_encrypted_conference_multi_encrypt(void) {
 	create_transfer_conference_base(
 	    ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	    {LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS},
-	    LinphoneConferenceLayoutActiveSpeaker, LinphoneConferenceSecurityLevelEndToEnd, true, false);
+	    LinphoneConferenceLayoutActiveSpeaker, LinphoneConferenceSecurityLevelEndToEnd, true, true);
 }
 
-static void create_video_encrypted_conference(void) {
+static void create_audio_video_encrypted_conference(void) {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
 	                                LinphoneConferenceSecurityLevelEndToEnd, true, true);
@@ -715,10 +709,10 @@ static test_t local_conference_transferred_conference_basic_tests[] = {
                 LinphoneTest::create_video_transfer_conference_active_speaker_changed),
     TEST_NO_TAG("Conference joined in early media", LinphoneTest::conference_joined_in_early_media),
 #ifdef HAVE_EKT_SERVER_PLUGIN
-    TEST_ONE_TAG("Create encrypted audio conference", LinphoneTest::create_audio_encrypted_conference, "End2EndConf"),
-    TEST_ONE_TAG("Create encrypted video conference", LinphoneTest::create_video_encrypted_conference, "End2EndConf"),
+    TEST_ONE_TAG(
+        "Create encrypted video conference", LinphoneTest::create_audio_video_encrypted_conference, "End2EndConf"),
     TEST_ONE_TAG("Create encrypted audio conference multiple external SRTP key negociation scheme",
-                 LinphoneTest::create_audio_encrypted_conference_multi_encrypt,
+                 LinphoneTest::create_audio_video_encrypted_conference_multi_encrypt,
                  "End2EndConf"),
 #endif // HAVE_EKT_SERVER_PLUGIN
 };

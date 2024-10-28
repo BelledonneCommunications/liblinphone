@@ -42,6 +42,9 @@ public:
 	                                      const std::shared_ptr<Address> &creator) override;
 	virtual void processResponse(const LinphoneErrorInfo *errorInfo,
 	                             const std::shared_ptr<Address> conferenceAddress) override;
+	inline std::shared_ptr<CallSession> getSession() {
+		return mSession;
+	}
 
 private:
 	std::shared_ptr<CallSession> mSession = nullptr;

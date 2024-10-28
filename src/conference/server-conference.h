@@ -29,6 +29,7 @@
 #endif
 
 #include "conference/conference.h"
+#include "conference/session/media-session.h"
 #include "content/content-manager.h"
 
 // =============================================================================
@@ -259,6 +260,8 @@ private:
 	virtual void configure(SalCallOp *op) override;
 	void enableScreenSharing(const std::shared_ptr<LinphonePrivate::CallSession> &session, bool notify);
 	MediaSessionParams *updateParameterForParticipantRemoval(const std::shared_ptr<CallSession> &session) const;
+	int checkServerConfiguration(const std::shared_ptr<Address> &remoteContactAddress,
+	                             std::shared_ptr<LinphonePrivate::MediaSession> &session);
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();

@@ -25,15 +25,18 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "call/call.h"
 #include "conference/conference-info.h"
+#include "conference/conference-scheduler.h"
 #include "conference/params/media-session-params.h"
 #include "conference/participant-device.h"
 #include "conference/participant-info.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
+#include "conference/sip-conference-scheduler.h"
 #include "liblinphone_tester.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
+#include "linphone/api/c-conference-scheduler.h"
 #include "linphone/api/c-participant.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
@@ -1032,4 +1035,18 @@ const char *_linphone_call_get_local_rtp_address(const LinphoneCall *call) {
 
 const char *_linphone_call_get_remote_rtp_address(const LinphoneCall *call) {
 	return _linphone_call_get_remote_desc(call)->getConnectionAddress().c_str();
+}
+
+void check_session_error(LinphoneConferenceScheduler *scheduler, LinphoneReason reason) {
+	auto cppScheduler = ConferenceScheduler::toCpp(scheduler);
+	auto sipConferenceScheduler = dynamic_cast<SIPConferenceScheduler *>(cppScheduler);
+	if (BC_ASSERT_PTR_NOT_NULL(sipConferenceScheduler)) {
+		auto session = sipConferenceScheduler->getSession();
+		if (BC_ASSERT_PTR_NOT_NULL(session)) {
+			auto errorInfo = session->getErrorInfo();
+			if (BC_ASSERT_PTR_NOT_NULL(errorInfo)) {
+				BC_ASSERT_EQUAL(linphone_error_info_get_reason(errorInfo), reason, int, "%i");
+			}
+		}
+	}
 }

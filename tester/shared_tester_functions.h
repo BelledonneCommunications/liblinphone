@@ -98,6 +98,8 @@ bool_t screen_sharing_enabled_in_negotiated_description(LinphoneCall *call);
 bool_t check_custom_m_line(LinphoneCall *call, const char *m_line);
 void check_chat_message_properties(LinphoneChatMessage *msg);
 
+void check_session_error(LinphoneConferenceScheduler *scheduler, LinphoneReason reason);
+
 #ifdef __cplusplus
 }
 #endif
