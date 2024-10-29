@@ -951,6 +951,9 @@ void check_stream_encryption(LinphoneCall *call);
 int get_stream_stop_count(LinphoneCall *call);
 bool_t search_matching_srtp_suite(LinphoneCoreManager *caller_mgr, LinphoneCoreManager *callee_mgr);
 
+void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
+                                                   bool_t enable_lime,
+                                                   bool_t participant_goes_offline);
 LinphoneChatRoom *create_chat_room_client_side(bctbx_list_t *lcs,
                                                LinphoneCoreManager *lcm,
                                                stats *initialStats,

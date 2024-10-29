@@ -222,6 +222,10 @@ public:
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *sal_msg);
 	LinphoneReason
 	handleChatMessagesAggregation(std::shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg);
+
+	void setImdnToEverybodyThreshold(const int threshold);
+	int getImdnToEverybodyThreshold() const;
+
 	void enableEmptyChatroomsDeletion(const bool enable);
 	bool emptyChatroomsDeletionEnabled() const;
 
@@ -459,6 +463,7 @@ private:
 	void updateChatRoomList() const;
 
 	bool deleteEmptyChatrooms = true;
+	int mImdnToEverybodyThreshold = 5;
 	std::shared_ptr<SignalInformation> mSignalInformation = nullptr;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
 	void clearProxyConfigList() const;

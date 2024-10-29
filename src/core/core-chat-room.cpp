@@ -1041,6 +1041,14 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	return reason;
 }
 
+void Core::setImdnToEverybodyThreshold(const int threshold) {
+	mImdnToEverybodyThreshold = threshold;
+}
+
+int Core::getImdnToEverybodyThreshold() const {
+	return mImdnToEverybodyThreshold;
+}
+
 void Core::enableEmptyChatroomsDeletion(const bool enable) {
 	deleteEmptyChatrooms = enable;
 }

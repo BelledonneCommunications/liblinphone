@@ -178,9 +178,12 @@ public:
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	std::shared_ptr<ChatMessage> createChatMessage(ChatMessage::Direction direction);
-	std::shared_ptr<ImdnMessage> createImdnMessage(const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
-	                                               const std::list<std::shared_ptr<ChatMessage>> &displayedMessages);
-	std::shared_ptr<ImdnMessage> createImdnMessage(const std::list<Imdn::MessageReason> &nonDeliveredMessages);
+	std::list<std::shared_ptr<ImdnMessage>>
+	createImdnMessages(const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
+	                   const std::list<std::shared_ptr<ChatMessage>> &displayedMessages,
+	                   bool aggregate);
+	std::list<std::shared_ptr<ImdnMessage>>
+	createImdnMessages(const std::list<Imdn::MessageReason> &nonDeliveredMessages, bool aggregate);
 	std::shared_ptr<ImdnMessage> createImdnMessage(const std::shared_ptr<ImdnMessage> &message);
 	std::shared_ptr<IsComposingMessage> createIsComposingMessage();
 
@@ -224,6 +227,8 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> aggregatedMessages;
 
 protected:
+	Address getImdnChatRoomPeerAddress(const std::shared_ptr<ChatMessage> &message) const;
+	std::shared_ptr<AbstractChatRoom> getImdnChatRoom(const std::shared_ptr<Address> peerAddress);
 	std::shared_ptr<ChatMessage> getMessageFromSal(SalOp *op, const SalMessage *message);
 	explicit ChatRoom(const std::shared_ptr<Core> &core, const std::shared_ptr<Conference> &conf = nullptr);
 

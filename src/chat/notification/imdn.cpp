@@ -216,7 +216,6 @@ string Imdn::createXml(const string &id, time_t timestamp, Imdn::Type imdnType, 
 #endif // _MSC_VER
 void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 #ifdef HAVE_ADVANCED_IM
-	shared_ptr<AbstractChatRoom> cr = chatMessage->getChatRoom();
 	list<string> messagesIds;
 	list<unique_ptr<Xsd::Imdn::Imdn>> imdns;
 
@@ -236,7 +235,8 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 
 	// It seems to be more efficient to only make one database request to get all chat messages from their IMDN message
 	// ID
-	list<shared_ptr<ChatMessage>> chatMessages = cr->findChatMessages(messagesIds);
+	list<shared_ptr<ChatMessage>> chatMessages =
+	    chatMessage->getCore()->getPrivate()->mainDb->findChatMessagesFromImdnMessageId(messagesIds);
 	for (const auto &imdn : imdns) {
 		shared_ptr<ChatMessage> cm = nullptr;
 		for (const auto &chatMessage : chatMessages) {
@@ -251,6 +251,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 		} else {
 			chatMessages.remove(cm);
 
+			shared_ptr<AbstractChatRoom> cr = cm->getChatRoom();
 			auto policy = linphone_core_get_im_notif_policy(cr->getCore()->getCCore());
 			time_t imdnTime = chatMessage->getTime();
 			std::shared_ptr<Address> participantAddress =
@@ -281,7 +282,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 					    && chatRoomParams->getChatParams()->isEncrypted()) { // and the chatroom is encrypted
 						// Check the reason code is 488
 						auto reason = status.getReason().get();
-						auto imee = cm->getCore()->getEncryptionEngine();
+						auto imee = cr->getCore()->getEncryptionEngine();
 						if ((reason.getCode() == 488) && imee) {
 							// stale the encryption sessions with this device: something went wrong, we will create a
 							// new one at next encryption
@@ -399,64 +400,22 @@ void Imdn::send() {
 		return; // Cannot send imdn if core is destroyed.
 	}
 
+	std::list<std::shared_ptr<ImdnMessage>> imdnMessages;
 	if (!deliveredMessages.empty() || !displayedMessages.empty()) {
-		if (aggregationEnabled()) {
-			auto imdnMessage = chatRoom->createImdnMessage(deliveredMessages, displayedMessages);
-			if (imdnMessage->getPrivate()->getContents().empty()) {
-				lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
-			} else {
-				sentImdnMessages.push_back(imdnMessage);
-				imdnMessage->getPrivate()->send();
-			}
-		} else {
-			list<shared_ptr<ImdnMessage>> imdnMessages;
-			for (const auto &message : deliveredMessages) {
-				list<shared_ptr<ChatMessage>> l;
-				l.push_back(message);
-				imdnMessages.push_back(chatRoom->createImdnMessage(l, list<shared_ptr<ChatMessage>>()));
-			}
-			for (const auto &message : displayedMessages) {
-				list<shared_ptr<ChatMessage>> l;
-				l.push_back(message);
-				imdnMessages.push_back(chatRoom->createImdnMessage(list<shared_ptr<ChatMessage>>(), l));
-			}
-			for (const auto &message : imdnMessages) {
-				if (message->getPrivate()->getContents().empty()) {
-					lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
-				} else {
-					sentImdnMessages.push_back(message);
-					message->getPrivate()->send();
-				}
-			}
-			deliveredMessages.clear();
-			displayedMessages.clear();
-		}
+		imdnMessages = chatRoom->createImdnMessages(deliveredMessages, displayedMessages, aggregationEnabled());
+		deliveredMessages.clear();
+		displayedMessages.clear();
 	}
 	if (!nonDeliveredMessages.empty()) {
-		if (aggregationEnabled()) {
-			auto imdnMessage = chatRoom->createImdnMessage(nonDeliveredMessages);
-			if (imdnMessage->getPrivate()->getContents().empty()) {
-				lWarning() << "Not sending IMDN not delivered message as it contains no content";
-			} else {
-				sentImdnMessages.push_back(imdnMessage);
-				imdnMessage->getPrivate()->send();
-			}
+		imdnMessages = chatRoom->createImdnMessages(nonDeliveredMessages, aggregationEnabled());
+		nonDeliveredMessages.clear();
+	}
+	for (const auto &message : imdnMessages) {
+		if (message->getPrivate()->getContents().empty()) {
+			lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
 		} else {
-			list<shared_ptr<ImdnMessage>> imdnMessages;
-			for (const auto &message : nonDeliveredMessages) {
-				list<MessageReason> l;
-				l.push_back(message);
-				imdnMessages.push_back(chatRoom->createImdnMessage(l));
-			}
-			for (const auto &message : imdnMessages) {
-				if (message->getPrivate()->getContents().empty()) {
-					lWarning() << "Not sending IMDN not delivered message as it contains no content";
-				} else {
-					sentImdnMessages.push_back(message);
-					message->getPrivate()->send();
-				}
-			}
-			nonDeliveredMessages.clear();
+			sentImdnMessages.push_back(message);
+			message->getPrivate()->send();
 		}
 	}
 }

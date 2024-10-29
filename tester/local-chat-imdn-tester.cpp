@@ -26,7 +26,7 @@
 
 namespace LinphoneTest {
 
-static void group_chat_room_with_imdn(void) {
+static void group_chat_room_with_imdn_base(bool_t core_goes_offline) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t encrypted = FALSE;
@@ -130,6 +130,17 @@ static void group_chat_room_with_imdn(void) {
 		    coresList, pauline2.getCMgr(), &pauline2_stat, confAddr, initialSubject, 2, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(pauline2Cr);
 
+		if (!!core_goes_offline) {
+			const std::initializer_list<std::reference_wrapper<ClientConference>> cores2{pauline, michelle2};
+			for (const ClientConference &core : cores2) {
+				Address contactAddress = *Address::toCpp(
+				    linphone_account_get_contact_address(linphone_core_get_default_account(core.getLc())));
+				ms_message("%s (contact %s) goes offline", linphone_core_get_identity(core.getLc()),
+				           contactAddress.toString().c_str());
+				linphone_core_set_network_reachable(pauline.getLc(), FALSE);
+			}
+		}
+
 		// Marie sends the message
 		const char *marieMessage = "Hey ! What's up ?";
 		LinphoneChatMessage *msg = ClientConference::sendTextMsg(marieCr, marieMessage);
@@ -151,24 +162,6 @@ static void group_chat_room_with_imdn(void) {
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(michelleLastMsg);
 			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		}
-		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneMessageReceived,
-		                             michelle2_stat.number_of_LinphoneMessageReceived + 1,
-		                             liblinphone_tester_sip_timeout));
-		LinphoneChatMessage *michelle2LastMsg = michelle2.getStats().last_received_chat_message;
-		BC_ASSERT_PTR_NOT_NULL(michelle2LastMsg);
-		if (michelle2LastMsg) {
-			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(michelle2LastMsg);
-			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-		}
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
-		                             pauline_stat.number_of_LinphoneMessageReceived + 1,
-		                             liblinphone_tester_sip_timeout));
-		LinphoneChatMessage *paulineLastMsg = pauline.getStats().last_received_chat_message;
-		BC_ASSERT_PTR_NOT_NULL(paulineLastMsg);
-		if (paulineLastMsg) {
-			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(paulineLastMsg);
-			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-		}
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2.getStats().number_of_LinphoneMessageReceived,
 		                             pauline2_stat.number_of_LinphoneMessageReceived + 1,
 		                             liblinphone_tester_sip_timeout));
@@ -179,8 +172,58 @@ static void group_chat_room_with_imdn(void) {
 			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		}
 
-		linphone_chat_room_mark_as_read(michelleCr);
-		linphone_chat_room_mark_as_read(paulineCr);
+		if (!!core_goes_offline) {
+			// wait bit more to detect side effect if any
+			CoreManagerAssert({focus, marie, marie2, michelle, michelle2, pauline, pauline2})
+			    .waitUntil(chrono::seconds(2), [] { return false; });
+
+			const std::initializer_list<std::reference_wrapper<ClientConference>> cores2{pauline, michelle2};
+			for (const ClientConference &core : cores2) {
+				Address contactAddress = *Address::toCpp(
+				    linphone_account_get_contact_address(linphone_core_get_default_account(core.getLc())));
+				ms_message("%s (contact %s) comes back online", linphone_core_get_identity(core.getLc()),
+				           contactAddress.toString().c_str());
+				linphone_core_set_network_reachable(pauline.getLc(), TRUE);
+			}
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+		                             pauline_stat.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		LinphoneChatMessage *paulineLastMsg = pauline.getStats().last_received_chat_message;
+		BC_ASSERT_PTR_NOT_NULL(paulineLastMsg);
+		if (paulineLastMsg) {
+			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(paulineLastMsg);
+			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneMessageReceived,
+		                             michelle2_stat.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		LinphoneChatMessage *michelle2LastMsg = michelle2.getStats().last_received_chat_message;
+		BC_ASSERT_PTR_NOT_NULL(michelle2LastMsg);
+		if (michelle2LastMsg) {
+			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(michelle2LastMsg);
+			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		}
+
+		// wait bit more to detect side effect if any
+		CoreManagerAssert({focus, marie, marie2, michelle, michelle2, pauline, pauline2})
+		    .waitUntil(chrono::seconds(2), [] { return false; });
+
+		const std::initializer_list<std::reference_wrapper<ClientConference>> cores2{pauline, michelle};
+		for (const ClientConference &core : cores2) {
+			Address contactAddress =
+			    *Address::toCpp(linphone_account_get_contact_address(linphone_core_get_default_account(core.getLc())));
+			ms_message("%s (contact %s) marks message as read", linphone_core_get_identity(core.getLc()),
+			           contactAddress.toString().c_str());
+			LinphoneChatRoom *cr =
+			    linphone_core_search_chat_room(core.getLc(), NULL, contactAddress.toC(), confAddr, NULL);
+			BC_ASSERT_PTR_NOT_NULL(cr);
+			if (cr) {
+				linphone_chat_room_mark_as_read(cr);
+			}
+		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDisplayed,
 		                             marie_stat.number_of_LinphoneMessageDisplayed + 1,
@@ -229,6 +272,14 @@ static void group_chat_room_with_imdn(void) {
 
 		bctbx_list_free(coresList);
 	}
+}
+
+static void group_chat_room_with_imdn(void) {
+	group_chat_room_with_imdn_base(FALSE);
+}
+
+static void group_chat_room_with_imdn_and_core_restarts(void) {
+	group_chat_room_with_imdn_base(TRUE);
 }
 
 static void
@@ -1640,7 +1691,8 @@ static test_t local_conference_chat_imdn_tests[] = {
     TEST_ONE_TAG("Secure group chat with message state going from not delivered to displayed",
                  LinphoneTest::secure_group_chat_message_state_transition_from_not_delivered_to_displayed,
                  "LeaksMemory"), /* because of network up and down */
-    TEST_NO_TAG("Secure Group chat with IMDN", LinphoneTest::group_chat_room_with_imdn),
+    TEST_NO_TAG("Group chat with IMDN", LinphoneTest::group_chat_room_with_imdn),
+    TEST_NO_TAG("Group chat with IMDN and core restarts", LinphoneTest::group_chat_room_with_imdn_and_core_restarts),
     TEST_ONE_TAG(
         "Secure group chat with client IMDN sent after restart and participant added and core stopped before sending "
         "IMDN",

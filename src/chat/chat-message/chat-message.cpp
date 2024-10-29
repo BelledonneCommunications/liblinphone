@@ -354,7 +354,8 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 		if (state == ChatMessage::State::Delivered) {
 			// Use list of participants the client is sure have received the message and not the actual list of
 			// participants being part of the chatroom
-			for (const auto &imdnState : q->getParticipantsState()) {
+			const auto imdnStates = q->getParticipantsState();
+			for (const auto &imdnState : imdnStates) {
 				const auto &participant = imdnState.getParticipant();
 				const auto &participantAddress = participant->getAddress();
 				const auto isMe = chatRoom->isMe(participantAddress);
@@ -1868,6 +1869,7 @@ void ChatMessage::setInAggregationQueue(bool isInQueue) {
 list<ParticipantImdnState> ChatMessage::getParticipantsState() const {
 	list<ParticipantImdnState> result;
 	const auto &chatRoom = getChatRoom();
+	if (!chatRoom) return result;
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	const bool isBasicChatRoom = (chatRoomParams->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 	if (isBasicChatRoom || !isValid()) return result;

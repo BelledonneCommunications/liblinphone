@@ -53,12 +53,35 @@ simple_account_creation_base(bool_t remove_accounts, bool_t bring_offline_while_
 	LinphoneAccount *new_account = linphone_account_new(marie->lc, params);
 	linphone_account_add_custom_param(new_account, "main-account", "1");
 
+	stats marieStats = marie->stat;
+	const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+	int number_accounts = (int)bctbx_list_size(accounts);
+
 	linphone_core_remove_account(marie->lc, marie_account);
+
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		linphone_core_remove_account(marie->lc, account);
+	}
 	BC_ASSERT_PTR_NULL(linphone_core_get_default_account(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_default_proxy_config(marie->lc));
+	if (!quick_shutdown) {
+		if (!!bring_offline_while_removal) {
+			linphone_core_set_network_reachable(marie->lc, FALSE);
+			BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, 0, 1, (account_deletion_timeout + 1) * 1000));
+			linphone_core_set_network_reachable(marie->lc, TRUE);
+		} else {
+			BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared,
+			                        marieStats.number_of_LinphoneRegistrationCleared + number_accounts));
+		}
+		BC_ASSERT_PTR_NULL(linphone_core_get_deleted_account_list(marie->lc));
+	}
 
 	linphone_core_add_account(marie->lc, new_account);
 	linphone_core_set_default_account(marie->lc, new_account);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationFailed,
+	                        marieStats.number_of_LinphoneRegistrationFailed + 1));
 
 	BC_ASSERT_TRUE(linphone_core_get_default_account(marie->lc) == new_account);
 	BC_ASSERT_STRING_EQUAL(linphone_account_get_custom_param(new_account, "main-account"), "1");
@@ -81,23 +104,19 @@ simple_account_creation_base(bool_t remove_accounts, bool_t bring_offline_while_
 	char *local_rc = ms_strdup(marie->rc_local);
 
 	if (!!remove_accounts) {
-		stats marieStats = marie->stat;
-		const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
-		int number_accounts = (int)bctbx_list_size(accounts);
+		unsigned int account_deletion_timeout = 5;
+		linphone_core_set_account_deletion_timeout(marie->lc, account_deletion_timeout);
+		marieStats = marie->stat;
+		accounts = linphone_core_get_account_list(marie->lc);
+		number_accounts = (int)bctbx_list_size(accounts);
 		for (; accounts != NULL; accounts = accounts->next) {
 			LinphoneAccount *account = (LinphoneAccount *)accounts->data;
 			linphone_core_remove_account(marie->lc, account);
 		}
-		if (!quick_shutdown) {
-			if (!!bring_offline_while_removal) {
-				linphone_core_set_network_reachable(marie->lc, FALSE);
-				BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, 0, 1, (account_deletion_timeout + 1) * 1000));
-			} else {
-				BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared,
-				                        marieStats.number_of_LinphoneRegistrationCleared + number_accounts));
-			}
-			BC_ASSERT_PTR_NULL(linphone_core_get_deleted_account_list(marie->lc));
-		}
+		BC_ASSERT_PTR_NULL(linphone_core_get_default_account(marie->lc));
+		BC_ASSERT_PTR_NULL(linphone_core_get_default_proxy_config(marie->lc));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, 0, 1, (account_deletion_timeout + 1) * 1000));
+		BC_ASSERT_PTR_NULL(linphone_core_get_deleted_account_list(marie->lc));
 	}
 
 	linphone_core_manager_stop(marie);

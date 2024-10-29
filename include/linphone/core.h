@@ -7714,6 +7714,22 @@ LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore 
 LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
 
 /**
+ * Returns the threshold for sending IMDN to all participants to a #LinphoneChatRoom
+ * @param core A #LinphoneCore object @notnil
+ * @return An integer value telling the threshold for sending IMDN to all participants to a #LinphoneChatRoom
+ * @ingroup chatroom
+ */
+LINPHONE_PUBLIC int linphone_core_get_imdn_to_everybody_threshold(const LinphoneCore *core);
+
+/**
+ * Sets the threshold for sending IMDN to all participants to a #LinphoneChatRoom
+ * @param core A #LinphoneCore object @notnil
+ * @param threshold the threshold for sending IMDN to all participants to a #LinphoneChatRoom
+ * @ingroup chatroom
+ */
+LINPHONE_PUBLIC void linphone_core_set_imdn_to_everybody_threshold(LinphoneCore *core, int threshold);
+
+/**
  * Sets if accounts will wait for network to be connected before trying to REGISTER.
  * @param core the #LinphoneCore
  * @param register_only_when_network_is_up TRUE to wait for an internet connection before trying to REGISTER, FALSE to

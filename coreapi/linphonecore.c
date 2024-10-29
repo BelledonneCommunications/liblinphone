@@ -3335,8 +3335,13 @@ static void linphone_core_init(LinphoneCore *lc,
 
 	lc->push_config = linphone_push_notification_config_new();
 
+	linphone_core_set_imdn_to_everybody_threshold(
+	    lc, linphone_config_get_int(lc->config, "chat", "imdn_to_everybody_threshold",
+	                                linphone_core_get_imdn_to_everybody_threshold(lc)));
+
 	linphone_core_enable_empty_chatrooms_deletion(
-	    lc, linphone_config_get_bool(lc->config, "misc", "empty_chat_room_deletion", TRUE));
+	    lc, linphone_config_get_bool(lc->config, "misc", "empty_chat_room_deletion",
+	                                 linphone_core_empty_chatrooms_deletion_enabled(lc)));
 
 #ifdef __ANDROID__
 	if (system_context) {
@@ -9896,6 +9901,15 @@ LinphoneStatus linphone_core_config_sync(LinphoneCore *core) {
 	}
 #endif
 	return linphone_config_sync(core->config);
+}
+
+int linphone_core_get_imdn_to_everybody_threshold(const LinphoneCore *core) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(core)->getImdnToEverybodyThreshold();
+}
+
+void linphone_core_set_imdn_to_everybody_threshold(LinphoneCore *core, int threshold) {
+	linphone_config_set_int(core->config, "chat", "imdn_to_everybody_threshold", threshold);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->setImdnToEverybodyThreshold(threshold);
 }
 
 bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core) {

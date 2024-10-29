@@ -5250,6 +5250,73 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromMessageId(const std::s
 #endif
 }
 
+list<shared_ptr<ChatMessage>>
+MainDb::findChatMessagesFromImdnMessageId(const std::list<std::string> &imdnMessageIds) const {
+#ifdef HAVE_DB_STORAGE
+	// Keep chat_room_id at the end of the query !!!
+	static const string query =
+	    "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, "
+	    "to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, "
+	    "device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, "
+	    "display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, "
+	    "ephemeral_lifetime, expired_time, lifetime, reply_message_id, reply_sender_address.value, message_id, "
+	    "chat_room_id"
+	    " FROM conference_event_view"
+	    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
+	    " LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
+	    " LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
+	    " LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
+	    " LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
+	    " WHERE (imdn_message_id = ";
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		ostringstream ostr;
+		ostr << query;
+		size_t index = 0;
+		size_t listSize = imdnMessageIds.size();
+		for (const auto &id : imdnMessageIds) {
+			ostr << "'" << id << "'";
+			if (index < listSize - 1) {
+				ostr << " OR imdn_message_id = ";
+			} else {
+				ostr << " ) ";
+			}
+			index += 1;
+		}
+		string computedQuery = ostr.str();
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << computedQuery);
+
+		list<shared_ptr<ChatMessage>> chatMessages;
+		for (const auto &row : rows) {
+			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size() - 1);
+			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
+			if (!conferenceId.isValid()) {
+				conferenceId = d->selectConferenceId(dbChatRoomId);
+			}
+
+			if (conferenceId.isValid()) {
+				shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+				if (chatRoom) {
+					shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+					if (event) {
+						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
+						chatMessages.push_back(
+						    static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
+					}
+				}
+			}
+		}
+
+		return chatMessages;
+	};
+
+#else
+	return list<shared_ptr<ChatMessage>>();
+#endif
+}
+
 list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromCallId(const std::string &callId) const {
 #ifdef HAVE_DB_STORAGE
 	// Keep chat_room_id at the end of the query !!!

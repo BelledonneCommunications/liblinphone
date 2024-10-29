@@ -138,8 +138,7 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 	std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
 	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
 	// Enquire whether this conference belongs to a server group chat room
-	shared_ptr<Core> core = conf->getCore();
-	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	const bool oneToOne = chatRoom ? !!!chatRoom->getCurrentParams()->isGroup() : false;
 	const bool ephemerable = chatRoom ? !!chatRoom->getCurrentParams()->getChatParams()->ephemeralEnabled() : false;
 	string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string();
@@ -974,11 +973,10 @@ string ServerConferenceEventHandler::createNotifyEphemeralMode(const EventLog::T
 
 	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
 	// Enquire whether this conference belongs to a server group chat room
-	shared_ptr<Core> core = conf->getCore();
-	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
-
+	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	const ModeType mode =
 	    (type == EventLog::Type::ConferenceEphemeralMessageManagedByAdmin) ? "admin-managed" : "device-managed";
+	shared_ptr<Core> core = conf->getCore();
 	long lifetime = linphone_core_get_default_ephemeral_lifetime(core->getCCore());
 	if (chatRoom) {
 		lifetime = chatRoom->getCurrentParams()->getChatParams()->getEphemeralLifetime();
@@ -1020,9 +1018,8 @@ string ServerConferenceEventHandler::createNotifyEphemeralLifetime(const long &l
 
 	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
 	// Enquire whether this conference belongs to a server group chat room
+	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	shared_ptr<Core> core = conf->getCore();
-	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
-
 	auto chatRoomMode = static_cast<AbstractChatRoom::EphemeralMode>(
 	    linphone_core_chat_room_get_default_ephemeral_mode(core->getCCore()));
 	if (chatRoom) {
@@ -1292,12 +1289,8 @@ void ServerConferenceEventHandler::onParticipantAdded(const std::shared_ptr<Conf
 		notifyAllExcept(makeContent(createNotifyParticipantAdded(pAddress)), participant);
 		conf->updateParticipantInConferenceInfo(participant);
 
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_participant_added(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
@@ -1318,12 +1311,8 @@ void ServerConferenceEventHandler::onParticipantRemoved(const std::shared_ptr<Co
 	const auto &pAddress = participant->getAddress();
 	if (conf) {
 		notifyAllExcept(makeContent(createNotifyParticipantRemoved(pAddress)), participant);
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_participant_removed(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
@@ -1341,12 +1330,8 @@ void ServerConferenceEventHandler::onParticipantSetAdmin(const std::shared_ptr<C
 	const auto &pAddress = participant->getAddress();
 	if (conf) {
 		notifyAll(makeContent(createNotifyParticipantAdminStatusChanged(pAddress, isAdmin)));
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_participant_admin_status_changed(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
@@ -1363,12 +1348,8 @@ void ServerConferenceEventHandler::onSubjectChanged(const std::shared_ptr<Confer
 		const auto &subject = event->getSubject();
 		conf->updateSubjectInConferenceInfo(subject);
 		notifyAll(makeContent(createNotifySubjectChanged(subject)));
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_subject_changed(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
@@ -1412,9 +1393,6 @@ void ServerConferenceEventHandler::onParticipantDeviceJoiningRequest(
 		auto participant = device->getParticipant();
 		const auto &pAddress = participant->getAddress();
 		notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << *dAddress
 		           << " being added because pointer to conference is null";
@@ -1435,12 +1413,8 @@ void ServerConferenceEventHandler::onParticipantDeviceAdded(
 		} else {
 			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
 		}
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_participant_device_added(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
@@ -1459,12 +1433,8 @@ void ServerConferenceEventHandler::onParticipantDeviceRemoved(
 		auto participant = device->getParticipant();
 		notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceRemoved(participant->getAddress(), dAddress)),
 		                      device);
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_participant_device_removed(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
@@ -1482,12 +1452,8 @@ void ServerConferenceEventHandler::onParticipantDeviceStateChanged(
 	if (conf) {
 		auto participant = device->getParticipant();
 		notifyAll(makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress(), dAddress)));
-		shared_ptr<Core> core = conf->getCore();
-		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 		// Enquire whether this conference belongs to a server group chat room
-		std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 		if (chatRoom) {
 			_linphone_chat_room_notify_participant_device_state_changed(
 			    chatRoom->toC(), L_GET_C_BACK_PTR(event), (LinphoneParticipantDeviceState)device->getState());
@@ -1592,12 +1558,8 @@ ServerConferenceEventHandler::getConferenceParticipant(const std::shared_ptr<Add
 		return nullptr;
 	}
 
-	shared_ptr<Core> core = conf->getCore();
-	std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
-
 	// Enquire whether this conference belongs to a server group chat room
-	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	std::shared_ptr<LinphonePrivate::ServerChatRoom> sgcr = nullptr;
 	if (chatRoom && (chatRoom->getConference() == conf) && !conf->supportsMedia()) {
 		sgcr = dynamic_pointer_cast<LinphonePrivate::ServerChatRoom>(chatRoom);

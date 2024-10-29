@@ -6087,6 +6087,14 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 
+static void group_chat_lime_x3dh_with_imdn_sent_only_to_sender(void) {
+	group_chat_with_imdn_sent_only_to_sender_base(FALSE, TRUE, FALSE);
+}
+
+static void group_chat_lime_x3dh_with_imdn_sent_only_to_sender_after_going_over_threshold(void) {
+	group_chat_with_imdn_sent_only_to_sender_base(TRUE, TRUE, FALSE);
+}
+
 test_t secure_group_chat_tests[] = {
     TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH create multiple lime user using different base algorithm",
@@ -6130,6 +6138,12 @@ test_t secure_group_chat2_tests[] = {
                   group_chat_lime_x3dh_session_corrupted_no_imdn,
                   "LimeX3DH",
                   "LeaksMemory" /*due to core restart*/),
+    TEST_ONE_TAG("LIME X3DH group chat with IMDN sent only to sender",
+                 group_chat_lime_x3dh_with_imdn_sent_only_to_sender,
+                 "LimeX3DH"),
+    TEST_ONE_TAG("LIME X3DH group chat with IMDN sent only to sender after going over threshold",
+                 group_chat_lime_x3dh_with_imdn_sent_only_to_sender_after_going_over_threshold,
+                 "LimeX3DH"),
     TEST_TWO_TAGS("LIME X3DH session corrupted with delivery error IMDN only",
                   group_chat_lime_x3dh_session_corrupted_error_imdn_only,
                   "LimeX3DH",

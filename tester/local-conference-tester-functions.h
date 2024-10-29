@@ -295,20 +295,6 @@ public:
 	}
 
 private:
-	/*
-	    static void server_core_chat_room_conference_address_generation(LinphoneChatRoom *cr) {
-	        Focus *focus =
-	            (Focus *)(((LinphoneCoreManager
-	   *)linphone_core_get_user_data(linphone_chat_room_get_core(cr)))->user_info); char config_id[6];
-	        belle_sip_random_token(config_id, sizeof(config_id));
-	        LinphoneAddress *conference_address =
-	            linphone_address_clone(linphone_account_get_contact_address(focus->getDefaultAccount()));
-	        linphone_address_set_uri_param(conference_address, "conf-id", config_id);
-	        linphone_chat_room_set_conference_address(cr, conference_address);
-	        linphone_address_unref(conference_address);
-	    }
-	*/
-
 	static void
 	server_core_chat_room_state_changed(LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 		Focus *focus = (Focus *)(((LinphoneCoreManager *)linphone_core_get_user_data(core))->user_info);
@@ -317,8 +303,6 @@ private:
 				LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
 				linphone_chat_room_cbs_set_participant_registration_subscription_requested(
 				    cbs, chat_room_participant_registration_subscription_requested);
-				//				linphone_chat_room_cbs_set_conference_address_generation(
-				//				    cbs, server_core_chat_room_conference_address_generation);
 				setup_chat_room_callbacks(cbs);
 				linphone_chat_room_add_callbacks(cr, cbs);
 				linphone_chat_room_cbs_set_user_data(cbs, focus);

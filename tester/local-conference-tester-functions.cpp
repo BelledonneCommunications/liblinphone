@@ -6017,7 +6017,6 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		linphone_core_set_conference_cleanup_period(focus.getLc(), cleanup_window);
 
 		stats focus_stat = focus.getStats();
-
 		std::list<LinphoneCoreManager *> participants{laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr(),
 		                                              berthe.getCMgr()};
 		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(),    pauline.getCMgr(),
@@ -6069,6 +6068,21 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			// Restart flexisip
 			focus.reStart();
 			coresList = bctbx_list_append(coresList, focus.getLc());
+			LinphoneConference *fconference =
+			    linphone_core_search_conference(focus.getLc(), NULL, focus.getIdentity().toC(), confAddr, NULL);
+			BC_ASSERT_PTR_NOT_NULL(fconference);
+			if (fconference) {
+				LinphoneChatRoom *cr = linphone_conference_get_chat_room(fconference);
+				BC_ASSERT_PTR_NOT_NULL(cr);
+				if (cr) {
+					LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+					setup_chat_room_callbacks(cbs);
+					linphone_chat_room_add_callbacks(cr, cbs);
+					linphone_chat_room_cbs_set_user_data(
+					    cbs, ((LinphoneCoreManager *)linphone_core_get_user_data(focus.getLc()))->user_info);
+					linphone_chat_room_cbs_unref(cbs);
+				}
+			}
 		}
 
 		const LinphoneMediaEncryption encryption =
@@ -6170,6 +6184,13 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		                             focus_stat.number_of_LinphoneSubscriptionIncomingReceived + 5, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 		                             focus_stat.number_of_LinphoneSubscriptionActive + 5, 5000));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participants_added,
+		                             focus_stat.number_of_chat_room_participants_added + 5,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participant_devices_added,
+		                             focus_stat.number_of_chat_room_participant_devices_added + 5,
+		                             liblinphone_tester_sip_timeout));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 5, liblinphone_tester_sip_timeout));
@@ -6296,6 +6317,13 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionTerminated,
 				                             focus_stat.number_of_LinphoneSubscriptionTerminated + 1,
 				                             liblinphone_tester_sip_timeout));
+
+				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participants_removed,
+				                             focus_stat.number_of_chat_room_participants_removed + 1,
+				                             liblinphone_tester_sip_timeout));
+				BC_ASSERT_TRUE(wait_for_list(
+				    coresList, &focus.getStats().number_of_chat_room_participant_devices_removed,
+				    focus_stat.number_of_chat_room_participant_devices_removed + 1, liblinphone_tester_sip_timeout));
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_removed,
 				                             focus_stat.number_of_participants_removed + 1,
@@ -6474,6 +6502,13 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			for (auto remaining_mgr : remaining_members) {
 				stats stat = remaining_members_stats.front();
 				remaining_members_stats.pop_front();
+				BC_ASSERT_TRUE(wait_for_list(coresList, &remaining_mgr->stat.number_of_chat_room_participants_removed,
+				                             stat.number_of_chat_room_participants_removed + 1,
+				                             liblinphone_tester_sip_timeout));
+				BC_ASSERT_TRUE(wait_for_list(
+				    coresList, &remaining_mgr->stat.number_of_chat_room_participant_devices_removed,
+				    stat.number_of_chat_room_participant_devices_removed + 1, liblinphone_tester_sip_timeout));
+
 				BC_ASSERT_TRUE(wait_for_list(coresList, &remaining_mgr->stat.number_of_participants_removed,
 				                             stat.number_of_participants_removed + 1, liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &remaining_mgr->stat.number_of_participant_devices_removed,
