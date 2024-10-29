@@ -30,10 +30,6 @@
 
 using namespace LinphonePrivate;
 
-LinphoneLdapParams *linphone_ldap_params_new(BCTBX_UNUSED(LinphoneCore *lc)) {
-	return LdapParams::createCObject();
-}
-
 LinphoneLdapParams *linphone_ldap_params_clone(const LinphoneLdapParams *params) {
 	return LdapParams::toCpp(params)->clone()->toC();
 }

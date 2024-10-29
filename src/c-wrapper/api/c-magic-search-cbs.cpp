@@ -58,9 +58,19 @@ void linphone_magic_search_cbs_set_search_results_received(LinphoneMagicSearchCb
 
 LinphoneMagicSearchCbsLdapHaveMoreResultsCb
 linphone_magic_search_cbs_get_ldap_have_more_results(const LinphoneMagicSearchCbs *cbs) {
-	return MagicSearchCbs::toCpp(cbs)->getMoreResultsAvailable();
+	return MagicSearchCbs::toCpp(cbs)->getLdapMoreResultsAvailable();
 }
 void linphone_magic_search_cbs_set_ldap_have_more_results(LinphoneMagicSearchCbs *cbs,
                                                           LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb) {
+	MagicSearchCbs::toCpp(cbs)->setLdapMoreResultsAvailable(cb);
+}
+
+LinphoneMagicSearchCbsMoreResultsAvailableCb
+linphone_magic_search_cbs_get_more_results_available(const LinphoneMagicSearchCbs *cbs) {
+	return MagicSearchCbs::toCpp(cbs)->getMoreResultsAvailable();
+}
+
+void linphone_magic_search_cbs_set_more_results_available(LinphoneMagicSearchCbs *cbs,
+                                                          LinphoneMagicSearchCbsMoreResultsAvailableCb cb) {
 	MagicSearchCbs::toCpp(cbs)->setMoreResultsAvailable(cb);
 }

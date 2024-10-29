@@ -375,139 +375,6 @@ end:
 	linphone_core_manager_destroy(lcm);
 }
 
-static void friends_sqlite_store_lot_of_friends(void) {
-	sqlite3 *db;
-	int i;
-	char *errmsg = NULL;
-	int ret;
-	char *buf;
-	char *friends_db = bc_tester_file(vcard_friends_db_file);
-
-	unlink(friends_db);
-	ret = sqlite3_open(friends_db, &db);
-	bc_free(friends_db);
-
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "BEGIN", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-
-	ret = sqlite3_exec(db,
-	                   "CREATE TABLE IF NOT EXISTS friends ("
-	                   "id                INTEGER PRIMARY KEY AUTOINCREMENT,"
-	                   "friend_list_id    INTEGER,"
-	                   "sip_uri           TEXT,"
-	                   "subscribe_policy  INTEGER,"
-	                   "send_subscribe    INTEGER,"
-	                   "ref_key           TEXT,"
-	                   "vCard             TEXT,"
-	                   "vCard_etag        TEXT,"
-	                   "vCard_url         TEXT,"
-	                   "presence_received INTEGER"
-	                   ");",
-	                   0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "END", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-
-	ms_message("Start :\n");
-	ret = sqlite3_exec(db, "BEGIN", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	for (i = 0; i < 20000; i++) {
-		buf = sqlite3_mprintf("INSERT INTO friends VALUES(NULL,%u,%Q,%i,%i,'key_%i',%Q,%Q,%Q,%i);", i, "dummy_addr", 0,
-		                      0, i, NULL, NULL, NULL, 0);
-
-		ret = sqlite3_exec(db, buf, 0, 0, &errmsg);
-		BC_ASSERT_TRUE(ret == SQLITE_OK);
-		sqlite3_free(buf);
-	}
-
-	ret = sqlite3_exec(db, "END", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-
-	ms_message("End :\n");
-
-	ret = sqlite3_exec(db, "BEGIN", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "DELETE FROM friends;", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "END", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	sqlite3_close(db);
-}
-
-static void friends_sqlite_find_friend_in_lot_of_friends(void) {
-	sqlite3 *db;
-	int i;
-	char *errmsg = NULL;
-	int ret;
-	char *buf;
-	bctoolboxTimeSpec t1;
-	bctoolboxTimeSpec t2;
-	char *friends_db = bc_tester_file(vcard_friends_db_file);
-
-	unlink(friends_db);
-	ret = sqlite3_open(friends_db, &db);
-	bc_free(friends_db);
-
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "BEGIN", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-
-	ret = sqlite3_exec(db,
-	                   "CREATE TABLE IF NOT EXISTS friends ("
-	                   "id                INTEGER PRIMARY KEY AUTOINCREMENT,"
-	                   "friend_list_id    INTEGER,"
-	                   "sip_uri           TEXT,"
-	                   "subscribe_policy  INTEGER,"
-	                   "send_subscribe    INTEGER,"
-	                   "ref_key           TEXT,"
-	                   "vCard             TEXT,"
-	                   "vCard_etag        TEXT,"
-	                   "vCard_url         TEXT,"
-	                   "presence_received INTEGER"
-	                   ");",
-	                   0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "END", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-
-	ret = sqlite3_exec(db, "BEGIN", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	for (i = 0; i < 20000; i++) {
-		buf = sqlite3_mprintf("INSERT INTO friends VALUES(NULL,%u,%Q,%i,%i,'key_%i',%Q,%Q,%Q,%i);", i, "dummy_addr", 0,
-		                      0, i, NULL, NULL, NULL, 0);
-
-		ret = sqlite3_exec(db, buf, 0, 0, &errmsg);
-		BC_ASSERT_TRUE(ret == SQLITE_OK);
-		sqlite3_free(buf);
-		// ms_message("%i",i);
-	}
-
-	ret = sqlite3_exec(db, "END", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-
-	bctbx_get_cur_time(&t1);
-	ms_message("Start : %li : %li\n", (long int)t1.tv_sec, (long int)t1.tv_nsec);
-	for (i = 0; i < 20000; i++) {
-		buf = sqlite3_mprintf("SELECT * FROM friends WHERE ref_key LIKE 'key_%i';", i);
-
-		ret = sqlite3_exec(db, buf, 0, 0, &errmsg);
-		BC_ASSERT_TRUE(ret == SQLITE_OK);
-		sqlite3_free(buf);
-	}
-
-	bctbx_get_cur_time(&t2);
-	ms_message("End : %li : %li\n", (long int)t2.tv_sec, (long int)t2.tv_nsec);
-
-	ret = sqlite3_exec(db, "BEGIN", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "DELETE FROM friends;", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	ret = sqlite3_exec(db, "END", 0, 0, &errmsg);
-	BC_ASSERT_TRUE(ret == SQLITE_OK);
-	sqlite3_close(db);
-}
-
 typedef struct _LinphoneCardDAVStats {
 	int sync_done_count;
 	int new_contact_count;
@@ -546,6 +413,67 @@ carddav_sync_status_changed(LinphoneFriendList *list, LinphoneFriendListSyncStat
 	if (status == LinphoneFriendListSyncFailure || status == LinphoneFriendListSyncSuccessful) {
 		stats->sync_done_count++;
 	}
+}
+
+static void carddav_clean(
+    void) { // This is to ensure the content of the test addressbook is in the correct state for the following tests
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
+	LinphoneFriendListCbs *cbs = NULL;
+	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
+	bctbx_list_t *friends = NULL;
+	bctbx_list_t *friends_iterator = NULL;
+	LinphoneFriend *lf = NULL;
+	LinphoneVcard *lvc = NULL;
+
+	cbs = linphone_factory_create_friend_list_cbs(linphone_factory_get());
+	linphone_friend_list_cbs_set_user_data(cbs, stats);
+	linphone_friend_list_cbs_set_contact_created(cbs, carddav_contact_created);
+	linphone_friend_list_cbs_set_contact_deleted(cbs, carddav_contact_deleted);
+	linphone_friend_list_cbs_set_contact_updated(cbs, carddav_contact_updated);
+	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
+	linphone_friend_list_add_callbacks(lfl, cbs);
+	linphone_friend_list_cbs_unref(cbs);
+	linphone_friend_list_set_display_name(lfl, "CardDAV friend list");
+	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
+	linphone_core_add_friend_list(manager->lc, lfl);
+	linphone_friend_list_unref(lfl);
+
+	BC_ASSERT_STRING_EQUAL(linphone_friend_list_get_revision(lfl), "");
+	linphone_friend_list_synchronize_friends_from_server(lfl);
+	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
+	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
+	BC_ASSERT_STRING_NOT_EQUAL(linphone_friend_list_get_revision(lfl), "");
+	stats->sync_done_count = 0;
+
+	friends = bctbx_list_copy(linphone_friend_list_get_friends(lfl));
+	friends_iterator = friends;
+	while (friends_iterator) {
+		LinphoneFriend *lf = (LinphoneFriend *)friends_iterator->data;
+		linphone_friend_list_remove_friend(lfl, lf);
+		wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
+		BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
+		stats->sync_done_count = 0;
+		stats->removed_contact_count = 0;
+		friends_iterator = bctbx_list_next(friends_iterator);
+	}
+	bctbx_list_free(friends);
+
+	lvc = linphone_vcard_context_get_vcard_from_buffer(
+	    linphone_core_get_vcard_context(manager->lc),
+	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain "
+	    "Berfini\r\nIMPP:sip:sylvain@sip.linphone.org\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nEND:VCARD\r\n");
+	linphone_vcard_set_url(lvc, ME_VCF);
+	lf = linphone_core_create_friend_from_vcard(manager->lc, lvc);
+	linphone_vcard_unref(lvc);
+	linphone_friend_list_add_friend(lfl, lf);
+	linphone_friend_unref(lf);
+	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
+	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
+
+	ms_free(stats);
+	linphone_core_manager_destroy(manager);
 }
 
 static void carddav_integration(void) {
@@ -668,64 +596,135 @@ static void carddav_integration(void) {
 	ms_free(stats);
 }
 
-static void carddav_clean(
-    void) { // This is to ensure the content of the test addressbook is in the correct state for the following tests
-	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
-	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
-	LinphoneFriendListCbs *cbs = NULL;
-	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
-	bctbx_list_t *friends = NULL;
-	bctbx_list_t *friends_iterator = NULL;
-	LinphoneFriend *lf = NULL;
-	LinphoneVcard *lvc = NULL;
+void _onMagicSearchResultsReceived(LinphoneMagicSearch *magic_search) {
+	stats *stat =
+	    (stats *)linphone_magic_search_cbs_get_user_data(linphone_magic_search_get_current_callbacks(magic_search));
+	++stat->number_of_LinphoneMagicSearchResultReceived;
+}
 
-	cbs = linphone_factory_create_friend_list_cbs(linphone_factory_get());
-	linphone_friend_list_cbs_set_user_data(cbs, stats);
-	linphone_friend_list_cbs_set_contact_created(cbs, carddav_contact_created);
-	linphone_friend_list_cbs_set_contact_deleted(cbs, carddav_contact_deleted);
-	linphone_friend_list_cbs_set_contact_updated(cbs, carddav_contact_updated);
-	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
-	linphone_friend_list_add_callbacks(lfl, cbs);
-	linphone_friend_list_cbs_unref(cbs);
-	linphone_friend_list_set_display_name(lfl, "CardDAV friend list");
-	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
-	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
-	linphone_core_add_friend_list(manager->lc, lfl);
-	linphone_friend_list_unref(lfl);
+static void magic_search_carddav_query_from_api(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_new("marie_rc");
 
-	BC_ASSERT_STRING_EQUAL(linphone_friend_list_get_revision(lfl), "");
-	linphone_friend_list_synchronize_friends_from_server(lfl);
-	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
-	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
-	BC_ASSERT_STRING_NOT_EQUAL(linphone_friend_list_get_revision(lfl), "");
-	stats->sync_done_count = 0;
+	// Init Magic search
+	LinphoneMagicSearch *magicSearch = NULL;
+	LinphoneMagicSearchCbs *searchHandler = linphone_factory_create_magic_search_cbs(linphone_factory_get());
+	linphone_magic_search_cbs_set_search_results_received(searchHandler, _onMagicSearchResultsReceived);
+	magicSearch = linphone_magic_search_new(manager->lc);
+	linphone_magic_search_add_callbacks(magicSearch, searchHandler);
 
-	friends = bctbx_list_copy(linphone_friend_list_get_friends(lfl));
-	friends_iterator = friends;
-	while (friends_iterator) {
-		LinphoneFriend *lf = (LinphoneFriend *)friends_iterator->data;
-		linphone_friend_list_remove_friend(lfl, lf);
-		wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
-		BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
-		stats->sync_done_count = 0;
-		stats->removed_contact_count = 0;
-		friends_iterator = bctbx_list_next(friends_iterator);
+	bctbx_list_t *resultList = NULL;
+	stats *stat = get_stats(manager->lc);
+	linphone_magic_search_cbs_set_user_data(searchHandler, stat);
+	LinphoneSearchResult *result = nullptr;
+
+	bctbx_list_t *remoteContactDirectoriesList = linphone_core_get_remote_contact_directories(manager->lc);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(remoteContactDirectoriesList), 0, int, "%d");
+
+	//------------------------------------------------------------------------
+
+	linphone_magic_search_get_contacts_list_async(magicSearch, "", "", LinphoneMagicSearchSourceRemoteCardDAV,
+	                                              LinphoneMagicSearchAggregationNone);
+	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	// no result expected as no CardDAV server is configured
+	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
+
+	LinphoneCardDavParams *carddavParams = linphone_core_create_card_dav_params(manager->lc);
+	bctbx_list_t *fields = bctbx_list_append(NULL, (void *)"FN");
+	fields = bctbx_list_append(fields, (void *)"N");
+	fields = bctbx_list_append(fields, (void *)"IMPP");
+	linphone_card_dav_params_set_user_input_fields(carddavParams, fields);
+	bctbx_list_free(fields);
+	fields = bctbx_list_append(NULL, (void *)"IMPP");
+	linphone_card_dav_params_set_domain_fields(carddavParams, fields);
+	bctbx_list_free(fields);
+	linphone_card_dav_params_set_use_exact_match_policy(carddavParams, FALSE);
+
+	LinphoneRemoteContactDirectory *rcd =
+	    linphone_core_create_card_dav_remote_contact_directory(manager->lc, carddavParams);
+	linphone_remote_contact_directory_set_server_url(rcd, CARDDAV_SERVER);
+	linphone_remote_contact_directory_set_limit(rcd, 0);
+	linphone_remote_contact_directory_set_min_characters(rcd, 0);
+	linphone_remote_contact_directory_set_timeout(rcd, 5);
+	linphone_core_add_remote_contact_directory(manager->lc, rcd);
+	linphone_card_dav_params_unref(carddavParams);
+
+	remoteContactDirectoriesList = linphone_core_get_remote_contact_directories(manager->lc);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(remoteContactDirectoriesList), 1, int, "%d");
+	if (remoteContactDirectoriesList) {
+		bctbx_list_free_with_data(remoteContactDirectoriesList,
+		                          (bctbx_list_free_func)linphone_remote_contact_directory_unref);
 	}
-	bctbx_list_free(friends);
 
-	lvc = linphone_vcard_context_get_vcard_from_buffer(
-	    linphone_core_get_vcard_context(manager->lc),
-	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain "
-	    "Berfini\r\nIMPP:sip:sylvain@sip.linphone.org\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nEND:VCARD\r\n");
-	linphone_vcard_set_url(lvc, ME_VCF);
-	lf = linphone_core_create_friend_from_vcard(manager->lc, lvc);
-	linphone_vcard_unref(lvc);
-	linphone_friend_list_add_friend(lfl, lf);
-	linphone_friend_unref(lf);
-	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
-	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
+	if (linphone_core_vcard_supported()) {
+		linphone_magic_search_get_contacts_list_async(magicSearch, "", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 0 expected as no AuthInfo was provided to do the authentication
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 
-	ms_free(stats);
+		LinphoneAuthInfo *authInfo = linphone_core_create_auth_info(
+		    manager->lc, "tester", NULL, NULL, "40aa5ad3b300405c20c5e4eda2da9751", "BaikalDAV", "dav.example.org");
+		linphone_core_add_auth_info(manager->lc, authInfo);
+		linphone_auth_info_unref(authInfo);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// no filter so 1 expected, the whole address book
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "François Grisez");
+			bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+		}
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "çois", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 1 result expected: François Grisez from FN & N
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "François Grisez");
+			bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+		}
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "sylv", "sip.linphone.org",
+		                                              LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 1 result expected: François Grisez from IMPP
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "François Grisez");
+			bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+		}
+	}
+
+	//------------------------------------------------------------------------
+
+	linphone_core_remove_remote_contact_directory(manager->lc, rcd);
+	remoteContactDirectoriesList = linphone_core_get_remote_contact_directories(manager->lc);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(remoteContactDirectoriesList), 0, int, "%d");
+	linphone_remote_contact_directory_unref(rcd);
+
+	linphone_magic_search_cbs_unref(searchHandler);
+	linphone_magic_search_unref(magicSearch);
+
 	linphone_core_manager_destroy(manager);
 }
 
@@ -831,6 +830,143 @@ static void carddav_server_to_client_and_client_to_sever_sync(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void magic_search_carddav_query_from_config(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_new("marie_carddav_rc");
+
+	// Init Magic search
+	LinphoneMagicSearch *magicSearch = NULL;
+	LinphoneMagicSearchCbs *searchHandler = linphone_factory_create_magic_search_cbs(linphone_factory_get());
+	linphone_magic_search_cbs_set_search_results_received(searchHandler, _onMagicSearchResultsReceived);
+	magicSearch = linphone_magic_search_new(manager->lc);
+	linphone_magic_search_add_callbacks(magicSearch, searchHandler);
+
+	bctbx_list_t *resultList = NULL;
+	stats *stat = get_stats(manager->lc);
+	linphone_magic_search_cbs_set_user_data(searchHandler, stat);
+	LinphoneSearchResult *result = nullptr;
+
+	bctbx_list_t *remoteContactDirectoriesList = linphone_core_get_remote_contact_directories(manager->lc);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(remoteContactDirectoriesList), 1, int,
+	                "%d"); // There is one CardDavParams configured in marie_carddav_rc
+	if (remoteContactDirectoriesList) {
+		bctbx_list_free_with_data(remoteContactDirectoriesList,
+		                          (bctbx_list_free_func)linphone_remote_contact_directory_unref);
+	}
+
+	//------------------------------------------------------------------------
+
+	if (linphone_core_vcard_supported()) {
+		linphone_magic_search_get_contacts_list_async(magicSearch, "", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// no filter so 2 expected : margaux & ghislain, the whole address book
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "Ghislain Mary");
+		}
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "gh", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 1 expected : ghislain (FN, N & IMPP will match)
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "Ghislain Mary");
+		}
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "mar", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 2 expected : margaux (FN, N & IMPP will match) & Ghislain Mary (FN & N) will match
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "marg", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		linphone_magic_search_get_contacts_list_async(magicSearch, "marga", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		linphone_magic_search_get_contacts_list_async(magicSearch, "margau", "", LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		linphone_magic_search_get_contacts_list_async(
+		    magicSearch, "margaux", "", LinphoneMagicSearchSourceRemoteCardDAV, LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 1 expected : margaux
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "Margaux Clerc");
+		}
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "margaux", "sip.test.org",
+		                                              LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// O expected as margaux SIP URI isn't on sip.test.org domain
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "", "sip.test.org",
+		                                              LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// O expected as margaux SIP URI isn't on sip.test.org domain
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "", "sip.linphone.org",
+		                                              LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 2 expected : margaux & ghislain (IMPP will match)
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		if (resultList) {
+			result = (LinphoneSearchResult *)bctbx_list_get_data(resultList);
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(linphone_search_result_get_friend(result)),
+			                       "Ghislain Mary");
+		}
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "robert", "sip.linphone.org",
+		                                              LinphoneMagicSearchSourceRemoteCardDAV,
+		                                              LinphoneMagicSearchAggregationNone);
+		BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		// 0 expected as no contact is named robert
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+
+	//------------------------------------------------------------------------
+
+	linphone_magic_search_cbs_unref(searchHandler);
+	linphone_magic_search_unref(magicSearch);
+
+	linphone_core_manager_destroy(manager);
+}
+
 static void find_friend_by_ref_key_test(void) {
 	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
@@ -917,15 +1053,21 @@ test_t vcard_tests[] = {
     TEST_NO_TAG("vCard phone numbers and SIP addresses", linphone_vcard_phone_numbers_and_sip_addresses),
     TEST_NO_TAG("Friends working if no db set", friends_if_no_db_set),
     TEST_NO_TAG("Friends storage in sqlite database", friends_sqlite_storage),
-    TEST_NO_TAG("20000 Friends storage in sqlite database", friends_sqlite_store_lot_of_friends),
-    TEST_NO_TAG("Find friend in database of 20000 objects", friends_sqlite_find_friend_in_lot_of_friends),
     TEST_ONE_TAG("CardDAV clean", carddav_clean, "CardDAV"), // This is to ensure the content of the test addressbook is
                                                              // in the correct state for the following tests
     TEST_ONE_TAG("CardDAV integration", carddav_integration, "CardDAV"),
+    TEST_TWO_TAGS("Search friend in remote CardDAV server from API",
+                  magic_search_carddav_query_from_api,
+                  "CardDAV",
+                  "MagicSearch"),
     TEST_ONE_TAG("CardDAV multiple synchronizations", carddav_multiple_sync, "CardDAV"),
     TEST_ONE_TAG("CardDAV client to server and server to client sync",
                  carddav_server_to_client_and_client_to_sever_sync,
                  "CardDAV"),
+    TEST_TWO_TAGS("Search friend in remote CardDAV server from config",
+                  magic_search_carddav_query_from_config,
+                  "CardDAV",
+                  "MagicSearch"),
     TEST_NO_TAG("Find friend by ref key", find_friend_by_ref_key_test),
     TEST_NO_TAG("create a map and insert 20000 objects", insert_lot_of_friends_map_test),
     TEST_NO_TAG("Find ref key in 20000 objects map", find_friend_by_ref_key_in_lot_of_friends_test),

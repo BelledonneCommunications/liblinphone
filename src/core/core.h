@@ -79,6 +79,7 @@ class ConferenceScheduler;
 class SalOp;
 class SignalInformation;
 class HttpClient;
+class RemoteContactDirectory;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class Account;
@@ -331,15 +332,10 @@ public:
 
 	void handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, const Content *content);
 
-	// ---------------------------------------------------------------------------
-	// Ldap.
-	// ---------------------------------------------------------------------------
+	const std::list<std::shared_ptr<RemoteContactDirectory>> &getRemoteContactDirectories();
 
-	const std::list<std::shared_ptr<Ldap>> &getLdapList();
-	std::list<std::shared_ptr<Ldap>>::iterator getLdapIterator(int id);
-
-	void addLdap(std::shared_ptr<Ldap> ldap);
-	void removeLdap(std::shared_ptr<Ldap> ldap);
+	void addRemoteContactDirectory(std::shared_ptr<RemoteContactDirectory> remoteContactDirectory);
+	void removeRemoteContactDirectory(std::shared_ptr<RemoteContactDirectory> remoteContactDirectory);
 
 	std::shared_ptr<Address> interpretUrl(const std::string &url, bool chatOrCallUse) const;
 

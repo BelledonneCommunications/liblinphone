@@ -21,7 +21,7 @@
 #ifndef _L_CONFERENCE_SCHEDULER_H_
 #define _L_CONFERENCE_SCHEDULER_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-listener.h"

@@ -24,8 +24,8 @@
 #include <list>
 
 #include "bctoolbox/list.h"
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 
 // =============================================================================
 

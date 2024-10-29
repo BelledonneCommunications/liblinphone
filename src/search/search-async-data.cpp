@@ -46,7 +46,7 @@ bool SearchAsyncData::getCurrentRequest(SearchRequest *result) {
 	return haveRequest;
 }
 
-bool SearchAsyncData::keepOneRequest() {
+bool SearchAsyncData::isRequestPending() {
 	bool haveRequest;
 	ms_mutex_lock(&mLockQueue);
 	do {
@@ -77,12 +77,12 @@ void SearchAsyncData::clear() {
 	mSearchResults.clear();
 }
 
-bool SearchAsyncData::setSearchResults(list<std::shared_ptr<SearchResult>> &resultList) {
+bool SearchAsyncData::setSearchResults(list<shared_ptr<SearchResult>> &resultList) {
 	mSearchResults = resultList;
 	return !mSearchResults.empty();
 }
 
-void SearchAsyncData::addToResults(std::list<std::shared_ptr<SearchResult>> &data) {
+void SearchAsyncData::addToResults(list<shared_ptr<SearchResult>> &data) {
 	if (mSearchResults.empty()) {
 		mSearchResults = data;
 	} else {

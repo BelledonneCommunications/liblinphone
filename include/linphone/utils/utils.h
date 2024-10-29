@@ -279,6 +279,17 @@ std::string computeHa1ForAlgorithm(const std::string &userId,
                                    const std::string &password,
                                    const std::string &realm,
                                    const std::string &algorithm);
+
+LINPHONE_PUBLIC void
+configSetString(LpConfig *lpconfig, const std::string &section, const std::string &key, const std::string &value);
+
+LINPHONE_PUBLIC void configSetStringList(LpConfig *lpconfig,
+                                         const std::string &section,
+                                         const std::string &key,
+                                         const std::list<std::string> &list);
+
+LINPHONE_PUBLIC std::list<std::string>
+configGetStringList(LpConfig *lpconfig, const std::string &section, const std::string &key);
 } // namespace Utils
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version);

@@ -1495,7 +1495,6 @@ public class AndroidPlatformHelper {
         }
     }
 
-
     public void onBluetoothHeadsetStateChanged() {
         onBluetoothHeadsetStateChanged(500);
     }

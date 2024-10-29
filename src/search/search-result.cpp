@@ -96,8 +96,8 @@ bool SearchResult::operator==(const SearchResult &other) const {
 	return getWeight() == other.getWeight();
 }
 
-std::string SearchResult::toString() const {
-	std::ostringstream ss;
+string SearchResult::toString() const {
+	ostringstream ss;
 	ss << getDisplayName();
 
 	const auto &addr = getAddress();
@@ -162,7 +162,7 @@ int SearchResult::getSourceFlags() const {
 	return mSourceFlags;
 }
 
-void SearchResult::merge(const std::shared_ptr<SearchResult> &withResult) {
+void SearchResult::merge(const shared_ptr<SearchResult> &withResult) {
 	bool doOverride = mWeight <= withResult->getWeight();
 
 	if (doOverride) mWeight = withResult->getWeight();

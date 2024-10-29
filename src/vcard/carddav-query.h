@@ -31,9 +31,25 @@ class CardDAVContext;
 class CardDAVResponse;
 class Vcard;
 
+class CardDavPropFilter {
+public:
+	CardDavPropFilter(const std::string &filter, const std::string &field, bool exactMatch) {
+		mFilter = filter;
+		mField = field;
+		mExactMatch = exactMatch;
+	}
+
+	std::string toXmlString() const;
+
+	std::string mFilter;
+	std::string mField;
+	std::string mCollation = "i;unicode-casemap";
+	bool mExactMatch = false; // if false then contains will be used instead
+};
+
 class CardDAVQuery : public UserDataAccessor {
 public:
-	enum class Type { Propfind, AddressbookQuery, AddressbookMultiget, Put, Delete };
+	enum class Type { Propfind, AddressbookQuery, AddressbookQueryWithFilter, AddressbookMultiget, Put, Delete };
 	enum class PropfindType { UserPrincipal, UserAddressBooksHome, AddressBookUrlAndCTAG, AddressBookCTAG };
 
 	CardDAVQuery(CardDAVContext *context);
@@ -45,15 +61,18 @@ public:
 
 	bool isClientToServerSync() const;
 
-	static CardDAVQuery *createUserPrincipalPropfindQuery(CardDAVContext *context);
-	static CardDAVQuery *createUserAddressBookPropfindQuery(CardDAVContext *context);
-	static CardDAVQuery *createAddressBookUrlAndCtagPropfindQuery(CardDAVContext *context);
-	static CardDAVQuery *createAddressBookCtagPropfindQuery(CardDAVContext *context);
-	static CardDAVQuery *createAddressbookQuery(CardDAVContext *context);
-	static CardDAVQuery *createAddressbookMultigetQuery(CardDAVContext *context,
-	                                                    const std::list<CardDAVResponse> &list);
-	static CardDAVQuery *createDeleteQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard);
-	static CardDAVQuery *createPutQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard);
+	static std::shared_ptr<CardDAVQuery> createUserPrincipalPropfindQuery(CardDAVContext *context);
+	static std::shared_ptr<CardDAVQuery> createUserAddressBookPropfindQuery(CardDAVContext *context);
+	static std::shared_ptr<CardDAVQuery> createAddressBookUrlAndCtagPropfindQuery(CardDAVContext *context);
+	static std::shared_ptr<CardDAVQuery> createAddressBookCtagPropfindQuery(CardDAVContext *context);
+	static std::shared_ptr<CardDAVQuery> createAddressbookQuery(CardDAVContext *context);
+	static std::shared_ptr<CardDAVQuery> createAddressbookQueryWithFilter(
+	    CardDAVContext *context, const std::list<CardDavPropFilter> &propFilters, unsigned int limit);
+	static std::shared_ptr<CardDAVQuery> createAddressbookMultigetQuery(CardDAVContext *context,
+	                                                                    const std::list<CardDAVResponse> &list);
+	static std::shared_ptr<CardDAVQuery> createDeleteQuery(CardDAVContext *context,
+	                                                       const std::shared_ptr<Vcard> &vcard);
+	static std::shared_ptr<CardDAVQuery> createPutQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard);
 
 private:
 	CardDAVContext *mContext = nullptr;
@@ -64,7 +83,6 @@ private:
 	std::string mDepth;
 	std::string mIfmatch;
 	PropfindType mPropfindType;
-	belle_http_request_listener_t *mHttpRequestListener = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

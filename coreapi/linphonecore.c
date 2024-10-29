@@ -2795,7 +2795,7 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 
 	_linphone_core_apply_transports(lc); // This will create SIP sockets.
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->reloadLdapList();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->reloadRemoteContactDirectories();
 	linphone_core_set_state(lc, LinphoneGlobalOn, "On");
 }
 

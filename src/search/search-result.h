@@ -21,9 +21,9 @@
 #ifndef _L_SEARCH_RESULT_H_
 #define _L_SEARCH_RESULT_H_
 
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
-#include <belle-sip/object++.hh>
 
 #include "linphone/utils/general.h"
 

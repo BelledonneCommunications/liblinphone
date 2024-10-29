@@ -82,6 +82,7 @@ public:
 	HttpRequest &setBody(const Content &content);
 	/* Execute the request, ie send it and upon response execute the responseHandler lambda.*/
 	void execute(const ResponseHandler &responseHandler);
+	void cancel();
 
 private:
 	~HttpRequest();

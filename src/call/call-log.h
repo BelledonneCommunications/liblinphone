@@ -21,7 +21,7 @@
 #ifndef _L_CALL_LOG_H_
 #define _L_CALL_LOG_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "core/core-accessor.h"
 #include "linphone/api/c-types.h"

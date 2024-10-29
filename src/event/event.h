@@ -21,7 +21,7 @@
 #ifndef _L_EVENT_H_
 #define _L_EVENT_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-accessor.h"

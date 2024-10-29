@@ -24,7 +24,7 @@
 #include <map>
 #include <string>
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "linphone/api/c-participant-device-identity.h"
 #include "linphone/utils/general.h"

@@ -157,6 +157,7 @@ set(RC_FILES
 	rcfiles/lise_rc
 	rcfiles/marie2_rc
 	rcfiles/marie_bodyless_rc
+	rcfiles/marie_carddav_rc
 	rcfiles/marie_dependent_proxy_rc
 	rcfiles/marie_dtls_srtp_immediate_rc
 	rcfiles/marie_dual_proxy_2_rc

@@ -22,10 +22,10 @@
 #define FACTORY_H_
 
 #include "auth-info/bearer-token.h"
+#include "belle-sip/object++.hh"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/conference-info.h"
 #include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"

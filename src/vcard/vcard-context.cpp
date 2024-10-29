@@ -35,7 +35,7 @@ VcardContext::VcardContext(bool useVCard3Grammar) {
 	} else {
 		lInfo() << "[vCard] Creating parser using 4.0 grammar (RFC 6350/6358)";
 	}
-	mParser = std::shared_ptr<belcard::BelCardParser>(belcard::BelCardParser::getInstance(useVCard3Grammar));
+	mParser = shared_ptr<belcard::BelCardParser>(belcard::BelCardParser::getInstance(useVCard3Grammar));
 }
 
 VcardContext *VcardContext::clone() const {
@@ -44,9 +44,9 @@ VcardContext *VcardContext::clone() const {
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<Vcard> VcardContext::getVcardFromBuffer(const std::string &buffer) const {
+shared_ptr<Vcard> VcardContext::getVcardFromBuffer(const string &buffer) const {
 	if (buffer.empty()) return nullptr;
-	std::shared_ptr<belcard::BelCard> belCard = mParser->parseOne(buffer);
+	shared_ptr<belcard::BelCard> belCard = mParser->parseOne(buffer);
 	if (belCard) {
 		return Vcard::create(belCard);
 	} else {
@@ -55,10 +55,10 @@ std::shared_ptr<Vcard> VcardContext::getVcardFromBuffer(const std::string &buffe
 	}
 }
 
-std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromBuffer(const std::string &buffer) const {
-	std::list<std::shared_ptr<Vcard>> result;
+list<shared_ptr<Vcard>> VcardContext::getVcardListFromBuffer(const string &buffer) const {
+	list<shared_ptr<Vcard>> result;
 	if (!buffer.empty()) {
-		std::shared_ptr<belcard::BelCardList> belCards = mParser->parse(buffer);
+		shared_ptr<belcard::BelCardList> belCards = mParser->parse(buffer);
 		if (belCards) {
 			for (const auto &belCard : belCards->getCards())
 				result.push_back(Vcard::create(belCard));
@@ -67,10 +67,10 @@ std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromBuffer(const std
 	return result;
 }
 
-std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromFile(const std::string &filename) const {
-	std::list<std::shared_ptr<Vcard>> result;
+list<shared_ptr<Vcard>> VcardContext::getVcardListFromFile(const string &filename) const {
+	list<shared_ptr<Vcard>> result;
 	if (!filename.empty()) {
-		std::shared_ptr<belcard::BelCardList> belCards = mParser->parseFile(filename);
+		shared_ptr<belcard::BelCardList> belCards = mParser->parseFile(filename);
 		if (belCards) {
 			for (const auto &belCard : belCards->getCards())
 				result.push_back(Vcard::create(belCard));
@@ -90,16 +90,16 @@ VcardContext *VcardContext::clone() const {
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<Vcard> VcardContext::getVcardFromBuffer(BCTBX_UNUSED(const std::string &buffer)) const {
+shared_ptr<Vcard> VcardContext::getVcardFromBuffer(BCTBX_UNUSED(const string &buffer)) const {
 	return nullptr;
 }
 
-std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromBuffer(BCTBX_UNUSED(const std::string &buffer)) const {
-	return std::list<std::shared_ptr<Vcard>>();
+list<shared_ptr<Vcard>> VcardContext::getVcardListFromBuffer(BCTBX_UNUSED(const string &buffer)) const {
+	return list<shared_ptr<Vcard>>();
 }
 
-std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromFile(BCTBX_UNUSED(const std::string &filename)) const {
-	return std::list<std::shared_ptr<Vcard>>();
+list<shared_ptr<Vcard>> VcardContext::getVcardListFromFile(BCTBX_UNUSED(const string &filename)) const {
+	return list<shared_ptr<Vcard>>();
 }
 
 #endif /* VCARD_ENABLED */

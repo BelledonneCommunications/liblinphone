@@ -21,7 +21,7 @@
 #ifndef _L_PARTICIPANT_INFO_H_
 #define _L_PARTICIPANT_INFO_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "conference/participant.h"
 

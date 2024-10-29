@@ -705,8 +705,17 @@ typedef void (*LinphoneMagicSearchCbsSearchResultsReceivedCb)(LinphoneMagicSearc
  * Callback used to notify when LDAP have more results available.
  * @param magic_search #LinphoneMagicSearch object @notnil
  * @param ldap #LinphoneLdap object @notnil
+ * @deprecated 18/11/2024 use #LinphoneMagicSearchCbsMoreResultsAvailableCb instead.
  */
 typedef void (*LinphoneMagicSearchCbsLdapHaveMoreResultsCb)(LinphoneMagicSearch *magic_search, LinphoneLdap *ldap);
+
+/**
+ * Callback used to notify when more results are available for a given #LinphoneMagicSearchSource flag.
+ * @param magic_search #LinphoneMagicSearch object @notnil
+ * @param source The source flag indicating for which type of result there is more results available.
+ */
+typedef void (*LinphoneMagicSearchCbsMoreResultsAvailableCb)(LinphoneMagicSearch *magic_search,
+                                                             LinphoneMagicSearchSource source);
 
 /**
  * @}

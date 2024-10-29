@@ -31,6 +31,8 @@
 #include "linphone/wrapper_utils.h"
 #include "private_structs.h"
 #include "push-notification-message/push-notification-message.h"
+#include "search/remote-contact-directory.h"
+#include "vcard/carddav-params.h"
 
 // =============================================================================
 
@@ -264,12 +266,47 @@ bool_t linphone_core_conference_ics_in_message_body_enabled(const LinphoneCore *
 	                                TRUE);
 }
 
+LinphoneRemoteContactDirectory *linphone_core_create_card_dav_remote_contact_directory(BCTBX_UNUSED(LinphoneCore *core),
+                                                                                       LinphoneCardDavParams *params) {
+	auto cardDavParams = CardDavParams::toCpp(params)->getSharedFromThis();
+	return RemoteContactDirectory::createCObject(cardDavParams);
+}
+
+LinphoneRemoteContactDirectory *linphone_core_create_ldap_remote_contact_directory(BCTBX_UNUSED(LinphoneCore *core),
+                                                                                   LinphoneLdapParams *params) {
+	auto ldapParams = LdapParams::toCpp(params)->getSharedFromThis();
+	return RemoteContactDirectory::createCObject(ldapParams);
+}
+
+void linphone_core_add_remote_contact_directory(LinphoneCore *core,
+                                                LinphoneRemoteContactDirectory *remoteContactDirectory) {
+	CoreLogContextualizer logContextualizer(core);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->addRemoteContactDirectory(
+	    RemoteContactDirectory::toCpp(remoteContactDirectory)->getSharedFromThis());
+}
+
+void linphone_core_remove_remote_contact_directory(LinphoneCore *core,
+                                                   LinphoneRemoteContactDirectory *remoteContactDirectory) {
+	CoreLogContextualizer logContextualizer(core);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeRemoteContactDirectory(
+	    RemoteContactDirectory::toCpp(remoteContactDirectory)->getSharedFromThis());
+}
+
+bctbx_list_t *linphone_core_get_remote_contact_directories(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
+	return RemoteContactDirectory::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getRemoteContactDirectories());
+}
+
+LinphoneCardDavParams *linphone_core_create_card_dav_params(LinphoneCore *core) {
+	return CardDavParams::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
+}
+
 LinphoneLdapParams *linphone_core_create_ldap_params(LinphoneCore *core) {
-	return linphone_ldap_params_new(core);
+	return LdapParams::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
 }
 
 LinphoneLdap *linphone_core_create_ldap(LinphoneCore *core) {
-	return linphone_ldap_new(core);
+	return Ldap::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
 }
 
 LinphoneLdap *linphone_core_create_ldap_with_params(LinphoneCore *core, LinphoneLdapParams *params) {
@@ -280,25 +317,55 @@ LinphoneLdap *linphone_core_create_ldap_with_params(LinphoneCore *core, Linphone
 
 void linphone_core_clear_ldaps(LinphoneCore *core) {
 	CoreLogContextualizer logContextualizer(core);
-	auto list = L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLdapList();
-	for (auto ldap : list) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeLdap(ldap);
+
+	std::list<std::shared_ptr<RemoteContactDirectory>> toErase;
+	for (auto rdc : L_GET_CPP_PTR_FROM_C_OBJECT(core)->getRemoteContactDirectories()) {
+		if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap) {
+			toErase.push_back(rdc);
+		}
+	}
+	for (auto rdc : toErase) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeRemoteContactDirectory(rdc);
 	}
 }
 
 void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ldap) {
 	CoreLogContextualizer logContextualizer(core);
-	L_GET_CPP_PTR_FROM_C_OBJECT(core)->addLdap(Ldap::toCpp(ldap)->getSharedFromThis());
+
+	LinphoneLdapParams *params = linphone_ldap_get_params(ldap);
+	auto ldapParams = LdapParams::toCpp(params)->getSharedFromThis();
+	auto rdc = RemoteContactDirectory::create(ldapParams);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->addRemoteContactDirectory(rdc);
 }
 
 void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap *ldap) {
 	CoreLogContextualizer logContextualizer(core);
-	L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeLdap(Ldap::toCpp(ldap)->getSharedFromThis());
+
+	LinphoneLdapParams *params = linphone_ldap_get_params(ldap);
+	auto ldapParams = LdapParams::toCpp(params)->getSharedFromThis();
+	shared_ptr<RemoteContactDirectory> toRemove = nullptr;
+	for (auto rdc : L_GET_CPP_PTR_FROM_C_OBJECT(core)->getRemoteContactDirectories()) {
+		if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap && rdc->getLdapParams() == ldapParams) {
+			toRemove = rdc;
+			break;
+		}
+	}
+	if (toRemove) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeRemoteContactDirectory(toRemove);
+	}
 }
 
 bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
-	return Ldap::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getLdapList());
+
+	bctbx_list_t *results = NULL;
+	for (auto rdc : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getRemoteContactDirectories()) {
+		if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap) {
+			auto ldap = Ldap::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), rdc->getLdapParams());
+			results = bctbx_list_append(results, ldap);
+		}
+	}
+	return results;
 }
 
 bool_t linphone_core_get_chat_messages_aggregation_enabled(LinphoneCore *core) {

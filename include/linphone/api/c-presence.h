@@ -395,7 +395,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_contact(LinphonePre
 /**
  * Gets the service descriptions of a presence service.
  * @param service The #LinphonePresenceService object to get the contact from. @notnil
- * @return A \bctbx_list{char *} containing the services descriptions. @maybenil
+ * @return A \bctbx_list{char *} containing the services descriptions. @maybenil @tobefreed
  *
  * The returned string is to be freed.
  */

@@ -22,6 +22,8 @@
 #define _L_CARDDAV_CONTEXT_H_
 
 #include "c-wrapper/c-wrapper.h"
+#include "core/core-accessor.h"
+#include "core/core.h"
 #include "http/http-client.h"
 
 // =============================================================================
@@ -30,12 +32,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 class CardDAVQuery;
 class CardDAVResponse;
+class CardDavMagicSearchPlugin;
+class CardDavPropFilter;
 class Friend;
 class FriendList;
 
-class LINPHONE_PUBLIC CardDAVContext : public UserDataAccessor {
+class LINPHONE_PUBLIC CardDAVContext : public CoreAccessor, public UserDataAccessor {
 public:
-	CardDAVContext(const std::shared_ptr<FriendList> &friendList);
+	CardDAVContext(const std::shared_ptr<Core> &core);
 	CardDAVContext(const CardDAVContext &other) = delete;
 	virtual ~CardDAVContext() = default;
 
@@ -62,14 +66,12 @@ public:
 		mSynchronizationDoneCb = cb;
 	}
 
-	// Other
-	bool isValid() const {
-		return mFriendList != nullptr;
-	}
-
 	void deleteVcard(const std::shared_ptr<Friend> &f);
 	void putVcard(const std::shared_ptr<Friend> &f);
-	void synchronize();
+	void synchronize(std::shared_ptr<FriendList> friendList);
+
+	void setMagicSearchPlugin(const std::shared_ptr<CardDavMagicSearchPlugin> &plugin);
+	void queryVcards(const std::string serverUrl, const std::list<CardDavPropFilter> &propFilters, unsigned int limit);
 
 private:
 	void clientToServerSyncDone(bool success, const std::string &msg);
@@ -82,18 +84,19 @@ private:
 	void fetchVcards();
 	void pullVcards(const std::list<CardDAVResponse> &list);
 
-	void queryWellKnown(CardDAVQuery *query);
+	void queryWellKnown(std::shared_ptr<CardDAVQuery> query);
 	void retrieveUserPrincipalUrl();
 	void retrieveUserAddressBooksHomeUrl();
 	void retrieveAddressBookUrlAndCtag();
 	void retrieveAddressBookCtag();
 
-	void sendQuery(CardDAVQuery *query);
-	void setSchemeAndHostIfNotDoneYet(CardDAVQuery *query);
-	void processRedirect(CardDAVQuery *query, const std::string &location);
-	void processQueryResponse(CardDAVQuery *query, const HttpResponse &response);
+	void sendQuery(const std::shared_ptr<CardDAVQuery> &query, bool cancelCurrentIfAny = false);
+	void setSchemeAndHostIfNotDoneYet(std::shared_ptr<CardDAVQuery> query);
+	void processRedirect(std::shared_ptr<CardDAVQuery> query, const std::string &location);
+	void processQueryResponse(std::shared_ptr<CardDAVQuery> query, const HttpResponse &response);
 	void serverToClientSyncDone(bool success, const std::string &msg);
 	void vcardsFetched(const std::list<CardDAVResponse> &vCards);
+	void magicSearchResultsVcardsPulled(const std::list<CardDAVResponse> &vCards);
 	void vcardsPulled(const std::list<CardDAVResponse> &vCards);
 
 	static std::string generateUrlFromServerAddressAndUid(const std::string &serverUrl);
@@ -104,12 +107,16 @@ private:
 	static std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
 
-	std::shared_ptr<FriendList> mFriendList = nullptr;
 	std::string mCtag = "";
 	std::string mSyncUri = "";
 	std::string mScheme = "http";
 	std::string mHost = "";
 	bool mWellKnownQueried = true;
+	HttpRequest *mHttpRequest = nullptr;
+	std::shared_ptr<CardDAVQuery> mQuery = nullptr;
+
+	std::shared_ptr<FriendList> mFriendList = nullptr;
+	std::weak_ptr<CardDavMagicSearchPlugin> mCardDavMagicSearchPlugin;
 
 	std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> mContactCreatedCb = nullptr;
 	std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> mContactRemovedCb = nullptr;

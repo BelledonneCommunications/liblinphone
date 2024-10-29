@@ -47,10 +47,15 @@
 #include "magic-search.h"
 #include "presence/presence-model.h"
 #include "private.h"
+#include "remote-contact-directory.h"
 #include "search-async-data.h"
 
 #ifdef LDAP_ENABLED
 #include "ldap/ldap-magic-search-plugin.h"
+#endif
+
+#ifdef VCARD_ENABLED
+#include "vcard/carddav-magic-search-plugin.h"
 #endif
 
 using namespace std;
@@ -149,12 +154,10 @@ bool MagicSearch::iterate(void) {
 			list<shared_ptr<SearchResult>> results = mAsyncData.getSearchResults();
 			processResults(results);
 			_linphone_magic_search_notify_search_results_received(toC());
-		} else {
-			lInfo() << "[Magic Search] Cancelling : " << request.getFilter();
 		}
 
 		mAsyncData.clear();
-		if (mAsyncData.keepOneRequest()) {
+		if (mAsyncData.isRequestPending()) {
 			if (mAutoResetCache) resetSearchCache();
 			mState = STATE_START;
 		} else mState = STATE_END;
@@ -181,8 +184,9 @@ void MagicSearch::getContactListFromFilterAsync(const string &filter,
 		}
 		mState = STATE_START;
 		mIteration = this->getCore()->createTimer(bind(&MagicSearch::iterate, this), 100, "MagicSearch");
-	} else // A request is already computing. Enter in cancelling state.
+	} else { // A request is already computing. Enter in cancelling state.
 		mState = STATE_CANCEL;
+	}
 }
 
 // Public
@@ -205,6 +209,7 @@ list<shared_ptr<SearchResult>> MagicSearch::getContactListFromFilter(const strin
 
 	auto allResults = processResults(resultList);
 	lInfo() << "[Magic Search] Found in total [" << allResults.size() << "] results";
+
 	return allResults;
 }
 
@@ -345,22 +350,31 @@ void MagicSearch::initPlugins() {
 	}
 	mPlugins.clear();
 
+	auto remoteContactDirectories = getCore()->getRemoteContactDirectories();
+	for (auto remoteContactDirectory : remoteContactDirectories) {
+		if (remoteContactDirectory->getType() == LinphoneRemoteContactDirectoryTypeCardDav) {
+#ifdef VCARD_ENABLED
+			auto params = remoteContactDirectory->getCardDavParams();
+			if (params) {
+				auto plugin = make_shared<CardDavMagicSearchPlugin>(getCore(), *this, params);
+				mPlugins.push_back(plugin);
+			}
+#endif
+		} else {
 #ifdef LDAP_ENABLED
-	int limit = -1;
-	if (getLimitedSearch()) {
-		limit = (int)getSearchLimit();
-	}
-
-	auto ldapList = getCore()->getLdapList();
-	for (auto itLdap : ldapList) {
-		auto params = itLdap->getLdapParams();
-		if (params->getEnabled()) {
-			auto provider = make_shared<LdapContactProvider>(getCore(), itLdap, limit);
-			auto plugin = make_shared<LdapMagicSearchPlugin>(getCore(), *this, provider);
-			mPlugins.push_back(plugin);
+			auto params = remoteContactDirectory->getLdapParams();
+			if (params && params->getEnabled()) {
+				int limit = -1;
+				if (getLimitedSearch()) {
+					limit = (int)getSearchLimit();
+				}
+				auto provider = make_shared<LdapContactProvider>(getCore(), params, limit);
+				auto plugin = make_shared<LdapMagicSearchPlugin>(getCore(), *this, provider);
+				mPlugins.push_back(plugin);
+			}
+#endif
 		}
 	}
-#endif
 }
 
 const list<shared_ptr<SearchResult>> &MagicSearch::getSearchCache() const {
@@ -564,12 +578,14 @@ bool MagicSearch::arePluginsProcessingDone(SearchAsyncData *asyncData) const {
 	bctbx_get_cur_time(&currentTime);
 
 	for (auto plugin : mPlugins) {
-		const auto results = plugin->getResults();
-
 		timeout = startTime;
 		bctbx_timespec_add(&timeout, plugin->getTimeout());
 		if (plugin->getHasEnded() || bctbx_timespec_compare(&currentTime, &timeout) > 0) {
-			if (!plugin->getHasEnded()) plugin->stop();
+			if (!plugin->getHasEnded()) {
+				lWarning() << "[Magic Search] Plugin [" << plugin->getDisplayName()
+				           << "] reached it's timeout, stopping it";
+				plugin->stop();
+			}
 		} else {
 			areAllPluginsDoneSearching = false;
 		}
@@ -602,6 +618,8 @@ void MagicSearch::beginNewSearchAsync(const SearchRequest &request, SearchAsyncD
 
 	for (auto plugin : mPlugins) {
 		if ((sourceFlags & plugin->getSource()) == plugin->getSource()) {
+			lInfo() << "[Magic Search] Found plugin [" << plugin->getDisplayName()
+			        << "] that matches request source flag, starting search";
 			plugin->startSearchAsync(filter, domain, asyncData);
 		}
 	}
@@ -630,7 +648,9 @@ void MagicSearch::mergeResults(SearchAsyncData *asyncData) {
 
 	for (auto plugin : mPlugins) {
 		const list<shared_ptr<SearchResult>> &pluginResults = plugin->getResults();
-		addResultsToResultsList(pluginResults, results);
+		if (!pluginResults.empty()) {
+			addResultsToResultsList(pluginResults, results);
+		}
 	}
 
 	asyncData->setSearchResults(results);
@@ -654,6 +674,8 @@ MagicSearch::beginNewSearch(const string &filter, const string &withDomain, int 
 
 	for (auto plugin : mPlugins) {
 		if ((sourceFlags & plugin->getSource()) == plugin->getSource()) {
+			lInfo() << "[Magic Search] Found plugin [" << plugin->getDisplayName()
+			        << "] that matches request source flag, starting search";
 			auto found = plugin->startSearch(filter, withDomain);
 			addResultsToResultsList(found, resultList);
 		}
@@ -860,7 +882,7 @@ bool MagicSearch::checkDomain(const shared_ptr<Friend> &lFriend,
 	if (withDomain == lAddress->getDomain()) return true;
 
 	if (!lFriend) return false;
-	const std::shared_ptr<PresenceModel> &presenceModel = lFriend->getPresenceModelForAddress(lAddress);
+	const shared_ptr<PresenceModel> &presenceModel = lFriend->getPresenceModelForAddress(lAddress);
 	if (!presenceModel || presenceModel->getContact().empty()) return false;
 
 	Address addrPresence = Address(presenceModel->getContact());

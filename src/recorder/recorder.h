@@ -21,7 +21,7 @@
 #ifndef _L_RECORDER_H_
 #define _L_RECORDER_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 #include <mediastreamer2/msmediarecorder.h>
 #include <mediastreamer2/mssndcard.h>
 #include <mediastreamer2/mswebcam.h>

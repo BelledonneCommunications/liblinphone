@@ -24,7 +24,7 @@
 #include <map>
 #include <vector>
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "address/address.h"
 #include "dictionary/dictionary.h"

@@ -32,12 +32,28 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+string CardDavPropFilter::toXmlString() const {
+	ostringstream ss;
+	ss << "<card:prop-filter name=\"" << mField << "\"><card:text-match";
+	if (!mCollation.empty()) {
+		ss << " collation=\"" << mCollation << "\"";
+	}
+	if (mExactMatch) {
+		ss << " match-type=\"equals\"";
+	} else {
+		ss << " match-type=\"contains\"";
+	}
+	ss << ">" << mFilter << "</card:text-match></card:prop-filter>";
+	return ss.str();
+}
+
+// =============================================================================
+
 CardDAVQuery::CardDAVQuery(CardDAVContext *context) {
 	mContext = context;
 }
 
 CardDAVQuery::~CardDAVQuery() {
-	if (mHttpRequestListener) belle_sip_object_unref(mHttpRequestListener);
 }
 
 // -----------------------------------------------------------------------------
@@ -46,6 +62,7 @@ bool CardDAVQuery::isClientToServerSync() const {
 	switch (mType) {
 		case Type::Propfind:
 		case Type::AddressbookQuery:
+		case Type::AddressbookQueryWithFilter:
 		case Type::AddressbookMultiget:
 			return false;
 		case Type::Put:
@@ -59,14 +76,14 @@ bool CardDAVQuery::isClientToServerSync() const {
 
 // -----------------------------------------------------------------------------
 
-CardDAVQuery *CardDAVQuery::createAddressbookMultigetQuery(CardDAVContext *context,
-                                                           const std::list<CardDAVResponse> &list) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createAddressbookMultigetQuery(CardDAVContext *context,
+                                                                      const list<CardDAVResponse> &list) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mDepth = "1";
 	query->mMethod = "REPORT";
 	query->mUrl = context->mSyncUri;
 	query->mType = Type::AddressbookMultiget;
-	std::stringstream ssBody;
+	stringstream ssBody;
 	ssBody << "<card:addressbook-multiget xmlns:d=\"DAV:\" "
 	          "xmlns:card=\"urn:ietf:params:xml:ns:carddav\"><d:prop><d:getetag "
 	          "/><card:address-data content-type='text/vcard' version='4.0'/></d:prop>";
@@ -77,8 +94,8 @@ CardDAVQuery *CardDAVQuery::createAddressbookMultigetQuery(CardDAVContext *conte
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createAddressbookQuery(CardDAVContext *context) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createAddressbookQuery(CardDAVContext *context) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mDepth = "1";
 	query->mBody =
 	    "<card:addressbook-query xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\"><d:prop><d:getetag "
@@ -89,8 +106,37 @@ CardDAVQuery *CardDAVQuery::createAddressbookQuery(CardDAVContext *context) {
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createDeleteQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createAddressbookQueryWithFilter(CardDAVContext *context,
+                                                                        const list<CardDavPropFilter> &propFilters,
+                                                                        unsigned int limit) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
+	query->mDepth = "1";
+
+	ostringstream carddavQuery;
+	carddavQuery
+	    << "<card:addressbook-query xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\"><d:prop><d:getetag "
+	       "/></d:prop>";
+	if (!propFilters.empty()) {
+		carddavQuery << "<card:filter>";
+		for (auto propFilter : propFilters) {
+			carddavQuery << propFilter.toXmlString();
+		}
+		carddavQuery << "</card:filter>";
+	}
+	if (limit > 0) {
+		carddavQuery << "<card:limit><card:nresults>" << limit << "</card:nresults></card:limit>";
+	}
+	carddavQuery << "</card:addressbook-query>";
+	query->mBody = carddavQuery.str();
+
+	query->mMethod = "REPORT";
+	query->mUrl = context->mSyncUri;
+	query->mType = Type::AddressbookQueryWithFilter;
+	return query;
+}
+
+shared_ptr<CardDAVQuery> CardDAVQuery::createDeleteQuery(CardDAVContext *context, const shared_ptr<Vcard> &vcard) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mIfmatch = vcard->getEtag();
 	query->mMethod = "DELETE";
 	query->mUrl = vcard->getUrl();
@@ -98,8 +144,8 @@ CardDAVQuery *CardDAVQuery::createDeleteQuery(CardDAVContext *context, const std
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createUserPrincipalPropfindQuery(CardDAVContext *context) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createUserPrincipalPropfindQuery(CardDAVContext *context) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mDepth = "0";
 	query->mBody = "<d:propfind xmlns:d=\"DAV:\"><d:prop><d:current-user-principal /></d:prop></d:propfind>";
 	query->mMethod = "PROPFIND";
@@ -109,8 +155,8 @@ CardDAVQuery *CardDAVQuery::createUserPrincipalPropfindQuery(CardDAVContext *con
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createUserAddressBookPropfindQuery(CardDAVContext *context) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createUserAddressBookPropfindQuery(CardDAVContext *context) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mDepth = "0";
 	query->mBody =
 	    "<d:propfind xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\"><d:prop><card:addressbook-home-set "
@@ -122,8 +168,8 @@ CardDAVQuery *CardDAVQuery::createUserAddressBookPropfindQuery(CardDAVContext *c
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createAddressBookUrlAndCtagPropfindQuery(CardDAVContext *context) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createAddressBookUrlAndCtagPropfindQuery(CardDAVContext *context) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mDepth = "1"; // This PROPFIND must have Depth 1!
 	query->mBody = "<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\"><d:prop><d:resourcetype "
 	               "/><d:displayname /><cs:getctag /></d:prop></d:propfind>";
@@ -134,8 +180,8 @@ CardDAVQuery *CardDAVQuery::createAddressBookUrlAndCtagPropfindQuery(CardDAVCont
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createAddressBookCtagPropfindQuery(CardDAVContext *context) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createAddressBookCtagPropfindQuery(CardDAVContext *context) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mDepth = "1"; // This PROPFIND must have Depth 1!
 	query->mBody = "<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\"><d:prop><cs:getctag "
 	               "/></d:prop></d:propfind>";
@@ -146,8 +192,8 @@ CardDAVQuery *CardDAVQuery::createAddressBookCtagPropfindQuery(CardDAVContext *c
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createPutQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard) {
-	CardDAVQuery *query = new CardDAVQuery(context);
+shared_ptr<CardDAVQuery> CardDAVQuery::createPutQuery(CardDAVContext *context, const shared_ptr<Vcard> &vcard) {
+	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mIfmatch = vcard->getEtag();
 	query->mBody = vcard->asVcard4String();
 	query->mMethod = "PUT";

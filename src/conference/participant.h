@@ -24,7 +24,7 @@
 #include <ctime>
 #include <list>
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "address/address.h"
 #include "chat/chat-room/abstract-chat-room.h"

@@ -39,6 +39,7 @@ extern "C" {
  *
  * @param lc The #LinphoneCore object. @maybenil
  * @return The newly created #LinphoneLdap object. @notnil @tobefreed
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  */
 LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_new(LinphoneCore *lc);
 
@@ -48,6 +49,7 @@ LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_new(LinphoneCore *lc);
  * @param lc The #LinphoneCore object. @notnil
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The newly created #LinphoneLdap object. @notnil @tobefreed
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  */
 LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_new_with_params(LinphoneCore *lc, LinphoneLdapParams *params);
 
@@ -55,12 +57,14 @@ LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_new_with_params(LinphoneCore *lc, Li
  * Take a reference on a #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @return the same #LinphoneLdap object. @notnil
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  */
 LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_ref(LinphoneLdap *ldap);
 
 /**
  * Release a #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  */
 LINPHONE_PUBLIC void linphone_ldap_unref(LinphoneLdap *ldap);
 
@@ -69,6 +73,7 @@ LINPHONE_PUBLIC void linphone_ldap_unref(LinphoneLdap *ldap);
  *
  * @param ldap The #LinphoneLdap object. @notnil
  * @param params The #LinphoneLdapParams object. @notnil
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  */
 LINPHONE_PUBLIC void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapParams *params);
 
@@ -78,13 +83,15 @@ LINPHONE_PUBLIC void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapPa
  * make your changes on it and apply them using with linphone_ldap_set_params().
  * @param ldap The #LinphoneLdap object. @notnil
  * @return The #LinphoneLdapParams attached to this ldap. @notnil
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  */
-LINPHONE_PUBLIC const LinphoneLdapParams *linphone_ldap_get_params(LinphoneLdap *ldap);
+LINPHONE_PUBLIC LinphoneLdapParams *linphone_ldap_get_params(LinphoneLdap *ldap);
 
 /**
  * Get the #LinphoneCore object to which is associated the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @return The #LinphoneCore object to which is associated the #LinphoneLdap. @notnil
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  **/
 LINPHONE_PUBLIC LinphoneCore *linphone_ldap_get_core(LinphoneLdap *ldap);
 
@@ -92,6 +99,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_ldap_get_core(LinphoneLdap *ldap);
  * Set the index associated to the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @param index The index of the Ldap. Can be -1 : it will be determined on save.
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  **/
 LINPHONE_PUBLIC void linphone_ldap_set_index(LinphoneLdap *ldap, int index);
 
@@ -99,6 +107,7 @@ LINPHONE_PUBLIC void linphone_ldap_set_index(LinphoneLdap *ldap, int index);
  * Get the index of the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @return The index of the Ldap
+ * @deprecated 18/11/2024 #LinphoneLdap object is no longer used, use #LinphoneRemoteContactDirectory instead.
  **/
 LINPHONE_PUBLIC int linphone_ldap_get_index(const LinphoneLdap *ldap);
 

@@ -20,9 +20,9 @@
 #ifndef SIGNAL_INFORMATION_H
 #define SIGNAL_INFORMATION_H
 
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
 #include "linphone/enums/c-enums.h"
-#include <belle-sip/object++.hh>
 
 using namespace std;
 
@@ -31,9 +31,9 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC SignalInformation : public bellesip::HybridObject<LinphoneSignalInformation, SignalInformation> {
 
 public:
-	SignalInformation(){};
+	SignalInformation() {};
 	SignalInformation(LinphoneSignalType type, LinphoneSignalStrengthUnit unit, float value, std::string details = "")
-	    : mType(type), mUnit(unit), mStrength(value), mDetails(details){};
+	    : mType(type), mUnit(unit), mStrength(value), mDetails(details) {};
 	SignalInformation(const SignalInformation &other);
 	virtual ~SignalInformation();
 	SignalInformation *clone() const override;

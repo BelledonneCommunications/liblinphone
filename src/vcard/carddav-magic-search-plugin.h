@@ -18,25 +18,26 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_LDAP_MAGIC_SEARCH_PLUGIN_H_
-#define _L_LDAP_MAGIC_SEARCH_PLUGIN_H_
+#ifndef _L_CARDDAV_MAGIC_SEARCH_PLUGIN_H_
+#define _L_CARDDAV_MAGIC_SEARCH_PLUGIN_H_
 
 #include "core/core.h"
-#include "ldap-contact-provider.h"
+#include "friend/friend.h"
 #include "search/magic-search-plugin.h"
 #include "search/magic-search.h"
 #include "search/search-request.h"
+#include "vcard/carddav-context.h"
+#include "vcard/carddav-params.h"
+#include "vcard/carddav-query.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LdapMagicSearchPlugin : public MagicSearchPlugin {
+class CardDavMagicSearchPlugin : public MagicSearchPlugin,
+                                 public std::enable_shared_from_this<CardDavMagicSearchPlugin> {
 public:
-	LdapMagicSearchPlugin(const std::shared_ptr<Core> &core,
-	                      MagicSearch &magicSearch,
-	                      std::shared_ptr<LdapContactProvider> provider)
-	    : MagicSearchPlugin(core, magicSearch, LinphoneMagicSearchSourceLdapServers, "LDAP") {
-		mProvider = provider;
-	}
+	CardDavMagicSearchPlugin(const std::shared_ptr<Core> &core,
+	                         MagicSearch &magicSearch,
+	                         std::shared_ptr<CardDavParams> params);
 
 	void stop() override;
 
@@ -44,21 +45,24 @@ public:
 
 	void startSearchAsync(const std::string &filter, const std::string &domain, SearchAsyncData *asyncData) override;
 
-	std::list<std::shared_ptr<SearchResult>> getAddressFromLDAPServer(const std::string &filter,
-	                                                                  const std::string &withDomain);
+	void sendQueryAgainAfterDiscoveryProcess();
 
-	void getAddressFromLDAPServerStartAsync(const std::string &filter,
-	                                        const std::string &withDomain,
-	                                        SearchAsyncData *asyncData);
+	void notifyError(const std::string &errorMessage);
 
-	const std::shared_ptr<LdapContactProvider> &getLdapProvider() const {
-		return mProvider;
-	}
+	void processResults(const std::list<std::shared_ptr<Friend>> &friends);
 
 private:
-	std::shared_ptr<LdapContactProvider> mProvider;
+	std::list<CardDavPropFilter> computePropFilters() const;
+
+	std::shared_ptr<CardDAVContext> mCardDavContext;
+	std::string mFilter;
+	std::string mDomain;
+
+	std::shared_ptr<CardDavParams> mParams;
+
+	SearchAsyncData *mAsyncData;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_LDAP_MAGIC_SEARCH_PLUGIN_H_
+#endif // ifndef _L_CARDDAV_MAGIC_SEARCH_PLUGIN_H_

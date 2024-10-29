@@ -18,17 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ldap.h"
+#include "bctoolbox/defs.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "ldap-config-keys.h"
+#include "ldap.h"
 #include "linphone/api/c-ldap-params.h"
-#include "linphone/api/c-ldap.h"
 #include "linphone/core.h"
 #include "linphone/utils/utils.h"
 #include "private.h"
-#include <bctoolbox/defs.h>
+#include "search/remote-contact-directory.h"
 
 #include <string>
 
@@ -38,16 +38,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-const std::string Ldap::gSectionRootKey = "ldap";
-
-Ldap::Ldap(const std::shared_ptr<Core> &lc, int id) : CoreAccessor(lc) {
-	setIndex(id);
-	mParams = LdapParams::create();
+Ldap::Ldap(const std::shared_ptr<Core> &lc) : CoreAccessor(lc) {
+	mParams = LdapParams::create(lc)->toSharedPtr();
 	bctbx_message("LinphoneLdap[%p] created", toC());
 }
 
-Ldap::Ldap(const std::shared_ptr<Core> &lc, std::shared_ptr<LdapParams> params, int id) : CoreAccessor(lc) {
-	setIndex(id);
+Ldap::Ldap(const std::shared_ptr<Core> &lc, const std::shared_ptr<LdapParams> &params) : CoreAccessor(lc) {
 	mParams = params;
 	bctbx_message("LinphoneLdap[%p] created with params", toC());
 }
@@ -56,47 +52,37 @@ Ldap::~Ldap() {
 	bctbx_message("LinphoneLdap[%p] destroyed", toC());
 }
 
-std::shared_ptr<Ldap> Ldap::create(const std::shared_ptr<Core> &lc, const std::string &sectionKey) {
-	std::shared_ptr<Ldap> ldap;
-	int id = getIdFromSectionName(sectionKey);
-	if (id >= 0) {
-		ldap = bellesip::HybridObject<LinphoneLdap, Ldap>::create(
-		    lc, LdapParams::create(lc->getCCore()->config, sectionKey), id); // From Hybrid
-	}
-	return ldap;
-}
-
-int Ldap::getIdFromSectionName(std::string sectionKey) {
-	int id = -1;
-	std::string sectionName;
-	size_t sectionNameIndex = sectionKey.length() - 1;
-	sectionKey = Utils::stringToLower(sectionKey);
-	while (sectionNameIndex > 0 && sectionKey[sectionNameIndex] != '_') // Get the name strip number
-		--sectionNameIndex;
-	if (sectionNameIndex > 0) {
-		sectionName = sectionKey.substr(0, sectionNameIndex);
-		if (sectionName == gSectionRootKey) id = atoi(sectionKey.substr(sectionNameIndex + 1).c_str());
-	} else {
-		if (sectionKey == gSectionRootKey) id = 0;
-	}
-	return id;
-}
-
 void Ldap::setLdapParams(std::shared_ptr<LdapParams> params) {
+	shared_ptr<RemoteContactDirectory> found = nullptr;
+	if (mParams) {
+		for (auto rdc : getCore()->getRemoteContactDirectories()) {
+			if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap && rdc->getLdapParams() == mParams) {
+				found = rdc;
+				break;
+			}
+		}
+	}
 	mParams = params;
-	getCore()->addLdap(this->getSharedFromThis());
+
+	if (found) {
+		getCore()->removeRemoteContactDirectory(found);
+	}
+	auto remoteContactDirectory = RemoteContactDirectory::create(mParams);
+	getCore()->addRemoteContactDirectory(remoteContactDirectory);
 }
 
-std::shared_ptr<const LdapParams> Ldap::getLdapParams() const {
+std::shared_ptr<LdapParams> Ldap::getLdapParams() const {
 	return mParams;
 }
 
 void Ldap::setIndex(int index) {
-	mId = index;
+	if (mParams->mConfigIndex != index) {
+		bctbx_warning("Trying to change LDAPParams config index, don't do it");
+	}
 }
 
 int Ldap::getIndex() const {
-	return mId;
+	return mParams->mConfigIndex;
 }
 
 int Ldap::check() const {
@@ -104,37 +90,15 @@ int Ldap::check() const {
 }
 
 int Ldap::getNewId() const {
-	LpConfig *lConfig = linphone_core_get_config(getCore()->getCCore());
-	// Read configuration
-	bctbx_list_t *bcSections = linphone_config_get_sections_names_list(lConfig);
-	std::vector<int> allIds;
-	for (auto itSections = bcSections; itSections; itSections = itSections->next) {
-		std::string section = static_cast<char *>(itSections->data);
-		int id = getIdFromSectionName(section);
-		if (id >= 0) allIds.push_back(id);
-	}
-	if (bcSections) bctbx_list_free(bcSections);
-	int id = 0;
-	while (std::find(allIds.begin(), allIds.end(), id) != allIds.end())
-		++id;
-	return id;
+	return getIndex();
 }
 
 void Ldap::writeToConfigFile() {
-	auto lConfig = linphone_core_get_config(getCore()->getCCore());
-	if (!mParams) {
-		lWarning() << "writeToConfigFile is called but no LdapParams is set on Ldap [" << this->toC() << "]";
-		return;
-	}
-	if (mId < 0) { // This is a new configuration
-		setIndex(getNewId());
-	} // else this is an update of the configuration
-	mParams->writeToConfigFile(lConfig, gSectionRootKey + "_" + Utils::toString(mId));
+	mParams->writeToConfigFile();
 }
 
 void Ldap::removeFromConfigFile() {
-	auto lConfig = linphone_core_get_config(getCore()->getCCore());
-	linphone_config_clean_section(lConfig, (gSectionRootKey + "_" + Utils::toString(mId)).c_str());
+	mParams->removeFromConfigFile();
 }
 
 LINPHONE_END_NAMESPACE

@@ -23,7 +23,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "call/call.h"
 #include "conference/session/media-session.h"
@@ -68,7 +68,7 @@ inline std::ostream &operator<<(std::ostream &stream, const Alert &alert) {
 
 class AlertTimer {
 public:
-	AlertTimer(){};
+	AlertTimer() {};
 	AlertTimer(uint64_t delay);
 	bool isTimeout(bool autoreset = true);
 
@@ -87,7 +87,7 @@ public:
 	                 bool triggerCondition,
 	                 const std::function<std::shared_ptr<Dictionary>()> &getInformationFunction = nullptr);
 	void getTimer(LinphoneAlertType type, const std::string &section, const std::string &key, int delay);
-	virtual void reset(){};
+	virtual void reset() {};
 	bool getAlertsEnabled();
 
 protected:

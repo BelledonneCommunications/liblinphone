@@ -132,6 +132,10 @@ public:
 	void updateDirtyFriends();
 	void updateRevision(const std::string &revision);
 
+	const std::string &getRevision() const {
+		return mRevision;
+	}
+
 private:
 	LinphoneFriendListStatus addFriend(const std::shared_ptr<Friend> &lf, bool synchronize);
 	void closeSubscriptions();
@@ -191,7 +195,7 @@ private:
 	LinphoneFriendListType mType = LinphoneFriendListTypeDefault;
 	bool mStoreInDb = false;
 #if VCARD_ENABLED
-	CardDAVContext *mCardDavContext = nullptr;
+	std::shared_ptr<CardDAVContext> mCardDavContext;
 #endif
 };
 

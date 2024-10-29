@@ -85,6 +85,7 @@ linphone_magic_search_cbs_set_search_results_received(LinphoneMagicSearchCbs *cb
  * Get the ldap callback on having more results.
  * @param cbs #LinphoneMagicSearchCbs object. @notnil
  * @return The ldap callback on having more results.
+ * @deprecated 18/11/2024 use linphone_magic_search_cbs_get_more_results_available() instead.
  */
 LINPHONE_PUBLIC LinphoneMagicSearchCbsLdapHaveMoreResultsCb
 linphone_magic_search_cbs_get_ldap_have_more_results(const LinphoneMagicSearchCbs *cbs);
@@ -93,10 +94,28 @@ linphone_magic_search_cbs_get_ldap_have_more_results(const LinphoneMagicSearchCb
  * Set the ldap callback on having more results.
  * @param cbs #LinphoneMagicSearchCbs object. @notnil
  * @param cb The ldap callback on having more results.
+ * @deprecated 18/11/2024 use linphone_magic_search_cbs_set_more_results_available() instead.
  */
 LINPHONE_PUBLIC void
 linphone_magic_search_cbs_set_ldap_have_more_results(LinphoneMagicSearchCbs *cbs,
                                                      LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb);
+
+/**
+ * Gets the callback notifying more results for a source flag are available.
+ * @param cbs #LinphoneMagicSearchCbs object. @notnil
+ * @return The more results available callback.
+ */
+LINPHONE_PUBLIC LinphoneMagicSearchCbsMoreResultsAvailableCb
+linphone_magic_search_cbs_get_more_results_available(const LinphoneMagicSearchCbs *cbs);
+
+/**
+ * Sets the callback notifying that more results for a source flag are available.
+ * @param cbs #LinphoneMagicSearchCbs object. @notnil
+ * @return The more results available callback.
+ */
+LINPHONE_PUBLIC void
+linphone_magic_search_cbs_set_more_results_available(LinphoneMagicSearchCbs *cbs,
+                                                     LinphoneMagicSearchCbsMoreResultsAvailableCb cb);
 
 /**
  * @}

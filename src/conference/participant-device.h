@@ -25,7 +25,7 @@
 #include <set>
 #include <string>
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "conference/conference-enums.h"
 

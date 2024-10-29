@@ -21,7 +21,7 @@
 #ifndef _L_DICTIONARY_H_
 #define _L_DICTIONARY_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-types.h"

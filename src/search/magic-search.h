@@ -400,16 +400,23 @@ public:
 	void setResultsReceived(LinphoneMagicSearchCbsSearchResultsReceivedCb cb) {
 		mResultsAvailableCb = cb;
 	}
-	LinphoneMagicSearchCbsLdapHaveMoreResultsCb getMoreResultsAvailable() const {
+	LinphoneMagicSearchCbsLdapHaveMoreResultsCb getLdapMoreResultsAvailable() const {
+		return mLdapMoreResultsAvailableCb;
+	}
+	void setLdapMoreResultsAvailable(LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb) {
+		mLdapMoreResultsAvailableCb = cb;
+	}
+	LinphoneMagicSearchCbsMoreResultsAvailableCb getMoreResultsAvailable() const {
 		return mMoreResultsAvailableCb;
 	}
-	void setMoreResultsAvailable(LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb) {
+	void setMoreResultsAvailable(LinphoneMagicSearchCbsMoreResultsAvailableCb cb) {
 		mMoreResultsAvailableCb = cb;
 	}
 
 private:
 	LinphoneMagicSearchCbsSearchResultsReceivedCb mResultsAvailableCb = nullptr;
-	LinphoneMagicSearchCbsLdapHaveMoreResultsCb mMoreResultsAvailableCb = nullptr;
+	LinphoneMagicSearchCbsLdapHaveMoreResultsCb mLdapMoreResultsAvailableCb = nullptr;
+	LinphoneMagicSearchCbsMoreResultsAvailableCb mMoreResultsAvailableCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

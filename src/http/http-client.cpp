@@ -134,7 +134,7 @@ const Content &HttpResponse::getBody() const {
 }
 
 HttpRequest::~HttpRequest() {
-	belle_sip_object_unref(mRequest);
+	if (mRequest) belle_sip_object_unref(mRequest);
 	if (mListener) belle_sip_object_unref(mListener);
 }
 
@@ -152,6 +152,11 @@ void HttpRequest::execute(const ResponseHandler &responseHandler) {
 		if (mResponseHandler) mResponseHandler(response);
 		delete this;
 	}
+}
+
+void HttpRequest::cancel() {
+	mResponseHandler = nullptr;
+	belle_http_provider_cancel_request(mClient.getProvider(), mRequest);
 }
 
 void HttpRequest::processResponseHeaders(BCTBX_UNUSED(const belle_http_response_event_t *event)) {

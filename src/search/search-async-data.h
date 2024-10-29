@@ -39,10 +39,10 @@ public:
 	~SearchAsyncData();
 
 	/**
-	 * @brief keepOneRequest Remove all request in queue and keep only the last entered.
-	 * @return true the queue is empty.
+	 * @brief isRequestPending Remove all request in queue and keep only the last entered.
+	 * @return true the queue is not empty.
 	 */
-	bool keepOneRequest();
+	bool isRequestPending();
 
 	/**
 	 * @brief pushRequest Add a request in the queue (FIFO): Thread-safe.

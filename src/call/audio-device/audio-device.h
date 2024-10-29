@@ -20,9 +20,9 @@
 #ifndef AUDIO_DEVICE_H
 #define AUDIO_DEVICE_H
 
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
 #include "linphone/enums/call-enums.h"
-#include <belle-sip/object++.hh>
 #include <mediastreamer2/mssndcard.h>
 
 LINPHONE_BEGIN_NAMESPACE

@@ -25,7 +25,7 @@
 #include <map>
 #include <string>
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "address/address.h"
 #include "c-wrapper/list-holder.h"

@@ -586,4 +586,36 @@ std::ostream &operator<<(std::ostream &ostr, LinphoneGlobalState state) {
 	return ostr;
 }
 
+void Utils::configSetString(LpConfig *lpconfig,
+                            const std::string &section,
+                            const std::string &key,
+                            const std::string &value) {
+	linphone_config_set_string(lpconfig, section.c_str(), key.c_str(), value.c_str());
+}
+
+void Utils::configSetStringList(LpConfig *lpconfig,
+                                const std::string &section,
+                                const std::string &key,
+                                const std::list<std::string> &list) {
+	bctbx_list_t *c_list = NULL;
+	for (std::string value : list) {
+		c_list = bctbx_list_append(c_list, bctbx_strdup(L_STRING_TO_C(value)));
+	}
+	linphone_config_set_string_list(lpconfig, section.c_str(), key.c_str(), c_list);
+	bctbx_list_free_with_data(c_list, (bctbx_list_free_func)ms_free);
+}
+
+std::list<std::string>
+Utils::configGetStringList(LpConfig *lpconfig, const std::string &section, const std::string &key) {
+	bctbx_list_t *c_list = linphone_config_get_string_list(lpconfig, section.c_str(), key.c_str(), NULL);
+	std::list<std::string> cppList;
+	if (c_list != NULL) {
+		for (bctbx_list_t *it = c_list; it != NULL; it = bctbx_list_next(it)) {
+			cppList.push_back(L_C_TO_STRING(static_cast<const char *>(bctbx_list_get_data(it))));
+		}
+		bctbx_list_free_with_data(c_list, (bctbx_list_free_func)bctbx_free);
+	}
+	return cppList;
+}
+
 LINPHONE_END_NAMESPACE

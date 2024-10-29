@@ -21,8 +21,8 @@
 #pragma once
 
 #include "address/address.h"
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 
 LINPHONE_BEGIN_NAMESPACE
 

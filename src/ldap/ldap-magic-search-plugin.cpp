@@ -19,12 +19,13 @@
  */
 
 #include "ldap-magic-search-plugin.h"
+#include "ldap.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 using namespace std;
 
-static void resultsCb(std::list<std::shared_ptr<SearchResult>> searchResults, void *data, bool_t haveMoreResults) {
+static void resultsCb(list<shared_ptr<SearchResult>> searchResults, void *data, bool_t haveMoreResults) {
 	LdapMagicSearchPlugin *ldapPlugin = (LdapMagicSearchPlugin *)data;
 	lInfo() << "[Magic Search][LDAP] Processing results";
 
@@ -47,26 +48,37 @@ static void resultsCb(std::list<std::shared_ptr<SearchResult>> searchResults, vo
 	lInfo() << "[Magic Search][LDAP] Found " << ldapPlugin->getResults().size() << " results in LDAP."
 	        << (haveMoreResults ? " More results are available." : "");
 	if (haveMoreResults) {
-		std::shared_ptr<Ldap> ldap = ldapPlugin->getLdapProvider()->getLdapServer();
+		shared_ptr<LdapParams> ldapParams = ldapPlugin->getLdapProvider()->getLdapServer();
+		shared_ptr<Ldap> ldap = Ldap::create(ldapPlugin->getCore(), ldapParams);
+		// Legacy
 		_linphone_magic_search_notify_ldap_have_more_results(ldapPlugin->getMagicSearch().toC(), ldap->toC());
+
+		_linphone_magic_search_notify_more_results_available(ldapPlugin->getMagicSearch().toC(),
+		                                                     ldapPlugin->getSource());
 	}
 	ldapPlugin->setHasEnded(true);
 }
 
 void LdapMagicSearchPlugin::stop() {
+	setHasEnded(true);
 	mProvider = nullptr;
 }
 
 list<shared_ptr<SearchResult>> LdapMagicSearchPlugin::startSearch(const string &filter, const string &domain) {
 	if (linphone_core_is_network_reachable(getCore()->getCCore())) {
+		setHasEnded(false);
 		return getAddressFromLDAPServer(filter, domain);
 	}
+	setHasEnded(true);
 	return list<shared_ptr<SearchResult>>();
 }
 
 void LdapMagicSearchPlugin::startSearchAsync(const string &filter, const string &domain, SearchAsyncData *asyncData) {
 	if (linphone_core_is_network_reachable(getCore()->getCCore())) {
+		setHasEnded(false);
 		getAddressFromLDAPServerStartAsync(filter, domain, asyncData);
+	} else {
+		setHasEnded(true);
 	}
 }
 

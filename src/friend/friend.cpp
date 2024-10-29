@@ -93,7 +93,7 @@ std::string Friend::toString() const {
 
 LinphoneStatus Friend::setAddress(const std::shared_ptr<const Address> &address) {
 	if (!address) return -1;
-	Address *newAddress = address->clone();
+	shared_ptr<Address> newAddress = address->clone()->toSharedPtr();
 	newAddress->clean();
 
 	const std::shared_ptr<Address> previousAddress = getAddress();
@@ -111,10 +111,11 @@ LinphoneStatus Friend::setAddress(const std::shared_ptr<const Address> &address)
 			    newAddress->getDisplayName().empty() ? newAddress->getUsername() : newAddress->getDisplayName();
 			createVcard(name);
 		}
-		if (mVcard) mVcard->editMainSipAddress(strAddress);
-		newAddress->unref();
+		if (mVcard) {
+			mVcard->editMainSipAddress(strAddress);
+		}
 	} else {
-		mUri = newAddress->getSharedFromThis();
+		mUri = newAddress;
 	}
 
 	return 0;
@@ -521,20 +522,22 @@ void Friend::addAddress(const std::shared_ptr<const Address> &address) {
 		}
 	}
 
-	std::shared_ptr<Address> newAddr = address->clone()->getSharedFromThis();
+	shared_ptr<Address> newAddr = address->clone()->toSharedPtr();
 	newAddr->clean();
-	std::string uri = newAddr->asStringUriOnly();
+	string uri = newAddr->asStringUriOnly();
 	if (mFriendList) addFriendToListMapIfNotInItYet(uri);
 
 	if (linphone_core_vcard_supported()) {
 		if (!mVcard) {
-			const std::string name =
-			    newAddr->getDisplayName().empty() ? newAddr->getUsername() : newAddr->getDisplayName();
+			const string name = newAddr->getDisplayName().empty() ? newAddr->getUsername() : newAddr->getDisplayName();
 			createVcard(name);
 		}
-		if (mVcard) mVcard->addSipAddress(uri);
-	} else if (!mUri) mUri = newAddr;
-	newAddr->unref();
+		if (mVcard) {
+			mVcard->addSipAddress(uri);
+		}
+	} else if (!mUri) {
+		mUri = newAddr;
+	}
 }
 
 void Friend::addPhoneNumber(const std::string &phoneNumber) {

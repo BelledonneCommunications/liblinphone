@@ -1896,7 +1896,6 @@ const std::shared_ptr<Address> CallSession::getContactAddress() const {
 		contactAddress = Address::create();
 		contactAddress->setImpl(op->getContactAddress());
 	} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && account && accountContactAddress) {
-		contactAddress = Address::create();
 		contactAddress = accountContactAddress->clone()->toSharedPtr();
 	} else {
 		lInfo() << "No contact address from op or account for at this time call session " << this << " (local address "

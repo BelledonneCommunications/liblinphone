@@ -32,11 +32,11 @@
 #include "ldap-contact-fields.h"
 #include "ldap-contact-search.h"
 #include "ldap-params.h"
-#include "ldap.h"
-#include "search/search-result.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
 #include "linphone/api/c-types.h"
+#include "search/search-result.h"
+#include "vcard/vcard.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -56,7 +56,7 @@ LINPHONE_BEGIN_NAMESPACE
 //*******************************************	CREATION
 
 LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core,
-                                         std::shared_ptr<Ldap> ldap,
+                                         std::shared_ptr<LdapParams> ldap,
                                          int maxResults) {
 	mAwaitingMessageId = 0;
 	mConnected = false;
@@ -65,7 +65,7 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core,
 	mLd = nullptr;
 	mLdapServer = ldap;
 	mSalContext = NULL;
-	const std::map<std::string, std::vector<std::string>> &config = ldap->getLdapParams()->getConfig();
+	const std::map<std::string, std::vector<std::string>> &config = ldap->getConfig();
 	// register our hook into iterate so that LDAP can do its magic asynchronously.
 	mIteration = mCore->createTimer(std::bind(&LdapContactProvider::iterate, this), 50, "LdapContactProvider");
 	if (!LdapConfigKeys::validConfig(config)) {
@@ -104,20 +104,6 @@ void LdapContactProvider::cleanLdap() {
 		ldap_unbind_ext_s(mLd, NULL, NULL);
 	mConnected = false;
 	mLd = nullptr;
-}
-
-std::vector<std::shared_ptr<LdapContactProvider>> LdapContactProvider::create(const std::shared_ptr<Core> &core,
-                                                                              int maxResults) {
-	std::vector<std::shared_ptr<LdapContactProvider>> providers;
-
-	auto ldapList = core->getLdapList();
-
-	for (auto itLdap : ldapList) {
-		auto params = itLdap->getLdapParams();
-
-		if (params->getEnabled()) providers.push_back(std::make_shared<LdapContactProvider>(core, itLdap, maxResults));
-	}
-	return providers;
 }
 
 void LdapContactProvider::fallbackToNextServerUrl() {
@@ -339,7 +325,7 @@ int LdapContactProvider::getCurrentAction() const {
 	return mCurrentAction;
 }
 
-std::shared_ptr<Ldap> LdapContactProvider::getLdapServer() {
+std::shared_ptr<LdapParams> LdapContactProvider::getLdapServer() {
 	return mLdapServer;
 }
 
@@ -772,6 +758,12 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 								lFriend->addAddress(addr);
 								if (!sipAddress.second.empty()) {
 									lFriend->addPhoneNumber(sipAddress.second);
+								}
+
+								auto vCard = lFriend->getVcard();
+								if (vCard && vCard->getUid().empty()) {
+									vCard->generateUniqueId();
+									lFriend->setRefKey(vCard->getUid());
 								}
 
 								int maxResults = atoi(mConfig["max_results"][0].c_str());

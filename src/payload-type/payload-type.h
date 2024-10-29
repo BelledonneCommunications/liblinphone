@@ -21,9 +21,9 @@
 #ifndef _L_PAYLOAD_TYPE_H_
 #define _L_PAYLOAD_TYPE_H_
 
+#include "belle-sip/object++.hh"
 #include "core/core-accessor.h"
 #include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 
 // =============================================================================
 

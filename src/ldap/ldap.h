@@ -35,21 +35,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Ldap : public bellesip::HybridObject<LinphoneLdap, Ldap>, public CoreAccessor {
 public:
-	Ldap(const std::shared_ptr<Core> &lc, int id = -1);
-	Ldap(const std::shared_ptr<Core> &lc, std::shared_ptr<LdapParams> params, int id = -1);
+	Ldap(const std::shared_ptr<Core> &lc);
+	Ldap(const std::shared_ptr<Core> &lc, const std::shared_ptr<LdapParams> &params);
 	~Ldap();
-
-	// Create a Ldap instance from configuration at section name. Return nullptr if this is not an ldap configuration
-	// (section name different from "ldap_n" or "ldap")
-	static std::shared_ptr<Ldap> create(const std::shared_ptr<Core> &lc, const std::string &sectionKey);
-	static bool isLdapConfigSection(const std::string &sectionKey);
-	static int getIdFromSectionName(std::string sectionKey);
 
 	// Ldap* clone () const override;
 
 	// Account params configuration
 	void setLdapParams(std::shared_ptr<LdapParams> params);
-	std::shared_ptr<const LdapParams> getLdapParams() const;
+	std::shared_ptr<LdapParams> getLdapParams() const;
 
 	void setIndex(int index);
 	int getIndex() const;
@@ -60,12 +54,8 @@ public:
 	void removeFromConfigFile();
 	int getNewId() const;
 
-	static const std::string gSectionRootKey;
-
 private:
 	std::shared_ptr<LdapParams> mParams;
-	int mId = -1; // -1: get an unique identifier on saving.
-	std::string mSectionKey;
 };
 
 LINPHONE_END_NAMESPACE

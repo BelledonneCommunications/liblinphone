@@ -21,9 +21,9 @@
 #define CHAT_MESSAGE_REACTION_H
 
 #include "address/address.h"
+#include "belle-sip/object++.hh"
 #include "chat/chat-message/chat-message.h"
 #include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 #include <chat/chat-message/chat-message-listener.h>
 
 LINPHONE_BEGIN_NAMESPACE

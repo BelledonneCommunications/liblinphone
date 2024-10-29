@@ -22,11 +22,11 @@
 #define _L_ACCOUNT_PARAMS_H_
 
 #include "address/address.h"
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-push-notification-config.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
 #include "utils/custom-params.h"
-#include <belle-sip/object++.hh>
 
 // =============================================================================
 

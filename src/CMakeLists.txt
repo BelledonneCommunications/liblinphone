@@ -287,6 +287,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	search/search-async-data.h
 	search/magic-search-plugin.h
 	search/magic-search.h
+	search/remote-contact-directory.h
 	search/search-request.h
 	search/search-result.h
 	signal-information/signal-information.h
@@ -298,6 +299,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/xml-utils.h
 	variant/variant.h
 	variant/variant-impl.h
+	vcard/carddav-params.h
 	vcard/vcard.h
 	vcard/vcard-context.h
 	xml/patch-ops.h
@@ -355,6 +357,7 @@ if(ENABLE_VCARD)
 		vcard/carddav-context.h
 		vcard/carddav-query.h
 		vcard/carddav-response.h
+		vcard/carddav-magic-search-plugin.h
 	)
 endif()
 
@@ -396,6 +399,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-call-params.cpp
 	c-wrapper/api/c-call-stats.cpp
 	c-wrapper/api/c-call.cpp
+	c-wrapper/api/c-carddav-params.cpp
 	c-wrapper/api/c-chat-message-cbs.cpp
 	c-wrapper/api/c-chat-message-reaction.cpp
 	c-wrapper/api/c-chat-message.cpp
@@ -440,6 +444,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-push-notification-config.cpp
 	c-wrapper/api/c-recorder.cpp
 	c-wrapper/api/c-recorder-params.cpp
+	c-wrapper/api/c-remote-contact-directory.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/api/c-signal-information.cpp
 	c-wrapper/api/c-video-source-descriptor.cpp
@@ -596,6 +601,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/if-addrs.cpp
 	utils/xml-utils.cpp
 	utils/version.cpp
+	vcard/carddav-params.cpp
 	vcard/vcard.cpp
 	vcard/vcard-context.cpp
 	xml/patch-ops.cpp
@@ -625,6 +631,7 @@ if(ENABLE_VCARD)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
 		vcard/carddav-context.cpp
 		vcard/carddav-query.cpp
+		vcard/carddav-magic-search-plugin.cpp
 	)
 endif()
 

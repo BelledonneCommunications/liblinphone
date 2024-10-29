@@ -21,9 +21,11 @@
 #ifndef _L_LDAP_PARAMS_H_
 #define _L_LDAP_PARAMS_H_
 
+#include "belle-sip/object++.hh"
+#include "core/core-accessor.h"
+#include "core/core.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
-#include <belle-sip/object++.hh>
 
 #include <map>
 #include <string>
@@ -33,12 +35,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LdapParams : public bellesip::HybridObject<LinphoneLdapParams, LdapParams> {
+class LdapParams : public bellesip::HybridObject<LinphoneLdapParams, LdapParams>, public CoreAccessor {
 	friend class Ldap;
 
 public:
-	LdapParams();
-	LdapParams(LinphoneConfig *lConfig, const std::string &sectionKey);
+	LdapParams(const std::shared_ptr<Core> &core);
+	LdapParams(const std::shared_ptr<Core> &core, int index);
 	LdapParams(const LdapParams &other);
 	~LdapParams();
 
@@ -96,11 +98,17 @@ public:
 	int checkServer() const;
 	int checkBaseObject() const;
 
-	void writeToConfigFile(LinphoneConfig *config, const std::string &sectionKey);
+	void writeToConfigFile() const;
+	void removeFromConfigFile() const;
 
 private:
+	void lookupConfigEntryIndex();
+	void readFromConfigFile();
+
+	int mConfigIndex = -1;
 	std::map<std::string, std::string> mConfig;
-	std::string mDummyTxt; // For passing persistent data to wrapper (getCustomValue() can return "" without being in config)
+	std::string
+	    mDummyTxt; // For passing persistent data to wrapper (getCustomValue() can return "" without being in config)
 };
 
 LINPHONE_END_NAMESPACE

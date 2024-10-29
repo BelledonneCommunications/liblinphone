@@ -74,7 +74,6 @@ FriendList *FriendList::clone() const {
 void FriendList::release() {
 #if VCARD_ENABLED
 	if (mCardDavContext) {
-		delete mCardDavContext;
 		mCardDavContext = nullptr;
 	}
 #endif
@@ -94,8 +93,10 @@ void FriendList::setRlsAddress(const std::shared_ptr<const Address> &rlsAddr) {
 	mRlsAddr = rlsAddr ? rlsAddr->clone()->toSharedPtr() : nullptr;
 	if (mRlsAddr) {
 		mRlsUri = mRlsAddr->asString();
-		saveInDb();
+	} else {
+		mRlsUri = "";
 	}
+	saveInDb();
 }
 
 void FriendList::setRlsUri(const std::string &rlsUri) {
@@ -114,7 +115,7 @@ void FriendList::setType(LinphoneFriendListType type) {
 
 void FriendList::setUri(const std::string &uri) {
 	mUri = uri;
-	if (!mUri.empty()) saveInDb();
+	saveInDb();
 }
 
 // -----------------------------------------------------------------------------
@@ -229,9 +230,9 @@ void FriendList::exportFriendsAsVcard4File(const std::string &vcardFile) const {
 std::shared_ptr<Friend> FriendList::findFriendByAddress(const std::shared_ptr<const Address> &address) const {
 	string cleanUri;
 	if (address->hasUriParam("gr")) {
-		Address cleanAddress = *address->clone();
-		cleanAddress.removeUriParam("gr");
-		cleanUri = cleanAddress.asStringUriOnly();
+		std::shared_ptr<Address> cleanAddress = address->clone()->toSharedPtr();
+		cleanAddress->removeUriParam("gr");
+		cleanUri = cleanAddress->asStringUriOnly();
 	} else {
 		cleanUri = address->asStringUriOnly();
 	}
@@ -240,10 +241,7 @@ std::shared_ptr<Friend> FriendList::findFriendByAddress(const std::shared_ptr<co
 }
 
 std::shared_ptr<Friend> FriendList::findFriendByPhoneNumber(const std::string &phoneNumber) const {
-	const auto &account = getCore()->getDefaultAccount();
-	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can
-	// handle it
-	if (phoneNumber.empty() || !linphone_account_is_phone_number(account->toC(), L_STRING_TO_C(phoneNumber))) {
+	if (phoneNumber.empty()) {
 		lWarning() << "Phone number [" << phoneNumber << "] isn't valid";
 		return nullptr;
 	}
@@ -256,9 +254,11 @@ std::shared_ptr<Friend> FriendList::findFriendByPhoneNumber(const std::string &p
 	for (const auto &accountInList : accounts) {
 		char *normalizedPhoneNumber =
 		    linphone_account_normalize_phone_number(accountInList->toC(), L_STRING_TO_C(phoneNumber));
-		std::shared_ptr<Friend> result = findFriendByPhoneNumber(accountInList, normalizedPhoneNumber);
-		bctbx_free(normalizedPhoneNumber);
-		if (result) return result;
+		if (normalizedPhoneNumber && strlen(normalizedPhoneNumber) > 0) {
+			std::shared_ptr<Friend> result = findFriendByPhoneNumber(accountInList, normalizedPhoneNumber);
+			bctbx_free(normalizedPhoneNumber);
+			if (result) return result;
+		}
 	}
 	return nullptr;
 }
@@ -278,9 +278,14 @@ std::shared_ptr<Friend> FriendList::findFriendByUri(const std::string &uri) cons
 
 std::list<std::shared_ptr<Friend>>
 FriendList::findFriendsByAddress(const std::shared_ptr<const Address> &address) const {
-	std::shared_ptr<Address> cleanAddress = address->clone()->toSharedPtr();
-	if (cleanAddress->hasUriParam("gr")) cleanAddress->removeUriParam("gr");
-	std::list<std::shared_ptr<Friend>> result = findFriendsByUri(cleanAddress->asStringUriOnly());
+	if (address->hasUriParam("gr")) {
+		std::shared_ptr<Address> cleanAddress = address->clone()->toSharedPtr();
+		cleanAddress->removeUriParam("gr");
+		std::list<std::shared_ptr<Friend>> result = findFriendsByUri(cleanAddress->asStringUriOnly());
+		return result;
+	}
+
+	std::list<std::shared_ptr<Friend>> result = findFriendsByUri(address->asStringUriOnly());
 	return result;
 }
 
@@ -333,7 +338,7 @@ bool FriendList::subscriptionsEnabled() const {
 
 void FriendList::createCardDavContextIfNotDoneYet() {
 	if (mCardDavContext == nullptr) {
-		mCardDavContext = new CardDAVContext(getSharedFromThis());
+		mCardDavContext = make_shared<CardDAVContext>(getCore());
 		mCardDavContext->setContactCreatedCallback(carddavCreated);
 		mCardDavContext->setContactRemovedCallback(carddavRemoved);
 		mCardDavContext->setContactUpdatedCallback(carddavUpdated);
@@ -431,7 +436,7 @@ void FriendList::synchronizeFriendsFromServer() {
 		createCardDavContextIfNotDoneYet();
 		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
 		                                  LinphoneFriendListSyncStarted, nullptr);
-		mCardDavContext->synchronize();
+		mCardDavContext->synchronize(getSharedFromThis());
 	} else {
 		lError() << "Failed to create a CardDAV context for friend list [" << toC() << "] with URI [" << mUri << "]";
 	}
@@ -646,6 +651,7 @@ LinphoneStatus FriendList::importFriendsFromVcard4(const std::list<std::shared_p
 	}
 	int count = 0;
 	for (const auto &vcard : vcards) {
+		if (vcard->getUid().empty()) vcard->generateUniqueId();
 		std::shared_ptr<Friend> f = Friend::create(getCore(), vcard);
 		if (importFriend(f, true) == LinphoneFriendListOK) {
 			f->saveInDb(), count++;

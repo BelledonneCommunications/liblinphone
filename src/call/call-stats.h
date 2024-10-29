@@ -21,7 +21,7 @@
 #ifndef _L_CALL_STATS_H_
 #define _L_CALL_STATS_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "c-wrapper/c-wrapper.h"
 #include "encryption-status.h"

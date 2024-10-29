@@ -21,6 +21,7 @@
 #include "bctoolbox/defs.h"
 
 #include "carddav-context.h"
+#include "carddav-magic-search-plugin.h"
 #include "carddav-query.h"
 #include "carddav-response.h"
 #include "core/core.h"
@@ -38,27 +39,26 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-CardDAVContext::CardDAVContext(const std::shared_ptr<FriendList> &friendList) {
-	mFriendList = friendList;
+CardDAVContext::CardDAVContext(const shared_ptr<Core> &core) : CoreAccessor(core) {
 }
 
 // -----------------------------------------------------------------------------
 
-void CardDAVContext::deleteVcard(const std::shared_ptr<Friend> &f) {
-	if (!isValid() || !f) return;
+void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
+	if (!f) return;
 	if (mCtag.empty()) {
-		std::string msg = "Address book wasn't synchronized yet";
+		string msg = "Address book wasn't synchronized yet";
 		lWarning() << "[CardDAV] " << msg << ", do it first before deleting a vCard";
 		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
 		return;
 	}
 
-	std::shared_ptr<Vcard> vcard = f->getVcard();
+	shared_ptr<Vcard> vcard = f->getVcard();
 	if (vcard && !vcard->getUid().empty() && !vcard->getEtag().empty()) {
 		if (vcard->getUrl().empty()) {
-			std::string url = CardDAVContext::generateUrlFromServerAddressAndUid(mSyncUri);
+			string url = CardDAVContext::generateUrlFromServerAddressAndUid(mSyncUri);
 			if (url.empty()) {
-				const std::string msg =
+				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, "
 				    "can't delete it";
 				lWarning() << "[CardDAV] " << msg;
@@ -70,7 +70,7 @@ void CardDAVContext::deleteVcard(const std::shared_ptr<Friend> &f) {
 		}
 		sendQuery(CardDAVQuery::createDeleteQuery(this, vcard));
 	} else {
-		std::string msg;
+		string msg;
 		if (!vcard) msg = "vCard is NULL";
 		else if (vcard->getUid().empty()) msg = "vCard doesn't have an UID";
 		else if (vcard->getEtag().empty()) msg = "vCard doesn't have an eTag";
@@ -79,22 +79,22 @@ void CardDAVContext::deleteVcard(const std::shared_ptr<Friend> &f) {
 	}
 }
 
-void CardDAVContext::putVcard(const std::shared_ptr<Friend> &f) {
-	if (!isValid() || !f) return;
+void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
+	if (!f) return;
 	if (mCtag.empty()) {
-		std::string msg = "Address book wasn't synchronized yet";
+		string msg = "Address book wasn't synchronized yet";
 		lWarning() << "[CardDAV] " << msg << ", do it first before putting a vCard";
 		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
 		return;
 	}
 
-	std::shared_ptr<Vcard> vcard = f->getVcard();
+	shared_ptr<Vcard> vcard = f->getVcard();
 	if (vcard) {
 		if (vcard->getUid().empty()) vcard->generateUniqueId();
 		if (vcard->getUrl().empty()) {
-			std::string url = CardDAVContext::generateUrlFromServerAddressAndUid(mSyncUri);
+			string url = CardDAVContext::generateUrlFromServerAddressAndUid(mSyncUri);
 			if (url.empty()) {
-				const std::string msg =
+				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, can't push it";
 				lWarning() << "[CardDAV] " << msg;
 				if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
@@ -103,21 +103,22 @@ void CardDAVContext::putVcard(const std::shared_ptr<Friend> &f) {
 				vcard->setUrl(url);
 			}
 		}
-		CardDAVQuery *query = CardDAVQuery::createPutQuery(this, vcard);
+		shared_ptr<CardDAVQuery> query = CardDAVQuery::createPutQuery(this, vcard);
 		query->setUserData(linphone_friend_ref(f->toC()));
 		sendQuery(query);
 	} else {
-		const std::string msg = "vCard is NULL";
+		const string msg = "vCard is NULL";
 		lError() << "[CardDAV] " << msg;
 		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
 	}
 }
 
-void CardDAVContext::synchronize() {
-	if (!isValid()) return;
+void CardDAVContext::synchronize(shared_ptr<FriendList> friendList) {
+	if (!friendList) return;
 
-	mCtag = mFriendList->mRevision;
-	mSyncUri = mFriendList->getUri();
+	mFriendList = friendList;
+	mCtag = friendList->getRevision();
+	mSyncUri = friendList->getUri();
 
 	if (!mCtag.empty()) {
 		lInfo() << "[CardDAV] A synchronization was already made, only query server CTAG and compare it with locally "
@@ -131,16 +132,45 @@ void CardDAVContext::synchronize() {
 	}
 }
 
+void CardDAVContext::setMagicSearchPlugin(const shared_ptr<CardDavMagicSearchPlugin> &plugin) {
+	if (plugin == nullptr) {
+		if (mHttpRequest) {
+			lWarning() << "[CardDAV] Cancelling HTTP request";
+			mHttpRequest->cancel();
+			mHttpRequest = nullptr;
+		}
+		mCardDavMagicSearchPlugin.reset();
+	} else {
+		mCardDavMagicSearchPlugin = plugin;
+	}
+}
+
+void CardDAVContext::queryVcards(const string serverUrl,
+                                 const list<CardDavPropFilter> &propFilters,
+                                 unsigned int limit) {
+	if (mSyncUri.empty()) {
+		lInfo() << "[CardDAV] Address book URL isn't known yet for sure, starting discovery process using provided "
+		           "server URL ["
+		        << serverUrl << "]";
+		mSyncUri = serverUrl;
+		mWellKnownQueried = false;
+		retrieveUserPrincipalUrl();
+	} else {
+		lInfo() << "[CardDAV] Start querying server [" << mSyncUri << "] for vCards";
+		sendQuery(CardDAVQuery::createAddressbookQueryWithFilter(this, propFilters, limit), true);
+	}
+}
+
 // -----------------------------------------------------------------------------
 
-void CardDAVContext::clientToServerSyncDone(bool success, const std::string &msg) {
+void CardDAVContext::clientToServerSyncDone(bool success, const string &msg) {
 	if (!success) lError() << "[CardDAV] CardDAV client to server sync failure: " << msg;
 	if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, success, msg);
 }
 
-void CardDAVContext::userPrincipalUrlRetrieved(std::string principalUrl) {
+void CardDAVContext::userPrincipalUrlRetrieved(string principalUrl) {
 	if (!principalUrl.empty()) {
-		std::string fullUrl = mScheme + "://" + mHost + principalUrl;
+		string fullUrl = mScheme + "://" + mHost + principalUrl;
 		lDebug() << "[CardDAV] User principal URL is [" << fullUrl
 		         << "], updating sync URI and querying address book home";
 		mSyncUri = fullUrl;
@@ -151,15 +181,15 @@ void CardDAVContext::userPrincipalUrlRetrieved(std::string principalUrl) {
 		if (mWellKnownQueried) {
 			clientToServerSyncDone(false, "Failed to retrieve principal URL");
 		} else {
-			CardDAVQuery *query = CardDAVQuery::createUserPrincipalPropfindQuery(this);
+			shared_ptr<CardDAVQuery> query = CardDAVQuery::createUserPrincipalPropfindQuery(this);
 			queryWellKnown(query);
 		}
 	}
 }
 
-void CardDAVContext::userAddressBookHomeUrlRetrieved(std::string addressBookHomeUrl) {
+void CardDAVContext::userAddressBookHomeUrlRetrieved(string addressBookHomeUrl) {
 	if (!addressBookHomeUrl.empty()) {
-		std::string fullUrl = mScheme + "://" + mHost + addressBookHomeUrl;
+		string fullUrl = mScheme + "://" + mHost + addressBookHomeUrl;
 		lDebug() << "[CardDAV] User address book home URL is [" << fullUrl
 		         << "], updating sync URI and querying address books list";
 		mSyncUri = fullUrl;
@@ -169,19 +199,31 @@ void CardDAVContext::userAddressBookHomeUrlRetrieved(std::string addressBookHome
 	}
 }
 
-void CardDAVContext::addressBookUrlAndCtagRetrieved(const std::list<CardDAVResponse> &list) {
+void CardDAVContext::addressBookUrlAndCtagRetrieved(const list<CardDAVResponse> &list) {
 	if (list.size() > 0) {
 		const CardDAVResponse addressbook = list.front();
-		std::string ctag = addressbook.mCtag;
-		std::string url = addressbook.mUrl;
-		std::string displayName = addressbook.mDisplayName;
+		string ctag = addressbook.mCtag;
+		string url = addressbook.mUrl;
+		string displayName = addressbook.mDisplayName;
 		if (ctag.empty() || ctag != mCtag) {
-			std::string fullUrl = mScheme + "://" + mHost + url;
+			string fullUrl = mScheme + "://" + mHost + url;
 			lInfo() << "[CardDAV] User address book [" << displayName << "] URL is [" << fullUrl << "] has CTAG ["
 			        << ctag << "] but our local one is [" << mCtag << "], fetching vCards";
 			mSyncUri = fullUrl;
-			mCtag = ctag;
 
+			if (!mFriendList) {
+				shared_ptr<CardDavMagicSearchPlugin> plugin = mCardDavMagicSearchPlugin.lock();
+				if (plugin) {
+					lInfo() << "[CardDAV] Address book URL discovered, asking magic search plugin to retry the query";
+					plugin->sendQueryAgainAfterDiscoveryProcess();
+				} else {
+					lError() << "[CardDAV] Address book URL & CTAG retrieved but no friend list nor magic search "
+					            "plugin found!";
+				}
+				return;
+			}
+
+			mCtag = ctag;
 			if (mFriendList->getDisplayName().empty() && !displayName.empty()) {
 				lInfo() << "[CardDAV] Updating friend list display name with address book's one";
 				mFriendList->setDisplayName(displayName);
@@ -202,7 +244,7 @@ void CardDAVContext::addressBookUrlAndCtagRetrieved(const std::list<CardDAVRespo
 	}
 }
 
-void CardDAVContext::addressBookCtagRetrieved(std::string ctag) {
+void CardDAVContext::addressBookCtagRetrieved(string ctag) {
 	if (ctag.empty() || ctag != mCtag) {
 		lInfo() << "[CardDAV] User address book has CTAG [" << ctag << "] but our local one is [" << mCtag
 		        << "], fetching vCards";
@@ -218,7 +260,7 @@ void CardDAVContext::fetchVcards() {
 	sendQuery(CardDAVQuery::createAddressbookQuery(this));
 }
 
-void CardDAVContext::pullVcards(const std::list<CardDAVResponse> &list) {
+void CardDAVContext::pullVcards(const list<CardDAVResponse> &list) {
 	sendQuery(CardDAVQuery::createAddressbookMultigetQuery(this, list));
 }
 
@@ -238,9 +280,9 @@ void CardDAVContext::retrieveAddressBookCtag() {
 	sendQuery(CardDAVQuery::createAddressBookCtagPropfindQuery(this));
 }
 
-void CardDAVContext::queryWellKnown(CardDAVQuery *query) {
+void CardDAVContext::queryWellKnown(shared_ptr<CardDAVQuery> query) {
 	mWellKnownQueried = true;
-	std::string wellKnown = ".well-known/carddav";
+	string wellKnown = ".well-known/carddav";
 
 	char &back = mHost.back();
 	const char *latestQueryChar = &back;
@@ -249,12 +291,20 @@ void CardDAVContext::queryWellKnown(CardDAVQuery *query) {
 	} else {
 		query->mUrl = mScheme + "://" + mHost + "/" + wellKnown;
 	}
-	lInfo() << "Trying a well-known query on URL " << query->mUrl;
+	lInfo() << "[CardDAV] Trying a well-known query on URL " << query->mUrl;
 	sendQuery(query);
 }
 
-void CardDAVContext::sendQuery(CardDAVQuery *query) {
-	auto &httpRequest = mFriendList->getCore()->getHttpClient().createRequest(query->mMethod, query->mUrl);
+void CardDAVContext::sendQuery(const shared_ptr<CardDAVQuery> &query, bool cancelCurrentIfAny) {
+	if (mHttpRequest && cancelCurrentIfAny) {
+		lWarning() << "[CardDAV] Cancelling current HTTP request";
+		mHttpRequest->cancel();
+		mHttpRequest = nullptr;
+	}
+	mQuery = query;
+
+	auto &httpRequest = getCore()->getHttpClient().createRequest(query->mMethod, query->mUrl);
+	mHttpRequest = &httpRequest;
 
 	if (!query->mDepth.empty()) {
 		httpRequest.addHeader("Depth", query->mDepth);
@@ -275,23 +325,26 @@ void CardDAVContext::sendQuery(CardDAVQuery *query) {
 
 	auto context = this;
 	httpRequest.execute([query, context](const HttpResponse &response) {
-		int code = response.getStatusCode();
-		if (code == 301 || code == 302 || code == 307 || code == 308) {
-			string location = response.getHeaderValue("Location");
-			if (location.empty()) {
-				context->serverToClientSyncDone(false, "HTTP Redirect without location header.");
-			} else {
-				context->processRedirect(query, location);
-			}
-			return;
-		}
+		if (context && query) {
+			context->mHttpRequest = nullptr;
 
-		context->processQueryResponse(query, response);
-		delete query;
+			int code = response.getStatusCode();
+			if (code == 301 || code == 302 || code == 307 || code == 308) {
+				string location = response.getHeaderValue("Location");
+				if (location.empty()) {
+					context->serverToClientSyncDone(false, "HTTP Redirect without location header.");
+				} else {
+					context->processRedirect(query, location);
+				}
+				return;
+			}
+
+			context->processQueryResponse(query, response);
+		}
 	});
 }
 
-void CardDAVContext::setSchemeAndHostIfNotDoneYet(CardDAVQuery *query) {
+void CardDAVContext::setSchemeAndHostIfNotDoneYet(shared_ptr<CardDAVQuery> query) {
 	if (mHost.empty()) {
 		belle_generic_uri_t *uri = belle_generic_uri_parse(query->mUrl.c_str());
 		mScheme = belle_generic_uri_get_scheme(uri);
@@ -300,7 +353,7 @@ void CardDAVContext::setSchemeAndHostIfNotDoneYet(CardDAVQuery *query) {
 	}
 }
 
-void CardDAVContext::processRedirect(CardDAVQuery *query, const std::string &location) {
+void CardDAVContext::processRedirect(shared_ptr<CardDAVQuery> query, const string &location) {
 	lInfo() << "[CardDAV] Location header directs towards: " << location;
 	string newLocation = location;
 	if (newLocation.rfind(mScheme, 0) != 0 && newLocation.rfind("/", 0) == 0) {
@@ -312,8 +365,8 @@ void CardDAVContext::processRedirect(CardDAVQuery *query, const std::string &loc
 	sendQuery(query);
 }
 
-void CardDAVContext::processQueryResponse(CardDAVQuery *query, const HttpResponse &response) {
-	query->mContext->setSchemeAndHostIfNotDoneYet(query);
+void CardDAVContext::processQueryResponse(shared_ptr<CardDAVQuery> query, const HttpResponse &response) {
+	setSchemeAndHostIfNotDoneYet(query);
 	int code = response.getStatusCode();
 	if (code == 207 || code == 200 || code == 201 || code == 204) {
 		auto content = response.getBody();
@@ -322,32 +375,34 @@ void CardDAVContext::processQueryResponse(CardDAVQuery *query, const HttpRespons
 			case CardDAVQuery::Type::Propfind:
 				switch (query->mPropfindType) {
 					case CardDAVQuery::PropfindType::UserPrincipal:
-						query->mContext->userPrincipalUrlRetrieved(parseUserPrincipalUrlValueFromXmlResponse(body));
+						userPrincipalUrlRetrieved(parseUserPrincipalUrlValueFromXmlResponse(body));
 						break;
 					case CardDAVQuery::PropfindType::UserAddressBooksHome:
-						query->mContext->userAddressBookHomeUrlRetrieved(
-						    parseUserAddressBookUrlValueFromXmlResponse(body));
+						userAddressBookHomeUrlRetrieved(parseUserAddressBookUrlValueFromXmlResponse(body));
 						break;
 					case CardDAVQuery::PropfindType::AddressBookUrlAndCTAG:
-						query->mContext->addressBookUrlAndCtagRetrieved(
-						    parseAddressBookUrlAndCtagValueFromXmlResponse(body));
+						addressBookUrlAndCtagRetrieved(parseAddressBookUrlAndCtagValueFromXmlResponse(body));
 						break;
 					case CardDAVQuery::PropfindType::AddressBookCTAG:
-						query->mContext->addressBookCtagRetrieved(parseAddressBookCtagValueFromXmlResponse(body));
+						addressBookCtagRetrieved(parseAddressBookCtagValueFromXmlResponse(body));
 						break;
 				}
 				break;
 			case CardDAVQuery::Type::AddressbookQuery:
-				query->mContext->vcardsFetched(parseVcardsEtagsFromXmlResponse(body));
+			case CardDAVQuery::Type::AddressbookQueryWithFilter:
+				vcardsFetched(parseVcardsEtagsFromXmlResponse(body));
 				break;
 			case CardDAVQuery::Type::AddressbookMultiget:
-				query->mContext->vcardsPulled(parseVcardsFromXmlResponse(body));
+				if (mFriendList) {
+					vcardsPulled(parseVcardsFromXmlResponse(body));
+				} else {
+					magicSearchResultsVcardsPulled(parseVcardsFromXmlResponse(body));
+				}
 				break;
 			case CardDAVQuery::Type::Put: {
-				std::shared_ptr<Friend> f =
-				    Friend::getSharedFromThis(static_cast<LinphoneFriend *>(query->getUserData()));
+				shared_ptr<Friend> f = Friend::getSharedFromThis(static_cast<LinphoneFriend *>(query->getUserData()));
 				f->unref();
-				std::shared_ptr<Vcard> vcard = f->getVcard();
+				shared_ptr<Vcard> vcard = f->getVcard();
 				if (vcard) {
 					string etag = response.getHeaderValue("ETag");
 					if (!etag.empty()) {
@@ -357,68 +412,85 @@ void CardDAVContext::processQueryResponse(CardDAVQuery *query, const HttpRespons
 							lInfo() << "[CardDAV] eTag for updated vCard is [" << etag << "]";
 						}
 						vcard->setEtag(etag);
-						query->mContext->clientToServerSyncDone(true, "");
+						clientToServerSyncDone(true, "");
 					} else {
 						// For some reason, server didn't return the eTag of the updated/created vCard
 						// We need to do a GET on the vCard to get the correct one
-						std::list<CardDAVResponse> list;
+						list<CardDAVResponse> list;
 						CardDAVResponse response;
 						response.mUrl = vcard->getUrl();
 						list.push_back(std::move(response));
-						query->mContext->pullVcards(list);
+						pullVcards(list);
 					}
 				} else {
-					query->mContext->clientToServerSyncDone(false,
-					                                        "No LinphoneFriend found in user_data field of query");
+					clientToServerSyncDone(false, "No LinphoneFriend found in user_data field of query");
 				}
 			} break;
 			case CardDAVQuery::Type::Delete:
-				query->mContext->clientToServerSyncDone(true, "");
+				clientToServerSyncDone(true, "");
 				break;
 			default:
 				lError() << "[CardDAV] Unknown request: " << static_cast<int>(query->mType);
 				break;
 		}
 	} else {
-		if (query->mContext->mWellKnownQueried) {
-			std::stringstream ssMsg;
+		if (mWellKnownQueried) {
+			stringstream ssMsg;
 			ssMsg << "Unexpected HTTP response code: " << code;
-			if (query->isClientToServerSync()) query->mContext->clientToServerSyncDone(false, ssMsg.str().c_str());
-			else query->mContext->serverToClientSyncDone(false, ssMsg.str().c_str());
+			if (query->isClientToServerSync()) clientToServerSyncDone(false, ssMsg.str().c_str());
+			else serverToClientSyncDone(false, ssMsg.str().c_str());
 		} else {
-			lWarning() << "Query HTTP result code was [" << code << "], trying well-known";
-			query->mContext->queryWellKnown(query);
+			lWarning() << "[CardDAV] Query HTTP result code was [" << code << "], trying well-known";
+			queryWellKnown(query);
 			return; // Prevents deleting the query
 		}
 	}
 }
 
-void CardDAVContext::serverToClientSyncDone(bool success, const std::string &msg) {
+void CardDAVContext::serverToClientSyncDone(bool success, const string &msg) {
 	if (success) {
-		if (!mCtag.empty()) {
-			lInfo() << "CardDAV sync successful, saving new cTag [" << mCtag << "]";
-			mFriendList->updateRevision(mCtag);
-		} else {
-			lWarning() << "CardDAV sync successful but new cTag is empty!";
+		if (mFriendList) {
+			if (!mCtag.empty()) {
+				lInfo() << "[CardDAV] Sync successful, saving new cTag [" << mCtag << "]";
+				mFriendList->updateRevision(mCtag);
+			} else if (mCtag.empty()) {
+				lWarning() << "[CardDAV] Sync successful but new cTag is empty!";
+			}
 		}
 	} else {
-		lError() << "[CardDAV] CardDAV server to client sync failure: " << msg;
+		lError() << "[CardDAV] Server to client sync failure: " << msg;
+		shared_ptr<CardDavMagicSearchPlugin> plugin = mCardDavMagicSearchPlugin.lock();
+		if (plugin) {
+			plugin->notifyError(msg);
+		}
 	}
 	if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, success, msg);
 }
 
-void CardDAVContext::vcardsFetched(const std::list<CardDAVResponse> &vCards) {
+void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
+	shared_ptr<CardDavMagicSearchPlugin> plugin = mCardDavMagicSearchPlugin.lock();
 	if (vCards.empty()) {
+		if (plugin) {
+			list<shared_ptr<Friend>> friends;
+			plugin->processResults(friends);
+		}
 		serverToClientSyncDone(true, "No vCard fetched, address book is likely to be empty");
 		return;
 	}
 
-	std::list<CardDAVResponse> vCardsToPull = vCards;
-	const std::list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
-	std::list<shared_ptr<Friend>> friendsToRemove;
+	if (!mFriendList) {
+		if (plugin) {
+			pullVcards(vCards);
+		}
+		return;
+	}
+
+	list<CardDAVResponse> vCardsToPull = vCards;
+	const list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
+	list<shared_ptr<Friend>> friendsToRemove;
 	for (const auto &f : friends) {
-		const auto responseIt = std::find_if(vCardsToPull.cbegin(), vCardsToPull.cend(), [&](const auto &response) {
-			std::shared_ptr<Vcard> vcard = f->getVcard();
+		const auto responseIt = find_if(vCardsToPull.cbegin(), vCardsToPull.cend(), [&](const auto &response) {
+			shared_ptr<Vcard> vcard = f->getVcard();
 			if (response.mUrl.empty() || !vcard || vcard->getUrl().empty()) return false;
 			return response.mUrl == vcard->getUrl();
 		});
@@ -427,8 +499,8 @@ void CardDAVContext::vcardsFetched(const std::list<CardDAVResponse> &vCards) {
 			        << "] isn't in the remote vCard list, will be removed";
 			friendsToRemove.push_back(f);
 		} else {
-			std::shared_ptr<Vcard> vcard = f->getVcard();
-			const std::string etag = vcard->getEtag();
+			shared_ptr<Vcard> vcard = f->getVcard();
+			const string etag = vcard->getEtag();
 			lInfo() << "[CardDAV] Local friend [" << f->getName() << "] eTag is [" << etag
 			        << "], remote vCard eTag is [" << responseIt->mEtag << "]";
 			if (!etag.empty() && (etag == responseIt->mEtag)) {
@@ -447,42 +519,81 @@ void CardDAVContext::vcardsFetched(const std::list<CardDAVResponse> &vCards) {
 	pullVcards(vCardsToPull);
 }
 
-void CardDAVContext::vcardsPulled(const std::list<CardDAVResponse> &vCards) {
+void CardDAVContext::magicSearchResultsVcardsPulled(const list<CardDAVResponse> &vCards) {
+	shared_ptr<CardDavMagicSearchPlugin> plugin = mCardDavMagicSearchPlugin.lock();
+	if (!plugin) return;
+
+	list<shared_ptr<Friend>> results;
 	if (!vCards.empty()) {
-		const std::list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
 		for (const auto &response : vCards) {
 			string vCardBuffer = response.mVcard;
-			std::shared_ptr<Vcard> vcard =
-			    VcardContext::getSharedFromThis(mFriendList->getCore()->getCCore()->vcard_context)
-			        ->getVcardFromBuffer(vCardBuffer);
+			shared_ptr<Vcard> vcard =
+			    VcardContext::getSharedFromThis(getCore()->getCCore()->vcard_context)->getVcardFromBuffer(vCardBuffer);
 			if (vcard) {
 				// Compute downloaded vCards' URL and save it (+ eTag)
 				auto slashPos = response.mUrl.rfind('/');
-				std::string vcardName = response.mUrl.substr((slashPos == std::string::npos) ? 0 : ++slashPos);
-				std::stringstream fullUrlSs;
+				string vcardName = response.mUrl.substr((slashPos == string::npos) ? 0 : ++slashPos);
+				stringstream fullUrlSs;
 				if (mSyncUri.back() == '/') {
 					fullUrlSs << mSyncUri << vcardName;
 				} else {
 					fullUrlSs << mSyncUri << "/" << vcardName;
 				}
-				std::string fullUrl = fullUrlSs.str();
+				string fullUrl = fullUrlSs.str();
 				vcard->setUrl(fullUrl);
 				vcard->setEtag(response.mEtag);
+				if (vcard->getUid().empty()) vcard->generateUniqueId();
 				lInfo() << "[CardDAV] Downloaded vCard eTag is [" << vcard->getEtag() << "] and URL is ["
 				        << vcard->getUrl() << "]";
-				std::shared_ptr<Friend> newFriend = Friend::create(mFriendList->getCore(), vcard);
+				shared_ptr<Friend> newFriend = Friend::create(getCore(), vcard);
 				if (newFriend) {
-					const auto friendIt = std::find_if(friends.cbegin(), friends.cend(), [&](const auto &oldFriend) {
-						std::shared_ptr<Vcard> oldFriendVcard = oldFriend->getVcard();
-						std::shared_ptr<Vcard> newFriendVcard = newFriend->getVcard();
+					results.push_back(newFriend);
+				}
+			}
+		}
+	}
+
+	plugin->processResults(results);
+}
+
+void CardDAVContext::vcardsPulled(const list<CardDAVResponse> &vCards) {
+	if (!mFriendList) return;
+
+	if (!vCards.empty()) {
+		const list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
+		for (const auto &response : vCards) {
+			string vCardBuffer = response.mVcard;
+			shared_ptr<Vcard> vcard =
+			    VcardContext::getSharedFromThis(getCore()->getCCore()->vcard_context)->getVcardFromBuffer(vCardBuffer);
+			if (vcard) {
+				// Compute downloaded vCards' URL and save it (+ eTag)
+				auto slashPos = response.mUrl.rfind('/');
+				string vcardName = response.mUrl.substr((slashPos == string::npos) ? 0 : ++slashPos);
+				stringstream fullUrlSs;
+				if (mSyncUri.back() == '/') {
+					fullUrlSs << mSyncUri << vcardName;
+				} else {
+					fullUrlSs << mSyncUri << "/" << vcardName;
+				}
+				string fullUrl = fullUrlSs.str();
+				vcard->setUrl(fullUrl);
+				vcard->setEtag(response.mEtag);
+				if (vcard->getUid().empty()) vcard->generateUniqueId();
+				lInfo() << "[CardDAV] Downloaded vCard eTag is [" << vcard->getEtag() << "] and URL is ["
+				        << vcard->getUrl() << "]";
+				shared_ptr<Friend> newFriend = Friend::create(getCore(), vcard);
+				if (newFriend) {
+					const auto friendIt = find_if(friends.cbegin(), friends.cend(), [&](const auto &oldFriend) {
+						shared_ptr<Vcard> oldFriendVcard = oldFriend->getVcard();
+						shared_ptr<Vcard> newFriendVcard = newFriend->getVcard();
 						if (!oldFriendVcard || !newFriendVcard) return false;
-						std::string oldFriendUid = oldFriendVcard->getUid();
-						std::string newFriendUid = newFriendVcard->getUid();
+						string oldFriendUid = oldFriendVcard->getUid();
+						string newFriendUid = newFriendVcard->getUid();
 						if (oldFriendUid.empty() || newFriendUid.empty()) return false;
 						return oldFriendUid == newFriendUid;
 					});
 					if (friendIt != friends.cend()) {
-						std::shared_ptr<Friend> oldFriend = *friendIt;
+						shared_ptr<Friend> oldFriend = *friendIt;
 						newFriend->mStorageId = oldFriend->mStorageId;
 						newFriend->setIncSubscribePolicy(oldFriend->getIncSubscribePolicy());
 						newFriend->enableSubscribes(oldFriend->subscribesEnabled());
@@ -514,12 +625,12 @@ void CardDAVContext::vcardsPulled(const std::list<CardDAVResponse> &vCards) {
 
 // -----------------------------------------------------------------------------
 
-std::string CardDAVContext::generateUrlFromServerAddressAndUid(const std::string &serverUrl) {
-	if (serverUrl.empty()) return std::string();
+string CardDAVContext::generateUrlFromServerAddressAndUid(const string &serverUrl) {
+	if (serverUrl.empty()) return string();
 	char *uuid = sal_generate_uuid();
-	std::stringstream ss;
+	stringstream ss;
 	ss << serverUrl << "/linphone-" << uuid << ".vcf";
-	std::string url = ss.str();
+	string url = ss.str();
 	lDebug() << "[CardDAV] Generated url is [" << url << "]";
 	bctbx_free(uuid);
 	return url;
@@ -527,8 +638,8 @@ std::string CardDAVContext::generateUrlFromServerAddressAndUid(const std::string
 
 #ifdef HAVE_XML2
 
-std::list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXmlResponse(const std::string &body) {
-	std::list<CardDAVResponse> result;
+list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXmlResponse(const string &body) {
+	list<CardDAVResponse> result;
 	XmlParsingContext xmlCtx(body);
 	if (xmlCtx.isValid()) {
 		xmlCtx.initCarddavNs();
@@ -539,7 +650,7 @@ std::list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXm
 				for (int i = 0; i < responsesNodes->nodeNr; i++) {
 					xmlNodePtr responseNode = responsesNodes->nodeTab[i];
 					xmlCtx.setXpathContextNode(responseNode);
-					std::string status = xmlCtx.getTextContent("d:propstat/d:status");
+					string status = xmlCtx.getTextContent("d:propstat/d:status");
 					if (status == "HTTP/1.1 200 OK") {
 						xmlXPathObjectPtr resources =
 						    xmlCtx.getXpathObjectForNodeList("d:propstat/d:prop/d:resourcetype");
@@ -551,8 +662,8 @@ std::list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXm
 									xmlNodePtr resourceNode = resourcesNodes->nodeTab[j];
 									for (xmlNodePtr resourceChild = resourceNode->children; resourceChild != NULL;
 									     resourceChild = resourceChild->next) {
-										std::string resourceType = (char *)resourceChild->name;
-										if (resourceType.find("addressbook") != std::string::npos) {
+										string resourceType = (char *)resourceChild->name;
+										if (resourceType.find("addressbook") != string::npos) {
 											addressBookResourceTypeFound = true;
 											break;
 										}
@@ -560,9 +671,9 @@ std::list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXm
 								}
 							}
 							if (addressBookResourceTypeFound) {
-								std::string ctag = xmlCtx.getTextContent("d:propstat/d:prop/x1:getctag");
-								std::string url = xmlCtx.getTextContent("d:href");
-								std::string displayName = xmlCtx.getTextContent("d:propstat/d:prop/d:displayname");
+								string ctag = xmlCtx.getTextContent("d:propstat/d:prop/x1:getctag");
+								string url = xmlCtx.getTextContent("d:href");
+								string displayName = xmlCtx.getTextContent("d:propstat/d:prop/d:displayname");
 
 								CardDAVResponse response;
 								response.mDisplayName = displayName;
@@ -589,11 +700,11 @@ std::list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXm
 	return result;
 }
 
-std::string CardDAVContext::parseUserPrincipalUrlValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+string CardDAVContext::parseUserPrincipalUrlValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
 	XmlParsingContext xmlCtx(body);
 	if (xmlCtx.isValid()) {
 		xmlCtx.initCarddavNs();
-		std::string response =
+		string response =
 		    xmlCtx.getTextContent("/d:multistatus/d:response/d:propstat/d:prop/d:current-user-principal/d:href");
 		lDebug() << "[CardDAV] Extracted user principal URL value from body [" << response.c_str() << "]";
 		if (!response.empty()) return response;
@@ -603,11 +714,11 @@ std::string CardDAVContext::parseUserPrincipalUrlValueFromXmlResponse(BCTBX_UNUS
 	return "";
 }
 
-std::string CardDAVContext::parseUserAddressBookUrlValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+string CardDAVContext::parseUserAddressBookUrlValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
 	XmlParsingContext xmlCtx(body);
 	if (xmlCtx.isValid()) {
 		xmlCtx.initCarddavNs();
-		std::string response =
+		string response =
 		    xmlCtx.getTextContent("/d:multistatus/d:response/d:propstat/d:prop/card:addressbook-home-set/d:href");
 		lDebug() << "[CardDAV] Extracted address book URL value from body [" << response.c_str() << "]";
 		if (!response.empty()) return response;
@@ -617,11 +728,11 @@ std::string CardDAVContext::parseUserAddressBookUrlValueFromXmlResponse(BCTBX_UN
 	return "";
 }
 
-std::string CardDAVContext::parseAddressBookCtagValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+string CardDAVContext::parseAddressBookCtagValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
 	XmlParsingContext xmlCtx(body);
 	if (xmlCtx.isValid()) {
 		xmlCtx.initCarddavNs();
-		std::string response = xmlCtx.getTextContent("/d:multistatus/d:response/d:propstat/d:prop/x1:getctag");
+		string response = xmlCtx.getTextContent("/d:multistatus/d:response/d:propstat/d:prop/x1:getctag");
 		lInfo() << "[CardDAV] Extracted CTAG value from body [" << response.c_str() << "]";
 		if (!response.empty()) return response;
 	} else {
@@ -630,8 +741,8 @@ std::string CardDAVContext::parseAddressBookCtagValueFromXmlResponse(BCTBX_UNUSE
 	return "";
 }
 
-std::list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(const std::string &body) {
-	std::list<CardDAVResponse> result;
+list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(const string &body) {
+	list<CardDAVResponse> result;
 	XmlParsingContext xmlCtx(body);
 	if (xmlCtx.isValid()) {
 		xmlCtx.initCarddavNs();
@@ -642,8 +753,8 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(const
 				for (int i = 0; i < responsesNodes->nodeNr; i++) {
 					xmlNodePtr responseNode = responsesNodes->nodeTab[i];
 					xmlCtx.setXpathContextNode(responseNode);
-					std::string etag = xmlCtx.getTextContent("d:propstat/d:prop/d:getetag");
-					std::string url = xmlCtx.getTextContent("d:href");
+					string etag = xmlCtx.getTextContent("d:propstat/d:prop/d:getetag");
+					string url = xmlCtx.getTextContent("d:href");
 					CardDAVResponse response;
 					response.mEtag = etag;
 					response.mUrl = url;
@@ -657,8 +768,8 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(const
 	return result;
 }
 
-std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(const std::string &body) {
-	std::list<CardDAVResponse> result;
+list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(const string &body) {
+	list<CardDAVResponse> result;
 	XmlParsingContext xmlCtx(body);
 	if (xmlCtx.isValid()) {
 		xmlCtx.initCarddavNs();
@@ -668,9 +779,9 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(const std:
 			if (responsesNodes->nodeNr >= 1) {
 				for (int i = 0; i < responsesNodes->nodeNr; i++) {
 					xmlCtx.setXpathContextNode(responsesNodes->nodeTab[i]);
-					std::string etag = xmlCtx.getTextContent("d:propstat/d:prop/d:getetag");
-					std::string url = xmlCtx.getTextContent("d:href");
-					std::string vcard = xmlCtx.getTextContent("d:propstat/d:prop/card:address-data");
+					string etag = xmlCtx.getTextContent("d:propstat/d:prop/d:getetag");
+					string url = xmlCtx.getTextContent("d:href");
+					string vcard = xmlCtx.getTextContent("d:propstat/d:prop/card:address-data");
 					CardDAVResponse response;
 					response.mEtag = etag;
 					response.mUrl = url;
@@ -689,29 +800,28 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(const std:
 
 #else
 
-std::list<CardDAVResponse>
-CardDAVContext::parseAddressBookUrlAndCtagValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
-	return std::list<CardDAVResponse>();
+list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
+	return list<CardDAVResponse>();
 }
 
-std::string CardDAVContext::parseUserPrincipalUrlValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+string CardDAVContext::parseUserPrincipalUrlValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
 	return "";
 }
 
-std::string CardDAVContext::parseUserAddressBookUrlValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+string CardDAVContext::parseUserAddressBookUrlValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
 	return "";
 }
 
-std::string CardDAVContext::parseAddressBookCtagValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+string CardDAVContext::parseAddressBookCtagValueFromXmlResponse(BCTBX_UNUSED(const string &body)) {
 	return "";
 }
 
-std::list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
-	return std::list<CardDAVResponse>();
+list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(BCTBX_UNUSED(const string &body)) {
+	return list<CardDAVResponse>();
 }
 
-std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
-	return std::list<CardDAVResponse>();
+list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(BCTBX_UNUSED(const string &body)) {
+	return list<CardDAVResponse>();
 }
 
 #endif /* HAVE_XML2 */

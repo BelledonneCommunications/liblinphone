@@ -970,7 +970,7 @@ long long MainDbPrivate::insertOrUpdateFriendList(const std::shared_ptr<FriendLi
 	std::string name = list->getDisplayName();
 	std::string rlsUri = list->getRlsUri();
 	std::string syncUri = list->getUri();
-	std::string ctag = list->mRevision;
+	std::string ctag = list->getRevision();
 	int type = list->getType();
 
 	if (friendListId > 0) {

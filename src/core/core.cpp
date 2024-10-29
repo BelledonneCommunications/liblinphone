@@ -80,6 +80,8 @@
 #include "logger/logger.h"
 #include "paths/paths.h"
 #include "sal/sal_media_description.h"
+#include "search/remote-contact-directory.h"
+#include "vcard/carddav-params.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "xml/ekt-linphone-extension.h"
@@ -485,7 +487,7 @@ void CorePrivate::uninit() {
 	listeners.clear();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
 	pushReceivedBackgroundTask.stop();
-	mLdapServers.clear();
+	mRemoteContactDirectories.clear();
 
 	q->mPublishByEtag.clear();
 
@@ -1695,57 +1697,68 @@ void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, 
 }
 
 // -----------------------------------------------------------------------------
-// Ldap.
+// Remote Contact Directories.
 // -----------------------------------------------------------------------------
 
-const std::list<std::shared_ptr<Ldap>> &Core::getLdapList() {
-	return getPrivate()->mLdapServers;
+const list<shared_ptr<RemoteContactDirectory>> &Core::getRemoteContactDirectories() {
+	return getPrivate()->mRemoteContactDirectories;
 }
 
-std::list<std::shared_ptr<Ldap>>::iterator Core::getLdapIterator(int index) {
-	return std::find_if(getPrivate()->mLdapServers.begin(), getPrivate()->mLdapServers.end(),
-	                    [index](std::shared_ptr<Ldap> a) { return a->getIndex() == index; });
+void Core::addRemoteContactDirectory(shared_ptr<RemoteContactDirectory> remoteContactDirectory) {
+	remoteContactDirectory->writeToConfigFile();
+	getPrivate()->mRemoteContactDirectories.push_back(remoteContactDirectory);
 }
 
-void CorePrivate::reloadLdapList() {
-	std::list<std::shared_ptr<Ldap>> ldapList;
+void Core::removeRemoteContactDirectory(shared_ptr<RemoteContactDirectory> remoteContactDirectory) {
+	remoteContactDirectory->removeFromConfigFile();
+	getPrivate()->mRemoteContactDirectories.remove(remoteContactDirectory);
+}
+
+void CorePrivate::reloadRemoteContactDirectories() {
+	auto core = getPublic()->getSharedFromThis();
 	auto lpConfig = linphone_core_get_config(getCCore());
 	bctbx_list_t *bcSections = linphone_config_get_sections_names_list(lpConfig);
-	// Loop on all sections and load configuration. If this is not a LDAP configuration, the model is discarded.
-	for (auto itSections = bcSections; itSections; itSections = itSections->next) {
-		std::string section = static_cast<char *>(itSections->data);
-		std::shared_ptr<Ldap> ldap = Ldap::create(getPublic()->getSharedFromThis(), section);
-		if (ldap) ldapList.push_back(ldap);
-	}
-	if (bcSections) bctbx_list_free(bcSections);
-	ldapList.sort([](std::shared_ptr<Ldap> a, std::shared_ptr<Ldap> b) { return a->getIndex() < b->getIndex(); });
-	mLdapServers = ldapList;
-}
 
-void Core::addLdap(std::shared_ptr<Ldap> ldap) {
-	if (ldap->getLdapParams()) {
-		ldap->writeToConfigFile();
-		auto itLdapStored = getLdapIterator(ldap->getIndex());
-		if (itLdapStored == getPrivate()->mLdapServers.end()) { // New
-			getPrivate()->mLdapServers.push_back(ldap);
-			getPrivate()->mLdapServers.sort(
-			    [](std::shared_ptr<Ldap> a, std::shared_ptr<Ldap> b) { return a->getIndex() < b->getIndex(); });
-		} else { // Update
-			*itLdapStored = ldap;
+	string carddavSection = "carddav_";
+	string ldapSection = "ldap_";
+	list<shared_ptr<RemoteContactDirectory>> paramsList;
+	for (auto itSections = bcSections; itSections; itSections = itSections->next) {
+		string section = static_cast<char *>(itSections->data);
+		if (section.rfind(carddavSection, 0) == 0) {
+			string indexStr = section.substr(carddavSection.size());
+			if (!indexStr.empty()) {
+				try {
+					int index = stoi(indexStr);
+					auto params = CardDavParams::create(core, index);
+					auto remoteContactDirectory = RemoteContactDirectory::create(params);
+					paramsList.push_back(remoteContactDirectory);
+				} catch (const invalid_argument &) {
+				} catch (const out_of_range &) {
+				}
+			}
+		} else if (section.rfind(ldapSection, 0) == 0) {
+			string indexStr = section.substr(ldapSection.size());
+			if (!indexStr.empty()) {
+				try {
+					int index = stoi(indexStr);
+					auto params = LdapParams::create(core, index);
+					auto remoteContactDirectory = RemoteContactDirectory::create(params);
+					paramsList.push_back(remoteContactDirectory);
+				} catch (const invalid_argument &) {
+				} catch (const out_of_range &) {
+				}
+			}
 		}
 	}
+
+	if (bcSections) bctbx_list_free(bcSections);
+	mRemoteContactDirectories = paramsList;
 }
 
-void Core::removeLdap(std::shared_ptr<Ldap> ldap) {
-	auto itLdapStored = getLdapIterator(ldap->getIndex());
-	if (itLdapStored != getPrivate()->mLdapServers.end()) {
-		getPrivate()->mLdapServers.erase(itLdapStored);
-		ldap->removeFromConfigFile();
-	}
-}
 // -----------------------------------------------------------------------------
 // Signal Infomrations
 // -----------------------------------------------------------------------------
+
 void Core::setSignalInformation(std::shared_ptr<SignalInformation> signalInformation) {
 	mSignalInformation = signalInformation;
 }

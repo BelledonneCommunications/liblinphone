@@ -7431,6 +7431,70 @@ LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *c
                                                                  LinphoneConferenceInfo *conference_info);
 
 /**
+ * @addtogroup contacts
+ * @{
+ */
+
+/**
+ * Creates a new CardDAV server params object that may be used later by #LinphoneMagicSearch to query contacts.
+ * @param core #LinphoneCore object. @notnil
+ * @param params the #LinphoneCardDavParams to configure this remote contact directory. @notnil
+ * @return a new #LinphoneRemoteContactDirectory object to configure, and then add using
+ * linphone_core_add_remote_contact_directory(). @notnil
+ */
+LINPHONE_PUBLIC LinphoneRemoteContactDirectory *
+linphone_core_create_card_dav_remote_contact_directory(LinphoneCore *core, LinphoneCardDavParams *params);
+
+/**
+ * Creates a new CardDAV server params object that may be used later by #LinphoneMagicSearch to query contacts.
+ * @param core #LinphoneCore object. @notnil
+ * @param params the #LinphoneLdapParams to configure this remote contact directory. @notnil
+ * @return a new #LinphoneRemoteContactDirectory object to configure, and then add using
+ * linphone_core_add_remote_contact_directory(). @notnil
+ */
+LINPHONE_PUBLIC LinphoneRemoteContactDirectory *
+linphone_core_create_ldap_remote_contact_directory(LinphoneCore *core, LinphoneLdapParams *params);
+
+/**
+ * Adds a #LinphoneRemoteContactDirectory object previously created to the Core, to be used later by
+ * #LinphoneMagicSearch to query contacts using either LDAP or CardDAV.
+ * @param core #LinphoneCore object. @notnil
+ * @param remoteContactDirectory the newly created #LinphoneRemoteContactDirectory to add. @notnil
+ */
+LINPHONE_PUBLIC void linphone_core_add_remote_contact_directory(LinphoneCore *core,
+                                                                LinphoneRemoteContactDirectory *remoteContactDirectory);
+
+/**
+ * Removes a #LinphoneRemoteContactDirectory object previously added to the Core.
+ * @param core #LinphoneCore object. @notnil
+ * @param remoteContactDirectory the newly created #LinphoneRemoteContactDirectory to add. @notnil
+ */
+LINPHONE_PUBLIC void
+linphone_core_remove_remote_contact_directory(LinphoneCore *core,
+                                              LinphoneRemoteContactDirectory *remoteContactDirectory);
+
+/**
+ * Gets the list of currently configured LDAP or CardDAV remote servers used by #LinphoneMagicSearch.
+ * @param core #LinphoneCore object. @notnil
+ * @return the list of #LinphoneRemoteContactDirectory currently configured, if any.
+ * \bctbx_list{LinphoneRemoteContactDirectory} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_remote_contact_directories(LinphoneCore *core);
+
+/**
+ * Creates a new CardDAV server params object that may be used later by #LinphoneMagicSearch to query contacts.
+ * @param core #LinphoneCore object. @notnil
+ * @return a new #LinphoneCardDavParams object to configure, and then use it to create a #LinphoneRemoteContactDirectory
+ * using linphone_core_create_card_dav_remote_contact_directory(). @notnil
+ */
+LINPHONE_PUBLIC LinphoneCardDavParams *linphone_core_create_card_dav_params(LinphoneCore *core);
+
+/**
+ * @}
+ * End of group contacts
+ */
+
+/**
  * Tells if LDAP is available
  * @param core LinphoneCore object @notnil
  * @ingroup misc
@@ -7461,6 +7525,7 @@ LINPHONE_PUBLIC LinphoneLdapParams *linphone_core_create_ldap_params(LinphoneCor
  *
  * @param core #LinphoneCore object @notnil
  * @return #LinphoneLdap with default values set @notnil @tobefreed
+ * @deprecated 18/11/2024 use linphone_core_create_ldap_remote_contact_directory() instead.
  */
 LINPHONE_PUBLIC LinphoneLdap *linphone_core_create_ldap(LinphoneCore *core);
 
@@ -7470,12 +7535,15 @@ LINPHONE_PUBLIC LinphoneLdap *linphone_core_create_ldap(LinphoneCore *core);
  * @param core #LinphoneCore object @notnil
  * @param params #LinphoneLdapParams object @notnil
  * @return #LinphoneLdap with default values set @notnil @tobefreed
+ * @deprecated 18/11/2024 use linphone_core_create_ldap_remote_contact_directory() instead.
  */
 LINPHONE_PUBLIC LinphoneLdap *linphone_core_create_ldap_with_params(LinphoneCore *core, LinphoneLdapParams *params);
 
 /**
  * Erases all LDAP from the configuration.
  * @param core #LinphoneCore object @notnil
+ * @deprecated 18/11/2024 use linphone_core_remove_remote_contact_directory() instead.
+ *
  **/
 LINPHONE_PUBLIC void linphone_core_clear_ldaps(LinphoneCore *core);
 
@@ -7483,6 +7551,7 @@ LINPHONE_PUBLIC void linphone_core_clear_ldaps(LinphoneCore *core);
  * Add or update a LDAP server and save it to the configuration.
  * @param core #LinphoneCore object @notnil
  * @param ldap The LDAP to add/update. @notnil
+ * @deprecated 18/11/2024 use linphone_core_add_remote_contact_directory() instead.
  **/
 LINPHONE_PUBLIC void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ldap);
 
@@ -7490,6 +7559,7 @@ LINPHONE_PUBLIC void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ld
  * Remove a LDAP from the configuration.
  * @param core #LinphoneCore object @notnil
  * @param ldap The LDAP to remove. @notnil
+ * @deprecated 18/11/2024 use linphone_core_remove_remote_contact_directory() instead.
  **/
 LINPHONE_PUBLIC void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap *ldap);
 
@@ -7497,6 +7567,7 @@ LINPHONE_PUBLIC void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap 
  * Returns a list of entered LDAPs. Items must be freed with linphone_ldap_unref()
  * @param core The #LinphoneCore object @notnil
  * @return \bctbx_list{LinphoneLdap} @maybenil @tobefreed
+ * @deprecated 18/11/2024 use linphone_core_get_remote_contact_directories() instead.
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *core);
 

@@ -33,13 +33,6 @@ extern "C" {
  */
 
 /**
- * Create a new #LinphoneLdapParams object.
- * @param lc The #LinphoneCore object. @maybenil
- * @return The newly created #LinphoneLdapParams object. @notnil
- */
-LINPHONE_PUBLIC LinphoneLdapParams *linphone_ldap_params_new(LinphoneCore *lc);
-
-/**
  * Instantiate a new #LinphoneLdapParams with values from source.
  * @param params The #LinphoneLdapParams object to be cloned. @notnil
  * @return The newly created #LinphoneLdapParams object. @notnil
@@ -90,6 +83,7 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_custom_value(const Linphone
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param server LDAP Server address. @notnil
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_set_server_url() instead.
  **/
 LINPHONE_PUBLIC void linphone_ldap_params_set_server(LinphoneLdapParams *params, const char *server);
 
@@ -98,6 +92,7 @@ LINPHONE_PUBLIC void linphone_ldap_params_set_server(LinphoneLdapParams *params,
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return LDAP Server address. @notnil
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_get_server_url() instead.
  **/
 LINPHONE_PUBLIC const char *linphone_ldap_params_get_server(const LinphoneLdapParams *params);
 
@@ -150,6 +145,7 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_base_object(const LinphoneL
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param timeout The timeout in seconds.
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_set_timeout() instead.
  **/
 LINPHONE_PUBLIC void linphone_ldap_params_set_timeout(LinphoneLdapParams *params, int timeout);
 
@@ -158,6 +154,7 @@ LINPHONE_PUBLIC void linphone_ldap_params_set_timeout(LinphoneLdapParams *params
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The timeout in seconds.
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_get_timeout() instead.
  **/
 LINPHONE_PUBLIC int linphone_ldap_params_get_timeout(const LinphoneLdapParams *params);
 
@@ -187,6 +184,7 @@ LINPHONE_PUBLIC int linphone_ldap_params_get_timeout_tls_ms(const LinphoneLdapPa
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param max_results The max results when requesting searches.
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_set_limit() instead.
  **/
 LINPHONE_PUBLIC void linphone_ldap_params_set_max_results(LinphoneLdapParams *params, int max_results);
 
@@ -196,6 +194,7 @@ LINPHONE_PUBLIC void linphone_ldap_params_set_max_results(LinphoneLdapParams *pa
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The max results when requesting searches.
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_get_limit() instead.
  **/
 LINPHONE_PUBLIC int linphone_ldap_params_get_max_results(const LinphoneLdapParams *params);
 
@@ -207,6 +206,7 @@ LINPHONE_PUBLIC int linphone_ldap_params_get_max_results(const LinphoneLdapParam
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param min_chars The minimum characters needed by a search.
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_set_min_characters() instead.
  **/
 LINPHONE_PUBLIC void linphone_ldap_params_set_min_chars(LinphoneLdapParams *params, int min_chars);
 
@@ -215,6 +215,7 @@ LINPHONE_PUBLIC void linphone_ldap_params_set_min_chars(LinphoneLdapParams *para
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The minimum characters needed by a search.
+ * @deprecated 18/11/2024 use linphone_remote_contact_directory_get_min_characters() instead.
  **/
 LINPHONE_PUBLIC int linphone_ldap_params_get_min_chars(const LinphoneLdapParams *params);
 

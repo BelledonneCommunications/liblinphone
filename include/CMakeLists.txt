@@ -84,6 +84,7 @@ set(C_API_HEADER_FILES
 	c-call-log.h
 	c-call-stats.h
 	c-call.h
+	c-carddav-params.h
 	c-conference.h
 	c-conference-params.h
 	c-conference-cbs.h
@@ -129,6 +130,7 @@ set(C_API_HEADER_FILES
 	c-push-notification-config.h
 	c-recorder.h
 	c-recorder-params.h
+	c-remote-contact-directory.h
 	c-search-result.h
 	c-signal-information.h
 	c-types.h

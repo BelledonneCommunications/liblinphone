@@ -1381,8 +1381,19 @@ typedef enum _LinphoneMagicSearchSource {
 	    1 << 4, /**< Search from request : it is usually an address built from the request */
 	LinphoneMagicSearchSourceFavoriteFriends = 1 << 5, /**< Search in "starred" friends only */
 	LinphoneMagicSearchSourceConferencesInfo = 1 << 6, /**< Search in conferences info (organizer and participants) */
-	LinphoneMagicSearchSourceAll = -1                  /**< Search in all sources */
+	LinphoneMagicSearchSourceRemoteCardDAV =
+	    1 << 7,                       /**< Search in remote CardDAV servers (not locally synched ones) if any */
+	LinphoneMagicSearchSourceAll = -1 /**< Search in all sources */
 } LinphoneMagicSearchSource;
+
+/**
+ * @brief Enum describing the type of #RemoteContactDirectory (currently CardDAV or LDAP).
+ * @ingroup buddy_list
+ **/
+typedef enum _LinphoneRemoteContactDirectoryType {
+	LinphoneRemoteContactDirectoryTypeCardDav = 0, /**< Remote contact directory will use #CardDavParams */
+	LinphoneRemoteContactDirectoryTypeLdap = 1,    /**< Remote contact directory will use #LdapParams */
+} LinphoneRemoteContactDirectoryType;
 
 /**
  * @brief Enum describing how to merge #LinphoneSearchResult from #LinphoneMagicSearch

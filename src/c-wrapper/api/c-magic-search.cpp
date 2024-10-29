@@ -39,6 +39,12 @@ void _linphone_magic_search_notify_ldap_have_more_results(LinphoneMagicSearch *m
 	                                  linphone_magic_search_cbs_get_ldap_have_more_results, ldap);
 }
 
+void _linphone_magic_search_notify_more_results_available(LinphoneMagicSearch *magic_search,
+                                                          LinphoneMagicSearchSource source) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(MagicSearch, MagicSearch::toCpp(magic_search),
+	                                  linphone_magic_search_cbs_get_more_results_available, source);
+}
+
 LinphoneMagicSearch *linphone_core_create_magic_search(LinphoneCore *lc) {
 	return MagicSearch::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr);
 }

@@ -30,9 +30,13 @@ LINPHONE_BEGIN_NAMESPACE
 /** Interface to inherit from when adding a new source for MagicSearch results, used by LDAP & remote CardDAV queries */
 class MagicSearchPlugin : public CoreAccessor {
 public:
-	MagicSearchPlugin(const std::shared_ptr<Core> &core, MagicSearch &magicSearch, LinphoneMagicSearchSource source)
+	MagicSearchPlugin(const std::shared_ptr<Core> &core,
+	                  MagicSearch &magicSearch,
+	                  LinphoneMagicSearchSource source,
+	                  const std::string &displayName)
 	    : CoreAccessor(core), mMagicSearch(magicSearch) {
 		mSource = source;
+		mDisplayName = displayName;
 	}
 	virtual ~MagicSearchPlugin() {
 	}
@@ -99,16 +103,21 @@ public:
 		mWithDomain = domain;
 	}
 
+	const std::string &getDisplayName() const {
+		return mDisplayName;
+	}
+
 private:
 	MagicSearch &mMagicSearch;
 	LinphoneMagicSearchSource mSource;
 
-	bool mEnded = false;
+	bool mEnded = true; // Consider the plugin request as ended by default in case plugin do not match the source flag
 
 	int64_t mTimeout = 5; // 5 secs
 
 	std::list<std::shared_ptr<SearchResult>> mResults;
 
+	std::string mDisplayName;
 	std::string mFilter;
 	std::string mWithDomain;
 };

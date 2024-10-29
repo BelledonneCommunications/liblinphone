@@ -21,7 +21,7 @@
 #ifndef _L_VIDEO_SOURCE_DESCRIPTOR_H_
 #define _L_VIDEO_SOURCE_DESCRIPTOR_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"

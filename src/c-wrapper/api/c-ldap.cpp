@@ -53,7 +53,7 @@ void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapParams *params) {
 	Ldap::toCpp(ldap)->setLdapParams(LdapParams::toCpp(params)->getSharedFromThis());
 }
 
-const LinphoneLdapParams *linphone_ldap_get_params(LinphoneLdap *ldap) {
+LinphoneLdapParams *linphone_ldap_get_params(LinphoneLdap *ldap) {
 	return Ldap::toCpp(ldap)->getLdapParams()->toC();
 }
 

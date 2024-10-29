@@ -26,8 +26,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SearchRequest::SearchRequest(const std::string &filter,
-                             const std::string &withDomain,
+SearchRequest::SearchRequest(const string &filter,
+                             const string &withDomain,
                              int sourceFlags,
                              LinphoneMagicSearchAggregation aggregation) {
 	mFilter = filter;
@@ -56,11 +56,11 @@ void SearchRequest::operator=(const SearchRequest &request) {
 	mStartTime = request.mStartTime;
 }
 
-const std::string &SearchRequest::getFilter() const {
+const string &SearchRequest::getFilter() const {
 	return mFilter;
 }
 
-const std::string &SearchRequest::getWithDomain() const {
+const string &SearchRequest::getWithDomain() const {
 	return mWithDomain;
 }
 

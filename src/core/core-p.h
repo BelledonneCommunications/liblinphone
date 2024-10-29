@@ -113,7 +113,7 @@ public:
 
 	ToneManager &getToneManager();
 
-	void reloadLdapList();
+	void reloadRemoteContactDirectories();
 
 	// Base
 	std::shared_ptr<AbstractChatRoom> createServerChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
@@ -235,7 +235,9 @@ private:
 	ExtraBackgroundTask bgTask{"Stop core async end"};
 	BackgroundTask coreStartupTask{"Core startup until registration"};
 
-	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
+	std::list<std::shared_ptr<RemoteContactDirectory>>
+	    mRemoteContactDirectories; // Persistent list of LDAP & CardDAV configs
+
 	std::string logLabel;
 	LinphoneCodecPriorityPolicy videoCodecPriorityPolicy = LinphoneCodecPriorityPolicyAuto;
 	std::unique_ptr<HttpClient> httpClient;

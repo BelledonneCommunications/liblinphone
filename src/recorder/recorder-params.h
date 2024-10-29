@@ -21,7 +21,7 @@
 #ifndef _L_RECORDER_PARAMS_H_
 #define _L_RECORDER_PARAMS_H_
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 
 #include "call/audio-device/audio-device.h"
 #include "linphone/api/c-types.h"

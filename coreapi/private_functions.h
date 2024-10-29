@@ -555,6 +555,8 @@ void _linphone_chat_message_clear_callbacks(LinphoneChatMessage *msg);
 
 void _linphone_magic_search_notify_search_results_received(LinphoneMagicSearch *magic_search);
 void _linphone_magic_search_notify_ldap_have_more_results(LinphoneMagicSearch *magic_search, LinphoneLdap *ldap);
+void _linphone_magic_search_notify_more_results_available(LinphoneMagicSearch *magic_search,
+                                                          LinphoneMagicSearchSource source);
 
 const LinphoneParticipantImdnState *
 _linphone_participant_imdn_state_from_cpp_obj(const LinphonePrivate::ParticipantImdnState &state);
