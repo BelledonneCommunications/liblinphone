@@ -445,6 +445,17 @@ public:
 	}
 
 	/*
+	 * This fonction is called each time a new participant device that is not in the allowed participants'list calls a
+	 * closed-list conference
+	 * @param[in] event informations related to the removed device's participant. @notnil
+	 * @param[in] device participant device that is not in the allowed participants'list. @notnil
+	 */
+	virtual void
+	onParticipantDeviceJoiningRequest(BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+	                                  BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
+	}
+
+	/*
 	 * This fonction is called each time a participant device is being currently displayed as active speaker.
 	 * @param[in] device participant device currently being displayed as active speaker. @notnil
 	 */

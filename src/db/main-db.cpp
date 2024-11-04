@@ -1294,6 +1294,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent(const ConferenceId
 
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
+		case EventLog::Type::ConferenceParticipantDeviceJoiningRequest:
 		case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
 		case EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged:
 		case EventLog::Type::ConferenceParticipantDeviceStatusChanged:
@@ -4326,6 +4327,7 @@ bool MainDb::addEvent(const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceJoiningRequest:
 			case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
 			case EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged:
 			case EventLog::Type::ConferenceParticipantDeviceStatusChanged:
@@ -4403,6 +4405,7 @@ bool MainDb::updateEvent(const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceJoiningRequest:
 			case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
 			case EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged:
 			case EventLog::Type::ConferenceParticipantDeviceStatusChanged:

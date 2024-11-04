@@ -107,18 +107,24 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params)
 	mStunAllowed = !!linphone_config_get_int(linphone_core_get_config(sg.getCCore()), "rtp", "stun_keepalives", 1);
 }
 
-void MS2Stream::setEkt(const MSEKTParametersSet *ekt_params) const {
+void MS2Stream::setEkt(const MSEKTParametersSet *ekt_params) {
 	MediaStream *ms = getMediaStream();
 	if (ms) {
 		ms_media_stream_sessions_set_ekt(&ms->sessions, ekt_params);
+		// ms_media_stream_sessions_set_ekt may create an SRTP context that must be added to the sessions held by the
+		// stream to be freed if the call ends at an early stage
+		media_stream_reclaim_sessions(ms, &mSessions);
 	}
 }
 
-void MS2Stream::setEktMode(MSEKTMode ekt_mode) const {
+void MS2Stream::setEktMode(MSEKTMode ekt_mode) {
 	MediaStream *ms = getMediaStream();
 	if (ms) {
 		ms_media_stream_sessions_set_ekt_mode(&ms->sessions, ekt_mode);
 		if (ekt_mode == MS_EKT_TRANSFER) rtp_session_enable_transfer_mode(ms->sessions.rtp_session, TRUE);
+		// ms_media_stream_sessions_set_ekt_mode may create an SRTP context that must be added to the sessions held by
+		// the stream to be freed if the call ends at an early stage
+		media_stream_reclaim_sessions(ms, &mSessions);
 	}
 }
 

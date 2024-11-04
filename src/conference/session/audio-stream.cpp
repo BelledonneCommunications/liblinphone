@@ -444,9 +444,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		    pt ? PayloadType::create(getCore().getSharedFromThis(), pt) : nullptr);
 	}
 
-	if (stream.getDirection() == SalStreamSendOnly) media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);
-	else if (stream.getDirection() == SalStreamRecvOnly) media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
-	else if (stream.getDirection() == SalStreamSendRecv) media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
+	auto streamDirection = stream.getDirection();
+	if (streamDirection == SalStreamSendOnly) media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);
+	else if (streamDirection == SalStreamRecvOnly) media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
+	else if (streamDirection == SalStreamSendRecv) media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
 
 	// If stream doesn't have a playcard associated with it, then use the default values
 	if (!playcard)
@@ -604,7 +605,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 
-		conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 		if (conference) {
 			audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
 
@@ -631,7 +631,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (getMediaSession().isPlayingRingbackTone()) setupRingbackPlayer();
 
 	std::shared_ptr<ParticipantDevice> device = nullptr;
-	conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 	if (conference) {
 		device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
 	}

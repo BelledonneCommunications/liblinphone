@@ -62,6 +62,7 @@ public:
 		ScheduledForJoining = LinphoneParticipantDeviceStateScheduledForJoining,
 		ScheduledForLeaving = LinphoneParticipantDeviceStateScheduledForLeaving,
 		OnHold = LinphoneParticipantDeviceStateOnHold,
+		RequestingToJoin = LinphoneParticipantDeviceStateRequestingToJoin,
 		Alerting = LinphoneParticipantDeviceStateAlerting,
 		MutedByFocus = LinphoneParticipantDeviceStateMutedByFocus,
 	};

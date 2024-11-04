@@ -497,6 +497,13 @@ void _linphone_conference_notify_participant_device_removed(LinphoneConference *
 	                                  linphone_conference_cbs_get_participant_device_removed, participant_device);
 }
 
+void _linphone_conference_notify_participant_device_joining_request(LinphoneConference *conference,
+                                                                    LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, Conference::toCpp(conference),
+	                                  linphone_conference_cbs_get_participant_device_joining_request,
+	                                  participant_device);
+}
+
 void _linphone_conference_notify_participant_device_state_changed(LinphoneConference *conference,
                                                                   const LinphoneParticipantDevice *participant_device,
                                                                   const LinphoneParticipantDeviceState state) {

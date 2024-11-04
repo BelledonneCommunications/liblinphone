@@ -1167,8 +1167,13 @@ void LimeX3dhEncryptionEngine::onAccountRegistrationStateChanged(std::shared_ptr
 		return;
 	}
 
-	const std::shared_ptr<Address> &identityAddress = account->getContactAddress();
-	string localDeviceId = identityAddress->asStringUriOnly();
+	const std::shared_ptr<Address> &contactAddress = account->getContactAddress();
+	if (!contactAddress) {
+		lWarning() << "[LIME] Unable to load LIME user because the contact address of account [" << account
+		           << "] has not been defined yet";
+		return;
+	}
+	string localDeviceId = contactAddress->asStringUriOnly();
 
 	lInfo() << "[LIME] Load lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl
 	        << "]";
@@ -1208,6 +1213,8 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 	// Can take into account LIME server changed when the contact address is not known
 	auto contactAddress = account->getContactAddress();
 	if (!contactAddress) {
+		lWarning() << "[LIME] Unable to update LIME user because contact address of account [" << account
+		           << "] has not been defined yet";
 		return;
 	}
 	string localDeviceId = contactAddress->asStringUriOnly();

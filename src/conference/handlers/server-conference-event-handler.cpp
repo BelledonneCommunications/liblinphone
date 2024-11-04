@@ -66,6 +66,20 @@ void ServerConferenceEventHandler::notifyFullState(const std::shared_ptr<Content
 	notifyParticipantDevice(notify, device);
 }
 
+void ServerConferenceEventHandler::notifyOnlyAdmins(const std::shared_ptr<Content> &notify) {
+	auto conf = getConference();
+	if (!conf) {
+		return;
+	}
+	for (const auto &participant : conf->getParticipants()) {
+		if (participant->isAdmin()) {
+			for (const auto &device : participant->getDevices()) {
+				notifyParticipantDevice(notify, device);
+			}
+		}
+	}
+}
+
 void ServerConferenceEventHandler::notifyAllExceptDevice(const std::shared_ptr<Content> &notify,
                                                          const shared_ptr<ParticipantDevice> &exceptDevice) {
 	auto conf = getConference();
@@ -335,6 +349,11 @@ void ServerConferenceEventHandler::addEndpointSessionInfo(const std::shared_ptr<
 			status = EndpointStatusType::connected;
 			break;
 		case ParticipantDevice::State::OnHold:
+		case ParticipantDevice::State::RequestingToJoin:
+			// RFC4575: the on_hold state means that there is signaling between the conference and the client but the
+			// latter is neither mixed in the conference nor being mixed. It is typically used when the endpoint has
+			// requested to join the conference (state RequestingToJoin) or it left temporarely the conference (state
+			// OnHold)
 			status = EndpointStatusType::on_hold;
 			break;
 		case ParticipantDevice::State::ScheduledForLeaving:
@@ -1073,6 +1092,7 @@ void ServerConferenceEventHandler::notifyParticipant(const std::shared_ptr<Conte
 			case ParticipantDevice::State::Alerting:
 			case ParticipantDevice::State::Present:
 			case ParticipantDevice::State::OnHold:
+			case ParticipantDevice::State::RequestingToJoin:
 			case ParticipantDevice::State::MutedByFocus:
 				notifyParticipantDevice(notify, device);
 				break;
@@ -1379,6 +1399,25 @@ void ServerConferenceEventHandler::onAvailableMediaChanged(
 	} else {
 		lWarning() << __func__
 		           << ": Not sending notification of conference subject change because pointer to conference is null";
+	}
+}
+
+void ServerConferenceEventHandler::onParticipantDeviceJoiningRequest(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+    const std::shared_ptr<ParticipantDevice> &device) {
+	// Do not send notify if conference pointer is null. It may mean that the conference has been terminated
+	auto conf = getConference();
+	const auto &dAddress = device->getAddress();
+	if (conf) {
+		auto participant = device->getParticipant();
+		const auto &pAddress = participant->getAddress();
+		notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
+		shared_ptr<Core> core = conf->getCore();
+		std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
+		ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant device " << *dAddress
+		           << " being added because pointer to conference is null";
 	}
 }
 

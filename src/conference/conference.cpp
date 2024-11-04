@@ -160,9 +160,22 @@ bool Conference::addParticipantDevice(std::shared_ptr<Call> call) {
 		if (p->findDevice(session, false) == nullptr) {
 			shared_ptr<ParticipantDevice> device = p->addDevice(session);
 			// If there is already a call for this participant, then he/she is joining the conference
-			device->setState(ParticipantDevice::State::Joining);
-			lInfo() << "Participant with address " << *remoteAddress << " has added device with session " << session
-			        << " (address " << *device->getAddress() << ") to conference " << conferenceAddressStr;
+			auto invitedInfo = findInvitedParticipant(device->getAddress());
+			bool joining =
+			    (invitedInfo || (mConfParams->getParticipantListType() == ConferenceParams::ParticipantListType::Open));
+			auto deviceState = ParticipantDevice::State::Joining;
+			if (joining) {
+				deviceState = ParticipantDevice::State::Joining;
+				lInfo() << "Participant with address " << *call->getRemoteAddress() << " has added device with session "
+				        << session << " (address " << *device->getAddress() << ") to conference "
+				        << conferenceAddressStr;
+			} else {
+				deviceState = ParticipantDevice::State::RequestingToJoin;
+				lInfo() << "Participant with address " << *call->getRemoteAddress() << " has added device with session "
+				        << session << " (address " << *device->getAddress()
+				        << ") which is requesting to join conference " << conferenceAddressStr;
+			}
+			device->setState(deviceState, false);
 			return true;
 		} else {
 			lDebug() << "Participant with address " << *remoteAddress << " to conference " << conferenceAddressStr
@@ -1220,6 +1233,23 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceMediaAvailabilityChanged(event, participantDevice);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent>
+Conference::notifyParticipantDeviceJoiningRequest(time_t creationTime,
+                                                  const bool isFullState,
+                                                  const std::shared_ptr<Participant> &participant,
+                                                  const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+	    EventLog::Type::ConferenceParticipantDeviceJoiningRequest, creationTime, mConferenceId,
+	    participant->getAddress(), participantDevice->getAddress(), participantDevice->getName());
+	event->setFullState(isFullState);
+	event->setNotifyId(mLastNotify);
+
+	for (const auto &l : mConfListeners) {
+		l->onParticipantDeviceJoiningRequest(event, participantDevice);
 	}
 	return event;
 }

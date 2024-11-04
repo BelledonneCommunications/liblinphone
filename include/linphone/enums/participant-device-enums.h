@@ -39,8 +39,10 @@ typedef enum _LinphoneParticipantDeviceState {
 	LinphoneParticipantDeviceStateScheduledForLeaving =
 	    5, /**< Transitional state for a participant that will receive a BYE shortly. */
 	LinphoneParticipantDeviceStateOnHold = 6, /**< the SIP session has been concluded, participant is not media mixed */
-	LinphoneParticipantDeviceStateAlerting = 7,    /**< 180 Ringing */
-	LinphoneParticipantDeviceStateMutedByFocus = 8 /**< Some medias have been muted by the focus */
+	LinphoneParticipantDeviceStateAlerting = 7,     /**< 180 Ringing */
+	LinphoneParticipantDeviceStateMutedByFocus = 8, /**< Some medias have been muted by the focus */
+	LinphoneParticipantDeviceStateRequestingToJoin =
+	    9 /**< the participant has sent a request to join the conference as he/she didn't receive any invitation for */
 } LinphoneParticipantDeviceState;
 
 /**

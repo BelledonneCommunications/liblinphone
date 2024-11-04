@@ -409,6 +409,8 @@ void _linphone_conference_notify_participant_device_added(LinphoneConference *co
                                                           LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference,
                                                             const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_participant_device_joining_request(LinphoneConference *conference,
+                                                                    LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_role_changed(LinphoneConference *conference,
                                                           const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference,

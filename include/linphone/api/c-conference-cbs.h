@@ -146,6 +146,22 @@ linphone_conference_cbs_set_participant_device_removed(LinphoneConferenceCbs *cb
                                                        LinphoneConferenceCbsParticipantDeviceRemovedCb cb);
 
 /**
+ * Get the participant device joining request callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device joining request callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceJoiningRequestCb
+linphone_conference_cbs_get_participant_device_joining_request(const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device joining request callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device joining request callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_joining_request(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceJoiningRequestCb cb);
+
+/**
  * Get the participant role changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current participant role changed callback.

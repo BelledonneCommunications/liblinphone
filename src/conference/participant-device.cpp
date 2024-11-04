@@ -285,6 +285,7 @@ bool ParticipantDevice::isLeavingState(const ParticipantDevice::State &state) {
 		case ParticipantDevice::State::Alerting:
 		case ParticipantDevice::State::Present:
 		case ParticipantDevice::State::OnHold:
+		case ParticipantDevice::State::RequestingToJoin:
 		case ParticipantDevice::State::MutedByFocus:
 			return false;
 		case ParticipantDevice::State::ScheduledForLeaving:
@@ -356,6 +357,8 @@ ostream &operator<<(ostream &stream, ParticipantDevice::State state) {
 			return stream << "Present";
 		case ParticipantDevice::State::OnHold:
 			return stream << "OnHold";
+		case ParticipantDevice::State::RequestingToJoin:
+			return stream << "RequestingToJoin";
 		case ParticipantDevice::State::ScheduledForLeaving:
 			return stream << "ScheduledForLeaving";
 		case ParticipantDevice::State::Leaving:

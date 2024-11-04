@@ -118,6 +118,9 @@ std::ostream &operator<<(std::ostream &lhs, EventLog::Type e) {
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
 			lhs << "ConferenceParticipantDeviceRemoved";
 			break;
+		case EventLog::Type::ConferenceParticipantDeviceJoiningRequest:
+			lhs << "ConferenceParticipantDeviceJoiningRequest";
+			break;
 		case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
 			lhs << "ConferenceParticipantDeviceMediaCapabilityChanged";
 			break;

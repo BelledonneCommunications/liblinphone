@@ -872,7 +872,7 @@ typedef void (*LinphoneConferenceCbsAudioDeviceChangedCb)(LinphoneConference *co
                                                           const LinphoneAudioDevice *audio_device);
 
 /**
- * Callback used to notify a conference that a participant has been added.
+ * Callback used to notify a conference that a participant device has been added.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] participant_device #LinphoneParticipantDevice that has been added to the conference @notnil
  */
@@ -880,12 +880,20 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb)(LinphoneConference
                                                               LinphoneParticipantDevice *participant_device);
 
 /**
- * Callback used to notify a conference that a participant has been removed.
+ * Callback used to notify a conference that a participant device has been removed.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] participant_device #LinphoneParticipantDevice that has been removed to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb)(LinphoneConference *conference,
                                                                 const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Callback used to notify a conference that a participant has requested to join the conference.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device #LinphoneParticipantDevice that has requested to join the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceJoiningRequestCb)(LinphoneConference *conference,
+                                                                       LinphoneParticipantDevice *participant_device);
 
 /**
  * Callback used to notify which participant device video is being displayed as "actively speaking".

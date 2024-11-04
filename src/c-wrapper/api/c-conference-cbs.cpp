@@ -98,6 +98,16 @@ void linphone_conference_cbs_set_participant_device_removed(LinphoneConferenceCb
 	ConferenceCbs::toCpp(cbs)->participantDeviceRemovedCb = cb;
 }
 
+LinphoneConferenceCbsParticipantDeviceJoiningRequestCb
+linphone_conference_cbs_get_participant_device_joining_request(const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceJoiningRequestCb;
+}
+
+void linphone_conference_cbs_set_participant_device_joining_request(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceJoiningRequestCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceJoiningRequestCb = cb;
+}
+
 LinphoneConferenceCbsParticipantRoleChangedCb
 linphone_conference_cbs_get_participant_role_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantRoleChangedCb;

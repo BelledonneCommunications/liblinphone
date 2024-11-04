@@ -72,6 +72,7 @@ public:
 	void notifyAllExceptDevice(const std::shared_ptr<Content> &notify,
 	                           const std::shared_ptr<ParticipantDevice> &exceptDevice);
 	void notifyAll(const std::shared_ptr<Content> &notify);
+	void notifyOnlyAdmins(const std::shared_ptr<Content> &notify);
 	std::shared_ptr<Content> createNotifyFullState(const std::shared_ptr<EventSubscribe> &ev);
 	std::shared_ptr<Content> createNotifyMultipart(int notifyId);
 
@@ -149,6 +150,15 @@ public:
 	 * @param[in] event informations related to the new subject.
 	 */
 	virtual void onAvailableMediaChanged(const std::shared_ptr<ConferenceAvailableMediaEvent> &event) override;
+
+	/*
+	 * This fonction is called each time a new participant device that is not in the allowed participants'list calls a
+	 * closed-list conference
+	 * @param[in] event informations related to the removed device's participant. @notnil
+	 * @param[in] device participant device that is not in the allowed participants'list. @notnil
+	 */
+	virtual void onParticipantDeviceJoiningRequest(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                                               const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	 * This fonction is called each time a new participant device is added by the focus after full state notification.

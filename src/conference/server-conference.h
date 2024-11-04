@@ -127,6 +127,13 @@ public:
 	notifyEphemeralMessageEnabled(time_t creationTime, const bool isFullState, const bool enable) override;
 	virtual std::shared_ptr<ConferenceEphemeralMessageEvent>
 	notifyEphemeralLifetimeChanged(time_t creationTime, const bool isFullState, const long lifetime) override;
+
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceJoiningRequest(time_t creationTime,
+	                                      const bool isFullState,
+	                                      const std::shared_ptr<Participant> &participant,
+	                                      const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
 	notifyParticipantDeviceAdded(time_t creationTime,
 	                             const bool isFullState,

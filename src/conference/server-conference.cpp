@@ -1137,6 +1137,16 @@ shared_ptr<ConferenceParticipantDeviceEvent> ServerConference::notifyParticipant
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent>
+ServerConference::notifyParticipantDeviceJoiningRequest(time_t creationTime,
+                                                        const bool isFullState,
+                                                        const std::shared_ptr<Participant> &participant,
+                                                        const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	incrementLastNotify();
+	return Conference::notifyParticipantDeviceJoiningRequest(creationTime, isFullState, participant, participantDevice);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent>
 ServerConference::notifyParticipantDeviceAdded(time_t creationTime,
                                                const bool isFullState,
                                                const std::shared_ptr<Participant> &participant,
@@ -1580,6 +1590,9 @@ void ServerConference::addLocalEndpoint() {
 			time_t creationTime = time(nullptr);
 			notifyParticipantAdded(creationTime, false, getMe());
 			for (auto &device : mMe->getDevices()) {
+				device->updateMediaCapabilities();
+				device->updateStreamAvailabilities();
+				device->setState(ParticipantDevice::State::Present, false);
 				notifyParticipantDeviceAdded(creationTime, false, getMe(), device);
 			}
 		}
@@ -1594,9 +1607,10 @@ void ServerConference::removeLocalEndpoint() {
 
 		time_t creationTime = time(nullptr);
 		for (auto &device : mMe->getDevices()) {
-			notifyParticipantDeviceRemoved(creationTime, false, getMe(), device);
+			participantDeviceLeft(mMe, device);
+			notifyParticipantDeviceRemoved(creationTime, false, mMe, device);
 		}
-		notifyParticipantRemoved(creationTime, false, getMe());
+		notifyParticipantRemoved(creationTime, false, mMe);
 	}
 }
 
@@ -1728,25 +1742,6 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 		return false;
 	}
 
-	const auto &localAddress = call->getLocalAddress();
-	if (mConfParams->getParticipantListType() == ConferenceParams::ParticipantListType::Closed) {
-		const auto allowedAddresses = getAllowedAddresses();
-		auto p = std::find_if(allowedAddresses.begin(), allowedAddresses.end(),
-		                      [&remoteAddress](const auto &address) { return (remoteAddress->weakEqual(*address)); });
-		if (p == allowedAddresses.end()) {
-			lError() << "Unable to add call (local address " << *localAddress << " remote address " << *remoteAddress
-			         << ") because participant " << *remoteAddress
-			         << " is not in the list of allowed participants of conference " << *conferenceAddress;
-
-			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Call forbidden to join the conference",
-			                        NULL);
-			call->terminate(ei);
-			linphone_error_info_unref(ei);
-			return false;
-		}
-	}
-
 	const auto initialState = getState();
 	const auto dialout = (mConfParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
 	const auto now = Utils::timeToIso8601(ms_time(NULL));
@@ -1765,13 +1760,14 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 
 	// Add participants event after the conference ends if it is active (i.e in the Created state)
 	if (initialState != ConferenceInterface::State::Created) {
-		auto session = call->getActiveSession();
+		const auto &localAddress = call->getLocalAddress();
 		if (!isConferenceStarted()) {
 			lError() << "Unable to add call (local address " << *localAddress << " remote address " << *remoteAddress
 			         << ") because conference " << *conferenceAddress << " will start at " << startTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference not started yet", NULL);
+			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference not started yet",
+			                        "Conference not started yet");
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
 			return false;
@@ -1782,7 +1778,8 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			         << ") because conference " << *conferenceAddress << " is already terminated at " << endTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference already terminated", NULL);
+			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference already terminated",
+			                        "Conference already terminated");
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
 			return false;
@@ -2197,7 +2194,11 @@ bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
 			const auto &p = device->getParticipant();
 			if (p) {
 				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceAdded(creationTime, false, p, device);
+				if (device->getState() == ParticipantDevice::State::Joining) {
+					notifyParticipantDeviceAdded(creationTime, false, p, device);
+				} else {
+					notifyParticipantDeviceJoiningRequest(creationTime, false, p, device);
+				}
 			}
 		}
 	}
@@ -2866,9 +2867,6 @@ int ServerConference::enter() {
 		setOrganizer(meAddress);
 
 		addLocalEndpoint();
-		if (mMe->getDevices().size() > 0) {
-			participantDeviceJoined(mMe, mMe->getDevices().front());
-		}
 	}
 	return 0;
 }
@@ -2876,9 +2874,6 @@ int ServerConference::enter() {
 void ServerConference::leave() {
 	if (isIn() && supportsMedia()) {
 		lInfo() << *getMe()->getAddress() << " is leaving conference " << *getConferenceAddress();
-		if (mMe->getDevices().size() > 0) {
-			participantDeviceLeft(mMe, mMe->getDevices().front());
-		}
 		removeLocalEndpoint();
 	}
 }
@@ -3025,12 +3020,14 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				auto p = std::find_if(
 				    allowedAddresses.begin(), allowedAddresses.end(),
 				    [&remoteAddress](const auto &address) { return (remoteAddress->weakEqual(*address)); });
-				if (resourceList && (p == allowedAddresses.end())) {
+				bool allowedParticipant = (p != allowedAddresses.end());
+				if (resourceList && !allowedParticipant) {
 					LinphoneErrorInfo *ei = linphone_error_info_new();
 					lInfo() << *remoteAddress << " is not allowed to joing conference [" << this << " - "
 					        << *getConferenceAddress();
 					linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403,
-					                        "Participant not authorized to change the participant list", NULL);
+					                        "Participant not authorized to change the participant list",
+					                        "Participant not authorized to change the participant list");
 					ms->decline(ei);
 					linphone_error_info_unref(ei);
 				} else if (!cppCall) {
@@ -3042,15 +3039,21 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					ms->decline(ei);
 					linphone_error_info_unref(ei);
 				} else {
+					bool acceptSession = (allowedParticipant || (mConfParams->getParticipantListType() ==
+					                                          ConferenceParams::ParticipantListType::Open));
 					LinphoneCallParams *params =
 					    linphone_core_create_call_params(getCore()->getCCore(), cppCall ? cppCall->toC() : nullptr);
-					linphone_call_params_enable_audio(params, TRUE);
-					linphone_call_params_enable_video(
-					    params,
-					    (ms->getRemoteParams()->videoEnabled() && getCurrentParams()->videoEnabled()) ? TRUE : FALSE);
+					linphone_call_params_enable_audio(params, acceptSession);
+					linphone_call_params_enable_video(params, acceptSession &&
+					                                              cppCall->getRemoteParams()->videoEnabled() &&
+					                                              getCurrentParams()->videoEnabled());
 					linphone_call_params_set_start_time(params, getCurrentParams()->getStartTime());
 					linphone_call_params_set_end_time(params, getCurrentParams()->getEndTime());
-					ms->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+					if (acceptSession) {
+						ms->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+					} else {
+						ms->acceptEarlyMedia(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+					}
 					linphone_call_params_unref(params);
 				}
 				if (isCancelled) {
@@ -3493,6 +3496,7 @@ void ServerConference::updateParticipantDeviceSession(BCTBX_UNUSED(const shared_
 			case ParticipantDevice::State::Alerting:
 			case ParticipantDevice::State::Present:
 			case ParticipantDevice::State::OnHold:
+			case ParticipantDevice::State::RequestingToJoin:
 			case ParticipantDevice::State::MutedByFocus:
 			case ParticipantDevice::State::Left:
 				// nothing to do

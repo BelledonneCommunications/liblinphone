@@ -266,7 +266,8 @@ void ClientEktManager::subscribe() {
 		mEventSubscribe->getOp()->setFromAddress(localAddress->getImpl());
 		mEventSubscribe->setInternal(true);
 	}
-	lInfo() << *localAddress << " is subscribing to chat room or conference: " << *peerAddress;
+	lInfo() << *localAddress << " is subscribing to chat room or conference: " << *peerAddress
+	        << " to get encryption data";
 	mEventSubscribe->send(nullptr);
 }
 

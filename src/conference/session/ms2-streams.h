@@ -52,8 +52,8 @@ public:
 	 *
 	 * @param[in] ekt_params	All data needed to set the EKT
 	 */
-	void setEkt(const MSEKTParametersSet *ekt_params) const;
-	void setEktMode(MSEKTMode ekt_mode) const;
+	void setEkt(const MSEKTParametersSet *ekt_params);
+	void setEktMode(MSEKTMode ekt_mode);
 	MSZrtpContext *getZrtpContext() const;
 	std::pair<RtpTransport *, RtpTransport *> getMetaRtpTransports();
 	virtual MediaStream *getMediaStream() const = 0;

@@ -540,11 +540,13 @@ typedef struct _stats {
 	int number_of_participant_devices_removed;
 	int number_of_participant_devices_screen_sharing_enabled;
 	int number_of_participant_devices_screen_sharing_disabled;
+	int number_of_participant_devices_joining_request;
 	int number_of_conference_full_state_received;
 	int number_of_participant_devices_media_capability_changed;
 	int number_of_participant_devices_scheduled_for_joining;
 	int number_of_participant_devices_pending;
 	int number_of_participant_devices_on_hold;
+	int number_of_participant_devices_requesting_to_join;
 	int number_of_participant_devices_alerting;
 	int number_of_participant_devices_joined;
 	int number_of_participant_devices_scheduled_for_leaving;

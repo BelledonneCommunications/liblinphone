@@ -621,37 +621,44 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						}
 					}
 
+					// Set state after setting the joining time
 					if (endpoint.getStatus().present()) {
 						const auto &status = endpoint.getStatus().get();
-						ParticipantDevice::State state = ParticipantDevice::State::Joining;
+						ParticipantDevice::State deviceState = ParticipantDevice::State::Joining;
 						switch (status) {
 							case EndpointStatusType::dialing_in:
 							case EndpointStatusType::dialing_out:
-								state = ParticipantDevice::State::Joining;
+								deviceState = ParticipantDevice::State::Joining;
 								break;
 							case EndpointStatusType::alerting:
-								state = ParticipantDevice::State::Alerting;
+								deviceState = ParticipantDevice::State::Alerting;
 								break;
 							case EndpointStatusType::pending:
-								state = ParticipantDevice::State::ScheduledForJoining;
+								deviceState = ParticipantDevice::State::ScheduledForJoining;
 								break;
 							case EndpointStatusType::connected:
-								state = ParticipantDevice::State::Present;
+								deviceState = ParticipantDevice::State::Present;
 								break;
 							case EndpointStatusType::on_hold:
-								state = ParticipantDevice::State::OnHold;
+								// If the joining time is not defined and the client receives a NOTIFY that a
+								// participant is on hold it means that it is requesting to join the conference.
+								// The joining time is indeed defined the first time the participant state moves to the
+								// Present state
+								deviceState = (device->getTimeOfJoining() == (time_t)-1)
+								                  ? ParticipantDevice::State::RequestingToJoin
+								                  : ParticipantDevice::State::OnHold;
 								break;
 							case EndpointStatusType::disconnecting:
-								state = ParticipantDevice::State::Leaving;
+								deviceState = ParticipantDevice::State::Leaving;
 								break;
 							case EndpointStatusType::disconnected:
-								state = ParticipantDevice::State::Left;
+								deviceState = ParticipantDevice::State::Left;
 								break;
 							case EndpointStatusType::muted_via_focus:
-								state = ParticipantDevice::State::MutedByFocus;
+								deviceState = ParticipantDevice::State::MutedByFocus;
 								break;
 						}
-						device->setState(state, !isFullState);
+						device->setState(deviceState, !isFullState);
 					}
 
 					if (endpoint.getCallInfo().present()) {
@@ -690,8 +697,13 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							sendNotify = (dIt == oldDevices.cend()) && !isMe;
 						}
 						if (!isFullState || sendNotify) {
-							getConference()->notifyParticipantDeviceAdded(creationTime, isFullState, participant,
-							                                              device);
+							if (device->getState() == ParticipantDevice::State::RequestingToJoin) {
+								getConference()->notifyParticipantDeviceJoiningRequest(creationTime, isFullState,
+								                                                       participant, device);
+							} else {
+								getConference()->notifyParticipantDeviceAdded(creationTime, isFullState, participant,
+								                                              device);
+							}
 						}
 					} else {
 						lInfo() << "Participant device " << *gruu << " has been successfully updated";

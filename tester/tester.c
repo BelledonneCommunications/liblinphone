@@ -738,6 +738,9 @@ static void conference_participant_device_state_changed(LinphoneConference *conf
 		case LinphoneParticipantDeviceStateOnHold:
 			manager->stat.number_of_participant_devices_on_hold++;
 			break;
+		case LinphoneParticipantDeviceStateRequestingToJoin:
+			manager->stat.number_of_participant_devices_requesting_to_join++;
+			break;
 		case LinphoneParticipantDeviceStateAlerting:
 			manager->stat.number_of_participant_devices_alerting++;
 			break;
@@ -818,6 +821,12 @@ static void conference_participant_device_removed(LinphoneConference *conference
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_removed++;
 }
+static void conference_participant_device_joining_request(LinphoneConference *conference,
+                                                          BCTBX_UNUSED(LinphoneParticipantDevice *participant_device)) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_devices_joining_request++;
+}
 static void conference_full_state_received(LinphoneConference *conference) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
@@ -852,6 +861,8 @@ void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
 		linphone_conference_cbs_set_participant_device_added(cbs, conference_participant_device_added);
 		linphone_conference_cbs_set_participant_removed(cbs, conference_participant_removed);
 		linphone_conference_cbs_set_participant_device_removed(cbs, conference_participant_device_removed);
+		linphone_conference_cbs_set_participant_device_joining_request(cbs,
+		                                                               conference_participant_device_joining_request);
 		linphone_conference_cbs_set_participant_device_screen_sharing_changed(
 		    cbs, conference_participant_device_screen_sharing_changed);
 		linphone_conference_cbs_set_full_state_received(cbs, conference_full_state_received);

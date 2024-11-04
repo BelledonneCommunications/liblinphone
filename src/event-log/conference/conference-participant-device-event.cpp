@@ -49,6 +49,7 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent(Type type,
           *new ConferenceParticipantDeviceEventPrivate, type, creationTime, conferenceId, participantAddress) {
 	L_D();
 	L_ASSERT(type == Type::ConferenceParticipantDeviceAdded || type == Type::ConferenceParticipantDeviceRemoved ||
+	         type == Type::ConferenceParticipantDeviceJoiningRequest ||
 	         type == Type::ConferenceParticipantDeviceStatusChanged ||
 	         type == Type::ConferenceParticipantDeviceMediaCapabilityChanged ||
 	         type == Type::ConferenceParticipantDeviceMediaAvailabilityChanged);

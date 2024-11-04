@@ -117,6 +117,12 @@ void NotifyConferenceListener::onParticipantDeviceRemoved(
 	_linphone_conference_notify_participant_device_removed(conf->toC(), device->toC());
 }
 
+void NotifyConferenceListener::onParticipantDeviceJoiningRequest(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+    const std::shared_ptr<ParticipantDevice> &device) {
+	_linphone_conference_notify_participant_device_joining_request(conf->toC(), device->toC());
+}
+
 void NotifyConferenceListener::onStateChanged(ConferenceInterface::State newState) {
 	_linphone_conference_notify_state_changed(conf->toC(), (LinphoneConferenceState)newState);
 }

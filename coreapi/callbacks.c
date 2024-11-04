@@ -307,8 +307,7 @@ static void call_received(SalCallOp *h) {
 							sal_error_info_set(&sei, SalReasonNotFound, "SIP", 0, nullptr, nullptr);
 							h->declineWithErrorInfo(&sei);
 							LinphoneErrorInfo *ei = linphone_error_info_new();
-							linphone_error_info_set(ei, nullptr, LinphoneReasonNotFound, 404, "Conference not found",
-							                        nullptr);
+							linphone_error_info_set(ei, nullptr, LinphoneReasonNotFound, 404, "Conference not found", "Conference not found");
 							core->reportEarlyCallFailed(LinphoneCallIncoming, from, to, ei, h->getCallId());
 							h->release();
 							sal_error_info_reset(&sei);

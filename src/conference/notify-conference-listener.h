@@ -116,6 +116,15 @@ public:
 	                                        const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
+	 * This fonction is called each time a new participant device that is not in the allowed participants'list calls a
+	 * closed-list conference
+	 * @param[in] event informations related to the removed device's participant. @notnil
+	 * @param[in] device participant device that is not in the allowed participants'list. @notnil
+	 */
+	virtual void onParticipantDeviceJoiningRequest(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                                               const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
 	 * This fonction is called each time a new participant device changed its media availability after full state
 	 * notification.
 	 * @param[in] event informations related to the device's participant whose media availability changed. @notnil
