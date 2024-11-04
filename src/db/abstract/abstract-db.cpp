@@ -27,9 +27,9 @@
 #include "logger/logger.h"
 
 #ifdef HAVE_DB_STORAGE
-#ifdef HAVE_STATIC_SOCI
+#ifdef HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
 #include <sqlite3.h>
-#endif // HAVE_STATIC_SOCI
+#endif // HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
 #endif // ifdef HAVE_DB_STORAGE
 
 // =============================================================================
@@ -38,7 +38,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-#ifdef HAVE_STATIC_SOCI
+#ifdef HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
 // Force static sqlite3 linking when soci is built statically (mainly for IOS and Android).
 extern "C" void register_factory_sqlite3();
 
@@ -47,7 +47,7 @@ static void sqlite3Log(void *, int iErrCode, const char *zMsg) {
 	lInfo() << "[sqlite3][" << iErrCode << "]" << zMsg;
 }
 #endif
-#endif // HAVE_STATIC_SOCI
+#endif // HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
 
 void AbstractDbPrivate::safeInit() {
 #ifdef HAVE_DB_STORAGE
@@ -69,7 +69,7 @@ AbstractDb::AbstractDb(AbstractDbPrivate &p) : Object(p) {
 
 void AbstractDb::registerBackend(Backend backend) {
 #ifdef HAVE_DB_STORAGE
-#ifdef HAVE_STATIC_SOCI
+#ifdef HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
 	if (backend == Sqlite3) {
 		static bool registered = false;
 		if (!registered) {
@@ -80,7 +80,7 @@ void AbstractDb::registerBackend(Backend backend) {
 	} else {
 		lWarning() << "AbstractDb::registerBackend() not implemented.";
 	}
-#endif // HAVE_STATIC_SOCI
+#endif // HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
 #endif
 }
 
