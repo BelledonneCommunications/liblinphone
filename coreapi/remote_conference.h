@@ -183,6 +183,7 @@ private:
 	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 	void createFocus(const std::shared_ptr<Address> focusAddr,
 	                 const std::shared_ptr<LinphonePrivate::CallSession> focusSession = nullptr);
+	void callFocus();
 
 	bool finalized = false;
 	bool scheduleUpdate = false;

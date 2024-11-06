@@ -394,15 +394,33 @@ bool RemoteConference::addParticipant(const std::shared_ptr<Address> &participan
 	return ret;
 }
 
+void RemoteConference::callFocus() {
+	std::shared_ptr<Address> focusAddress = focus->getAddress();
+	if (!focus->getSession()) {
+		lInfo() << "Calling the conference focus (" << *focusAddress
+		        << ") as there is no session towards the focus yet";
+		LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
+		// Participant with the focus call is admin
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
+		linphone_call_params_enable_video(params, confParams->videoEnabled());
+		Conference::setSubject(pendingSubject);
+		auto focusCallC = linphone_core_invite_address_with_params_2(getCore()->getCCore(), focusAddress->toC(), params,
+		                                                             L_STRING_TO_C(pendingSubject), nullptr);
+		linphone_call_params_unref(params);
+		if (focusCallC) {
+			auto focusCall = Call::toCpp(focusCallC)->getSharedFromThis();
+			focusCall->setConference(getSharedFromThis());
+			focus->setSession(focusCall->getActiveSession());
+		}
+	}
+}
+
 bool RemoteConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call) {
 
 #if 0
 	if (getMe()->isAdmin() && !isConferenceEnded() && isConferenceStarted()) {
 #endif
 	if (getMe()->isAdmin()) {
-		std::shared_ptr<Address> focusAddress = focus->getAddress();
-		LinphoneCallParams *params;
-		std::shared_ptr<LinphonePrivate::Call> focusCall = nullptr;
 		const auto &remoteAddress = call->getRemoteAddress();
 		const auto conferenceAddressStr =
 		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<address-not-defined>"));
@@ -410,72 +428,28 @@ bool RemoteConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> cal
 		switch (state) {
 			case ConferenceInterface::State::None:
 			case ConferenceInterface::State::Instantiated:
-			case ConferenceInterface::State::CreationFailed: {
-				lInfo() << "Calling the conference focus (" << *focusAddress << ")";
-				params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-				// Participant with the focus call is admin
-				L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
-				linphone_call_params_enable_video(params, confParams->videoEnabled());
-				Conference::setSubject(pendingSubject);
-				auto focusCallC = linphone_core_invite_address_with_params_2(
-				    getCore()->getCCore(), focusAddress->toC(), params, L_STRING_TO_C(pendingSubject), nullptr);
-				linphone_call_params_unref(params);
-				if (focusCallC) {
-					focusCall = Call::toCpp(focusCallC)->getSharedFromThis();
-					focusCall->setConference(getSharedFromThis());
-					focus->setSession(focusCall->getActiveSession());
-				}
-				auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
-				if (callIt == m_pendingCalls.end()) {
-					lInfo() << "Adding call (local address " << *call->getLocalAddress() << " remote address "
-					        << remoteAddressStr << ") to the list of call to add to conference " << conferenceAddressStr
-					        << " (" << this << ")";
-					m_pendingCalls.push_back(call);
+			case ConferenceInterface::State::CreationFailed:
+			case ConferenceInterface::State::CreationPending:
+			case ConferenceInterface::State::Created: {
+				callFocus();
+				if (focusIsReady()) {
 					Conference::addParticipant(call->getRemoteAddress());
+					transferToFocus(call);
 				} else {
-					lError() << "Trying to add call (local address " << *call->getLocalAddress() << " remote address "
-					         << remoteAddressStr << ") twice to conference " << conferenceAddressStr << " (" << this
-					         << ")";
+					auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
+					if (callIt == m_pendingCalls.end()) {
+						lInfo() << "Adding call (local address " << *call->getLocalAddress() << " remote address "
+						        << remoteAddressStr << ") to the list of call to add to conference "
+						        << conferenceAddressStr << " (" << this << ")";
+						m_pendingCalls.push_back(call);
+						Conference::addParticipant(call->getRemoteAddress());
+					} else {
+						lError() << "Trying to add call (local address " << *call->getLocalAddress()
+						         << " remote address " << remoteAddressStr << ") twice to conference "
+						         << conferenceAddressStr << " (" << this << ")";
+					}
 				}
 			}
-				return true;
-			case ConferenceInterface::State::CreationPending:
-			case ConferenceInterface::State::Created:
-				if (focus->getSession()) {
-					if (focusIsReady()) {
-						Conference::addParticipant(call->getRemoteAddress());
-						transferToFocus(call);
-					} else {
-						auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
-						if (callIt == m_pendingCalls.end()) {
-							lInfo() << "Adding call (local address " << call->getLocalAddress()->toString()
-							        << " remote address " << remoteAddressStr
-							        << ") to the list of call to add to conference " << *getConferenceAddress() << " ("
-							        << this << ")";
-							m_pendingCalls.push_back(call);
-							Conference::addParticipant(call);
-						} else {
-							lError() << "Trying to add call (local address " << call->getLocalAddress()->toString()
-							         << " remote address " << remoteAddressStr << ") twice to conference "
-							         << conferenceAddressStr << " (" << this << ")";
-						}
-					}
-				} else {
-					lInfo() << "Calling the conference focus (" << *focusAddress << ")";
-					params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-					// Participant with the focus call is admin
-					L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
-					linphone_call_params_enable_video(params, confParams->videoEnabled());
-					Conference::setSubject(pendingSubject);
-					focusCall = Call::toCpp(linphone_core_invite_address_with_params_2(
-					                            getCore()->getCCore(), focusAddress->toC(), params,
-					                            L_STRING_TO_C(pendingSubject), nullptr))
-					                ->getSharedFromThis();
-					focusCall->setConference(getSharedFromThis());
-					focus->setSession(focusCall->getActiveSession());
-					m_pendingCalls.push_back(call);
-					linphone_call_params_unref(params);
-				}
 				return true;
 			default:
 				lError() << "Could not add call " << call << " to the conference. Bad conference state ("
