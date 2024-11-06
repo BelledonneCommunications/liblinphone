@@ -636,7 +636,11 @@ static void register_failure(SalOp *op) {
 		/* Do nothing. There will be an auth_requested() callback. If the callback doesn't provide an AuthInfo, then
 		 * the proxy config will transition to the failed state.*/
 	} else {
-		Account::toCpp(account)->setState(LinphoneRegistrationFailed, details);
+		if (Account::toCpp(account)->isUnregistering()) {
+			Account::toCpp(account)->setState(LinphoneRegistrationNone, details);
+		} else {
+			Account::toCpp(account)->setState(LinphoneRegistrationFailed, details);
+		}
 	}
 	if (Account::toCpp(account)->getPresencePublishEvent()) {
 		/*prevent publish to be sent now until registration gets successful*/

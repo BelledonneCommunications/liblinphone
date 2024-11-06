@@ -2574,11 +2574,18 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 		params->setConferenceFactoryAddress(nullptr);
 		account->setAccountParams(params);
 	}
-
-	if (account->getState() == LinphoneRegistrationOk) {
-		account->update();
-	} else if (account->getState() != LinphoneRegistrationNone) {
-		account->setState(LinphoneRegistrationNone, "Registration disabled");
+	auto state = account->getState();
+	switch (state) {
+		case LinphoneRegistrationNone:
+		case LinphoneRegistrationOk:
+		case LinphoneRegistrationRefreshing:
+		case LinphoneRegistrationProgress:
+			// iterate will do the job.
+			break;
+		case LinphoneRegistrationFailed:
+		case LinphoneRegistrationCleared:
+			account->setState(LinphoneRegistrationNone, "Registration disabled");
+			break;
 	}
 	Account::writeAllToConfigFile(getSharedFromThis());
 }
@@ -2587,7 +2594,7 @@ void Core::removeDeletedAccount(const std::shared_ptr<Account> &account) {
 	auto &accounts = mDeletedAccounts.mList;
 	const auto accountIt = std::find(accounts.cbegin(), accounts.cend(), account);
 	if (accountIt == accounts.cend()) {
-		lError() << "Account [ " << account << "] is not in the list odf deleted accounts";
+		lError() << "Account [ " << account << "] is not in the list of deleted accounts";
 		return;
 	}
 	/* we also need to update the accounts list */

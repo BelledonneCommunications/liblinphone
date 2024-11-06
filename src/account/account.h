@@ -114,7 +114,7 @@ public:
 	int getUnreadChatMessageCount() const;
 	const std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms() const;
 	const bctbx_list_t *getChatRoomsCList() const;
-	const std::list<std::shared_ptr<AbstractChatRoom>> filterChatRooms(const std::string &filter) const;
+	std::list<std::shared_ptr<AbstractChatRoom>> filterChatRooms(const std::string &filter) const;
 
 	int getMissedCallsCount() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogs() const;
@@ -192,6 +192,7 @@ private:
 	void updateChatRoomList() const;
 
 	void triggerUpdate();
+	void handleDeletion();
 
 	std::shared_ptr<AccountParams> mParams;
 
@@ -202,10 +203,8 @@ private:
 	bool mRegisterChanged = false;
 	bool mSendPublish = false;
 	bool mIsUnregistering = false;
-
 	bool hasProxyConfigRef = false;
-
-	time_t mDeletionDate;
+	time_t mDeletionDate = 0;
 
 	std::string mSipEtag;
 
@@ -261,6 +260,11 @@ public:
 	    : CoreLogContextualizer(account ? Account::toCpp(account) : nullptr) {
 	}
 };
+
+inline std::ostream &operator<<(std::ostream &ostr, const Account &account) {
+	ostr << "Account [" << (void *)&account << "]";
+	return ostr;
+}
 
 LINPHONE_END_NAMESPACE
 
