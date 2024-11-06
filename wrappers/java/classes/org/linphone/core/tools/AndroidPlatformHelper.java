@@ -1323,6 +1323,10 @@ public class AndroidPlatformHelper {
     }
 
     public void processPushNotification(String callId, String payload, boolean isCoreStarting) {
+        Log.i("[Platform Helper] Acquiring platform helper push notification wakelock");
+        WakeLock wakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Push Notification Processing");
+        wakeLock.acquire(20000L);
+        
         if (mCore.isAutoIterateEnabled() && mCore.isInBackground()) {
             // Force the core.iterate() scheduling to a low value to ensure the Core will process what triggered the push notification as quickly as possible
             Log.i("[Platform Helper] Push notification received, scheduling core.iterate() every " + AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED + "ms");
@@ -1332,6 +1336,9 @@ public class AndroidPlatformHelper {
 
         Log.i("[Platform Helper] Notifying Core a push with Call-ID [" + callId + "] has been received");
         processPushNotification(mCore.getNativePointer(), callId, payload, isCoreStarting);
+
+        Log.i("[Platform Helper] Releasing platform helper push notification wakelock");
+        wakeLock.release();
     }
 
     public void startAutoIterate() {
