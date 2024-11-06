@@ -178,6 +178,7 @@ private:
 	std::list<SalAddress *> getOtherContacts();
 
 	void triggerUpdate();
+	void handleDeletion();
 
 	std::shared_ptr<AccountParams> mParams;
 
@@ -189,7 +190,7 @@ private:
 	bool mSendPublish = false;
 	bool mIsUnregistering = false;
 
-	time_t mDeletionDate;
+	time_t mDeletionDate = 0;
 
 	std::string mSipEtag;
 
@@ -242,6 +243,11 @@ public:
 	    : CoreLogContextualizer(account ? Account::toCpp(account) : nullptr) {
 	}
 };
+
+inline std::ostream &operator<<(std::ostream &ostr, const Account &account) {
+	ostr << "Account [" << (void *)&account << "]";
+	return ostr;
+}
 
 LINPHONE_END_NAMESPACE
 

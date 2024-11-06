@@ -890,14 +890,22 @@ void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account) 
 	linphone_core_notify_account_removed(core, account);
 
 	Account::toCpp(account)->setDeletionDate(ms_time(NULL));
-	if (linphone_account_get_state(account) == LinphoneRegistrationOk) {
-		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
-		linphone_account_params_set_register_enabled(params, FALSE);
-		linphone_account_set_params(account, params);
-		linphone_account_params_unref(params);
-		Account::toCpp(account)->update();
-	} else if (linphone_account_get_state(account) != LinphoneRegistrationNone) {
-		Account::toCpp(account)->setState(LinphoneRegistrationNone, "Registration disabled");
+	auto state = linphone_account_get_state(account);
+	switch (state) {
+		case LinphoneRegistrationNone:
+		case LinphoneRegistrationOk:
+		case LinphoneRegistrationRefreshing:
+		case LinphoneRegistrationProgress: {
+			LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+			linphone_account_params_set_register_enabled(params, FALSE);
+			linphone_account_set_params(account, params);
+			linphone_account_params_unref(params);
+			// Account::toCpp(account)->update();
+		} break;
+		case LinphoneRegistrationFailed:
+		case LinphoneRegistrationCleared:
+			Account::toCpp(account)->setState(LinphoneRegistrationNone, "Registration disabled");
+			break;
 	}
 	linphone_proxy_config_write_all_to_config_file(core);
 

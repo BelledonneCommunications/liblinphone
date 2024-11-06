@@ -354,13 +354,28 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 	}
 }
 
+void Account::handleDeletion() {
+	switch (mState) {
+		case LinphoneRegistrationOk:
+			unregister();
+			break;
+		case LinphoneRegistrationNone:
+		case LinphoneRegistrationCleared:
+			break;
+		default:
+			// In all other states, un-registration is aborted.
+			setState(LinphoneRegistrationNone, "Registration disabled");
+			break;
+	}
+}
+
 void Account::setState(LinphoneRegistrationState state, const std::string &message) {
 	auto core = getCCore();
 	if (mState != state ||
 	    state == LinphoneRegistrationOk) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
 		const auto identity = (mParams) ? mParams->getIdentityAddress()->toString() : std::string();
-		if (!mParams) lWarning() << "AccountParams not set for Account [" << this->toC() << "]";
-		lInfo() << "Account [" << this << "] for identity [" << identity << "] moving from state ["
+		if (!mParams) lWarning() << "AccountParams not set for " << *this;
+		lInfo() << *this << " for identity [" << identity << "] moving from state ["
 		        << linphone_registration_state_to_string(mState) << "] to ["
 		        << linphone_registration_state_to_string(state) << "] on core [" << core << "]";
 		mIsUnregistering = false;
@@ -378,6 +393,10 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 
 		LinphoneRegistrationState previousState = mState;
 		mState = state;
+		if (mDeletionDate != 0) {
+			handleDeletion();
+		}
+
 		if (!mDependency) {
 			updateDependentAccount(state, message);
 		}
@@ -556,8 +575,8 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 
 		if (core && core->push_notification_enabled) {
 			if (!newParams->isPushNotificationAvailable()) {
-				lError() << "Couldn't compute automatic push notifications parameters on account [" << this->toC()
-				         << "] because account params do not have available push notifications";
+				lError() << "Couldn't compute automatic push notifications parameters on " << *this
+				         << " because account params do not have available push notifications";
 			} else if (newParams->mPushNotificationAllowed || newParams->mRemotePushNotificationAllowed) {
 				if (newParams->mPushNotificationConfig->getProvider().empty()) {
 					bool tester_env = !!linphone_config_get_int(core->config, "tester", "test_env", FALSE);
@@ -583,8 +602,8 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 					if (!contactParamsWrapper->getUriParamValue(paramName).empty()) {
 						contactParamsWrapper->removeUriParam(paramName);
 						didRemoveParams = true;
-						lError() << "Removing '" << paramName << "' from account [" << this
-						         << "] contact uri parameters because it will be generated automatically since core "
+						lError() << "Removing '" << paramName << "' from " << *this
+						         << " contact uri parameters because it will be generated automatically since core "
 						            "has push notification enabled";
 					}
 				}
@@ -598,8 +617,8 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 						}
 					}
 
-					lWarning() << "Account [" << this << "] contact uri parameters changed from '"
-					           << newParams->mContactUriParameters << "' to '" << newContactUriParams << "'";
+					lWarning() << *this << " contact uri parameters changed from '" << newParams->mContactUriParameters
+					           << "' to '" << newContactUriParams << "'";
 					newParams->mContactUriParameters = newContactUriParams;
 				}
 			}
@@ -628,7 +647,7 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 			}
 			lInfo() << "Added push notification informations '"
 			        << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed)
-			        << "' added to account [" << this << "]";
+			        << "' added to " << *this;
 			setAccountParams(newParams);
 		}
 	}
@@ -660,15 +679,14 @@ std::list<SalAddress *> Account::getOtherContacts() {
 void Account::registerAccount() {
 	if (mParams->mRegisterEnabled) {
 		if (mParams->mProxyAddress == nullptr) {
-			lError() << "Can't register LinphoneAccount [" << this << "] without a proxy address";
+			lError() << "Can't register " << *this << " without a proxy address";
 			return;
 		}
 		if (mParams->mIdentityAddress == nullptr) {
-			lError() << "Can't register LinphoneAccount [" << this << "] without an identity address";
+			lError() << "Can't register " << *this << " without an identity address";
 			return;
 		}
-		lInfo() << "LinphoneAccount [" << this
-		        << "] about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
+		lInfo() << *this << " about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
 
 		if (mOp) mOp->release();
 		mOp = new SalRegisterOp(getCCore()->sal.get());
@@ -697,15 +715,12 @@ void Account::registerAccount() {
 	} else {
 		/* unregister if registered*/
 		unregister();
-		if (mState == LinphoneRegistrationProgress) {
-			setState(LinphoneRegistrationCleared, "Registration cleared");
-		}
 	}
 }
 
 void Account::refreshRegister() {
 	if (!mParams) {
-		lWarning() << "refreshRegister is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "refreshRegister is called but no AccountParams is set on " << *this;
 		return;
 	}
 
@@ -721,10 +736,12 @@ void Account::pauseRegister() {
 }
 
 void Account::unregister() {
-	if (mOp &&
-	    (mState == LinphoneRegistrationOk || (mState == LinphoneRegistrationProgress && mParams->mExpires != 0))) {
-		mOp->unregister();
-		mIsUnregistering = true;
+	if (mOp) {
+		if (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationFailed) {
+			lInfo() << *this << " unregistering.";
+			mOp->unregister();
+			mIsUnregistering = true;
+		}
 	}
 }
 
@@ -837,7 +854,7 @@ LinphoneTransportType Account::getTransport() {
 
 bool Account::isAvpfEnabled() const {
 	if (!mParams) {
-		lWarning() << "isAvpfEnabled is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "isAvpfEnabled is called but no AccountParams is set on " << *this;
 		return false;
 	}
 	auto core = getCCore();
@@ -851,7 +868,7 @@ bool Account::isAvpfEnabled() const {
 
 const LinphoneAuthInfo *Account::findAuthInfo() const {
 	if (!mParams) {
-		lWarning() << "findAuthInfo is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "findAuthInfo is called but no AccountParams is set on " << *this;
 		return nullptr;
 	}
 
@@ -862,7 +879,7 @@ const LinphoneAuthInfo *Account::findAuthInfo() const {
 
 int Account::getUnreadChatMessageCount() const {
 	if (!mParams) {
-		lWarning() << "getUnreadMessageCount is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "getUnreadMessageCount is called but no AccountParams is set on " << *this;
 		return -1;
 	}
 
@@ -872,7 +889,7 @@ int Account::getUnreadChatMessageCount() const {
 list<shared_ptr<AbstractChatRoom>> Account::getChatRooms() const {
 	list<shared_ptr<AbstractChatRoom>> results;
 	if (!mParams) {
-		lWarning() << "getChatRooms is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "getChatRooms is called but no AccountParams is set on " << *this;
 		return results;
 	}
 
@@ -900,7 +917,7 @@ void Account::setMissedCallsCount(int count) {
 
 list<shared_ptr<CallLog>> Account::getCallLogs() const {
 	if (!mParams) {
-		lWarning() << "getCallLogs is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "getCallLogs is called but no AccountParams is set on " << *this;
 		list<shared_ptr<CallLog>> callLogs;
 		return callLogs;
 	}
@@ -912,7 +929,7 @@ list<shared_ptr<CallLog>> Account::getCallLogs() const {
 
 list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<Address> remoteAddress) const {
 	if (!mParams) {
-		lWarning() << "getCallLogsForAddress is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "getCallLogsForAddress is called but no AccountParams is set on " << *this;
 		list<shared_ptr<CallLog>> callLogs;
 		return callLogs;
 	}
@@ -924,7 +941,7 @@ list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<A
 
 void Account::deleteCallLogs() const {
 	if (!mParams) {
-		lWarning() << "deleteCallLogs is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "deleteCallLogs is called but no AccountParams is set on Account " << *this;
 		return;
 	}
 
@@ -935,7 +952,7 @@ void Account::deleteCallLogs() const {
 
 list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos() const {
 	if (!mParams) {
-		lWarning() << "getConferenceInfos is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "getConferenceInfos is called but no AccountParams is set on " << *this;
 		list<shared_ptr<ConferenceInfo>> conferences;
 		return conferences;
 	}
@@ -947,7 +964,7 @@ list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos() const {
 
 void Account::writeToConfigFile(int index) {
 	if (!mParams) {
-		lWarning() << "writeToConfigFile is called but no AccountParams is set on Account [" << this->toC() << "]";
+		lWarning() << "writeToConfigFile is called but no AccountParams is set on " << *this;
 		return;
 	}
 
@@ -969,6 +986,11 @@ bool Account::canRegister() {
 	}
 	if (mDependency) {
 		return mDependency->getState() == LinphoneRegistrationOk;
+	}
+	if (getState() == LinphoneRegistrationNone && mDeletionDate != 0) {
+		// Account is removed, but never registered before.
+		// This case happens when doing a removeAccount() while network is off.
+		return false;
 	}
 	return true;
 }
@@ -1001,19 +1023,19 @@ int Account::done() {
 		mRegisterChanged = false;
 	}
 
-	if (mNeedToRegister) {
-		pauseRegister();
-	}
+	// if (mNeedToRegister) {
+	//	pauseRegister();
+	// }
 
 	if (computePublishParamsHash()) {
-		lInfo() << "Publish params have changed on account [" << this->toC() << "]";
+		lInfo() << "Publish params have changed on " << *this;
 		if (mPresencePublishEvent) {
 			/*publish is terminated*/
 			mPresencePublishEvent->terminate();
 		}
 		if (mParams->mPublishEnabled) setSendPublish(true);
 	} else {
-		lInfo() << "Publish params have not changed on account [" << this->toC() << "]";
+		lInfo() << "Publish params have not changed " << *this;
 	}
 
 	if (getCCore()) {
@@ -1090,7 +1112,7 @@ void Account::apply(LinphoneCore *lc) {
 
 shared_ptr<EventPublish> Account::createPublish(const std::string event, int expires) {
 	if (!getCore()) {
-		lError() << "Cannot create publish from account [" << this->toC() << "] not attached to any core";
+		lError() << "Cannot create publish from " << *this << " not attached to any core";
 		return nullptr;
 	}
 	return dynamic_pointer_cast<EventPublish>(
@@ -1207,11 +1229,11 @@ int Account::sendPublish() {
 
 bool Account::check() {
 	if (mParams->mProxy.empty()) {
-		lWarning() << "No proxy given for account " << this;
+		lWarning() << "No proxy given for " << *this;
 		return false;
 	}
 	if (mParams->mIdentityAddress == NULL) {
-		lWarning() << "Identity address of account " << this << " has not been set";
+		lWarning() << "Identity address of " << *this << " has not been set";
 		return false;
 	}
 	resolveDependencies();
