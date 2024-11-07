@@ -476,7 +476,7 @@ LINPHONE_PUBLIC void linphone_conference_set_current_callbacks(LinphoneConferenc
  * This is meant only to be called from a callback to be able to get the user_data associated with the
  * LinphoneConferenceCbs that is calling the callback.
  * @param conference #LinphoneConference object. @notnil
- * @return The #LinphoneConferenceCbs that has called the last callback. @notnil
+ * @return The #LinphoneConferenceCbs that has called the last callback. @maybenil
  */
 LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_conference_get_current_callbacks(const LinphoneConference *conference);
 

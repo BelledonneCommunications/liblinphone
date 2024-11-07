@@ -605,11 +605,59 @@ static bool check_conference_security(BCTBX_UNUSED(LinphoneConference *conferenc
 
 	return security_check;
 }
+void configure_end_to_end_encrypted_conference_server(Focus &focus) {
+	// Focus is in full packet mode: transfer packet not payload
+	LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
+	linphone_config_set_int(focus_config, "sound", "conference_mode",
+	                        static_cast<int>(MSConferenceModeRouterFullPacket));
+	linphone_config_set_int(focus_config, "video", "conference_mode",
+	                        static_cast<int>(MSConferenceModeRouterFullPacket));
+}
+
+bool verify_participant_addition_stats(bctbx_list_t *coresList,
+                                       const ClientConference &participant,
+                                       stats participantStat,
+                                       int nbParticipantsAdded,
+                                       int nbNotifyEktReceived) {
+	bool result = BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_participants_added,
+	                                           participantStat.number_of_participants_added + nbParticipantsAdded,
+	                                           liblinphone_tester_sip_timeout));
+	result = result &&
+	         BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_participant_devices_added,
+	                                      participantStat.number_of_participant_devices_added + nbParticipantsAdded,
+	                                      liblinphone_tester_sip_timeout));
+	result = result &&
+	         BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_participant_devices_joined,
+	                                      participantStat.number_of_participant_devices_joined + nbParticipantsAdded,
+	                                      liblinphone_tester_sip_timeout));
+	result = result && BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_NotifyEktReceived,
+	                                                participantStat.number_of_NotifyEktReceived + nbNotifyEktReceived,
+	                                                liblinphone_tester_sip_timeout));
+	return result;
+}
+
+bool verify_participant_removal_stats(bctbx_list_t *coresList,
+                                      const ClientConference &participant,
+                                      stats participantStat,
+                                      int nbParticipantsAdded,
+                                      int nbNotifyEktReceived) {
+	bool result = BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_participants_removed,
+	                                           participantStat.number_of_participants_removed + nbParticipantsAdded,
+	                                           liblinphone_tester_sip_timeout));
+	result = result &&
+	         BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_participant_devices_removed,
+	                                      participantStat.number_of_participant_devices_removed + nbParticipantsAdded,
+	                                      liblinphone_tester_sip_timeout));
+	result = result && BC_ASSERT_TRUE(wait_for_list(coresList, &participant.getStats().number_of_NotifyEktReceived,
+	                                                participantStat.number_of_NotifyEktReceived + nbNotifyEktReceived,
+	                                                liblinphone_tester_sip_timeout));
+	return result;
+}
 
 #ifdef HAVE_ADVANCED_IM
-static void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
-                                                    std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> members,
-                                                    const LinphoneAddress *confAddr) {
+void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
+                                             std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> members,
+                                             const LinphoneAddress *confAddr) {
 	auto focusConference = linphone_core_search_conference_2(focus->lc, confAddr);
 	BC_ASSERT_PTR_NOT_NULL(focusConference);
 	if (focusConference) {
@@ -1277,14 +1325,7 @@ void create_conference_base(time_t start_time,
 		}
 
 		if (enable_lime) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		int nortp_timeout = 10;
@@ -1388,12 +1429,7 @@ void create_conference_base(time_t start_time,
 			coresList = bctbx_list_append(coresList, focus.getLc());
 
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				// Focus is in full packet mode: transfer packet not payload
-				LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-				linphone_config_set_int(focus_config, "sound", "conference_mode",
-				                        static_cast<int>(MSConferenceModeRouterFullPacket));
-				linphone_config_set_int(focus_config, "video", "conference_mode",
-				                        static_cast<int>(MSConferenceModeRouterFullPacket));
+				configure_end_to_end_encrypted_conference_server(focus);
 			}
 		}
 
@@ -9439,14 +9475,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 		}
 
 		if (enable_lime) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr(),
@@ -11538,12 +11567,7 @@ void change_active_speaker_base(bool transfer_mode) {
 		}
 
 		if (transfer_mode) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);

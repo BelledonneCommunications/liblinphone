@@ -448,7 +448,7 @@ void linphone_conference_set_current_callbacks(LinphoneConference *conference, L
 }
 
 LinphoneConferenceCbs *linphone_conference_get_current_callbacks(const LinphoneConference *conference) {
-	return Conference::toCpp(conference)->getCurrentCallbacks()->toC();
+	return toC(Conference::toCpp(conference)->getCurrentCallbacks());
 }
 
 const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConference *conference) {

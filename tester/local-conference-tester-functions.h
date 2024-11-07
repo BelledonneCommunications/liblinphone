@@ -470,6 +470,24 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       long cleanup_window,
                                       bool_t slow_ice_negotiation);
 
+void configure_end_to_end_encrypted_conference_server(Focus &focus);
+
+bool verify_participant_addition_stats(bctbx_list_t *coresList,
+                                       const ClientConference &participant,
+                                       stats participantStat,
+                                       int nbParticipantsAdded,
+                                       int nbNotifyEktReceived);
+
+bool verify_participant_removal_stats(bctbx_list_t *coresList,
+                                      const ClientConference &participant,
+                                      stats participantStat,
+                                      int nbParticipantsAdded,
+                                      int nbNotifyEktReceived);
+
+void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
+                                             std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> members,
+                                             const LinphoneAddress *confAddr);
+
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,
                                  LinphoneCoreManager *focus,
