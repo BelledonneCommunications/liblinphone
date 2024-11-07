@@ -3851,12 +3851,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		}
 
 		if (enable_lime) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		int nortp_timeout = 10;
@@ -5069,12 +5064,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(berthe.getLc()));
 
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
@@ -5978,12 +5968,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		                                         michelle.getCMgr(), berthe.getCMgr()};
 
 		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		time_t start_time = ms_time(NULL) - 45;
@@ -10346,12 +10331,7 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()};
 
 		if (enable_lime) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		time_t start_time = ms_time(NULL) + 5;
@@ -10921,12 +10901,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 		}
 
 		if (securityLevel == LinphoneConferenceSecurityLevelEndToEnd) {
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));

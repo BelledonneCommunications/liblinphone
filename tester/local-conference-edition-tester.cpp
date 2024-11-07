@@ -1761,12 +1761,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 			}
 			security_level = LinphoneConferenceSecurityLevelEndToEnd;
 
-			// Focus is in full packet mode: transfer packet not payload
-			LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-			linphone_config_set_int(focus_config, "sound", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
-			linphone_config_set_int(focus_config, "video", "conference_mode",
-			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		std::list<LinphoneCoreManager *> participants{michelle.getCMgr(), pauline.getCMgr(), laure.getCMgr()};
