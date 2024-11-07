@@ -85,9 +85,9 @@ public:
 	};
 
 	ClientEktManager(MSEKTCipherType cipherType, MSCryptoSuite cryptoSuite);
-	ClientEktManager(const std::shared_ptr<EktContext> &ektCtx);
+	explicit ClientEktManager(const std::shared_ptr<EktContext> &ektCtx);
 	ClientEktManager(const ClientEktManager &other) = delete;
-	~ClientEktManager();
+	~ClientEktManager() override;
 
 	void onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) override;
 	void onAccountRegistrationStateChanged(BCTBX_UNUSED(std::shared_ptr<Account> account),
@@ -98,7 +98,7 @@ public:
 
 	static void onPublishStateChangedCb(LinphoneEvent *lev, LinphonePublishState state);
 
-	void init(std::shared_ptr<ClientConference> rc);
+	void init(std::shared_ptr<ClientConference> &rc);
 
 	const std::shared_ptr<ClientEktManager::EktContext> &getEktCtx() const;
 
@@ -111,17 +111,19 @@ public:
 private:
 	// PUBLISH
 	void createPublish(const std::list<std::string> &to);
-	void encryptAndSendEkt(std::shared_ptr<EktInfo> ei,
-	                       const std::shared_ptr<Address> from,
+	void encryptAndSendEkt(const std::shared_ptr<EktInfo> &ei,
+	                       const std::shared_ptr<Address> &from,
 	                       const std::list<std::string> &to);
-	void publishCipheredEkt(std::shared_ptr<EktInfo> ei,
-	                        const bool status,
-	                        std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts);
-	void sendPublish(std::shared_ptr<EktInfo> ei);
+	void publishCipheredEkt(const std::shared_ptr<EktInfo> &ei,
+	                        const std::unordered_map<std::string, std::vector<uint8_t>> &cipherTexts,
+	                        bool status);
+	void sendPublish(const std::shared_ptr<EktInfo> &ei);
 
 	// NOTIFY
 	int checkSSpi(uint16_t eiSSpi, uint16_t ektCtxSSpi);
-	int recoverEkt(std::shared_ptr<EktInfo> ei);
+	void getParticipantsRequiringKey(std::shared_ptr<Dictionary> &dict, std::list<std::string> &to);
+	int recoverEkt(const std::shared_ptr<EktInfo> &ei);
+	void manageParticipantsRequiringKeyAndPublish(std::list<std::string> &to);
 	bool decrypt(const std::string &from, const std::string &to, const std::vector<uint8_t> &cipher);
 
 	void clearData();
