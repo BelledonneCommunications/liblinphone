@@ -224,6 +224,8 @@ private:
 	                         const std::string method) override;
 	virtual bool sessionParamsAllowThumbnails() const override;
 
+	void callFocus();
+
 	bool mFinalized = false;
 	bool mScheduleUpdate = false;
 	bool mFullStateUpdate = false;

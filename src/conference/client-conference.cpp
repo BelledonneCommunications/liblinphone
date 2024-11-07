@@ -540,6 +540,22 @@ void ClientConference::setParticipantAdminStatus(const shared_ptr<Participant> &
 	referOp->unref();
 }
 
+void ClientConference::callFocus() {
+	if (!mFocus->getSession()) {
+		std::shared_ptr<Address> focusAddress = mFocus->getAddress();
+		lInfo() << "Calling the conference focus (" << *focusAddress
+		        << ") as there is no session towards the focus yet";
+		LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
+		// Participant with the focus call is admin
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
+		linphone_call_params_enable_video(params, mConfParams->videoEnabled());
+		Conference::setSubject(mPendingSubject);
+		const std::list<std::shared_ptr<const Address>> addresses;
+		inviteAddresses(addresses, params);
+		linphone_call_params_unref(params);
+	}
+}
+
 bool ClientConference::addParticipantDevice(std::shared_ptr<Call> call) {
 	bool success = Conference::addParticipantDevice(call);
 	if (success) {
@@ -585,9 +601,6 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 	if (getMe()->isAdmin() && !isConferenceEnded() && isConferenceStarted()) {
 #endif
 	if (getMe()->isAdmin()) {
-		std::shared_ptr<Address> focusAddress = mFocus->getAddress();
-		LinphoneCallParams *params;
-		std::shared_ptr<Call> focusCall = nullptr;
 		const auto &remoteAddress = call->getRemoteAddress();
 		const auto remoteAddressStr = (remoteAddress ? remoteAddress->toString() : "sip:");
 		const auto conferenceAddressStr =
@@ -598,41 +611,18 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 			case ConferenceInterface::State::CreationFailed:
 			case ConferenceInterface::State::CreationPending:
 			case ConferenceInterface::State::Created:
-				if (mFocus->getSession()) {
-					if (focusIsReady()) {
-						Conference::addParticipant(call->getRemoteAddress());
-						transferToFocus(call);
-					} else {
-						auto callIt = std::find(mPendingCalls.begin(), mPendingCalls.end(), call);
-						if (callIt == mPendingCalls.end()) {
-							lInfo() << "Adding call (local address " << *call->getLocalAddress() << " remote address "
-							        << remoteAddressStr << ") to the list of call to add to conference "
-							        << conferenceAddressStr << " (" << this << ")";
-							mPendingCalls.push_back(call);
-							Conference::addParticipant(call);
-						} else {
-							lError() << "Trying to add call (local address " << *call->getLocalAddress()
-							         << " remote address " << remoteAddressStr << ") twice to conference "
-							         << conferenceAddressStr << " (" << this << ")";
-						}
-					}
+				callFocus();
+				if (focusIsReady()) {
+					Conference::addParticipant(call->getRemoteAddress());
+					transferToFocus(call);
 				} else {
-					lInfo() << "Calling the conference focus (" << *focusAddress << ")";
-					params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-					// Participant with the focus call is admin
-					L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
-					linphone_call_params_enable_video(params, mConfParams->videoEnabled());
-					Conference::setSubject(mPendingSubject);
-					const std::list<std::shared_ptr<const Address>> addresses;
-					inviteAddresses(addresses, params);
-					linphone_call_params_unref(params);
 					auto callIt = std::find(mPendingCalls.begin(), mPendingCalls.end(), call);
 					if (callIt == mPendingCalls.end()) {
 						lInfo() << "Adding call (local address " << *call->getLocalAddress() << " remote address "
 						        << remoteAddressStr << ") to the list of call to add to conference "
 						        << conferenceAddressStr << " (" << this << ")";
 						mPendingCalls.push_back(call);
-						Conference::addParticipant(call->getRemoteAddress());
+						Conference::addParticipant(call);
 					} else {
 						lError() << "Trying to add call (local address " << *call->getLocalAddress()
 						         << " remote address " << remoteAddressStr << ") twice to conference "
