@@ -476,10 +476,13 @@ void ClientEktManager::encryptAndSendEkt(shared_ptr<EktInfo> ei,
 	auto AD = std::make_shared<std::vector<uint8_t>>(associatedData.begin(), associatedData.end());
 	auto core = mClientConf.lock()->getCore();
 	if (!to.empty()) {
+		weak_ptr<ClientEktManager> ektManagerRef = shared_from_this();
 		core->getEncryptionEngine()->rawEncrypt(
 		    from->asStringUriOnly(), to, plainText, AD,
-		    [this, ei](const bool status, std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts) {
-			    publishCipheredEkt(ei, status, cipherTexts);
+		    [ektManagerRef, ei](const bool status,
+		                        const std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts) {
+			    auto sharedEktManager = ektManagerRef.lock();
+			    if (sharedEktManager) sharedEktManager->publishCipheredEkt(ei, status, cipherTexts);
 		    });
 	} else {
 		sendPublish(ei);
