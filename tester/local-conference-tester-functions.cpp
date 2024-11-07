@@ -5469,9 +5469,10 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 			                             berthe_stat.number_of_NotifyFullStateReceived + 1,
 			                             liblinphone_tester_sip_timeout));
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+				// The EKT NOTIFY may arrive quite late
 				BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_NotifyEktReceived,
 				                             berthe_stat.number_of_NotifyEktReceived + 1,
-				                             liblinphone_tester_sip_timeout));
+				                             2 * liblinphone_tester_sip_timeout));
 			}
 
 			if (!one_addition) {
@@ -9660,8 +9661,9 @@ void create_conference_dial_out_base(bool_t send_ics,
 					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 					                             liblinphone_tester_sip_timeout));
 					if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+						// Network traffic might cause that it takes along time to receive the EKT NOTIFY
 						BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyEktReceived, 1,
-						                             liblinphone_tester_sip_timeout));
+						                             2 * liblinphone_tester_sip_timeout));
 					}
 				}
 

@@ -10529,14 +10529,13 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2 * no_participants,
 		                             liblinphone_tester_sip_timeout));
 
+		const LinphoneAddress *conference_address = linphone_conference_get_conference_address(conference);
 		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 			LinphoneCore *c = (LinphoneCore *)bctbx_list_get_data(it);
 			if (defer_update == TRUE) {
 				linphone_config_set_int(linphone_core_get_config(c), "sip", "defer_update_default", TRUE);
 			}
 		}
-
-		const LinphoneAddress *conference_address = linphone_conference_get_conference_address(conference);
 
 		// Disable video in calls of the remote participants
 		bool_t video_enabled = FALSE;

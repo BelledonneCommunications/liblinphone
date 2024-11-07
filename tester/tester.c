@@ -1302,6 +1302,56 @@ void check_nb_streams(LinphoneCoreManager *m1,
 	}
 }
 
+static void wait_for_conference_stable_state(bctbx_list_t *lcs,
+                                             LinphoneCoreManager *conf_mgr,
+                                             size_t no_parts,
+                                             bctbx_list_t *new_participants,
+                                             const LinphoneAddress *conference_address) {
+
+	bool_t c_event_log_enabled =
+	    linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE);
+	for (bctbx_list_t *itParticipant = new_participants; itParticipant;
+	     itParticipant = bctbx_list_next(itParticipant)) {
+		LinphoneCoreManager *m = (LinphoneCoreManager *)bctbx_list_get_data(itParticipant);
+		bool_t p_event_log_enabled =
+		    linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE);
+		if (c_event_log_enabled && p_event_log_enabled) {
+			LinphoneConference *conference =
+			    linphone_core_search_conference(m->lc, NULL, NULL, conference_address, NULL);
+			int part_counter = 0;
+			bctbx_list_t *participant_device_list = NULL;
+			do {
+				if (participant_device_list) {
+					bctbx_list_free_with_data(participant_device_list,
+					                          (void (*)(void *))linphone_participant_device_unref);
+				}
+				participant_device_list = linphone_conference_get_participant_device_list(conference);
+				part_counter++;
+				wait_for_list(lcs, NULL, 0, 100);
+			} while ((part_counter < 100) && (bctbx_list_size(participant_device_list) != (size_t)no_parts));
+			BC_ASSERT_EQUAL(bctbx_list_size(participant_device_list), no_parts, size_t, "%0zu");
+
+			for (bctbx_list_t *itDevice = participant_device_list; itDevice; itDevice = bctbx_list_next(itDevice)) {
+				LinphoneParticipantDevice *device = (LinphoneParticipantDevice *)bctbx_list_get_data(itDevice);
+				LinphoneParticipantDeviceState device_state = LinphoneParticipantDeviceStateJoining;
+				part_counter = 0;
+				do {
+					device_state = linphone_participant_device_get_state(device);
+					part_counter++;
+					wait_for_list(lcs, NULL, 0, 100);
+				} while ((part_counter < 100) && (device_state != LinphoneParticipantDeviceStatePresent) &&
+				         (device_state != LinphoneParticipantDeviceStateOnHold));
+				BC_ASSERT_TRUE((device_state == LinphoneParticipantDeviceStatePresent) ||
+				               (device_state == LinphoneParticipantDeviceStateOnHold));
+			}
+
+			if (participant_device_list) {
+				bctbx_list_free_with_data(participant_device_list, (void (*)(void *))linphone_participant_device_unref);
+			}
+		}
+	}
+}
+
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs,
                                               LinphoneCoreManager *focus_mgr,
                                               LinphoneCoreManager *conf_mgr,
@@ -1346,6 +1396,16 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs,
 	int init_parts_count = (focus_conference) ? linphone_conference_get_participant_count(focus_conference) : 0;
 	bool_t focus_conference_not_existing = (focus_conference) ? FALSE : TRUE;
 	LinphoneConference *admin_conference = conference ? conference : linphone_core_get_conference(conf_mgr->lc);
+
+	size_t initial_device_count = 0;
+	if (focus_conference) {
+		bctbx_list_t *participant_device_list = linphone_conference_get_participant_device_list(focus_conference);
+		initial_device_count =
+		    bctbx_list_size(participant_device_list) + (!!!linphone_conference_is_in(focus_conference) ? 1 : 0);
+		if (participant_device_list) {
+			bctbx_list_free_with_data(participant_device_list, (void (*)(void *))linphone_participant_device_unref);
+		}
+	}
 
 	if (!one_by_one) {
 		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
@@ -1655,6 +1715,10 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs,
 		BC_ASSERT_TRUE(linphone_call_is_in_conference(focus_to_conf_call));
 	}
 
+	size_t no_parts = initial_device_count + bctbx_list_size(new_participants) + ((initial_device_count == 0) ? 1 : 0);
+	wait_for_conference_stable_state(lcs, conf_mgr, no_parts, new_participants,
+	                                 linphone_conference_get_conference_address(focus_conference));
+
 	return 0;
 }
 
@@ -1703,7 +1767,16 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs,
 	int resumed = 1;
 	int updated = 1;
 
-	LinphoneConference *conference_used = NULL;
+	LinphoneConference *conference_used = conference ? conference : linphone_core_get_conference(conf_mgr->lc);
+	size_t initial_device_count = 0;
+	if (conference_used) {
+		bctbx_list_t *participant_device_list = linphone_conference_get_participant_device_list(conference_used);
+		initial_device_count =
+		    bctbx_list_size(participant_device_list) - (linphone_conference_is_in(conference_used) ? 1 : 0);
+		if (participant_device_list) {
+			bctbx_list_free_with_data(participant_device_list, (void (*)(void *))linphone_participant_device_unref);
+		}
+	}
 
 	bool_t c_event_log_enabled =
 	    linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE);
@@ -1828,6 +1901,12 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs,
 	check_participant_added_to_conference(lcs, conf_mgr, conf_initial_stats, new_participants,
 	                                      new_participants_initial_stats, call_paused, participants,
 	                                      participants_initial_stats, conference_used);
+
+	// Add local participant device is needed
+	size_t no_parts =
+	    initial_device_count + bctbx_list_size(new_participants) + (linphone_conference_is_in(conference_used) ? 1 : 0);
+	wait_for_conference_stable_state(lcs, conf_mgr, no_parts, new_participants,
+	                                 linphone_conference_get_conference_address(conference_used));
 
 	ms_free(call_paused);
 	ms_free(participants_initial_stats);
