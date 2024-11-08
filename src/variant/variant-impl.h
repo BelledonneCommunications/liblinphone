@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -21,7 +21,6 @@
 #ifndef _L_VARIANT_IMPL_H_
 #define _L_VARIANT_IMPL_H_
 
-#include "linphone/buffer.h"
 #include "linphone/utils/general.h"
 
 // =============================================================================
@@ -59,6 +58,7 @@ public:
 	void setValue(const T &value) {
 		mValue = value;
 	}
+
 	std::ostream &toStream(std::ostream &stream) const override {
 		stream << mValue;
 		return stream;
@@ -66,47 +66,6 @@ public:
 
 private:
 	T mValue;
-};
-
-template <>
-class VariantImpl<LinphoneBuffer *> : public VariantImplBase {
-public:
-	VariantImpl(LinphoneBuffer *value) {
-		linphone_buffer_ref(value);
-		mValue = value;
-	}
-
-	VariantImpl(const VariantImpl<LinphoneBuffer *> &other) {
-		setValue(other.getValue());
-	}
-
-	~VariantImpl() {
-		if (mValue != nullptr) linphone_buffer_unref(mValue);
-	}
-
-	VariantImplBase *clone() override {
-		return new VariantImpl<LinphoneBuffer *>(*this);
-	}
-
-	LinphoneBuffer *&getValue() const {
-		return mValue;
-	}
-
-	void setValue(LinphoneBuffer *value) {
-		if (mValue != nullptr) {
-			linphone_buffer_unref(mValue);
-		}
-		linphone_buffer_ref(value);
-		mValue = value;
-	}
-
-	std::ostream &toStream(std::ostream &stream) const override {
-		stream << mValue;
-		return stream;
-	}
-
-private:
-	mutable LinphoneBuffer *mValue = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

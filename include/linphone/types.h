@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -576,12 +576,6 @@ typedef enum _LinphoneAVPFMode {
 	LinphoneAVPFDisabled = 0, /**< AVPF is disabled */
 	LinphoneAVPFEnabled = 1   /**< AVPF is enabled */
 } LinphoneAVPFMode;
-
-/**
- * @brief The object representing a data buffer.
- * @ingroup misc
- **/
-typedef struct _LinphoneBuffer LinphoneBuffer;
 
 /**
  * Consolidated presence information: 'online' means the user is open for communication,

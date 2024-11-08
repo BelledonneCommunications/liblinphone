@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -2980,9 +2980,8 @@ string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
 		CiphersType ciphers;
 		crypto.setCiphers(ciphers);
 		for (const auto &cipher : cipherMap) {
-			vector<uint8_t> cipherVec(ei->getCiphers()->getLinphoneBuffer(cipher.first)->content,
-			                          ei->getCiphers()->getLinphoneBuffer(cipher.first)->content +
-			                              ei->getCiphers()->getLinphoneBuffer(cipher.first)->size);
+			vector<uint8_t> cipherVec(ei->getCiphers()->getBuffer(cipher.first)->getContent().begin(),
+			                          ei->getCiphers()->getBuffer(cipher.first)->getContent().end());
 			EncryptedektType ekt = EncryptedektType(bctoolbox::encodeBase64(cipherVec), cipher.first);
 			crypto.getCiphers()->getEncryptedekt().push_back(ekt);
 		}

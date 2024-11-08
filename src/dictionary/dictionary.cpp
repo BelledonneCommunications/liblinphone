@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "dictionary.h"
 #include "c-wrapper/c-wrapper.h"
 
@@ -65,11 +66,11 @@ void Dictionary::setProperty(const string &name, const long long value) {
 	PropertyContainer::setProperty(name, Variant(value));
 }
 
-LinphoneBuffer *Dictionary::getLinphoneBuffer(const std::string &name) const {
-	return PropertyContainer::getProperty(name).getValue<LinphoneBuffer *>();
+shared_ptr<Buffer> Dictionary::getBuffer(const std::string &name) const {
+	return PropertyContainer::getProperty(name).getValue<shared_ptr<Buffer>>();
 }
 
-void Dictionary::setProperty(const std::string &name, LinphoneBuffer *value) {
+void Dictionary::setProperty(const std::string &name, const shared_ptr<Buffer> &value) {
 	PropertyContainer::setProperty(name, Variant(value));
 }
 

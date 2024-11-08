@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2010-2023 Belledonne Communications SARL.
+Copyright (c) 2010-2024 Belledonne Communications SARL.
 
 This file is part of Liblinphone 
 (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -37,7 +37,6 @@ set(LINPHONE_SOURCE_FILES_C
 	bellesip_sal/sal_impl.c
 	bellesip_sal/sal_op_impl.c
 	bellesip_sal/sal_sdp.c
-	buffer.c
 	callbacks.c
 	chat.c
 	contactprovider.c

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -323,13 +323,12 @@ int ClientEktManager::recoverEkt(shared_ptr<EktInfo> ei) {
 		return 4;
 	}
 	auto myAddr = getAccount()->getContactAddress()->asStringUriOnly();
-	LinphoneBuffer *buffer = dict->getLinphoneBuffer(myAddr);
+	auto buffer = dict->getBuffer(myAddr);
 	if (!buffer) {
 		lError() << "ClientEktManager::recoverEkt : Cipher not found";
 		return 5;
 	}
-	vector<uint8_t> cipher(linphone_buffer_get_size(buffer));
-	memcpy(cipher.data(), linphone_buffer_get_content(buffer), linphone_buffer_get_size(buffer));
+	vector<uint8_t> cipher = buffer->getContent();
 	bool success = decrypt(ei->getFrom()->asStringUriOnly(), myAddr, cipher);
 	if (success) {
 		lInfo() << "ClientEktManager::recoverEkt : EKT recovered";
@@ -454,11 +453,10 @@ void ClientEktManager::publishCipheredEkt(shared_ptr<EktInfo> ei,
 		return;
 	}
 	auto ciphers = make_shared<Dictionary>();
-	LinphoneBuffer *buffer;
+	shared_ptr<Buffer> buffer = nullptr;
 	for (auto cipher : cipherTexts) {
-		buffer = linphone_buffer_new_from_data(cipher.second.data(), cipher.second.size());
+		buffer = make_shared<Buffer>(cipher.second);
 		ciphers->setProperty(cipher.first, buffer);
-		linphone_buffer_unref(buffer);
 	}
 	ei->setCiphers(ciphers);
 

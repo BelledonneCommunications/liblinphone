@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,91 +18,68 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/core.h"
+#include "linphone/api/c-buffer.h"
 
+#include "buffer/buffer.h"
 #include "c-wrapper/c-wrapper.h"
 
-// TODO: From coreapi. Remove me later.
-#include "private.h"
+// =============================================================================
 
-static void linphone_buffer_destroy(LinphoneBuffer *buffer) {
-	if (buffer->content) belle_sip_free(buffer->content);
-}
-
-BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneBuffer);
-
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneBuffer,
-                           belle_sip_object_t,
-                           (belle_sip_object_destroy_t)linphone_buffer_destroy,
-                           NULL, // clone
-                           NULL, // marshal
-                           TRUE);
+using namespace LinphonePrivate;
 
 LinphoneBuffer *linphone_buffer_new(void) {
-	LinphoneBuffer *buffer = belle_sip_object_new(LinphoneBuffer);
-	belle_sip_object_ref(buffer);
-	return buffer;
+	return Buffer::createCObject<Buffer>();
 }
 
 LinphoneBuffer *linphone_buffer_new_from_data(const uint8_t *data, size_t size) {
-	LinphoneBuffer *buffer = linphone_buffer_new();
-	linphone_buffer_set_content(buffer, data, size);
-	return buffer;
+	return Buffer::createCObject<Buffer>(std::vector<uint8_t>(data, data + size));
 }
 
 LinphoneBuffer *linphone_buffer_new_from_string(const char *data) {
-	LinphoneBuffer *buffer = linphone_buffer_new();
-	linphone_buffer_set_string_content(buffer, data);
-	return buffer;
+	return Buffer::createCObject<Buffer>(std::string(data));
 }
 
 LinphoneBuffer *linphone_buffer_ref(LinphoneBuffer *buffer) {
-	belle_sip_object_ref(buffer);
+	Buffer::toCpp(buffer)->ref();
 	return buffer;
 }
 
 void linphone_buffer_unref(LinphoneBuffer *buffer) {
-	belle_sip_object_unref(buffer);
+	Buffer::toCpp(buffer)->unref();
 }
 
 void *linphone_buffer_get_user_data(const LinphoneBuffer *buffer) {
-	return buffer->user_data;
+	return Buffer::toCpp(buffer)->getUserData();
 }
 
-void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void *ud) {
-	buffer->user_data = ud;
+void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void *user_data) {
+	Buffer::toCpp(buffer)->setUserData(user_data);
 }
 
 const uint8_t *linphone_buffer_get_content(const LinphoneBuffer *buffer) {
-	return buffer->content;
+	return Buffer::toCpp(buffer)->getContent().data();
 }
 
 void linphone_buffer_set_content(LinphoneBuffer *buffer, const uint8_t *content, size_t size) {
-	buffer->size = size;
-	if (buffer->content) belle_sip_free(buffer->content);
-	buffer->content = reinterpret_cast<uint8_t *>(belle_sip_malloc(size + 1));
-	memcpy(buffer->content, content, size);
-	((char *)buffer->content)[size] = '\0';
+	Buffer::toCpp(buffer)->setContent(std::vector<uint8_t>(content, content + size));
 }
 
 const char *linphone_buffer_get_string_content(const LinphoneBuffer *buffer) {
-	return (const char *)buffer->content;
+	return L_STRING_TO_C(Buffer::toCpp(buffer)->getStringContent());
 }
 
 void linphone_buffer_set_string_content(LinphoneBuffer *buffer, const char *content) {
-	buffer->size = strlen(content);
-	if (buffer->content) belle_sip_free(buffer->content);
-	buffer->content = (uint8_t *)belle_sip_strdup(content);
+	Buffer::toCpp(buffer)->setStringContent(std::string(content));
 }
 
 size_t linphone_buffer_get_size(const LinphoneBuffer *buffer) {
-	return buffer->size;
+	return Buffer::toCpp(buffer)->getSize();
 }
 
 void linphone_buffer_set_size(LinphoneBuffer *buffer, size_t size) {
-	buffer->size = size;
+	Buffer::toCpp(buffer)->setSize(size);
 }
 
 bool_t linphone_buffer_is_empty(const LinphoneBuffer *buffer) {
-	return (buffer->size == 0) ? TRUE : FALSE;
+	return Buffer::toCpp(buffer)->isEmpty();
 }

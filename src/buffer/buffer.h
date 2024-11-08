@@ -18,43 +18,48 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_EKT_INFO_H_
-#define _L_EKT_INFO_H_
+#ifndef _L_BUFFER_H_
+#define _L_BUFFER_H_
 
-#include <map>
-#include <vector>
+#include <belle-sip/object++.hh>
 
-#include "belle-sip/object++.hh"
-
-#include "address/address.h"
-#include "dictionary/dictionary.h"
+#include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-types.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LINPHONE_PUBLIC EktInfo : public bellesip::HybridObject<LinphoneEktInfo, EktInfo> {
+// -----------------------------------------------------------------------------
+
+class LINPHONE_PUBLIC Buffer : public bellesip::HybridObject<LinphoneBuffer, Buffer> {
 public:
-	std::shared_ptr<Address> getFrom() const;
-	void setFrom(const Address &from);
+	Buffer() = default;
+	explicit Buffer(const std::vector<uint8_t> &data);
+	explicit Buffer(const std::string &data);
+	explicit Buffer(std::vector<uint8_t> &&data);
+	explicit Buffer(std::string &&data);
 
-	uint16_t getSSpi() const;
-	void setSSpi(uint16_t sSpi);
+	void *getUserData() const;
+	void setUserData(void *ud);
 
-	const std::vector<uint8_t> &getCSpi() const;
-	void setCSpi(const std::vector<uint8_t> &cSpi);
+	const std::vector<uint8_t> &getContent() const;
+	void setContent(const std::vector<uint8_t> &content);
 
-	std::shared_ptr<Dictionary> getCiphers() const;
-	void setCiphers(const std::shared_ptr<Dictionary> &ciphers);
-	void addCipher(const std::string &to, const std::vector<uint8_t> &cipher);
+	const std::string &getStringContent() const;
+	void setStringContent(const std::string &content);
+
+	size_t getSize() const;
+	void setSize(size_t size);
+
+	bool_t isEmpty() const;
 
 private:
-	std::shared_ptr<Dictionary> mCiphers;
-	std::shared_ptr<Address> mFrom;
-	std::vector<uint8_t> mCSpi = {};
-	uint16_t mSSpi;
+	void *mUserData;
+	std::vector<uint8_t> mContent;
+	mutable std::string mStringContent;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_EKT_INFO_H_
+#endif // _L_BUFFER_H_

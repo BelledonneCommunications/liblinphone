@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -90,12 +90,8 @@ static void ekt_xml_composing_parsing_test(EktXmlContent exc) {
 			BC_ASSERT_PTR_NOT_NULL(eiFromAddress);
 			if (outputFromAddress && eiFromAddress) {
 				BC_ASSERT_TRUE(outputEi->getFrom()->asStringUriOnly() == ei->getFrom()->asStringUriOnly());
-				auto outputCipher = vector(outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->content,
-				                           outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->content +
-				                               outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->size);
-				auto eiCipher = vector(ei->getCiphers()->getLinphoneBuffer(paulineAddr)->content,
-				                       ei->getCiphers()->getLinphoneBuffer(paulineAddr)->content +
-				                           ei->getCiphers()->getLinphoneBuffer(paulineAddr)->size);
+				auto outputCipher = outputEi->getCiphers()->getBuffer(paulineAddr)->getContent();
+				auto eiCipher = ei->getCiphers()->getBuffer(paulineAddr)->getContent();
 				BC_ASSERT_TRUE(outputCipher == eiCipher);
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -27,7 +27,7 @@
 #include "linphone/account_creator.h"
 #include "linphone/account_creator_service.h"
 #include "linphone/api/c-api.h"
-#include "linphone/buffer.h"
+#include "linphone/api/c-buffer.h"
 #include "linphone/call.h"
 #include "linphone/call_params.h"
 #include "linphone/call_stats.h"

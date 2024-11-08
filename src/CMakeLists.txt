@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2023 Belledonne Communications SARL.
+# Copyright (c) 2010-2024 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -117,6 +117,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	auth-info/auth-info.h
 	auth-info/auth-stack.h
 	auth-info/bearer-token.h
+	buffer/buffer.h
 	c-wrapper/c-wrapper.h
 	c-wrapper/list-holder.h
 	c-wrapper/internal/c-sal.h
@@ -380,6 +381,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	auth-info/bearer-token.cpp
+	buffer/buffer.cpp
 	c-wrapper/c-wrapper.cpp
 	c-wrapper/api/c-digest-authentication-policy.cpp
 	c-wrapper/api/c-account.cpp
@@ -394,6 +396,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-alert.cpp
 	c-wrapper/api/c-audio-device.cpp
 	c-wrapper/api/c-auth-info.cpp
+	c-wrapper/api/c-buffer.cpp
 	c-wrapper/api/c-call-cbs.cpp
 	c-wrapper/api/c-call-log.cpp
 	c-wrapper/api/c-call-params.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,6 +19,8 @@
  */
 
 #include "ekt-info.h"
+
+#include "buffer/buffer.h"
 
 // =============================================================================
 
@@ -62,9 +64,8 @@ void EktInfo::setCiphers(const shared_ptr<Dictionary> &ciphers) {
 
 void EktInfo::addCipher(const string &to, const vector<uint8_t> &cipher) {
 	if (mCiphers == nullptr) mCiphers = Dictionary::create();
-	LinphoneBuffer *buffer = linphone_buffer_new_from_data(cipher.data(), cipher.size());
+	auto buffer = Buffer::create(cipher);
 	mCiphers->setProperty(to, buffer);
-	linphone_buffer_unref(buffer);
 }
 
 LINPHONE_END_NAMESPACE

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -25,8 +25,7 @@
 
 #include "address/address.h"
 #include "conference/encryption/ekt-info.h"
-#include "linphone/api/c-address.h"
-#include "linphone/buffer.h"
+#include "linphone/api/c-buffer.h"
 
 using namespace LinphonePrivate;
 
@@ -59,13 +58,11 @@ void linphone_ekt_info_set_sspi(LinphoneEktInfo *linphone_ekt_info, uint16_t ssp
 
 LinphoneBuffer *linphone_ekt_info_get_cspi(const LinphoneEktInfo *linphone_ekt_info) {
 	auto cspi = EktInfo::toCpp(linphone_ekt_info)->getCSpi();
-	return linphone_buffer_new_from_data(cspi.data(), cspi.size());
+	return Buffer::createCObject<Buffer>(cspi);
 }
 
 void linphone_ekt_info_set_cspi(LinphoneEktInfo *linphone_ekt_info, const LinphoneBuffer *cspi) {
-	EktInfo::toCpp(linphone_ekt_info)
-	    ->setCSpi(std::vector<uint8_t>(linphone_buffer_get_content(cspi),
-	                                   linphone_buffer_get_content(cspi) + linphone_buffer_get_size(cspi)));
+	EktInfo::toCpp(linphone_ekt_info)->setCSpi(std::vector<uint8_t>(Buffer::toCpp(cspi)->getContent()));
 }
 
 LinphoneDictionary *linphone_ekt_info_get_ciphers(const LinphoneEktInfo *linphone_ekt_info) {
@@ -77,10 +74,7 @@ void linphone_ekt_info_set_ciphers(LinphoneEktInfo *linphone_ekt_info, LinphoneD
 }
 
 void linphone_ekt_info_add_cipher(LinphoneEktInfo *linphone_ekt_info, const char *to, const LinphoneBuffer *cipher) {
-	EktInfo::toCpp(linphone_ekt_info)
-	    ->addCipher(std::string(to),
-	                std::vector<uint8_t>(linphone_buffer_get_content(cipher),
-	                                     linphone_buffer_get_content(cipher) + linphone_buffer_get_size(cipher)));
+	EktInfo::toCpp(linphone_ekt_info)->addCipher(std::string(to), Buffer::toCpp(cipher)->getContent());
 }
 
 #else // HAVE_ADVANCED_IM

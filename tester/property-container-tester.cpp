@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,11 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dictionary/dictionary.h"
 #include "object/property-container.h"
 
+#include "dictionary/dictionary.h"
 #include "liblinphone_tester.h"
-#include "tester_utils.h"
 
 // =============================================================================
 
@@ -53,7 +52,7 @@ static void set_generic_property() {
 	BC_ASSERT_EQUAL(properties.getProperty("generic").getValue<void *>(), reinterpret_cast<void *>(0x42), void *, "%p");
 }
 
-static void to_stream_property(void) {
+static void to_stream_property() {
 	PropertyContainer properties;
 	properties.setProperty(std::string("Hello"), std::string("world!"));
 	properties.setProperty(std::string("universe"), 42);
@@ -86,7 +85,7 @@ static void get_properties_with_string() {
 
 static void get_properties_with_buffer() {
 	PropertyContainer properties;
-	LinphoneBuffer *buffer = linphone_buffer_new_from_string("LinphoneBufferTest");
+	auto buffer = make_shared<Buffer>("LinphoneBufferTest");
 	BC_ASSERT_PTR_NOT_NULL(buffer);
 	properties.setProperty(std::string("Buffer"), buffer);
 	const auto &keyValue = properties.getProperties();
@@ -94,13 +93,11 @@ static void get_properties_with_buffer() {
 	std::stringstream actual, expected;
 	expected << "key : Buffer - value : LinphoneBufferTest ; ";
 	for (auto [key, value] : keyValue) {
-		actual << "key : " << key << " - value : " << linphone_buffer_get_content(value.getValue<LinphoneBuffer *>())
-		       << " ; ";
+		actual << "key : " << key << " - value : " << value.getValue<shared_ptr<Buffer>>()->getStringContent() << " ; ";
 	}
 	auto actual_str = actual.str();
 	auto expected_str = expected.str();
 	BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
-	linphone_buffer_unref(buffer);
 }
 
 static void set_int_dictionary() {
@@ -122,11 +119,13 @@ static void set_string_dictionary() {
 
 static void set_buffer_dictionary() {
 	auto dictionary = Dictionary::create();
-	LinphoneBuffer *buffer = linphone_buffer_new_from_string("LinphoneBufferTest");
+	auto buffer = make_shared<Buffer>("LinphoneBufferTest");
 	BC_ASSERT_PTR_NOT_NULL(buffer);
 	dictionary->setProperty("buffer", buffer);
-	BC_ASSERT_PTR_NOT_NULL(dictionary->getLinphoneBuffer("buffer"));
-	linphone_buffer_unref(buffer);
+	auto getBuffer = dictionary->getBuffer("buffer");
+	BC_ASSERT_PTR_NOT_NULL(getBuffer);
+	auto stringBuffer = getBuffer->getStringContent();
+	BC_ASSERT_STRING_EQUAL(getBuffer->getStringContent().c_str(), "LinphoneBufferTest");
 }
 
 static void get_properties_on_empty_dictionary() {
@@ -145,21 +144,19 @@ static void get_properties_on_empty_dictionary() {
 
 static void dictionary_get_properties_with_buffer() {
 	auto dictionary = Dictionary::create();
-	LinphoneBuffer *buffer = linphone_buffer_new_from_string("LinphoneBufferTest");
+	auto buffer = make_shared<Buffer>("LinphoneBufferTest");
 	BC_ASSERT_PTR_NOT_NULL(buffer);
-	dictionary->setProperty(std::string("Buffer in dictionary"), buffer);
+	dictionary->setProperty("Buffer in dictionary", buffer);
 	auto keyValue = dictionary->getProperties();
 
 	std::stringstream actual, expected;
 	expected << "key : Buffer in dictionary - value : LinphoneBufferTest ; ";
 	for (auto [key, value] : keyValue) {
-		actual << "key : " << key << " - value : " << linphone_buffer_get_content(value.getValue<LinphoneBuffer *>())
-		       << " ; ";
+		actual << "key : " << key << " - value : " << value.getValue<shared_ptr<Buffer>>()->getStringContent() << " ; ";
 	}
 	auto actual_str = actual.str();
 	auto expected_str = expected.str();
 	BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
-	linphone_buffer_unref(buffer);
 }
 
 test_t property_container_tests[] = {
@@ -177,8 +174,8 @@ test_t property_container_tests[] = {
 };
 
 test_suite_t property_container_test_suite = {"PropertyContainer",
-                                              NULL,
-                                              NULL,
+                                              nullptr,
+                                              nullptr,
                                               liblinphone_tester_before_each,
                                               liblinphone_tester_after_each,
                                               sizeof(property_container_tests) / sizeof(property_container_tests[0]),

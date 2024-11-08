@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,10 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINPHONE_BUFFER_H_
-#define LINPHONE_BUFFER_H_
+#ifndef _L_C_BUFFER_H_
+#define _L_C_BUFFER_H_
 
-#include "linphone/types.h"
+#include "linphone/api/c-types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +41,7 @@ LINPHONE_PUBLIC LinphoneBuffer *linphone_buffer_new(void);
 /**
  * Create a new #LinphoneBuffer object from existing data.
  * @param data The initial data to store in the LinphoneBuffer. @notnil
- * @param size The size of the initial data to stroe in the LinphoneBuffer.
+ * @param size The size of the initial data to store in the LinphoneBuffer.
  * @return A new #LinphoneBuffer object. @notnil
  */
 LINPHONE_PUBLIC LinphoneBuffer *linphone_buffer_new_from_data(const uint8_t *data, size_t size);
@@ -138,4 +138,4 @@ LINPHONE_PUBLIC bool_t linphone_buffer_is_empty(const LinphoneBuffer *buffer);
 }
 #endif
 
-#endif /* LINPHONE_BUFFER_H_ */
+#endif // _L_C_BUFFER_H_

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -265,15 +265,6 @@ struct _EchoTester {
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneContent);
-
-struct _LinphoneBuffer {
-	belle_sip_object_t base;
-	void *user_data;
-	uint8_t *content; /**< A pointer to the buffer content */
-	size_t size;      /**< The size of the buffer content */
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneBuffer);
 
 struct _LinphoneImNotifPolicy {
 	belle_sip_object_t base;

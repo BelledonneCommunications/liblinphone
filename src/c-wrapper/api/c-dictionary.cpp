@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -75,12 +75,14 @@ int64_t linphone_dictionary_get_int64(const LinphoneDictionary *dict, const char
 	return Dictionary::toCpp(dict)->getLongLong(L_C_TO_STRING(key));
 }
 
-void linphone_dictionary_set_linphone_buffer(LinphoneDictionary *dict, const char *key, LinphoneBuffer *value) {
-	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
+void linphone_dictionary_set_buffer(LinphoneDictionary *dict, const char *key, LinphoneBuffer *value) {
+	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), Buffer::toCpp(value)->getSharedFromThis());
 }
 
-LinphoneBuffer *linphone_dictionary_get_linphone_buffer(const LinphoneDictionary *dict, const char *key) {
-	return Dictionary::toCpp(dict)->getLinphoneBuffer(L_C_TO_STRING(key));
+LinphoneBuffer *linphone_dictionary_get_buffer(const LinphoneDictionary *dict, const char *key) {
+	auto buffer = Dictionary::toCpp(dict)->getBuffer(L_C_TO_STRING(key));
+	if (buffer) return buffer->toC();
+	return nullptr;
 }
 
 LinphoneStatus linphone_dictionary_remove(LinphoneDictionary *dict, const char *key) {

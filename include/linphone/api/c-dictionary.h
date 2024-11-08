@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -120,8 +120,7 @@ LINPHONE_PUBLIC int64_t linphone_dictionary_get_int64(const LinphoneDictionary *
  * @param key The key. @maybenil
  * @param value The LinphoneBuffer value. @maybenil
  **/
-LINPHONE_PUBLIC void
-linphone_dictionary_set_linphone_buffer(LinphoneDictionary *dict, const char *key, LinphoneBuffer *value);
+LINPHONE_PUBLIC void linphone_dictionary_set_buffer(LinphoneDictionary *dict, const char *key, LinphoneBuffer *value);
 
 /**
  * Gets the LinphoneBuffer value of a key.
@@ -129,8 +128,7 @@ linphone_dictionary_set_linphone_buffer(LinphoneDictionary *dict, const char *ke
  * @param key The key. @maybenil
  * @return The value. @maybenil
  */
-LINPHONE_PUBLIC LinphoneBuffer *linphone_dictionary_get_linphone_buffer(const LinphoneDictionary *dict,
-                                                                        const char *key);
+LINPHONE_PUBLIC LinphoneBuffer *linphone_dictionary_get_buffer(const LinphoneDictionary *dict, const char *key);
 
 /**
  * Removes the pair of the key.
