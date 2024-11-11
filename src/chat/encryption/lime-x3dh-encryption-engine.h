@@ -140,8 +140,8 @@ public:
 	bool participantListRequired() const override;
 
 private:
-	std::shared_ptr<lime::limeCallback>
-	setLimeUserCreationCallback(LinphoneCore *lc, const std::string localDeviceId, std::shared_ptr<Account> &account);
+	std::shared_ptr<lime::limeCallback> setLimeUserCreationCallback(const std::string &localDeviceId,
+	                                                                std::shared_ptr<Account> &account);
 	void update(const std::string localDeviceId);
 	std::vector<lime::CurveId>
 	getAllConfiguredAlgos(); /**< return a vector with all supported algorithm - from all users, in no specific order */

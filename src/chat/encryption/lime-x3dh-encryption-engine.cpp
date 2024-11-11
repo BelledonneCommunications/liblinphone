@@ -192,12 +192,12 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
                                                    const shared_ptr<Core> core)
     : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
-	auto cCore = core->getCCore();
 	// Default curve core config is c25519 - keep it for retrocompatibility
 	// it is still in use for the transition period: use it to produce the a=ik SDP parameter
 	// the lime-Iks parameter, allowing support for several curves is used by updated [oct 2024] clients
 	// when the transition of all client is completed, it should default to unset
-	const std::string curveConfig = linphone_config_get_string(cCore->config, "lime", "curve", "c25519");
+	// This change should also be applied in shared_tester_function / check_lime_ik
+	const std::string curveConfig = linphone_config_get_string(core->getCCore()->config, "lime", "curve", "c25519");
 	coreCurve = lime::string2CurveId(curveConfig);
 	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is ["
 	        << core->getX3dhServerUrl() << "] and default curve [" << curveConfig << "] DB path: " << dbAccess;
@@ -866,11 +866,13 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(cons
 
 	string localDeviceId = contactAddress->asStringUriOnly();
 	std::map<lime::CurveId, std::vector<uint8_t>> Iks;
-	try {
-		limeManager->get_selfIdentityKey(localDeviceId, usersAlgos.at(localDeviceId), Iks);
-	} catch (const exception &e) {
-		lInfo() << "[LIME] " << e.what() << " while getting identity key for ZRTP auxiliary secret";
-		return {};
+	if (usersAlgos.find(localDeviceId) != usersAlgos.end()) {
+		try {
+			limeManager->get_selfIdentityKey(localDeviceId, usersAlgos.at(localDeviceId), Iks);
+		} catch (const exception &e) {
+			lInfo() << "[LIME] " << e.what() << " while getting identity key for ZRTP auxiliary secret";
+			return {};
+		}
 	}
 
 	if (Iks.empty()) {
@@ -1014,10 +1016,9 @@ void LimeX3dhEncryptionEngine::mutualAuthentication(MSZrtpContext *zrtpContext,
 	}
 
 	// Set the auxiliary shared secret in ZRTP
-	size_t auxSharedSecretLength = vectorAuxSharedSecret.size();
-	const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
-	lInfo() << "[LIME] Setting ZRTP auxiliary shared secret after identity key concatenation";
-	int retval = ms_zrtp_setAuxiliarySharedSecret(zrtpContext, auxSharedSecret, auxSharedSecretLength);
+	lInfo() << "[LIME] Setting ZRTP auxiliary shared secret after identity key concatenation ";
+	int retval =
+	    ms_zrtp_setAuxiliarySharedSecret(zrtpContext, vectorAuxSharedSecret.data(), vectorAuxSharedSecret.size());
 	if (retval != 0) // not an error as most of the time reason is already set (I.E re-invite case)
 		lWarning() << "[LIME] ZRTP auxiliary shared secret cannot be set 0x" << hex << retval;
 }
@@ -1046,7 +1047,7 @@ void LimeX3dhEncryptionEngine::authenticationVerified(
 			        legacy base algorithm we do */
 			const char *charRemoteIk =
 			    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
-			if (charRemoteIk) {
+			if (charRemoteIk && coreCurve != lime::CurveId::unset) {
 				remoteIks.emplace_back(coreCurve, bctoolbox::decodeBase64(charRemoteIk));
 			}
 		}
@@ -1201,21 +1202,25 @@ void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, con
 	}
 }
 
-std::shared_ptr<lime::limeCallback> LimeX3dhEncryptionEngine::setLimeUserCreationCallback(
-    LinphoneCore *lc, const std::string localDeviceId, shared_ptr<Account> &account) {
-	return make_shared<lime::limeCallback>([lc, localDeviceId, account](lime::CallbackReturn returnCode, string info) {
-		if (returnCode == lime::CallbackReturn::success) {
-			lInfo() << "[LIME] user " << localDeviceId << " creation successful";
-			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreated);
-		} else {
-			lWarning() << "[LIME] user " << localDeviceId << " creation failed with error [" << info << "]";
-			/* mLimeUserAccountStatus set to LimeUserAccountCreationSkiped in order to send the register even if Lime
-			 * user creation failed */
-			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
-		}
-		linphone_core_notify_imee_user_registration(lc, returnCode == lime::CallbackReturn::success,
-		                                            localDeviceId.data(), info.data());
-	});
+std::shared_ptr<lime::limeCallback>
+LimeX3dhEncryptionEngine::setLimeUserCreationCallback(const std::string &localDeviceId, shared_ptr<Account> &account) {
+	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
+	std::string baseAlgos = lime::CurveId2String(usersAlgos[localDeviceId]);
+	return make_shared<lime::limeCallback>(
+	    [lc, localDeviceId, baseAlgos, account](lime::CallbackReturn returnCode, string info) {
+		    if (returnCode == lime::CallbackReturn::success) {
+			    lInfo() << "[LIME] user " << localDeviceId << " creation successful on base algo " << baseAlgos;
+			    account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreated);
+		    } else {
+			    lWarning() << "[LIME] user " << localDeviceId << " on base algo " << baseAlgos
+			               << " creation failed with error [" << info << "]";
+			    /* mLimeUserAccountStatus set to LimeUserAccountCreationSkiped in order to send the register even if
+			     * Lime user creation failed */
+			    account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
+		    }
+		    linphone_core_notify_imee_user_registration(lc, returnCode == lime::CallbackReturn::success,
+		                                                localDeviceId.data(), info.data());
+	    });
 }
 
 void LimeX3dhEncryptionEngine::onNetworkReachable(BCTBX_UNUSED(bool sipNetworkReachable),
@@ -1293,8 +1298,7 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 
 	try {
 		if (!limeManager->is_user(localDeviceId, accountLimeAlgo)) {
-			LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
-			auto callback = setLimeUserCreationCallback(lc, localDeviceId, account);
+			auto callback = setLimeUserCreationCallback(localDeviceId, account);
 			// create user if not exist
 			limeManager->create_user(localDeviceId, accountLimeAlgo, accountLimeServerUrl, callback);
 		} else {
@@ -1309,7 +1313,6 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 void LimeX3dhEncryptionEngine::setTestForceDecryptionFailureFlag(bool flag) {
 	forceFailure = flag;
 }
-namespace {}
 
 void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, const string &gruu) {
 	string accountLimeServerUrl = account->getAccountParams()->getLimeServerUrl();
@@ -1340,15 +1343,15 @@ void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, cons
 	usersAlgos[gruu] = accountLimeAlgo;
 
 	try {
-		LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 		if (!limeManager->is_user(gruu, accountLimeAlgo)) {
 			lInfo() << "[LIME] Try to create lime user for device " << gruu << " with server URL ["
 			        << accountLimeServerUrl << "] on base algorithm [" << CurveId2String(accountLimeAlgo) << "]";
-			auto callback = setLimeUserCreationCallback(lc, gruu, account);
+			auto callback = setLimeUserCreationCallback(gruu, account);
 			// create user if not exist
 			limeManager->create_user(gruu, accountLimeAlgo, accountLimeServerUrl, callback);
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountIsCreating);
 		} else {
+			LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 			string info = "";
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreated);
 			linphone_core_notify_imee_user_registration(lc, TRUE, gruu.data(), info.data());

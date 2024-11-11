@@ -87,6 +87,7 @@ extern test_suite_t secure_group_chat_exhume_test_suite;
 extern test_suite_t secure_message_test_suite;
 extern test_suite_t secure_message2_test_suite;
 extern test_suite_t secure_group_chat_migration_test_suite;
+extern test_suite_t secure_group_chat_multialgos_test_suite;
 extern test_suite_t ephemeral_group_chat_test_suite;
 extern test_suite_t ephemeral_group_chat_basic_test_suite;
 extern test_suite_t log_collection_test_suite;
@@ -1183,7 +1184,7 @@ void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 void lime_delete_DRSessions(const char *limedb, const char *requestOption);
 void lime_setback_usersUpdateTs(const char *limedb, int days);
 uint64_t lime_get_userUpdateTs(const char *limedb);
-char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu);
+char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu, uint8_t curveId);
 bool_t liblinphone_tester_is_lime_PQ_available(void);
 void delete_all_in_zrtp_table(const char *zrtpdb);
 

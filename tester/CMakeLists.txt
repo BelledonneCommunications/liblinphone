@@ -271,7 +271,6 @@ set(SOURCE_FILES_C
 	flexisip_tester.c
 	group_chat_tester.c
 	group_chat_ephemeral_tester.c
-	group_chat_secure_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	log_file_tester.c
@@ -345,6 +344,10 @@ set(SOURCE_FILES_CXX
 	http-client-tester.cpp
 	http-server-utils.cpp
 )
+
+if(ENABLE_LIME_X3DH)
+	list(APPEND SOURCE_FILES_CXX group_chat_secure_multialgo_tester.cpp)
+endif()
 
 if(ENABLE_FLEXIAPI)
 	list(APPEND SOURCE_FILES_CXX account_creator_flexiapi_tester.cpp)

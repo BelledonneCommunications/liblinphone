@@ -42,18 +42,49 @@
 #include "sal/sal_media_description.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
+#ifdef HAVE_LIME_X3DH
+#include "lime/lime.hpp"
+#endif // HAVE_LIME_X3DH
 
 using namespace std;
 #include <sstream>
 
 using namespace LinphonePrivate;
+#ifdef HAVE_LIME_X3DH
+namespace {
+std::vector<std::pair<lime::CurveId, std::string>> parseLimeIks(const char *attr) {
+	std::vector<std::pair<lime::CurveId, std::string>> algoIks;
+	std::stringstream lineStream{std::string(attr)};
+	std::string algoIkString;
 
-void check_lime_ik(LinphoneCoreManager *mgr, LinphoneCall *call) {
+	// Split line by semi colon fields
+	while (std::getline(lineStream, algoIkString, ';')) {
+		// split the field found by colon
+		std::string algoString, Ikb64;
+		std::stringstream algoIkStream(algoIkString);
+		std::getline(algoIkStream, algoString, ':');
+		std::getline(algoIkStream, Ikb64);
+
+		auto algo = lime::string2CurveId(algoString);
+		// check the algo is valid
+		if (algo == lime::CurveId::unset) {
+			lWarning() << "Invalid lime algo[" << algoString << "] skip it";
+		} else {
+			algoIks.emplace_back(algo, Ikb64);
+		}
+	}
+	return algoIks;
+}
+} // anonymous namespace
+#endif // HAVE_LIME_X3DH
+
+void check_lime_ik(LinphoneCoreManager *mgr, BCTBX_UNUSED(LinphoneCall *call)) {
 
 	if (!linphone_core_lime_x3dh_enabled(mgr->lc)) {
 		return;
 	}
 
+#ifdef HAVE_LIME_X3DH
 	// Do not check Ik if database is encrypted
 	if (is_filepath_encrypted(mgr->lime_database_path)) {
 		return;
@@ -69,18 +100,36 @@ void check_lime_ik(LinphoneCoreManager *mgr, LinphoneCall *call) {
 		if (!lime_server_found) return;
 		const LinphoneAddress *call_account_contact = linphone_account_get_contact_address(call_account);
 		char *call_account_contact_str = linphone_address_as_string_uri_only(call_account_contact);
-		refIk = lime_get_userIk(mgr, call_account_contact_str);
+		auto coreDefaultCurve =
+		    lime::string2CurveId(linphone_config_get_string(mgr->lc->config, "lime", "curve", "c25519"));
+		refIk = lime_get_userIk(mgr, call_account_contact_str, static_cast<uint8_t>(coreDefaultCurve));
 		BC_ASSERT_PTR_NOT_NULL(refIk);
-		ms_free(call_account_contact_str);
 
 		SalMediaDescription *desc = _linphone_call_get_local_desc(call);
 		belle_sdp_session_description_t *sdp = desc->toSdp();
 		const char *ik = belle_sdp_session_description_get_attribute_value(sdp, "Ik");
-		BC_ASSERT_PTR_NOT_NULL(ik);
+		BC_ASSERT_PTR_NOT_NULL(ik); // for now we always have an Ik as the default is c25519 but at some point (see
+		                            // comment in lime-x3dh-encryption-engine.cpp) it will not be true
 		BC_ASSERT_PTR_NOT_NULL(refIk);
 		if (refIk && ik) BC_ASSERT_STRING_EQUAL(refIk, ik);
 		if (refIk) ms_free(refIk);
+
+		// Check lime-Iks param
+		const char *limeIks = belle_sdp_session_description_get_attribute_value(sdp, "lime-Iks");
+		if (limeIks) { // We do have a lime-Iks : parse it and check it matches what's in db
+			auto Iks = parseLimeIks(limeIks);
+			for (const auto &Ik : Iks) {
+				auto refIk = lime_get_userIk(mgr, call_account_contact_str, static_cast<uint8_t>(Ik.first));
+				BC_ASSERT_PTR_NOT_NULL(refIk);
+				if (refIk) {
+					BC_ASSERT_STRING_EQUAL(refIk, Ik.second.c_str());
+					bctbx_free(refIk);
+				}
+			}
+		}
+		ms_free(call_account_contact_str);
 	}
+#endif // HAVE_LIME_X3DH
 }
 
 static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStreamType stream_type) {

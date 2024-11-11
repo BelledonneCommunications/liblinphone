@@ -101,7 +101,7 @@ uint64_t lime_get_userUpdateTs(const char *limedb) {
 	return ret;
 }
 
-char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu) {
+char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu, uint8_t curveId) {
 	char *ret = NULL;
 #ifdef HAVE_SOCI
 #ifdef HAVE_LIME_X3DH
@@ -110,8 +110,8 @@ char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu) {
 		soci::session sql("sqlite3", limedb); // open the DB
 		soci::blob ik_blob(sql);
 		const std::string userGruu(gruu);
-		sql << "SELECT Ik FROM Lime_LocalUsers WHERE UserId = :UserId LIMIT 1;", soci::into(ik_blob),
-		    soci::use(userGruu);
+		sql << "SELECT Ik FROM Lime_LocalUsers WHERE UserId = :UserId AND curveId = :curveId LIMIT 1;",
+		    soci::into(ik_blob), soci::use(userGruu), soci::use(curveId);
 		if (sql.got_data()) { // Found it, it is stored in one buffer Public || Private
 			std::array<unsigned char, BCTBX_EDDSA_448_PUBLIC_SIZE> ikRaw;
 			const size_t public_key_size = ik_blob.get_len() / 2;

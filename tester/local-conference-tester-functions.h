@@ -46,104 +46,6 @@ using namespace ownership;
 
 namespace LinphoneTest {
 
-class BcAssert {
-public:
-	void addCustomIterate(const std::function<void()> &iterate) {
-		mIterateFuncs.push_back(iterate);
-	}
-	bool waitUntil(std::chrono::duration<double> timeout, const std::function<bool()> &condition) {
-		auto start = std::chrono::steady_clock::now();
-
-		bool_t result;
-		while (!(result = condition()) && (std::chrono::steady_clock::now() - start < timeout)) {
-			for (const std::function<void()> &iterate : mIterateFuncs) {
-				iterate();
-			}
-			ms_usleep(100);
-		}
-		return result;
-	}
-	bool wait(const std::function<bool()> &condition) {
-		return waitUntil(std::chrono::seconds(10), condition);
-	}
-
-private:
-	std::list<std::function<void()>> mIterateFuncs;
-};
-
-class CoreAssert : public BcAssert {
-public:
-	CoreAssert(std::initializer_list<std::shared_ptr<Core>> cores) {
-		for (shared_ptr<Core> core : cores) {
-			addCustomIterate([core] { linphone_core_iterate(L_GET_C_BACK_PTR(core)); });
-		}
-	}
-};
-
-class ClientConference;
-
-class ConfCoreManager : public CoreManager {
-public:
-	ConfCoreManager(std::string rc) : CoreManager(rc.c_str()) {
-		mMgr->user_info = this;
-	}
-
-	ConfCoreManager(std::string rc, const std::function<void()> &preStart)
-	    : CoreManager(owned(linphone_core_manager_create(rc.c_str()))), mPreStart(preStart) {
-		mMgr->user_info = this;
-		mPreStart();
-		start(true);
-	}
-
-	void reStart(bool check_for_proxies = true) {
-		linphone_core_manager_reinit(mMgr.get());
-		mPreStart();
-		start(check_for_proxies);
-	}
-
-	void configureCoreForConference(const Address &factoryUri) {
-		_configure_core_for_conference(mMgr.get(), factoryUri.toC());
-	}
-	void setupMgrForConference(const char *conferenceVersion = nullptr) {
-		setup_mgr_for_conference(mMgr.get(), conferenceVersion);
-	}
-	BorrowedMut<LinphoneChatRoom> searchChatRoom(const LinphoneAddress *localAddr,
-	                                             const LinphoneAddress *remoteAddr,
-	                                             const bctbx_list_t *participants = nullptr,
-	                                             const LinphoneChatRoomParams *params = nullptr) {
-		return borrowed_mut(linphone_core_search_chat_room(mMgr->lc, params, localAddr, remoteAddr, participants));
-	}
-	LinphoneAccount *getDefaultAccount() const {
-		return linphone_core_get_default_account(mMgr->lc);
-	}
-	stats &getStats() const {
-		return mMgr->stat;
-	}
-	LinphoneCoreManager *getCMgr() {
-		return mMgr.get();
-	};
-	LinphoneCore *getLc() const {
-		return mMgr->lc;
-	};
-
-private:
-	const std::function<void()> mPreStart = [] { return; };
-};
-
-class CoreManagerAssert : public BcAssert {
-public:
-	CoreManagerAssert(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs) : BcAssert() {
-		for (CoreManager &coreMgr : coreMgrs) {
-			addCustomIterate([&coreMgr] { coreMgr.iterate(); });
-		}
-	}
-
-	CoreManagerAssert(std::list<std::reference_wrapper<CoreManager>> coreMgrs) : BcAssert() {
-		for (CoreManager &coreMgr : coreMgrs) {
-			addCustomIterate([&coreMgr] { coreMgr.iterate(); });
-		}
-	}
-};
 class Focus;
 
 /*Core manager acting as a client*/
@@ -151,7 +53,7 @@ class ClientConference : public ConfCoreManager {
 public:
 	ClientConference(std::string rc, Address factoryUri, bool encrypted = false)
 	    : ConfCoreManager(rc,
-	                      [this, factoryUri, encrypted] {
+	                      [this, factoryUri, encrypted](bool) {
 		                      configureCoreForConference(factoryUri);
 		                      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
 		                      setupMgrForConference();
@@ -180,22 +82,6 @@ public:
 		for (auto chatRoom : getCore().getChatRooms()) {
 			deleteChatRoomSync(*chatRoom);
 		}
-	}
-
-	static LinphoneChatMessage *sendTextMsg(LinphoneChatRoom *cr, const std::string text) {
-		LinphoneChatMessage *msg = nullptr;
-		if (cr && !text.empty()) {
-			lInfo() << " Chat room " << AbstractChatRoom::toCpp(cr)->getConferenceId()
-			        << " is sending message with text " << text;
-			msg = linphone_chat_room_create_message_from_utf8(cr, text.c_str());
-			BC_ASSERT_PTR_NOT_NULL(msg);
-			LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
-			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-			linphone_chat_message_add_callbacks(msg, cbs);
-			linphone_chat_message_cbs_unref(cbs);
-			linphone_chat_message_send(msg);
-		}
-		return msg;
 	}
 
 	static void deleteAllDevices(std::shared_ptr<Participant> &participant) {
@@ -244,7 +130,8 @@ private:
 /* Core manager acting as a focus*/
 class Focus : public ConfCoreManager {
 public:
-	Focus(std::string rc) : ConfCoreManager(rc, [this] { linphone_core_enable_conference_server(getLc(), TRUE); }) {
+	Focus(std::string rc)
+	    : ConfCoreManager(rc, [this](bool) { linphone_core_enable_conference_server(getLc(), TRUE); }) {
 		configureFocus();
 	}
 	~Focus() {
