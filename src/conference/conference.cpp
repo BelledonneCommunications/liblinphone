@@ -123,7 +123,8 @@ const std::shared_ptr<Account> Conference::getAccount() {
 	}
 	if (!account) {
 		const auto &conferenceAddress = getConferenceAddress();
-		lError() << "Unable to associate account to conference [" << this << "] with address ["
+		lError() << "Unable to find account with identity [" << *mConferenceId.getLocalAddress()
+		         << "] to associate account to conference [" << this << "] with address ["
 		         << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << "]";
 	}
 	return account;

@@ -380,8 +380,8 @@ static void create_conference_on_unresponsive_server(void) {
 
 		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateUpdating,
-		                             marie_stat.number_of_ConferenceSchedulerStateUpdating + 1,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateAllocationPending,
+		                             marie_stat.number_of_ConferenceSchedulerStateAllocationPending + 2,
 		                             liblinphone_tester_sip_timeout));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateError,
@@ -4877,11 +4877,11 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 }
 
 void create_conference_with_chat(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1);
 }
 
 void create_conference_with_chat_with_cores_restart(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1);
 }
 
 } // namespace LinphoneTest

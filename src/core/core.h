@@ -181,7 +181,8 @@ public:
 	// ChatRoom.
 	// ---------------------------------------------------------------------------
 
-	std::list<std::shared_ptr<AbstractChatRoom>> getRawChatRoomList() const;
+	std::list<std::shared_ptr<AbstractChatRoom>> getRawChatRoomList(bool includeBasic = true,
+	                                                                bool includeConference = true) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms() const;
 	const bctbx_list_t *getChatRoomsCList() const;
 

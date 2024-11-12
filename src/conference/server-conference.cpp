@@ -307,8 +307,15 @@ void ServerConference::updateConferenceInformation(SalCallOp *op) {
 				lWarning() << "Video capability in a conference is not supported when a device that is not a server is "
 				              "hosting a conference.";
 			}
-			const auto contactAddress = op->getRemoteContactAddress();
-			const auto chatEnabled = !!sal_address_has_param(contactAddress, Conference::TextParameter.c_str());
+			auto recvCustomHeaders = op->getRecvCustomHeaders();
+			string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "End-To-End-Encrypted"));
+			string ephemerable = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "Ephemerable"));
+			string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "Ephemeral-Life-Time"));
+			string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "One-To-One-Chat-Room"));
+			const auto remoteContactAddress = op->getRemoteContactAddress();
+			const auto chatEnabled = !ephemerable.empty() || !ephemeralLifeTime.empty() || !endToEndEncrypted.empty() ||
+			                         !oneToOneChatRoom.empty() ||
+			                         !!(sal_address_has_param(remoteContactAddress, Conference::TextParameter.c_str()));
 
 			bool previousChatEnablement = mConfParams->chatEnabled();
 			bool previousVideoEnablement = mConfParams->videoEnabled();
@@ -637,7 +644,11 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(),
 		                            Address::create(op->getTo()));
 		newDeviceSession->startIncomingNotification(false);
-		const auto &contactAddress = getAccount()->getContactAddress();
+		std::shared_ptr<Address> contactAddress = nullptr;
+		const auto &account = getAccount();
+		if (account) {
+			contactAddress = account->getContactAddress();
+		}
 		std::shared_ptr<Address> addr = getConferenceAddress()->clone()->toSharedPtr();
 		if (contactAddress && contactAddress->hasUriParam("gr")) {
 			addr->setUriParam("gr", contactAddress->getUriParamValue("gr"));
@@ -1248,7 +1259,10 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 			linphone_call_params_enable_tone_indications(new_params, !supportsMedia());
 			linphone_call_params_set_in_conference(new_params, TRUE);
 			linphone_call_params_set_start_time(new_params, mConfParams->getStartTime());
-			linphone_call_params_set_account(new_params, getAccount()->toC());
+			const auto &account = getAccount();
+			if (account) {
+				linphone_call_params_set_account(new_params, account->toC());
+			}
 
 			const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 			const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);

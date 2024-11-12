@@ -274,6 +274,10 @@ CorePrivate::searchChatRoom(const shared_ptr<ConferenceParams> &params,
 	for (const auto &chatRoom : q->getRawChatRoomList()) {
 		if (params) {
 			const auto &chatRoomParams = chatRoom->getCurrentParams();
+
+			if (params->audioEnabled() != chatRoomParams->audioEnabled()) continue;
+			if (params->videoEnabled() != chatRoomParams->videoEnabled()) continue;
+
 			if (params->getChatParams()->getBackend() != chatRoomParams->getChatParams()->getBackend()) continue;
 
 			if (params->isGroup() != chatRoomParams->isGroup()) continue;
@@ -302,10 +306,13 @@ CorePrivate::searchChatRoom(const shared_ptr<ConferenceParams> &params,
 		    (remoteAddress && remoteAddress->isValid()) ? remoteAddress->getUriWithoutGruu() : Address();
 		if (remoteAddressWithoutGruu.isValid() && (remoteAddressWithoutGruu != curRemoteAddressWithoutGruu)) continue;
 
+		const auto &chatRoomParticipants = chatRoom->getParticipants();
+		const auto expectedParticipantNb = participants.size();
+		if ((expectedParticipantNb > 0) && (chatRoomParticipants.size() != expectedParticipantNb)) continue;
 		bool allFound = true;
 		for (const auto &participant : participants) {
 			bool found = false;
-			for (const auto &p : chatRoom->getParticipants()) {
+			for (const auto &p : chatRoomParticipants) {
 				if (participant->weakEqual(*(p->getAddress()))) {
 					found = true;
 					break;
@@ -603,7 +610,7 @@ CorePrivate::findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &local
 
 	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << *localAddress << "] and participant ["
 	        << *participantAddress << "]";
-	for (const auto &chatRoom : q->getRawChatRoomList()) {
+	for (const auto &chatRoom : q->getRawChatRoomList(false, true)) {
 		const std::shared_ptr<Address> &curLocalAddress = chatRoom->getLocalAddress();
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 		if ((chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
@@ -632,14 +639,7 @@ shared_ptr<AbstractChatRoom>
 CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
-	for (const auto &chatRoom : q->getRawChatRoomList()) {
-		const auto &chatRoomParams = chatRoom->getCurrentParams();
-		// We are looking for a one to one chatroom which isn't basic
-		if ((chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::Basic) &&
-		    chatRoomParams->isGroup()) {
-			continue;
-		}
-
+	for (const auto &chatRoom : q->getRawChatRoomList(false, true)) {
 		const shared_ptr<ClientChatRoom> &clientGroupChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
 		// Check it isn't a ServerChatRoom
 		if (clientGroupChatRoom) {
@@ -705,20 +705,24 @@ const std::shared_ptr<Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(co
 }
 
 // -----------------------------------------------------------------------------
-std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList() const {
+std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList(bool includeBasic, bool includeConference) const {
 	L_D();
 	std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
-	for (const auto &[id, conference] : d->mConferenceById) {
-		const auto &chatRoom = conference->getChatRoom();
-		if (chatRoom) {
-			chatRooms.push_back(chatRoom);
+	if (includeConference) {
+		for (const auto &[id, conference] : d->mConferenceById) {
+			const auto &chatRoom = conference->getChatRoom();
+			if (chatRoom) {
+				chatRooms.push_back(chatRoom);
+			}
 		}
 	}
 
-	for (const auto &chatRoomPair : d->mChatRoomsById) {
-		const auto &chatRoom = chatRoomPair.second;
-		if (chatRoom) {
-			chatRooms.push_back(chatRoom);
+	if (includeBasic) {
+		for (const auto &chatRoomPair : d->mChatRoomsById) {
+			const auto &chatRoom = chatRoomPair.second;
+			if (chatRoom) {
+				chatRooms.push_back(chatRoom);
+			}
 		}
 	}
 	return chatRooms;
@@ -727,6 +731,7 @@ std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList() const {
 void Core::updateChatRoomList() const {
 	LinphoneCore *lc = getCCore();
 	LinphoneConfig *config = linphone_core_get_config(lc);
+	bool hideChatRoomsWithMedia = !!linphone_config_get_int(config, "chat", "hide_chat_rooms_with_media", 1);
 	bool hideEmptyChatRooms = !!linphone_config_get_int(config, "misc", "hide_empty_chat_rooms", 1);
 	bool hideChatRoomsFromRemovedProxyConfig =
 	    !!linphone_config_get_int(config, "misc", "hide_chat_rooms_from_removed_proxies", 1);
@@ -734,6 +739,12 @@ void Core::updateChatRoomList() const {
 	list<shared_ptr<AbstractChatRoom>> rooms;
 
 	for (const auto &chatRoom : getRawChatRoomList()) {
+		if (hideChatRoomsWithMedia) {
+			const auto &chatRoomParams = chatRoom->getCurrentParams();
+			if (chatRoomParams->audioEnabled() || chatRoomParams->videoEnabled()) {
+				continue;
+			}
+		}
 		if (hideEmptyChatRooms) {
 			const auto &chatRoomParams = chatRoom->getCurrentParams();
 			if (chatRoom->isEmpty() && !chatRoomParams->isGroup()) {
@@ -808,7 +819,14 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom(const std::shared_ptr<co
                                                         bool basicOnly,
                                                         bool conferenceOnly,
                                                         bool encrypted) const {
-	for (const auto &chatRoom : getRawChatRoomList()) {
+	bool includeBasic = true;
+	bool includeConference = true;
+	if (basicOnly) {
+		includeConference = false;
+	} else if (conferenceOnly) {
+		includeBasic = false;
+	}
+	for (const auto &chatRoom : getRawChatRoomList(includeBasic, includeConference)) {
 		const std::shared_ptr<Address> &curLocalAddress = chatRoom->getLocalAddress();
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 

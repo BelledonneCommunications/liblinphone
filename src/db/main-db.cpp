@@ -6948,7 +6948,8 @@ void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
 				// Delete conference only if it is not in the core's cache or it has no participants (i.e. it was
 				// terminated before its end time)
 				if (!conference || (conference->getParticipantDevices(false).size() == 0)) {
-					lInfo() << "Deleting conference information linked to conference " << uriString;
+					lInfo() << "Deleting conference information linked to conference " << uriString
+					        << " because it has no participants or it is not found in the core cache";
 					deleteConferenceInfo(dbConferenceId);
 				}
 			}

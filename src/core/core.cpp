@@ -1821,6 +1821,7 @@ void Core::setConferenceCleanupPeriod(long seconds) {
 	auto oldPeriod = getConferenceCleanupPeriod();
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	linphone_config_set_int64(config, "misc", "conference_cleanup_period", seconds);
+	lInfo() << "Set conference clean window to " << seconds << " seconds";
 	if ((oldPeriod <= 0) && (seconds > 0)) {
 		// Create cleanup time if not already done
 		d->createConferenceCleanupTimer();

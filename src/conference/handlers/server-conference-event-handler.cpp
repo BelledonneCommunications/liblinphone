@@ -1534,8 +1534,7 @@ void ServerConferenceEventHandler::onStateChanged(LinphonePrivate::ConferenceInt
 			conf->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
-			if ((!textEnabled) && conf->getParticipantDevices(false).size() == 0)
-				conf->setState(ConferenceInterface::State::Terminated);
+			if (conf->getParticipantDevices(false).size() == 0) conf->setState(ConferenceInterface::State::Terminated);
 			break;
 		case ConferenceInterface::State::Terminated:
 			if (!textEnabled) conf->resetLastNotify();

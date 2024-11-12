@@ -179,7 +179,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	lInfo() << "[Conference Scheduler] [" << this << "] is attempting to " << (isUpdate ? "update" : "schedule")
 	        << " a conference with address " << conferenceAddressStr;
 
-	if (mConferenceInfo == nullptr && !isUpdate) {
+	if (!isUpdate) {
 		setState(State::AllocationPending);
 		if (conferenceAddress && conferenceAddress->isValid()) {
 			// This is a hack for the tester
@@ -283,9 +283,10 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 		        << "] Conference has been succesfully created: " << *conferenceAddress;
 		mConferenceInfo->setUri(conferenceAddress);
 	} else {
+		const auto &uri = mConferenceInfo->getUri();
 		// No need to update the conference address during an update
-		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully updated: " << *mConferenceInfo->getUri();
+		lInfo() << "[Conference Scheduler] [" << this << "] Conference has been succesfully updated: "
+		        << (uri ? uri->toString() : std::string("sip:unknown"));
 	}
 
 #ifdef HAVE_DB_STORAGE
