@@ -66,6 +66,7 @@ Account::Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params, Linpho
 
 Account::~Account() {
 	lInfo() << "Account [" << this << "] destroyed";
+	cancelDeletion();
 	if (mSentHeaders) sal_custom_header_free(mSentHeaders);
 	setDependency(nullptr);
 	if (mErrorInfo) linphone_error_info_unref(mErrorInfo);
@@ -287,8 +288,37 @@ void Account::setNeedToRegister(bool needToRegister) {
 	}
 }
 
-void Account::setDeletionDate(time_t deletionDate) {
-	mDeletionDate = deletionDate;
+void Account::triggerDeletion() {
+	cancelDeletion();
+	weak_ptr weakZis = getSharedFromThis();
+	mDeletionTimer = getCore()->createTimer(
+	    [weakZis]() -> bool {
+		    auto zis = weakZis.lock();
+		    if (zis) {
+			    try {
+				    zis->getCore()->removeDeletedAccount(zis);
+			    } catch (const bad_weak_ptr &) {
+				    // ignored
+			    }
+		    }
+		    return false;
+	    },
+	    32000, "Account deletion");
+}
+
+void Account::cancelDeletion() {
+	if (mDeletionTimer) {
+		try {
+			getCore()->destroyTimer(mDeletionTimer);
+		} catch (const bad_weak_ptr &) {
+			// ignored.
+		}
+		mDeletionTimer = nullptr;
+	}
+}
+
+bool Account::deletionPending() const {
+	return mDeletionTimer != nullptr;
 }
 
 void Account::setSipEtag(const std::string &sipEtag) {
@@ -405,7 +435,7 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 
 		LinphoneRegistrationState previousState = mState;
 		mState = state;
-		if (mDeletionDate != 0) {
+		if (deletionPending()) {
 			handleDeletion();
 		}
 
@@ -489,10 +519,6 @@ int Account::getAuthFailure() const {
 
 bool Account::getRegisterChanged() const {
 	return mRegisterChanged;
-}
-
-time_t Account::getDeletionDate() const {
-	return mDeletionDate;
 }
 
 const std::string &Account::getSipEtag() const {
@@ -1129,7 +1155,7 @@ bool Account::canRegister() {
 	if (mDependency) {
 		return mDependency->getState() == LinphoneRegistrationOk;
 	}
-	if (getState() == LinphoneRegistrationNone && mDeletionDate != 0) {
+	if (getState() == LinphoneRegistrationNone && deletionPending()) {
 		// Account is removed, but never registered before.
 		// This case happens when doing a removeAccount() while network is off.
 		return false;

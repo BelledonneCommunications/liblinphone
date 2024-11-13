@@ -4514,11 +4514,10 @@ void linphone_core_iterate(LinphoneCore *lc) {
 
 	if (lc->sal) lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
-	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring)
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring) {
 		// Avoid registration before getting remote configuration results
 		return;
-
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->removeDeletedAccounts();
+	}
 
 	/* We have to iterate for each call */
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->iterateCalls(current_real_time, one_second_elapsed);

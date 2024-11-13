@@ -77,7 +77,9 @@ public:
 	void setRegisterChanged(bool registerChanged);
 	void setSendPublish(bool sendPublish);
 	void setNeedToRegister(bool needToRegister);
-	void setDeletionDate(time_t deletionDate);
+	void triggerDeletion();
+	void cancelDeletion();
+	bool deletionPending() const;
 	void setSipEtag(const std::string &sipEtag);
 	void setErrorInfo(LinphoneErrorInfo *errorInfo);
 	void setContactAddress(const std::shared_ptr<const Address> &contact);
@@ -95,7 +97,6 @@ public:
 	// Getters
 	int getAuthFailure() const;
 	bool getRegisterChanged() const;
-	time_t getDeletionDate() const;
 	const std::string &getSipEtag() const;
 	const LinphoneErrorInfo *getErrorInfo();
 	const std::shared_ptr<Address> &getContactAddress() const;
@@ -204,7 +205,8 @@ private:
 	bool mSendPublish = false;
 	bool mIsUnregistering = false;
 	bool hasProxyConfigRef = false;
-	time_t mDeletionDate = 0;
+
+	belle_sip_source_t *mDeletionTimer = nullptr;
 
 	std::string mSipEtag;
 

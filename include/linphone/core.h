@@ -5534,11 +5534,14 @@ typedef void (*ContactSearchCallback)(LinphoneContactSearch *id,
 
 /**
  * Sets the URI where to download xml configuration file at startup.
+ * http://, https:// and file:// uris are supported.
  * This can also be set from configuration file or factory config file, from [misc] section, item "config-uri".
  * Calling this function does not load the configuration. It will write the value into configuration so that
- *configuration from remote URI will take place at next #LinphoneCore start.
+ * configuration from URI will take place during next linphone_core_start() invocation.
+ * The format the xml file is briefly documented here:
+ * https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Remote%20Provisioning/
  * @param core the #LinphoneCore object @notnil
- * @param uri the http or https uri to use in order to download the configuration. Passing NULL will disable remote
+ * @param uri the uri to use in order to obtain the configuration. Passing NULL will disable remote
  *provisioning. @maybenil
  * @return -1 if uri could not be parsed, 0 otherwise. Note that this does not check validity of URI endpoint nor scheme
  *and download may still fail.

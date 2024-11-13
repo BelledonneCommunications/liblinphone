@@ -2556,6 +2556,7 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 	removeDependentAccount(account);
 	/* add to the list of destroyed accounts, so that the possible unREGISTER request can succeed authentication */
 	mDeletedAccounts.mList.push_back(account);
+	account->triggerDeletion();
 
 	invalidateAccountInConferencesAndChatRooms(account);
 
@@ -2564,8 +2565,6 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 	}
 
 	linphone_core_notify_account_removed(getCCore(), account->toC());
-
-	account->setDeletionDate(ms_time(NULL));
 
 	if (getCCore()->state == LinphoneGlobalOn) {
 		// Update the associated linphone specs on the core
@@ -2597,6 +2596,9 @@ void Core::removeDeletedAccount(const std::shared_ptr<Account> &account) {
 		lError() << "Account [ " << account << "] is not in the list of deleted accounts";
 		return;
 	}
+	const auto &params = account->getAccountParams();
+	lInfo() << "Account for [" << *params->getServerAddress() << "] is definitely removed from core.";
+	account->releaseOps();
 	/* we also need to update the accounts list */
 	accounts.erase(accountIt);
 }
@@ -2625,7 +2627,7 @@ LinphoneStatus Core::addAccount(std::shared_ptr<Account> account) {
 		lWarning() << "Account already entered, ignored.";
 		return 0;
 	}
-
+	account->cancelDeletion(); // in case this account had been previously be removed from the Core.
 	mAccounts.mList.push_back(account);
 
 	// If there is no back pointer to a proxy config then create a proxy config that will depend on this account
@@ -2701,6 +2703,7 @@ void Core::releaseAccounts() {
 
 	for (const auto &account : getDeletedAccounts()) {
 		account->releaseOps();
+		account->cancelDeletion();
 	}
 }
 
@@ -2804,18 +2807,6 @@ end:
 	else if (!foundAccount && foundRegAccountDomainMatch) foundAccount = foundRegAccountDomainMatch;
 	else if (!foundAccount && foundNoRegAccountDomainMatch) foundAccount = foundNoRegAccountDomainMatch;
 	return foundAccount;
-}
-
-void Core::removeDeletedAccounts() {
-	const auto deletedAccounts = mDeletedAccounts.mList;
-	for (const auto &account : deletedAccounts) {
-		if ((ms_time(NULL) - account->getDeletionDate()) > 32) {
-			removeDeletedAccount(account);
-			const auto &params = account->getAccountParams();
-			lInfo() << "Account for [" << *params->getServerAddress() << "] is definitely removed from core.";
-			account->releaseOps();
-		}
-	}
 }
 
 std::shared_ptr<Account> Core::findAccountByIdentityAddress(const std::shared_ptr<const Address> identity) const {

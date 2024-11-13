@@ -179,7 +179,9 @@ void HttpRequest::processIOError(BCTBX_UNUSED(const belle_sip_io_error_event_t *
 void HttpRequest::processAuthRequested(belle_sip_auth_event_t *event) {
 	try {
 		auto core = mClient.getCore();
-		if (linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, NULL, NULL)) return;
+		if (linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, NULL, NULL)) {
+			return;
+		}
 	} catch (...) {
 	}
 	// TODO check what happens if auth info is not supplied.

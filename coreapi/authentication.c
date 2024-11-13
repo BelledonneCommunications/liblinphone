@@ -422,6 +422,8 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 	const char *ae_username = belle_sip_auth_event_get_username(event);
 	const char *ae_domain = belle_sip_auth_event_get_domain(event);
 	LinphoneAuthMethod requestedMethod = LinphoneAuthHttpDigest;
+	int try_count = belle_sip_auth_event_get_try_count(event);
+	int max_tries = 2;
 	switch (belle_sip_auth_event_get_mode(event)) {
 		case BELLE_SIP_AUTH_MODE_HTTP_DIGEST: {
 			const char *algorithm = belle_sip_auth_event_get_algorithm(event);
@@ -432,17 +434,18 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				linphone_auth_info_fill_belle_sip_event(auth_info, event);
 				done = true;
 			}
+			max_tries = 2; /* server nonce may change, we can two consecutive 401.*/
 			requestedMethod = LinphoneAuthHttpDigest;
 		} break;
 		case BELLE_SIP_AUTH_MODE_HTTP_BASIC: {
 			const char *algorithm = belle_sip_auth_event_get_algorithm(event);
-
 			const LinphoneAuthInfo *auth_info =
 			    _linphone_core_find_auth_info(lc, realm, ae_username, ae_domain, algorithm, FALSE);
 			if (auth_info) {
 				linphone_auth_info_fill_belle_sip_event(auth_info, event);
 				done = true;
 			}
+			max_tries = 1;
 			requestedMethod = LinphoneAuthBasic;
 		} break;
 		case BELLE_SIP_AUTH_MODE_HTTP_BEARER: {
@@ -451,6 +454,7 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				linphone_auth_info_fill_belle_sip_event(auth_info, event);
 				done = true;
 			}
+			max_tries = 1;
 			requestedMethod = LinphoneAuthBearer;
 		} break;
 		case BELLE_SIP_AUTH_MODE_TLS: {
@@ -510,13 +514,14 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 			}
 			done = true; // since we can't know if server requested a client certificate, assume all is good.
 			requestedMethod = LinphoneAuthTls;
+			max_tries = 1;
 		} break;
 		default:
 			lError() << "Connection gets an auth event of unexpected type";
 			done = false;
 			break;
 	}
-	if (!done) {
+	if (!done || try_count >= max_tries) {
 		/* We do not prompt the application for authentication info for http services, because it may happen
 		 * for various kind of events but user is not expected to supply them on the fly.
 		 * However, for provisioning process, for which bearer or digest is likely to be requested,
