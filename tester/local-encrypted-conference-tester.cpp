@@ -55,9 +55,12 @@ static void ekt_xml_composing_parsing_test(EktXmlContent exc) {
 	bctoolbox::RNG rng = bctoolbox::RNG();
 
 	shared_ptr<EktInfo> ei = make_shared<EktInfo>();
-	auto sSpiVector = rng.randomize(2);
-	uint16_t sspi = (uint16_t)((sSpiVector.at(0) << 8) & 0xffff);
-	sspi = (uint16_t)((sSpiVector.at(1)) & 0xffff);
+	vector<uint8_t> sSpiVector;
+	uint16_t sspi = 0;
+	do {
+		sSpiVector = rng.randomize(2);
+		memcpy(&sspi, &sSpiVector[0], sizeof(uint16_t));
+	} while (sspi == 0);
 	ei->setSSpi(sspi);
 
 	vector<uint8_t> cspi = rng.randomize(16);
@@ -81,14 +84,20 @@ static void ekt_xml_composing_parsing_test(EktXmlContent exc) {
 		BC_ASSERT_EQUAL(outputEi->getCSpi().size(), ei->getCSpi().size(), int, "%i");
 		BC_ASSERT_TRUE(outputEi->getCSpi() == ei->getCSpi());
 		if (exc == EktXmlContent::CipherTransport) {
-			BC_ASSERT_TRUE(outputEi->getFrom()->asStringUriOnly() == ei->getFrom()->asStringUriOnly());
-			auto outputCipher = vector(outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->content,
-			                           outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->content +
-			                               outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->size);
-			auto eiCipher = vector(ei->getCiphers()->getLinphoneBuffer(paulineAddr)->content,
-			                       ei->getCiphers()->getLinphoneBuffer(paulineAddr)->content +
-			                           ei->getCiphers()->getLinphoneBuffer(paulineAddr)->size);
-			BC_ASSERT_TRUE(outputCipher == eiCipher);
+			auto outputFromAddress = outputEi->getFrom();
+			auto eiFromAddress = ei->getFrom();
+			BC_ASSERT_PTR_NOT_NULL(outputFromAddress);
+			BC_ASSERT_PTR_NOT_NULL(eiFromAddress);
+			if (outputFromAddress && eiFromAddress) {
+				BC_ASSERT_TRUE(outputEi->getFrom()->asStringUriOnly() == ei->getFrom()->asStringUriOnly());
+				auto outputCipher = vector(outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->content,
+				                           outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->content +
+				                               outputEi->getCiphers()->getLinphoneBuffer(paulineAddr)->size);
+				auto eiCipher = vector(ei->getCiphers()->getLinphoneBuffer(paulineAddr)->content,
+				                       ei->getCiphers()->getLinphoneBuffer(paulineAddr)->content +
+				                           ei->getCiphers()->getLinphoneBuffer(paulineAddr)->size);
+				BC_ASSERT_TRUE(outputCipher == eiCipher);
+			}
 		}
 	}
 
