@@ -168,6 +168,18 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	string pictureUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "picture_uri", "") : "";
 	setPictureUri(pictureUri);
 
+	string mwiServerUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "mwi_server_uri", "") : "";
+	mMwiServerAddress = nullptr;
+	if (!mwiServerUri.empty()) {
+		setMwiServerAddress(Address::create(mwiServerUri));
+	}
+
+	string voicemailUri = lc ? linphone_config_get_string(lc->config, "proxy", "voicemail_uri", "") : "";
+	mVoicemailAddress = nullptr;
+	if (!voicemailUri.empty()) {
+		setVoicemailAddress(Address::create(voicemailUri));
+	}
+
 	mInstantMessagingEncryptionMandatory =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "im_encryption_mandatory", 0) : 0;
 }
