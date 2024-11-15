@@ -180,7 +180,6 @@ static void call_received(SalCallOp *h) {
 #endif
 
 	auto params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
-	params->setHidden(linphone_config_get_bool(linphone_core_get_config(lc), "misc", "hide_conferences", 0));
 	if (hasStreams) {
 		params->setAudioVideoDefaults();
 	}

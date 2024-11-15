@@ -31,6 +31,7 @@
 #include "linphone/api/c-call-stats.h"
 #include "linphone/wrapper_utils.h"
 #include "player/call-player.h"
+#include "private_functions.h"
 
 // =============================================================================
 
@@ -64,6 +65,14 @@ MediaStream *linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType typ
 
 LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call) {
 	return Call::toCpp(call)->getOp();
+}
+
+const char *linphone_call_get_local_tag(const LinphoneCall *call) {
+	return sal_call_get_local_tag(linphone_call_get_op(call));
+}
+
+const char *linphone_call_get_remote_tag(const LinphoneCall *call) {
+	return sal_call_get_remote_tag(linphone_call_get_op(call));
 }
 
 LinphoneAccount *linphone_call_get_dest_account(const LinphoneCall *call) {

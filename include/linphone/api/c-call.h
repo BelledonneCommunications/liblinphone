@@ -916,6 +916,20 @@ LINPHONE_PUBLIC bool_t linphone_call_media_in_progress(const LinphoneCall *call)
 LINPHONE_PUBLIC void linphone_call_ogl_render(const LinphoneCall *call);
 
 /**
+ * Returns the local tag of the #LinphoneCall
+ * @param call The #LinphoneCall object @notnil
+ * @return the local tag. @notnil
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_local_tag(const LinphoneCall *call);
+
+/**
+ * Returns the remote tag of the #LinphoneCall
+ * @param call The #LinphoneCall object @notnil
+ * @return the remote tag. @notnil
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_remote_tag(const LinphoneCall *call);
+
+/**
  * Sends an info message through an established call
  * @param call the #LinphoneCall @notnil
  * @param info the #LinphoneInfoMessage to send @notnil

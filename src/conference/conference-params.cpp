@@ -32,6 +32,10 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ConferenceParams::ConferenceParams(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
+	if (core) {
+		setHidden(
+		    !!linphone_config_get_bool(linphone_core_get_config(core->getCCore()), "misc", "hide_conferences", 0));
+	}
 }
 
 ConferenceParams::ConferenceParams(const ConferenceParams &other)

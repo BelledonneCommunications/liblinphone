@@ -1271,11 +1271,9 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 			std::shared_ptr<CallSession> session = nullptr;
 
 			if (supportsMedia()) {
-				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
-				    ->addCustomContactParameter(Conference::IsFocusParameter, std::string());
-				const auto &conferenceAddress = getConferenceAddress();
-				if (conferenceAddress) {
-					const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
+				if (!mConfParams->isHidden()) {
+					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
+					    ->addCustomContactParameter(Conference::IsFocusParameter, std::string());
 					if (!confId.empty()) {
 						L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
 						    ->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
@@ -1420,19 +1418,21 @@ shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<Part
 		}
 	}
 	if (!session) {
+		const auto &conferenceAddress = getConferenceAddress();
 		shared_ptr<Participant> participant =
 		    const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 		MediaSessionParams *currentParams = csp->clone();
-		if (mConfParams->chatEnabled()) {
-			currentParams->addCustomContactParameter(Conference::TextParameter, std::string());
-		}
-		currentParams->addCustomContactParameter(Conference::IsFocusParameter, std::string());
-		const auto &conferenceAddress = getConferenceAddress();
-		if (conferenceAddress) {
-			const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
-			if (!confId.empty()) {
-				currentParams->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
-				currentParams->getPrivate()->setConferenceId(confId);
+		if (!mConfParams->isHidden()) {
+			if (mConfParams->chatEnabled()) {
+				currentParams->addCustomContactParameter(Conference::TextParameter, std::string());
+			}
+			currentParams->addCustomContactParameter(Conference::IsFocusParameter, std::string());
+			if (conferenceAddress) {
+				const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
+				if (!confId.empty()) {
+					currentParams->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
+					currentParams->getPrivate()->setConferenceId(confId);
+				}
 			}
 		}
 
@@ -2166,18 +2166,20 @@ bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
 				device->setName(displayName);
 			}
 			enableScreenSharing(session, false);
-			if (mConfParams->chatEnabled()) {
-				const_cast<MediaSessionParams *>(call->getParams())
-				    ->addCustomContactParameter(Conference::TextParameter, std::string());
-			}
-			const_cast<MediaSessionParams *>(call->getParams())
-			    ->addCustomContactParameter(Conference::IsFocusParameter, std::string());
-			const auto &conferenceAddress = getConferenceAddress();
-			if (conferenceAddress) {
-				const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
-				if (!confId.empty()) {
+			if (!mConfParams->isHidden()) {
+				if (mConfParams->chatEnabled()) {
 					const_cast<MediaSessionParams *>(call->getParams())
-					    ->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
+					    ->addCustomContactParameter(Conference::TextParameter, std::string());
+				}
+				const_cast<MediaSessionParams *>(call->getParams())
+				    ->addCustomContactParameter(Conference::IsFocusParameter, std::string());
+				const auto &conferenceAddress = getConferenceAddress();
+				if (conferenceAddress) {
+					const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
+					if (!confId.empty()) {
+						const_cast<MediaSessionParams *>(call->getParams())
+						    ->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
+					}
 				}
 			}
 

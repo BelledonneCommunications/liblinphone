@@ -926,6 +926,9 @@ void set_playback_gain_db(AudioStream *st, float gain);
 LinphoneMediaDirection media_direction_from_sal_stream_dir(SalStreamDir dir);
 LINPHONE_PUBLIC SalStreamDir sal_dir_from_call_params_dir(LinphoneMediaDirection cpdir);
 
+LINPHONE_PUBLIC const char *sal_call_get_local_tag(LinphonePrivate::SalOp *op);
+LINPHONE_PUBLIC const char *sal_call_get_remote_tag(LinphonePrivate::SalOp *op);
+
 /*****************************************************************************
  * LINPHONE CONTENT PRIVATE ACCESSORS                                        *
  ****************************************************************************/
