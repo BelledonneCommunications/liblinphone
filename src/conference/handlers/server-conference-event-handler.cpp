@@ -591,7 +591,7 @@ string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::sha
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -643,7 +643,7 @@ string ServerConferenceEventHandler::createNotifyParticipantAdminStatusChanged(c
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -666,7 +666,7 @@ string ServerConferenceEventHandler::createNotifyParticipantRemoved(const std::s
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -687,7 +687,7 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceAdded(const st
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -734,7 +734,7 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceRemoved(const 
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -804,7 +804,7 @@ ServerConferenceEventHandler::createNotifyParticipantDeviceDataChanged(const std
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
@@ -927,7 +927,7 @@ string ServerConferenceEventHandler::createNotifySubjectChanged(const string &su
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	confDescr.setSubject(subject);
@@ -943,7 +943,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralMode(const EventLog::T
 	}
 
 	const auto &conferenceAddress = conf->getConferenceAddress();
-	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:unknown");
+	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:");
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	std::string keywordList;
@@ -987,7 +987,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralLifetime(const long &l
 	}
 
 	const auto &conferenceAddress = conf->getConferenceAddress();
-	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:unknown");
+	const std::string entity = conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:");
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	if (lifetime != 0) {
@@ -1036,7 +1036,7 @@ string ServerConferenceEventHandler::createNotifyAvailableMediaChanged(
 	}
 
 	string entity =
-	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:unknown"));
+	    (conf->getConferenceAddress() ? conf->getConferenceAddress()->asStringUriOnly() : std::string("sip:"));
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
@@ -1116,7 +1116,7 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 
 	const auto &conferenceAddress = conf->getConferenceAddress();
 	const std::string conferenceAddressString =
-	    conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:unknown");
+	    conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:");
 
 	shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 	if (!participant) {

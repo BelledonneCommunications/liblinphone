@@ -157,7 +157,7 @@ void create_transfer_conference_base(time_t start_time,
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, security_level, video_transfer, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,

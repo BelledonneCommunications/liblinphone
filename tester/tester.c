@@ -674,7 +674,7 @@ static void conference_state_changed(LinphoneConference *conference, LinphoneCon
 	if (address) {
 		address_str = linphone_address_as_string(address);
 	} else {
-		address_str = ms_strdup("sip:unknown");
+		address_str = ms_strdup("sip:");
 	}
 	char *newStateStr = linphone_conference_state_to_string(newState);
 	ms_message("Conference %p [%s] state changed: %s", conference, address_str, newStateStr);
@@ -3040,7 +3040,7 @@ void linphone_core_manager_delete_chat_room(LinphoneCoreManager *mgr, LinphoneCh
 	if (cr) {
 		const LinphoneAddress *cr_conference_address = linphone_chat_room_get_conference_address(cr);
 		char *cr_conference_address_str =
-		    cr_conference_address ? linphone_address_as_string(cr_conference_address) : ms_strdup("sip:unknown");
+		    cr_conference_address ? linphone_address_as_string(cr_conference_address) : ms_strdup("sip:");
 		ms_message("Core %s is trying to delete chat room %p (address %s)", linphone_core_get_identity(mgr->lc), cr,
 		           cr_conference_address_str);
 		ms_free(cr_conference_address_str);

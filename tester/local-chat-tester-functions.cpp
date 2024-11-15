@@ -845,6 +845,9 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			marieCr = check_creation_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, confAddr,
 			                                               initialSubject, 3, TRUE);
 			BC_ASSERT_PTR_NOT_NULL(marieCr);
+			BC_ASSERT_FALSE(
+			    wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomSessionUpdating, 1, 1000));
+			BC_ASSERT_EQUAL(marie.getStats().number_of_LinphoneChatRoomSessionUpdating, 0, int, "%0d");
 		}
 
 		focus.registerAsParticipantDevice(laure);
@@ -936,6 +939,9 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			                             liblinphone_tester_sip_timeout));
 			michelle2Cr = check_creation_chat_room_client_side(coresList, michelle2.getCMgr(), &initialMichelle2Stats,
 			                                                   confAddr, initialSubject, 4, FALSE);
+			BC_ASSERT_FALSE(
+			    wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneChatRoomSessionUpdating, 1, 1000));
+			BC_ASSERT_EQUAL(michelle2.getStats().number_of_LinphoneChatRoomSessionUpdating, 0, int, "%0d");
 
 			char *berthe_proxy_contact_str = linphone_address_as_string(
 			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(berthe.getLc())));
@@ -949,6 +955,9 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			                             liblinphone_tester_sip_timeout));
 			bertheCr = check_creation_chat_room_client_side(coresList, berthe.getCMgr(), &initialBertheStats, confAddr,
 			                                                initialSubject, 4, FALSE);
+			BC_ASSERT_FALSE(
+			    wait_for_list(coresList, &berthe.getStats().number_of_LinphoneChatRoomSessionUpdating, 1, 1000));
+			BC_ASSERT_EQUAL(berthe.getStats().number_of_LinphoneChatRoomSessionUpdating, 0, int, "%0d");
 		}
 
 		LinphoneChatMessage *michelle2LastMsg = NULL;

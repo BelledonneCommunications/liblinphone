@@ -148,8 +148,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	auto chatRoom = core->findChatRoom(getConferenceId());
 
 	const auto &conferenceAddress = getConference()->getConferenceAddress();
-	const std::string conferenceAddressString =
-	    conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown");
+	const std::string conferenceAddressString = conferenceAddress ? conferenceAddress->toString() : std::string("sip:");
 	std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity());
 	if (!conferenceAddress || (*entityAddress != *conferenceAddress)) {
 		lError() << "Unable to process received NOTIFY because the entity address " << *entityAddress
@@ -764,7 +763,7 @@ void ClientConferenceEventHandler::requestFullState() {
 	auto conference = getConference();
 	lInfo() << "Requesting full state for conference "
 	        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-	                                               : std::string("sip:unknown"));
+	                                               : std::string("sip:"));
 	unsubscribe();
 	conference->setLastNotify(0);
 	subscribe(getConferenceId());

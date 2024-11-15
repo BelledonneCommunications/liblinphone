@@ -3086,7 +3086,7 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-	char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+	char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
@@ -6084,7 +6084,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
 	BC_ASSERT_PTR_NOT_NULL(confAddr);
-	conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+	conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr,
 	                                                         initialSubject, 1, FALSE);
 

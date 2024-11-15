@@ -84,12 +84,12 @@ Conference::Conference(const shared_ptr<Core> &core,
 	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
 		auto startTime = mConfParams->getStartTime();
 		auto endTime = mConfParams->getEndTime();
-		auto duration = (endTime >= 0) ? (endTime - startTime) : startTime;
+		auto duration = (endTime >= 0) ? (endTime - startTime) : -1;
 
-		if (duration < 0) {
+		if ((endTime >= 0) && (duration < 0)) {
 			lError() << "Unable to create conference due to an invalid time settings";
-			lError() << "Start time (" << startTime << "): " << ctime(&startTime);
-			lError() << "End time (" << endTime << "): " << ctime(&endTime);
+			lError() << "Start time (" << startTime << "): " << mConfParams->getStartTimeString();
+			lError() << "End time (" << endTime << "): " << mConfParams->getEndTimeString();
 			lError() << "Duration: " << duration << " seconds";
 			setState(ConferenceInterface::State::CreationFailed);
 		}
@@ -904,8 +904,8 @@ shared_ptr<Participant> Conference::findParticipant(const shared_ptr<const CallS
 	}
 
 	lWarning() << "Unable to find participant in conference "
-	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " ("
-	           << this << ") with session " << session;
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:")) << " (" << this
+	           << ") with session " << session;
 	return nullptr;
 }
 
@@ -917,8 +917,8 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<const 
 	}
 
 	lWarning() << "Unable to find participant in conference "
-	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " ("
-	           << this << ") with address " << *addr;
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:")) << " (" << this
+	           << ") with address " << *addr;
 	return nullptr;
 }
 
@@ -933,8 +933,8 @@ Conference::findInvitedParticipant(const std::shared_ptr<const Address> &partici
 	}
 
 	lWarning() << "Unable to find invited participant in conference "
-	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " ("
-	           << this << ") with address " << *participantAddress;
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:")) << " (" << this
+	           << ") with address " << *participantAddress;
 	return nullptr;
 }
 
@@ -946,7 +946,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const Lin
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown")) << " with "
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:")) << " with "
 	         << std::string(linphone_stream_type_to_string(type)) << " label " << label;
 
 	return nullptr;
@@ -961,8 +961,8 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceBySsrc(uint32_t s
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"))
-	         << " with ssrc " << ssrc;
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:")) << " with ssrc "
+	         << ssrc;
 
 	return nullptr;
 }
@@ -979,7 +979,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::share
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"))
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"))
 	         << " with device address " << *dAddr << " belonging to participant " << *pAddr;
 
 	return nullptr;
@@ -995,7 +995,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const shared_ptr
 	}
 
 	lDebug() << "Unable to find participant device in conference "
-	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"))
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"))
 	         << " with call session " << session;
 
 	return nullptr;

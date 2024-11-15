@@ -113,6 +113,7 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
 
 	setState(ConferenceInterface::State::Instantiated);
 
+	mPendingSubject = getSubject();
 	mConferenceId = conferenceId;
 	if (conferenceAddress) {
 		setConferenceAddress(conferenceAddress);
@@ -405,6 +406,17 @@ void ClientConference::acceptSession(const shared_ptr<CallSession> &session) {
 	}
 }
 
+void ClientConference::attachCall(const shared_ptr<CallSession> &session) {
+	setMainSession(session);
+	if (getConferenceAddress()) {
+		setState(ConferenceInterface::State::CreationPending);
+		session->addListener(getSharedFromThis());
+		initializeHandlers(this, false);
+	} else {
+		setConferenceAddress(session->getRemoteContactAddress());
+	}
+}
+
 std::shared_ptr<CallSession> ClientConference::getMainSession() const {
 	auto session = mFocus ? mFocus->getSession() : nullptr;
 	return session;
@@ -482,6 +494,12 @@ void ClientConference::setSubject(const std::string &subject) {
 			if (updateSubject() != 0) {
 				session->addPendingAction(updateSubject);
 			}
+		}
+	} else if (!supportsMedia()) {
+		lInfo() << "Sending re-INVITE to update subject from \"" << getSubject() << "\" to \"" << subject << "\"";
+		session = dynamic_pointer_cast<MediaSession>(createSession());
+		if (session) {
+			session->startInvite(nullptr, Utils::localeToUtf8(subject), nullptr);
 		}
 	} else {
 		mPendingSubject = subject;
@@ -636,16 +654,16 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 		lError() << "Could not add call " << call
 		         << " to the conference because the conference is not active right now.";
 		if (startTime >= 0) {
-			lError() << "Expected start time (" << startTime << "): " << ctime(&startTime);
+			lError() << "Expected start time (" << startTime << "): " << mConfParams->getStartTimeString();
 		} else {
 			lError() << "Expected start time: none";
 		}
 		if (endTime >= 0) {
-			lError() << "Expected end time (" << endTime << "): " << ctime(&endTime);
+			lError() << "Expected end time (" << endTime << "): " << mConfParams->getEndTimeString();
 		} else {
 			lError() << "Expected end time: none";
 		}
-		lError() << "Now: " << ctime(&now);
+		lError() << "Now: " << Utils::timeToIso8601(now);
 		return false;
 	}
 	return false;
@@ -742,11 +760,11 @@ bool ClientConference::addParticipants(const list<std::shared_ptr<const Address>
 			referOp->unref();
 		}
 	} else {
-		const auto &endTime = mConfParams->getEndTime();
+		const auto &endTime = mConfParams->getEndTimeString();
 		const auto now = time(NULL);
 		lError() << "Could not add participants to the conference because local participant " << getMe()->getAddress()
-		         << " is not admin or conference already ended (expected endtime: " << asctime(gmtime(&endTime))
-		         << " now: " << asctime(gmtime(&now));
+		         << " is not admin or conference already ended (expected endtime: " << endTime
+		         << " now: " << Utils::timeToIso8601(now);
 		return false;
 	}
 
@@ -931,8 +949,8 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 			case CallSession::State::End:
 				lInfo() << "Ending conference " << this << "(" << conferenceAddressStr
 				        << ") because focus call (local address "
-				        << (session ? session->getLocalAddress()->toString() : "sip:unknown") << " remote address "
-				        << (session ? session->getRemoteAddress()->toString() : "sip:unknown") << ") has ended";
+				        << (session ? session->getLocalAddress()->toString() : "sip:") << " remote address "
+				        << (session ? session->getRemoteAddress()->toString() : "sip:") << ") has ended";
 				endConference();
 				break;
 			default:
@@ -947,6 +965,9 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		    ms->getPrivate()->canSoundResourcesBeFreed()) {
 			lInfo() << "Executing scheduled update of the focus session of conference " << conferenceAddressStr;
 			if (updateMainSession(!mFullStateUpdate) == 0) {
+				if (confState == ConferenceInterface::State::CreationPending) {
+					setState(ConferenceInterface::State::Created);
+				}
 				mScheduleUpdate = false;
 				mFullStateUpdate = false;
 			} else {
@@ -1180,7 +1201,7 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 			}
 			break;
 		case ConferenceInterface::State::Created:
-			if (session && getMe()->isAdmin() && (subject.compare(mPendingSubject) != 0)) {
+			if (session && getMe()->isAdmin() && !mPendingSubject.empty() && (subject.compare(mPendingSubject) != 0)) {
 				setSubject(mPendingSubject);
 			}
 			break;
@@ -1659,7 +1680,10 @@ void ClientConference::onFirstNotifyReceived(BCTBX_UNUSED(const std::shared_ptr<
 #ifdef HAVE_ADVANCED_IM
 	auto chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
-		if (mState != ConferenceInterface::State::Created) {
+		// If the chatroom is not in tbhe created state, ignore the forst notify callback. Nonetheless, it has media
+		// capabilities, this callback might be called when the conference is in the CreationPending state
+		if (!((mState == ConferenceInterface::State::Created) ||
+		      (supportsMedia() && (mState == ConferenceInterface::State::CreationPending)))) {
 			lWarning() << "First notify received in ClientConference that is not in the Created state ["
 			           << Utils::toString(getState()) << "], ignoring it!";
 			return;
@@ -1756,14 +1780,17 @@ void ClientConference::onFullStateReceived() {
 		if (session) {
 			notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
 		}
+		const auto conferenceAddressStr =
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
 			if (requestStreams() != 0) {
+				lInfo()
+				    << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for conference "
+				    << conferenceAddressStr << " because it cannot be sent right now";
 				mScheduleUpdate = true;
 				mFullStateUpdate = true;
 			}
 		} else {
-			const auto conferenceAddressStr =
-			    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 			lInfo() << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for conference "
 			        << conferenceAddressStr << " because ICE negotiations didn't end yet";
 			mScheduleUpdate = true;

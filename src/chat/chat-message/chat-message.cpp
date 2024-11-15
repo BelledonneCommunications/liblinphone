@@ -169,7 +169,7 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 	ChatMessage::State currentState = q->getParticipantState(participantAddress);
 	const auto &conferenceAddress = chatRoom->getConferenceAddress();
-	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown");
+	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("sip:");
 
 	if (currentState == ChatMessage::State::Displayed) {
 		// Prevents "invalid state transition from [Displayed] to [DeliveredToUser]" error logs when a participant has

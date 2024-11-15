@@ -460,6 +460,22 @@ void MediaSessionPrivate::accepted() {
 					break;
 			}
 		}
+	} else {
+		switch (state) {
+			case CallSession::State::StreamsRunning:
+			case CallSession::State::PausedByRemote:
+			case CallSession::State::Pausing:
+			case CallSession::State::Paused:
+			case CallSession::State::Updating:
+			case CallSession::State::UpdatedByRemote:
+				lInfo() << "Session [" << q
+				        << "] has sent an INVITE message without SDP that has been accepted, restoring previous state ["
+				        << Utils::toString(prevState) << "]";
+				setState(prevState, "Restoring previous state.");
+				break;
+			default:
+				break;
+		}
 	}
 
 	getCurrentParams()->getPrivate()->setInConference(getParams()->getPrivate()->getInConference());
@@ -1702,9 +1718,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 		std::list<OrtpPayloadType *> l = pth.makeCodecsList(type, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 		if (!l.empty()) {
 			newStream.setLabel(label);
-			const auto rtp_port = q->getRandomRtpPort(newStream);
-			newStream.rtp_port = rtp_port;
-			newStream.rtcp_port = newStream.rtp_port + 1;
+			newStream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			newStream.name = std::string(sal_stream_type_to_string(type)) + " " + dev->getAddress()->toString();
 			const auto &content = newStream.getContent();
 
@@ -1779,7 +1793,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 
 	if (!success) {
 		lInfo() << "Don't put video stream for device in conference with address "
-		        << (dev ? dev->getAddress()->toString() : "sip:unknown") << " on local offer for CallSession [" << q
+		        << (dev ? dev->getAddress()->toString() : "sip:") << " on local offer for CallSession [" << q
 		        << "] because no valid payload has been found or device is not valid (pointer " << dev << ")";
 		cfg.dir = SalStreamInactive;
 		newStream.disable();
@@ -2607,8 +2621,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 			videoDir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(linphoneVideoDir);
 			if (videoDir == SalStreamInactive) {
 				lWarning() << *q << " Video may have been enable in the local media parameters but device "
-				           << ((participantDevice) ? participantDevice->getAddress()->toString()
-				                                   : std::string("sip:unknown"))
+				           << ((participantDevice) ? participantDevice->getAddress()->toString() : std::string("sip:"))
 				           << " may not be able to send video streams or an old video stream is just being copied";
 				enableVideoStream = false;
 			}
@@ -2753,7 +2766,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		localDesc = nullptr;
 	}
 	forceStreamsDirAccordingToState(md);
-	lInfo() << "makeLocalMediaDescription: address = " << (localDesc ? localDesc->addr : std::string("sip:unknown"));
+	lInfo() << "makeLocalMediaDescription: address = " << (localDesc ? localDesc->addr : std::string("sip:"));
 	if (op) {
 		lInfo() << "Local media description assigned to op " << op;
 		op->setLocalMediaDescription(localDesc);

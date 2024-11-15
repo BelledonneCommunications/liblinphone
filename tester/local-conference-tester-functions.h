@@ -468,7 +468,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t client_restart,
                                       bool_t join_after_termination,
                                       long cleanup_window,
-                                      bool_t slow_ice_negotiation);
+                                      bool_t slow_ice_negotiation,
+                                      bool_t client_reenter_conference);
 
 void configure_end_to_end_encrypted_conference_server(Focus &focus);
 

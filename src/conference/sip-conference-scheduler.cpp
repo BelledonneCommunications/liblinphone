@@ -96,7 +96,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		lError() << "[Conference Scheduler] [" << this
 		         << "] The session to update the conference information of conference "
 		         << (conferenceAddress && conferenceAddress->isValid() ? conferenceAddress->toString()
-		                                                               : std::string("sip:unknown"))
+		                                                               : std::string("sip:"))
 		         << " did not succesfully establish hence it is likely that the request wasn't taken into account by "
 		            "the server";
 		setState(State::Error);

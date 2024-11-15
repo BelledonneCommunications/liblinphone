@@ -172,6 +172,7 @@ public:
 
 	void setConferenceId(const ConferenceId &conferenceId);
 	void confirmJoining(SalCallOp *op);
+	void attachCall(const std::shared_ptr<CallSession> &session);
 	AbstractChatRoom::SecurityLevel
 	getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const;
 

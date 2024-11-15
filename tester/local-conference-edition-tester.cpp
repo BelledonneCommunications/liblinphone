@@ -362,7 +362,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 		std::list<LinphoneCoreManager *> participants{pauline.getCMgr(), laure.getCMgr()};
 
 		char *uid = NULL;
@@ -1396,7 +1396,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 			linphone_conference_info_unref(info);
 		}
 
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 		ms_message("%s is trying to update conference %s - adding %s and removing %s",
 		           linphone_core_get_identity(marie.getLc()), conference_address_str,
 		           linphone_core_get_identity(michelle.getLc()), linphone_core_get_identity(laure.getLc()));
@@ -1808,7 +1808,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 			participant_stats.push_back(mgr->stat);
 		}
 
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 		ms_message("%s is trying to change duration of conference %s", linphone_core_get_identity(marie.getLc()),
 		           conference_address_str);
 		LinphoneConferenceInfo *conf_info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);

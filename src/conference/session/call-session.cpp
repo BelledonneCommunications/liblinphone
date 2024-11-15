@@ -993,8 +993,7 @@ void CallSessionPrivate::setContactOp() {
 		op->setContactAddress(contactAddress->getImpl());
 	} else {
 		lWarning() << "Unable to set contact address for session " << q << " to "
-		           << ((contactAddress) ? contactAddress->toString() : std::string("sip:unknown"))
-		           << " as it is not valid";
+		           << ((contactAddress) ? contactAddress->toString() : std::string("sip:")) << " as it is not valid";
 	}
 }
 

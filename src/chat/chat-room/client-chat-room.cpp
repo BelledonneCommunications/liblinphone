@@ -380,6 +380,9 @@ void ClientChatRoom::sendEphemeralUpdate() {
 	auto utf8Subject = conference->getUtf8Subject();
 	auto focus = conference->mFocus;
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(focus->getSession());
+	const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
+	lInfo() << "Re-INVITing " << *remoteParticipant << " because ephemeral settings of chat room [" << getConferenceId()
+	        << "] have changed";
 	if (session) {
 		auto csp = session->getMediaParams()->clone();
 		csp->removeCustomHeader("Ephemeral-Life-Time");
@@ -388,11 +391,6 @@ void ClientChatRoom::sendEphemeralUpdate() {
 		delete csp;
 	} else {
 		session = dynamic_pointer_cast<MediaSession>(conference->createSession());
-
-		const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
-		lInfo() << "Re-INVITing " << *remoteParticipant << " because ephemeral settings of chat room ["
-		        << getConferenceId() << "] have changed";
-
 		session->startInvite(nullptr, utf8Subject, nullptr);
 	}
 }

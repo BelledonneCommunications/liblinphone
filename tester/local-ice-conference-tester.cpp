@@ -195,6 +195,19 @@ static void abort_call_to_ice_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased, 3,
 		                             liblinphone_tester_sip_timeout));
 
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
+		                             3, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, 3,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, 3,
+		                             liblinphone_tester_sip_timeout));
+
+		// The conference goes three times because participants enter it one after the other and there isn't ever two
+		// calls running at the same time
+		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminationPending, 3, int, "%d");
+		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminated, 3, int, "%d");
+		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateDeleted, 3, int, "%d");
+
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			reset_counters(&mgr->stat);
 			ms_message("%s calls again conference %s", linphone_core_get_identity(mgr->lc), confAddrStr);
@@ -398,13 +411,6 @@ static void abort_call_to_ice_conference(void) {
 		BC_ASSERT_EQUAL(marie.getStats().number_of_LinphoneConferenceStateDeleted,
 		                marie_stat.number_of_LinphoneConferenceStateDeleted, int, "%d");
 
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
-		                focus_stat.number_of_LinphoneConferenceStateTerminationPending, int, "%d");
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateTerminated,
-		                focus_stat.number_of_LinphoneConferenceStateTerminated, int, "%d");
-		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateDeleted,
-		                focus_stat.number_of_LinphoneConferenceStateDeleted, int, "%d");
-
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr()}) {
 			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pconference);
@@ -440,17 +446,6 @@ static void abort_call_to_ice_conference(void) {
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateDeleted, 1,
 			                             liblinphone_tester_sip_timeout));
-
-			if (end_time > 0) {
-				time_t now = ms_time(NULL);
-				time_t time_left = end_time - now + linphone_core_get_conference_cleanup_period(focus.getLc());
-				// wait for the conference to end
-				if (time_left > 0) {
-					CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds((time_left + 1)), [] {
-						return false;
-					});
-				}
-			}
 
 			BC_ASSERT_TRUE(wait_for_list(coresList,
 			                             &focus.getStats().number_of_LinphoneConferenceStateTerminationPending, 1,

@@ -3739,7 +3739,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 		}
 	} else {
 		conference_address_str =
-		    (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("sip:unknown");
+		    (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("sip:");
 		for (bctbx_list_t *it = coresManagerList; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager *mgr = (LinphoneCoreManager *)bctbx_list_get_data(it);
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);

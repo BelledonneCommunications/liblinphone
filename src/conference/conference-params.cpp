@@ -120,9 +120,10 @@ void ConferenceParams::updateFromAccount(
 				setMe(nullptr);
 			}
 			if (mUseDefaultFactoryAddress) {
-				const auto &audioVideoConferenceFactory = accountParams->getAudioVideoConferenceFactoryAddress();
-				mFactoryAddress =
-				    audioVideoConferenceFactory ? audioVideoConferenceFactory->clone()->toSharedPtr() : nullptr;
+				const auto &conferenceFactory = (audioEnabled() || videoEnabled())
+				                                    ? accountParams->getAudioVideoConferenceFactoryAddress()
+				                                    : accountParams->getConferenceFactoryAddress();
+				mFactoryAddress = conferenceFactory ? conferenceFactory->clone()->toSharedPtr() : nullptr;
 				if (mFactoryAddress &&
 				    (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup)) {
 					lInfo() << "Update conference parameters from account, factory: " << *mFactoryAddress;

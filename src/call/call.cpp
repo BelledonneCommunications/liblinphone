@@ -551,15 +551,13 @@ void Call::createClientConference(const shared_ptr<CallSession> &session) {
 
 	if (conference) {
 		const auto &conferenceAddress = conference->getConferenceAddress();
-		const auto conferenceAddressStr =
-		    (conferenceAddress ? conferenceAddress->toString() : std::string("<address-not-defined>"));
+		const auto conferenceAddressStr = (conferenceAddress ? conferenceAddress->toString() : std::string("sip:"));
 		lInfo() << "Attaching call (local address " << *session->getLocalAddress() << " remote address "
 		        << *session->getRemoteAddress() << ") to conference " << conference << " (address "
 		        << conferenceAddressStr << ") ID " << conferenceId;
 		clientConference = dynamic_pointer_cast<ClientConference>(conference);
 		if (clientConference) {
-			clientConference->setMainSession(session);
-			clientConference->setConferenceAddress(remoteContactAddress);
+			clientConference->attachCall(session);
 		}
 	} else {
 		auto confParams = ConferenceParams::create(getCore());

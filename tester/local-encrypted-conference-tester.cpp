@@ -395,7 +395,7 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
 		                                description, TRUE, LinphoneConferenceSecurityLevelEndToEnd, TRUE, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
-		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:unknown");
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 3,
@@ -867,16 +867,16 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 	}
 }
 
-static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted() {
+static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted(void) {
 	create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin(true);
 }
 
-static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined() {
+static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined(void) {
 	create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin(false);
 }
 
-static void create_encrypted_conference_with_chat() {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE);
+static void create_encrypted_conference_with_chat(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE, FALSE);
 }
 
 static void scheduling_failure_check(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state) {

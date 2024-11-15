@@ -96,7 +96,7 @@ void ConferenceScheduler::cancelConference(const std::shared_ptr<ConferenceInfo>
 	if (info) {
 		const auto &conferenceAddress = info->getUri();
 		const std::string conferenceAddressStr =
-		    (conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown"));
+		    (conferenceAddress ? conferenceAddress->toString() : std::string("sip:"));
 		lInfo() << "[Conference Scheduler] [" << this << "] is attempting to cancel a conference with address "
 		        << conferenceAddressStr;
 		auto clone = info->clone()->toSharedPtr();
@@ -133,8 +133,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 
 	const auto &organizer = clone->getOrganizerAddress();
 	const auto &conferenceAddress = clone->getUri();
-	const std::string conferenceAddressStr =
-	    (conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown"));
+	const std::string conferenceAddressStr = (conferenceAddress ? conferenceAddress->toString() : std::string("sip:"));
 	const auto &participants = clone->getParticipants();
 	const auto participantListEmpty = participants.empty();
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator](const auto &p) {
@@ -285,8 +284,8 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 	} else {
 		const auto &uri = mConferenceInfo->getUri();
 		// No need to update the conference address during an update
-		lInfo() << "[Conference Scheduler] [" << this << "] Conference has been succesfully updated: "
-		        << (uri ? uri->toString() : std::string("sip:unknown"));
+		lInfo() << "[Conference Scheduler] [" << this
+		        << "] Conference has been succesfully updated: " << (uri ? uri->toString() : std::string("sip:"));
 	}
 
 #ifdef HAVE_DB_STORAGE

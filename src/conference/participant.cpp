@@ -53,7 +53,7 @@ Participant::Participant(std::shared_ptr<Address> address) : mAddress(address) {
 
 Participant::~Participant() {
 	lDebug() << "Destroying participant [" << this
-	         << "] (address: " << (mAddress ? mAddress->toString() : std::string("sip:unknown")) << ")";
+	         << "] (address: " << (mAddress ? mAddress->toString() : std::string("sip:")) << ")";
 }
 
 void Participant::configure(const std::shared_ptr<Conference> conference,

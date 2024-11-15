@@ -144,16 +144,22 @@ public:
 	virtual void setStartTime(const time_t &start) override {
 		mStartTime = start;
 	};
-	const time_t &getStartTime() const {
+	inline const time_t &getStartTime() const {
 		return mStartTime;
 	};
+	const std::string getStartTimeString() const {
+		return Utils::timeToIso8601(getStartTime());
+	}
 
 	virtual void setEndTime(const time_t &end) override {
 		mEndTime = end;
 	};
-	const time_t &getEndTime() const {
+	inline const time_t &getEndTime() const {
 		return mEndTime;
 	};
+	const std::string getEndTimeString() const {
+		return Utils::timeToIso8601(getEndTime());
+	}
 
 	virtual void setParticipantListType(const ParticipantListType &type) override {
 		mParticipantListType = type;
