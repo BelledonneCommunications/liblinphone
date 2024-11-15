@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -853,7 +853,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 		shared_ptr<ChatMessage> message = chatMessage.lock();
 		if (!message) return;
 
-		if (code >= 400 && code < 500) {
+		if (code >= 400) {
 			lWarning() << "File transfer failed with code " << code;
 			const auto &meAddress = message->getMeAddress();
 			if (meAddress) {
@@ -973,7 +973,7 @@ void FileTransferChatMessageModifier::processResponseFromGetFile(const belle_htt
 		if (!message) return;
 
 		int code = belle_http_response_get_status_code(event->response);
-		if (code >= 400 && code < 500) {
+		if (code >= 400) {
 			lWarning() << "File transfer failed with code " << code;
 			onDownloadFailed();
 		} else if (code != 200) {
