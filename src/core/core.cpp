@@ -1891,13 +1891,15 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 		return;
 	}
 
-	auto conf = findConference(conferenceId);
-	if (!conf && conference->getCurrentParams()->chatEnabled()) {
+	std::shared_ptr<Conference> conf;
+	if (conference->getCurrentParams()->chatEnabled()) {
 		// Handling of chat room exhume
 		const auto &chatRoom = findChatRoom(conferenceId);
 		if (chatRoom) {
 			conf = chatRoom->getConference();
 		}
+	} else {
+		conf = findConference(conferenceId);
 	}
 	// When starting the LinphoneCore, it may happen to have 2 audio video conferences or chat room that have the same
 	// conference ID apart from the GRUU which is not taken into the account for the comparison. In such a scenario, it
