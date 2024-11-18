@@ -2220,7 +2220,7 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 	auto op = session->getPrivate()->getOp();
 	shared_ptr<Call> call = getCore()->getCallByCallId(op->getCallId());
 	CallSession::State sessionState = session->getState();
-
+	auto sessionHasEnded = (sessionState == CallSession::State::Released) || (sessionState == CallSession::State::End);
 	const std::shared_ptr<Address> &remoteAddress = session->getRemoteAddress();
 	std::shared_ptr<Participant> participant = findParticipant(remoteAddress);
 	if (participant) {
@@ -2230,7 +2230,7 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 			mMixerSession->unjoinStreamsGroup(streamsGroup);
 		}
 	} else {
-		if ((sessionState != CallSession::State::Released) && (sessionState != CallSession::State::End)) {
+		if (!sessionHasEnded) {
 			lError() << "Trying to remove participant " << *session->getRemoteAddress() << " with session " << session
 			         << " which is not part of conference " << *getConferenceAddress();
 		}
@@ -2251,7 +2251,7 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 				lInfo() << "Updating call session [" << session << "] to get it out of conference "
 				        << *getConferenceAddress() << " because it has already been paused";
 				err = static_pointer_cast<MediaSession>(session)->updateFromConference(newParams);
-			} else if ((sessionState != CallSession::State::End) && (sessionState != CallSession::State::Released)) {
+			} else if (!sessionHasEnded) {
 				lInfo() << "Pausing call session [" << session << "] to get it out of conference "
 				        << *getConferenceAddress();
 				err = static_pointer_cast<MediaSession>(session)->pauseFromConference(newParams);
@@ -2260,11 +2260,10 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 		} else {
 			// Terminate session (i.e. send a BYE) as per RFC
 			// This is the default behaviour
-			if (sessionState != CallSession::State::End) {
+			if (!sessionHasEnded) {
 				err = static_pointer_cast<MediaSession>(session)->terminate();
 			}
 		}
-		Conference::removeParticipant(session, preserveSession);
 
 		/*
 		 * Handle the case where only the local participant and a unique remote participant are remaining.

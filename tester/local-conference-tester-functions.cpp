@@ -6312,6 +6312,12 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				CoreManagerAssert({focus, marie, pauline, michelle, laure, berthe})
 				    .waitUntil(chrono::seconds((time_left + 1)), [] { return false; });
 			}
+		} else if (focus_cleanup_window <= 0) {
+			LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
+			BC_ASSERT_PTR_NOT_NULL(fconference);
+			if (fconference) {
+				linphone_conference_terminate(fconference);
+			}
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending,

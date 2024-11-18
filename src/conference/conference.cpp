@@ -373,9 +373,13 @@ int Conference::removeParticipantDevice(const std::shared_ptr<CallSession> &sess
 				ev->terminate();
 			}
 
+			CallSession::State sessionState = session->getState();
+			auto sessionHasEnded =
+			    (sessionState == CallSession::State::Released) || (sessionState == CallSession::State::End);
+			auto initiatingRemoval = static_pointer_cast<MediaSession>(session)->isTerminator() || !sessionHasEnded;
 			const auto ei = session->getErrorInfo();
-			device->setDisconnectionData(static_pointer_cast<MediaSession>(session)->isTerminator(),
-			                             linphone_error_info_get_protocol_code(ei), linphone_error_info_get_reason(ei));
+			device->setDisconnectionData(initiatingRemoval, linphone_error_info_get_protocol_code(ei),
+			                             linphone_error_info_get_reason(ei));
 			device->setState(ParticipantDevice::State::Left);
 			time_t creationTime = time(nullptr);
 			notifyParticipantDeviceRemoved(creationTime, false, p, device);
