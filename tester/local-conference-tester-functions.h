@@ -449,7 +449,8 @@ void create_conference_base(time_t start_time,
                             LinphoneConferenceSecurityLevel security_level,
                             std::list<LinphoneParticipantRole> allowedRoles,
                             bool_t add_participant_after_end,
-                            bool_t version_mismatch);
+                            bool_t version_mismatch,
+                            bool_t slow_ice_negotiation);
 
 void create_conference_with_screen_sharing_base(time_t start_time,
                                                 int duration,
@@ -466,7 +467,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t server_restart,
                                       bool_t client_restart,
                                       bool_t join_after_termination,
-                                      long cleanup_window);
+                                      long cleanup_window,
+                                      bool_t slow_ice_negotiation);
 
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,

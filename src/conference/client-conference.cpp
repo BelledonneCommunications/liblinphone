@@ -539,7 +539,8 @@ void ClientConference::callFocus() {
 		        << ") as there is no session towards the focus yet";
 		LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 		// Participant with the focus call is admin
-		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter(Conference::AdminParameter,
+		                                                               Utils::toString(true));
 		linphone_call_params_enable_video(params, mConfParams->videoEnabled());
 		Conference::setSubject(mPendingSubject);
 		const std::list<std::shared_ptr<const Address>> addresses;
@@ -810,118 +811,9 @@ void ClientConference::reset() {
 }
 
 void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_UNUSED(const std::string &message)) {
-	auto chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
-#ifdef HAVE_ADVANCED_IM
-		auto session = mFocus->getSession();
-		const auto &chatRoomState = mState;
-		auto clientGroupChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
-		if (state == CallSession::State::Connected) {
-			if ((chatRoomState == ConferenceInterface::State::Instantiated) ||
-			    (chatRoomState == ConferenceInterface::State::CreationPending)) {
-				if (!mConfParams->getAccount()) {
-					mConfParams->setAccount(session->getParams()->getAccount());
-				}
-				if (clientGroupChatRoom->isLocalExhumePending()) {
-					clientGroupChatRoom->onLocallyExhumedConference(session->getRemoteContactAddress());
-				} else {
-					clientGroupChatRoom->onChatRoomCreated(session->getRemoteContactAddress());
-				}
-				getCore()->getPrivate()->insertChatRoomWithDb(chatRoom, getLastNotify());
-			} else if (chatRoomState == ConferenceInterface::State::TerminationPending) {
-				/* This is the case where we have re-created the session in order to quit the chatroom.
-				 * In this case, defer the sending of the bye so that it is sent after the ACK.
-				 * Indeed, the ACK is sent immediately after being notified of the Connected state.*/
-				getCore()->doLater([session]() {
-					if (session) {
-						session->terminate();
-					}
-				});
-			}
-		} else if (state == CallSession::State::End) {
-			const auto errorInfo = session->getErrorInfo();
-			const auto code = linphone_error_info_get_protocol_code(errorInfo);
-			if (errorInfo != nullptr && code > 299) {
-				lWarning() << "Chat room [" << getConferenceId()
-				           << "] received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo)
-				           << ", not leaving it.";
-			} else {
-				const auto &clientConferenceAddress = session->getRemoteAddress();
-				bool found = false;
-				auto previousConferenceIds = clientGroupChatRoom->getPreviousConferenceIds();
-				for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
-					ConferenceId confId = static_cast<ConferenceId>(*it);
-					if (*confId.getPeerAddress() == *clientConferenceAddress) {
-						lInfo() << "Found previous chat room conference ID [" << confId
-						        << "] for chat room with current ID [" << getConferenceId() << "]";
-						clientGroupChatRoom->removeConferenceIdFromPreviousList(confId);
-						found = true;
-						break;
-					}
-				}
-
-				const auto isLocalExhume = clientGroupChatRoom && clientGroupChatRoom->isLocalExhumePending();
-
-				if (found) {
-					/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's
-					 * state */
-					lInfo() << "Chat room [" << *clientConferenceAddress
-					        << "] from before the exhume has been terminated";
-				} else if (isLocalExhume) {
-					lInfo() << "Chat room [" << *clientConferenceAddress << "] has been successfully recreated";
-				} else {
-					setState(ConferenceInterface::State::TerminationPending);
-				}
-			}
-		} else if (state == CallSession::State::Released) {
-			if (chatRoomState == ConferenceInterface::State::TerminationPending) {
-				const auto &reason = session->getReason();
-				if ((reason == LinphoneReasonNone) || (reason == LinphoneReasonDeclined)) {
-					// Everything is fine, the chat room has been left on the server side.
-					// Or received 603 Declined, the chat room has been left on the server side but
-					// remains local.
-					setState(ConferenceInterface::State::Terminated);
-				} else {
-					// Go to state TerminationFailed and then back to Created since it has not been terminated
-					setState(ConferenceInterface::State::TerminationFailed);
-					setState(ConferenceInterface::State::Created);
-				}
-			}
-		} else if (state == CallSession::State::Error) {
-			const auto &reason = session->getReason();
-			if ((chatRoomState == ConferenceInterface::State::Instantiated) ||
-			    (chatRoomState == ConferenceInterface::State::CreationPending)) {
-				setState(ConferenceInterface::State::CreationFailed);
-				// If there are chat message pending chat room creation, set state to NotDelivered and remove them from
-				// queue.
-				const std::list<std::shared_ptr<ChatMessage>> &pendingCreationMessages =
-				    clientGroupChatRoom->getPendingCreationMessages();
-				for (const auto &msg : pendingCreationMessages) {
-					msg->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::NotDelivered,
-					                                       ::ms_time(nullptr));
-				}
-				clientGroupChatRoom->clearPendingCreationMessages();
-				if (reason == LinphoneReasonForbidden) {
-					setState(ConferenceInterface::State::Terminated);
-					chatRoom->deleteFromDb();
-				}
-			} else if (chatRoomState == ConferenceInterface::State::TerminationPending) {
-				if (reason == LinphoneReasonNotFound) {
-					// Somehow the chat room is no longer known on the server, so terminate it
-					setState(ConferenceInterface::State::Terminated);
-					setState(ConferenceInterface::State::Deleted);
-				} else {
-					// Go to state TerminationFailed and then back to Created since it has not been terminated
-					setState(ConferenceInterface::State::TerminationFailed);
-					setState(ConferenceInterface::State::Created);
-				}
-			}
-			setMainSession(nullptr);
-		}
-		linphone_chat_room_notify_session_state_changed(chatRoom->toC(), static_cast<LinphoneCallState>(state),
-		                                                L_STRING_TO_C(message));
-#endif // HAVE_ADVANCED_IM
-	} else {
+	const auto conferenceAddressStr =
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
+	if (supportsMedia()) {
 		auto session = getMainSession();
 		std::shared_ptr<Address> focusContactAddress;
 		std::shared_ptr<Call> call = nullptr;
@@ -938,8 +830,6 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 
 		const bool isFocusFound =
 		    focusContactAddress ? focusContactAddress->hasParam(Conference::IsFocusParameter) : false;
-		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
 		list<std::shared_ptr<Call>>::iterator it;
 		switch (state) {
 			case CallSession::State::StreamsRunning: {
@@ -1063,6 +953,149 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 				lInfo() << "Scheduled update of the focus session of conference " << conferenceAddressStr
 				        << " cannot be executed right now - Retrying at the next state change";
 			}
+		}
+	} else if (mConfParams->chatEnabled()) {
+#ifdef HAVE_ADVANCED_IM
+		auto session = mFocus->getSession();
+		auto chatRoom = getChatRoom();
+		auto clientGroupChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
+		switch (state) {
+			case CallSession::State::Connected: {
+				if ((mState == ConferenceInterface::State::Instantiated) ||
+				    (mState == ConferenceInterface::State::CreationPending)) {
+					if (!mConfParams->getAccount()) {
+						mConfParams->setAccount(session->getParams()->getAccount());
+					}
+					if (clientGroupChatRoom->isLocalExhumePending()) {
+						clientGroupChatRoom->onLocallyExhumedConference(session->getRemoteContactAddress());
+					} else {
+						clientGroupChatRoom->onChatRoomCreated(session->getRemoteContactAddress());
+					}
+					getCore()->getPrivate()->insertChatRoomWithDb(chatRoom, getLastNotify());
+				} else if (mState == ConferenceInterface::State::TerminationPending) {
+					/* This is the case where we have re-created the session in order to quit the chatroom.
+					 * In this case, defer the sending of the bye so that it is sent after the ACK.
+					 * Indeed, the ACK is sent immediately after being notified of the Connected state.*/
+					getCore()->doLater([session]() {
+						if (session) {
+							session->terminate();
+						}
+					});
+				}
+			} break;
+			case CallSession::State::End: {
+				const auto errorInfo = session->getErrorInfo();
+				const auto code = linphone_error_info_get_protocol_code(errorInfo);
+				if (errorInfo != nullptr && code > 299) {
+					lWarning() << "Chat room [" << getConferenceId()
+					           << "] received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo)
+					           << ", not leaving it.";
+				} else {
+					const auto &clientConferenceAddress = session->getRemoteAddress();
+					bool found = false;
+					auto previousConferenceIds = clientGroupChatRoom->getPreviousConferenceIds();
+					for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
+						ConferenceId confId = static_cast<ConferenceId>(*it);
+						if (*confId.getPeerAddress() == *clientConferenceAddress) {
+							lInfo() << "Found previous chat room conference ID [" << confId
+							        << "] for chat room with current ID [" << getConferenceId() << "]";
+							clientGroupChatRoom->removeConferenceIdFromPreviousList(confId);
+							found = true;
+							break;
+						}
+					}
+
+					const auto isLocalExhume = clientGroupChatRoom && clientGroupChatRoom->isLocalExhumePending();
+
+					if (found) {
+						/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change
+						 * it's state */
+						lInfo() << "Chat room [" << *clientConferenceAddress
+						        << "] from before the exhume has been terminated";
+					} else if (isLocalExhume) {
+						lInfo() << "Chat room [" << *clientConferenceAddress << "] has been successfully recreated";
+					} else {
+						setState(ConferenceInterface::State::TerminationPending);
+					}
+				}
+			} break;
+			case CallSession::State::Released: {
+				if (mState == ConferenceInterface::State::TerminationPending) {
+					const auto &reason = session->getReason();
+					if ((reason == LinphoneReasonNone) || (reason == LinphoneReasonDeclined)) {
+						// Everything is fine, the chat room has been left on the server side.
+						// Or received 603 Declined, the chat room has been left on the server side but
+						// remains local.
+						setState(ConferenceInterface::State::Terminated);
+					} else {
+						// Go to state TerminationFailed and then back to Created since it has not been terminated
+						setState(ConferenceInterface::State::TerminationFailed);
+						setState(ConferenceInterface::State::Created);
+					}
+				}
+				break;
+			}
+			case CallSession::State::Error: {
+				const auto &reason = session->getReason();
+				if ((mState == ConferenceInterface::State::Instantiated) ||
+				    (mState == ConferenceInterface::State::CreationPending)) {
+					setState(ConferenceInterface::State::CreationFailed);
+					// If there are chat message pending chat room creation, set state to NotDelivered and remove them
+					// from queue.
+					const std::list<std::shared_ptr<ChatMessage>> &pendingCreationMessages =
+					    clientGroupChatRoom->getPendingCreationMessages();
+					for (const auto &msg : pendingCreationMessages) {
+						msg->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::NotDelivered,
+						                                       ::ms_time(nullptr));
+					}
+					clientGroupChatRoom->clearPendingCreationMessages();
+					if (reason == LinphoneReasonForbidden) {
+						setState(ConferenceInterface::State::Terminated);
+						chatRoom->deleteFromDb();
+					}
+				} else if (mState == ConferenceInterface::State::TerminationPending) {
+					if (reason == LinphoneReasonNotFound) {
+						// Somehow the chat room is no longer known on the server, so terminate it
+						setState(ConferenceInterface::State::Terminated);
+						setState(ConferenceInterface::State::Deleted);
+					} else {
+						// Go to state TerminationFailed and then back to Created since it has not been terminated
+						setState(ConferenceInterface::State::TerminationFailed);
+						setState(ConferenceInterface::State::Created);
+					}
+				}
+				setMainSession(nullptr);
+			} break;
+			default:
+				lDebug() << "Unhandled state " << Utils::toString(state) << " in conference [" << this << " - "
+				         << conferenceAddressStr << "]";
+				break;
+		}
+		if (chatRoom) {
+			linphone_chat_room_notify_session_state_changed(chatRoom->toC(), static_cast<LinphoneCallState>(state),
+			                                                L_STRING_TO_C(message));
+		}
+#endif // HAVE_ADVANCED_IM
+	} else {
+		switch (state) {
+			case CallSession::State::Error:
+				if ((mState == ConferenceInterface::State::Instantiated) ||
+				    (mState == ConferenceInterface::State::CreationPending)) {
+					setState(ConferenceInterface::State::CreationFailed);
+				} else if (mState == ConferenceInterface::State::Created) {
+					setState(ConferenceInterface::State::TerminationPending);
+				}
+				break;
+			case CallSession::State::End:
+			case CallSession::State::Released:
+				break;
+			default:
+				lError() << "Conference [" << this << " - " << conferenceAddressStr
+				         << "] has no capability set and it has been requested to handle a call session whose state "
+				            "changed to "
+				         << Utils::toString(state);
+				abort();
+				break;
 		}
 	}
 }

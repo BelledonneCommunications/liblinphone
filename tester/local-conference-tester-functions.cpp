@@ -1203,7 +1203,8 @@ void create_conference_base(time_t start_time,
                             LinphoneConferenceSecurityLevel security_level,
                             std::list<LinphoneParticipantRole> allowedRoles,
                             bool_t add_participant_after_end,
-                            bool_t version_mismatch) {
+                            bool_t version_mismatch,
+                            bool_t slow_ice_negotiation) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -1245,6 +1246,11 @@ void create_conference_base(time_t start_time,
 					linphone_config_set_string(linphone_core_get_config(mgr->lc), "video", "max_conference_size",
 					                           "vga");
 				}
+			}
+
+			if (!!slow_ice_negotiation) {
+				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
+				linphone_core_enable_forced_ice_relay(mgr->lc, TRUE);
 			}
 
 			if (mgr == pauline.getCMgr()) {
@@ -5900,7 +5906,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t server_restart,
                                       bool_t client_restart,
                                       bool_t join_after_termination,
-                                      long cleanup_window) {
+                                      long cleanup_window,
+                                      bool_t slow_ice_negotiation) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -5936,6 +5943,11 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			if (mgr != focus.getCMgr()) {
 				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
+			}
+
+			if (!!slow_ice_negotiation) {
+				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
+				linphone_core_enable_forced_ice_relay(mgr->lc, TRUE);
 			}
 
 			// Enable ICE at the account level but not at the core level
