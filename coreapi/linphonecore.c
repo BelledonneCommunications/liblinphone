@@ -2789,8 +2789,13 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 			           contacts_vcard_list_uri);
 			linphone_friend_list_ref(lc->base_contacts_list_for_synchronization);
 		}
-
-		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
+		bool_t fetch_contacts_list =
+		    linphone_config_get_bool(lc->config, "misc", "fetch-contacts-vcard-list-at-startup", TRUE);
+		if (fetch_contacts_list) {
+			linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
+		} else {
+			ms_message("do not fetch contact list from server");
+		}
 	}
 
 	_linphone_core_apply_transports(lc); // This will create SIP sockets.

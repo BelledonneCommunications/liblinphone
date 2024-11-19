@@ -64,6 +64,32 @@ static void remote_provisioning_http(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void remote_provisioning_contact_list_fetch_at_startup(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_remote_rc");
+	const char *vcard_file = "http://provisioning.example.org/vcards.vcf";
+	linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", vcard_file);
+
+	// do not get vcard contact list from remote provisioning at startup
+	bool_t fetch_contact_list_at_startup = FALSE;
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "fetch-contacts-vcard-list-at-startup",
+	                         fetch_contact_list_at_startup);
+
+	linphone_core_manager_start(marie, FALSE);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1));
+
+	std::string url =
+	    linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
+	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
+	BC_ASSERT_PTR_NOT_NULL(friendList);
+	if (friendList) {
+		unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
+		BC_ASSERT_EQUAL(friends_list_size, 0, unsigned int, "%u");
+	}
+
+	linphone_core_manager_destroy(marie);
+}
+
 static void remote_provisioning_transient(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_transient_remote_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1));
@@ -473,7 +499,8 @@ test_t remote_provisioning_tests[] = {
     TEST_NO_TAG("Remote provisioning default values", remote_provisioning_default_values),
     TEST_NO_TAG("Remote provisioning from file", remote_provisioning_file),
     TEST_NO_TAG("Remote provisioning invalid URI", remote_provisioning_invalid_uri),
-    TEST_NO_TAG("Remote provisioning check if push tokens are not lost", remote_provisioning_check_push_params)
+    TEST_NO_TAG("Remote provisioning check if push tokens are not lost", remote_provisioning_check_push_params),
+    TEST_NO_TAG("Remote Provisioning Contacts List fetch at startup", remote_provisioning_contact_list_fetch_at_startup)
 #ifdef HAVE_FLEXIAPI
         ,
     TEST_NO_TAG("Remote Provisioning Flow", flexiapi_remote_provisioning_flow),
