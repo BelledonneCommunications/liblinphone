@@ -1904,29 +1904,27 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 		return;
 	}
 
+	bool isStartup = (linphone_core_get_global_state(getCCore()) == LinphoneGlobalStartup);
 	std::shared_ptr<Conference> conf;
-	if (conference->getCurrentParams()->chatEnabled()) {
-		// Handling of chat room exhume
-		const auto &chatRoom = findChatRoom(conferenceId);
-		if (chatRoom) {
-			conf = chatRoom->getConference();
+	if (!isStartup) {
+		if (conference->getCurrentParams()->chatEnabled()) {
+			// Handling of chat room exhume
+			const auto &chatRoom = findChatRoom(conferenceId);
+			if (chatRoom) {
+				conf = chatRoom->getConference();
+			}
+		} else {
+			conf = findConference(conferenceId);
 		}
-	} else {
-		conf = findConference(conferenceId);
+		// When starting the LinphoneCore, it may happen to have 2 audio video conferences or chat room that have the
+		// same conference ID apart from the GRUU which is not taken into the account for the comparison. In such a
+		// scenario, it is allowed to replace the pointer towards the audio video conference in the core map. Method
+		// addChatRoomToList will take care of setting the right pointer before exiting
+		L_ASSERT(conf == nullptr || conf == conference);
 	}
-	// When starting the LinphoneCore, it may happen to have 2 audio video conferences or chat room that have the same
-	// conference ID apart from the GRUU which is not taken into the account for the comparison. In such a scenario, it
-	// is allowed to replace the pointer towards the audio video conference in the core map. Method addChatRoomToList
-	// will take care of setting the right pointer before exiting
-	L_ASSERT(conf == nullptr || conf == conference ||
-	         linphone_core_get_global_state(getCCore()) == LinphoneGlobalStartup);
-	if (conf == nullptr) {
+	if ((conf == nullptr) || (conf != conference)) {
 		lInfo() << "Insert conference " << conference << " in RAM with conference ID " << conferenceId << ".";
-		d->mConferenceById.insert(std::make_pair(conferenceId, conference));
-	} else if (conf != conference) {
-		lWarning() << "Replacing conference with conference ID " << conferenceId << " in the core map " << conf
-		           << " with " << conference << ". This might happen if your database has been corrupted";
-		d->mConferenceById[conferenceId] = conference;
+		d->mConferenceById.insert_or_assign(conferenceId, conference);
 	}
 }
 
