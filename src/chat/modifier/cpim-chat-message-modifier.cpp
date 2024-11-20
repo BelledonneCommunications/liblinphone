@@ -306,12 +306,18 @@ CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const auto &account = chatRoom->getAccount();
 	if (!account) {
-		lWarning() << "Unable to create CPIM becaus the account attached to the message is unknown";
+		lWarning() << "Unable to create CPIM because the account attached to the message is unknown";
 		return Content::create();
 	}
-	const string &localDeviceId = account->getContactAddress()->asStringUriOnly();
-
+	const auto &accountContactAddress = account->getContactAddress();
+	const auto &localDevice =
+	    accountContactAddress ? accountContactAddress : chatRoom->getConferenceId().getLocalAddress();
+	if (!localDevice) {
+		lWarning() << "Unable to create CPIM because account [" << account << "] has not registered yet and the chatroom local address is unknown";
+		return Content::create();
+	}
 	Cpim::Message cpimMessage;
+	const string &localDeviceId = localDevice->asStringUriOnly();
 	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress())));
 	cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
 	cpimMessage.addMessageHeader(

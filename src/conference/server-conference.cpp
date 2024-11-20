@@ -394,7 +394,7 @@ void ServerConference::configure(SalCallOp *op) {
 #endif // HAVE_DB_STORAGE
 
 	bool audioEnabled = false;
-	bool videoEnabled = !!linphone_core_video_enabled(lc);
+	bool videoEnabled = false;
 	std::string subject;
 	time_t startTime = ms_time(NULL);
 	time_t endTime = ms_time(NULL);
@@ -404,6 +404,7 @@ void ServerConference::configure(SalCallOp *op) {
 
 	const auto &remoteMd = op->getRemoteMediaDescription();
 	if (remoteMd) {
+		videoEnabled = !!linphone_core_video_enabled(lc);
 		const auto times = remoteMd->times;
 		if (times.size() > 0) {
 			startTimeSdp = times.front().first;
@@ -447,6 +448,7 @@ void ServerConference::configure(SalCallOp *op) {
 		//    - if the core is a conference server, video is enabled
 		// - Subject is got from the "Subject" header in the INVITE
 		audioEnabled = remoteMd && (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
+		videoEnabled = remoteMd && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
 		if (!op->getSubject().empty()) {
 			subject = op->getSubject();
 		}
@@ -2995,7 +2997,9 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				// - the incoming INVITE has no resource list or it is the organizer of a dialout conference
 				if ((!Conference::isTerminationState(getState())) && !isCancelled &&
 				    (!resourceList || ((getOrganizer()->weakEqual(*(session->getRemoteAddress()))) && dialout))) {
-					addParticipant(cppCall);
+					if (cppCall) {
+						addParticipant(cppCall);
+					}
 				} else {
 					const_cast<LinphonePrivate::CallSessionParamsPrivate *>(session->getParams()->getPrivate())
 					    ->setInConference(true);
@@ -3009,27 +3013,36 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					session->removeListener(getSharedFromThis());
 				}
 
+				const auto ms = static_pointer_cast<MediaSession>(session);
 				const auto allowedAddresses = getAllowedAddresses();
 				auto p = std::find_if(
 				    allowedAddresses.begin(), allowedAddresses.end(),
 				    [&remoteAddress](const auto &address) { return (remoteAddress->weakEqual(*address)); });
 				if (resourceList && (p == allowedAddresses.end())) {
 					LinphoneErrorInfo *ei = linphone_error_info_new();
+					lInfo() << *remoteAddress << " is not allowed to joing conference [" << this << " - " << *getConferenceAddress();
 					linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403,
-					                        "Participant not authorized to change the participant list", NULL);
-					cppCall->decline(ei);
+								"Participant not authorized to change the participant list", NULL);
+					ms->decline(ei);
+					linphone_error_info_unref(ei);
+				} else if (!cppCall) {
+					LinphoneErrorInfo *ei = linphone_error_info_new();
+					lInfo() << "Conference [" << this << " - " << *getConferenceAddress() << "] Unable to associate the media session " << ms << " to an existing call";
+					linphone_error_info_set(ei, NULL, LinphoneReasonNotAcceptable, 488,
+								"Unable to associate the media session to an existing call", NULL);
+					ms->decline(ei);
 					linphone_error_info_unref(ei);
 				} else {
 					LinphoneCallParams *params =
-					    linphone_core_create_call_params(getCore()->getCCore(), cppCall->toC());
+					    linphone_core_create_call_params(getCore()->getCCore(), cppCall ? cppCall->toC() : nullptr);
 					linphone_call_params_enable_audio(params, TRUE);
 					linphone_call_params_enable_video(
-					    params, (cppCall->getRemoteParams()->videoEnabled() && getCurrentParams()->videoEnabled())
-					                ? TRUE
-					                : FALSE);
+					    params, (ms->getRemoteParams()->videoEnabled() && getCurrentParams()->videoEnabled())
+							? TRUE
+							: FALSE);
 					linphone_call_params_set_start_time(params, getCurrentParams()->getStartTime());
 					linphone_call_params_set_end_time(params, getCurrentParams()->getEndTime());
-					cppCall->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+					ms->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 					linphone_call_params_unref(params);
 				}
 				if (isCancelled) {

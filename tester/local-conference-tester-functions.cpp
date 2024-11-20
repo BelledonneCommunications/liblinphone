@@ -1204,7 +1204,7 @@ void create_conference_base(time_t start_time,
                             std::list<LinphoneParticipantRole> allowedRoles,
                             bool_t add_participant_after_end,
                             bool_t version_mismatch,
-                            bool_t slow_ice_negotiation) {
+                            bool_t use_relay_ice_candidates) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -1248,7 +1248,7 @@ void create_conference_base(time_t start_time,
 				}
 			}
 
-			if (!!slow_ice_negotiation) {
+			if (!!use_relay_ice_candidates) {
 				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
 				linphone_core_enable_forced_ice_relay(mgr->lc, TRUE);
 			}
@@ -2726,7 +2726,9 @@ void create_conference_base(time_t start_time,
 					}
 
 					if (enable_ice) {
-						BC_ASSERT_TRUE(check_ice(michelle.getCMgr(), focus.getCMgr(), LinphoneIceStateHostConnection));
+						if (!!!use_relay_ice_candidates) {
+							BC_ASSERT_TRUE(check_ice(michelle.getCMgr(), focus.getCMgr(), LinphoneIceStateHostConnection));
+						}
 						BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneCallUpdating, 1,
 						                             liblinphone_tester_sip_timeout));
 						BC_ASSERT_TRUE(wait_for_list(coresList,
@@ -4991,7 +4993,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 
 			check_conference_info_in_db(mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info2, 0, 0,
 			                            initialSubject, description, 0, LinphoneConferenceInfoStateNew, security_level,
-			                            FALSE, TRUE, enable_video, FALSE);
+			                            FALSE, TRUE, TRUE, FALSE);
 			bctbx_list_free_with_data(participants_info2, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
 
@@ -5907,7 +5909,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t client_restart,
                                       bool_t join_after_termination,
                                       long cleanup_window,
-                                      bool_t slow_ice_negotiation) {
+                                      bool_t use_relay_ice_candidates) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -5945,7 +5947,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
 			}
 
-			if (!!slow_ice_negotiation) {
+			if (!!use_relay_ice_candidates) {
 				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
 				linphone_core_enable_forced_ice_relay(mgr->lc, TRUE);
 			}
@@ -8789,6 +8791,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		// marie creates the conference
 		LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(marie.getLc(), NULL);
 		const char *initialSubject = "Test characters: ^ :) ¤ çà @";
+		linphone_conference_params_enable_audio(conf_params, TRUE);
+		linphone_conference_params_enable_video(conf_params, toggle_video);
 		linphone_conference_params_set_subject(conf_params, initialSubject);
 		LinphoneConference *conf = linphone_core_create_conference_with_params(marie.getLc(), conf_params);
 		linphone_conference_params_unref(conf_params);
