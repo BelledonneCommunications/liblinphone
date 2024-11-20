@@ -4507,7 +4507,9 @@ int MainDb::getEventCount(FilterMask mask) const {
 shared_ptr<EventLog> MainDb::getEvent(const unique_ptr<MainDb> &mainDb, const long long &storageId) {
 #ifdef HAVE_DB_STORAGE
 	if ((storageId < 0) || (mainDb == nullptr)) {
-		lWarning() << "Unable to get event from invalid storage ID " << storageId;
+		if ((storageId < 0)) {
+			lDebug() << "Unable to get event from invalid storage ID " << storageId;
+		}
 		return nullptr;
 	}
 

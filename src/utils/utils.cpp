@@ -266,11 +266,15 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 #endif
 
 	if (result == time_t(-1)) {
+		int error = errno;
 		if (tCopy.tm_hour == 0 && tCopy.tm_min == 0 && tCopy.tm_sec == 0 && tCopy.tm_year == 70 && tCopy.tm_mon == 0 &&
-		    tCopy.tm_mday == 1)
-			return time_t(
-			    0); // Not really an error as we try to getTmAsTimeT from initial day (Error comes from timezones)
-		lError() << "timegm/mktime failed: " << strerror(errno);
+		    tCopy.tm_mday == 1) {
+			// Not really an error as we try to getTmAsTimeT from initial day (Error comes from timezones)
+			return time_t(0);
+		}
+		if (error > 0) {
+			lError() << "timegm/mktime failed: " << strerror(error);
+		}
 		return time_t(-1);
 	}
 	return result - offset;

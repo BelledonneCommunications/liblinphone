@@ -940,7 +940,8 @@ void FriendList::saveInDb() {
 				mStorageId = mainDb->insertFriendList(getSharedFromThis());
 			}
 		} else {
-			lError() << "Can't save friend list in DB, either Core is not available or database storage is disabled";
+			lWarning() << "Can't save friend list [" << getDisplayName()
+			           << "] in DB, either Core is not available or database storage is disabled";
 		}
 	} catch (std::bad_weak_ptr &) {
 	}

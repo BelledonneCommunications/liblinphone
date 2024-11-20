@@ -171,6 +171,11 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	const auto &conferenceAddress = chatRoom->getConferenceAddress();
 	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("sip:unknown");
 
+	if (currentState == ChatMessage::State::Displayed) {
+		// Prevents "invalid state transition from [Displayed] to [DeliveredToUser]" error logs when a participant has
+		// multiple devices.
+		return;
+	}
 	if (!chatMessageFsmChecker.isValid(currentState, newState)) {
 		if (isBasicChatRoom) {
 			lWarning() << "Chat message " << sharedMessage << ": Invalid transaction of message in basic chat room "

@@ -52,8 +52,13 @@ public:
 		}
 		auto destIt = (*srcIt).second.find(destination);
 		if (destIt == (*srcIt).second.end()) {
-			lError() << "FsmIntegrityChecker: invalid state transition from [" << origin << "] to [" << destination
-			         << "]";
+			if (origin == destination) {
+				lDebug() << "FsmIntegrityChecker: invalid state transition from [" << origin << "] to [" << destination
+				         << "]";
+			} else {
+				lError() << "FsmIntegrityChecker: invalid state transition from [" << origin << "] to [" << destination
+				         << "]";
+			}
 			return false;
 		}
 		return true;

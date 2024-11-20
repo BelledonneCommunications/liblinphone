@@ -731,37 +731,41 @@ std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList(bool inclu
 void Core::updateChatRoomList() const {
 	LinphoneCore *lc = getCCore();
 	LinphoneConfig *config = linphone_core_get_config(lc);
+
 	bool hideChatRoomsWithMedia = !!linphone_config_get_int(config, "chat", "hide_chat_rooms_with_media", 1);
 	bool hideEmptyChatRooms = !!linphone_config_get_int(config, "misc", "hide_empty_chat_rooms", 1);
+
 	bool hideChatRoomsFromRemovedProxyConfig =
 	    !!linphone_config_get_int(config, "misc", "hide_chat_rooms_from_removed_proxies", 1);
+	list<shared_ptr<Address>> localAddresses;
+	if (hideChatRoomsFromRemovedProxyConfig) {
+		for (const auto &account : getAccounts()) {
+			auto localAddress = account->getAccountParams()->getIdentityAddress();
+			localAddresses.push_front(localAddress);
+		}
+	}
 
 	list<shared_ptr<AbstractChatRoom>> rooms;
 
 	for (const auto &chatRoom : getRawChatRoomList()) {
+		const auto &chatRoomParams = chatRoom->getCurrentParams();
+
 		if (hideChatRoomsWithMedia) {
-			const auto &chatRoomParams = chatRoom->getCurrentParams();
 			if (chatRoomParams->audioEnabled() || chatRoomParams->videoEnabled()) {
 				continue;
 			}
 		}
 		if (hideEmptyChatRooms) {
-			const auto &chatRoomParams = chatRoom->getCurrentParams();
 			if (chatRoom->isEmpty() && !chatRoomParams->isGroup()) {
 				continue;
 			}
 		}
 
 		if (hideChatRoomsFromRemovedProxyConfig) {
-			bool found = false;
-			for (const auto &account : getAccounts()) {
-				auto localAddress = account->getAccountParams()->getIdentityAddress();
-				if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
+			auto chatRoomLocalAddress = chatRoom->getLocalAddress();
+			const auto found = std::find_if(std::begin(localAddresses), std::end(localAddresses),
+			                                [&](const auto &addr) { return addr->weakEqual(chatRoomLocalAddress); });
+			if (found == std::end(localAddresses)) {
 				continue;
 			}
 		}

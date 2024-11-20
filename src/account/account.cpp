@@ -937,7 +937,7 @@ void Account::updateChatRoomList() const {
 	auto localAddress = mParams->mIdentityAddress;
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = getCore()->getChatRooms();
 	for (auto chatRoom : chatRooms) {
-		if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {
+		if (localAddress->weakEqual(chatRoom->getLocalAddress())) {
 			results.push_back(chatRoom);
 		}
 	}
