@@ -734,9 +734,12 @@ int ServerConference::checkServerConfiguration(const shared_ptr<Address> &remote
 			linphone_error_info_set(errorInfo, nullptr, LinphoneReasonNotAcceptable, 488,
 			                        "Attempt to establish an end-to-end encrypted conference, but focus is not "
 			                        "operating in full packet router mode",
-			                        nullptr);
+			                        "Attempt to establish an end-to-end encrypted conference, but focus is not "
+			                        "operating in full packet router mode");
 			session->decline(errorInfo);
 			linphone_error_info_unref(errorInfo);
+			// No need to leave the conference run for longer
+			terminate();
 			return SERVER_CONFIGURATION_FAILED;
 		}
 	}
@@ -777,12 +780,14 @@ void ServerConference::confirmCreation() {
 				auto errorInfo = linphone_error_info_new();
 				linphone_error_info_set(errorInfo, nullptr, LinphoneReasonNotAcceptable, 488,
 				                        "\"groupchat\" capability has not been found in remote contact address",
-				                        nullptr);
+				                        "\"groupchat\" capability has not been found in remote contact address");
 				session->decline(errorInfo);
 				linphone_error_info_unref(errorInfo);
 			}
 		}
 #endif // HAVE_ADVANCED_IM
+
+		if (checkServerConfiguration(remoteContactAddress, session) == SERVER_CONFIGURATION_FAILED) return;
 
 		if (mState == ConferenceInterface::State::CreationFailed) {
 			return;
@@ -814,8 +819,6 @@ void ServerConference::confirmCreation() {
 			setState(ConferenceInterface::State::Created);
 		}
 #endif // HAVE_ADVANCED_IM
-
-		if (checkServerConfiguration(remoteContactAddress, session) == SERVER_CONFIGURATION_FAILED) return;
 
 		const auto &conferenceInfo = createOrGetConferenceInfo();
 
@@ -2933,24 +2936,20 @@ bool ServerConference::checkClientCompatibility(const shared_ptr<Call> &call,
 			// Check if the server conference is in end-to-end encryption mode
 			bool isE2E = getCurrentParams()->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd;
 
+			LinphoneErrorInfo *ei = nullptr;
 			if ((audioMode == MSConferenceModeRouterFullPacket) && (videoMode == MSConferenceModeRouterFullPacket) &&
 			    (clientVersion < minimalVersion)) {
 				// If the client does not meet the minimum version required for a full-packet router conference
-				LinphoneErrorInfo *ei = linphone_error_info_new();
+				ei = linphone_error_info_new();
 				linphone_error_info_set(ei, NULL, LinphoneReasonNotAcceptable, 488, NULL,
 				                        "Please upgrade your software in order to connect to this service");
-				if (incomingReceived) {
-					call->decline(ei);
-				} else {
-					call->terminate(ei);
-				}
-				linphone_error_info_unref(ei);
-				return false; // The client is not compatible
 			} else if (auto limeEnabled = protocols.find("lime"); limeEnabled == protocols.end() && isE2E) {
 				// If the conference requires end-to-end encryption but the client does not support LIME
-				LinphoneErrorInfo *ei = linphone_error_info_new();
+				ei = linphone_error_info_new();
 				linphone_error_info_set(ei, NULL, LinphoneReasonNotAcceptable, 488, NULL,
 				                        "Lime (end to end encryption) is required to use this service");
+			}
+			if (ei) {
 				if (incomingReceived) {
 					call->decline(ei);
 				} else {
