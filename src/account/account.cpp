@@ -290,7 +290,7 @@ void Account::setNeedToRegister(bool needToRegister) {
 
 void Account::triggerDeletion() {
 	cancelDeletion();
-	weak_ptr weakZis = getSharedFromThis();
+	weak_ptr<Account> weakZis = getSharedFromThis();
 	mDeletionTimer = getCore()->createTimer(
 	    [weakZis]() -> bool {
 		    auto zis = weakZis.lock();

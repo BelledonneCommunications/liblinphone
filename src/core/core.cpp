@@ -2568,9 +2568,12 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 	/* we also need to update the accounts list */
 	accounts.erase(accountIt);
 	removeDependentAccount(account);
-	/* add to the list of destroyed accounts, so that the possible unREGISTER request can succeed authentication */
-	mDeletedAccounts.mList.push_back(account);
-	account->triggerDeletion();
+	/* When the core is ON, add to the list of destroyed accounts, so that the possible unREGISTER request can succeed
+	 * authentication. If not ON, no unregistration is made in this case. This might happen during a Core restart. */
+	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn) {
+		mDeletedAccounts.mList.push_back(account);
+		account->triggerDeletion();
+	} else account->setConfig(nullptr);
 
 	invalidateAccountInConferencesAndChatRooms(account);
 
