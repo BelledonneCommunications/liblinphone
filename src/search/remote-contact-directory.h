@@ -129,7 +129,7 @@ public:
 		if (mType == LinphoneRemoteContactDirectoryTypeCardDav) {
 			mCardDavParams->writeToConfigFile();
 		} else {
-			mLdapParams->removeFromConfigFile();
+			mLdapParams->writeToConfigFile();
 		}
 	}
 

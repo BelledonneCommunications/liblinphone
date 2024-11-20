@@ -7467,7 +7467,7 @@ LINPHONE_PUBLIC void linphone_core_add_remote_contact_directory(LinphoneCore *co
 /**
  * Removes a #LinphoneRemoteContactDirectory object previously added to the Core.
  * @param core #LinphoneCore object. @notnil
- * @param remoteContactDirectory the newly created #LinphoneRemoteContactDirectory to add. @notnil
+ * @param remoteContactDirectory the #LinphoneRemoteContactDirectory to remove. @notnil
  */
 LINPHONE_PUBLIC void
 linphone_core_remove_remote_contact_directory(LinphoneCore *core,
