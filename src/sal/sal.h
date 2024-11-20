@@ -313,6 +313,9 @@ public:
 	void setPongTimeout(int value) {
 		belle_sip_stack_set_pong_timeout(mStack, value);
 	}
+	void enablePingPongVerification(bool value) {
+		belle_sip_stack_enable_ping_pong_verification(mStack, value ? TRUE : FALSE);
+	}
 
 	void setUnreliableConnectionTimeout(int value) {
 		belle_sip_stack_set_unreliable_connection_timeout(mStack, value);
