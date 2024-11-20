@@ -2790,7 +2790,7 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 			linphone_friend_list_ref(lc->base_contacts_list_for_synchronization);
 		}
 		bool_t fetch_contacts_list =
-		    linphone_config_get_bool(lc->config, "misc", "fetch-contacts-vcard-list-at-startup", TRUE);
+		    linphone_config_get_bool(lc->config, "misc", "fetch_contacts_vcard_list_at_startup", TRUE);
 		if (fetch_contacts_list) {
 			linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
 		} else {

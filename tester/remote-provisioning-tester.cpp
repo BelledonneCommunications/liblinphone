@@ -71,7 +71,7 @@ static void remote_provisioning_contact_list_fetch_at_startup(void) {
 
 	// do not get vcard contact list from remote provisioning at startup
 	bool_t fetch_contact_list_at_startup = FALSE;
-	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "fetch-contacts-vcard-list-at-startup",
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "fetch_contacts_vcard_list_at_startup",
 	                         fetch_contact_list_at_startup);
 
 	linphone_core_manager_start(marie, FALSE);
@@ -85,6 +85,15 @@ static void remote_provisioning_contact_list_fetch_at_startup(void) {
 	if (friendList) {
 		unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
 		BC_ASSERT_EQUAL(friends_list_size, 0, unsigned int, "%u");
+	}
+
+	// check that the vcards file is not missing nor empty
+	linphone_friend_list_synchronize_friends_from_server(friendList);
+	wait_for_until(marie->lc, NULL, NULL, 1, 5000);
+	BC_ASSERT_PTR_NOT_NULL(friendList);
+	if (friendList) {
+		unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
+		BC_ASSERT_EQUAL(friends_list_size, 3, unsigned int, "%u");
 	}
 
 	linphone_core_manager_destroy(marie);
