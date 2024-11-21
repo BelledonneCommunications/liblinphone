@@ -1780,22 +1780,30 @@ void ClientConference::onFullStateReceived() {
 		if (session) {
 			notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
 		}
-		const auto conferenceAddressStr =
-		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
-		if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
-			if (requestStreams() != 0) {
+
+		if (!getCore()->getCCore()->sal->mediaDisabled()) {
+			const auto conferenceAddressStr =
+			    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:"));
+			if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
+				if (requestStreams() != 0) {
+					lInfo() << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for "
+					           "conference "
+					        << conferenceAddressStr << " because it cannot be sent right now";
+					mScheduleUpdate = true;
+					mFullStateUpdate = true;
+				}
+			} else {
 				lInfo()
 				    << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for conference "
-				    << conferenceAddressStr << " because it cannot be sent right now";
+				    << conferenceAddressStr << " because ICE negotiations didn't end yet";
 				mScheduleUpdate = true;
 				mFullStateUpdate = true;
 			}
 		} else {
-			lInfo() << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for conference "
-			        << conferenceAddressStr << " because ICE negotiations didn't end yet";
-			mScheduleUpdate = true;
-			mFullStateUpdate = true;
+			// Set the state if no media so that the conference is correctly handled
+			setState(ConferenceInterface::State::Created);
 		}
+
 	} else {
 		if ((mState == ConferenceInterface::State::Instantiated) ||
 		    (mState == ConferenceInterface::State::CreationPending)) {
