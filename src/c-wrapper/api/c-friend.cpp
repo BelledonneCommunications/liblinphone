@@ -266,6 +266,14 @@ bool_t linphone_friend_in_list(const LinphoneFriend *lf) {
 	return Friend::toCpp(lf)->inList();
 }
 
+LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *linphone_friend) {
+	FriendList *list = Friend::toCpp(linphone_friend)->getFriendList();
+	if (list) {
+		return list->toC();
+	}
+	return nullptr;
+}
+
 bool_t linphone_friend_is_presence_received(const LinphoneFriend *lf) {
 	return Friend::toCpp(lf)->isPresenceReceived();
 }

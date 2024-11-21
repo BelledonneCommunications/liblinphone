@@ -107,11 +107,6 @@ long long linphone_friend_get_storage_id(const LinphoneFriend *lf) {
 	return Friend::toCpp(lf)->mStorageId;
 }
 
-LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf) {
-	FriendList *friendList = Friend::toCpp(lf)->mFriendList;
-	return friendList ? friendList->toC() : nullptr;
-}
-
 const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl) {
 	return FriendList::toCpp(lfl)->mBctbxDirtyFriendsToUpdate;
 }

@@ -324,6 +324,13 @@ LINPHONE_PUBLIC const char *linphone_friend_get_ref_key(const LinphoneFriend *li
 LINPHONE_PUBLIC bool_t linphone_friend_in_list(const LinphoneFriend *linphone_friend);
 
 /**
+ * Check that the given friend is in a friend list.
+ * @param linphone_friend #LinphoneFriend object. @notnil
+ * @return The #LinphoneFriendList the friend is in if any, NULL otherwise. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *linphone_friend);
+
+/**
  * Acquire a reference to the linphone friend.
  * @param linphone_friend #LinphoneFriend object @notnil
  * @return The same #LinphoneFriend object @notnil

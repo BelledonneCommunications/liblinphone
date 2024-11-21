@@ -701,6 +701,10 @@ bool Friend::inList() const {
 	return mFriendList != nullptr;
 }
 
+FriendList *Friend::getFriendList() const {
+	return mFriendList;
+}
+
 bool Friend::isPresenceReceived() const {
 	return mPresenceReceived;
 }

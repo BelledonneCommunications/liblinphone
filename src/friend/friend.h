@@ -73,7 +73,6 @@ public:
 	friend void ::linphone_core_remove_friend(LinphoneCore *lc, LinphoneFriend *lf);
 	friend void ::linphone_friend_add_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
 	friend const bctbx_list_t * ::linphone_friend_get_addresses(const LinphoneFriend *lf);
-	friend LinphoneFriendList * ::linphone_friend_get_friend_list(const LinphoneFriend *lf);
 	friend bctbx_list_t * ::linphone_friend_get_insubs(const LinphoneFriend *lf);
 	friend SalPresenceOp * ::linphone_friend_get_outsub(const LinphoneFriend *lf);
 	friend int ::linphone_friend_get_rc_index(const LinphoneFriend *lf);
@@ -151,6 +150,7 @@ public:
 	bool hasCapabilityWithVersionOrMore(const LinphoneFriendCapability capability, float version) const;
 	bool hasPhoneNumber(const std::string &searchedPhoneNumber) const;
 	bool inList() const;
+	FriendList *getFriendList() const;
 	bool isPresenceReceived() const;
 	void remove();
 	void removeAddress(const std::shared_ptr<const Address> &address);
