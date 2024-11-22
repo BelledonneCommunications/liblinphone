@@ -78,18 +78,22 @@ public class JavaPlatformHelper {
     private void copyResourcesFromJar() throws IOException {
         Log.i("[Platform Helper] Starting copy from resources to application files directory");
 
-        mTmpDir = new File(Files.createTempDirectory("linphone-sdk").toString());
-        mTmpDir.deleteOnExit();
+        File systemTmpDir = new File(System.getProperty("java.io.tmpdir"));
+        mTmpDir = new File(systemTmpDir, "linphone-sdk-java-linux");
+        if (!mTmpDir.exists()) {
+            mTmpDir.mkdir();
+            mTmpDir.deleteOnExit();
+        }
         Log.i("[Platform Helper] " + mTmpDir.getAbsolutePath());
 
-        copyResourcesFromJar(assetsDirectoryName);
-        copyResourcesFromJar(linphonePluginsDirectoryName);
-        copyResourcesFromJar(ms2PluginsDirectoryName);
+        copyResourcesFromJarIfNeeded(assetsDirectoryName);
+        copyResourcesFromJarIfNeeded(linphonePluginsDirectoryName);
+        copyResourcesFromJarIfNeeded(ms2PluginsDirectoryName);
 
         Log.i("[Platform Helper] Copy from resources done");
     }
 
-    private void copyResourcesFromJar(String prefix) throws IOException {
+    private void copyResourcesFromJarIfNeeded(String prefix) throws IOException {
         String jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
         File jarFile = new File(jarPath);
         if (jarFile.isFile()) {
@@ -104,11 +108,17 @@ public class JavaPlatformHelper {
                     if (relativeName.isEmpty()) {
                         String[] parts = prefix.split("/");
                         destPrefix = parts[parts.length - 1] + "/";
-                        Files.createDirectory(mTmpDir.toPath().resolve(destPrefix));
+                        if(!Files.exists(mTmpDir.toPath().resolve(destPrefix))) {
+                            Files.createDirectory(mTmpDir.toPath().resolve(destPrefix));
+                        }
                     } else {
                         Path destPath = mTmpDir.toPath().resolve(destPrefix).resolve(relativeName);
                         if (entry.isDirectory()) {
-                            Files.createDirectory(destPath);
+                            if(!Files.exists(destPath)) {
+                                Files.createDirectory(destPath);
+                            }
+                        } else if(Files.exists(destPath)) {
+                            Log.i("[Platform Helper] Resource already present" + destPrefix + relativeName);
                         } else {
                             Log.i("[Platform Helper] Installing resource " + destPrefix + relativeName);
                             File dest = new File(destPath.toString());
