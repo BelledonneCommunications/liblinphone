@@ -1839,9 +1839,9 @@ bool LocalConference::validateNewParameters(const LinphonePrivate::ConferencePar
 		return false;
 	}
 
-	if (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()) {
-		lError() << "Conference address change is not allowed: actual " << confParams->getConferenceAddress()
-		         << " new value " << newConfParams.getConferenceAddress();
+	if (*confParams->getConferenceAddress() != *newConfParams.getConferenceAddress()) {
+		lError() << "Conference address change is not allowed: actual " << *confParams->getConferenceAddress()
+		         << " new value " << *newConfParams.getConferenceAddress();
 		return false;
 	}
 

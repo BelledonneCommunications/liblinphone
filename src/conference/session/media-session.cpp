@@ -275,7 +275,8 @@ void MediaSessionPrivate::accepted() {
 	/* Reset the internal call update flag, so it doesn't risk to be copied and used in further re-INVITEs */
 	getParams()->getPrivate()->setInternalCallUpdate(false);
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
-	std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> cmd = op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> md = cmd;
 	if (!md && (prevState == CallSession::State::OutgoingEarlyMedia) && resultDesc) {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
@@ -285,7 +286,7 @@ void MediaSessionPrivate::accepted() {
 	bool updatingConference = conferenceInfo && (conferenceInfo->getState() == ConferenceInfo::State::Updated);
 	// Do not reject media session if the client is trying to update a conference
 	if (rejectMediaSession(rmd, md) && !updatingConference) {
-		lInfo() << "Rejecting media session";
+		lInfo() << "Rejecting media session [" << this << "]";
 		md = nullptr;
 	}
 
@@ -437,6 +438,7 @@ void MediaSessionPrivate::accepted() {
 					default:
 						lInfo() << "Incompatible SDP answer received, restoring previous state ["
 						        << Utils::toString(prevState) << "]";
+						resultDesc = cmd;
 						setState(prevState, "Incompatible media parameters.");
 						break;
 				}
@@ -797,8 +799,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		SalErrorInfo sei;
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
-		std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
-		if (rejectMediaSession(rmd, md)) {
+		std::shared_ptr<SalMediaDescription> &cmd = op->getFinalMediaDescription();
+		if (rejectMediaSession(rmd, cmd)) {
 			lWarning() << "Session [" << q << "] is going to be rejected because of an incompatible negotiated SDP";
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, "Incompatible SDP", nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
@@ -806,8 +808,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			return;
 		}
 		std::shared_ptr<SalMediaDescription> &prevResultDesc = resultDesc;
-		if (isUpdate && prevResultDesc && md) {
-			int diff = md->equal(*prevResultDesc);
+		if (isUpdate && prevResultDesc && cmd) {
+			int diff = cmd->equal(*prevResultDesc);
 			if (diff & (SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED | SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED)) {
 				lWarning() << "Cannot accept this update, it is changing parameters that require user approval";
 				sal_error_info_set(&sei, SalReasonUnknown, "SIP", 504,
@@ -3504,8 +3506,14 @@ void MediaSessionPrivate::setTerminated() {
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate(CallSession::State nextState, const string &stateInfo) {
 	op->accept();
-	std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
-	if (md && !md->isEmpty()) updateStreams(md, nextState);
+	std::shared_ptr<SalMediaDescription> &cmd = op->getFinalMediaDescription();
+	if (cmd) {
+		if (cmd->isEmpty()) {
+			resultDesc = cmd;
+		} else {
+			updateStreams(cmd, nextState);
+		}
+	}
 	setState(nextState, stateInfo);
 	getCurrentParams()->getPrivate()->setInConference(getParams()->getPrivate()->getInConference());
 
@@ -3818,6 +3826,10 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		} else {
 			getCurrentParams()->enableRealtimeText(false);
 		}
+	} else {
+		getCurrentParams()->enableAudio(false);
+		getCurrentParams()->enableVideo(false);
+		getCurrentParams()->enableRealtimeText(false);
 	}
 	getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(isUpdateSentWhenIceCompleted());
 }
@@ -3895,7 +3907,9 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 		}
 		updateStreams(newMd, CallSession::State::StreamsRunning);
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
-	} else expectMediaInAck = true;
+	} else {
+		expectMediaInAck = true;
+	}
 
 	return 0;
 }
@@ -4835,7 +4849,7 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		                             isCapabilityNegotiationReInvite);
 		const auto &localDesc = d->localDesc;
 
-		auto updateCompletionTask = [this, method, subject, localDesc]() -> LinphoneStatus {
+		auto updateCompletionTask = [this, method, subject, localDesc, isOfferer]() -> LinphoneStatus {
 			L_D();
 
 			CallSession::State previousState = d->state;
@@ -4855,17 +4869,17 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			// therefore the local description must be updated to include ICE candidates for every stream
 			const auto currentLocalDesc = d->localDesc;
 			d->localDesc = localDesc;
-			d->updateLocalMediaDescriptionFromIce(!getCore()->getCCore()->sip_conf.sdp_200_ack);
+			d->updateLocalMediaDescriptionFromIce(isOfferer);
 
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
-				d->op->setLocalMediaDescription(nullptr);
-			} else {
+			if (isOfferer) {
 				d->op->setLocalMediaDescription(d->localDesc);
+			} else {
+				d->op->setLocalMediaDescription(nullptr);
 			}
 			LinphoneStatus res = d->startUpdate(method, subject);
 
 			d->localDesc = currentLocalDesc;
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+			if (!isOfferer) {
 				/* We are NOT offering, set local media description after sending the call so that we are ready to
 				 * process the remote offer when it will arrive. */
 				d->op->setLocalMediaDescription(d->localDesc);
