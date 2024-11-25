@@ -197,10 +197,10 @@ LinphoneCoreManager *create_core_mgr_with_capability_negotiation_setup(const cha
 #ifdef VIDEO_ENABLED
 		// important: VP8 has really poor performances with the mire camera, at least
 		// on iOS - so when ever h264 is available, let's use it instead
-		LinphonePayloadType *type = linphone_core_get_payload_type(mgr->lc, "h264", -1, -1);
-		if (type != NULL) {
-			linphone_payload_type_unref(type);
+		LinphonePayloadType *h264_payload = linphone_core_get_payload_type(mgr->lc, "h264", -1, -1);
+		if (h264_payload != NULL) {
 			disable_all_video_codecs_except_one(mgr->lc, "h264");
+			linphone_payload_type_unref(h264_payload);
 		}
 
 		linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
@@ -487,6 +487,8 @@ void pause_resume_calls(LinphoneCoreManager *caller, LinphoneCoreManager *callee
 		LinphoneMediaEncryption callerEncryption =
 		    linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall));
 
+		ms_message("%s pauses call with %s", linphone_core_get_identity(callee->lc),
+		           linphone_core_get_identity(caller->lc));
 		// Pause callee call
 		BC_ASSERT_TRUE(pause_call_1(callee, calleeCall, caller, callerCall));
 		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
@@ -497,6 +499,8 @@ void pause_resume_calls(LinphoneCoreManager *caller, LinphoneCoreManager *callee
 		stats caller_stat = caller->stat;
 		stats callee_stat = callee->stat;
 
+		ms_message("%s resumes call with %s", linphone_core_get_identity(callee->lc),
+		           linphone_core_get_identity(caller->lc));
 		linphone_call_resume(calleeCall);
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &callee->stat.number_of_LinphoneCallStreamsRunning,
 		                        callee_stat.number_of_LinphoneCallStreamsRunning + 1));
@@ -524,6 +528,8 @@ void pause_resume_calls(LinphoneCoreManager *caller, LinphoneCoreManager *callee
 		check_stream_encryption(calleeCall);
 
 		// Pause caller call
+		ms_message("%s pauses call with %s", linphone_core_get_identity(caller->lc),
+		           linphone_core_get_identity(callee->lc));
 		BC_ASSERT_TRUE(pause_call_1(caller, callerCall, callee, calleeCall));
 		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
 
@@ -533,6 +539,8 @@ void pause_resume_calls(LinphoneCoreManager *caller, LinphoneCoreManager *callee
 		caller_stat = caller->stat;
 		callee_stat = callee->stat;
 
+		ms_message("%s resumes call with %s", linphone_core_get_identity(caller->lc),
+		           linphone_core_get_identity(callee->lc));
 		linphone_call_resume(callerCall);
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &callee->stat.number_of_LinphoneCallStreamsRunning,
 		                        callee_stat.number_of_LinphoneCallStreamsRunning + 1));

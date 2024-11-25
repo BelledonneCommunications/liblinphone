@@ -1831,6 +1831,20 @@ static void group_chat_room_with_subscribe_error(void) {
 	group_chat_room_with_sip_errors_base(false, true, false);
 }
 
+void chat_room_session_state_changed_no_ack(BCTBX_UNUSED(LinphoneChatRoom *cr),
+                                            LinphoneCallState cstate,
+                                            BCTBX_UNUSED(const char *msg)) {
+	if (cstate == LinphoneCallConnected) {
+		LinphoneCoreManager *marie2 = (LinphoneCoreManager *)linphone_chat_room_get_user_data(cr);
+		LinphoneAddress *marie2DeviceAddr =
+		    linphone_account_get_contact_address(linphone_core_get_default_account(marie2->lc));
+		char *marie2_proxy_contact_str = linphone_address_as_string(marie2DeviceAddr);
+		ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(marie2->lc),
+		           marie2_proxy_contact_str);
+		ms_free(marie2_proxy_contact_str);
+		linphone_core_set_network_reachable(marie2->lc, FALSE);
+	}
+}
 static void group_chat_room_with_invite_error_when_updating_subject(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -2020,7 +2034,16 @@ static void group_chat_room_with_invite_error_when_updating_subject(void) {
 		devices = bctbx_list_append(devices, identity);
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
-			linphone_chat_room_set_participant_devices(chatRoom->toC(), marie.getCMgr()->identity, devices);
+			LinphoneChatRoom *cr = chatRoom->toC();
+			linphone_chat_room_set_user_data(cr, marie2.getCMgr());
+			// Add chat room session state changed callback to turn off Marie2's network as soon as the call session
+			// reaches the Connected state
+			LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+			linphone_chat_room_cbs_set_session_state_changed(cbs, chat_room_session_state_changed_no_ack);
+			linphone_chat_room_add_callbacks(cr, cbs);
+			linphone_chat_room_cbs_unref(cbs);
+			// Add Marie's devices
+			linphone_chat_room_set_participant_devices(cr, marie.getCMgr()->identity, devices);
 		}
 		bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
 
@@ -2029,9 +2052,6 @@ static void group_chat_room_with_invite_error_when_updating_subject(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomSessionConnected,
 		                             initialFocusStats.number_of_LinphoneChatRoomSessionConnected + 1,
 		                             liblinphone_tester_sip_timeout));
-		ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(marie2.getLc()),
-		           marie2_proxy_contact_str);
-		linphone_core_set_network_reachable(marie2.getLc(), FALSE);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomSessionEnd,
 		                             initialFocusStats.number_of_LinphoneChatRoomSessionEnd + 1, 80000));
