@@ -193,6 +193,25 @@ void Vcard::setUrl(const string &url) {
 	mUrl = url;
 }
 
+void Vcard::setStarred(bool starred) {
+	for (auto &property : mBelCard->getProperties()) {
+		if (property->getName() == "X-LINPHONE-STARRED") {
+			property->setValue(starred ? "1" : "0");
+			return;
+		}
+	}
+
+	shared_ptr<belcard::BelCardProperty> starredProperty;
+	if (mUseVCard3Grammar) {
+		starredProperty = belcard::BelCardGeneric::createV3<belcard::BelCardProperty>();
+	} else {
+		starredProperty = belcard::BelCardGeneric::create<belcard::BelCardProperty>();
+	}
+	starredProperty->setName("X-LINPHONE-STARRED");
+	starredProperty->setValue(starred ? "1" : "0");
+	mBelCard->addProperty(starredProperty);
+}
+
 // -----------------------------------------------------------------------------
 
 const string &Vcard::getEtag() const {
@@ -278,6 +297,15 @@ const string &Vcard::getUid() const {
 
 const string &Vcard::getUrl() const {
 	return mUrl;
+}
+
+bool Vcard::getStarred() const {
+	for (auto &property : mBelCard->getProperties()) {
+		if (property->getName() == "X-LINPHONE-STARRED") {
+			return property->getValue() == "1";
+		}
+	}
+	return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -516,6 +544,9 @@ void Vcard::setUid(BCTBX_UNUSED(const string &uid)) {
 void Vcard::setUrl(BCTBX_UNUSED(const string &url)) {
 }
 
+void Vcard::setStarred(BCTBX_UNUSED(bool starred)) {
+}
+
 // -----------------------------------------------------------------------------
 
 const string &Vcard::getEtag() const {
@@ -572,6 +603,10 @@ const string &Vcard::getUid() const {
 
 const string &Vcard::getUrl() const {
 	return emptyString;
+}
+
+bool Vcard::getStarred() const {
+	return false;
 }
 
 // -----------------------------------------------------------------------------

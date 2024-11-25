@@ -2344,7 +2344,7 @@ std::shared_ptr<Friend> MainDbPrivate::selectFriend(const soci::row &row) const 
 	f->enableSubscribes(!!row.get<int>(3));
 	f->setRefKey(row.get<string>(4));
 	f->mPresenceReceived = !!row.get<int>(8);
-	f->mIsStarred = !!row.get<int>(9);
+	f->setStarred(!!row.get<int>(9));
 	f->mStorageId = dbFriendId;
 
 	return f;

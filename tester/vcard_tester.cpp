@@ -54,6 +54,16 @@ static void linphone_vcard_import_export_friends_test(void) {
 	BC_ASSERT_EQUAL(count, 3, int, "%d");
 	friends = linphone_friend_list_get_friends(lfl);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(friends), 3, unsigned int, "%u");
+	const bctbx_list_t *it;
+	for (it = friends; it != NULL; it = it->next) {
+		LinphoneFriend *lfriend = (LinphoneFriend *)it->data;
+		if (strcmp(linphone_friend_get_name(lfriend), "Sylvain Berfini") == 0) {
+			BC_ASSERT_TRUE(linphone_friend_get_starred(lfriend));
+			linphone_friend_set_starred(lfriend, FALSE);
+		} else {
+			BC_ASSERT_FALSE(linphone_friend_get_starred(lfriend));
+		}
+	}
 
 	linphone_friend_list_export_friends_as_vcard4_file(lfl, export_filepath);
 
@@ -62,6 +72,10 @@ static void linphone_vcard_import_export_friends_test(void) {
 	BC_ASSERT_EQUAL(count, 3, int, "%d");
 	friends = linphone_friend_list_get_friends(lfl);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(friends), 3, unsigned int, "%u");
+	for (it = friends; it != NULL; it = it->next) {
+		const LinphoneFriend *lfriend = (LinphoneFriend *)it->data;
+		BC_ASSERT_FALSE(linphone_friend_get_starred(lfriend));
+	}
 	linphone_friend_list_unref(lfl);
 
 	remove(export_filepath);

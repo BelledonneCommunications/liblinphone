@@ -8,12 +8,14 @@ X-PHONETIC-MIDDLE-NAME:
 X-PHONETIC-LAST-NAME:
 GENDER:M
 IMPP;PREF=1;TYPE=work:sip:sylvain@sip.linphone.org
+X-LINPHONE-STARRED:1
 END:VCARD
 BEGIN:VCARD
 VERSION:4.0
 KIND:individual
 FN:François Grisez
 N:Grisez;François;;;
+X-LINPHONE-STARRED:0
 IMPP;TYPE=work:sip:francois@sip.linphone.org
 END:VCARD
 BEGIN:VCARD

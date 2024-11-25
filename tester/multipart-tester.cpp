@@ -65,7 +65,7 @@ check_contents(const bctbx_list_t *contents, bool first_file_transfer, bool seco
 					BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), 1095946, int, "%d");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
 				} else {
-					BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), 497, int, "%d");
+					BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), 541, int, "%d");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "vcards.vcf");
 				}
 			} else if (first_file_transfer || second_file_transfer) {
@@ -73,7 +73,7 @@ check_contents(const bctbx_list_t *contents, bool first_file_transfer, bool seco
 					BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), 1095946, int, "%d");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
 				} else {
-					BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), 497, int, "%d");
+					BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), 541, int, "%d");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "vcards.vcf");
 				}
 			}

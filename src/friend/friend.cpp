@@ -184,6 +184,9 @@ void Friend::setRefKey(const std::string &key) {
 }
 
 void Friend::setStarred(bool starred) {
+	if (linphone_core_vcard_supported() && mVcard) {
+		mVcard->setStarred(starred);
+	}
 	mIsStarred = starred;
 }
 
@@ -413,6 +416,9 @@ const std::string &Friend::getRefKey() const {
 }
 
 bool Friend::getStarred() const {
+	if (linphone_core_vcard_supported() && mVcard) {
+		return mVcard->getStarred();
+	}
 	return mIsStarred;
 }
 
