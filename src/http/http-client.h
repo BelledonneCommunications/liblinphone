@@ -107,7 +107,7 @@ class HttpClient : public CoreAccessor {
 public:
 	HttpClient(const std::shared_ptr<Core> &core);
 	~HttpClient();
-	/* Create a http request */
+	/* Create a http request, throws exception if it cannot be constructed. */
 	HttpRequest &createRequest(const std::string &method, const std::string &uri);
 	/*
 	 * This method is provided for backward compatibility with code written before the HttpClient

@@ -72,7 +72,7 @@ HttpRequest &HttpClient::createRequest(const std::string &method, const std::str
 
 HttpRequest::HttpRequest(HttpClient &client, const std::string &method, const std::string &uri) : mClient(client) {
 	auto uriParsed = belle_generic_uri_parse(uri.c_str());
-	if (!uriParsed) return;
+	if (!uriParsed) throw std::invalid_argument("Bad URI");
 	mRequest = belle_http_request_create(method.c_str(), uriParsed, nullptr);
 
 	const char *core_user_agent = linphone_core_get_user_agent(client.getCore()->getCCore());

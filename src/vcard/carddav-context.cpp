@@ -302,14 +302,18 @@ void CardDAVContext::sendQuery(const shared_ptr<CardDAVQuery> &query, bool cance
 		mHttpRequest = nullptr;
 	}
 	mQuery = query;
-
-	auto &httpRequest = getCore()->getHttpClient().createRequest(query->mMethod, query->mUrl);
-	mHttpRequest = &httpRequest;
+	try {
+		auto &httpRequest = getCore()->getHttpClient().createRequest(query->mMethod, query->mUrl);
+		mHttpRequest = &httpRequest;
+	} catch (const std::exception &e) {
+		lError() << "Could not build http request: " << e.what();
+		return;
+	}
 
 	if (!query->mDepth.empty()) {
-		httpRequest.addHeader("Depth", query->mDepth);
+		mHttpRequest->addHeader("Depth", query->mDepth);
 	} else if (!query->mIfmatch.empty()) {
-		httpRequest.addHeader("If-Match", query->mIfmatch);
+		mHttpRequest->addHeader("If-Match", query->mIfmatch);
 	}
 
 	ContentType contentType = ContentType("application/xml");
@@ -320,11 +324,11 @@ void CardDAVContext::sendQuery(const shared_ptr<CardDAVQuery> &query, bool cance
 
 	if (!query->mBody.empty()) {
 		auto content = Content(ContentType(contentType), query->mBody);
-		httpRequest.setBody(content);
+		mHttpRequest->setBody(content);
 	}
 
 	auto context = this;
-	httpRequest.execute([query, context](const HttpResponse &response) {
+	mHttpRequest->execute([query, context](const HttpResponse &response) {
 		if (context && query) {
 			context->mHttpRequest = nullptr;
 

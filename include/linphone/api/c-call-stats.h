@@ -86,42 +86,42 @@ LINPHONE_PUBLIC void linphone_call_stats_set_user_data(LinphoneCallStats *stats,
 LINPHONE_PUBLIC LinphoneStreamType linphone_call_stats_get_type(const LinphoneCallStats *stats);
 
 /**
- * Get the local loss rate since last report
+ * Get the local loss rate since last report, expressed as a percentage.
  * @param stats #LinphoneCallStats object @notnil
  * @return The sender loss rate
  **/
 LINPHONE_PUBLIC float linphone_call_stats_get_sender_loss_rate(const LinphoneCallStats *stats);
 
 /**
- * Gets the remote reported loss rate since last report
+ * Gets the remote reported loss rate since last report, expressed as a percentage.
  * @param stats #LinphoneCallStats object @notnil
  * @return The receiver loss rate
  **/
 LINPHONE_PUBLIC float linphone_call_stats_get_receiver_loss_rate(const LinphoneCallStats *stats);
 
 /**
- * Get the local loss rate since last report
+ * Get the local loss rate since last report, expressed as a percentage.
  * @param stats #LinphoneCallStats object @notnil
  * @return The local loss rate
  **/
 LINPHONE_PUBLIC float linphone_call_stats_get_local_loss_rate(const LinphoneCallStats *stats);
 
 /**
- * Gets the local late rate since last report
+ * Gets the local late rate since last report, expressed as a percentage.
  * @param stats #LinphoneCallStats object @notnil
  * @return The local late rate
  **/
 LINPHONE_PUBLIC float linphone_call_stats_get_local_late_rate(const LinphoneCallStats *stats);
 
 /**
- * Gets the local interarrival jitter
+ * Gets the local interarrival jitter, expressed in seconds.
  * @param stats #LinphoneCallStats object @notnil
  * @return The interarrival jitter at last emitted sender report
  **/
 LINPHONE_PUBLIC float linphone_call_stats_get_sender_interarrival_jitter(const LinphoneCallStats *stats);
 
 /**
- * Gets the remote reported interarrival jitter
+ * Gets the remote reported interarrival jitter, expressed in seconds.
  * @param stats #LinphoneCallStats object @notnil
  * @return The interarrival jitter at last received receiver report
  **/

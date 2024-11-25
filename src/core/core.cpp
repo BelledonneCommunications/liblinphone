@@ -2884,31 +2884,36 @@ bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
 	if (!ai->getClientId().empty()) {
 		form += "&client_id=" + ai->getClientId();
 	}
-	getHttpClient()
-	    .createRequest("POST", ai->getTokenEndpointUri())
-	    .setBody(Content(ContentType("application", "x-www-form-urlencoded"), form))
-	    .execute([this, ai](const HttpResponse &response) {
-		    if (response.getStatusCode() == 200) {
-			    JsonDocument doc(response.getBody());
-			    const Json::Value &root = doc.getRoot();
-			    if (!root.isNull()) {
-				    auto bearerToken = (new BearerToken(root["access_token"].asString(),
-				                                        time(NULL) + (time_t)root["expires_in"].asInt64()))
-				                           ->toSharedPtr();
-				    ai->setAccessToken(bearerToken);
-				    string refreshToken = root["refresh_token"].asString();
-				    if (!refreshToken.empty()) {
-					    // FIXME: how to get the expiration of the refresh token ?
-					    auto bearerRefreshToken = (new BearerToken(refreshToken, time(NULL)))->toSharedPtr();
-					    ai->setRefreshToken(bearerRefreshToken);
+	try {
+		getHttpClient()
+		    .createRequest("POST", ai->getTokenEndpointUri())
+		    .setBody(Content(ContentType("application", "x-www-form-urlencoded"), form))
+		    .execute([this, ai](const HttpResponse &response) {
+			    if (response.getStatusCode() == 200) {
+				    JsonDocument doc(response.getBody());
+				    const Json::Value &root = doc.getRoot();
+				    if (!root.isNull()) {
+					    auto bearerToken = (new BearerToken(root["access_token"].asString(),
+					                                        time(NULL) + (time_t)root["expires_in"].asInt64()))
+					                           ->toSharedPtr();
+					    ai->setAccessToken(bearerToken);
+					    string refreshToken = root["refresh_token"].asString();
+					    if (!refreshToken.empty()) {
+						    // FIXME: how to get the expiration of the refresh token ?
+						    auto bearerRefreshToken = (new BearerToken(refreshToken, time(NULL)))->toSharedPtr();
+						    ai->setRefreshToken(bearerRefreshToken);
+					    }
+					    /* this will resubmit all pending authentications */
+					    linphone_core_add_auth_info(getCCore(), ai->toC());
+					    return;
 				    }
-				    /* this will resubmit all pending authentications */
-				    linphone_core_add_auth_info(getCCore(), ai->toC());
-				    return;
 			    }
-		    }
-		    lError() << "Token refreshing failed.";
-	    });
+			    lError() << "Token refreshing failed.";
+		    });
+	} catch (const std::exception &e) {
+		lError() << "Cannot refresh access token: " << e.what();
+		return false;
+	}
 	return true;
 }
 

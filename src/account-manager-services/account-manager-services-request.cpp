@@ -50,41 +50,48 @@ AccountManagerServicesRequest::~AccountManagerServicesRequest() {
 // =============================================================================
 
 void AccountManagerServicesRequest::submit() {
-	auto &httpRequest =
-	    getCore()->getHttpClient().createRequest(mHttpRequestType, mUrl).addHeader("Accept", "application/json");
+	try {
+		auto &httpRequest =
+		    getCore()->getHttpClient().createRequest(mHttpRequestType, mUrl).addHeader("Accept", "application/json");
 
-	if (!mFrom.empty()) {
-		httpRequest.addHeader("From", mFrom);
-	} else if (mTesterEnv) {
-		lWarning() << "[Account Manager Services] Tester env flag set, altering headers!";
-		httpRequest.addHeader("From", "sip:admin_test@sip.example.org");
-		httpRequest.addHeader("x-api-key", "no_secret_at_all");
-	}
-
-	if (!mLanguage.empty()) {
-		httpRequest.addHeader("Accept-Language", mLanguage);
-	}
-
-	if (!mJsonParams.empty()) {
-		Json::StreamWriterBuilder builder;
-		builder["indentation"] = "";
-		auto content = Content(ContentType("application/json"), std::string(Json::writeString(builder, mJsonParams)));
-		httpRequest.setBody(content);
-	}
-
-	auto request = this;
-	httpRequest.execute([request](const HttpResponse &response) {
-		try {
-			int code = response.getStatusCode();
-			if (code >= 200 && code < 300) {
-				request->handleSuccess(response);
-			} else {
-				request->handleError(response);
-			}
-		} catch (const std::exception &e) {
-			lError() << e.what();
+		if (!mFrom.empty()) {
+			httpRequest.addHeader("From", mFrom);
+		} else if (mTesterEnv) {
+			lWarning() << "[Account Manager Services] Tester env flag set, altering headers!";
+			httpRequest.addHeader("From", "sip:admin_test@sip.example.org");
+			httpRequest.addHeader("x-api-key", "no_secret_at_all");
 		}
-	});
+
+		if (!mLanguage.empty()) {
+			httpRequest.addHeader("Accept-Language", mLanguage);
+		}
+
+		if (!mJsonParams.empty()) {
+			Json::StreamWriterBuilder builder;
+			builder["indentation"] = "";
+			auto content =
+			    Content(ContentType("application/json"), std::string(Json::writeString(builder, mJsonParams)));
+			httpRequest.setBody(content);
+		}
+
+		auto request = this;
+		httpRequest.execute([request](const HttpResponse &response) {
+			try {
+				int code = response.getStatusCode();
+				if (code >= 200 && code < 300) {
+					request->handleSuccess(response);
+				} else {
+					request->handleError(response);
+				}
+			} catch (const std::exception &e) {
+				lError() << e.what();
+			}
+		});
+	} catch (const std::invalid_argument &e) {
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(AccountManagerServicesRequest, this,
+		                                  linphone_account_manager_services_request_cbs_get_request_error, 0, e.what(),
+		                                  nullptr);
+	}
 }
 
 // =============================================================================
