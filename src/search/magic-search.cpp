@@ -300,6 +300,17 @@ list<shared_ptr<SearchResult>> MagicSearch::processResults(list<shared_ptr<Searc
 	return getLastSearch();
 }
 
+static bool findAddress(const list<shared_ptr<SearchResult>> &list, const LinphoneAddress *addr) {
+	for (auto r : list) {
+		if (r->getAddress()) {
+			if (linphone_address_weak_equal(r->getAddress()->toC(), addr)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 list<shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 	list<shared_ptr<SearchResult>> returnList;
 
@@ -325,10 +336,13 @@ list<shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 				LinphoneAddress *lastResult =
 				    linphone_core_interpret_url_2(this->getCore()->getCCore(), strTmp.c_str(), apply_prefix);
 				if (lastResult) {
-					returnList.push_back(SearchResult::create((unsigned int)0,
-					                                          Address::toCpp(lastResult)->getSharedFromThis(), "",
-					                                          nullptr, LinphoneMagicSearchSourceRequest));
-					linphone_address_unref(lastResult);
+					// Check if this address isn't already in results list
+					if (!findAddress(returnList, lastResult)) {
+						returnList.push_back(SearchResult::create((unsigned int)0,
+						                                          Address::toCpp(lastResult)->getSharedFromThis(), "",
+						                                          nullptr, LinphoneMagicSearchSourceRequest));
+						linphone_address_unref(lastResult);
+					}
 				}
 			}
 		}
@@ -383,17 +397,6 @@ const list<shared_ptr<SearchResult>> &MagicSearch::getSearchCache() const {
 
 void MagicSearch::setSearchCache(list<shared_ptr<SearchResult>> cache) {
 	if (mCacheResult != cache) mCacheResult = cache;
-}
-
-static bool findAddress(const list<shared_ptr<SearchResult>> &list, const LinphoneAddress *addr) {
-	for (auto r : list) {
-		if (r->getAddress()) {
-			if (linphone_address_weak_equal(r->getAddress()->toC(), addr)) {
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 list<shared_ptr<SearchResult>>
