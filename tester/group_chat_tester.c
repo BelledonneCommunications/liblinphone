@@ -6361,6 +6361,7 @@ static void exhume_one_to_one_chat_room_1(void) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneChatRoomStateTerminated, 1,
 		                              liblinphone_tester_sip_timeout));
+		marieOneToOneCr = NULL;
 		/* The chatroom from Pauline is expected to terminate as well */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneChatRoomStateTerminated,
 		                              1, liblinphone_tester_sip_timeout));
@@ -6395,6 +6396,7 @@ static void exhume_one_to_one_chat_room_1(void) {
 			BC_ASSERT_PTR_NOT_NULL(conf_id);
 			const char *exhumed_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
 			BC_ASSERT_PTR_NOT_NULL(exhumed_conf_id);
+			if (!exhumed_conf_id || !conf_id) goto end;
 			BC_ASSERT_STRING_NOT_EQUAL(conf_id, exhumed_conf_id);
 			marieOneToOneCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats,
 			                                                       exhumedConfAddr, "one to one", 1, FALSE);
@@ -6489,6 +6491,7 @@ static void exhume_one_to_one_chat_room_2(void) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneChatRoomStateTerminated, 1,
 		                              liblinphone_tester_sip_timeout));
+		marieOneToOneCr = NULL;
 		/* The chatroom from Pauline is expected to terminate as well */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneChatRoomStateTerminated,
 		                              1, liblinphone_tester_sip_timeout));
@@ -6519,6 +6522,7 @@ static void exhume_one_to_one_chat_room_2(void) {
 			BC_ASSERT_PTR_NOT_NULL(conf_id);
 			const char *exhumed_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
 			BC_ASSERT_PTR_NOT_NULL(exhumed_conf_id);
+			if (!exhumed_conf_id || !conf_id) goto end;
 			BC_ASSERT_STRING_NOT_EQUAL(conf_id, exhumed_conf_id);
 			LinphoneAddress *paulineNewConfAddr =
 			    linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
@@ -6694,6 +6698,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneChatRoomStateTerminated, 1,
 		                              liblinphone_tester_sip_timeout));
+		marieOneToOneCr = NULL;
 		/* The chatroom from Pauline won't be terminated as it is offline */
 		BC_ASSERT_FALSE(
 		    wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneChatRoomStateTerminated, 1, 5000));
@@ -6955,6 +6960,7 @@ static void exhume_one_to_one_chat_room_4(void) {
 			BC_ASSERT_PTR_NOT_NULL(conf_id);
 			const char *exhumed_conf_id = linphone_address_get_uri_param(exhumedConfAddr, "conf-id");
 			BC_ASSERT_PTR_NOT_NULL(exhumed_conf_id);
+			if (!exhumed_conf_id || !conf_id) goto end;
 			BC_ASSERT_STRING_NOT_EQUAL(conf_id, exhumed_conf_id);
 			marieOneToOneCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats,
 			                                                       exhumedConfAddr, "one to one", 1, FALSE);
