@@ -4959,8 +4959,9 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd,
 		                             isCapabilityNegotiationReInvite);
 		const auto &localDesc = d->localDesc;
+		const auto &contentList = msp->getCustomContents();
 
-		auto updateCompletionTask = [this, method, subject, localDesc, isOfferer]() -> LinphoneStatus {
+		auto updateCompletionTask = [this, method, subject, localDesc, isOfferer, contentList]() -> LinphoneStatus {
 			L_D();
 
 			CallSession::State previousState = d->state;
@@ -4987,6 +4988,13 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			} else {
 				d->op->setLocalMediaDescription(nullptr);
 			}
+
+			list<Content> contents;
+			for (const auto &c : contentList) {
+				contents.push_back(*c);
+			}
+			d->op->setLocalBodies(contents);
+
 			LinphoneStatus res = d->startUpdate(method, subject);
 
 			d->localDesc = currentLocalDesc;

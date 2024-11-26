@@ -92,6 +92,7 @@ public:
 
 	void addCustomContent(const std::shared_ptr<Content> &content);
 	const std::list<std::shared_ptr<Content>> &getCustomContents() const;
+	void clearCustomContents();
 
 	std::shared_ptr<Account> getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);

@@ -1331,7 +1331,12 @@ void Call::setSpeakerVolumeGain(float value) {
 }
 
 MediaSessionParams *Call::createCallParams() {
-	return static_pointer_cast<MediaSession>(getActiveSession())->createMediaSessionParams();
+	auto *params = static_pointer_cast<MediaSession>(getActiveSession())->createMediaSessionParams();
+
+	// Clear custom contents as we don't want them to be copied to another MediaSessionParams
+	params->clearCustomContents();
+
+	return params;
 }
 
 void Call::setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {

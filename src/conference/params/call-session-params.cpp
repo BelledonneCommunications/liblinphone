@@ -344,6 +344,11 @@ const list<std::shared_ptr<Content>> &CallSessionParams::getCustomContents() con
 	return d->customContents;
 }
 
+void CallSessionParams::clearCustomContents() {
+	L_D();
+	d->customContents.clear();
+}
+
 // -----------------------------------------------------------------------------
 
 void CallSessionParams::setFromHeader(const std::string &fromValue) {
