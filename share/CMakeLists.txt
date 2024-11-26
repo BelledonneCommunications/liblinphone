@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2024 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -24,10 +24,10 @@
 set(ROOTCA_FILE "${CMAKE_CURRENT_SOURCE_DIR}/rootca.pem" PARENT_SCOPE)
 
 set(GRAMMAR_FILES
-	"${CMAKE_CURRENT_SOURCE_DIR}/cpim_grammar"
-	"${CMAKE_CURRENT_SOURCE_DIR}/ics_grammar"
-	"${CMAKE_CURRENT_SOURCE_DIR}/identity_grammar"
-	"${CMAKE_CURRENT_SOURCE_DIR}/mwi_grammar"
+	"${CMAKE_CURRENT_SOURCE_DIR}/cpim_grammar.belr"
+	"${CMAKE_CURRENT_SOURCE_DIR}/ics_grammar.belr"
+	"${CMAKE_CURRENT_SOURCE_DIR}/identity_grammar.belr"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mwi_grammar.belr"
 	PARENT_SCOPE
 )
 

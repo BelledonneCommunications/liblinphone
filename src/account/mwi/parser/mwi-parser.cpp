@@ -30,7 +30,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace {
-string MwiGrammar("mwi_grammar");
+string MwiGrammar("mwi_grammar.belr");
 }
 
 namespace Mwi {

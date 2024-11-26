@@ -45,7 +45,7 @@ private:
 	AddressParser();
 	std::shared_ptr<belr::Parser<void *>> mParser;
 	static std::unique_ptr<AddressParser> sInstance;
-	static constexpr const char *IdentityGrammar = "identity_grammar";
+	static constexpr const char *IdentityGrammar = "identity_grammar.belr";
 };
 
 LINPHONE_END_NAMESPACE

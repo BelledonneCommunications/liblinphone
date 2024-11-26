@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone 
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -673,7 +673,7 @@ public class AndroidPlatformHelper {
         copyAssetsFromPackage(mContext, "org.linphone.core", ".");
         Log.i("[Platform Helper] Copy from assets done");
 
-        if (getResourceIdentifierFromName("cpim_grammar") != 0) {
+        if (getResourceIdentifierFromName("cpim_grammar.belr") != 0) {
             copyLegacyAssets();
         }
     }
@@ -688,17 +688,17 @@ public class AndroidPlatformHelper {
         String mRingbackSoundFile = basePath + "/share/sounds/linphone/ringback.wav";
         String mPauseSoundFile = basePath + "/share/sounds/linphone/rings/dont_wait_too_long.mkv";
         String mErrorToneFile = basePath + "/share/sounds/linphone/incoming_chat.wav";
-        String mGrammarCpimFile = basePath + "/share/belr/grammars/cpim_grammar";
-        String mGrammarIcsFile = basePath + "/share/belr/grammars/ics_grammar";
-        String mGrammarIdentityFile = basePath + "/share/belr/grammars/identity_grammar";
-        String mGrammarMwiFile = basePath + "/share/belr/grammars/mwi_grammar";
-        String mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
+        String mGrammarCpimFile = basePath + "/share/belr/grammars/cpim_grammar.belr";
+        String mGrammarIcsFile = basePath + "/share/belr/grammars/ics_grammar.belr";
+        String mGrammarIdentityFile = basePath + "/share/belr/grammars/identity_grammar.belr";
+        String mGrammarMwiFile = basePath + "/share/belr/grammars/mwi_grammar.belr";
+        String mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar.belr";
 
-        copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar"), mGrammarCpimFile);
-        copyEvenIfExists(getResourceIdentifierFromName("ics_grammar"), mGrammarIcsFile);
-        copyEvenIfExists(getResourceIdentifierFromName("identity_grammar"), mGrammarIdentityFile);
-        copyEvenIfExists(getResourceIdentifierFromName("mwi_grammar"), mGrammarMwiFile);
-        copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar"), mGrammarVcardFile);
+        copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar.belr"), mGrammarCpimFile);
+        copyEvenIfExists(getResourceIdentifierFromName("ics_grammar.belr"), mGrammarIcsFile);
+        copyEvenIfExists(getResourceIdentifierFromName("identity_grammar.belr"), mGrammarIdentityFile);
+        copyEvenIfExists(getResourceIdentifierFromName("mwi_grammar.belr"), mGrammarMwiFile);
+        copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar.belr"), mGrammarVcardFile);
         copyEvenIfExists(getResourceIdentifierFromName("rootca"), mLinphoneRootCaFile);
         copyIfNotExist(getResourceIdentifierFromName("notes_of_the_optimistic"), mRingSoundFile);
         copyIfNotExist(getResourceIdentifierFromName("ringback"), mRingbackSoundFile);

@@ -40,7 +40,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace {
-string IcsGrammar("ics_grammar");
+string IcsGrammar("ics_grammar.belr");
 }
 
 namespace Ics {
