@@ -752,6 +752,12 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 		retval = imee->downloadingFile(message, 0, nullptr, 0, nullptr, currentFileTransferContent);
 	}
 	if (retval == 0 || retval == -1) {
+		if (currentFileContentToTransfer->getFileSize() == 0) {
+			/* case of chunked download, the content-length was not known. Set it now it is done. */
+			size_t sz = belle_sip_body_handler_get_transfered_size(BELLE_SIP_BODY_HANDLER(bh));
+			lInfo() << "Total size downloaded in chuncked mode: " << sz << " bytes.";
+			currentFileContentToTransfer->setFileSize(sz);
+		}
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 		if (currentFileContentToTransfer->getFilePath().empty()) {
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
@@ -872,9 +878,12 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 		if (currentFileContentToTransfer) {
 			belle_sip_header_content_length_t *content_length_hdr =
 			    BELLE_SIP_HEADER_CONTENT_LENGTH(belle_sip_message_get_header(response, "Content-Length"));
-			currentFileContentToTransfer->setFileSize(
-			    belle_sip_header_content_length_get_content_length(content_length_hdr));
-			lInfo() << "Extracted content length " << currentFileContentToTransfer->getFileSize() << " from header";
+			if (content_length_hdr) {
+				currentFileContentToTransfer->setFileSize(
+				    belle_sip_header_content_length_get_content_length(content_length_hdr));
+				lInfo() << "Extracted content length " << currentFileContentToTransfer->getFileSize() << " from header";
+			}
+
 		} else {
 			lWarning() << "No file transfer information for message [" << message << "]: creating...";
 			auto content = createFileTransferInformationFromHeaders(response);
