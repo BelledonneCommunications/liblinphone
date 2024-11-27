@@ -765,19 +765,15 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 									vCard->generateUniqueId();
 									lFriend->setRefKey(vCard->getUid());
 								}
-
-								int maxResults = atoi(mConfig["max_results"][0].c_str());
-								if (maxResults == 0 || req->mFoundCount < (unsigned int)maxResults) {
-									std::shared_ptr<SearchResult> searchResult =
-									    SearchResult::create((unsigned int)0, addr, sipAddress.second, lFriend,
-									                         LinphoneMagicSearchSourceLdapServers);
-									req->mFoundEntries.push_back(searchResult);
-									++req->mFoundCount;
-								} else { // Have more result (requested max_results+1). Do not store this result to
-									     // avoid missunderstanding from user.
-									req->mHaveMoreResults = true;
-								}
 							}
+						}
+						int maxResults = atoi(mConfig["max_results"][0].c_str());
+						if (maxResults == 0 || req->mFoundCount < (unsigned int)maxResults) {
+							req->mFoundEntries.push_back(lFriend);
+							++req->mFoundCount;
+						} else { // Have more result (requested max_results+1). Do not store this result to
+							     // avoid missunderstanding from user.
+							req->mHaveMoreResults = true;
 						}
 					}
 					if (ber) ber_free(ber, 0);

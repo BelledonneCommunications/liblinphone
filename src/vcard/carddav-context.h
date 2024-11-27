@@ -99,13 +99,13 @@ private:
 	void magicSearchResultsVcardsPulled(const std::list<CardDAVResponse> &vCards);
 	void vcardsPulled(const std::list<CardDAVResponse> &vCards);
 
-	static std::string generateUrlFromServerAddressAndUid(const std::string &serverUrl);
-	static std::string parseUserPrincipalUrlValueFromXmlResponse(const std::string &body);
-	static std::string parseUserAddressBookUrlValueFromXmlResponse(const std::string &body);
-	static std::list<CardDAVResponse> parseAddressBookUrlAndCtagValueFromXmlResponse(const std::string &body);
-	static std::string parseAddressBookCtagValueFromXmlResponse(const std::string &body);
-	static std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
-	static std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
+	std::string generateUrlFromServerAddressAndUid(const std::string &serverUrl);
+	std::string parseUserPrincipalUrlValueFromXmlResponse(const std::string &body);
+	std::string parseUserAddressBookUrlValueFromXmlResponse(const std::string &body);
+	std::list<CardDAVResponse> parseAddressBookUrlAndCtagValueFromXmlResponse(const std::string &body);
+	std::string parseAddressBookCtagValueFromXmlResponse(const std::string &body);
+	std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
+	std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
 
 	std::string mCtag = "";
 	std::string mSyncUri = "";

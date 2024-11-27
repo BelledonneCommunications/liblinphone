@@ -2955,19 +2955,6 @@ static void ldap_search(void) {
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 
-	// Test space character
-	linphone_magic_search_get_contacts_list_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers,
-	                                              LinphoneMagicSearchAggregationNone); // Laure Ardy
-	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
-	stat->number_of_LinphoneMagicSearchResultReceived = 0;
-	resultList = linphone_magic_search_get_last_search(magicSearch);
-	if (ldap_available) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
-		_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);
-		_check_friend_result_list(manager->lc, resultList, 1, "sip:laure@ldap.example.org", "+33655667788");
-	} else BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
-	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
-
 	linphone_magic_search_get_contacts_list_async(magicSearch, "pa ine", "", LinphoneMagicSearchSourceLdapServers,
 	                                              LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
@@ -3009,6 +2996,28 @@ static void ldap_search(void) {
 	if (ldap_available) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, "sip:pauline@ldap.example.org", NULL);
+	} else BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
+	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+	if (ldap_available) {
+		// Test on complex filters
+		LinphoneLdapParams *params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
+		linphone_ldap_params_set_name_attribute(
+		    params, "sn+givenName"); // Note: do not use gn as it seems to be rewrite with givenName by server
+		linphone_ldap_set_params(ldap, params);
+		linphone_ldap_params_unref(params);
+	}
+
+	// Test space character
+	linphone_magic_search_get_contacts_list_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers,
+	                                              LinphoneMagicSearchAggregationNone); // Laure Ardy
+	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	if (ldap_available) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);
+		_check_friend_result_list(manager->lc, resultList, 1, "sip:laure@ldap.example.org", "+33655667788");
 	} else BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 

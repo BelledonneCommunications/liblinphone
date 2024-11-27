@@ -19,33 +19,30 @@
  */
 
 #include "ldap-magic-search-plugin.h"
+#include "friend/friend.h"
 #include "ldap.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 using namespace std;
 
-static void resultsCb(list<shared_ptr<SearchResult>> searchResults, void *data, bool_t haveMoreResults) {
+static void resultsCb(list<shared_ptr<Friend>> friends, void *data, bool_t haveMoreResults) {
 	LdapMagicSearchPlugin *ldapPlugin = (LdapMagicSearchPlugin *)data;
-	lInfo() << "[Magic Search][LDAP] Processing results";
+	lInfo() << "[Magic Search][LDAP] Processing [" << friends.size() << "] friends created";
 
-	for (auto searchResult : searchResults) {
-		if (searchResult) {
-			if (ldapPlugin->getFilter().empty() && ldapPlugin->getDomain().empty()) {
-				searchResult->setWeight(0);
-				ldapPlugin->addToResults(searchResult);
-			} else { // We have constraints : add result with weight
-				unsigned int weight = ldapPlugin->getMagicSearch().searchInAddress(
-				    searchResult->getAddress(), ldapPlugin->getFilter(), ldapPlugin->getDomain());
-				if (weight >= ldapPlugin->getMagicSearch().getMinWeight()) {
-					searchResult->setWeight(weight);
-					ldapPlugin->addToResults(searchResult);
-				}
-			}
+	list<shared_ptr<SearchResult>> resultList;
+	for (auto &lFriend : friends) {
+		auto found =
+		    ldapPlugin->getMagicSearch().searchInFriend(lFriend, ldapPlugin->getDomain(), ldapPlugin->getSource());
+		if (resultList.empty()) {
+			resultList = found;
+		} else if (!found.empty()) {
+			resultList.splice(resultList.end(), found);
 		}
 	}
+	ldapPlugin->setResults(resultList);
 
-	lInfo() << "[Magic Search][LDAP] Found " << ldapPlugin->getResults().size() << " results in LDAP."
+	lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results in LDAP."
 	        << (haveMoreResults ? " More results are available." : "");
 	if (haveMoreResults) {
 		shared_ptr<LdapParams> ldapParams = ldapPlugin->getLdapProvider()->getLdapServer();

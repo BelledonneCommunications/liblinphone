@@ -51,12 +51,15 @@ public:
 
 	void processResults(const std::list<std::shared_ptr<Friend>> &friends);
 
+	void setMoreResultsAvailable();
+
 private:
 	std::list<CardDavPropFilter> computePropFilters() const;
 
 	std::shared_ptr<CardDAVContext> mCardDavContext;
 	std::string mFilter;
 	std::string mDomain;
+	bool mMoreResultsAvailable = false;
 
 	std::shared_ptr<CardDavParams> mParams;
 

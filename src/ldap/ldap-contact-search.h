@@ -54,7 +54,7 @@ public:
 	std::string mFilter;
 	bool complete;
 	bool mHaveMoreResults = false;
-	std::list<std::shared_ptr<SearchResult>> mFoundEntries;
+	std::list<std::shared_ptr<Friend>> mFoundEntries;
 	unsigned int mFoundCount;
 
 private:

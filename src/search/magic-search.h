@@ -24,6 +24,7 @@
 #include <list>
 #include <memory>
 #include <queue>
+#include <regex>
 #include <string>
 
 #include "c-wrapper/c-wrapper.h"
@@ -46,9 +47,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class MagicSearchCbs;
 
-typedef void (*MagicSearchCallback)(std::list<std::shared_ptr<SearchResult>> searchResults,
-                                    void *data,
-                                    bool_t haveMoreResults);
+typedef void (*MagicSearchCallback)(std::list<std::shared_ptr<Friend>> friends, void *data, bool_t haveMoreResults);
 
 class LINPHONE_PUBLIC MagicSearch : public bellesip::HybridObject<LinphoneMagicSearch, MagicSearch>,
                                     public UserDataAccessor,
@@ -203,13 +202,10 @@ public:
 	/**
 	 * Search informations in address given
 	 * @param[in] lAddress address whose informations will be check
-	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
 	 * @private
 	 **/
-	unsigned int searchInAddress(const std::shared_ptr<const Address> &lAddress,
-	                             const std::string &filter,
-	                             const std::string &withDomain) const;
+	unsigned int searchInAddress(const std::shared_ptr<const Address> &lAddress, const std::string &withDomain) const;
 
 	/** Inits all magic search plugins, allowing external sources to be used, such as LDAP or distant CardDAV queries */
 	void initPlugins();
@@ -228,8 +224,7 @@ public:
 	void setSearchCache(std::list<std::shared_ptr<SearchResult>> cache);
 
 	/** Get SearchResults matching Friends in all FriendLists available in Core */
-	std::list<std::shared_ptr<SearchResult>>
-	getResultsFromFriends(bool onlyStarred, const std::string &filter, const std::string &withDomain);
+	std::list<std::shared_ptr<SearchResult>> getResultsFromFriends(bool onlyStarred, const std::string &withDomain);
 
 	/**
 	 * Get all addresses from call log
@@ -290,33 +285,31 @@ public:
 
 	/**
 	 * Continue the search from the cache of precedent search
-	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
+	 * @param[in] aggregation #LinphoneMagicSearchAggregation to use (Friend or None)
 	 * @private
 	 **/
-	std::list<std::shared_ptr<SearchResult>> continueSearch(const std::string &filter,
-	                                                        const std::string &withDomain) const;
+	std::list<std::shared_ptr<SearchResult>> continueSearch(const std::string &withDomain,
+	                                                        LinphoneMagicSearchAggregation aggregation) const;
 
 	/**
 	 * Search informations in friend given
 	 * @param[in] lFriend friend whose informations will be check
-	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
+	 * @param[in] flags flags to set in SearchResult(s)
 	 * @return list of result from friend
 	 * @private
 	 **/
-	std::list<std::shared_ptr<SearchResult>> searchInFriend(const std::shared_ptr<Friend> &lFriend,
-	                                                        const std::string &filter,
-	                                                        const std::string &withDomain) const;
+	std::list<std::shared_ptr<SearchResult>>
+	searchInFriend(const std::shared_ptr<Friend> &lFriend, const std::string &withDomain, int flags) const;
 
 	/**
 	 * Return a weight for a searched in with a filter
-	 * @param[in] stringWords which where we are searching
-	 * @param[in] filter what we are searching
+	 * @param[in] haystack which where we are searching
 	 * @return calculate weight
 	 * @private
 	 **/
-	unsigned int getWeight(const std::string &stringWords, const std::string &filter) const;
+	unsigned int getWeight(const std::string &haystack) const;
 
 	/**
 	 * Return if the given address match domain policy
@@ -373,6 +366,8 @@ public:
 	bool iterate(void);
 
 private:
+	void setupRegex(const std::string &filter);
+
 	int mState = 0;
 	unsigned int mMinWeight = 0;
 	unsigned int mMaxWeight = 1000;
@@ -384,6 +379,7 @@ private:
 	std::string mFilter;
 	bool mAutoResetCache = true; // When a new search start, let MagicSearch to clean its cache
 	bool returnEmptyFriends = false;
+	std::regex mFilterRegex = std::regex();
 
 	belle_sip_source_t *mIteration = nullptr;
 

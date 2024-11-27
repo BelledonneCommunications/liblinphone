@@ -757,6 +757,17 @@ list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(const stri
 				for (int i = 0; i < responsesNodes->nodeNr; i++) {
 					xmlNodePtr responseNode = responsesNodes->nodeTab[i];
 					xmlCtx.setXpathContextNode(responseNode);
+
+					string status = xmlCtx.getTextContent("d:status");
+					// string error = xmlCtx.getTextContent("d:error/d:number-of-matches-within-limits");
+					if (status == "HTTP/1.1 507 Insufficient Storage") {
+						lInfo() << "[CardDAV] Server didn't returned all results";
+						shared_ptr<CardDavMagicSearchPlugin> plugin = mCardDavMagicSearchPlugin.lock();
+						if (plugin) {
+							plugin->setMoreResultsAvailable();
+						}
+					}
+
 					string etag = xmlCtx.getTextContent("d:propstat/d:prop/d:getetag");
 					string url = xmlCtx.getTextContent("d:href");
 					CardDAVResponse response;

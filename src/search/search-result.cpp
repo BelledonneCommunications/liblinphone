@@ -110,6 +110,13 @@ string SearchResult::toString() const {
 		ss << " phone number [" << phoneNumber << "]";
 	}
 
+	if (mFriend) {
+		ss << " friend [" << mFriend << "]";
+	}
+
+	ss << " source(s) [" << mSourceFlags << "]";
+	ss << " capabilities [" << mCapabilities << "]";
+
 	return ss.str();
 }
 
@@ -162,28 +169,27 @@ int SearchResult::getSourceFlags() const {
 	return mSourceFlags;
 }
 
-void SearchResult::merge(const shared_ptr<SearchResult> &withResult) {
-	bool doOverride = mWeight <= withResult->getWeight();
+void SearchResult::merge(const shared_ptr<SearchResult> &other) {
+	bool updateSourceFlags = false;
 
-	if (doOverride) mWeight = withResult->getWeight();
-	mSourceFlags |= withResult->getSourceFlags();
+	// No need to merge addresses, they are equal otherwise we wouldn't be here
 
-	if (withResult->getAddress()) { // There is a new data
-		if (doOverride || !mAddress) {
-			mAddress = withResult->getAddress()->clone()->toSharedPtr();
-		}
+	if (mPhoneNumber.empty()) {
+		mPhoneNumber = other->getPhoneNumber();
+		updateSourceFlags = true;
 	}
 
-	if (doOverride || mPhoneNumber.empty()) mPhoneNumber = withResult->getPhoneNumber();
+	if (!mFriend && other->mFriend) {
+		mFriend = other->mFriend;
+		updateSourceFlags = true;
+	} else if (other->mFriend && !mFriend->inList() && other->mFriend->inList()) {
+		// Prefer friends storred locally
+		mFriend = other->mFriend;
+		updateSourceFlags = true;
+	}
 
-	const shared_ptr<Friend> &other = withResult->getFriend();
-	if (other && other != mFriend) { // There is a new data
-		if (doOverride && mFriend) {
-			mFriend.reset();
-		}
-		if (doOverride || !mFriend) {
-			mFriend = other;
-		}
+	if (updateSourceFlags) {
+		mSourceFlags |= other->getSourceFlags();
 	}
 
 	updateCapabilities();

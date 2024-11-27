@@ -55,6 +55,7 @@ void CardDavMagicSearchPlugin::startSearchAsync(const string &filter,
                                                 const string &domain,
                                                 SearchAsyncData *asyncData) {
 	setHasEnded(false);
+	mMoreResultsAvailable = false;
 
 	if (filter.size() < mParams->getMinCharactersToStartQuery()) {
 		lInfo() << "[Magic Search][CardDAV] Too few characters to start the query, doing nothing";
@@ -92,7 +93,7 @@ void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &fr
 
 	list<shared_ptr<SearchResult>> resultList;
 	for (auto &lFriend : friends) {
-		auto found = getMagicSearch().searchInFriend(lFriend, mFilter, mDomain);
+		auto found = getMagicSearch().searchInFriend(lFriend, mDomain, getSource());
 		if (resultList.empty()) {
 			resultList = found;
 		} else if (!found.empty()) {
@@ -102,6 +103,12 @@ void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &fr
 
 	lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results in remote server";
 	setResults(resultList);
+
+	if (mMoreResultsAvailable) {
+		lInfo() << "[Magic Search][CardDAV] Server response says more results are available";
+		_linphone_magic_search_notify_more_results_available(getMagicSearch().toC(), getSource());
+	}
+
 	setHasEnded(true);
 }
 
@@ -124,6 +131,10 @@ list<CardDavPropFilter> CardDavMagicSearchPlugin::computePropFilters() const {
 	}
 
 	return filters;
+}
+
+void CardDavMagicSearchPlugin::setMoreResultsAvailable() {
+	mMoreResultsAvailable = true;
 }
 
 LINPHONE_END_NAMESPACE
