@@ -332,7 +332,7 @@ void CardDAVContext::sendQuery(const shared_ptr<CardDAVQuery> &query, bool cance
 		if (context && query) {
 			context->mHttpRequest = nullptr;
 
-			int code = response.getStatusCode();
+			int code = response.getHttpStatusCode();
 			if (code == 301 || code == 302 || code == 307 || code == 308) {
 				string location = response.getHeaderValue("Location");
 				if (location.empty()) {
@@ -371,7 +371,7 @@ void CardDAVContext::processRedirect(shared_ptr<CardDAVQuery> query, const strin
 
 void CardDAVContext::processQueryResponse(shared_ptr<CardDAVQuery> query, const HttpResponse &response) {
 	setSchemeAndHostIfNotDoneYet(query);
-	int code = response.getStatusCode();
+	int code = response.getHttpStatusCode();
 	if (code == 207 || code == 200 || code == 201 || code == 204) {
 		auto content = response.getBody();
 		string body = content.getBodyAsString();

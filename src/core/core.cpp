@@ -2889,7 +2889,7 @@ bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
 		    .createRequest("POST", ai->getTokenEndpointUri())
 		    .setBody(Content(ContentType("application", "x-www-form-urlencoded"), form))
 		    .execute([this, ai](const HttpResponse &response) {
-			    if (response.getStatusCode() == 200) {
+			    if (response.getHttpStatusCode() == 200) {
 				    JsonDocument doc(response.getBody());
 				    const Json::Value &root = doc.getRoot();
 				    if (!root.isNull()) {

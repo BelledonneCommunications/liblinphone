@@ -506,7 +506,6 @@ class Core;
 	LinphoneTunnel *tunnel;                                                                                            \
 	char *device_id;                                                                                                   \
 	char *friends_db_file;                                                                                             \
-	belle_http_request_listener_t *provisioning_http_listener;                                                         \
 	belle_http_request_listener_t *base_contacts_list_http_listener;                                                   \
 	LinphoneFriendList *base_contacts_list_for_synchronization;                                                        \
 	MSList *tones;                                                                                                     \

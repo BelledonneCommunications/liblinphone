@@ -47,7 +47,7 @@ private:
 	static std::unique_ptr<Json::CharReader> sReader;
 };
 
-class HttpResponse {
+class LINPHONE_PUBLIC HttpResponse {
 	friend class HttpRequest;
 
 public:
@@ -56,9 +56,11 @@ public:
 	HttpResponse(HttpResponse &&) = delete;
 	// Overall status of the response, which may be a non-response in case of IOError, Timeout, or
 	// invalid request (case where it could even not be sent).
-	Status getStatus();
+	Status getStatus() const {
+		return mStatus;
+	}
 	// Return the http response code.
-	int getStatusCode() const;
+	int getHttpStatusCode() const;
 	std::string getReason() const;
 	std::string getHeaderValue(const std::string &headerName) const;
 	const Content &getBody() const;
@@ -70,7 +72,7 @@ private:
 	mutable Content mBody;
 };
 
-class HttpRequest {
+class LINPHONE_PUBLIC HttpRequest {
 	friend class HttpClient;
 
 public:
@@ -85,6 +87,9 @@ public:
 	void cancel();
 
 private:
+	void abortAuthentication();
+	void send();
+	void restart();
 	~HttpRequest();
 	void processResponse(const belle_http_response_event_t *event);
 	void processResponseHeaders(const belle_http_response_event_t *event);
@@ -101,9 +106,12 @@ private:
 	ResponseHandler mResponseHandler;
 	belle_http_request_t *mRequest;
 	belle_http_request_listener_t *mListener = nullptr;
+	bool mAuthPending = false;
 };
 
-class HttpClient : public CoreAccessor {
+class LINPHONE_PUBLIC HttpClient : public CoreAccessor {
+	friend class HttpRequest;
+
 public:
 	HttpClient(const std::shared_ptr<Core> &core);
 	~HttpClient();
@@ -120,8 +128,16 @@ public:
 	belle_tls_crypto_config_t *getCryptoConfig() {
 		return mCryptoConfig;
 	}
+	/*
+	 * Restarts http requests that were awaiting authentication information.
+	 * Returns the number of requests that were re-started.
+	 */
+	size_t retryPendingRequests();
+	size_t abortPendingRequests();
 
 private:
+	void postpone(HttpRequest &req);
+	std::list<HttpRequest *> mRequestsAwaitingAuth;
 	belle_http_provider_t *mProvider = nullptr;
 	belle_tls_crypto_config_t *mCryptoConfig = nullptr;
 };

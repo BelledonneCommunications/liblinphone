@@ -2744,11 +2744,6 @@ void linphone_core_load_config_from_xml(LinphoneCore *lc, const char *xml_uri) {
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
 	linphone_core_notify_configuring_status(lc, state, message);
 
-	if (lc->provisioning_http_listener) {
-		belle_sip_object_unref(lc->provisioning_http_listener);
-		lc->provisioning_http_listener = NULL;
-	}
-
 	if (lc->state == LinphoneGlobalShutdown) {
 		/* We are aborting the provisioning, just notify the configuring status and give up */
 		return;
@@ -2803,6 +2798,8 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->reloadRemoteContactDirectories();
 	linphone_core_set_state(lc, LinphoneGlobalOn, "On");
+	/* Auth infos may be altered by remote provisionning, immediately sync it to the config */
+	linphone_core_write_auth_infos(lc);
 }
 
 static int linphone_core_serialization_ref = 0;

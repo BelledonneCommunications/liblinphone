@@ -2540,12 +2540,14 @@ linphone_core_find_auth_info(LinphoneCore *core, const char *realm, const char *
 
 /**
  * This method is used to abort a user authentication request initiated by #LinphoneCore
- * from the auth_info_requested callback of LinphoneCoreVTable.
- * @note That function does nothing for now.
+ * from the authentication_requested callback of #LinphoneCoreCbs
+ * @note this function currently does not take into account the 'info' parameter.
+ * All pending authentication requests are aborted.
  * @param core the #LinphoneCore @notnil
- * @param info the #LinphoneAuthInfo for which to abort authentication @notnil
+ * @param info the #LinphoneAuthInfo for which to abort authentication @maybenil
+ * @ingroup authentication
  **/
-LINPHONE_PUBLIC void linphone_core_abort_authentication(LinphoneCore *core, LinphoneAuthInfo *info);
+LINPHONE_PUBLIC void linphone_core_abort_authentication(LinphoneCore *core, const LinphoneAuthInfo *info);
 
 /**
  * Clears all authentication information.

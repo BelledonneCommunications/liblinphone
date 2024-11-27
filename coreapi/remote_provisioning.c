@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "http/http-client.h"
 #include "linphone/api/c-account-params.h"
@@ -27,31 +27,53 @@
 #include "linphone/lpconfig.h"
 #include "private.h"
 #include "xml2lpc.h"
+#include <exception>
+#include <sstream>
+
+using namespace ::LinphonePrivate;
 
 #define XML2LPC_CALLBACK_BUFFER_SIZE 1024
 
-static void belle_request_process_io_error(void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
-	LinphoneCore *lc = (LinphoneCore *)ctx;
-	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http io error");
-}
-
-static void belle_request_process_timeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
-	LinphoneCore *lc = (LinphoneCore *)ctx;
-	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http timeout");
-}
-
-static void belle_request_process_auth_requested(void *ctx, belle_sip_auth_event_t *event) {
-	LinphoneCore *lc = (LinphoneCore *)ctx;
-	linphone_core_fill_belle_sip_auth_event(lc, event, NULL, NULL);
-}
-
 static void linphone_remote_provisioning_apply(LinphoneCore *lc, const char *xml) {
 	LinphoneConfig *config = linphone_core_get_config(lc);
+
+	/* prune all auth_info sections */
+	for (int i = 0;; ++i) {
+		std::ostringstream sectionName;
+		sectionName << "auth_info_" << i;
+		if (linphone_config_has_section(config, sectionName.str().c_str())) {
+			linphone_config_clean_section(config, sectionName.str().c_str());
+		} else break;
+	}
+
 	const char *error_msg = _linphone_config_load_from_xml_string(config, xml);
 
 	_linphone_config_apply_factory_config(config);
 	linphone_configuring_terminated(lc, error_msg ? LinphoneConfiguringFailed : LinphoneConfiguringSuccessful,
 	                                error_msg);
+}
+
+static void linphone_remote_provisioning_process_response(LinphoneCore *lc, const HttpResponse &resp) {
+	switch (resp.getStatus()) {
+		case HttpResponse::Status::Valid:
+			if (resp.getHttpStatusCode() == 200) {
+				linphone_remote_provisioning_apply(lc, resp.getBody().getBodyAsUtf8String().c_str());
+			} else if (resp.getHttpStatusCode() == 401) {
+				linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http auth requested");
+			} else {
+				linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http error");
+			}
+			break;
+		case HttpResponse::Status::InvalidRequest:
+			linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "invalid request");
+			break;
+		case HttpResponse::Status::IOError:
+			linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http io error");
+			break;
+		case HttpResponse::Status::Timeout:
+			linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http timeout");
+			break;
+	}
 }
 
 int linphone_remote_provisioning_load_file(LinphoneCore *lc, const char *file_path) {
@@ -64,21 +86,6 @@ int linphone_remote_provisioning_load_file(LinphoneCore *lc, const char *file_pa
 		ms_free(provisioning);
 	}
 	return status;
-}
-
-static void belle_request_process_response_event(void *ctx, const belle_http_response_event_t *event) {
-	LinphoneCore *lc = (LinphoneCore *)ctx;
-	belle_sip_message_t *message = BELLE_SIP_MESSAGE(event->response);
-	const char *body = belle_sip_message_get_body(message);
-
-	int statusCode = belle_http_response_get_status_code(event->response);
-	if (statusCode == 200) {
-		linphone_remote_provisioning_apply(lc, body);
-	} else if (statusCode == 401) {
-		linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http auth requested");
-	} else {
-		linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http error");
-	}
 }
 
 int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc,
@@ -98,43 +105,40 @@ int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc,
 
 		return linphone_remote_provisioning_load_file(lc, file_path);
 	} else if (scheme && strncmp(scheme, "http", 4) == 0 && host && strlen(host) > 0) {
-		belle_http_request_listener_callbacks_t belle_request_listener = {0};
-		belle_http_request_t *request;
-
-		belle_request_listener.process_response = belle_request_process_response_event;
-		belle_request_listener.process_auth_requested = belle_request_process_auth_requested;
-		belle_request_listener.process_io_error = belle_request_process_io_error;
-		belle_request_listener.process_timeout = belle_request_process_timeout;
-
-		lc->provisioning_http_listener = belle_http_request_listener_create_from_callbacks(&belle_request_listener, lc);
-
-		request = belle_http_request_create("GET", uri,
-		                                    belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)),
-		                                    belle_sip_header_create("X-Linphone-Provisioning", "1"), NULL);
-
-		const bctbx_list_t *header_it = remote_provisioning_headers;
-		while (header_it) {
-			const bctbx_list_t *pair_value = (const bctbx_list_t *)bctbx_list_get_data(header_it);
-			const char *field = (const char *)bctbx_list_get_data(pair_value);
-			pair_value = bctbx_list_next(pair_value);
-			belle_sip_header_t *header = belle_http_header_create(field, (const char *)bctbx_list_get_data(pair_value));
-			if (header) belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), header);
-			header_it = bctbx_list_next(header_it);
+		if (uri) {
+			belle_sip_object_unref(uri);
 		}
+		try {
+			HttpClient &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient();
+			HttpRequest &request =
+			    httpClient.createRequest("GET", remote_provisioning_uri).addHeader("X-Linphone-Provisioning", "1");
 
-		LinphoneAccount *account = linphone_core_get_default_account(lc);
-		if (account != nullptr) {
-			char *addr = linphone_address_as_string_uri_only(
-			    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
-			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
-			ms_free(addr);
-		} else if (linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL) != NULL) {
-			const char *addr = linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL);
-			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
+			const bctbx_list_t *header_it = remote_provisioning_headers;
+			while (header_it) {
+				const bctbx_list_t *pair_value = (const bctbx_list_t *)bctbx_list_get_data(header_it);
+				const char *field = (const char *)bctbx_list_get_data(pair_value);
+				pair_value = bctbx_list_next(pair_value);
+				request.addHeader(field, (const char *)bctbx_list_get_data(pair_value));
+				header_it = bctbx_list_next(header_it);
+			}
+
+			LinphoneAccount *account = linphone_core_get_default_account(lc);
+			if (account != nullptr) {
+				auto identityAddress =
+				    Address::toCpp(linphone_account_params_get_identity_address(linphone_account_get_params(account)));
+				request.addHeader("From", identityAddress->asStringUriOnly());
+			} else if (linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL) !=
+			           NULL) {
+				const char *addr =
+				    linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL);
+				request.addHeader("From", addr);
+			}
+			request.execute(
+			    [lc](const HttpResponse &resp) { linphone_remote_provisioning_process_response(lc, resp); });
+		} catch (const std::exception &) {
+			return -1;
 		}
-
-		return belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getProvider(), request,
-		                                        lc->provisioning_http_listener);
+		return 0;
 	} else {
 		ms_error("Invalid provisioning URI [%s] (missing scheme or host ?)", remote_provisioning_uri);
 		if (uri) {

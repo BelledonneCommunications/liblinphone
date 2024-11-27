@@ -53,6 +53,11 @@ std::string BearerToken::toConfigString() const {
 }
 
 bool BearerToken::isExpired() const {
+	time_t expirationTime = getExpirationTime();
+	if (expirationTime == 0) {
+		lWarning() << "No expiration time set for bearer token. Will assume it is not expired.";
+		return false;
+	}
 	return time(nullptr) >= getExpirationTime();
 }
 

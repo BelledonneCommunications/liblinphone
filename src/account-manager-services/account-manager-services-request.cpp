@@ -77,7 +77,7 @@ void AccountManagerServicesRequest::submit() {
 		auto request = this;
 		httpRequest.execute([request](const HttpResponse &response) {
 			try {
-				int code = response.getStatusCode();
+				int code = response.getHttpStatusCode();
 				if (code >= 200 && code < 300) {
 					request->handleSuccess(response);
 				} else {
@@ -169,7 +169,7 @@ Json::Value AccountManagerServicesRequest::parseResponseAsJson(const HttpRespons
 		           << "] in response ('application/json' was expected), not parsing it";
 		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(AccountManagerServicesRequest, this,
 		                                  linphone_account_manager_services_request_cbs_get_request_error,
-		                                  response.getStatusCode(), "Invalid Content-Type in response", nullptr);
+		                                  response.getHttpStatusCode(), "Invalid Content-Type in response", nullptr);
 		return Json::Value::nullSingleton();
 	}
 
@@ -257,7 +257,7 @@ string AccountManagerServicesRequest::extractDataFromSuccessfulRequest(const Htt
 void AccountManagerServicesRequest::handleSuccess(const HttpResponse &response) {
 	string data = extractDataFromSuccessfulRequest(response);
 	lDebug() << "[Account Manager Services Request] " << requestTypeToString(mType) << " success ("
-	         << response.getStatusCode() << "), data is [" << data << "]";
+	         << response.getHttpStatusCode() << "), data is [" << data << "]";
 
 	if (mType == LinphoneAccountManagerServicesRequestTypeGetDevicesList) {
 		auto json = parseResponseAsJson(response);
@@ -308,14 +308,14 @@ void AccountManagerServicesRequest::handleError(const HttpResponse &response) {
 	}
 
 	lWarning() << "[Account Manager Services Request] " << requestTypeToString(mType) << " error: [" << errorMessage
-	           << "] (" << response.getStatusCode() << ")";
+	           << "] (" << response.getHttpStatusCode() << ")";
 	LinphoneDictionary *dict = nullptr;
 	if (dictionary != nullptr) {
 		dict = dictionary->toC();
 	}
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(AccountManagerServicesRequest, this,
 	                                  linphone_account_manager_services_request_cbs_get_request_error,
-	                                  response.getStatusCode(), errorMessage.c_str(), dict);
+	                                  response.getHttpStatusCode(), errorMessage.c_str(), dict);
 }
 
 LINPHONE_END_NAMESPACE

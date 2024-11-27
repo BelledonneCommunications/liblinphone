@@ -216,6 +216,7 @@ set(RC_FILES
 	rcfiles/groupchat_rc
 	rcfiles/arthur_rc
 	rcfiles/marie_xml
+	rcfiles/marie_digest_auth_xml
 )
 
 set(IMAGE_FILES
@@ -341,6 +342,8 @@ set(SOURCE_FILES_CXX
 	vcard_tester.cpp
 	bearer-auth.cpp
 	call-twisted-cases.cpp
+	http-client-tester.cpp
+	http-server-utils.cpp
 )
 
 if(ENABLE_FLEXIAPI)
@@ -374,6 +377,7 @@ set(HEADER_FILES
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
+	http-server-utils.h
 )
 
 set(SOURCE_FILES_OBJC )

@@ -77,6 +77,18 @@ static bool_t fmtp_equals(const char *p1, const char *p2){
 }
 */
 
+const char *sal_auth_mode_to_string(SalAuthMode mode) {
+	switch (mode) {
+		case SalAuthModeBearer:
+			return "bearer";
+		case SalAuthModeHttpDigest:
+			return "digest";
+		case SalAuthModeTls:
+			return "tls";
+	}
+	return "invalid";
+}
+
 SalAuthInfo *sal_auth_info_new() {
 	return ms_new0(SalAuthInfo, 1);
 }

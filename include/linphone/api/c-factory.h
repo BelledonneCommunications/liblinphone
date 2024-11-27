@@ -1036,6 +1036,8 @@ LINPHONE_PUBLIC LinphoneFriendPhoneNumber *linphone_factory_create_friend_phone_
 
 /**
  * Create a new #LinphoneBearerToken object.
+ * The expiration time may be set to zero if unknown, in which case the #LinphoneCore will
+ * anyway use the refresh token if an access token is rejected by a server.
  * @param factory The #LinphoneFactory @notnil
  * @param token the token, as an opaque string.
  * @param expiration_time the expiration time as the number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).

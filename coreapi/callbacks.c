@@ -579,7 +579,7 @@ static void auth_failure(SalOp *op, SalAuthInfo *info) {
 			 * authentication credential MUST be provided by the application before the connection without prompt from
 			 * the library */
 			ms_message("%s/%s/%s/%s authentication fails.", info->realm, info->username, info->domain,
-			           info->mode == SalAuthModeHttpDigest ? "HttpDigest" : "Tls");
+			           sal_auth_mode_to_string(info->mode));
 			if (info->mode == SalAuthModeHttpDigest) {
 				LinphoneAuthInfo *auth_info =
 				    linphone_core_create_auth_info(lc, info->username, NULL, NULL, NULL, info->realm, info->domain);
@@ -824,8 +824,10 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo *sai) {
 			case SalAuthModeBearer: {
 				auto cppAi = AuthInfo::toCpp(ai)->getSharedFromThis();
 				auto accessToken = cppAi->getAccessToken();
-				if (accessToken == nullptr || accessToken->isExpired()) {
-					lInfo() << "Absent or expired access token, using refresh token to obtain new one.";
+				bool expired = accessToken ? accessToken->isExpired() : false;
+				if (accessToken == nullptr || expired) {
+					lInfo() << "Access token is [" << (expired ? "expired" : "absent")
+					        << "], using refresh token to obtain new one.";
 					L_GET_CPP_PTR_FROM_C_OBJECT(lc)->refreshTokens(cppAi);
 				} else {
 					sai->bearer_token = cppAi->getAccessToken()->getImpl()->toC();
@@ -856,9 +858,9 @@ static bool_t auth_requested(Sal *sal, SalAuthInfo *sai) {
 	if (fill_auth_info(lc, sai)) {
 		return TRUE;
 	} else {
-		/* only HttpDigest Mode requests App for credentials, TLS client cert does not support callback so the
-		 * authentication credential MUST be provided by the application before the connection without prompt from the
-		 * library */
+		/* only HttpDigest and Bearer method request application for credentials, TLS client cert does not support
+		 * callback so the authentication credential MUST be provided by the application before the connection without
+		 * prompt from the library */
 		switch (sai->mode) {
 			case SalAuthModeHttpDigest: {
 				LinphoneAuthInfo *ai =

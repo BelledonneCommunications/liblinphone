@@ -18,12 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "account/account.h"
 #include "auth-info/auth-info.h"
 #include "auth-info/bearer-token.h"
 #include "c-wrapper/c-wrapper.h"
+#include "http/http-client.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
@@ -65,12 +66,6 @@ static bool_t realm_match(const char *realm1, const char *realm2) {
 			return strcmp(p1, p2) == 0;
 		}
 	}
-	return FALSE;
-}
-
-static bool_t string_match(const char *s1, const char *s2) {
-	if (s1 == NULL && s2 == NULL) return TRUE;
-	if (s1 && s2 && strcmp(s1, s2) == 0) return TRUE;
 	return FALSE;
 }
 
@@ -205,6 +200,20 @@ linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *us
 	return _linphone_core_find_auth_info(lc, realm, username, domain, NULL, TRUE);
 }
 
+const LinphoneAuthInfo *linphone_core_find_auth_info_to_be_replaced(LinphoneCore *lc, const LinphoneAuthInfo *other) {
+	bctbx_list_t *elem;
+	const AuthInfo *cppOther = AuthInfo::toCpp(other);
+	for (elem = lc->auth_info; elem != NULL; elem = elem->next) {
+		AuthInfo *pinfo = AuthInfo::toCpp((LinphoneAuthInfo *)elem->data);
+		if (cppOther->getUsername() != pinfo->getUsername()) continue;
+		if (cppOther->getRealm() != pinfo->getRealm()) continue;
+		if (cppOther->getDomain() != pinfo->getDomain()) continue;
+		if (cppOther->getAccessToken() && !pinfo->getAccessToken()) continue; /* not of the same type */
+		return pinfo->toC();
+	}
+	return nullptr;
+}
+
 LinphoneAuthInfo *
 _linphone_core_find_bearer_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain) {
 	bctbx_list_t *elem;
@@ -241,6 +250,9 @@ _linphone_core_find_bearer_auth_info(LinphoneCore *lc, const char *realm, const 
 		ms_message("_linphone_core_find_bearer_auth_info(): returning auth info username=%s, realm=%s, domain=%s",
 		           AuthInfo::toCpp(ret)->getUsername().c_str(), AuthInfo::toCpp(ret)->getRealm().c_str(),
 		           AuthInfo::toCpp(ret)->getDomain().c_str());
+	} else if (username && (realm || domain)) {
+		/* do the search without username. Not so elegant to use recursion here. */
+		ret = _linphone_core_find_bearer_auth_info(lc, realm, NULL, domain);
 	}
 	return ret;
 }
@@ -259,17 +271,19 @@ void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai) {
 	}
 }
 
-static void write_auth_infos(LinphoneCore *lc) {
+void linphone_core_write_auth_infos(LinphoneCore *lc) {
 	bctbx_list_t *elem;
 	int i;
+	auto state = linphone_core_get_global_state(lc);
 
-	if (!linphone_core_ready(lc)) return;
-	if (!lc->sip_conf.save_auth_info || linphone_config_is_readonly(lc->config)) return;
-	for (elem = lc->auth_info, i = 0; elem != NULL; elem = bctbx_list_next(elem), i++) {
-		LinphoneAuthInfo *ai = (LinphoneAuthInfo *)(elem->data);
-		linphone_auth_info_write_config(lc->config, ai, i);
+	if (state == LinphoneGlobalShutdown || state == LinphoneGlobalOn) {
+		if (!lc->sip_conf.save_auth_info || linphone_config_is_readonly(lc->config)) return;
+		for (elem = lc->auth_info, i = 0; elem != NULL; elem = bctbx_list_next(elem), i++) {
+			LinphoneAuthInfo *ai = (LinphoneAuthInfo *)(elem->data);
+			linphone_auth_info_write_config(lc->config, ai, i);
+		}
+		linphone_auth_info_write_config(lc->config, NULL, i); /* mark the end */
 	}
-	linphone_auth_info_write_config(lc->config, NULL, i); /* mark the end */
 }
 
 LinphoneAuthInfo *linphone_core_create_auth_info(BCTBX_UNUSED(LinphoneCore *lc),
@@ -284,7 +298,7 @@ LinphoneAuthInfo *linphone_core_create_auth_info(BCTBX_UNUSED(LinphoneCore *lc),
 
 void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info) {
 	LinphoneAuthInfo *ai = NULL;
-	int restarted_op_count = 0;
+	size_t restarted_op_count = 0;
 	bool_t updating = FALSE;
 
 	if (!linphone_auth_info_get_tls_key(info) && !linphone_auth_info_get_tls_key_path(info) &&
@@ -295,10 +309,9 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 		return;
 	}
 	/* find if we are attempting to modify an existing auth info */
-	ai = (LinphoneAuthInfo *)linphone_core_find_auth_info(lc, linphone_auth_info_get_realm(info),
-	                                                      linphone_auth_info_get_username(info),
-	                                                      linphone_auth_info_get_domain(info));
-	if (ai != NULL && string_match(linphone_auth_info_get_domain(ai), linphone_auth_info_get_domain(info))) {
+	ai = (LinphoneAuthInfo *)linphone_core_find_auth_info_to_be_replaced(lc, info);
+	if (ai != NULL) {
+		lInfo() << "linphone_core_add_auth_info(): replacing existing auth info.";
 		lc->auth_info = bctbx_list_remove(lc->auth_info, ai);
 		linphone_auth_info_unref(ai);
 		updating = TRUE;
@@ -330,22 +343,25 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 			restarted_op_count++;
 		}
 	}
+	restarted_op_count += L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().retryPendingRequests();
 
-	if (!pendingAuths.empty()) {
+	if (!pendingAuths.empty() || restarted_op_count > 0) {
 		ms_message("linphone_core_add_auth_info(): restarted [%i] operation(s) after %s auth info for\n"
 		           "\tusername: [%s]\n"
 		           "\trealm [%s]\n"
 		           "\tdomain [%s]\n",
-		           restarted_op_count, updating ? "updating" : "adding",
+		           (int)restarted_op_count, updating ? "updating" : "adding",
 		           linphone_auth_info_get_username(info) ? linphone_auth_info_get_username(info) : "",
 		           linphone_auth_info_get_realm(info) ? linphone_auth_info_get_realm(info) : "",
 		           linphone_auth_info_get_domain(info) ? linphone_auth_info_get_domain(info) : "");
 	}
 
-	write_auth_infos(lc);
+	linphone_core_write_auth_infos(lc);
 }
 
-void linphone_core_abort_authentication(BCTBX_UNUSED(LinphoneCore *lc), BCTBX_UNUSED(LinphoneAuthInfo *info)) {
+void linphone_core_abort_authentication(LinphoneCore *lc, BCTBX_UNUSED(const LinphoneAuthInfo *info)) {
+	size_t count = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().abortPendingRequests();
+	lInfo() << "Aborting " << count << " requests awaiting authentication information.";
 }
 
 void linphone_core_remove_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info) {
@@ -356,7 +372,7 @@ void linphone_core_remove_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *in
 	if (r) {
 		lc->auth_info = bctbx_list_remove(lc->auth_info, r);
 		linphone_auth_info_unref(r);
-		write_auth_infos(lc);
+		linphone_core_write_auth_infos(lc);
 	}
 }
 
@@ -409,15 +425,15 @@ void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, 
  * @param[in]		username	Used only when auth mode is TLS to get a matching client certificate. If empty, look for
  * any certificate matching domain nane
  * @param[in]		domain		Used only when auth mode is TLS to get a matching client certificate.
- * @return true if authentication could be processed, false otherwise.
+ * @return an AuthStatus value
  * @note It is not possible to know whether the TLS server requested a client certificate: true is always returned for
  * TLS authentication.
  */
-bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
-                                             belle_sip_auth_event *event,
-                                             const char *username,
-                                             const char *domain) {
-	bool done = false;
+AuthStatus linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
+                                                   belle_sip_auth_event *event,
+                                                   const char *username,
+                                                   const char *domain) {
+	AuthStatus status = AuthStatus::NoAuth;
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *ae_username = belle_sip_auth_event_get_username(event);
 	const char *ae_domain = belle_sip_auth_event_get_domain(event);
@@ -432,7 +448,7 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 			    _linphone_core_find_auth_info(lc, realm, ae_username, ae_domain, algorithm, TRUE);
 			if (auth_info) {
 				linphone_auth_info_fill_belle_sip_event(auth_info, event);
-				done = true;
+				status = AuthStatus::Done;
 			}
 			max_tries = 2; /* server nonce may change, we can two consecutive 401.*/
 			requestedMethod = LinphoneAuthHttpDigest;
@@ -443,18 +459,32 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 			    _linphone_core_find_auth_info(lc, realm, ae_username, ae_domain, algorithm, FALSE);
 			if (auth_info) {
 				linphone_auth_info_fill_belle_sip_event(auth_info, event);
-				done = true;
+				status = AuthStatus::Done;
 			}
 			max_tries = 1;
 			requestedMethod = LinphoneAuthBasic;
 		} break;
 		case BELLE_SIP_AUTH_MODE_HTTP_BEARER: {
+			max_tries = 1;
 			const LinphoneAuthInfo *auth_info = _linphone_core_find_bearer_auth_info(lc, realm, ae_username, ae_domain);
 			if (auth_info) {
-				linphone_auth_info_fill_belle_sip_event(auth_info, event);
-				done = true;
+				auto bearerToken = AuthInfo::toCpp(auth_info)->getAccessToken();
+				auto refreshToken = AuthInfo::toCpp(auth_info)->getRefreshToken();
+				if (refreshToken &&
+				    (bearerToken->isExpired() || (bearerToken->getExpirationTime() == 0 && try_count >= 1))) {
+					/* We know that the access token is expired, or we have a failure with the access token.
+					 * As we have a refresh token, make a refresh attempt */
+					lInfo() << "Token is or might be expired, using refresh token to get new one.";
+					if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->refreshTokens(
+					        AuthInfo::toCpp(const_cast<LinphoneAuthInfo *>(auth_info))->getSharedFromThis())) {
+						status = AuthStatus::Pending;
+					} else status = AuthStatus::NoAuth;
+				} else {
+					linphone_auth_info_fill_belle_sip_event(auth_info, event);
+					status = AuthStatus::Done;
+				}
+				max_tries = refreshToken ? 2 : 1;
 			}
-			max_tries = 1;
 			requestedMethod = LinphoneAuthBearer;
 		} break;
 		case BELLE_SIP_AUTH_MODE_TLS: {
@@ -512,20 +542,23 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				//  callback. Not done as we assume that authentication on flexisip server was performed before so the
 				//  application layer already got a chance to set the correct auth_info in the core
 			}
-			done = true; // since we can't know if server requested a client certificate, assume all is good.
+			status =
+			    AuthStatus::Done; // since we can't know if server requested a client certificate, assume all is good.
 			requestedMethod = LinphoneAuthTls;
 			max_tries = 1;
 		} break;
 		default:
 			lError() << "Connection gets an auth event of unexpected type";
-			done = false;
+			status = AuthStatus::NoAuth;
 			break;
 	}
-	if (!done || try_count >= max_tries) {
+	if (status == AuthStatus::NoAuth || try_count >= max_tries) {
 		/* We do not prompt the application for authentication info for http services, because it may happen
 		 * for various kind of events but user is not expected to supply them on the fly.
 		 * However, for provisioning process, for which bearer or digest is likely to be requested,
 		 * we notify the application.
+		 * The provisioning is then suspended until authentication information is supplied, or
+		 * authentication is aborted using linphone_core_abort_authentication().
 		 */
 		if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring) {
 			LinphoneAuthInfo *ai =
@@ -535,9 +568,10 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 			linphone_auth_info_set_authorization_server(ai, belle_sip_auth_event_get_authz_server(event));
 			linphone_core_notify_authentication_requested(lc, ai, requestedMethod);
 			linphone_auth_info_unref(ai);
+			status = AuthStatus::Pending;
 		}
 	}
-	return done;
+	return status;
 }
 
 void linphone_core_set_digest_authentication_policy(LinphoneCore *core, LinphoneDigestAuthenticationPolicy *policy) {

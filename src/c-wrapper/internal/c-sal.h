@@ -396,6 +396,8 @@ typedef struct SalAuthInfo {
 extern "C" {
 #endif
 
+const char *sal_auth_mode_to_string(SalAuthMode mode);
+
 SalAuthInfo *sal_auth_info_new(void);
 // SalAuthInfo *sal_auth_info_clone(const SalAuthInfo *auth_info);
 void sal_auth_info_delete(SalAuthInfo *auth_info);

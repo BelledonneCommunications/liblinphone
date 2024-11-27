@@ -63,7 +63,7 @@ static bool_t update_is_available(const char *current_version, const char *last_
 
 static void update_check_process_response_event(LinphoneUpdateCheck *update, const HttpResponse &response) {
 
-	if (response.getStatusCode() == 200) {
+	if (response.getHttpStatusCode() == 200) {
 		const Content &content = response.getBody();
 		if (!content.isEmpty()) {
 			char *body = bctbx_strdup(content.getBodyAsUtf8String().c_str());
