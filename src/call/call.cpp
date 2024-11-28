@@ -562,6 +562,9 @@ void Call::createClientConference(const shared_ptr<CallSession> &session) {
 	} else {
 		auto confParams = ConferenceParams::create(getCore());
 		std::shared_ptr<SalMediaDescription> md = (op) ? op->getFinalMediaDescription() : nullptr;
+
+		if (op && op->getSal()->mediaDisabled()) md = op->getRemoteMediaDescription();
+
 		if (md) {
 			confParams->enableAudio(md->nbActiveStreamsOfType(SalAudio) > 0);
 			confParams->enableVideo(md->nbActiveStreamsOfType(SalVideo) > 0);
