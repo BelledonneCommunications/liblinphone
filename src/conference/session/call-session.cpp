@@ -2135,7 +2135,9 @@ void CallSession::updateContactAddressInOp() {
 
 	updateContactAddress(contactAddress);
 	lInfo() << "Updating contact address for session " << this << " to " << contactAddress;
-	d->op->setContactAddress(contactAddress.getImpl());
+	if (d->op) {
+		d->op->setContactAddress(contactAddress.getImpl());
+	}
 }
 
 void CallSession::addPendingAction(std::function<LinphoneStatus()> f) {

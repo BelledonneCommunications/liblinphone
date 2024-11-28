@@ -571,15 +571,21 @@ void Call::createClientConference(const shared_ptr<CallSession> &session) {
 		}
 		confParams->enableChat(remoteContactAddress && remoteContactAddress->hasParam(Conference::TextParameter));
 
-		clientConference = dynamic_pointer_cast<ClientConference>(
-		    (new ClientConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))->toSharedPtr());
-		clientConference->initWithFocus(remoteContactAddress, session, op);
+		if (confParams->audioEnabled() || confParams->videoEnabled() || confParams->chatEnabled()) {
+			clientConference = dynamic_pointer_cast<ClientConference>(
+			    (new ClientConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))->toSharedPtr());
+			clientConference->initWithFocus(remoteContactAddress, session, op);
+		} else {
+			lError() << "Unable to attach call (local address " << *session->getLocalAddress() << " remote address "
+			         << *session->getRemoteAddress()
+			         << ") to a conference because it has all capabilities (audio, video and chat) disabled";
+		}
 	}
 
 	setConference(clientConference);
 
 	// Record conf-id to be used later when terminating the client conference
-	if (remoteContactAddress->hasUriParam(Conference::ConfIdParameter)) {
+	if (clientConference && remoteContactAddress->hasUriParam(Conference::ConfIdParameter)) {
 		setConferenceId(remoteContactAddress->getUriParamValue(Conference::ConfIdParameter));
 	}
 }

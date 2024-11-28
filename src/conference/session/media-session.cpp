@@ -2163,11 +2163,6 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 			}
 			const auto &confLayout = parameters->getConferenceVideoLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-			const auto remoteContactAddress = q->getRemoteContactAddress();
-			q->updateContactAddressInOp();
-			const auto &participantDeviceAddress =
-			    (isInLocalConference) ? remoteContactAddress : q->getContactAddress();
-
 			if (localIsOfferer && !linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
 				bool request = true;
 				if (isVideoStream) {
@@ -2180,6 +2175,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 					        : ((isConferenceLayoutActiveSpeaker) ? MediaSessionPrivate::ThumbnailVideoContentAttribute
 					                                             : ""));
 					const std::string bundleNameStreamPrefix((isVideoStream) ? "vs" : "as");
+					const auto participantDeviceAddress =
+					    (isInLocalConference) ? q->getRemoteContactAddress() : q->getContactAddress();
 					for (const auto &p : conference->getParticipants()) {
 						for (const auto &dev : p->getDevices()) {
 							const auto &devAddress = dev->getAddress();
@@ -2194,7 +2191,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							                     (devState != ParticipantDevice::State::Joining) &&
 							                     (devState != ParticipantDevice::State::Alerting);
 							// Add only streams of participants that have accepted to join the conference
-							if ((participantDeviceAddress != devAddress) && mediaAvailable && stateOk) {
+							if ((*participantDeviceAddress != *devAddress) && mediaAvailable && stateOk) {
 								const auto &devLabel = useThumbnailStream
 								                           ? dev->getThumbnailStreamLabel()
 								                           : dev->getStreamLabel(sal_stream_type_to_linphone(type));
@@ -2521,6 +2518,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	const SalStreamDescription &oldAudioStream =
 	    refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
+	// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
+	const auto remoteContactAddress = q->getRemoteContactAddress();
+	q->updateContactAddressInOp();
+
 	if (addAudioStream || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
 		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
 		                                      ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())
@@ -2547,8 +2548,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		PayloadTypeHandler::clearPayloadList(audioCodecs);
 
 		if (conference) {
-			// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
-			const auto remoteContactAddress = q->getRemoteContactAddress();
 			if (participantDevice &&
 			    (isInLocalConference || (!isInLocalConference && remoteContactAddress &&
 			                             remoteContactAddress->hasParam(Conference::IsFocusParameter)))) {
@@ -2662,8 +2661,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		                           getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		if (conference) {
-			// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
-			const auto remoteContactAddress = q->getRemoteContactAddress();
 			if (participantDevice &&
 			    (isInLocalConference || (!isInLocalConference && remoteContactAddress &&
 			                             remoteContactAddress->hasParam(Conference::IsFocusParameter)))) {
