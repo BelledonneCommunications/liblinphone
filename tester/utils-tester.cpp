@@ -101,7 +101,12 @@ static void timestamp_pruning(void) {
 	auto convertedUtcTimestamp = Utils::iso8601ToTime(utcTimestamp);
 	BC_ASSERT_EQUAL((long long)convertedUtcTimestamp, expectedUtcTimestamp, long long, "%lld");
 	auto backConvertedUtcTimestamp = Utils::timeToIso8601(convertedUtcTimestamp);
-	std::string utcTimestampBackConvertion = "2024-10-23T14:02:13+0000";
+	std::string utcTimestampBackConvertion =
+#ifdef __APPLE__
+	    "2024-10-23T14:02:13Z";
+#else
+	    "2024-10-23T14:02:13+0000";
+#endif // __APPLE__
 	BC_ASSERT_STRING_EQUAL(backConvertedUtcTimestamp.c_str(), utcTimestampBackConvertion.c_str());
 
 	// With fractional part
@@ -117,11 +122,16 @@ static void timestamp_pruning(void) {
 
 	// Positive offset
 	std::string offsetPlusCommaTimestamp = "2024-10-23T14:02:13,000000+0100";
-	long long expectedOffsetPlusTimestamp = 1729695733;
+	long long expectedOffsetPlusTimestamp = 1729688533;
 	auto convertedOffsetPlusCommaTimestamp = Utils::iso8601ToTime(offsetPlusCommaTimestamp);
 	BC_ASSERT_EQUAL((long long)convertedOffsetPlusCommaTimestamp, expectedOffsetPlusTimestamp, long long, "%lld");
 	auto backConvertedOffsetPlusTimestamp = Utils::timeToIso8601(convertedOffsetPlusCommaTimestamp);
-	std::string offsetPlusTimestampBackConvertion = "2024-10-23T15:02:13+0000";
+	std::string offsetPlusTimestampBackConvertion =
+#ifdef __APPLE__
+	    "2024-10-23T13:02:13Z";
+#else
+	    "2024-10-23T13:02:13+0000";
+#endif // __APPLE__
 	BC_ASSERT_STRING_EQUAL(backConvertedOffsetPlusTimestamp.c_str(), offsetPlusTimestampBackConvertion.c_str());
 
 	std::string offsetPlusDotTimestamp = "2024-10-23T14:02:13.000000+01";
@@ -130,11 +140,16 @@ static void timestamp_pruning(void) {
 
 	// Negative offset
 	std::string offsetMinusCommaTimestamp = "2024-10-23T14:02:13,000000-0100";
-	long long expectedOffsetMinusTimestamp = 1729688533;
+	long long expectedOffsetMinusTimestamp = 1729695733;
 	auto convertedOffsetMinusCommaTimestamp = Utils::iso8601ToTime(offsetMinusCommaTimestamp);
 	BC_ASSERT_EQUAL((long long)convertedOffsetMinusCommaTimestamp, expectedOffsetMinusTimestamp, long long, "%lld");
 	auto backConvertedOffsetMinusTimestamp = Utils::timeToIso8601(convertedOffsetMinusCommaTimestamp);
-	std::string offsetMinusTimestampBackConvertion = "2024-10-23T13:02:13+0000";
+	std::string offsetMinusTimestampBackConvertion =
+#ifdef __APPLE__
+	    "2024-10-23T15:02:13Z";
+#else
+	    "2024-10-23T15:02:13+0000";
+#endif // __APPLE__
 	BC_ASSERT_STRING_EQUAL(backConvertedOffsetMinusTimestamp.c_str(), offsetMinusTimestampBackConvertion.c_str());
 
 	std::string offsetMinusDotTimestamp = "2024-10-23T14:02:13.000000-01";

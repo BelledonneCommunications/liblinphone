@@ -37,6 +37,10 @@
 #include "xml/resource-lists.h"
 #endif
 
+#ifdef __APPLE__
+#include "utils/time-utils.h"
+#endif // __APPLE__
+
 // =============================================================================
 
 using namespace std;
@@ -255,8 +259,8 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 #elif defined(TARGET_IPHONE_SIMULATOR) || defined(__linux__)
 	if (!tCopy.tm_zone) {
 		// tCopy.tm_gmtoff is reset by timegm even though it doesn't take it into account
-		// No need to apply offset if tm_zone is set as  timegm takes into account the timezone.
-		offset = -tCopy.tm_gmtoff;
+		// No need to apply offset if tm_zone is set as timegm takes into account the timezone.
+		offset = tCopy.tm_gmtoff;
 	}
 	result = timegm(&tCopy);
 #else
@@ -325,14 +329,23 @@ std::string removeIso8601FractionalPart(const std::string &updateTime) {
 	return prunedUpdateTime;
 }
 
-time_t Utils::iso8601ToTime(const std::string &iso8601datetime) {
+time_t Utils::iso8601ToTime(const std::string &iso8601DateTime) {
+	auto iso8601DateTimeNoFractional = removeIso8601FractionalPart(iso8601DateTime);
+#ifdef __APPLE__
+	return iso8601ToTimeApple(iso8601DateTimeNoFractional);
+#else
 	std::string format = "%FT%T%z";
-	return Utils::getStringToTime(format, removeIso8601FractionalPart(iso8601datetime));
+	return Utils::getStringToTime(format, iso8601DateTimeNoFractional);
+#endif // __APPLE__
 }
 
 std::string Utils::timeToIso8601(time_t t) {
+#ifdef __APPLE__
+	return timeToIso8601Apple(t);
+#else
 	std::string format = "%FT%T%z";
 	return Utils::getTimeAsString(format, t);
+#endif // __APPLE__
 }
 
 // -----------------------------------------------------------------------------

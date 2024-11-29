@@ -233,7 +233,6 @@ void Account::applyParamsChanges() {
 
 	if (mOldParams == nullptr || mOldParams->mLimeServerUrl != mParams->mLimeServerUrl) {
 		onLimeServerUrlChanged(mParams->mLimeServerUrl);
-		mRegisterChanged = true;
 	}
 
 	if (mOldParams == nullptr || mOldParams->mRegisterEnabled != mParams->mRegisterEnabled ||
