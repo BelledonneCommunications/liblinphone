@@ -1292,8 +1292,8 @@ void group_chat_room_lime_server_message(bool encrypted) {
 
 			std::string messageString = "This is my message to you Rudy";
 			std::string ADString = "These are my AD to you Rudy";
-			auto message = std::make_shared<std::vector<uint8_t>>(messageString.cbegin(), messageString.cend());
-			auto AD = std::make_shared<std::vector<uint8_t>>(ADString.cbegin(), ADString.cend());
+			std::vector<uint8_t> message(messageString.cbegin(), messageString.cend());
+			std::vector<uint8_t> AD(ADString.cbegin(), ADString.cend());
 			std::vector<uint8_t> cipherText{};
 
 			marieEncryptionEngine->rawEncrypt(
@@ -1311,7 +1311,7 @@ void group_chat_room_lime_server_message(bool encrypted) {
 			if (rawEncryptionSuccess == 1) {
 				// try to decrypt only if encryption was a success
 				std::vector<uint8_t> plainText{};
-				BC_ASSERT_TRUE(paulineEncryptionEngine->rawDecrypt(paulineAddressString, marieAddressString, *AD,
+				BC_ASSERT_TRUE(paulineEncryptionEngine->rawDecrypt(paulineAddressString, marieAddressString, AD,
 				                                                   cipherText, plainText));
 				std::string plainTextString{plainText.cbegin(), plainText.cend()};
 				BC_ASSERT_TRUE(plainTextString == messageString);

@@ -218,26 +218,26 @@ LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine() {
 void LimeX3dhEncryptionEngine::rawEncrypt(
     const std::string &localDeviceId,
     const std::list<std::string> &recipientDevices,
-    std::shared_ptr<const std::vector<uint8_t>> plainMessage,
-    std::shared_ptr<const std::vector<uint8_t>> associatedData,
+    const std::vector<uint8_t> &plainMessage,
+    const std::vector<uint8_t> &associatedData,
     const std::function<void(const bool status, std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts)>
         &callback) const {
 
-	// build the recipient list
-	auto recipients = make_shared<vector<lime::RecipientData>>();
+	// build the encryption context, stick to DRMessage encryption policy
+	auto encryptionContext =
+	    make_shared<lime::EncryptionContext>(associatedData, plainMessage, lime::EncryptionPolicy::DRMessage);
+	// add the recipient list
 	for (const auto &recipient : recipientDevices) {
-		recipients->emplace_back(recipient);
+		encryptionContext->addRecipient(recipient);
 	}
 
 	// encrypt
 	try {
-		// this buffer will not be used as we stick to DRMessage encryption policy
-		shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 		auto encryptionCallback = std::make_shared<lime::limeCallback>(
-		    [localDeviceId, recipients, callback](lime::CallbackReturn returnCode, string errorMessage) {
+		    [localDeviceId, encryptionContext, callback](lime::CallbackReturn returnCode, string errorMessage) {
 			    std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts{};
 			    if (returnCode == lime::CallbackReturn::success) {
-				    for (const auto &recipient : *recipients) {
+				    for (const auto &recipient : encryptionContext->m_recipients) {
 					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
 						    cipherTexts[recipient.deviceId] = recipient.DRmessage;
 					    } else {
@@ -251,8 +251,7 @@ void LimeX3dhEncryptionEngine::rawEncrypt(
 				    callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
 			    }
 		    });
-		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), associatedData, recipients, plainMessage,
-		                     cipherMessage, encryptionCallback, lime::EncryptionPolicy::DRMessage);
+		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), encryptionContext, encryptionCallback);
 	} catch (const exception &e) {
 		lError() << e.what() << " while raw encrypting message";
 		callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
@@ -437,31 +436,27 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	if (curveConfig.compare("c25519k512") == 0) {
 		compressedPlain = plainContent.deflateBody();
 	}
-	auto &contentBody = plainContent.getBody();
-	plainMessage = make_shared<vector<uint8_t>>(contentBody.cbegin(), contentBody.cend());
-
-	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
 		const string localDeviceId = localDevice->asStringUriOnly();
 		auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
-		shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.asStringUriOnly());
 		errorCode = 0; // no need to specify error code because not used later
-		auto recipients = make_shared<vector<lime::RecipientData>>();
+		auto encryptionContext = make_shared<lime::EncryptionContext>(
+		    peerAddress.asStringUriOnly(), plainContent.getBody(), lime::EncryptionPolicy::cipherMessage);
 		for (const auto &address : recipientAddresses) {
-			recipients->emplace_back(address.asStringUriOnly());
+			encryptionContext->addRecipient(address.asStringUriOnly());
 		}
 
-		auto encryptionCallback = std::make_shared<lime::limeCallback>(
-		    [localDeviceId, recipients, cipherMessage, message, result,
-		     compressedPlain](lime::CallbackReturn returnCode, string errorMessage) {
+		auto encryptionCallback =
+		    std::make_shared<lime::limeCallback>([localDeviceId, encryptionContext, message, result, compressedPlain](
+		                                             lime::CallbackReturn returnCode, string errorMessage) {
 			    if (returnCode == lime::CallbackReturn::success) {
 
 				    // Ignore devices which do not have keys on the X3DH server
 				    // The message will still be sent to them but they will not be able to decrypt it
 				    vector<lime::RecipientData> filteredRecipients;
-				    filteredRecipients.reserve(recipients->size());
-				    for (const lime::RecipientData &recipient : *recipients) {
+				    filteredRecipients.reserve(encryptionContext->m_recipients.size());
+				    for (const auto &recipient : encryptionContext->m_recipients) {
 					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
 						    filteredRecipients.push_back(recipient);
 					    } else {
@@ -501,8 +496,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 				    // ---------------------------------------------- MESSAGE
 
-				    const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
-				    string cipherMessageB64 = bctoolbox::encodeBase64(*binaryCipherMessage);
+				    string cipherMessageB64 = bctoolbox::encodeBase64(encryptionContext->m_cipherMessage);
 				    auto cipherMessageC = Content::create();
 				    cipherMessageC->setBodyFromLocale(cipherMessageB64);
 				    cipherMessageC->setContentType(ContentType::OctetStream);
@@ -543,8 +537,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 			    }
 		    });
 
-		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), recipientUserId, recipients, plainMessage,
-		                     cipherMessage, encryptionCallback, lime::EncryptionPolicy::cipherMessage);
+		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), encryptionContext, encryptionCallback);
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
