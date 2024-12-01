@@ -186,11 +186,13 @@ static void group_chat_lime_x3dh_change_server_url_curve(const int curveId) {
 	                                                initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	LinphoneAddress *encryptedConfAddr =
 	    linphone_address_clone(linphone_chat_room_get_conference_address(marieEncryptedCr));
+	if (!BC_ASSERT_PTR_NOT_NULL(encryptedConfAddr)) return;
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineEncryptedCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
 	                                                          encryptedConfAddr, initialSubject, 1, 0);
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineEncryptedCr)) return;
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
 	// Clean db from chat room

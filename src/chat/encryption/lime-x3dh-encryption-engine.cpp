@@ -1294,6 +1294,7 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 			auto callback = setLimeUserCreationCallback(localDeviceId, account);
 			// create user if not exist
 			limeManager->create_user(localDeviceId, accountLimeAlgo, accountLimeServerUrl, callback);
+			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountIsCreating);
 		} else {
 			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeAlgo, accountLimeServerUrl);
 			update(localDeviceId);
