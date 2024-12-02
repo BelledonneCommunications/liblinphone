@@ -22,7 +22,7 @@
 
 HttpServerWithBearerAuth::HttpServerWithBearerAuth(const std::string &realm, const std::string &validToken) {
 	mToken = validToken;
-	mBaseUrl = "http://localhost:" + mListeningPort;
+	mBaseUrl = "http://127.0.0.1:" + mListeningPort;
 	mRealm = realm;
 	BCTBX_SLOGI << " Waiting for http request on " << mBaseUrl;
 }

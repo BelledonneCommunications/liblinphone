@@ -2582,8 +2582,7 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 		linphone_chat_message_set_external_body_url(
 		    msg, "https://transfer.example.org:444/download/0aa00aaa00a0a_a0000d00aaa0a0aaaa00.jpg");
 	} else {
-		linphone_chat_message_set_external_body_url(msg,
-		                                            "https://www.linphone.org/sites/default/files/backgroundstory.png");
+		linphone_chat_message_set_external_body_url(msg, "http://sip.example.org/vcards.vcf");
 	}
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);

@@ -85,15 +85,6 @@ static void http_bad_uri() {
 
 	linphone_core_manager_destroy(lcm);
 }
-#if 0
-static int auth_requested = 0;
-static void on_auth_requested(LinphoneCore *lc, LinphoneAuthInfo *ai, LinphoneAuthMethod method){
-    auth_requested++;
-    (void)lc;
-    (void)ai;
-    (void)method;
-}
-#endif
 
 static void _http_needs_token_refresh(bool expiration_is_known) {
 	bellesip::HttpServer authorizationServer;
@@ -146,8 +137,18 @@ static void http_needs_token_refresh_but_expiration_is_not_known() {
 	_http_needs_token_refresh(false);
 }
 
-static void challenged_requested_with_late_credentials() {
+// Disabled functionality and test: on-demand authentication for http is not supported, unless in Configuring global
+// state. This may change in the future.
 #if 0
+static int auth_requested = 0;
+static void on_auth_requested(LinphoneCore *lc, LinphoneAuthInfo *ai, LinphoneAuthMethod method){
+    auth_requested++;
+    (void)lc;
+    (void)ai;
+    (void)method;
+}
+
+static void challenged_requested_with_late_credentials() {
     LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
     LinphoneCoreCbs *coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
     int responseCode = 0;
@@ -162,15 +163,96 @@ static void challenged_requested_with_late_credentials() {
 	HttpClient &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lcm->lc)->getHttpClient();
     auto & httpRequest = httpClient.createRequest("GET", httpServer->getUrl() + "/hello");
     httpRequest.execute([&](const HttpResponse & response){
-        responseCode = response.getStatusCode();
+        responseCode = response.getHttpStatusCode();
         gotResponse = 1;
     });
-    BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &gotResponse, 1));
-    BC_ASSERT_EQUAL(responseCode, 401, int, "%i");
-    BC_ASSERT_EQUAL(auth_requested, 1, int, "%i");
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &auth_requested, 1));
+	BC_ASSERT_EQUAL(gotResponse, 0, int, "%i");
+	LinphoneBearerToken *token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), validToken, time(NULL) + 10);
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(linphone_factory_get(), nullptr, token, serverRealm);
+
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &gotResponse, 1));
+	BC_ASSERT_EQUAL(responseCode, 200, int, "%i");
+	BC_ASSERT_EQUAL(auth_requested, 1, int, "%i");
 
 	linphone_core_manager_destroy(lcm);
+}
 #endif
+
+static void http_request_cancelled() {
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
+	int responseCode = 0;
+	int gotResponse = 0;
+	LinphoneBearerToken *token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), validToken, time(NULL) + 10);
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(linphone_factory_get(), nullptr, token, serverRealm);
+
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+	linphone_bearer_token_unref(token);
+
+	HttpClient &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lcm->lc)->getHttpClient();
+	auto &httpRequest = httpClient.createRequest("GET", httpServer->getUrl() + "/hello");
+	httpRequest.execute([&](const HttpResponse &response) {
+		responseCode = response.getHttpStatusCode();
+		gotResponse = 1;
+	});
+	for (int i = 0; i < 2; ++i)
+		linphone_core_iterate(lcm->lc);
+	BC_ASSERT_TRUE(gotResponse == 0);
+	if (gotResponse == 0) {
+		httpRequest.cancel();
+		BC_ASSERT_FALSE(wait_for_until(lcm->lc, NULL, &gotResponse, 1, 1000));
+		BC_ASSERT_EQUAL(responseCode, 0, int, "%i");
+	}
+	linphone_core_manager_destroy(lcm);
+}
+
+static void one_over_two_http_request_cancelled() {
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
+	int responseCode1 = 0;
+	int gotResponse1 = 0;
+	int responseCode2 = 0;
+	int gotResponse2 = 0;
+	LinphoneBearerToken *token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), validToken, time(NULL) + 10);
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(linphone_factory_get(), nullptr, token, serverRealm);
+
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+	linphone_bearer_token_unref(token);
+
+	HttpClient &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lcm->lc)->getHttpClient();
+	auto &httpRequest1 = httpClient.createRequest("GET", httpServer->getUrl() + "/hello");
+	httpRequest1.execute([&](const HttpResponse &response) {
+		responseCode1 = response.getHttpStatusCode();
+		gotResponse1 = 1;
+	});
+
+	auto &httpRequest2 = httpClient.createRequest("GET", httpServer->getUrl() + "/hello");
+	httpRequest2.execute([&](const HttpResponse &response) {
+		responseCode2 = response.getHttpStatusCode();
+		gotResponse2 = 1;
+	});
+
+	for (int i = 0; i < 2; ++i)
+		linphone_core_iterate(lcm->lc);
+	BC_ASSERT_TRUE(gotResponse1 == 0); // normally it should not have enough time to get answered.
+	if (gotResponse1 == 0) {
+		httpRequest1.cancel(); // Cancel is possible only if not answered.
+		BC_ASSERT_FALSE(wait_for_until(lcm->lc, NULL, &gotResponse1, 1, 1000));
+		BC_ASSERT_EQUAL(responseCode1, 0, int, "%i");
+	}
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &gotResponse2, 1));
+	BC_ASSERT_EQUAL(responseCode2, 200, int, "%i");
+
+	linphone_core_manager_destroy(lcm);
 }
 
 static test_t http_client_tests[] = {
@@ -179,7 +261,9 @@ static test_t http_client_tests[] = {
     {"Http request needs a token refresh", http_needs_token_refresh},
     {"Http request needs a token refresh but expiration was not known",
      http_needs_token_refresh_but_expiration_is_not_known},
-    {"Challenged request, credentials comes later", challenged_requested_with_late_credentials}};
+    //{"Challenged request, credentials comes later", challenged_requested_with_late_credentials},
+    {"Http request cancelled", http_request_cancelled},
+    {"One over two http request cancelled", one_over_two_http_request_cancelled}};
 
 test_suite_t http_client_test_suite = {"HTTP Client",
                                        before_suite,
@@ -188,5 +272,5 @@ test_suite_t http_client_test_suite = {"HTTP Client",
                                        liblinphone_tester_after_each,
                                        sizeof(http_client_tests) / sizeof(http_client_tests[0]),
                                        http_client_tests,
-                                       2,
+                                       3,
                                        0};

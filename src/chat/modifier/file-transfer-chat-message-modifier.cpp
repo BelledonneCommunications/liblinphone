@@ -1113,6 +1113,15 @@ void FileTransferChatMessageModifier::cancelFileTransfer() {
 			if (imee) {
 				imee->cancelFileTransfer(currentFileTransferContent);
 			}
+			if (message) {
+				const auto &meAddress = message->getMeAddress();
+				if (meAddress) {
+					auto nextState = (message->getDirection() == ChatMessage::Direction::Outgoing)
+					                     ? ChatMessage::State::NotDelivered
+					                     : ChatMessage::State::FileTransferError;
+					message->getPrivate()->setParticipantState(meAddress, nextState, ::ms_time(nullptr));
+				}
+			}
 		} else {
 			lWarning() << "Found a http request for file transfer but no Content";
 		}
