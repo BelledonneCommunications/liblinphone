@@ -1407,6 +1407,15 @@ static void search_friend_with_phone_number(void) {
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "+3365566", "", LinphoneMagicSearchSourceAll,
+	                                                     LinphoneMagicSearchAggregationNone);
+
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL); //"sip:+33655667788@sip.example.org"
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+
 	resultList = linphone_magic_search_get_contacts_list(magicSearch, "55667", "", LinphoneMagicSearchSourceAll,
 	                                                     LinphoneMagicSearchAggregationNone);
 

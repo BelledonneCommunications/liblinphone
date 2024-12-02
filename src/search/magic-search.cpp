@@ -62,6 +62,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+static const std::regex charactersToEscape(R"([\.\^\$\+\(\)\[\]\{\}\|\?\*])");
+
 MagicSearch::MagicSearch(const shared_ptr<Core> &core) : CoreAccessor(core) {
 }
 
@@ -878,13 +880,21 @@ void MagicSearch::setupRegex(const string &filter) {
 	transform(lowercaseFilter.begin(), lowercaseFilter.end(), lowercaseFilter.begin(),
 	          [](unsigned char c) { return tolower(c); });
 
-	lowercaseFilter = "*" + lowercaseFilter + "*";
-	// Replace white space by wildcard star character
-	lowercaseFilter = Utils::replaceAll(lowercaseFilter, " ", "*");
+	if (lowercaseFilter.empty()) {
+		// Match anything
+		lowercaseFilter = ".*";
+	} else {
+		lowercaseFilter = regex_replace(lowercaseFilter, charactersToEscape, "\\$&");
+		// Replace white space by wildcard (used by LDAP)
+		lowercaseFilter = Utils::replaceAll(lowercaseFilter, " ", ".*");
+		if (lowercaseFilter != ".*") {
+			lowercaseFilter = ".*" + lowercaseFilter + ".*";
+		}
+	}
 
-	regex star_replace("\\*");
-	regex wildcard_regex("^" + regex_replace(lowercaseFilter, star_replace, ".*") + "$");
-	mFilterRegex = wildcard_regex;
+	// Replace any regex special character by escaped version of it, such as '+' for example
+	lDebug() << "[MagicSearch] Building regex [" << lowercaseFilter << "]";
+	mFilterRegex = regex(lowercaseFilter);
 }
 
 unsigned int MagicSearch::getWeight(const string &haystack) const {
