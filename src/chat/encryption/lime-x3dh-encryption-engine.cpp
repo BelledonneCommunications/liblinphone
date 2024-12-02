@@ -427,18 +427,17 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	// Compress plain text message - compression after encryption is much less efficient
 	// To keep compatibility with version not supporting the encryption at this stage, do it (for now: may 2024)
-	// only when the lime base algorithm is c25519k512
+	// only when the only supported algorithm is c25519k512
 	bool compressedPlain = false;
-	std::shared_ptr<vector<uint8_t>> plainMessage = nullptr;
-	const std::string curveConfig =
-	    linphone_config_get_string(message->getChatRoom()->getCore()->getCCore()->config, "lime", "curve", "c25519");
 	Content plainContent(message->getInternalContent());
-	if (curveConfig.compare("c25519k512") == 0) {
-		compressedPlain = plainContent.deflateBody();
+	const string localDeviceId = localDevice->asStringUriOnly();
+	if (usersAlgos.find(localDeviceId) != usersAlgos.end()) {
+		if (usersAlgos[localDeviceId].size() == 1 && usersAlgos[localDeviceId][0] == lime::CurveId::c25519k512) {
+			compressedPlain = plainContent.deflateBody();
+		}
 	}
 
 	try {
-		const string localDeviceId = localDevice->asStringUriOnly();
 		auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
 		errorCode = 0; // no need to specify error code because not used later
 		auto encryptionContext = make_shared<lime::EncryptionContext>(
