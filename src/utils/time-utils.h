@@ -21,11 +21,18 @@
 #ifndef _L_APPLE_TIME_UTILS_H_
 #define _L_APPLE_TIME_UTILS_H_
 
-#ifdef __APPLE__
 #include <string>
 #include <time.h>
+
+#include "linphone/utils/general.h"
+
+LINPHONE_BEGIN_NAMESPACE
+
+#ifdef __APPLE__
 time_t iso8601ToTimeApple(std::string iso8601DateTime);
 std::string timeToIso8601Apple(time_t t);
 #endif // __APPLE__
+
+LINPHONE_END_NAMESPACE
 
 #endif // _L_APPLE_TIME_UTILS_H_

@@ -23,6 +23,8 @@
 
 #import "utils/time-utils.h"
 
+LINPHONE_BEGIN_NAMESPACE
+
 time_t iso8601ToTimeApple(std::string iso8601DateTime) {
 	NSString* iso8601DateTimeString = [NSString stringWithCString:iso8601DateTime.c_str() encoding:[NSString defaultCStringEncoding]];
 	NSISO8601DateFormatter* dateFormatter = [[NSISO8601DateFormatter alloc] init];
@@ -36,4 +38,7 @@ std::string timeToIso8601Apple(time_t t) {
 	NSString* dateString = [dateFormatter stringFromDate:nsDateTime];
 	return std::string([dateString UTF8String]);
 }
+
+LINPHONE_END_NAMESPACE
+
 #endif // __APPLE__
