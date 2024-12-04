@@ -65,6 +65,7 @@ public:
 	const std::shared_ptr<Address> &getOrganizerAddress() const;
 	void setOrganizer(const std::shared_ptr<const ParticipantInfo> &organizer);
 	void setOrganizer(const std::shared_ptr<const Address> &organizer);
+	bool isOrganizer(const std::shared_ptr<const ParticipantInfo> &participantInfo) const;
 
 	const std::list<std::shared_ptr<Address>> &getParticipantAddressList() const;
 	const bctbx_list_t *getParticipantAddressCList() const;
@@ -84,7 +85,12 @@ public:
 	void removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo, bool logActivity = true);
 
 	bool hasParticipant(const std::shared_ptr<const Address> &address) const;
+	bool hasParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) const;
+
+	const std::shared_ptr<ParticipantInfo>
+	findParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) const;
 	const std::shared_ptr<ParticipantInfo> findParticipant(const std::shared_ptr<const Address> &address) const;
+	const std::shared_ptr<ParticipantInfo> findParticipant(const std::string &ccmpuri) const;
 
 	void updateParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
 
@@ -139,7 +145,10 @@ public:
 
 private:
 	void updateParticipantAddresses() const;
+	participant_list_t::const_iterator
+	findParticipantIt(const std::shared_ptr<const ParticipantInfo> &participantInfo) const;
 	participant_list_t::const_iterator findParticipantIt(const std::shared_ptr<const Address> &address) const;
+	participant_list_t::const_iterator findParticipantIt(const std::string &ccmpUri) const;
 
 	mutable std::string mCcmpUri = "";
 	organizer_t mOrganizer;

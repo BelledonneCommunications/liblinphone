@@ -40,6 +40,7 @@
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
+#include "utils/xml-utils.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -232,7 +233,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			for (auto &mediaEntry : availableMedia.get().getEntry()) {
 				const std::string mediaType = mediaEntry.getType();
 				const LinphoneMediaDirection mediaDirection =
-				    ClientConferenceEventHandler::mediaStatusToMediaDirection(mediaEntry.getStatus().get());
+				    XmlUtils::mediaStatusToMediaDirection(mediaEntry.getStatus().get());
 				const bool enabled = (mediaDirection == LinphoneMediaDirectionSendRecv);
 				if (mediaType.compare("audio") == 0) {
 					getConference()->getCurrentParams()->enableAudio(enabled);
@@ -518,7 +519,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 						isScreenSharing |= (streamType == LinphoneStreamTypeVideo) && (content.compare("slides") == 0);
 						LinphoneMediaDirection mediaDirection =
-						    ClientConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
+						    XmlUtils::mediaStatusToMediaDirection(media.getStatus().get());
 						uint32_t ssrc = 0;
 						if (media.getSrcId() && (mediaDirection != LinphoneMediaDirectionInactive)) {
 							const std::string srcId = media.getSrcId().get();
@@ -780,20 +781,6 @@ void ClientConferenceEventHandler::requestFullState() {
 	conference->setLastNotify(0);
 	subscribe(getConferenceId());
 	fullStateRequested = true;
-}
-
-LinphoneMediaDirection ClientConferenceEventHandler::mediaStatusToMediaDirection(MediaStatusType status) {
-	switch (status) {
-		case MediaStatusType::inactive:
-			return LinphoneMediaDirectionInactive;
-		case MediaStatusType::sendonly:
-			return LinphoneMediaDirectionSendOnly;
-		case MediaStatusType::recvonly:
-			return LinphoneMediaDirectionRecvOnly;
-		case MediaStatusType::sendrecv:
-			return LinphoneMediaDirectionSendRecv;
-	}
-	return LinphoneMediaDirectionSendRecv;
 }
 
 // -----------------------------------------------------------------------------

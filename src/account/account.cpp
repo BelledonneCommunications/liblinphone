@@ -22,11 +22,13 @@
 
 #include "account.h"
 
+#include "chat/ics/ics.h"
 #include "content/content.h"
 #include "core/core.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
+#include "linphone/utils/algorithm.h"
 #include "push-notification/push-notification-config.h"
 #ifdef HAVE_ADVANCED_IM
 #ifdef HAVE_LIME_X3DH
@@ -43,12 +45,17 @@
 #include "presence/presence-service.h"
 #include "private.h"
 #include "utils/custom-params.h"
+#include "utils/xml-utils.h"
+#include "xml/xcon-ccmp.h"
 
 // =============================================================================
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+using namespace Xsd::XconCcmp;
+using namespace Xsd::XconConferenceInfo;
 
 Account::Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params)
     : CoreAccessor(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr) {
@@ -1100,7 +1107,25 @@ list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos(const std::list<Lin
 
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-	return mainDb->getConferenceInfosWithParticipant(localAddress, capabilities);
+	mConferenceInfos = mainDb->getConferenceInfosWithParticipant(localAddress, capabilities);
+
+	const auto ccmpServerUrl = mParams->getCcmpServerUrl();
+	if (!ccmpServerUrl.empty()) {
+		updateConferenceInfoListWithCcmp();
+	}
+	// At first, the list of locally stored conferences is returned.
+	// The updated list will be available upon receiving the notification that the conference information list has been
+	// updated (callback: conference_information_updated)
+	return mConferenceInfos;
+}
+
+void Account::addConferenceInfo(const std::shared_ptr<ConferenceInfo> &info) {
+	auto it = std::find_if(mConferenceInfos.begin(), mConferenceInfos.end(),
+	                       [&info](const auto &cachedInfo) { return *info->getUri() == *cachedInfo->getUri(); });
+	if (it != mConferenceInfos.end()) {
+		mConferenceInfos.erase(it);
+	}
+	mConferenceInfos.push_back(info);
 }
 
 void Account::writeAllToConfigFile(const std::shared_ptr<Core> core) {
@@ -1718,6 +1743,345 @@ void Account::onMwiServerAddressChanged() {
 	}
 }
 
+void Account::ccmpConferenceInformationRequestSent() {
+	mCcmpConferenceInformationRequestsCounter++;
+}
+
+void Account::ccmpConferenceInformationResponseReceived() {
+	if (mCcmpConferenceInformationRequestsCounter == 0) {
+		lFatal() << "Account [" << this << "] Receiving more responses than HTTP requests sent";
+	}
+	mCcmpConferenceInformationRequestsCounter--;
+	if (mCcmpConferenceInformationRequestsCounter == 0) {
+		// Notify the application that all responses have been received and therefore the core holds a list of
+		// conference informations that is up to date for this account
+		auto infosCList = Utils::listToCBctbxList<LinphoneConferenceInfo, ConferenceInfo>(mConferenceInfos);
+		_linphone_account_notify_conference_information_updated(toC(), infosCList);
+		bctbx_list_free(infosCList);
+	}
+}
+
+void Account::updateConferenceInfoListWithCcmp() const {
+	const auto ccmpServerUrl = mParams->getCcmpServerUrl();
+	if (ccmpServerUrl.empty()) {
+		lError() << "Unable to get the list of conferences on an unknown CCMP server where account [" << this
+		         << "] is a participant";
+		return;
+	}
+
+	ConfsRequestType confsRequest = ConfsRequestType();
+	CcmpConfsRequestMessageType requestBody = CcmpConfsRequestMessageType(confsRequest);
+	const auto &identity = mParams->getIdentityAddress();
+	std::string identityXconUserId = Utils::getXconId(identity);
+	if (identityXconUserId.empty()) {
+		lError() << "Aborting creation of body of POST to request the list of conferences on the CCMP server "
+		         << ccmpServerUrl << " where account [" << this
+		         << "] is a participant because its CCMP User ID is unknwon";
+		return;
+	}
+	requestBody.setConfUserID(identityXconUserId);
+
+	stringstream httpBody;
+	Xsd::XmlSchema::NamespaceInfomap map;
+	map["conference-info"].name = "urn:ietf:params:xml:ns:conference-info";
+	map["xcon-conference-info"].name = "urn:ietf:params:xml:ns:xcon-conference-info";
+	map["xcon-ccmp"].name = "urn:ietf:params:xml:ns:xcon-ccmp";
+	serializeCcmpRequest(httpBody, requestBody, map);
+	const auto body = httpBody.str();
+
+	belle_http_request_listener_callbacks_t internalCallbacks = {};
+	internalCallbacks.process_response = Account::handleResponseConferenceList;
+	internalCallbacks.process_io_error = Account::handleIoError;
+	internalCallbacks.process_timeout = Account::handleTimeout;
+	internalCallbacks.process_auth_requested = Account::handleAuthRequested;
+
+	belle_http_request_listener_t *listener =
+	    belle_http_request_listener_create_from_callbacks(&internalCallbacks, const_cast<Account *>(this));
+
+	// Send request to retrieve the list of all conferences on the CCMP server
+	if (!XmlUtils::sendCcmpRequest(getCore(), ccmpServerUrl, identity, body, listener)) {
+		lError() << "An error occurred when requesting informations list linked to " << *this << " to server "
+		         << ccmpServerUrl;
+	}
+}
+
+void Account::handleResponseConferenceList(void *ctx, const belle_http_response_event_t *event) {
+	if (event->response) {
+		auto account = static_cast<Account *>(ctx);
+		int code = belle_http_response_get_status_code(event->response);
+		std::shared_ptr<Address> conferenceAddress;
+		if (code >= 200 && code < 300) {
+			belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
+			char *content = belle_sip_object_to_string(body);
+			if (content) {
+				try {
+					istringstream data(content);
+					auto responseType = parseCcmpResponse(data, Xsd::XmlSchema::Flags::dont_validate);
+					ms_free(content);
+					CcmpConfsResponseMessageType &response =
+					    dynamic_cast<CcmpConfsResponseMessageType &>(responseType->getCcmpResponse());
+					const auto responseCodeType = response.getResponseCode();
+					code = static_cast<int>(responseCodeType);
+					if (code >= 200 && code < 300) {
+						auto &confsResponse = response.getConfsResponse();
+						auto &confsInfo = confsResponse.getConfsInfo();
+						if (!confsInfo.present()) return;
+						auto &infos = confsInfo->getEntry();
+						// For every conference that has been retrieved, send one more request to get all the details
+						for (auto &info : infos) {
+							ConfRequestType confRequest = ConfRequestType();
+							auto confObjId = info.getUri();
+
+							CcmpConfRequestMessageType requestBody = CcmpConfRequestMessageType(confRequest);
+							// CCMP URI (conference object ID) if update or delete
+							if (!confObjId.empty()) {
+								requestBody.setConfObjID(confObjId);
+							}
+
+							// Conference user ID
+							const auto &accountParams = account->getAccountParams();
+							const auto &identity = accountParams->getIdentityAddress();
+							const auto ccmpServerUrl = accountParams->getCcmpServerUrl();
+							std::string identityXconUserId = Utils::getXconId(identity);
+							if (identityXconUserId.empty()) {
+								lError() << "Aborting creation of body of POST to request the list of conferences on "
+								            "the CCMP server "
+								         << ccmpServerUrl << " where account [" << account
+								         << "] is a participant because its CCMP User ID is unknwon";
+								return;
+							}
+							requestBody.setConfUserID(identityXconUserId);
+							requestBody.setOperation(OperationType::retrieve);
+
+							stringstream httpBody;
+							Xsd::XmlSchema::NamespaceInfomap map;
+							map["conference-info"].name = "urn:ietf:params:xml:ns:conference-info";
+							map["xcon-conference-info"].name = "urn:ietf:params:xml:ns:xcon-conference-info";
+							map["xcon-ccmp"].name = "urn:ietf:params:xml:ns:xcon-ccmp";
+							serializeCcmpRequest(httpBody, requestBody, map);
+							const auto body = httpBody.str();
+
+							belle_http_request_listener_callbacks_t internalCallbacks = {};
+							internalCallbacks.process_response = Account::handleResponseConferenceInformation;
+							internalCallbacks.process_io_error = Account::handleIoError;
+							internalCallbacks.process_timeout = Account::handleTimeout;
+							internalCallbacks.process_auth_requested = Account::handleAuthRequested;
+
+							belle_http_request_listener_t *listener =
+							    belle_http_request_listener_create_from_callbacks(&internalCallbacks, ctx);
+
+							if (XmlUtils::sendCcmpRequest(account->getCore(), ccmpServerUrl, identity, body,
+							                              listener)) {
+								account->ccmpConferenceInformationRequestSent();
+							} else {
+								lError() << "An error occurred when requesting informations of conference " << confObjId
+								         << " linked to Account [" << account << "] (" << *identity << ") to server "
+								         << ccmpServerUrl;
+							}
+						}
+					}
+				} catch (const std::bad_cast &e) {
+					lError() << "Error while casting parsed CCMP response (CcmpConfsResponseMessageType) in "
+					         << *account << ": " << e.what();
+				} catch (const exception &e) {
+					lError() << "Error while parsing CCMP response (CcmpConfsResponseMessageType) in " << *account
+					         << ": " << e.what();
+				}
+			}
+		}
+	}
+}
+
+void Account::handleResponseConferenceInformation(void *ctx, const belle_http_response_event_t *event) {
+	if (event->response) {
+		auto account = static_cast<Account *>(ctx);
+		int code = belle_http_response_get_status_code(event->response);
+		std::shared_ptr<Address> conferenceAddress;
+		if (code >= 200 && code < 300) {
+			belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
+			char *content = belle_sip_object_to_string(body);
+			if (content) {
+				try {
+					istringstream data(content);
+					auto responseType = parseCcmpResponse(data, Xsd::XmlSchema::Flags::dont_validate);
+					ms_free(content);
+					CcmpConfResponseMessageType &response =
+					    dynamic_cast<CcmpConfResponseMessageType &>(responseType->getCcmpResponse());
+					const auto responseCodeType = response.getResponseCode();
+					code = static_cast<int>(responseCodeType);
+					if (code >= 200 && code < 300) {
+						auto &confResponse = response.getConfResponse();
+						auto &confInfo = confResponse.getConfInfo();
+						if (!confInfo.present()) return;
+						std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
+						info->setCcmpUri(confInfo->getEntity());
+						auto &confDescription = confInfo->getConferenceDescription();
+						if (confDescription.present()) {
+							auto &subject = confDescription.get().getSubject();
+							if (subject.present() && !subject.get().empty()) {
+								info->setSubject(subject.get());
+							}
+							auto &confUris = confDescription.get().getConfUris();
+							auto &uris = confUris->getEntry();
+							for (auto &uri : uris) {
+								info->setUri(Address::create(uri.getUri()));
+							}
+							const auto &availableMedia = confDescription.get().getAvailableMedia();
+							if (availableMedia.present()) {
+								for (auto &mediaEntry : availableMedia.get().getEntry()) {
+									const std::string mediaType = mediaEntry.getType();
+									const LinphoneMediaDirection mediaDirection =
+									    XmlUtils::mediaStatusToMediaDirection(mediaEntry.getStatus().get());
+									LinphoneStreamType streamType = LinphoneStreamTypeUnknown;
+									if (mediaType.compare("audio") == 0) {
+										streamType = LinphoneStreamTypeAudio;
+									} else if (mediaType.compare("video") == 0) {
+										streamType = LinphoneStreamTypeVideo;
+									} else if (mediaType.compare("text") == 0) {
+										streamType = LinphoneStreamTypeText;
+									} else {
+										lError() << "Unrecognized media type " << mediaType;
+									}
+									info->setCapability(streamType, (mediaDirection == LinphoneMediaDirectionSendRecv));
+								}
+							}
+							auto &anySequence(confDescription.get().getAny());
+							for (const auto &anyElement : anySequence) {
+								auto name = xsd::cxx::xml::transcode<char>(anyElement.getLocalName());
+								auto nodeName = xsd::cxx::xml::transcode<char>(anyElement.getNodeName());
+								auto nodeValue = xsd::cxx::xml::transcode<char>(anyElement.getNodeValue());
+								if (nodeName == "xcon:conference-time") {
+									ConferenceTimeType conferenceTime{anyElement};
+									for (auto &conferenceTimeEntry : conferenceTime.getEntry()) {
+										const std::string base = conferenceTimeEntry.getBase();
+										if (!base.empty()) {
+											auto ics = Ics::Icalendar::createFromString(base.c_str());
+											if (ics) {
+												auto timeInfo = ics->toConferenceInfo();
+												info->setDateTime(timeInfo->getDateTime());
+												info->setDuration(timeInfo->getDuration());
+											}
+										}
+									}
+								}
+							}
+						}
+						auto &users = confInfo->getUsers();
+						if (users.present()) {
+							auto &anySequence(users.get().getAny());
+							for (const auto &anyElement : anySequence) {
+								auto name = xsd::cxx::xml::transcode<char>(anyElement.getLocalName());
+								auto nodeName = xsd::cxx::xml::transcode<char>(anyElement.getNodeName());
+								auto nodeValue = xsd::cxx::xml::transcode<char>(anyElement.getNodeValue());
+								if (nodeName == "xcon:allowed-users-list") {
+									ConferenceInfo::participant_list_t participantInfos;
+									AllowedUsersListType allowedUserList{anyElement};
+									auto users = allowedUserList.getTarget();
+									for (auto &user : users) {
+										auto participantInfo = ParticipantInfo::create(user.getUri());
+										participantInfos.push_back(participantInfo);
+									}
+									info->setParticipants(participantInfos);
+								}
+							}
+							for (auto &user : users->getUser()) {
+								auto &roles = user.getRoles();
+								bool isOrganizer = false;
+								auto ccmpUri = user.getEntity().get();
+								auto participantInfo = info->findParticipant(ccmpUri);
+								if (roles) {
+									auto &entry = roles->getEntry();
+									isOrganizer = (find(entry, "organizer") != entry.end() ? true : false);
+								}
+								// The server CCMP sends responses using the XCON-USERID and, unfortunately, they are
+								// generated by the CCMP server and the SDK has no knowledge of them. RFC4475
+								// fortunately details the tag <associated-aors> that can be used to communicate
+								// additional URIs that should be associated to the entity attribute. For example the
+								// following XML code will allow to associated the participant with address
+								// sip:bob@sip.example.org to the XCON-USERID bob:
+								//<user entity="xcon-userid:bob">
+								//  <associated-aors>
+								//    <entry>
+								//      <uri>sip:bob@sip.example.com</uri>
+								//    </entry>
+								//   </associated-aors>
+								//</user>
+								auto &associatedAors = user.getAssociatedAors();
+								std::shared_ptr<Address> address;
+								if (associatedAors.present()) {
+									for (auto &aor : associatedAors->getEntry()) {
+										auto tmpAddress = Address::create(aor.getUri());
+										if (tmpAddress) {
+											address = tmpAddress;
+										}
+									}
+								}
+								decltype(participantInfo) updatedParticipantInfo;
+								if (participantInfo) {
+									updatedParticipantInfo = participantInfo->clone()->toSharedPtr();
+								} else {
+									updatedParticipantInfo = ParticipantInfo::create(ccmpUri);
+								}
+								if (address) {
+									updatedParticipantInfo->setAddress(address);
+								}
+								if (participantInfo) {
+									info->updateParticipant(updatedParticipantInfo);
+								} else {
+									info->addParticipant(updatedParticipantInfo);
+								}
+								if (isOrganizer) {
+									info->setOrganizer(updatedParticipantInfo);
+								}
+							}
+						}
+						account->addConferenceInfo(info);
+#ifdef HAVE_DB_STORAGE
+						auto &mainDb = account->getCore()->getPrivate()->mainDb;
+						if (mainDb) {
+							mainDb->insertConferenceInfo(info);
+						}
+#endif // HAVE_DB_STORAGE
+					}
+				} catch (const std::bad_cast &e) {
+					lError() << "Error while casting parsed CCMP response (CcmpConfResponseMessageType) in account ["
+					         << *account << ": " << e.what();
+				} catch (const exception &e) {
+					lError() << "Error while parsing CCMP response (CcmpConfResponseMessageType) in " << *account
+					         << ": " << e.what();
+				}
+			}
+		}
+		account->ccmpConferenceInformationResponseReceived();
+	}
+}
+
+void Account::handleIoError(void *ctx, const belle_sip_io_error_event_t *event) {
+	auto account = static_cast<Account *>(ctx);
+	belle_sip_message_t *msg = BELLE_SIP_MESSAGE(belle_sip_io_error_event_get_source(event));
+	belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(msg);
+	std::string content = L_C_TO_STRING(belle_sip_object_to_string(body));
+	lInfo() << "Account [" << account << "] I/O error on host [" << belle_sip_io_error_event_get_host(event)
+	        << "] for message [" << msg << "]: " << content;
+	account->ccmpConferenceInformationResponseReceived();
+}
+
+void Account::handleTimeout(void *ctx, const belle_sip_timeout_event_t *event) {
+	auto account = static_cast<Account *>(ctx);
+	belle_sip_client_transaction_t *transaction = belle_sip_timeout_event_get_client_transaction(event);
+	belle_sip_message_t *msg = BELLE_SIP_MESSAGE(belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(transaction)));
+	belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(msg);
+	std::string content = L_C_TO_STRING(belle_sip_object_to_string(body));
+	lInfo() << "Account [" << account << "] Timeout error for message [" << msg << "]: " << content;
+	account->ccmpConferenceInformationResponseReceived();
+}
+
+void Account::handleAuthRequested(void *ctx, belle_sip_auth_event_t *event) {
+	const char *username = belle_sip_auth_event_get_username(event);
+	const char *domain = belle_sip_auth_event_get_domain(event);
+	auto account = static_cast<Account *>(ctx);
+	linphone_core_fill_belle_sip_auth_event(account->getCore()->getCCore(), event, username, domain);
+}
 // -----------------------------------------------------------------------------
 
 LinphoneAccountCbsRegistrationStateChangedCb AccountCbs::getRegistrationStateChanged() const {
@@ -1734,6 +2098,14 @@ LinphoneAccountCbsMessageWaitingIndicationChangedCb AccountCbs::getMessageWaitin
 
 void AccountCbs::setMessageWaitingIndicationChanged(LinphoneAccountCbsMessageWaitingIndicationChangedCb cb) {
 	mMessageWaitingIndicationChangedCb = cb;
+}
+
+LinphoneAccountCbsConferenceInformationUpdatedCb AccountCbs::getConferenceInformationUpdated() const {
+	return mConferenceInformationUpdatedCb;
+}
+
+void AccountCbs::setConferenceInformationUpdated(LinphoneAccountCbsConferenceInformationUpdatedCb cb) {
+	mConferenceInformationUpdatedCb = cb;
 }
 
 #ifndef _MSC_VER

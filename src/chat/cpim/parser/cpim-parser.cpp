@@ -643,7 +643,7 @@ shared_ptr<Cpim::Message> Cpim::Parser::parseMessage(const string &input) {
 	size_t parsedSize;
 	shared_ptr<Node> node = d->parser->parseInput("Message", input, &parsedSize);
 	if (!node) {
-		lWarning() << "Unable to parse message.";
+		lWarning() << "Unable to parse CPIM message " << input;
 		return nullptr;
 	}
 

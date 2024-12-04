@@ -21,6 +21,8 @@
 #ifndef _L_XML_UTILS_H_
 #define _L_XML_UTILS_H_
 
+#include <belle-sip/http-listener.h>
+
 #include "linphone/types.h"
 #include "xml/conference-info.h"
 
@@ -28,8 +30,17 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Core;
+class Address;
+
 namespace XmlUtils {
+LinphoneMediaDirection mediaStatusToMediaDirection(Xsd::ConferenceInfo::MediaStatusType status);
 Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
+bool sendCcmpRequest(const std::shared_ptr<Core> core,
+                     const std::string ccmpServerUrl,
+                     const std::shared_ptr<Address> from,
+                     const std::string body,
+                     belle_http_request_listener_t *listener);
 } // namespace XmlUtils
 
 LINPHONE_END_NAMESPACE

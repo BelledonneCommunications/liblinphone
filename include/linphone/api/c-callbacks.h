@@ -56,6 +56,17 @@ typedef void (*LinphoneAccountCbsMessageWaitingIndicationChangedCb)(LinphoneAcco
                                                                     const LinphoneMessageWaitingIndication *mwi);
 
 /**
+ * Callback for notifying that the conference information list of an account has been updated.
+ * This is generally the case when retrieving conference informations from a CCMP server as the request might take a
+ * little bit of time to be responded. In order to allow the core to perform its tasks while the conference information
+ * are being sent, the core will send first the list of conference information that are locally stored and then this
+ * callback is called once it is updated with the information received by the CCMP server.
+ * @param account #LinphoneAccount object whose message waiting indication changed. @notnil
+ * @param infos The updated list of conference informations \bctbx_list{LinphoneConferenceInfo} @notnil
+ */
+typedef void (*LinphoneAccountCbsConferenceInformationUpdatedCb)(LinphoneAccount *account, const bctbx_list_t *infos);
+
+/**
  * @}
  **/
 

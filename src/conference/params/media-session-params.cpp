@@ -712,8 +712,10 @@ bool MediaSessionParams::isConfiguredForScreenSharing(bool enableLog) const {
 		configured = false;
 		if (enableLog) {
 			lWarning() << "Screen sharing is not correctly configured right now because some requirements aren't met:";
-			lWarning() << "- video capability must be enabled";
-			lWarning() << "- screen sharing capability must be enabled";
+			lWarning() << "- video capability must be enabled: actual "
+			           << std::string(isVideoEnabled ? "true" : "false");
+			lWarning() << "- screen sharing capability must be enabled: actual "
+			           << std::string(isScreenSharingEnabled ? "true" : "false");
 			lWarning() << "- video direction has send component: actual direction is "
 			           << std::string(linphone_media_direction_to_string(videoDirection));
 		}
@@ -728,13 +730,10 @@ bool MediaSessionParams::isConfiguredForScreenSharing(bool enableLog) const {
 
 bool MediaSessionParams::isValid() const {
 	const auto isScreenSharingEnabled = screenSharingEnabled();
-
 	bool valid = true;
-
 	if (isScreenSharingEnabled) {
 		valid = isConfiguredForScreenSharing(true);
 	}
-
 	return valid;
 }
 

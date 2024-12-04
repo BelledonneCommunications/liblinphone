@@ -548,7 +548,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 								    linphone_factory_create_conference_info_from_icalendar_content(
 								        linphone_factory_get(), original_content);
 								if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
-									check_conference_info_against_db(mgr, confAddr, conf_info_from_original_content);
+									check_conference_info_against_db(mgr, confAddr, conf_info_from_original_content,
+									                                 FALSE);
 									linphone_conference_info_unref(conf_info_from_original_content);
 								}
 							}
@@ -576,7 +577,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 								    linphone_factory_create_conference_info_from_icalendar_content(
 								        linphone_factory_get(), original_content);
 								if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
-									check_conference_info_against_db(mgr, confAddr, conf_info_from_original_content);
+									check_conference_info_against_db(mgr, confAddr, conf_info_from_original_content,
+									                                 FALSE);
 									linphone_conference_info_unref(conf_info_from_original_content);
 								}
 							}
@@ -1066,7 +1068,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 										        linphone_factory_get(), original_content);
 										if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
 											check_conference_info_against_db(mgr, confAddr,
-											                                 conf_info_from_original_content);
+											                                 conf_info_from_original_content, FALSE);
 											linphone_conference_info_unref(conf_info_from_original_content);
 										}
 									}
@@ -1096,7 +1098,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 										        linphone_factory_get(), original_content);
 										if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
 											check_conference_info_against_db(mgr, confAddr,
-											                                 conf_info_from_original_content);
+											                                 conf_info_from_original_content, FALSE);
 											linphone_conference_info_unref(conf_info_from_original_content);
 										}
 									}

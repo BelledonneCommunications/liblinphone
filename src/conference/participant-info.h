@@ -38,6 +38,7 @@ public:
 	static const std::string sequenceParameter;
 	static const std::string roleParameter;
 
+	ParticipantInfo(const std::string &ccmpUri);
 	ParticipantInfo(const std::shared_ptr<const Address> &address);
 	virtual ~ParticipantInfo();
 
@@ -45,7 +46,11 @@ public:
 
 	ParticipantInfo *clone() const override;
 
+	void setAddress(const std::shared_ptr<const Address> &address);
 	const std::shared_ptr<Address> &getAddress() const;
+
+	void setCcmpUri(const std::string &ccmpUri);
+	std::string getCcmpUri() const;
 
 	void setRole(Participant::Role role);
 	Participant::Role getRole() const;
@@ -68,11 +73,21 @@ public:
 	static const participant_params_t stringToMemberParameters(const std::string &params);
 
 private:
+	std::string mCcmpUri;
 	std::shared_ptr<Address> mAddress;
 	Participant::Role mRole = Participant::Role::Unknown;
 	int mSequence = -1;
 	participant_params_t mParameters;
 };
+
+inline std::ostream &operator<<(std::ostream &ostr, const ParticipantInfo &participantInfo) {
+	const auto &address = participantInfo.getAddress();
+	const auto addressString = (address ? address->toString() : std::string("sip:"));
+	const auto &ccmpUri = participantInfo.getCcmpUri();
+	ostr << "ParticipantInfo [" << (void *)&participantInfo << "]  (address: " << addressString << " - CCMP uri "
+	     << ccmpUri << ")";
+	return ostr;
+}
 
 LINPHONE_END_NAMESPACE
 

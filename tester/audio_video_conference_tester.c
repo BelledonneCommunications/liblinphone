@@ -3357,7 +3357,6 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 	linphone_conference_scheduler_cbs_unref(cbs);
 
 	LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
-
 	LinphoneAddress *organizer_address =
 	    marie_account ? linphone_address_clone(
 	                        linphone_account_params_get_identity_address(linphone_account_get_params(marie_account)))
@@ -3456,7 +3455,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 
 				if (msg) {
 					const bctbx_list_t *original_contents = linphone_chat_message_get_contents(msg);
-					BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+					BC_ASSERT_EQUAL(bctbx_list_size(original_contents), 1, size_t, "%zu");
 					LinphoneContent *original_content = (LinphoneContent *)bctbx_list_get_data(original_contents);
 					BC_ASSERT_PTR_NOT_NULL(original_content);
 
@@ -3502,15 +3501,15 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 		linphone_conference_scheduler_add_callbacks(update_conference_scheduler, cbs);
 		linphone_conference_scheduler_cbs_unref(cbs);
 
-		LinphoneConferenceInfo *conf_info =
+		LinphoneConferenceInfo *updated_conf_info =
 		    linphone_core_find_conference_information_from_uri(marie->lc, conference_address);
 		LinphoneParticipantInfo *participant_info = linphone_participant_info_new(michelle->identity);
 		linphone_participant_info_set_role(participant_info, LinphoneParticipantRoleSpeaker);
-		linphone_conference_info_add_participant_2(conf_info, participant_info);
+		linphone_conference_info_add_participant_2(updated_conf_info, participant_info);
 		subject = "Updated CCMP conference";
-		linphone_conference_info_set_subject(conf_info, subject);
-		linphone_conference_scheduler_set_info(update_conference_scheduler, conf_info);
-		linphone_conference_info_unref(conf_info);
+		linphone_conference_info_set_subject(updated_conf_info, subject);
+		linphone_conference_scheduler_set_info(update_conference_scheduler, updated_conf_info);
+		linphone_conference_info_unref(updated_conf_info);
 		linphone_participant_info_unref(participant_info);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_ConferenceSchedulerStateUpdating, 1,
@@ -3584,7 +3583,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 
 					if (msg) {
 						const bctbx_list_t *original_contents = linphone_chat_message_get_contents(msg);
-						BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+						BC_ASSERT_EQUAL(bctbx_list_size(original_contents), 1, size_t, "%zu");
 						LinphoneContent *original_content = (LinphoneContent *)bctbx_list_get_data(original_contents);
 						BC_ASSERT_PTR_NOT_NULL(original_content);
 
@@ -3633,10 +3632,10 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 		linphone_conference_scheduler_add_callbacks(cancel_conference_scheduler, cbs);
 		linphone_conference_scheduler_cbs_unref(cbs);
 
-		LinphoneConferenceInfo *conf_info =
+		LinphoneConferenceInfo *cancel_conf_info =
 		    linphone_core_find_conference_information_from_uri(marie->lc, conference_address);
-		linphone_conference_scheduler_cancel_conference(cancel_conference_scheduler, conf_info);
-		linphone_conference_info_unref(conf_info);
+		linphone_conference_scheduler_cancel_conference(cancel_conference_scheduler, cancel_conf_info);
+		linphone_conference_info_unref(cancel_conf_info);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_ConferenceSchedulerStateUpdating,
 		                             marie_stats.number_of_ConferenceSchedulerStateUpdating + 1,
@@ -3701,7 +3700,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 
 					if (msg) {
 						const bctbx_list_t *original_contents = linphone_chat_message_get_contents(msg);
-						BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+						BC_ASSERT_EQUAL(bctbx_list_size(original_contents), 1, size_t, "%zu");
 						LinphoneContent *original_content = (LinphoneContent *)bctbx_list_get_data(original_contents);
 						BC_ASSERT_PTR_NOT_NULL(original_content);
 
@@ -3829,6 +3828,154 @@ static void simple_ccmp_conference_with_conference_update(void) {
 
 static void simple_ccmp_conference_with_conference_update_cancel(void) {
 	simple_ccmp_conference_base(TRUE, TRUE);
+}
+
+void conference_information_updated_on_account(LinphoneAccount *account, BCTBX_UNUSED(const bctbx_list_t *info)) {
+	LinphoneCore *lc = linphone_account_get_core(account);
+	ms_message("Conference information updated for user id [%s] at account [%s]",
+	           linphone_account_params_get_identity(linphone_account_get_params(account)),
+	           linphone_account_params_get_server_addr(linphone_account_get_params(account)));
+	stats *counters = get_stats(lc);
+	counters->number_of_ConferenceInformationUpdated++;
+}
+
+static void simple_ccmp_conference_retrieval(void) {
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE, NULL);
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_rc", TRUE, NULL);
+	LinphoneCoreManager *laure =
+	    create_mgr_for_conference(liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE, NULL);
+	LinphoneCoreManager *michelle = create_mgr_for_conference("michelle_rc", TRUE, NULL);
+
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, laure);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, michelle);
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+
+	for (bctbx_list_t *core_it = coresList; core_it; core_it = bctbx_list_next(core_it)) {
+		LinphoneCore *core = (LinphoneCore *)bctbx_list_get_data(core_it);
+		LinphoneAccount *account = linphone_core_get_default_account(core);
+		LinphoneAccountParams *account_params =
+		    account ? linphone_account_params_clone(linphone_account_get_params(account)) : NULL;
+		if (account_params) {
+			linphone_account_params_set_ccmp_server_url(account_params, ccmp_server_url);
+			linphone_account_set_params(account, account_params);
+			linphone_account_params_unref(account_params);
+		}
+		LinphoneAccountCbs *cbs = linphone_factory_create_account_cbs(linphone_factory_get());
+		linphone_account_cbs_set_conference_information_updated(cbs, conference_information_updated_on_account);
+		linphone_account_add_callbacks(account, cbs);
+		linphone_account_cbs_unref(cbs);
+	}
+
+	int number_conferences = 10;
+	int base_duration = 10;
+	const char *base_subject = "Conference number";
+	const char *base_description = "The CCMP conference description";
+	time_t base_start_time = ms_time(NULL);
+	int base_start_time_offset = 60;
+	bctbx_list_t *participants_info = NULL;
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	LinphoneAddress *organizer_address =
+	    marie_account ? linphone_address_clone(
+	                        linphone_account_params_get_identity_address(linphone_account_get_params(marie_account)))
+	                  : linphone_address_clone(marie->identity);
+	add_participant_info_to_list(&participants_info, pauline->identity, LinphoneParticipantRoleSpeaker, -1);
+	add_participant_info_to_list(&participants_info, laure->identity, LinphoneParticipantRoleListener, -1);
+	add_participant_info_to_list(&participants_info, michelle->identity, LinphoneParticipantRoleSpeaker, -1);
+	bctbx_list_t *reference_conference_infos = NULL;
+
+	for (int idx = 1; idx <= number_conferences; idx++) {
+		LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
+		linphone_conference_info_set_organizer(conf_info, organizer_address);
+		linphone_conference_info_set_participant_infos(conf_info, participants_info);
+		const int duration = base_duration * idx;
+		linphone_conference_info_set_duration(conf_info, duration);
+		const time_t start_time = base_start_time + base_start_time_offset * idx;
+		linphone_conference_info_set_date_time(conf_info, start_time);
+		char subject[100];
+		sprintf(subject, "%s %0d", base_subject, idx);
+		linphone_conference_info_set_subject(conf_info, subject);
+		char description[300];
+		sprintf(description, "%s %0d", base_description, idx);
+		linphone_conference_info_set_description(conf_info, description);
+		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
+		linphone_conference_info_set_security_level(conf_info, security_level);
+
+		// The organizer creates a conference scheduler
+		LinphoneConferenceScheduler *conference_scheduler =
+		    linphone_core_create_ccmp_conference_scheduler(marie->lc, linphone_core_get_default_account(marie->lc));
+		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
+		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+		linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+		linphone_conference_scheduler_cbs_unref(cbs);
+
+		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+		linphone_conference_info_unref(conf_info);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_ConferenceSchedulerStateReady, idx,
+		                             liblinphone_tester_sip_timeout));
+
+		const LinphoneConferenceInfo *updated_conf_info = linphone_conference_scheduler_get_info(conference_scheduler);
+		BC_ASSERT_PTR_NOT_NULL(updated_conf_info);
+		LinphoneAddress *conference_address = NULL;
+		const LinphoneAddress *conference_uri = linphone_conference_info_get_uri(updated_conf_info);
+		BC_ASSERT_PTR_NOT_NULL(conference_uri);
+		if (!conference_uri) {
+			goto end;
+		}
+		conference_address = linphone_address_clone(conference_uri);
+		BC_ASSERT_PTR_NOT_NULL(conference_address);
+		LinphoneConferenceInfo *updated_conf_info_cloned = linphone_conference_info_clone(updated_conf_info);
+		linphone_conference_info_add_participant_2(
+		    updated_conf_info_cloned, linphone_conference_info_get_organizer_info(updated_conf_info_cloned));
+		reference_conference_infos = bctbx_list_append(reference_conference_infos, updated_conf_info_cloned);
+
+		check_conference_info_in_db(marie, NULL, conference_address, marie->identity, participants_info, start_time,
+		                            duration, subject, description, 0, LinphoneConferenceInfoStateNew, security_level,
+		                            TRUE, TRUE, TRUE, FALSE);
+		linphone_conference_scheduler_unref(conference_scheduler);
+		linphone_address_unref(conference_address);
+	}
+
+	for (bctbx_list_t *core_it = coresList; core_it; core_it = bctbx_list_next(core_it)) {
+		LinphoneCore *core = (LinphoneCore *)bctbx_list_get_data(core_it);
+		bctbx_list_t *conference_infos =
+		    linphone_account_get_conference_information_list_2(linphone_core_get_default_account(core), NULL);
+		if (core == marie->lc) {
+			BC_ASSERT_PTR_NOT_NULL(conference_infos);
+			BC_ASSERT_EQUAL(bctbx_list_size(conference_infos), bctbx_list_size(reference_conference_infos), size_t,
+			                "%zu");
+			bctbx_list_free_with_data(conference_infos, (bctbx_list_free_func)linphone_conference_info_unref);
+		} else {
+			BC_ASSERT_PTR_NULL(conference_infos);
+		}
+		LinphoneCoreManager *mgr = get_manager(core);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_ConferenceInformationUpdated, 1,
+		                             liblinphone_tester_sip_timeout));
+		for (const bctbx_list_t *ref_info_it = reference_conference_infos; ref_info_it;
+		     ref_info_it = bctbx_list_next(ref_info_it)) {
+			LinphoneConferenceInfo *ref_info = (LinphoneConferenceInfo *)bctbx_list_get_data(ref_info_it);
+			LinphoneAddress *conference_address = linphone_address_clone(linphone_conference_info_get_uri(ref_info));
+			check_conference_info_against_db(mgr, conference_address, ref_info, TRUE);
+			linphone_address_unref(conference_address);
+		}
+	}
+
+end:
+	if (organizer_address) linphone_address_unref(organizer_address);
+	bctbx_list_free_with_data(reference_conference_infos, (bctbx_list_free_func)linphone_conference_info_unref);
+	bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(michelle);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void simple_conference_two_devices_same_address(void) {
@@ -13165,6 +13312,7 @@ static void video_conference_created_by_merging_video_calls_with_active_speaker_
 
 static test_t audio_video_conference_basic_tests[] = {
     TEST_NO_TAG("Simple conference", simple_conference), TEST_NO_TAG("Simple CCMP conference", simple_ccmp_conference),
+    TEST_NO_TAG("Simple CCMP conference retrieval", simple_ccmp_conference_retrieval),
     TEST_NO_TAG("Simple conference notify speaking device", simple_conference_notify_speaking_device),
     TEST_NO_TAG("Simple conference notify muted device", simple_conference_notify_muted_device),
     TEST_NO_TAG("Simple conference established before proxy config is created",

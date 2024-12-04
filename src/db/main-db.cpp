@@ -306,6 +306,9 @@ shared_ptr<Conference> MainDbPrivate::findConference(const ConferenceId &confere
 
 long long MainDbPrivate::insertSipAddress(BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
 #ifdef HAVE_DB_STORAGE
+	if (!address) {
+		return -1;
+	}
 	// This is a hack, because all addresses don't print their parameters in the same order.
 	const string sipAddress = address->toStringUriOnlyOrdered();
 	const string displayName = address->getDisplayName();
@@ -593,9 +596,15 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	}
 
 	const auto &conferenceUri = conferenceInfo->getUri();
-	if (!conferenceInfo->getOrganizerAddress() || !conferenceInfo->getOrganizerAddress()->isValid() || !conferenceUri ||
-	    !conferenceUri->isValid()) {
-		lError() << "Trying to insert a Conference Info without organizer or URI!";
+	const auto &organizer = conferenceInfo->getOrganizer();
+	const auto &organizerAddress = organizer ? organizer->getAddress() : nullptr;
+	const auto organizerAddressOk = (organizerAddress && organizerAddress->isValid());
+	const auto conferenceUriOk = (conferenceUri && conferenceUri->isValid());
+	if (!organizerAddressOk || !conferenceUriOk) {
+		const auto organizerAddressString = organizerAddressOk ? organizerAddress->toString() : std::string("sip:");
+		const auto conferenceUriString = conferenceUriOk ? conferenceUri->toString() : std::string("sip:");
+		lError() << "Trying to insert a Conference Info without a valid organizer iSP address ( "
+		         << organizerAddressString << ") or URI ( " << conferenceUriString << ")!";
 		return -1;
 	}
 
@@ -603,8 +612,6 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const int videoEnabled = conferenceInfo->getCapability(LinphoneStreamTypeVideo) ? 1 : 0;
 	const int chatEnabled = conferenceInfo->getCapability(LinphoneStreamTypeText) ? 1 : 0;
 	const auto &ccmpUri = conferenceInfo->getCcmpUri();
-	const auto &organizer = conferenceInfo->getOrganizer();
-	const auto &organizerAddress = organizer->getAddress();
 	const long long &organizerSipAddressId = insertSipAddress(organizerAddress);
 	const long long &uriSipAddressId = insertSipAddress(conferenceUri);
 	const auto &dateTime = conferenceInfo->getDateTime();
@@ -660,18 +667,13 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
 
-	const auto &participantList = conferenceInfo->getParticipants();
-	const bool isOrganizerAParticipant =
-	    std::find_if(participantList.cbegin(), participantList.cend(), [&organizerAddress](const auto &info) {
-		    return organizerAddress->weakEqual(*info->getAddress());
-	    }) != participantList.cend();
-	insertOrUpdateConferenceInfoOrganizer(conferenceInfoId, organizerSipAddressId, organizer->getAllParameters(),
-	                                      isOrganizerAParticipant);
+	const bool isOrganizerAParticipant = conferenceInfo->hasParticipant(organizer);
+	insertOrUpdateConferenceInfoOrganizer(conferenceInfoId, organizer, isOrganizerAParticipant);
 
+	const auto &participantList = conferenceInfo->getParticipants();
 	for (const auto &participantInfo : participantList) {
-		const auto participantAddress = participantInfo->getAddress();
-		insertOrUpdateConferenceInfoParticipant(conferenceInfoId, participantInfo, false,
-		                                        participantAddress->weakEqual(*organizerAddress), true);
+		const auto isOrganizer = conferenceInfo->isOrganizer(participantInfo);
+		insertOrUpdateConferenceInfoParticipant(conferenceInfoId, participantInfo, false, isOrganizer, true);
 	}
 
 	for (const auto &oldParticipantInfo : dbParticipantList) {
@@ -680,8 +682,7 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 			     return (p->getAddress()->weakEqual(*oldParticipantInfo->getAddress()));
 		     }) == participantList.cend());
 		if (deleted) {
-			const auto participantAddress = oldParticipantInfo->getAddress();
-			const auto &isOrganizer = participantAddress->weakEqual(*organizerAddress);
+			const auto isOrganizer = conferenceInfo->isOrganizer(oldParticipantInfo);
 			// If the participant to be deleted is the organizer, do not change the participant information parameters
 			const auto &info = isOrganizer ? organizer : oldParticipantInfo;
 			insertOrUpdateConferenceInfoParticipant(conferenceInfoId, info, true, isOrganizer, true);
@@ -738,11 +739,19 @@ void MainDbPrivate::insertOrUpdateConferenceInfoParticipantParams(
 }
 
 long long MainDbPrivate::insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
+                                                               const std::shared_ptr<ParticipantInfo> &organizer,
+                                                               bool isParticipant) {
+	return insertOrUpdateConferenceInfoOrganizer(conferenceInfoId, insertSipAddress(organizer->getAddress()),
+	                                             organizer->getAllParameters(), isParticipant, organizer->getCcmpUri());
+}
+
+long long MainDbPrivate::insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
                                                                long long organizerSipAddressId,
                                                                const ParticipantInfo::participant_params_t params,
-                                                               bool isParticipant) {
+                                                               bool isParticipant,
+                                                               const std::string ccmpUri) {
 	return insertOrUpdateConferenceInfoParticipant(conferenceInfoId, organizerSipAddressId, false, params, true,
-	                                               isParticipant);
+	                                               isParticipant, ccmpUri);
 }
 
 long long
@@ -753,7 +762,7 @@ MainDbPrivate::insertOrUpdateConferenceInfoParticipant(long long conferenceInfoI
                                                        bool isParticipant) {
 	return insertOrUpdateConferenceInfoParticipant(conferenceInfoId, insertSipAddress(participantInfo->getAddress()),
 	                                               deleted, participantInfo->getAllParameters(), isOrganizer,
-	                                               isParticipant);
+	                                               isParticipant, participantInfo->getCcmpUri());
 }
 
 long long MainDbPrivate::insertOrUpdateConferenceInfoParticipant(long long conferenceInfoId,
@@ -761,7 +770,8 @@ long long MainDbPrivate::insertOrUpdateConferenceInfoParticipant(long long confe
                                                                  bool deleted,
                                                                  const ParticipantInfo::participant_params_t params,
                                                                  bool isOrganizer,
-                                                                 bool isParticipant) {
+                                                                 bool isParticipant,
+                                                                 const std::string ccmpUri) {
 #ifdef HAVE_DB_STORAGE
 	long long conferenceInfoParticipantId =
 	    selectConferenceInfoParticipantId(conferenceInfoId, participantSipAddressId);
@@ -774,13 +784,18 @@ long long MainDbPrivate::insertOrUpdateConferenceInfoParticipant(long long confe
 		                                  ":isOrganizer, is_participant = :isParticipant WHERE id = :id",
 		    soci::use(participantDeleted), soci::use(isOrganizerInt), soci::use(isParticipantInt),
 		    soci::use(conferenceInfoParticipantId);
+		if (!ccmpUri.empty()) {
+			*dbSession.getBackendSession()
+			    << "UPDATE conference_info_participant SET ccmp_uri = :ccmpUri WHERE id = :id",
+			    soci::use(ccmpUri);
+		}
 	} else {
 		*dbSession.getBackendSession()
-		    << "INSERT INTO conference_info_participant (conference_info_id, participant_sip_address_id, deleted, "
-		       "is_organizer, is_participant)"
-		       " VALUES (:conferenceInfoId, :participantSipAddressId, :deleted, :isOrganizer, :isParticipant)",
-		    soci::use(conferenceInfoId), soci::use(participantSipAddressId), soci::use(participantDeleted),
-		    soci::use(isOrganizerInt), soci::use(isParticipantInt);
+		    << "INSERT INTO conference_info_participant (conference_info_id, participant_sip_address_id, ccmp_uri, "
+		       "deleted, is_organizer, is_participant) VALUES (:conferenceInfoId, :participantSipAddressId, :ccmpUri, "
+		       ":deleted, :isOrganizer, :isParticipant)",
+		    soci::use(conferenceInfoId), soci::use(participantSipAddressId), soci::use(ccmpUri),
+		    soci::use(participantDeleted), soci::use(isOrganizerInt), soci::use(isParticipantInt);
 
 		conferenceInfoParticipantId = dbSession.getLastInsertId();
 	}
@@ -2216,6 +2231,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	// to that of the conference info stored in the db It may be overridden if the conference organizer has been
 	// stored in table conference_info_organizer.
 	std::shared_ptr<Address> organizerAddress = Address::create(row.get<string>(1));
+	std::string organizerCcmpUri;
 	ParticipantInfo::participant_params_t organizerParams;
 	organizerParams.insert(std::make_pair(ParticipantInfo::sequenceParameter, std::to_string(icsSequence)));
 	static const string organizerQuery =
@@ -2236,8 +2252,8 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 		const long long &organizerId = dbSession.resolveId(organizerRow, 3);
 
 		// The flag is_participant is set to true here as by default the organizer is also a participant
-		const long long organizerIdInParticipantTable =
-		    insertOrUpdateConferenceInfoOrganizer(dbConferenceInfoId, organizerSipAddressId, organizerParams, true);
+		const long long organizerIdInParticipantTable = insertOrUpdateConferenceInfoOrganizer(
+		    dbConferenceInfoId, organizerSipAddressId, organizerParams, true, std::string());
 		const auto unprocessedOrganizerParams = ParticipantInfo::stringToMemberParameters(organizerParamsStr);
 		organizerParams =
 		    migrateConferenceInfoParticipantParams(unprocessedOrganizerParams, organizerIdInParticipantTable);
@@ -2246,11 +2262,10 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 		*session << "DELETE FROM conference_info_organizer WHERE id = :organizerId", soci::use(organizerId);
 	} else {
 		static const string organizerInParticipantTableQuery =
-		    "SELECT sip_address.value, conference_info_participant.id"
-		    " FROM sip_address, conference_info, conference_info_participant"
-		    " WHERE conference_info.id = :conferenceInfoId"
-		    " AND sip_address.id = conference_info_participant.participant_sip_address_id"
-		    " AND conference_info_participant.conference_info_id = conference_info.id AND "
+		    "SELECT sip_address.value, conference_info_participant.id, conference_info_participant.ccmp_uri FROM "
+		    "sip_address, conference_info, conference_info_participant WHERE conference_info.id = :conferenceInfoId "
+		    "AND sip_address.id = conference_info_participant.participant_sip_address_id AND "
+		    "conference_info_participant.conference_info_id = conference_info.id AND "
 		    "conference_info_participant.is_organizer = 1";
 
 		soci::rowset<soci::row> organizerInParticipantTableRows =
@@ -2259,19 +2274,22 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 		if (organizerInParticipantTableRowIt != organizerInParticipantTableRows.end()) {
 			const auto &organizerInParticipantTableRow = (*organizerInParticipantTableRowIt);
 			organizerAddress = Address::create(organizerInParticipantTableRow.get<string>(0));
-
+			organizerCcmpUri = organizerInParticipantTableRow.get<string>(2);
 			const long long &organizerId = dbSession.resolveId(organizerInParticipantTableRow, 1);
 			organizerParams = selectConferenceInfoParticipantParams(organizerId);
 		}
 	}
 
 	auto organizerInfo = ParticipantInfo::create(organizerAddress);
+	if (!organizerCcmpUri.empty()) {
+		organizerInfo->setCcmpUri(organizerCcmpUri);
+	}
 	organizerInfo->setParameters(organizerParams);
 	conferenceInfo->setOrganizer(organizerInfo);
 
 	static const string participantQuery =
 	    "SELECT sip_address.value, conference_info_participant.deleted, conference_info_participant.params, "
-	    "conference_info_participant.id"
+	    "conference_info_participant.id, conference_info_participant.ccmp_uri"
 	    " FROM sip_address, conference_info, conference_info_participant"
 	    " WHERE conference_info.id = :conferenceInfoId"
 	    " AND sip_address.id = conference_info_participant.participant_sip_address_id"
@@ -2286,8 +2304,12 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 			std::shared_ptr<Address> participantAddress = Address::create(participantRow.get<string>(0));
 			const string participantParamsStr = participantRow.get<string>(2);
 			const long long &participantId = dbSession.resolveId(participantRow, 3);
+			const auto ccmpUri = participantRow.get<string>(4);
 			ParticipantInfo::participant_params_t participantParams;
 			auto participantInfo = ParticipantInfo::create(participantAddress);
+			if (!ccmpUri.empty()) {
+				participantInfo->setCcmpUri(ccmpUri);
+			}
 			if (participantParamsStr.empty()) {
 				participantParams = selectConferenceInfoParticipantParams(participantId);
 			} else {
@@ -2922,6 +2944,13 @@ void MainDbPrivate::updateSchema() {
 	} catch (const soci::soci_error &e) {
 		lDebug() << "Caught exception " << e.what()
 		         << ": Column 'is_participant' already exists in table 'conference_info_participant'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info_participant ADD COLUMN ccmp_uri VARCHAR(255) DEFAULT ''";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'ccmp_uri' already exists in table 'conference_info_participant'";
 	}
 
 	if (backend == MainDb::Backend::Sqlite3) {

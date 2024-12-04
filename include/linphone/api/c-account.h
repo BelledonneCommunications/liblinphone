@@ -310,20 +310,26 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_call_logs_for_address(const L
 LINPHONE_PUBLIC void linphone_account_clear_call_logs(const LinphoneAccount *account);
 
 /**
- * Returns the list of conference information for a given account.
+ * Returns the list of conference information stored locally for a given account.
  * This list must be freed after use.
  * @param account The #LinphoneAccount object. @notnil
  * @return The list of call logs \bctbx_list{LinphoneConferenceInfo}. @maybenil
+ * @warning this method also start the synchronization with the CCMP server, should it be defined in the #AccountParams.
+ *The application may want to wait for the callback conference_information_updated to get a up-to-date list of
+ *conferences
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_conference_information_list(const LinphoneAccount *account);
 
 /**
- * Returns the list of conference information for a given account.
+ * Returns the list of conference information stored locally for a given account.
  * This list must be freed after use.
  * @param account The #LinphoneAccount object. @notnil
  * @param capabilities the list of conference capabilities that the conference information must has set
  *\bctbx_list{LinphoneStreamType}. @tobefreed @maybenil
  * @return The list of call logs \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
+ * @warning this method also start the synchronization with the CCMP server, should it be defined in the #AccountParams.
+ *The application may want to wait for the callback conference_information_updated to get a up-to-date list of
+ *conferences
  * @donotwrap
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_conference_information_list_2(const LinphoneAccount *account,

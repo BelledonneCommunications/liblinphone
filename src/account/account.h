@@ -122,6 +122,9 @@ public:
 	std::list<std::shared_ptr<CallLog>> getCallLogsForAddress(const std::shared_ptr<const Address> &) const;
 	std::list<std::shared_ptr<ConferenceInfo>>
 	getConferenceInfos(const std::list<LinphoneStreamType> capabilities = {}) const;
+	void addConferenceInfo(const std::shared_ptr<ConferenceInfo> &info);
+	void ccmpConferenceInformationResponseReceived();
+	void ccmpConferenceInformationRequestSent();
 
 	// Other
 	void resetMissedCallsCount();
@@ -155,8 +158,6 @@ public:
 	void subscribeToMessageWaitingIndication();
 	void unsubscribeFromMessageWaitingIndication();
 
-	// Callbacks
-
 	// Utils
 	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const std::shared_ptr<const Address> &a,
 	                                                                       const std::shared_ptr<const Address> &b);
@@ -168,6 +169,14 @@ public:
 	LinphoneProxyConfig *getConfig() const;
 	void setConfig(LinphoneProxyConfig *config, bool takeProxyConfigRef = true);
 	LinphoneAccountAddressComparisonResult isServerConfigChanged();
+
+	void updateConferenceInfoListWithCcmp() const;
+	// CCMP request callback (conference list)
+	static void handleResponseConferenceList(void *ctx, const belle_http_response_event_t *event);
+	static void handleResponseConferenceInformation(void *ctx, const belle_http_response_event_t *event);
+	static void handleAuthRequested(void *ctx, belle_sip_auth_event_t *event);
+	static void handleTimeout(void *ctx, const belle_sip_timeout_event_t *event);
+	static void handleIoError(void *ctx, const belle_sip_io_error_event_t *event);
 
 private:
 	LinphoneCore *getCCore() const;
@@ -233,6 +242,7 @@ private:
 	unsigned long long mPreviousPublishParamsHash[2] = {0};
 	std::shared_ptr<AccountParams> mOldParams;
 
+	mutable std::list<std::shared_ptr<ConferenceInfo>> mConferenceInfos;
 	mutable ListHolder<AbstractChatRoom> mChatRoomList;
 
 	// This is a back pointer intended to keep both LinphoneProxyConfig and Account
@@ -240,7 +250,8 @@ private:
 	// proxy configs can be replaced.
 	LinphoneProxyConfig *mConfig = nullptr;
 
-	int mMissedCalls;
+	int mMissedCalls = 0;
+	unsigned int mCcmpConferenceInformationRequestsCounter = 0;
 
 	std::shared_ptr<Event> mMwiEvent;
 };
@@ -251,10 +262,13 @@ public:
 	void setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb);
 	LinphoneAccountCbsMessageWaitingIndicationChangedCb getMessageWaitingIndicationChanged() const;
 	void setMessageWaitingIndicationChanged(LinphoneAccountCbsMessageWaitingIndicationChangedCb cb);
+	LinphoneAccountCbsConferenceInformationUpdatedCb getConferenceInformationUpdated() const;
+	void setConferenceInformationUpdated(LinphoneAccountCbsConferenceInformationUpdatedCb cb);
 
 private:
 	LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
 	LinphoneAccountCbsMessageWaitingIndicationChangedCb mMessageWaitingIndicationChangedCb = nullptr;
+	LinphoneAccountCbsConferenceInformationUpdatedCb mConferenceInformationUpdatedCb = nullptr;
 };
 
 class AccountLogContextualizer : public CoreLogContextualizer {
@@ -265,7 +279,10 @@ public:
 };
 
 inline std::ostream &operator<<(std::ostream &ostr, const Account &account) {
-	ostr << "Account [" << (void *)&account << "]";
+	const auto &params = account.getAccountParams();
+	const auto identity =
+	    (params && params->getIdentityAddress()) ? params->getIdentityAddress()->toString() : std::string("sip:");
+	ostr << "Account [" << (void *)&account << "]  (" << identity << ")";
 	return ostr;
 }
 

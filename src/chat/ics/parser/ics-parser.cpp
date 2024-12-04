@@ -53,7 +53,7 @@ class DateTimeNode : public Node {
 public:
 	DateTimeNode() = default;
 
-	const tm getDateStart() {
+	const tm getDate() {
 		tm time = {0};
 		time.tm_year = mYear - 1900;
 		time.tm_mon = mMonth - 1;
@@ -290,6 +290,10 @@ public:
 		mDateStart = dateStart;
 	}
 
+	void setDateEnd(const shared_ptr<DateTimeNode> &dateEnd) {
+		mDateEnd = dateEnd;
+	}
+
 	void setDuration(const shared_ptr<DurationNode> &duration) {
 		mDuration = duration;
 	}
@@ -299,8 +303,34 @@ public:
 
 		event->setSummary(mSummary);
 		event->setDescription(mDescription);
-		if (mDateStart) event->setDateTimeStart(mDateStart->getDateStart());
-		if (mDuration) event->setDuration(mDuration->getDuration());
+		tm startTimeTm = {0};
+		if (mDateStart) {
+			startTimeTm = mDateStart->getDate();
+			event->setDateTimeStart(startTimeTm);
+		}
+		if (mDuration) {
+			event->setDuration(mDuration->getDuration());
+		} else if (mDateStart && mDateEnd) {
+			time_t startTimeTimeT = Utils::getTmAsTimeT(startTimeTm);
+			tm endTimeTm = mDateEnd->getDate();
+			time_t endTimeTimeT = Utils::getTmAsTimeT(endTimeTm);
+			time_t durationS = endTimeTimeT - startTimeTimeT;
+			tm durationTm = {0};
+			// There are 31536000 seconds in a year
+			int yearToS = 31536000;
+			durationTm.tm_year = (int)(durationS / yearToS);
+			int dayToS = yearToS / 365;
+			time_t durationDayS = (durationS % yearToS);
+			durationTm.tm_yday = (int)(durationDayS / dayToS);
+			int hourToS = dayToS / 24;
+			time_t durationHourS = (durationDayS % dayToS);
+			durationTm.tm_hour = (int)(durationHourS / hourToS);
+			int minToS = hourToS / 60;
+			time_t durationMinS = (durationHourS % hourToS);
+			durationTm.tm_min = (int)(durationMinS / minToS);
+			durationTm.tm_sec = (int)(durationMinS % minToS);
+			event->setDuration(durationTm);
+		}
 		event->setOrganizer(mOrganizer.first, mOrganizer.second);
 		event->setXConfUri(mXConfUri);
 
@@ -323,6 +353,7 @@ private:
 	unsigned int mSequence = 0;
 	Ics::Event::attendee_list_t mAttendees;
 	shared_ptr<DateTimeNode> mDateStart;
+	shared_ptr<DateTimeNode> mDateEnd;
 	shared_ptr<DurationNode> mDuration;
 };
 
@@ -381,7 +412,7 @@ Ics::Parser::Parser() : Singleton(*new ParserPrivate) {
 	L_D();
 
 	shared_ptr<belr::Grammar> grammar = belr::GrammarLoader::get().load(IcsGrammar);
-	if (!grammar) lFatal() << "Unable to load CPIM grammar.";
+	if (!grammar) lFatal() << "Unable to load ICS grammar.";
 
 	d->parser = make_shared<belr::Parser<shared_ptr<Node>>>(grammar);
 
@@ -393,12 +424,22 @@ Ics::Parser::Parser() : Singleton(*new ParserPrivate) {
 	    ->setCollector("summvalue", belr::make_sfn(&EventNode::setUtf8Summary))
 	    ->setCollector("descvalue", belr::make_sfn(&EventNode::setUtf8Description))
 	    ->setCollector("dtstval", belr::make_sfn(&EventNode::setDateStart))
+	    ->setCollector("dtendval", belr::make_sfn(&EventNode::setDateEnd))
 	    ->setCollector("dur-value", belr::make_sfn(&EventNode::setDuration))
 	    ->setCollector("organizer", belr::make_sfn(&EventNode::setOrganizer))
 	    ->setCollector("attendee", belr::make_sfn(&EventNode::addAttendee))
 	    ->setCollector("uid", belr::make_sfn(&EventNode::setUid))
 	    ->setCollector("seq", belr::make_sfn(&EventNode::setSequence))
 	    ->setCollector("x-prop", belr::make_sfn(&EventNode::setXProp));
+
+	d->parser->setHandler("dtendval", belr::make_fn(make_shared<DateTimeNode>))
+	    ->setCollector("date-fullyear", belr::make_sfn(&DateTimeNode::setYear))
+	    ->setCollector("date-month", belr::make_sfn(&DateTimeNode::setMonth))
+	    ->setCollector("date-mday", belr::make_sfn(&DateTimeNode::setDay))
+	    ->setCollector("time-hour", belr::make_sfn(&DateTimeNode::setHour))
+	    ->setCollector("time-minute", belr::make_sfn(&DateTimeNode::setMinute))
+	    ->setCollector("time-second", belr::make_sfn(&DateTimeNode::setSecond))
+	    ->setCollector("time-utc", belr::make_sfn(&DateTimeNode::setUtc));
 
 	d->parser->setHandler("dtstval", belr::make_fn(make_shared<DateTimeNode>))
 	    ->setCollector("date-fullyear", belr::make_sfn(&DateTimeNode::setYear))
@@ -423,7 +464,7 @@ shared_ptr<Ics::Icalendar> Ics::Parser::parseIcs(const string &input) {
 	size_t parsedSize;
 	shared_ptr<Node> node = d->parser->parseInput("icalobject", input, &parsedSize);
 	if (!node) {
-		lWarning() << "Unable to parse message.";
+		lWarning() << "Unable to parse ICS message " << input;
 		return nullptr;
 	}
 

@@ -302,6 +302,11 @@ void _linphone_account_notify_registration_state_changed(LinphoneAccount *accoun
 	                                  linphone_account_cbs_get_registration_state_changed, state, message);
 }
 
+void _linphone_account_notify_conference_information_updated(LinphoneAccount *account, const bctbx_list_t *infos) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account),
+	                                  linphone_account_cbs_get_conference_information_updated, infos);
+}
+
 bool_t linphone_account_is_phone_number(const LinphoneAccount *account, const char *username) {
 	AccountLogContextualizer logContextualizer(account);
 	if (!username) return FALSE;

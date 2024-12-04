@@ -61,6 +61,14 @@ LINPHONE_PUBLIC void linphone_conference_info_unref(LinphoneConferenceInfo *conf
 /**
  * Retrieve the organizer of the conference.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return The #LinphoneParticipantInfo of the conference's organizer. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneParticipantInfo *
+linphone_conference_info_get_organizer_info(const LinphoneConferenceInfo *conference_info);
+
+/**
+ * Retrieve the organizer of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The #LinphoneAddress of the conference's organizer. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *
@@ -292,6 +300,19 @@ LINPHONE_PUBLIC char *linphone_conference_info_get_icalendar_string(const Linpho
 LINPHONE_PUBLIC LinphoneConferenceInfoState
 linphone_conference_info_get_state(const LinphoneConferenceInfo *conference_info);
 
+/**
+ * Store the ICS UID in the conference info
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param uid the ICS UID to be associated to the #LinphoneConferenceInfo object. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_info_set_ics_uid(LinphoneConferenceInfo *conference_info, const char *uid);
+
+/**
+ * Retrieve the ICS UID linked to a conference info
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return the ICS UID. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
 /**
  * @}
  */

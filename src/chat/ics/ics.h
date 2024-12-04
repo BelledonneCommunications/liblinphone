@@ -101,6 +101,7 @@ public:
 	enum class Method {
 		Request = 0,
 		Cancel = 1,
+		Retrieve = 2,
 	};
 
 	Icalendar() = default;

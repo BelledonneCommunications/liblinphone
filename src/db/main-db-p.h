@@ -85,11 +85,16 @@ private:
 	                                                  bool deleted,
 	                                                  const ParticipantInfo::participant_params_t params,
 	                                                  bool isOrganizer,
-	                                                  bool isParticipant);
+	                                                  bool isParticipant,
+	                                                  const std::string ccmpUri);
+	long long insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
+	                                                const std::shared_ptr<ParticipantInfo> &organizer,
+	                                                bool isParticipant);
 	long long insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
 	                                                long long organizerSipAddressId,
 	                                                const ParticipantInfo::participant_params_t params,
-	                                                bool isParticipant);
+	                                                bool isParticipant,
+	                                                const std::string ccmpUri);
 	void insertOrUpdateConferenceInfoParticipantParams(long long conferenceInfoParticipantId,
 	                                                   const ParticipantInfo::participant_params_t params) const;
 

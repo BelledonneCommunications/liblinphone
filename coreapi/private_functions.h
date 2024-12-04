@@ -478,6 +478,8 @@ LINPHONE_PUBLIC LinphoneCore *linphone_participant_device_get_core(const Linphon
 void _linphone_account_notify_registration_state_changed(LinphoneAccount *account,
                                                          LinphoneRegistrationState state,
                                                          const char *message);
+void _linphone_account_notify_conference_information_updated(LinphoneAccount *account, const bctbx_list_t *infos);
+
 /*alerts*/
 void linphone_core_notify_alert(LinphoneCore *lc, LinphoneAlert *alert);
 LINPHONE_PUBLIC void linphone_alert_notify_on_terminated(LinphoneAlert *alert);
@@ -1024,10 +1026,6 @@ LINPHONE_PUBLIC void linphone_conference_info_set_ics_sequence(LinphoneConferenc
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
 LINPHONE_PUBLIC const char *linphone_conference_info_get_utf8_ics_uid(const LinphoneConferenceInfo *conference_info);
-// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
-LINPHONE_PUBLIC void linphone_conference_info_set_ics_uid(LinphoneConferenceInfo *conference_info, const char *uid);
-// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
-LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_conference_info_set_state(LinphoneConferenceInfo *conference_info,
                                                         LinphoneConferenceInfoState state);

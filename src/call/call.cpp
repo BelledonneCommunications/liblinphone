@@ -638,12 +638,16 @@ void Call::onIncomingCallSessionStarted(BCTBX_UNUSED(const shared_ptr<CallSessio
 void Call::onIncomingCallSessionTimeoutCheck(BCTBX_UNUSED(const shared_ptr<CallSession> &session),
                                              int elapsed,
                                              bool oneSecondElapsed) {
-	if (oneSecondElapsed)
+	auto timeout = getCore()->getCCore()->sip_conf.inc_timeout;
+	if (oneSecondElapsed) {
 		lInfo() << "Incoming call " << this << " with session " << session << " (local address "
 		        << *session->getLocalAddress() << " remote address " << *session->getRemoteAddress() << ") ringing for "
-		        << elapsed << " seconds";
-	if (elapsed > getCore()->getCCore()->sip_conf.inc_timeout) {
-		lInfo() << "Incoming call timeout (" << getCore()->getCCore()->sip_conf.inc_timeout << ")";
+		        << elapsed << " seconds (timeout: " << timeout << ")";
+	}
+	if (elapsed > timeout) {
+		lInfo() << "Incoming call " << this << " with session " << session << " (local address "
+		        << *session->getLocalAddress() << " remote address " << *session->getRemoteAddress()
+		        << ") timeout reached (" << timeout << ")";
 		auto config = linphone_core_get_config(getCore()->getCCore());
 		int statusCode = linphone_config_get_int(config, "sip", "inc_timeout_status_code", 486);
 		getActiveSession()->declineNotAnswered(linphone_error_code_to_reason(statusCode));

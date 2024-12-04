@@ -41,9 +41,9 @@ public:
 	void setCcmpUri(const std::string &ccmpUri);
 
 	static void handleResponse(void *ctx, const belle_http_response_event_t *event);
-	static void handleAuthRequested(BCTBX_UNUSED(void *ctx), belle_sip_auth_event_t *event);
-	static void handleTimeout(BCTBX_UNUSED(void *ctx), BCTBX_UNUSED(const belle_sip_timeout_event_t *event));
-	static void handleIoError(BCTBX_UNUSED(void *ctx), BCTBX_UNUSED(const belle_sip_io_error_event_t *event));
+	static void handleAuthRequested(void *ctx, belle_sip_auth_event_t *event);
+	static void handleTimeout(void *ctx, const belle_sip_timeout_event_t *event);
+	static void handleIoError(void *ctx, const belle_sip_io_error_event_t *event);
 
 private:
 };

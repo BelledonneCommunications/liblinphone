@@ -1632,8 +1632,9 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs,
 			do {
 				part_counter++;
 				wait_for_list(lcs, NULL, 0, 100);
-			} while ((part_counter < 100) && (linphone_conference_get_participant_count(remote_conference) <
-			                                  (int)(bctbx_list_size(participants))));
+			} while ((part_counter < 100) &&
+			         (remote_conference && (linphone_conference_get_participant_count(remote_conference) <
+			                                (int)(bctbx_list_size(participants)))));
 		}
 
 		int wait_counter = 0;
@@ -5939,10 +5940,11 @@ void check_conference_info_in_db(LinphoneCoreManager *mgr,
 
 void check_conference_info_against_db(LinphoneCoreManager *mgr,
                                       LinphoneAddress *confAddr,
-                                      const LinphoneConferenceInfo *info1) {
+                                      const LinphoneConferenceInfo *info1,
+                                      bool_t skip_participant_info) {
 	LinphoneConferenceInfo *info2 = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
 	if (BC_ASSERT_PTR_NOT_NULL(info2)) {
-		compare_conference_infos(info1, info2, FALSE);
+		compare_conference_infos(info1, info2, skip_participant_info);
 		linphone_conference_info_unref(info2);
 	}
 }

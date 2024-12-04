@@ -472,6 +472,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/chat-params.cpp
 	chat/encryption/encryption-engine.cpp
 	chat/encryption/legacy-encryption-engine.cpp
+	chat/ics/ics.cpp
+	chat/ics/parser/ics-parser.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
 	chat/modifier/multipart-chat-message-modifier.cpp
@@ -673,8 +675,6 @@ if(ENABLE_ADVANCED_IM)
 		chat/cpim/header/cpim-header.cpp
 		chat/cpim/message/cpim-message.cpp
 		chat/cpim/parser/cpim-parser.cpp
-		chat/ics/ics.cpp
-		chat/ics/parser/ics-parser.cpp
 	)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-server-engine.h)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-server-engine.cpp)

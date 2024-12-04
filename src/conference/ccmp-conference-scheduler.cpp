@@ -86,17 +86,7 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 		return;
 	}
 
-	belle_http_request_t *req =
-	    belle_http_request_create("POST", belle_generic_uri_parse(ccmpServerUrl.c_str()),
-	                              belle_sip_header_content_type_create("application", "ccmp+xml"), NULL, NULL);
-	if (!req) {
-		lError() << "CCMPConferenceScheduler cannot create a http request from config url [" << ccmpServerUrl << "]";
-		return;
-	}
-
 	const auto from = accountParams->getIdentityAddress();
-	const auto fromStr = from->asStringUriOnly();
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", fromStr.c_str()));
 
 	ConfRequestType confRequest = ConfRequestType();
 
@@ -193,9 +183,8 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 	// Conference user ID
 	std::string organizerXconUserId = Utils::getXconId(creator);
 	if (organizerXconUserId.empty()) {
-		lError() << "Aborting creation of conference because the CCMP server address  of conference scheduler [" << this
-		         << "] because the CCMP user id of the creator " << *accountParams->getIdentityAddress()
-		         << " cannot be found";
+		lError() << "Aborting creation of conference using conference scheduler [" << this
+		         << "] because the CCMP user id of the creator " << *creator << " cannot be found";
 		setState(State::Error);
 		return;
 	}
@@ -221,18 +210,6 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 	serializeCcmpRequest(httpBody, requestBody, map);
 	const auto body = httpBody.str();
 
-	if (!body.empty()) {
-		belle_sip_message_set_body(BELLE_SIP_MESSAGE(req), body.c_str(), body.size());
-	}
-
-	// Set the same User-Agent header as for the SAL
-	belle_sip_header_user_agent_t *userAgentHeader = belle_sip_header_user_agent_new();
-	belle_sip_object_ref(userAgentHeader);
-	belle_sip_header_user_agent_set_products(userAgentHeader, nullptr);
-	const auto cCore = getCore()->getCCore();
-	belle_sip_header_user_agent_add_product(userAgentHeader, linphone_core_get_user_agent(cCore));
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), BELLE_SIP_HEADER(userAgentHeader));
-
 	belle_http_request_listener_callbacks_t internalCallbacks = {};
 	internalCallbacks.process_response = CCMPConferenceScheduler::handleResponse;
 	internalCallbacks.process_io_error = CCMPConferenceScheduler::handleIoError;
@@ -242,9 +219,10 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 	belle_http_request_listener_t *listener =
 	    belle_http_request_listener_create_from_callbacks(&internalCallbacks, this);
 
-	belle_http_provider_send_request(getCore()->getHttpClient().getProvider(), req, listener);
-	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
-	belle_sip_object_unref(userAgentHeader);
+	if (!XmlUtils::sendCcmpRequest(getCore(), ccmpServerUrl, from, body, listener)) {
+		lError() << "An error occurred when sending the HTTP request of CCMPConferenceScheduler [" << this
+		         << "] to server " << ccmpServerUrl;
+	}
 }
 
 void CCMPConferenceScheduler::setCcmpUri(const std::string &ccmpUri) {
@@ -335,8 +313,7 @@ void CCMPConferenceScheduler::handleIoError(void *ctx, BCTBX_UNUSED(const belle_
 	linphone_error_info_unref(ei);
 }
 
-void CCMPConferenceScheduler::handleTimeout(BCTBX_UNUSED(void *ctx),
-                                            BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
+void CCMPConferenceScheduler::handleTimeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
 	LinphoneErrorInfo *ei = linphone_error_info_new();
 	int code = 504;
 	LinphoneReason reason = linphone_error_code_to_reason(code);

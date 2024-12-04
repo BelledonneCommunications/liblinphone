@@ -46,7 +46,6 @@ class LINPHONE_PUBLIC ClientConferenceEventHandler : public std::enable_shared_f
                                                      public ClientConferenceEventHandlerBase,
                                                      public CoreListener {
 public:
-	static LinphoneMediaDirection mediaStatusToMediaDirection(Xsd::ConferenceInfo::MediaStatusType status);
 	ClientConferenceEventHandler(const std::shared_ptr<Core> &core,
 	                             const std::shared_ptr<Conference> &clientConference,
 	                             ConferenceListener *listener);

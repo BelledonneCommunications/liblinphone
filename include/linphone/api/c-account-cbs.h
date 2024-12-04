@@ -103,6 +103,23 @@ linphone_account_cbs_set_message_waiting_indication_changed(LinphoneAccountCbs *
                                                             LinphoneAccountCbsMessageWaitingIndicationChangedCb cb);
 
 /**
+ * Get the conference information updated callback.
+ * @param cbs #LinphoneAccountCbs object. @notnil
+ * @return The current conference information updated callback.
+ */
+LINPHONE_PUBLIC LinphoneAccountCbsConferenceInformationUpdatedCb
+linphone_account_cbs_get_conference_information_updated(const LinphoneAccountCbs *cbs);
+
+/**
+ * Set the conference information updated callback.
+ * @param cbs #LinphoneAccountCbs object. @notnil
+ * @param cb The conference information updated changed callback to be used.
+ */
+LINPHONE_PUBLIC void
+linphone_account_cbs_set_conference_information_updated(LinphoneAccountCbs *cbs,
+                                                        LinphoneAccountCbsConferenceInformationUpdatedCb cb);
+
+/**
  * @}
  */
 

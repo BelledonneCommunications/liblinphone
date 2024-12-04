@@ -63,7 +63,7 @@ Stream *StreamsGroup::createStream(const OfferAnswerContext &params) {
 	Stream *ret = nullptr;
 	const auto &payloads = params.getLocalStreamDescription().getPayloads();
 	if (!params.getLocalStreamDescription().enabled()) {
-		lInfo() << "Disabled stream at index " << params.streamIndex;
+		lInfo() << *this << ": Disabled stream at index " << params.streamIndex;
 		return nullptr;
 	}
 
@@ -87,15 +87,15 @@ Stream *StreamsGroup::createStream(const OfferAnswerContext &params) {
 		}
 	}
 	if (!ret) {
-		lError() << "Could not create Stream of type " << sal_stream_type_to_string(type);
+		lError() << *this << ": Could not create Stream of type " << sal_stream_type_to_string(type);
 		return nullptr;
 	}
-	lInfo() << "Created stream of type " << sal_stream_type_to_string(type) << " at index " << params.streamIndex
-	        << ": " << *ret;
+	lInfo() << *this << ": Created stream of type " << sal_stream_type_to_string(type) << " at index "
+	        << params.streamIndex << ": " << *ret;
 
 	if ((decltype(mStreams)::size_type)params.streamIndex >= mStreams.size()) mStreams.resize(params.streamIndex + 1);
 	if (mStreams[params.streamIndex] != nullptr) {
-		lInfo() << "Stream at index " << params.streamIndex << " is being replaced.";
+		lInfo() << *this << ": Stream at index " << params.streamIndex << " is being replaced.";
 	}
 	mStreams[params.streamIndex].reset(ret);
 	/* Attach a mixer to this new stream, if any. */
@@ -123,23 +123,26 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params) {
 
 		if (params.localStreamDescriptionChanges) {
 			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
-			lInfo() << "Local stream description has changed: " << differences;
+			lInfo() << *this << ": Local stream description has changed: " << differences;
 		}
 		if (index >= mStreams.size() || ((s = mStreams[index].get()) == nullptr)) {
 			s = createStream(params);
 		} else if (s) {
-			if (s->getType() != params.getLocalStreamDescription().getType()) {
-				if (params.getLocalStreamDescription().getRtpPort() == 0) {
-					lInfo() << "Restarting stream at index " << index << " because its type has changed from "
-					        << sal_stream_type_to_string(s->getType()) << " to "
-					        << sal_stream_type_to_string(params.getLocalStreamDescription().type) << "!";
+			auto type = s->getType();
+			auto localType = params.getLocalStreamDescription().getType();
+			if (type != localType) {
+				auto typeString = sal_stream_type_to_string(type);
+				auto localTypeString = sal_stream_type_to_string(localType);
+				auto rtpPort = params.getLocalStreamDescription().getRtpPort();
+				if (rtpPort == 0) {
+					lInfo() << *this << ": Restarting stream at index " << index
+					        << " because its type has changed from " << typeString << " to " << localTypeString << "!";
 					s->stop();
 					s = createStream(params);
 				} else {
-					lInfo() << "Invalid attempt to change type of stream at index " << index << " from "
-					        << sal_stream_type_to_string(s->getType()) << " to "
-					        << sal_stream_type_to_string(params.getLocalStreamDescription().type)
-					        << " because the RTP port wasn't 0 but " << params.getLocalStreamDescription().getRtpPort();
+					lInfo() << *this << ": Invalid attempt to change type of stream at index " << index << " from "
+					        << typeString << " to " << localTypeString << " because the RTP port wasn't 0 but "
+					        << rtpPort;
 				}
 			} else if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED) {
 				/*
@@ -158,9 +161,10 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params) {
 
 bool StreamsGroup::prepare() {
 	if (mFinished) {
-		lError() << "StreamsGroup finished, cannot be used anymore.";
+		lError() << *this << ": finished, cannot be used anymore.";
 		return false;
 	}
+	lInfo() << *this << ": preparing";
 	for (auto &stream : mStreams) {
 		if (!stream) continue;
 		if (stream->getState() == Stream::Stopped) {
@@ -204,17 +208,17 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	for (size_t index = 0; index < mStreams.size() && index < resultMediaDescriptionStreamNb; ++index) {
 		auto &stream = mStreams[index];
 		if (!stream) continue;
-		lInfo() << "StreamsGroup " << this << " rendering " << *stream;
+		lInfo() << *this << ": rendering " << *stream;
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 
 		if (params.localStreamDescriptionChanges) {
 			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
-			lInfo() << "Local stream description has changed: " << differences;
+			lInfo() << *this << ": Local stream description has changed: " << differences;
 		}
 		if (params.resultStreamDescriptionChanges) {
 			const std::string differences =
 			    SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
-			lInfo() << "Result stream description has changed: " << differences;
+			lInfo() << *this << ": Result stream description has changed: " << differences;
 		}
 		if (stream->getState() == Stream::Preparing) stream->finishPrepare();
 
@@ -249,7 +253,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	for (size_t index = resultMediaDescriptionStreamNb; index < mStreams.size(); ++index) {
 		auto &stream = mStreams[index];
 		if (!stream) continue;
-		lInfo() << "StreamsGroup " << this << " deleting " << *stream
+		lInfo() << *this << ": deleting " << *stream
 		        << " because the negotiated media description has no stream at index " << index << " (it has only "
 		        << resultMediaDescriptionStreamNb << " streams)";
 		stream->stop();
@@ -271,11 +275,12 @@ void StreamsGroup::sessionConfirmed(BCTBX_UNUSED(const OfferAnswerContext &param
 
 void StreamsGroup::stop() {
 	if (mFinished) {
-		lError() << "StreamsGroup finished, cannot be used anymore.";
+		lError() << *this << ": finished, cannot be used anymore.";
 		abort();
 		return;
 	}
 
+	lInfo() << *this << ": stopping";
 	if (mBandwidthReportTimer) {
 		getCore().destroyTimer(mBandwidthReportTimer);
 		mBandwidthReportTimer = nullptr;
@@ -288,7 +293,7 @@ void StreamsGroup::stop() {
 
 Stream *StreamsGroup::getStream(size_t index) {
 	if (index >= mStreams.size()) {
-		lError() << "No stream at index " << index;
+		lError() << *this << ": No stream at index " << index;
 		return nullptr;
 	}
 	return mStreams[index].get();
@@ -328,7 +333,7 @@ const EncryptionStatus &StreamsGroup::getEncryptionStatus() {
 
 int StreamsGroup::updateAllocatedAudioBandwidth(const OrtpPayloadType *pt, int maxbw) {
 	mAudioBandwidth = PayloadTypeHandler::getAudioPayloadTypeBandwidth(pt, maxbw);
-	lInfo() << "Audio bandwidth for StreamsGroup [" << this << "] is " << mAudioBandwidth;
+	lInfo() << "Audio bandwidth for " << *this << " is " << mAudioBandwidth;
 	return mAudioBandwidth;
 }
 
@@ -401,8 +406,9 @@ void StreamsGroup::authTokensReady(const list<string> &&incorrectAuthTokens,
 	mAuthTokenVerified = verified;
 	mZrtpCacheMismatch = cacheMismatch;
 	mAuthTokenCheckDone = verified;
-	lInfo() << "Authentication token is " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified")
-	        << " " << (mZrtpCacheMismatch ? "and cache mismatch" : "") << ")";
+	lInfo() << *this << ": Authentication token is " << mAuthToken << "("
+	        << (mAuthTokenVerified ? "verified" : "unverified") << " "
+	        << (mZrtpCacheMismatch ? "and cache mismatch" : "") << ")";
 }
 
 void StreamsGroup::setAuthTokenVerified(bool value) {
@@ -635,7 +641,7 @@ void StreamsGroup::setStreamMain(size_t index, const bool force) {
 
 void StreamsGroup::finish() {
 	if (mFinished) return;
-	lInfo() << "StreamsGroup::finish() called.";
+	lInfo() << *this << ": finishing]";
 	stop();                // For the paranoid: normally it should be done already.
 	mIceService->finish(); // finish ICE first, as it has actions on the streams.
 	for (auto &ss : mSharedServices)

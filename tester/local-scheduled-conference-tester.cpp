@@ -4353,7 +4353,7 @@ static void uninvited_participant_rejoins(void) {
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 				LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 				if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-					check_conference_info_against_db(mgr, confAddr, call_log_info);
+					check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 				}
 			}
 		}
@@ -4734,7 +4734,7 @@ static void rejoining_conference_after_end(int cleanup_window) {
 					BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 					LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 					if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-						check_conference_info_against_db(mgr, confAddr, call_log_info);
+						check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 					}
 				}
 			}

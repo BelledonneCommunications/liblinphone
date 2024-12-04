@@ -796,20 +796,22 @@ bool ClientConference::transferToFocus(std::shared_ptr<Call> call) {
 	if (participant) {
 		referToAddr->setParam(Conference::AdminParameter, Utils::toString(participant->isAdmin()));
 		const auto &remoteAddress = call->getRemoteAddress();
-		lInfo() << "Transfering call (local address " << call->getLocalAddress()->toString() << " remote address "
-		        << (remoteAddress ? remoteAddress->toString() : "sip:") << ") to focus " << *referToAddr;
+		lInfo() << "Transfering call [" << call << "] (local address " << *call->getLocalAddress() << " remote address "
+		        << *remoteAddress << ") to focus " << *referToAddr;
 		updateParticipantInConferenceInfo(participant);
 		if (call->transfer(referToAddr->toString()) == 0) {
 			mTransferingCalls.push_back(call);
 			return true;
 		} else {
-			lError() << "Conference: could not transfer call " << call << " to " << *referToAddr;
+			lError() << "Conference: could not transfer call [" << call << "] (local address "
+			         << *call->getLocalAddress() << " remote address " << *remoteAddress << ") to focus "
+			         << *referToAddr << " right now";
 			return false;
 		}
 	} else {
-		lError() << "Conference: could not transfer call " << call << " to " << *referToAddr
-		         << " because participant with session " << call->getActiveSession()
-		         << " cannot be found  - guessed address " << *referToAddr;
+		lError() << "Conference: could not transfer call [" << call << "] (local address " << *call->getLocalAddress()
+		         << " remote address " << *remoteAddress << ") to focus " << *referToAddr
+		         << " because participant with address " << *remoteAddress << " cannot be found";
 		return false;
 	}
 	return false;
@@ -896,8 +898,9 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 						CallSession::State pendingCallState = pendingCall->getState();
 						if ((pendingCallState == CallSession::State::StreamsRunning) ||
 						    (pendingCallState == CallSession::State::Paused)) {
-							it = mPendingCalls.erase(it);
-							transferToFocus(pendingCall);
+							if (transferToFocus(pendingCall)) {
+								it = mPendingCalls.erase(it);
+							}
 						} else it++;
 					}
 
@@ -1131,8 +1134,9 @@ void ClientConference::onPendingCallStateChanged(std::shared_ptr<Call> call, Cal
 					// Transfer call only if focus call remote contact address is available (i.e. the call has been
 					// correctly established and passed through state StreamsRunning)
 					if (session->getRemoteContactAddress()) {
-						mPendingCalls.remove(call);
-						transferToFocus(call);
+						if (transferToFocus(call)) {
+							mPendingCalls.remove(call);
+						}
 					}
 				}
 			}

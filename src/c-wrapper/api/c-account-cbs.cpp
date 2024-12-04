@@ -66,3 +66,13 @@ void linphone_account_cbs_set_message_waiting_indication_changed(
     LinphoneAccountCbs *cbs, LinphoneAccountCbsMessageWaitingIndicationChangedCb cb) {
 	AccountCbs::toCpp(cbs)->setMessageWaitingIndicationChanged(cb);
 }
+
+LinphoneAccountCbsConferenceInformationUpdatedCb
+linphone_account_cbs_get_conference_information_updated(const LinphoneAccountCbs *cbs) {
+	return AccountCbs::toCpp(cbs)->getConferenceInformationUpdated();
+}
+
+void linphone_account_cbs_set_conference_information_updated(LinphoneAccountCbs *cbs,
+                                                             LinphoneAccountCbsConferenceInformationUpdatedCb cb) {
+	AccountCbs::toCpp(cbs)->setConferenceInformationUpdated(cb);
+}

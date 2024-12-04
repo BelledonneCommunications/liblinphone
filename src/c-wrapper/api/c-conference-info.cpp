@@ -46,6 +46,12 @@ void linphone_conference_info_unref(LinphoneConferenceInfo *conference_info) {
 	ConferenceInfo::toCpp(conference_info)->unref();
 }
 
+const LinphoneParticipantInfo *
+linphone_conference_info_get_organizer_info(const LinphoneConferenceInfo *conference_info) {
+	const auto &organizer = ConferenceInfo::toCpp(conference_info)->getOrganizer();
+	return organizer ? organizer->toC() : nullptr;
+}
+
 const LinphoneAddress *linphone_conference_info_get_organizer(const LinphoneConferenceInfo *conference_info) {
 	const auto &address = ConferenceInfo::toCpp(conference_info)->getOrganizerAddress();
 	return address && address->isValid() ? address->toC() : nullptr;

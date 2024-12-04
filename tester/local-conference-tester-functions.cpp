@@ -158,7 +158,7 @@ static bool check_conference_info_by_participant(LinphoneCoreManager *mgr,
 		for (bctbx_list_t *info_it = infos; info_it; info_it = bctbx_list_next(info_it)) {
 			LinphoneConferenceInfo *info = (LinphoneConferenceInfo *)bctbx_list_get_data(info_it);
 			if (linphone_address_equal(linphone_conference_info_get_uri(info), conference_address)) {
-				check_conference_info_against_db(mgr, conference_address, info);
+				check_conference_info_against_db(mgr, conference_address, info, FALSE);
 				found = TRUE;
 			}
 		}
@@ -2689,7 +2689,7 @@ void create_conference_base(time_t start_time,
 				BC_ASSERT_PTR_NOT_NULL(pconference);
 				if (pconference) {
 					auto info = linphone_conference_get_info(pconference);
-					check_conference_info_against_db(mgr, confAddr, info);
+					check_conference_info_against_db(mgr, confAddr, info, FALSE);
 					LinphoneParticipant *p =
 					    (mgr == laure.getCMgr())
 					        ? linphone_conference_get_me(pconference)
@@ -3408,7 +3408,7 @@ void create_conference_base(time_t start_time,
 					}
 					if (pconference) {
 						auto info = linphone_conference_get_info(pconference);
-						check_conference_info_against_db(mgr, confAddr, info);
+						check_conference_info_against_db(mgr, confAddr, info, FALSE);
 						const LinphoneConferenceParams *conference_params =
 						    linphone_conference_get_current_params(pconference);
 						int no_participants = 0;
@@ -6228,7 +6228,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 				LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 				if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-					check_conference_info_against_db(mgr, confAddr, call_log_info);
+					check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 				}
 			}
 		}
@@ -9780,7 +9780,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 				LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 				if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-					check_conference_info_against_db(mgr, confAddr, call_log_info);
+					check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 				}
 			}
 		}
@@ -9914,7 +9914,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 					BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 					LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 					if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-						check_conference_info_against_db(mgr, confAddr, call_log_info);
+						check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 					}
 				}
 			}
@@ -10118,7 +10118,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 					BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 					LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 					if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-						check_conference_info_against_db(mgr, confAddr, call_log_info);
+						check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 					}
 				}
 				bctbx_list_free_with_data(mgr_focus_call_log, (bctbx_list_free_func)linphone_call_log_unref);
@@ -11196,7 +11196,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 					BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 					LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 					if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-						check_conference_info_against_db(mgr, confAddr, call_log_info);
+						check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 					}
 				}
 
@@ -11387,7 +11387,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 							BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 							LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 							if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-								check_conference_info_against_db(mgr, confAddr, call_log_info);
+								check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 							}
 						}
 
@@ -11677,7 +11677,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 					LinphoneCallLog *call_log = (LinphoneCallLog *)it->data;
 					LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 					if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-						check_conference_info_against_db(mgr, confAddr, call_log_info);
+						check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 					}
 					BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 				}
@@ -12525,7 +12525,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 				LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 				if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-					check_conference_info_against_db(mgr, confAddr, call_log_info);
+					check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 				}
 			}
 		}
@@ -12748,7 +12748,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 						BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 						LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 						if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-							check_conference_info_against_db(mgr, confAddr, call_log_info);
+							check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 						}
 					}
 				}
@@ -12901,7 +12901,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 					BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 					LinphoneConferenceInfo *call_log_info = linphone_call_log_get_conference_info(call_log);
 					if (BC_ASSERT_PTR_NOT_NULL(call_log_info)) {
-						check_conference_info_against_db(mgr, confAddr, call_log_info);
+						check_conference_info_against_db(mgr, confAddr, call_log_info, FALSE);
 					}
 				}
 				bctbx_list_free_with_data(mgr_focus_call_log, (bctbx_list_free_func)linphone_call_log_unref);

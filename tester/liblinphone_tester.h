@@ -587,6 +587,8 @@ typedef struct _stats {
 	int number_of_ConferenceSchedulerStateError;
 	int number_of_ConferenceSchedulerInvitationsSent;
 
+	int number_of_ConferenceInformationUpdated;
+
 	int number_of_LinphoneMagicSearchResultReceived;
 	int number_of_LinphoneMagicSearchLdapHaveMoreResults;
 
@@ -1001,7 +1003,8 @@ void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *schedule
 int find_matching_participant_info(const LinphoneParticipantInfo *info1, const LinphoneParticipantInfo *info2);
 void check_conference_info_against_db(LinphoneCoreManager *mgr,
                                       LinphoneAddress *confAddr,
-                                      const LinphoneConferenceInfo *info1);
+                                      const LinphoneConferenceInfo *info1,
+                                      bool_t skip_participant_info);
 
 void check_conference_info_in_db(LinphoneCoreManager *mgr,
                                  const char *uid,
