@@ -673,7 +673,7 @@ public class AndroidPlatformHelper {
         copyAssetsFromPackage(mContext, "org.linphone.core", ".");
         Log.i("[Platform Helper] Copy from assets done");
 
-        if (getResourceIdentifierFromName("cpim_grammar.belr") != 0) {
+        if (getResourceIdentifierFromName("cpim_grammar") != 0) {
             copyLegacyAssets();
         }
     }
@@ -694,11 +694,11 @@ public class AndroidPlatformHelper {
         String mGrammarMwiFile = basePath + "/share/belr/grammars/mwi_grammar.belr";
         String mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar.belr";
 
-        copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar.belr"), mGrammarCpimFile);
-        copyEvenIfExists(getResourceIdentifierFromName("ics_grammar.belr"), mGrammarIcsFile);
-        copyEvenIfExists(getResourceIdentifierFromName("identity_grammar.belr"), mGrammarIdentityFile);
-        copyEvenIfExists(getResourceIdentifierFromName("mwi_grammar.belr"), mGrammarMwiFile);
-        copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar.belr"), mGrammarVcardFile);
+        copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar"), mGrammarCpimFile);
+        copyEvenIfExists(getResourceIdentifierFromName("ics_grammar"), mGrammarIcsFile);
+        copyEvenIfExists(getResourceIdentifierFromName("identity_grammar"), mGrammarIdentityFile);
+        copyEvenIfExists(getResourceIdentifierFromName("mwi_grammar"), mGrammarMwiFile);
+        copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar"), mGrammarVcardFile);
         copyEvenIfExists(getResourceIdentifierFromName("rootca"), mLinphoneRootCaFile);
         copyIfNotExist(getResourceIdentifierFromName("notes_of_the_optimistic"), mRingSoundFile);
         copyIfNotExist(getResourceIdentifierFromName("ringback"), mRingbackSoundFile);
@@ -761,7 +761,7 @@ public class AndroidPlatformHelper {
                 continue;
             }
 
-            Log.i("[Platform Helper] Installing Resource " + f);
+            Log.i("[Platform Helper] Installing resource [" + f + "] to [" + file.getAbsolutePath() + "]");
             FileOutputStream lOutputStream = new FileOutputStream(file);
             int readByte;
             byte[] buff = new byte[8048];
