@@ -380,6 +380,8 @@ private:
 	bool mAutoResetCache = true; // When a new search start, let MagicSearch to clean its cache
 	bool returnEmptyFriends = false;
 	std::regex mFilterRegex = std::regex();
+	bool mFilterApplyFullSipUri =
+	    false; // If true, searchInAddress will check the full SIP URI, otherwise only display name & username
 
 	belle_sip_source_t *mIteration = nullptr;
 

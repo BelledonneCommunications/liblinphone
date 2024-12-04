@@ -867,12 +867,19 @@ MagicSearch::searchInFriend(const shared_ptr<Friend> &lFriend, const string &wit
 }
 
 unsigned int MagicSearch::searchInAddress(const shared_ptr<const Address> &lAddress, const string &withDomain) const {
-	unsigned int weight = getMinWeight();
 	if (lAddress != nullptr && (withDomain.empty() || checkDomain(nullptr, lAddress, withDomain))) {
-		if (!lAddress->getUsername().empty()) weight += getWeight(lAddress->getUsername());
-		if (!lAddress->getDisplayName().empty()) weight += getWeight(lAddress->getDisplayName());
+		if (mFilterApplyFullSipUri && withDomain.empty()) {
+			// If no domain filter is set and that filter looks like a SIP URI, check the full address, otherwise only
+			// check username & displayname
+			return getWeight(lAddress->asString());
+		} else {
+			unsigned int weight = getMinWeight();
+			if (!lAddress->getUsername().empty()) weight = getWeight(lAddress->getUsername());
+			if (!lAddress->getDisplayName().empty()) weight += getWeight(lAddress->getDisplayName());
+			return weight;
+		}
 	}
-	return weight;
+	return getMinWeight();
 }
 
 void MagicSearch::setupRegex(const string &filter) {
@@ -893,8 +900,10 @@ void MagicSearch::setupRegex(const string &filter) {
 	}
 
 	// Replace any regex special character by escaped version of it, such as '+' for example
-	lDebug() << "[MagicSearch] Building regex [" << lowercaseFilter << "]";
+	lDebug() << "[Magic Search] Building regex [" << lowercaseFilter << "]";
 	mFilterRegex = regex(lowercaseFilter);
+	mFilterApplyFullSipUri =
+	    (filter.rfind("sip:", 0) == 0 || filter.rfind("sips:", 0) == 0 || filter.rfind("@") != string::npos);
 }
 
 unsigned int MagicSearch::getWeight(const string &haystack) const {
