@@ -239,6 +239,8 @@ public:
 
 	void setConferenceCleanupPeriod(long seconds);
 	long getConferenceCleanupPeriod() const;
+	void setAccountDeletionTimeout(unsigned int seconds);
+	unsigned int getAccountDeletionTimeout() const;
 	void insertConference(const std::shared_ptr<Conference> conference);
 	void invalidateAccountInConferencesAndChatRooms(const std::shared_ptr<Account> &account);
 	std::shared_ptr<Conference> findConference(const std::shared_ptr<const CallSession> &session,
@@ -484,6 +486,7 @@ private:
 
 	unsigned int mRemainingDownloadFileCount = 0;
 	unsigned int mRemainingUploadFileCount = 0;
+	unsigned int mAccountDeletionTimeout = 32;
 
 	mutable bctbx_list_t *mCachedProxyConfigs = NULL;
 

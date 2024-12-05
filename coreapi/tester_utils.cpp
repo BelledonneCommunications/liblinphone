@@ -341,3 +341,7 @@ void linphone_call_restart_main_audio_stream(LinphoneCall *call) {
 int linphone_core_get_number_of_duplicated_messages(const LinphoneCore *core) {
 	return core->number_of_duplicated_messages;
 }
+
+void linphone_core_set_account_deletion_timeout(LinphoneCore *core, unsigned int seconds) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->setAccountDeletionTimeout(seconds);
+}

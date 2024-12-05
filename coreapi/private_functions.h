@@ -353,7 +353,7 @@ LinphoneAccount *linphone_proxy_config_get_account(LinphoneProxyConfig *cfg);
 void linphone_account_update(LinphoneAccount *account);
 LinphoneProxyConfig *linphone_account_get_proxy_config(LinphoneAccount *account);
 
-const bctbx_list_t *linphone_core_get_deleted_account_list(const LinphoneCore *lc);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_deleted_account_list(const LinphoneCore *lc);
 void linphone_core_remove_deleted_account(LinphoneCore *core, LinphoneAccount *account);
 
 LinphoneProxyConfig *linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);

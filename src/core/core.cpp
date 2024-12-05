@@ -1852,6 +1852,17 @@ long Core::getConferenceCleanupPeriod() const {
 	                                       -1);
 }
 
+void Core::setAccountDeletionTimeout(unsigned int seconds) {
+	if (seconds == 0) {
+		lError() << "Unable to disable automatic deletion of accounts";
+	}
+	mAccountDeletionTimeout = seconds;
+}
+
+unsigned int Core::getAccountDeletionTimeout() const {
+	return mAccountDeletionTimeout;
+}
+
 std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const CallSession> &session,
                                                  bool logIfNotFound) const {
 
@@ -2565,15 +2576,23 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 		return;
 	}
 
+	auto accountParams = account->getAccountParams();
+	auto coreState = linphone_core_get_global_state(getCCore());
 	/* we also need to update the accounts list */
 	accounts.erase(accountIt);
 	removeDependentAccount(account);
 	/* When the core is ON, add to the list of destroyed accounts, so that the possible unREGISTER request can succeed
-	 * authentication. If not ON, no unregistration is made in this case. This might happen during a Core restart. */
-	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn) {
+	 * authentication. If not ON, no unregistration is made in this case. This might happen during a Core restart.
+	 * Also there is not need to trigger the deletion timer if the account hasn't registered.
+	 * The if statement is also entered if a REGISTER is sent and the account is removed while it is still in the state
+	 * LinphoneRegistrationProgress (i.e. before receiving the 200Ok response). In such a scenario, in fact an account
+	 * waits for the 200Ok response and then it sends another REGISTER message with the Expires header set to 0. */
+	if (accountParams->getRegisterEnabled() && (coreState == LinphoneGlobalOn)) {
 		mDeletedAccounts.mList.push_back(account);
 		account->triggerDeletion();
-	} else account->setConfig(nullptr);
+	} else {
+		account->setConfig(nullptr);
+	}
 
 	invalidateAccountInConferencesAndChatRooms(account);
 
@@ -2583,12 +2602,12 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 
 	linphone_core_notify_account_removed(getCCore(), account->toC());
 
-	if (getCCore()->state == LinphoneGlobalOn) {
+	if (coreState == LinphoneGlobalOn) {
 		// Update the associated linphone specs on the core
-		auto params = account->getAccountParams()->clone()->toSharedPtr();
-		params->setRegisterEnabled(false);
-		params->setConferenceFactoryAddress(nullptr);
-		account->setAccountParams(params);
+		auto newAccountParams = accountParams->clone()->toSharedPtr();
+		newAccountParams->setRegisterEnabled(false);
+		newAccountParams->setConferenceFactoryAddress(nullptr);
+		account->setAccountParams(newAccountParams);
 	}
 	auto state = account->getState();
 	switch (state) {
@@ -2616,6 +2635,10 @@ void Core::removeDeletedAccount(const std::shared_ptr<Account> &account) {
 	const auto &params = account->getAccountParams();
 	lInfo() << "Account for [" << *params->getServerAddress() << "] is definitely removed from core.";
 	account->releaseOps();
+	// Setting the proxy config associated to an account to NULL will cause its destruction and therefore losing the
+	// reference held by it to the Account object. In this way, the memory occupied by the account to be deleted is
+	// properly once it is erased by the account list
+	account->setConfig(nullptr);
 	/* we also need to update the accounts list */
 	accounts.erase(accountIt);
 }

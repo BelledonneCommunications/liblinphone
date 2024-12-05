@@ -290,6 +290,8 @@ void Account::setNeedToRegister(bool needToRegister) {
 void Account::triggerDeletion() {
 	cancelDeletion();
 	weak_ptr<Account> weakZis = getSharedFromThis();
+	// Timeout is in ms
+	unsigned int accountDeletionTimeout = getCore()->getAccountDeletionTimeout() * 1000;
 	mDeletionTimer = getCore()->createTimer(
 	    [weakZis]() -> bool {
 		    auto zis = weakZis.lock();
@@ -302,7 +304,7 @@ void Account::triggerDeletion() {
 		    }
 		    return false;
 	    },
-	    32000, "Account deletion");
+	    accountDeletionTimeout, "Account deletion");
 }
 
 void Account::cancelDeletion() {
@@ -400,9 +402,11 @@ void Account::handleDeletion() {
 		case LinphoneRegistrationOk:
 			unregister();
 			break;
-		case LinphoneRegistrationNone:
 		case LinphoneRegistrationCleared:
+			cancelDeletion();
+			getCore()->removeDeletedAccount(getSharedFromThis());
 			break;
+		case LinphoneRegistrationNone:
 		default:
 			// In all other states, un-registration is aborted.
 			setState(LinphoneRegistrationNone, "Registration disabled");
@@ -412,8 +416,8 @@ void Account::handleDeletion() {
 
 void Account::setState(LinphoneRegistrationState state, const std::string &message) {
 	auto core = getCCore();
-	if (mState != state ||
-	    state == LinphoneRegistrationOk) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
+	if ((mState != state) ||
+	    (state == LinphoneRegistrationOk)) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
 		const auto identity = (mParams) ? mParams->getIdentityAddress()->toString() : std::string("sip:");
 		if (!mParams) lWarning() << "AccountParams not set for " << *this;
 		lInfo() << *this << " for identity [" << identity << "] moving from state ["
@@ -434,10 +438,6 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 
 		LinphoneRegistrationState previousState = mState;
 		mState = state;
-		if (deletionPending()) {
-			handleDeletion();
-		}
-
 		if (!mDependency) {
 			updateDependentAccount(state, message);
 		}
@@ -458,6 +458,11 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 		}
 
 		triggerUpdate();
+
+		if (deletionPending()) {
+			handleDeletion();
+		}
+
 	} else {
 		/*state already reported*/
 	}

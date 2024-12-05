@@ -3141,7 +3141,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 }
 
 bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
-	bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(core);
+	const bctbx_list_t *accounts = linphone_core_get_account_list(core);
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
 		if (!linphone_account_params_is_push_notification_available(linphone_account_get_params(account))) return FALSE;

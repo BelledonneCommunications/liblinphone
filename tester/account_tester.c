@@ -29,8 +29,13 @@
 #include "linphone/api/c-chat-room.h"
 #include "tester_utils.h"
 
-static void simple_account_creation(void) {
+static void
+simple_account_creation_base(bool_t remove_accounts, bool_t bring_offline_while_removal, bool_t quick_shutdown) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	// Set the deletion timeout to 100s when the deletion timer is not expected to expire to ensure that account is
+	// freed well before the timeout
+	unsigned int account_deletion_timeout = (!!quick_shutdown || !bring_offline_while_removal) ? 100 : 5;
+	linphone_core_set_account_deletion_timeout(marie->lc, account_deletion_timeout);
 	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
 	int default_index = linphone_config_get_int(linphone_core_get_config(marie->lc), "sip", "default_proxy", 0);
 
@@ -75,23 +80,64 @@ static void simple_account_creation(void) {
 
 	char *local_rc = ms_strdup(marie->rc_local);
 
+	if (!!remove_accounts) {
+		stats marieStats = marie->stat;
+		const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+		int number_accounts = (int)bctbx_list_size(accounts);
+		for (; accounts != NULL; accounts = accounts->next) {
+			LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+			linphone_core_remove_account(marie->lc, account);
+		}
+		if (!quick_shutdown) {
+			if (!!bring_offline_while_removal) {
+				linphone_core_set_network_reachable(marie->lc, FALSE);
+				BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, 0, 1, (account_deletion_timeout + 1) * 1000));
+			} else {
+				BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared,
+				                        marieStats.number_of_LinphoneRegistrationCleared + number_accounts));
+			}
+			BC_ASSERT_PTR_NULL(linphone_core_get_deleted_account_list(marie->lc));
+		}
+	}
+
 	linphone_core_manager_stop(marie);
 	linphone_core_manager_uninit2(marie, TRUE, FALSE); // uninit but do not unlink the rc file
 	ms_free(marie);
 
-	// Verify that the custom parameters are written to the rc file
-	bctbx_vfs_file_t *cfg_file = bctbx_file_open(bctbx_vfs_get_default(), local_rc, "r");
-	size_t cfg_file_size = (size_t)bctbx_file_size(cfg_file);
-	char *buf = bctbx_malloc(cfg_file_size);
-	bctbx_file_read(cfg_file, buf, cfg_file_size, 0);
-	BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:main-account"));
-	BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:default"));
-	bctbx_file_close(cfg_file);
-	bctbx_free(buf);
+	if (!remove_accounts) {
+		// Verify that the custom parameters are written to the rc file
+		bctbx_vfs_file_t *cfg_file = bctbx_file_open(bctbx_vfs_get_default(), local_rc, "r");
+		size_t cfg_file_size = (size_t)bctbx_file_size(cfg_file);
+		char *buf = bctbx_malloc(cfg_file_size);
+		bctbx_file_read(cfg_file, buf, cfg_file_size, 0);
+		BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:main-account"));
+		BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:default"));
+		bctbx_file_close(cfg_file);
+		bctbx_free(buf);
+	}
 
 	unlink(local_rc);
 
 	ms_free(local_rc);
+}
+
+static void simple_account_creation(void) {
+	simple_account_creation_base(FALSE, FALSE, FALSE);
+}
+
+static void simple_account_creation_with_removal(void) {
+	// Account freed when the core receives the 200Ok response to the unREGISTER message
+	simple_account_creation_base(TRUE, FALSE, FALSE);
+}
+
+static void simple_account_creation_with_removal_offline(void) {
+	// Account freed when the deletion timer expires
+	simple_account_creation_base(TRUE, TRUE, FALSE);
+}
+
+static void simple_account_creation_with_removal_and_shutdown(void) {
+	// Account freed during the core shutdown procedure
+	simple_account_creation_base(TRUE, FALSE, TRUE);
 }
 
 static void simple_account_params_creation(void) {
@@ -107,7 +153,7 @@ static void simple_account_params_creation(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-static void account_removal(void) {
+static void default_account_removal(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAccount *account = linphone_core_get_default_account(marie->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(account)) {
@@ -118,7 +164,7 @@ static void account_removal(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-static void account_removal_2(void) {
+static void default_account_removal_2(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAccount *account = linphone_core_get_default_account(marie->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(account)) {
@@ -131,6 +177,72 @@ static void account_removal_2(void) {
 		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared, 1));
 	}
 	linphone_core_manager_destroy(marie);
+}
+
+static void added_account_removal_base(bool_t enable_register) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+
+	// Set the deletion timeout to 100s to ensure that account is freed well before the timeout
+	linphone_core_set_account_deletion_timeout(marie->lc, 100);
+
+	LinphoneAccount *marie_default_account = linphone_core_get_default_account(marie->lc);
+	LinphoneAccountParams *marie_account_params =
+	    linphone_account_params_clone(linphone_account_get_params(marie_default_account));
+	linphone_account_params_enable_register(marie_account_params, enable_register);
+	linphone_account_set_params(marie_default_account, marie_account_params);
+	linphone_account_params_unref(marie_account_params);
+
+	int default_index = linphone_config_get_int(linphone_core_get_config(marie->lc), "sip", "default_proxy", 0);
+	LinphoneAccountParams *new_account_params = linphone_account_params_new_with_config(marie->lc, default_index);
+	linphone_account_params_enable_register(new_account_params, enable_register);
+
+	stats marieStats = marie->stat;
+	linphone_core_remove_account(marie->lc, marie_default_account);
+	if (enable_register) {
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared,
+		                        marieStats.number_of_LinphoneRegistrationCleared + 1));
+	}
+	BC_ASSERT_PTR_NULL(linphone_core_get_deleted_account_list(marie->lc));
+
+	LinphoneAccount *account = linphone_core_create_account(marie->lc, new_account_params);
+	linphone_core_add_account(marie->lc, account);
+	linphone_account_params_unref(new_account_params);
+	linphone_account_unref(account);
+
+	marieStats = marie->stat;
+	if (enable_register) {
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationProgress,
+		                        marieStats.number_of_LinphoneRegistrationProgress + 1));
+	} else {
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, 0, 1, 1000));
+	}
+	const bctbx_list_t *marie_account_list = linphone_core_get_account_list(marie->lc);
+	for (const bctbx_list_t *account_it = marie_account_list; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)account_it->data;
+		linphone_core_remove_account(marie->lc, account);
+	}
+	if (enable_register) {
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared,
+		                        marieStats.number_of_LinphoneRegistrationCleared + 1));
+	} else {
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, 0, 1, 1000));
+	}
+
+	BC_ASSERT_PTR_NULL(linphone_core_get_deleted_account_list(marie->lc));
+
+	linphone_core_manager_destroy(marie);
+}
+
+static void added_account_removal_no_register(void) {
+	// The account is added but it didn't REGISTER therefore delete it immediately
+	added_account_removal_base(FALSE);
+}
+
+static void added_account_removal_while_registering(void) {
+	// This test verifies the behaviour of an account being added and immediately removed just after attempting to
+	// REGISTER. The core will wait for the 200Ok response and send a second REGISTER with the Expires header set to 0
+	// to unREGISTER. Upon reception of this 200Ok, the account is definitely freed
+	added_account_removal_base(TRUE);
 }
 
 static void registration_state_changed_on_account(LinphoneAccount *account,
@@ -279,8 +391,13 @@ static void account_dependency_to_self(void) {
 
 static test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
-    TEST_NO_TAG("Account removal", account_removal),
-    TEST_NO_TAG("Account removal while refreshing", account_removal_2),
+    TEST_NO_TAG("Simple account creation with removal", simple_account_creation_with_removal),
+    TEST_NO_TAG("Simple account creation with removal offline", simple_account_creation_with_removal_offline),
+    TEST_NO_TAG("Simple account creation with removal and shutdown", simple_account_creation_with_removal_and_shutdown),
+    TEST_NO_TAG("Default account removal", default_account_removal),
+    TEST_NO_TAG("Default account removal while refreshing", default_account_removal_2),
+    TEST_NO_TAG("Added account removal (while REGISTERing)", added_account_removal_while_registering),
+    TEST_NO_TAG("Added account removal (no REGISTER)", added_account_removal_no_register),
     TEST_NO_TAG("Simple account params creation", simple_account_params_creation),
     TEST_NO_TAG("Account dependency to self", account_dependency_to_self),
     TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
