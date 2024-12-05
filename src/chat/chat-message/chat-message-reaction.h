@@ -40,7 +40,7 @@ public:
 	                    std::shared_ptr<const Address> from,
 	                    const std::string &messageCallId);
 	~ChatMessageReaction();
-	ChatMessageReaction(const ChatMessageReaction &other);
+	ChatMessageReaction(const ChatMessageReaction &other) = delete;
 
 	void onChatMessageStateChanged(const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
 
@@ -59,27 +59,27 @@ public:
 	void send();
 
 	void setCallId(const std::string &id) {
-		callId = id;
+		mCallId = id;
 	}
 
 	const std::string &getCallId() const {
-		return callId;
+		return mCallId;
 	}
 
 	void setChatRoom(std::shared_ptr<AbstractChatRoom> cr) {
-		chatRoom = cr;
+		mChatRoom = cr;
 	}
 	std::shared_ptr<AbstractChatRoom> getChatRoom() const {
-		return chatRoom;
+		return mChatRoom;
 	}
 
 private:
-	std::string messageId;
-	std::string reaction;
-	std::string callId;
-	std::shared_ptr<const Address> fromAddress;
-	std::shared_ptr<ChatMessage> reactionMessage;
-	std::shared_ptr<AbstractChatRoom> chatRoom;
+	std::string mMessageId;
+	std::string mReaction;
+	std::string mCallId;
+	std::shared_ptr<const Address> mFromAddress;
+	std::shared_ptr<ChatMessage> mReactionMessage;
+	std::shared_ptr<AbstractChatRoom> mChatRoom;
 };
 
 LINPHONE_END_NAMESPACE

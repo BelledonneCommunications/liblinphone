@@ -34,29 +34,20 @@ ChatMessageReaction::ChatMessageReaction(const string &messageId,
                                          const string &emoji,
                                          std::shared_ptr<const Address> from,
                                          const string &messageCallId)
-    : messageId(messageId), callId(messageCallId), fromAddress(from) {
-	string toUtf8 = Utils::localeToUtf8(emoji);
-	reaction = toUtf8;
+    : mMessageId(messageId), mCallId(messageCallId), mFromAddress(from) {
+	mReaction = emoji;
 }
 
 ChatMessageReaction::~ChatMessageReaction() {
-	reactionMessage = nullptr;
-}
-
-ChatMessageReaction::ChatMessageReaction(const ChatMessageReaction &other) : HybridObject(other) {
-	messageId = other.messageId;
-	reactionMessage = other.reactionMessage;
-	reaction = other.getBody();
-	fromAddress = other.getFromAddress();
-	callId = other.getCallId();
+	mReactionMessage = nullptr;
 }
 
 const string &ChatMessageReaction::getBody() const {
-	return reaction;
+	return mReaction;
 }
 
 std::shared_ptr<const Address> ChatMessageReaction::getFromAddress() const {
-	return fromAddress;
+	return mFromAddress;
 }
 
 void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
@@ -66,7 +57,7 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 	}
 
 	if (state == ChatMessage::State::Delivered) {
-		lInfo() << "[Chat Message Reaction] Reaction [" << reaction << "] for message ID [" << messageId
+		lInfo() << "[Chat Message Reaction] Reaction [" << mReaction << "] for message ID [" << mMessageId
 		        << "] has been delivered";
 		auto originalMessage = message->getReactionToMessage();
 		if (!originalMessage) {
@@ -81,12 +72,12 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
 		LinphoneChatRoom *cr = message->getChatRoom()->toC();
 
-		if (reaction.empty()) {
-			lInfo() << "[Chat Message Reaction] Sending empty reaction to chat message ID [" << messageId
+		if (mReaction.empty()) {
+			lInfo() << "[Chat Message Reaction] Sending empty reaction to chat message ID [" << mMessageId
 			        << "] to remove any previously existing reaction";
-			const LinphoneAddress *address = fromAddress->toC();
+			const LinphoneAddress *address = mFromAddress->toC();
 			unique_ptr<MainDb> &mainDb = message->getChatRoom()->getCore()->getPrivate()->mainDb;
-			mainDb->removeConferenceChatMessageReactionEvent(messageId, fromAddress);
+			mainDb->removeConferenceChatMessageReactionEvent(mMessageId, mFromAddress);
 
 			_linphone_chat_message_notify_reaction_removed(msg, address);
 			linphone_core_notify_message_reaction_removed(message->getCore()->getCCore(), cr, msg, address);
@@ -101,37 +92,37 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 
 		message->removeListener(getSharedFromThis());
 	} else if (state == ChatMessage::State::NotDelivered) {
-		lError() << "[Chat Message Reaction] Can't send reaction [" << reaction << "] for message ID [" << messageId
+		lError() << "[Chat Message Reaction] Can't send reaction [" << mReaction << "] for message ID [" << mMessageId
 		         << "], an error occurred";
 		message->removeListener(getSharedFromThis());
 	}
 }
 
 void ChatMessageReaction::send() {
-	if (!chatRoom) {
-		lError() << "[Chat Message Reaction] Can't send reaction [" << reaction << "] for message ID [" << messageId
+	if (!mChatRoom) {
+		lError() << "[Chat Message Reaction] Can't send reaction [" << mReaction << "] for message ID [" << mMessageId
 		         << "], no chat room was provided, make sure to use linphone_chat_message_create_reaction()";
 		return;
 	}
 
-	reactionMessage = chatRoom->createChatMessage();
-	reactionMessage->addListener(getSharedFromThis());
-	reactionMessage->getPrivate()->setReactionToMessageId(messageId);
+	mReactionMessage = mChatRoom->createChatMessage();
+	mReactionMessage->addListener(getSharedFromThis());
+	mReactionMessage->getPrivate()->setReactionToMessageId(mMessageId);
 
 	auto content = Content::create();
 	content->setContentType(ContentType::PlainText);
-	content->setBodyFromUtf8(reaction);
-	reactionMessage->addContent(content);
+	content->setBodyFromUtf8(mReaction);
+	mReactionMessage->addContent(content);
 
 	// Do not store the reaction in DB for now, won't know Call ID at this time, wait for above callback
-	reactionMessage->setToBeStored(false);
+	mReactionMessage->setToBeStored(false);
 
-	lInfo() << "[Chat Message Reaction] Sending reaction [" << reaction << "] for message ID [" << messageId << "]";
-	reactionMessage->send();
+	lInfo() << "[Chat Message Reaction] Sending reaction [" << mReaction << "] for message ID [" << mMessageId << "]";
+	mReactionMessage->send();
 }
 
 bool ChatMessageReaction::operator==(const ChatMessageReaction &chatMessageReaction) const {
-	return chatMessageReaction.reaction == reaction;
+	return chatMessageReaction.mReaction == mReaction;
 }
 
 bool ChatMessageReaction::operator!=(const ChatMessageReaction &chatMessageReaction) const {
@@ -140,7 +131,7 @@ bool ChatMessageReaction::operator!=(const ChatMessageReaction &chatMessageReact
 
 string ChatMessageReaction::toString() const {
 	std::ostringstream ss;
-	ss << "Reaction [" << reaction << "] for message ID [" << messageId << "] from [" << fromAddress << "]";
+	ss << "Reaction [" << mReaction << "] for message ID [" << mMessageId << "] from [" << mFromAddress << "]";
 	return ss.str();
 }
 
