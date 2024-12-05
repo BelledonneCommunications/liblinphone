@@ -476,6 +476,7 @@ void CorePrivate::loadChatRooms() {
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
 #endif
 	if (!mainDb->isInitialized()) return;
+	std::set<Address, Address::WeakEqual> friendDeviceAddresses;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 		// We are looking for a one to one chatroom which isn't basic
@@ -489,13 +490,14 @@ void CorePrivate::loadChatRooms() {
 
 		// TODO FIXME: Remove later when devices for friends will be notified through presence
 		for (const auto &p : chatRoom->getParticipants()) {
-			auto devices = mainDb->getDevices(p->getAddress());
-			if (devices.empty()) {
+			const auto &pAddress = p->getAddress();
+			auto [it, success] = friendDeviceAddresses.insert(*pAddress);
+			if (success) {
 				for (const auto &d : p->getDevices()) {
 					auto gruu = d->getAddress();
 					auto name = d->getName();
-					lDebug() << "[Friend] Inserting existing device with name [" << name << "] and address ["
-					         << gruu->asStringUriOnly() << "]";
+					lDebug() << "[Friend] Inserting existing device of participant [" << *pAddress << "] with name ["
+					         << name << "] and address [" << *gruu << "]";
 					mainDb->insertDevice(gruu, name);
 				}
 			}

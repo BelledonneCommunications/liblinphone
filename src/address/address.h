@@ -154,6 +154,11 @@ public:
 	void setImpl(SalAddress *value);
 	void setImpl(const SalAddress *value);
 	static void clearSipAddressesCache();
+	struct WeakEqual {
+		bool operator()(const Address &address1, const Address &address2) const {
+			return address1.weakEqual(address2);
+		}
+	};
 
 protected:
 	static SalAddress *getSalAddressFromCache(const std::string &address, bool assumeGrUri);
