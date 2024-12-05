@@ -233,25 +233,26 @@ void LimeX3dhEncryptionEngine::rawEncrypt(
 
 	// encrypt
 	try {
-		auto encryptionCallback = std::make_shared<lime::limeCallback>(
-		    [localDeviceId, encryptionContext, callback](lime::CallbackReturn returnCode, string errorMessage) {
-			    std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts{};
-			    if (returnCode == lime::CallbackReturn::success) {
-				    for (const auto &recipient : encryptionContext->m_recipients) {
-					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
-						    cipherTexts[recipient.deviceId] = recipient.DRmessage;
-					    } else {
-						    lError() << "[LIME] No cipher message generated for " << recipient.deviceId;
-						    cipherTexts[recipient.deviceId] = std::vector<uint8_t>{};
-					    }
-				    }
-				    callback(true, cipherTexts);
-			    } else {
-				    lError() << "Raw encrypt from " << localDeviceId << " failed: " << errorMessage;
-				    callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
-			    }
-		    });
-		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), encryptionContext, encryptionCallback);
+		lime::limeCallback encryptionCallback = [localDeviceId, encryptionContext,
+		                                         callback](lime::CallbackReturn returnCode, string errorMessage) {
+			std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts{};
+			if (returnCode == lime::CallbackReturn::success) {
+				for (const auto &recipient : encryptionContext->m_recipients) {
+					if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
+						cipherTexts[recipient.deviceId] = recipient.DRmessage;
+					} else {
+						lError() << "[LIME] No cipher message generated for " << recipient.deviceId;
+						cipherTexts[recipient.deviceId] = std::vector<uint8_t>{};
+					}
+				}
+				callback(true, cipherTexts);
+			} else {
+				lError() << "Raw encrypt from " << localDeviceId << " failed: " << errorMessage;
+				callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
+			}
+		};
+		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), std::move(encryptionContext),
+		                     std::move(encryptionCallback));
 	} catch (const exception &e) {
 		lError() << e.what() << " while raw encrypting message";
 		callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
@@ -446,97 +447,97 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 			encryptionContext->addRecipient(address.asStringUriOnly());
 		}
 
-		auto encryptionCallback =
-		    std::make_shared<lime::limeCallback>([localDeviceId, encryptionContext, message, result, compressedPlain](
-		                                             lime::CallbackReturn returnCode, string errorMessage) {
-			    if (returnCode == lime::CallbackReturn::success) {
+		lime::limeCallback encryptionCallback = [localDeviceId, encryptionContext, message, result, compressedPlain](
+		                                            lime::CallbackReturn returnCode, string errorMessage) {
+			if (returnCode == lime::CallbackReturn::success) {
 
-				    // Ignore devices which do not have keys on the X3DH server
-				    // The message will still be sent to them but they will not be able to decrypt it
-				    vector<lime::RecipientData> filteredRecipients;
-				    filteredRecipients.reserve(encryptionContext->m_recipients.size());
-				    for (const auto &recipient : encryptionContext->m_recipients) {
-					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
-						    filteredRecipients.push_back(recipient);
-					    } else {
-						    lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
-					    }
-				    }
+				// Ignore devices which do not have keys on the X3DH server
+				// The message will still be sent to them but they will not be able to decrypt it
+				vector<lime::RecipientData> filteredRecipients;
+				filteredRecipients.reserve(encryptionContext->m_recipients.size());
+				for (const auto &recipient : encryptionContext->m_recipients) {
+					if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
+						filteredRecipients.push_back(recipient);
+					} else {
+						lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
+					}
+				}
 
-				    list<shared_ptr<Content>> contents;
+				list<shared_ptr<Content>> contents;
 
-				    // ---------------------------------------------- CPIM
+				// ---------------------------------------------- CPIM
 
-				    // Replaces SIPFRAG since version 4.4.0
-				    CpimChatMessageModifier ccmm;
-				    auto cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
-				    contents.push_back(std::move(cpimContent));
+				// Replaces SIPFRAG since version 4.4.0
+				CpimChatMessageModifier ccmm;
+				auto cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
+				contents.push_back(std::move(cpimContent));
 
-				    // ---------------------------------------------- SIPFRAG
+				// ---------------------------------------------- SIPFRAG
 
-				    // For backward compatibility only since 4.4.0
-				    auto sipfrag = Content::create();
-				    sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
-				    sipfrag->setContentType(ContentType::SipFrag);
-				    contents.push_back(std::move(sipfrag));
+				// For backward compatibility only since 4.4.0
+				auto sipfrag = Content::create();
+				sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
+				sipfrag->setContentType(ContentType::SipFrag);
+				contents.push_back(std::move(sipfrag));
 
-				    // ---------------------------------------------- HEADERS
+				// ---------------------------------------------- HEADERS
 
-				    for (const lime::RecipientData &recipient : filteredRecipients) {
-					    string cipherHeaderB64 = bctoolbox::encodeBase64(recipient.DRmessage);
-					    auto cipherHeader = Content::create();
-					    cipherHeader->setBodyFromLocale(cipherHeaderB64);
-					    cipherHeader->setContentType(ContentType::LimeKey);
-					    cipherHeader->addHeader("Content-Id", recipient.deviceId);
-					    Header contentDescription("Content-Description", "Cipher key");
-					    cipherHeader->addHeader(contentDescription);
-					    contents.push_back(std::move(cipherHeader));
-				    }
+				for (const lime::RecipientData &recipient : filteredRecipients) {
+					string cipherHeaderB64 = bctoolbox::encodeBase64(recipient.DRmessage);
+					auto cipherHeader = Content::create();
+					cipherHeader->setBodyFromLocale(cipherHeaderB64);
+					cipherHeader->setContentType(ContentType::LimeKey);
+					cipherHeader->addHeader("Content-Id", recipient.deviceId);
+					Header contentDescription("Content-Description", "Cipher key");
+					cipherHeader->addHeader(contentDescription);
+					contents.push_back(std::move(cipherHeader));
+				}
 
-				    // ---------------------------------------------- MESSAGE
+				// ---------------------------------------------- MESSAGE
 
-				    string cipherMessageB64 = bctoolbox::encodeBase64(encryptionContext->m_cipherMessage);
-				    auto cipherMessageC = Content::create();
-				    cipherMessageC->setBodyFromLocale(cipherMessageB64);
-				    cipherMessageC->setContentType(ContentType::OctetStream);
-				    if (compressedPlain) {
-					    cipherMessageC->setContentEncoding("deflate");
-				    }
-				    cipherMessageC->addHeader("Content-Description", "Encrypted message");
-				    contents.push_back(std::move(cipherMessageC));
+				string cipherMessageB64 = bctoolbox::encodeBase64(encryptionContext->m_cipherMessage);
+				auto cipherMessageC = Content::create();
+				cipherMessageC->setBodyFromLocale(cipherMessageB64);
+				cipherMessageC->setContentType(ContentType::OctetStream);
+				if (compressedPlain) {
+					cipherMessageC->setContentEncoding("deflate");
+				}
+				cipherMessageC->addHeader("Content-Description", "Encrypted message");
+				contents.push_back(std::move(cipherMessageC));
 
-				    auto finalContent = ContentManager::contentListToMultipart(contents, true);
+				auto finalContent = ContentManager::contentListToMultipart(contents, true);
 
-				    /* Septembre 2022 note:
-				     * Because of a scandalous ancient bug in belle-sip, we are forced to set
-				     * the boundary as the last parameter of the content-type header.
-				     * After this is fixed, only the line that adds the protocol parameter is necessary.
-				     */
-				    ContentType &contentType = finalContent.getContentType();
-				    string boundary = contentType.getParameter("boundary").getValue();
-				    contentType.removeParameter("boundary");
-				    contentType.addParameter("protocol", "\"application/lime\"");
-				    contentType.addParameter("boundary", boundary);
+				/* Septembre 2022 note:
+				 * Because of a scandalous ancient bug in belle-sip, we are forced to set
+				 * the boundary as the last parameter of the content-type header.
+				 * After this is fixed, only the line that adds the protocol parameter is necessary.
+				 */
+				ContentType &contentType = finalContent.getContentType();
+				string boundary = contentType.getParameter("boundary").getValue();
+				contentType.removeParameter("boundary");
+				contentType.addParameter("protocol", "\"application/lime\"");
+				contentType.addParameter("boundary", boundary);
 
-				    if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(),
-				                                                 "deflate")) {
-					    finalContent.setContentEncoding("deflate");
-				    }
+				if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(),
+				                                             "deflate")) {
+					finalContent.setContentEncoding("deflate");
+				}
 
-				    message->setInternalContent(finalContent);
-				    message->getPrivate()->send();
-				    *result = ChatMessageModifier::Result::Done;
+				message->setInternalContent(finalContent);
+				message->getPrivate()->send();
+				*result = ChatMessageModifier::Result::Done;
 
-			    } else {
-				    lError() << "[LIME] operation failed: " << errorMessage;
-				    message->getPrivate()->setParticipantState(
-				        message->getChatRoom()->getConference()->getMe()->getAddress(),
-				        ChatMessage::State::NotDelivered, ::ms_time(nullptr));
-				    *result = ChatMessageModifier::Result::Error;
-			    }
-		    });
+			} else {
+				lError() << "[LIME] operation failed: " << errorMessage;
+				message->getPrivate()->setParticipantState(
+				    message->getChatRoom()->getConference()->getMe()->getAddress(), ChatMessage::State::NotDelivered,
+				    ::ms_time(nullptr));
+				*result = ChatMessageModifier::Result::Error;
+			}
+		};
 
-		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), encryptionContext, encryptionCallback);
+		limeManager->encrypt(localDeviceId, usersAlgos.at(localDeviceId), std::move(encryptionContext),
+		                     std::move(encryptionCallback));
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
@@ -710,16 +711,15 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 }
 
 void LimeX3dhEncryptionEngine::update(const std::string localDeviceId) {
-	auto callback =
-	    std::make_shared<lime::limeCallback>([localDeviceId](lime::CallbackReturn returnCode, string anythingToSay) {
-		    if (returnCode == lime::CallbackReturn::success) {
-			    lInfo() << "[LIME] Update successful for " << localDeviceId << " : " << anythingToSay;
-		    } else {
-			    lInfo() << "[LIME] Update failed for " << localDeviceId << " : " << anythingToSay;
-		    }
-	    });
+	lime::limeCallback callback = [localDeviceId](lime::CallbackReturn returnCode, string anythingToSay) {
+		if (returnCode == lime::CallbackReturn::success) {
+			lInfo() << "[LIME] Update successful for " << localDeviceId << " : " << anythingToSay;
+		} else {
+			lInfo() << "[LIME] Update failed for " << localDeviceId << " : " << anythingToSay;
+		}
+	};
 	try {
-		limeManager->update(localDeviceId, usersAlgos.at(localDeviceId), callback);
+		limeManager->update(localDeviceId, usersAlgos.at(localDeviceId), std::move(callback));
 	} catch (const exception &e) {
 		lInfo() << "[LIME] Update failed for " << localDeviceId << " : " << e.what();
 	}
@@ -1194,25 +1194,26 @@ void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, con
 	}
 }
 
-std::shared_ptr<lime::limeCallback>
-LimeX3dhEncryptionEngine::setLimeUserCreationCallback(const std::string &localDeviceId, shared_ptr<Account> &account) {
+lime::limeCallback LimeX3dhEncryptionEngine::setLimeUserCreationCallback(const std::string &localDeviceId,
+                                                                         shared_ptr<Account> &account) {
 	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 	std::string baseAlgos = lime::CurveId2String(usersAlgos[localDeviceId]);
-	return make_shared<lime::limeCallback>(
-	    [lc, localDeviceId, baseAlgos, account](lime::CallbackReturn returnCode, string info) {
-		    if (returnCode == lime::CallbackReturn::success) {
-			    lInfo() << "[LIME] user " << localDeviceId << " creation successful on base algo " << baseAlgos;
-			    account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreated);
-		    } else {
-			    lWarning() << "[LIME] user " << localDeviceId << " on base algo " << baseAlgos
-			               << " creation failed with error [" << info << "]";
-			    /* mLimeUserAccountStatus set to LimeUserAccountCreationSkiped in order to send the register even if
-			     * Lime user creation failed */
-			    account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
-		    }
-		    linphone_core_notify_imee_user_registration(lc, returnCode == lime::CallbackReturn::success,
-		                                                localDeviceId.data(), info.data());
-	    });
+	lime::limeCallback callback = [lc, localDeviceId, baseAlgos, account](lime::CallbackReturn returnCode,
+	                                                                      string info) {
+		if (returnCode == lime::CallbackReturn::success) {
+			lInfo() << "[LIME] user " << localDeviceId << " creation successful on base algo " << baseAlgos;
+			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreated);
+		} else {
+			lWarning() << "[LIME] user " << localDeviceId << " on base algo " << baseAlgos
+			           << " creation failed with error [" << info << "]";
+			/* mLimeUserAccountStatus set to LimeUserAccountCreationSkiped in order to send the register even if
+			 * Lime user creation failed */
+			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
+		}
+		linphone_core_notify_imee_user_registration(lc, returnCode == lime::CallbackReturn::success,
+		                                            localDeviceId.data(), info.data());
+	};
+	return callback;
 }
 
 void LimeX3dhEncryptionEngine::onNetworkReachable(BCTBX_UNUSED(bool sipNetworkReachable),
@@ -1292,7 +1293,7 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 		if (!limeManager->is_user(localDeviceId, accountLimeAlgo)) {
 			auto callback = setLimeUserCreationCallback(localDeviceId, account);
 			// create user if not exist
-			limeManager->create_user(localDeviceId, accountLimeAlgo, accountLimeServerUrl, callback);
+			limeManager->create_user(localDeviceId, accountLimeAlgo, accountLimeServerUrl, std::move(callback));
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountIsCreating);
 		} else {
 			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeAlgo, accountLimeServerUrl);
@@ -1341,7 +1342,7 @@ void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, cons
 			        << accountLimeServerUrl << "] on base algorithm [" << CurveId2String(accountLimeAlgo) << "]";
 			auto callback = setLimeUserCreationCallback(gruu, account);
 			// create user if not exist
-			limeManager->create_user(gruu, accountLimeAlgo, accountLimeServerUrl, callback);
+			limeManager->create_user(gruu, accountLimeAlgo, accountLimeServerUrl, std::move(callback));
 			account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountIsCreating);
 		} else {
 			LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
