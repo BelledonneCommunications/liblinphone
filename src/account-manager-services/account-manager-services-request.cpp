@@ -74,7 +74,7 @@ void AccountManagerServicesRequest::submit() {
 			httpRequest.setBody(content);
 		}
 
-		auto request = this;
+		auto request = getSharedFromThis();
 		httpRequest.execute([request](const HttpResponse &response) {
 			try {
 				int code = response.getHttpStatusCode();
