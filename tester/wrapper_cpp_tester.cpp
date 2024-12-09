@@ -69,6 +69,25 @@ static void create_account() {
 	linphone_core_manager_destroy(marie);
 }
 
+static void account_freed_after_core_destroyed() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+
+	// Get C++ and start working from it.
+	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
+
+	auto account = core->getDefaultAccount();
+	auto accountParams = account->getParams()->clone();
+	accountParams->enableRegister(false);
+	account->setParams(accountParams);
+	core->clearAccounts();
+	core = nullptr; // C++ Core deletion
+	// C clean
+	linphone_core_manager_destroy(marie);
+
+	// Release last reference after the core is destroyed
+	account = nullptr;
+}
+
 static void create_chat_room() {
 	// Init from C
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -221,10 +240,12 @@ static void displaying_payload_type(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-test_t wrapper_cpp_tests[] = {
-    TEST_NO_TAG("Create account", create_account), TEST_NO_TAG("Create chat room", create_chat_room),
-    TEST_NO_TAG("Create conference", create_conference), TEST_NO_TAG("Various API checks", various_api_checks),
-    TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
+test_t wrapper_cpp_tests[] = {TEST_NO_TAG("Create account", create_account),
+                              TEST_NO_TAG("Account freed after core destroyed", account_freed_after_core_destroyed),
+                              TEST_NO_TAG("Create chat room", create_chat_room),
+                              TEST_NO_TAG("Create conference", create_conference),
+                              TEST_NO_TAG("Various API checks", various_api_checks),
+                              TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
 
 test_suite_t wrapper_cpp_test_suite = {"Wrapper Cpp",
                                        NULL,

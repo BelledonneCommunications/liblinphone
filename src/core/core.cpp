@@ -2591,6 +2591,7 @@ void Core::removeAccount(std::shared_ptr<Account> account) {
 		mDeletedAccounts.mList.push_back(account);
 		account->triggerDeletion();
 	} else {
+		account->releaseOps();
 		account->setConfig(nullptr);
 	}
 
