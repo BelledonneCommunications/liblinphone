@@ -916,6 +916,10 @@ void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account) 
 	linphone_account_params_unref(params);
 }
 
+const bctbx_list_t *linphone_core_get_deleted_account_list(const LinphoneCore *lc) {
+	return lc->sip_conf.deleted_accounts;
+}
+
 const bctbx_list_t *linphone_core_get_account_list(const LinphoneCore *lc) {
 	return lc->sip_conf.accounts;
 }

@@ -109,6 +109,7 @@ LINPHONE_PUBLIC IceSession *linphone_call_get_ice_session(const LinphoneCall *ca
 LINPHONE_PUBLIC const struct addrinfo *linphone_core_get_stun_server_addrinfo(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_send_call_stats_periodical_updates(LinphoneCore *lc, bool_t enabled);
 LINPHONE_PUBLIC LinphoneAccount *linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_deleted_account_list(const LinphoneCore *lc);
 
 LINPHONE_PUBLIC int linphone_run_stun_tests(LinphoneCore *lc,
                                             int audioPort,
