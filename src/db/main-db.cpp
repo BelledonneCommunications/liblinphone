@@ -1082,6 +1082,31 @@ std::string MainDbPrivate::selectSipAddressFromId(long long sipAddressId) const 
 #endif
 }
 
+void MainDbPrivate::deleteChatRoom(const ConferenceId &conferenceId) {
+#ifdef HAVE_DB_STORAGE
+	const long long &dbChatRoomId = selectChatRoomId(conferenceId);
+	invalidConferenceEventsFromQuery("SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId",
+	                                 dbChatRoomId);
+
+	*dbSession.getBackendSession() << "DELETE FROM chat_room WHERE id = :chatRoomId", soci::use(dbChatRoomId);
+	unreadChatMessageCountCache.insert(conferenceId, 0);
+#endif
+}
+
+long long MainDbPrivate::selectChatRoomId(long long peerSipAddressId) const {
+#ifdef HAVE_DB_STORAGE
+	long long chatRoomId;
+
+	std::string query = "SELECT id FROM chat_room WHERE peer_sip_address_id = :1";
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << query, soci::use(peerSipAddressId), soci::into(chatRoomId);
+
+	return session->got_data() ? chatRoomId : -1;
+#else
+	return -1;
+#endif
+}
 long long MainDbPrivate::selectChatRoomId(long long peerSipAddressId, long long localSipAddressId) const {
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
@@ -4278,7 +4303,6 @@ bool MainDb::addEvent(const shared_ptr<EventLog> &eventLog) {
 		lWarning() << "Database has not been initialized";
 		return false;
 	}
-
 	if (eventLog->getPrivate()->dbKey.isValid()) {
 		lWarning() << "Unable to add an event twice!!!";
 		return false;
@@ -6211,7 +6235,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					    (new ServerConference(core, conferenceId.getLocalAddress(), nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, false);
 					chatRoom = conference->getChatRoom();
-					conference->setState(ConferenceInterface::State::Instantiated);
 					conference->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : participants) {
@@ -6224,7 +6247,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						}
 					}
 				}
-				conference->setParticipants(std::move(participants));
+				if (!conference->supportsMedia()) {
+					conference->setParticipants(std::move(participants));
+				}
 
 				std::list<std::shared_ptr<Participant>> invitedParticipants;
 				if (confInfo) {
@@ -6344,16 +6369,8 @@ void MainDb::deleteChatRoom(const ConferenceId &conferenceId) {
 #ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
-
-		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-
-		d->invalidConferenceEventsFromQuery("SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId",
-		                                    dbChatRoomId);
-
-		*d->dbSession.getBackendSession() << "DELETE FROM chat_room WHERE id = :chatRoomId", soci::use(dbChatRoomId);
-
+		d->deleteChatRoom(conferenceId);
 		tr.commit();
-		d->unreadChatMessageCountCache.insert(conferenceId, 0);
 	};
 #endif
 }
@@ -6973,8 +6990,24 @@ long long MainDb::insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &co
 void MainDb::deleteConferenceInfo(long long dbConferenceId) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
-	*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId",
-	    soci::use(dbConferenceId);
+	long long peerId;
+	soci::session *session = d->dbSession.getBackendSession();
+	std::string peerIdQuery =
+	    "SELECT uri_sip_address_id FROM conference_info WHERE (conference_info.id = :conferenceInfoId)";
+	*session << peerIdQuery, soci::use(dbConferenceId), soci::into(peerId);
+	if (session->got_data()) {
+		long long chatRoomId = d->selectChatRoomId(peerId);
+		if (chatRoomId >= 0) {
+			long long localId;
+			std::string localIdQuery = "SELECT local_sip_address_id FROM chat_room WHERE (id = :chatRoomId)";
+			*session << localIdQuery, soci::use(dbConferenceId), soci::into(localId);
+			std::shared_ptr<Address> peer = Address::create(d->selectSipAddressFromId(peerId));
+			std::shared_ptr<Address> local = Address::create(d->selectSipAddressFromId(localId));
+			d->deleteChatRoom(ConferenceId(peer, local));
+		}
+	}
+
+	*session << "DELETE FROM conference_info WHERE id = :conferenceId", soci::use(dbConferenceId);
 	d->storageIdToConferenceInfo.erase(dbConferenceId);
 #endif
 }

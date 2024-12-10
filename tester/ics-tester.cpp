@@ -306,7 +306,8 @@ static void send_conference_invitations(bool_t enable_encryption,
 	LinphoneAddress *conf_uri = linphone_address_new("sip:confvideo@sip.linphone.org");
 	linphone_conference_info_set_uri(conf_info, conf_uri);
 
-	LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie->lc);
+	LinphoneConferenceScheduler *conference_scheduler =
+	    linphone_core_create_sip_conference_scheduler(marie->lc, nullptr);
 	LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 	if (add_participant_in_error) {
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent_with_error);

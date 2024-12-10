@@ -259,8 +259,11 @@ static void abort_call_to_ice_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
 		                             focus_stat.number_of_participant_devices_added + 3,
 		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
-		                             focus_stat.number_of_participant_devices_joined + 3,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_conference_participant_devices_present,
+		                             focus_stat.number_of_conference_participant_devices_present + 3,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
+		                             focus_stat.number_of_participant_devices_present + 3,
 		                             liblinphone_tester_sip_timeout));
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =

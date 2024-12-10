@@ -149,6 +149,11 @@ bool_t linphone_participant_device_screen_sharing_enabled(const LinphoneParticip
 	return ParticipantDevice::toCpp(participant_device)->screenSharingEnabled();
 }
 
+LinphoneCore *linphone_participant_device_get_core(const LinphoneParticipantDevice *participant_device) {
+	const auto &core = ParticipantDevice::toCpp(participant_device)->getCore();
+	return core ? core->getCCore() : nullptr;
+}
+
 void linphone_participant_device_add_callbacks(LinphoneParticipantDevice *participant_device,
                                                LinphoneParticipantDeviceCbs *cbs) {
 	ParticipantDevice::toCpp(participant_device)->addCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());

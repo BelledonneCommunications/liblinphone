@@ -472,6 +472,7 @@ void _linphone_participant_device_notify_video_display_error_occurred(LinphonePa
 
 LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,
                                                            LinphoneParticipantDeviceState state);
+LINPHONE_PUBLIC LinphoneCore *linphone_participant_device_get_core(const LinphoneParticipantDevice *participant_device);
 
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount *account,

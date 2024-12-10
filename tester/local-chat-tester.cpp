@@ -3207,20 +3207,26 @@ static void group_chat_room_add_participant_with_invalid_address(void) {
 		                              initialMarieStats.number_of_participants_added + 1, 5000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_added,
 		                              initialMarieStats.number_of_participant_devices_added + 1, 1000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_joined,
-		                              initialMarieStats.number_of_participant_devices_joined + 1, 1000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_conference_participant_devices_present,
+		                              initialMarieStats.number_of_conference_participant_devices_present + 1, 1000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_present,
+		                              initialMarieStats.number_of_participant_devices_present + 1, 1000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
 		                              initialPaulineStats.number_of_participants_added + 1, 1000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
 		                              initialPaulineStats.number_of_participant_devices_added + 1, 1000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_joined,
-		                              initialPaulineStats.number_of_participant_devices_joined + 1, 1000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_conference_participant_devices_present,
+		                              initialPaulineStats.number_of_conference_participant_devices_present + 1, 1000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_present,
+		                              initialPaulineStats.number_of_participant_devices_present + 1, 1000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participants_added,
 		                              initialMichelleStats.number_of_participants_added + 1, 1000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_added,
 		                              initialMichelleStats.number_of_participant_devices_added + 1, 1000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_joined,
-		                              initialMichelleStats.number_of_participant_devices_joined + 1, 1000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_conference_participant_devices_present,
+		                              initialMichelleStats.number_of_conference_participant_devices_present + 1, 1000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_present,
+		                              initialMichelleStats.number_of_participant_devices_present + 1, 1000));
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");

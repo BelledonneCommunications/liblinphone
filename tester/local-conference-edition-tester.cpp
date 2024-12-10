@@ -443,7 +443,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			}
 
 			LinphoneConferenceScheduler *conference_scheduler =
-			    linphone_core_create_conference_scheduler(marie.getLc());
+			    linphone_core_create_sip_conference_scheduler(marie.getLc(), nullptr);
 			LinphoneConferenceSchedulerCbs *cbs =
 			    linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 			linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
@@ -670,8 +670,11 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
 			                             focus_stat.number_of_participant_devices_added + 2,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
-			                             focus_stat.number_of_participant_devices_joined + 2,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_conference_participant_devices_present,
+			                             focus_stat.number_of_conference_participant_devices_present + 2,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
+			                             focus_stat.number_of_participant_devices_present + 2,
 			                             liblinphone_tester_sip_timeout));
 
 			std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
@@ -894,8 +897,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 				}
 
 				LinphoneConferenceScheduler *conference_scheduler =
-				    linphone_core_create_conference_scheduler(manager_editing->lc);
-				linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+				    linphone_core_create_sip_conference_scheduler(manager_editing->lc, editing_account);
 				LinphoneConferenceSchedulerCbs *cbs =
 				    linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 				linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
@@ -1439,8 +1441,8 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 			participant_stats.push_back(mgr->stat);
 		}
 
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
-		linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+		LinphoneConferenceScheduler *conference_scheduler =
+		    linphone_core_create_sip_conference_scheduler(marie.getLc(), editing_account);
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -1564,8 +1566,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 			participant_stats.push_back(mgr->stat);
 		}
 
-		conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
-		linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+		conference_scheduler = linphone_core_create_sip_conference_scheduler(marie.getLc(), editing_account);
 		cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -1813,10 +1814,10 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 		unsigned int new_duration = 2000;
 		linphone_conference_info_set_duration(conf_info, new_duration);
 
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
 		LinphoneAccount *editing_account = linphone_core_get_default_account(marie.getLc());
 		BC_ASSERT_PTR_NOT_NULL(editing_account);
-		linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+		LinphoneConferenceScheduler *conference_scheduler =
+		    linphone_core_create_sip_conference_scheduler(marie.getLc(), editing_account);
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
@@ -1966,8 +1967,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 		const bctbx_list_t *ics_participants = linphone_conference_info_get_participant_infos(conf_info);
 		BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 3, size_t, "%zu");
 
-		conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
-		linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+		conference_scheduler = linphone_core_create_sip_conference_scheduler(marie.getLc(), editing_account);
 		cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);

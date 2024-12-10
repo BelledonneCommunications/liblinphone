@@ -402,6 +402,7 @@ LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscr
 
 LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,
                                                            LinphoneParticipantDeviceState state);
+LINPHONE_PUBLIC LinphoneCore *linphone_participant_device_get_core(const LinphoneParticipantDevice *participant_device);
 
 #endif // !defined(__cplusplus)
 

@@ -108,7 +108,15 @@ void Conference::removeListener(std::shared_ptr<ConferenceListenerInterface> lis
 }
 
 void Conference::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-	mConfListeners.push_back(listener);
+	if (listener) {
+		// Avoid adding twice the same listener.
+		// It may happen when a conference with chat capabilities is rejoined without restarting the core
+		const auto it = std::find_if(mConfListeners.cbegin(), mConfListeners.cend(),
+		                             [&listener](const auto &l) { return l == listener; });
+		if (it == mConfListeners.cend()) {
+			mConfListeners.push_back(listener);
+		}
+	}
 }
 
 void Conference::invalidateAccount() {
@@ -812,7 +820,6 @@ Conference::notifyParticipantDeviceStateChanged(time_t creationTime,
 	    participant->getAddress(), participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
 	event->setNotifyId(mLastNotify);
-
 	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceStateChanged(event, participantDevice);
 	}

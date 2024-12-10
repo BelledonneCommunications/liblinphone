@@ -494,8 +494,11 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
 		                             focus_stat.number_of_participant_devices_added + 4,
 		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
-		                             focus_stat.number_of_participant_devices_joined + 4,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_conference_participant_devices_present,
+		                             focus_stat.number_of_conference_participant_devices_present + 4,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
+		                             focus_stat.number_of_participant_devices_present + 4,
 		                             liblinphone_tester_sip_timeout));
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
@@ -648,8 +651,11 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
 			                             focus_stat.number_of_participant_devices_added + 1,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
-			                             focus_stat.number_of_participant_devices_joined + 1,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_conference_participant_devices_present,
+			                             focus_stat.number_of_conference_participant_devices_present + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
+			                             focus_stat.number_of_participant_devices_present + 1,
 			                             liblinphone_tester_sip_timeout));
 
 			int nbParticipantsAdded = 1;

@@ -103,6 +103,8 @@ private:
 	long long selectSipAddressId(const std::string &sipAddress, const bool caseSensitive) const;
 	long long selectSipAddressId(const std::shared_ptr<Address> &address, const bool caseSensitive) const;
 	std::string selectSipAddressFromId(long long sipAddressId) const;
+	void deleteChatRoom(const ConferenceId &conferenceId);
+	long long selectChatRoomId(long long peerSipAddressId) const;
 	long long selectChatRoomId(long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId(const ConferenceId &conferenceId) const;
 	ConferenceId selectConferenceId(const long long chatRoomId) const;

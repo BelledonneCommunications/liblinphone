@@ -349,6 +349,8 @@ void CorePrivate::createConferenceCleanupTimer() {
 				const auto conferenceIsEnded = conference->isConferenceEnded();
 				const auto conferenceHasNoParticipantDevices = (conference->getParticipantDevices(false).size() == 0);
 				if (conferenceIsEnded && conferenceHasNoParticipantDevices) {
+					lInfo() << "Automatically terminating conference " << *conference->getConferenceAddress()
+					        << " because it is ended and no devices are left";
 					conference->terminate();
 				}
 			};

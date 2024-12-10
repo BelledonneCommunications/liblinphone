@@ -635,8 +635,11 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
 		                             focus_stat.number_of_participant_devices_added + participant_no,
 		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
-		                             focus_stat.number_of_participant_devices_joined + participant_no,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_conference_participant_devices_present,
+		                             focus_stat.number_of_conference_participant_devices_present + participant_no,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
+		                             focus_stat.number_of_participant_devices_present + participant_no,
 		                             liblinphone_tester_sip_timeout));
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);

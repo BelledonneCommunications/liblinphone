@@ -632,6 +632,44 @@ static void generate_random_database_path(LinphoneCoreManager *mgr) {
 	bctbx_free(zrtp_secrets_database_path_format);
 }
 
+static void participant_device_state_changed(LinphoneParticipantDevice *device,
+                                             const LinphoneParticipantDeviceState state) {
+	LinphoneCore *core = linphone_participant_device_get_core(device);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	switch (state) {
+		case LinphoneParticipantDeviceStateJoining:
+			manager->stat.number_of_participant_devices_pending++;
+			break;
+		case LinphoneParticipantDeviceStateScheduledForJoining:
+			manager->stat.number_of_participant_devices_scheduled_for_joining++;
+			break;
+		case LinphoneParticipantDeviceStatePresent:
+			manager->stat.number_of_participant_devices_present++;
+			break;
+		case LinphoneParticipantDeviceStateOnHold:
+			manager->stat.number_of_participant_devices_on_hold++;
+			break;
+		case LinphoneParticipantDeviceStateRequestingToJoin:
+			manager->stat.number_of_participant_devices_requesting_to_join++;
+			break;
+		case LinphoneParticipantDeviceStateAlerting:
+			manager->stat.number_of_participant_devices_alerting++;
+			break;
+		case LinphoneParticipantDeviceStateScheduledForLeaving:
+			manager->stat.number_of_participant_devices_scheduled_for_leaving++;
+			break;
+		case LinphoneParticipantDeviceStateLeaving:
+			manager->stat.number_of_participant_devices_leaving++;
+			break;
+		case LinphoneParticipantDeviceStateLeft:
+			manager->stat.number_of_participant_devices_left++;
+			break;
+		case LinphoneParticipantDeviceStateMutedByFocus:
+			manager->stat.number_of_participant_devices_muted_by_focus++;
+			break;
+	}
+}
+
 static void conference_state_changed(LinphoneConference *conference, LinphoneConferenceState newState) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
@@ -694,34 +732,34 @@ static void conference_participant_device_state_changed(LinphoneConference *conf
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	switch (state) {
 		case LinphoneParticipantDeviceStateJoining:
-			manager->stat.number_of_participant_devices_pending++;
+			manager->stat.number_of_conference_participant_devices_pending++;
 			break;
 		case LinphoneParticipantDeviceStateScheduledForJoining:
-			manager->stat.number_of_participant_devices_scheduled_for_joining++;
+			manager->stat.number_of_conference_participant_devices_scheduled_for_joining++;
 			break;
 		case LinphoneParticipantDeviceStatePresent:
-			manager->stat.number_of_participant_devices_joined++;
+			manager->stat.number_of_conference_participant_devices_present++;
 			break;
 		case LinphoneParticipantDeviceStateOnHold:
-			manager->stat.number_of_participant_devices_on_hold++;
+			manager->stat.number_of_conference_participant_devices_on_hold++;
 			break;
 		case LinphoneParticipantDeviceStateRequestingToJoin:
-			manager->stat.number_of_participant_devices_requesting_to_join++;
+			manager->stat.number_of_conference_participant_devices_requesting_to_join++;
 			break;
 		case LinphoneParticipantDeviceStateAlerting:
-			manager->stat.number_of_participant_devices_alerting++;
+			manager->stat.number_of_conference_participant_devices_alerting++;
 			break;
 		case LinphoneParticipantDeviceStateScheduledForLeaving:
-			manager->stat.number_of_participant_devices_scheduled_for_leaving++;
+			manager->stat.number_of_conference_participant_devices_scheduled_for_leaving++;
 			break;
 		case LinphoneParticipantDeviceStateLeaving:
-			manager->stat.number_of_participant_devices_leaving++;
+			manager->stat.number_of_conference_participant_devices_leaving++;
 			break;
 		case LinphoneParticipantDeviceStateLeft:
-			manager->stat.number_of_participant_devices_left++;
+			manager->stat.number_of_conference_participant_devices_left++;
 			break;
 		case LinphoneParticipantDeviceStateMutedByFocus:
-			manager->stat.number_of_participant_devices_muted_by_focus++;
+			manager->stat.number_of_conference_participant_devices_muted_by_focus++;
 			break;
 	}
 }
@@ -777,10 +815,15 @@ static void conference_participant_removed(LinphoneConference *conference,
 	manager->stat.number_of_participants_removed++;
 }
 static void conference_participant_device_added(LinphoneConference *conference,
-                                                BCTBX_UNUSED(LinphoneParticipantDevice *participant_device)) {
+                                                LinphoneParticipantDevice *participant_device) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_added++;
+
+	LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
+	linphone_participant_device_cbs_set_state_changed(cbs, participant_device_state_changed);
+	linphone_participant_device_add_callbacks(participant_device, cbs);
+	linphone_participant_device_cbs_unref(cbs);
 }
 static void conference_participant_device_removed(LinphoneConference *conference,
                                                   BCTBX_UNUSED(const LinphoneParticipantDevice *participant_device)) {
@@ -798,6 +841,34 @@ static void conference_full_state_received(LinphoneConference *conference) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_conference_full_state_received++;
+
+	bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
+	for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
+		LinphoneParticipantDevice *participant_device = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+		LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
+		linphone_participant_device_cbs_set_state_changed(cbs, participant_device_state_changed);
+		linphone_participant_device_add_callbacks(participant_device, cbs);
+		linphone_participant_device_cbs_unref(cbs);
+	}
+	if (devices) {
+		bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+	}
+
+	// linphone_conference_get_participant_device_list() doesn't add the me participant if it is not in the conférence.
+	// This might happen when the client call is in state Updating
+	if (!linphone_conference_is_in(conference)) {
+		devices = linphone_participant_get_devices(linphone_conference_get_me(conference));
+		for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
+			LinphoneParticipantDevice *participant_device = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+			LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
+			linphone_participant_device_cbs_set_state_changed(cbs, participant_device_state_changed);
+			linphone_participant_device_add_callbacks(participant_device, cbs);
+			linphone_participant_device_cbs_unref(cbs);
+		}
+		if (devices) {
+			bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+		}
+	}
 }
 
 static void conference_participant_device_screen_sharing_changed(
