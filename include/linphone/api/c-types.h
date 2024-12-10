@@ -530,7 +530,7 @@ typedef enum _LinphoneSearchDirection {
 // -----------------------------------------------------------------------------
 /**
  * @brief Object representing all informations present in an Encrypted Key Transport event.
- * @ingroup ekt_info_api
+ * @ingroup ekt_api
  */
 typedef struct _LinphoneEktInfo LinphoneEktInfo;
 

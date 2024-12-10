@@ -3048,4 +3048,12 @@ const list<shared_ptr<FriendList>> &Core::getFriendLists() const {
 	return d->friendLists;
 }
 
+bool Core::isEktPluginLoaded() const {
+	return mEktPluginLoaded;
+}
+
+void Core::setEktPluginLoaded(bool ektPluginLoaded) {
+	mEktPluginLoaded = ektPluginLoaded;
+}
+
 LINPHONE_END_NAMESPACE

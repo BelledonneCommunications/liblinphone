@@ -1759,9 +1759,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 				linphone_core_set_media_encryption_mandatory(mgr->lc, TRUE);
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionZRTP);
 			}
-			security_level = LinphoneConferenceSecurityLevelEndToEnd;
-
-			configure_end_to_end_encrypted_conference_server(focus);
+			security_level = LinphoneConferenceSecurityLevelPointToPoint;
 		}
 
 		std::list<LinphoneCoreManager *> participants{michelle.getCMgr(), pauline.getCMgr(), laure.getCMgr()};

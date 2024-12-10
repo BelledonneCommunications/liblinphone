@@ -176,8 +176,8 @@
 **/
 
 /**
- * @defgroup ekt_info_api Ekt
- * @brief Managing EktInfo
+ * @defgroup ekt_api Ekt
+ * @brief Managing Ekt
  */
 
 /**

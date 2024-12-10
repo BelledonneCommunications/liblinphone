@@ -258,7 +258,6 @@ private:
 	void addParticipantDevice(const std::shared_ptr<Participant> &participant,
 	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 	bool validateNewParameters(const ConferenceParams &newConfParams) const;
-	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> &session);
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device,
 	                                         const MediaSessionParams *csp);
 	void chooseAnotherAdminIfNoneInConference();
@@ -267,6 +266,11 @@ private:
 	virtual void configure(SalCallOp *op) override;
 	void enableScreenSharing(const std::shared_ptr<LinphonePrivate::CallSession> &session, bool notify);
 	MediaSessionParams *updateParameterForParticipantRemoval(const std::shared_ptr<CallSession> &session) const;
+	void terminateConferenceWithReason(const std::shared_ptr<Address> &remoteContactAddress,
+	                                   std::shared_ptr<MediaSession> &session,
+	                                   LinphoneReason reason,
+	                                   int code,
+	                                   const std::string &errorMessage);
 	int checkServerConfiguration(const std::shared_ptr<Address> &remoteContactAddress,
 	                             std::shared_ptr<LinphonePrivate::MediaSession> &session);
 

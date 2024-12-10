@@ -458,6 +458,13 @@ public:
 	void clearFriendLists();
 	const std::list<std::shared_ptr<FriendList>> &getFriendLists() const;
 
+	// ---------------------------------------------------------------------------
+	// EKT plugin
+	// ---------------------------------------------------------------------------
+
+	bool isEktPluginLoaded() const;
+	void setEktPluginLoaded(bool ektPluginLoaded);
+
 private:
 	Core();
 	void updateChatRoomList() const;
@@ -494,6 +501,8 @@ private:
 	unsigned int mAccountDeletionTimeout = 32;
 
 	mutable bctbx_list_t *mCachedProxyConfigs = NULL;
+
+	bool mEktPluginLoaded = false;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

@@ -10002,3 +10002,14 @@ void linphone_core_add_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook ho
 	    coreCpp->createTimer([hook, hook_data]() -> bool { return !!hook(hook_data); }, 20, "iterateHook");
 	belle_sip_object_unref(timer);
 }
+
+bool_t linphone_core_is_ekt_plugin_loaded(const LinphoneCore *lc) {
+	shared_ptr<const Core> coreCpp = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	if (coreCpp) return coreCpp->isEktPluginLoaded();
+	return false;
+}
+
+void linphone_core_set_ekt_plugin_loaded(LinphoneCore *lc, bool_t ekt_plugin_loaded) {
+	shared_ptr<Core> coreCpp = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	if (coreCpp) coreCpp->setEktPluginLoaded(true);
+}

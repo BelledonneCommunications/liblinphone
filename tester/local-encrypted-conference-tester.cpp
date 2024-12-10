@@ -892,7 +892,7 @@ static void scheduling_failure_check(LinphoneConferenceScheduler *scheduler, Lin
 	}
 }
 
-static void failure_in_creating_end_to_end_encrypted_conference() {
+static void failure_in_creating_end_to_end_encrypted_conference_bad_server_config() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		LinphoneTest::ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), TRUE);
@@ -1043,8 +1043,8 @@ static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[
                  create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined,
                  "End2EndConf"),
     TEST_ONE_TAG("Create encrypted conference with chat", create_encrypted_conference_with_chat, "End2EndConf"),
-    TEST_ONE_TAG("Failure in creating end-to-end encrypted conference",
-                 failure_in_creating_end_to_end_encrypted_conference,
+    TEST_ONE_TAG("Failure in creating end-to-end encrypted conference bad server config",
+                 failure_in_creating_end_to_end_encrypted_conference_bad_server_config,
                  "End2EndConf"),
 };
 

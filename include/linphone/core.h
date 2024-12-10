@@ -9218,7 +9218,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_call_logs_data
  * @param core the #LinphoneCore
  * @param xml_body the string containing the XML body @notnil
  * @return The #LinphoneEktInfo @maybenil
- * @ingroup ekt_info_api
+ * @ingroup ekt_api
  */
 LINPHONE_PUBLIC const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(const LinphoneCore *core,
                                                                               const char *xml_body);
@@ -9228,9 +9228,25 @@ LINPHONE_PUBLIC const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(co
  * @param core the #LinphoneCore
  * @param ekt_info the #LinphoneEktInfo @notnil
  * @return The XML body @maybenil @tobefreed
- * @ingroup ekt_info_api
+ * @ingroup ekt_api
  */
 LINPHONE_PUBLIC char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const LinphoneEktInfo *ekt_info);
+
+/**
+ * Gets if the EKT plugin is currently loaded in the Linphone core instance.
+ * @param core the #LinphoneCore
+ * @return true if the EKT plugin is loaded
+ * @ingroup ekt_api
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_ekt_plugin_loaded(const LinphoneCore *core);
+
+/**
+ * sets the state of the EKT plugin in the Linphone core instance.
+ * @param core the #LinphoneCore
+ * @param ekt_plugin_loaded whether the EKT plugin is loaded or not
+ * @ingroup ekt_api
+ */
+LINPHONE_PUBLIC void linphone_core_set_ekt_plugin_loaded(LinphoneCore *core, bool_t ekt_plugin_loaded);
 
 #ifdef __cplusplus
 }

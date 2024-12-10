@@ -720,28 +720,37 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 #endif // HAVE_ADVANCED_IM
 }
 
+void ServerConference::terminateConferenceWithReason(const shared_ptr<Address> &remoteContactAddress,
+                                                     shared_ptr<MediaSession> &session,
+                                                     LinphoneReason reason,
+                                                     int code,
+                                                     const string &errorMessage) {
+	lError() << *remoteContactAddress << " : " << errorMessage;
+	setState(ConferenceInterface::State::CreationFailed);
+	auto errorInfo = linphone_error_info_new();
+	linphone_error_info_set(errorInfo, nullptr, reason, code, errorMessage.c_str(), errorMessage.c_str());
+	session->decline(errorInfo);
+	linphone_error_info_unref(errorInfo);
+	// No need to leave the conference run for longer
+	terminate();
+}
+
 int ServerConference::checkServerConfiguration(const shared_ptr<Address> &remoteContactAddress,
                                                shared_ptr<MediaSession> &session) {
-	if (!getChatRoom() && mConfParams->getSecurityLevel() == ConferenceParams::SecurityLevel::EndToEnd) {
+	if (supportsMedia() && mConfParams->getSecurityLevel() == ConferenceParams::SecurityLevel::EndToEnd) {
 		int audioMode = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sound",
 		                                        "conference_mode", MSConferenceModeMixer);
 		int videoMode = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "video",
 		                                        "conference_mode", MSConferenceModeMixer);
 		if (audioMode != MSConferenceModeRouterFullPacket || videoMode != MSConferenceModeRouterFullPacket) {
-			lError() << *remoteContactAddress
-			         << " attempts to establish an end-to-end encrypted conference, but focus is not operating in "
-			            "full packet router mode";
-			setState(ConferenceInterface::State::CreationFailed);
-			auto errorInfo = linphone_error_info_new();
-			linphone_error_info_set(errorInfo, nullptr, LinphoneReasonNotAcceptable, 488,
-			                        "Attempt to establish an end-to-end encrypted conference, but focus is not "
-			                        "operating in full packet router mode",
-			                        "Attempt to establish an end-to-end encrypted conference, but focus is not "
-			                        "operating in full packet router mode");
-			session->decline(errorInfo);
-			linphone_error_info_unref(errorInfo);
-			// No need to leave the conference run for longer
-			terminate();
+			terminateConferenceWithReason(remoteContactAddress, session, LinphoneReasonNotAcceptable, 488,
+			                              "Attempt to establish an end-to-end encrypted conference, but focus is not "
+			                              "operating in full packet router mode");
+			return SERVER_CONFIGURATION_FAILED;
+		} else if (!getCore()->isEktPluginLoaded()) {
+			terminateConferenceWithReason(remoteContactAddress, session, LinphoneReasonNotAcceptable, 488,
+			                              "Attempt to establish an end-to-end encrypted conference, but focus has not "
+			                              "loaded the EktServer plugin required for this feature");
 			return SERVER_CONFIGURATION_FAILED;
 		}
 	}
@@ -3040,7 +3049,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					linphone_error_info_unref(ei);
 				} else {
 					bool acceptSession = (allowedParticipant || (mConfParams->getParticipantListType() ==
-					                                          ConferenceParams::ParticipantListType::Open));
+					                                             ConferenceParams::ParticipantListType::Open));
 					LinphoneCallParams *params =
 					    linphone_core_create_call_params(getCore()->getCCore(), cppCall ? cppCall->toC() : nullptr);
 					linphone_call_params_enable_audio(params, acceptSession);
