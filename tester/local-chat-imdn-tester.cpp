@@ -804,12 +804,20 @@ static void group_chat_room_lime_session_corrupted(void) {
 			    linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(laureLastMsg)));
 			linphone_address_unref(marieAddr);
 
+			Linphone::Tester::CoreManagerAssert({marie, laure, pauline}).waitUntil(std::chrono::seconds(3), [] {
+				return false;
+			});
+
 			// Corrupt Pauline sessions in lime database: WARNING: if SOCI is not found, this call does nothing and the
 			// test fails
-			lime_delete_DRSessions(pauline.getCMgr()->lime_database_path, NULL);
-			// Trick to force the reloading of the lime engine so the session in cache is cleared
-			linphone_core_enable_lime_x3dh(pauline.getLc(), FALSE);
-			linphone_core_enable_lime_x3dh(pauline.getLc(), TRUE);
+			lime_delete_DRSessions(pauline.getCMgr()->lime_database_path,
+			                       " WHERE Did = (SELECT Did FROM lime_PeerDevices WHERE DeviceId LIKE 'sip:marie%')");
+			// restart core to force lime manager cache reload
+			coresList = bctbx_list_remove(coresList, pauline.getLc());
+			pauline.reStart();
+			linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
+			pauline_stat = pauline.getStats();
+			coresList = bctbx_list_append(coresList, pauline.getLc());
 
 			// Marie send a new message, it shall fail and get a 488 response
 			const char *marieTextMessage2 = "Do you copy?";
@@ -823,7 +831,7 @@ static void group_chat_room_lime_session_corrupted(void) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageNotDelivered,
 			                             marie_stat.number_of_LinphoneMessageNotDelivered + 1,
 			                             liblinphone_tester_sip_timeout)); // Not delivered to pauline
-			BC_ASSERT_EQUAL(pauline.getStats().number_of_LinphoneMessageReceived, 1, int, "%d");
+			BC_ASSERT_EQUAL(pauline.getStats().number_of_LinphoneMessageReceived, 0, int, "%d");
 			linphone_chat_message_unref(msg);
 			laureLastMsg = laure.getStats().last_received_chat_message;
 			if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg)) goto end;
@@ -842,7 +850,7 @@ static void group_chat_room_lime_session_corrupted(void) {
 			                             marie_stat.number_of_LinphoneMessageDelivered + 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
-			                             pauline_stat.number_of_LinphoneMessageReceived + 2,
+			                             pauline_stat.number_of_LinphoneMessageReceived + 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneMessageReceived,
 			                             laure_stat.number_of_LinphoneMessageReceived + 3,
@@ -1677,8 +1685,9 @@ static test_t local_conference_chat_imdn_tests[] = {
     TEST_ONE_TAG("Group chat with client IMDN after restart",
                  LinphoneTest::group_chat_room_with_client_idmn_after_restart,
                  "LeaksMemory"), /* because of network up and down */
-    TEST_NO_TAG("Group chat Lime Server chat room send imdn error",
-                LinphoneTest::group_chat_room_lime_session_corrupted),
+    TEST_ONE_TAG("Group chat Lime Server chat room send imdn error",
+                 LinphoneTest::group_chat_room_lime_session_corrupted,
+                 "LeaksMemory"), /* because of core restart */
     TEST_ONE_TAG("Secure group chat with client IMDN sent after restart",
                  LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart,
                  "LeaksMemory"), /* because of network up and down */
