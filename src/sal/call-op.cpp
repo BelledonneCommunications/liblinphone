@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -749,7 +749,7 @@ SalReason SalCallOp::processBodyForInvite(belle_sip_request_t *invite) {
 			SalErrorInfo sei;
 			memset(&sei, 0, sizeof(sei));
 			sal_error_info_set(&sei, reason, "SIP", 0, nullptr, nullptr);
-			declineWithErrorInfo(&sei, nullptr);
+			replyWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
 		}
 	} else {
@@ -1366,60 +1366,6 @@ int SalCallOp::decline(SalReason reason, const string &redirectionUri) {
 	return 0;
 }
 
-belle_sip_header_reason_t *SalCallOp::makeReasonHeader(const SalErrorInfo *info) {
-	if (info && (info->reason != SalReasonNone)) {
-		auto reasonHeader = BELLE_SIP_HEADER_REASON(belle_sip_header_reason_new());
-		belle_sip_header_reason_set_text(reasonHeader, info->status_string);
-		belle_sip_header_reason_set_protocol(reasonHeader, info->protocol);
-		belle_sip_header_reason_set_cause(reasonHeader, info->protocol_code);
-		return reasonHeader;
-	}
-	return nullptr;
-}
-
-int SalCallOp::declineWithErrorInfo(const SalErrorInfo *info, const SalAddress *redirectionAddr, const time_t expire) {
-	belle_sip_header_contact_t *contactHeader = nullptr;
-	belle_sip_header_retry_after_t *retryAfterHeader = nullptr;
-	int status = info->protocol_code;
-
-	if (info->reason == SalReasonRedirect) {
-		if (redirectionAddr) {
-			status = 302;
-			contactHeader = belle_sip_header_contact_create(BELLE_SIP_HEADER_ADDRESS(redirectionAddr));
-		} else {
-			lError() << "Cannot redirect to null";
-		}
-	}
-	auto transaction = BELLE_SIP_TRANSACTION(mPendingServerTransaction);
-	if (!transaction) transaction = BELLE_SIP_TRANSACTION(mPendingUpdateServerTransaction);
-	if (!transaction) {
-		lError() << "SalCallOp::declineWithErrorInfo(): no pending transaction to decline";
-		return -1;
-	}
-	auto response = createResponseFromRequest(belle_sip_transaction_get_request(transaction), status);
-	auto reasonHeader = makeReasonHeader(info->sub_sei);
-	if (info->retry_after > 0) retryAfterHeader = belle_sip_header_retry_after_create(info->retry_after);
-
-	if (reasonHeader) belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(reasonHeader));
-
-	if (contactHeader) belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(contactHeader));
-
-	if (expire != 0)
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
-		                             belle_sip_header_create("Expire", std::to_string(expire).c_str()));
-
-	if (info->warnings) {
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), createWarningHeader(info, getToAddress()));
-	}
-
-	if (retryAfterHeader) belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(retryAfterHeader));
-	belle_sip_server_transaction_send_response(BELLE_SIP_SERVER_TRANSACTION(transaction), response);
-	if (info->reason == SalReasonRedirect) {
-		mState = State::Terminating;
-	}
-	return 0;
-}
-
 void SalCallOp::haltSessionTimersTimer() {
 	if (mSessionTimersTimer != nullptr) {
 		mRoot->cancelTimer(mSessionTimersTimer);
@@ -1747,7 +1693,7 @@ int SalCallOp::terminate(const SalErrorInfo *info) {
 		}
 		case BELLE_SIP_DIALOG_NULL:
 			if (mDir == Dir::Incoming) {
-				declineWithErrorInfo(pSei, nullptr);
+				replyWithErrorInfo(pSei, nullptr);
 				mState = State::Terminated;
 			} else if (mPendingClientTransaction) {
 				if (belle_sip_transaction_get_state(BELLE_SIP_TRANSACTION(mPendingClientTransaction)) ==
@@ -1767,7 +1713,7 @@ int SalCallOp::terminate(const SalErrorInfo *info) {
 			break;
 		case BELLE_SIP_DIALOG_EARLY:
 			if (mDir == Dir::Incoming) {
-				declineWithErrorInfo(pSei, nullptr);
+				replyWithErrorInfo(pSei, nullptr);
 				mState = State::Terminated;
 			} else {
 				cancellingInvite(pSei);

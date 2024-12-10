@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -65,32 +65,32 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const std::shared_ptr<Address> resource,
+                               const std::shared_ptr<Address> &resource,
                                const string &event)
     : EventSubscribe(core, LinphoneSubscriptionIncoming, event, -1) {
-	linphone_configure_op(core->getCCore(), mOp, resource->toC(), NULL, TRUE);
+	linphone_configure_op(core->getCCore(), mOp, resource->toC(), nullptr, TRUE);
 	setState(LinphoneSubscriptionIncomingReceived);
 	mOp->setEvent(event);
 	setIsOutOfDialogOp(true);
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const std::shared_ptr<Address> resource,
+                               const std::shared_ptr<Address> &resource,
                                const string &event,
                                int expires)
     : EventSubscribe(core, LinphoneSubscriptionOutgoing, event, expires) {
-	linphone_configure_op(core->getCCore(), mOp, resource->toC(), NULL, TRUE);
+	linphone_configure_op(core->getCCore(), mOp, resource->toC(), nullptr, TRUE);
 	mOp->setManualRefresherMode(
 	    !linphone_config_get_int(core->getCCore()->config, "sip", "refresh_generic_subscribe", 1));
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const std::shared_ptr<Address> resource,
+                               const std::shared_ptr<Address> &resource,
                                const std::shared_ptr<Account> &account,
                                const string &event,
                                int expires)
     : EventSubscribe(core, LinphoneSubscriptionOutgoing, event, expires) {
-	linphone_configure_op_with_account(core->getCCore(), mOp, resource->toC(), NULL, TRUE, account->toC());
+	linphone_configure_op_with_account(core->getCCore(), mOp, resource->toC(), nullptr, TRUE, account->toC());
 	mOp->setManualRefresherMode(
 	    !linphone_config_get_int(core->getCCore()->config, "sip", "refresh_generic_subscribe", 1));
 }
@@ -116,7 +116,6 @@ LinphoneStatus EventSubscribe::send(const std::shared_ptr<const Content> &body) 
 			ms_error("EventSubscribe::send(): cannot update subscription while in state [%s]",
 			         linphone_subscription_state_to_string(mSubscriptionState));
 			return -1;
-			break;
 		case LinphoneSubscriptionNone:
 		case LinphoneSubscriptionActive:
 		case LinphoneSubscriptionExpiring:
@@ -238,16 +237,27 @@ void EventSubscribe::unpublish() {
 }
 
 void EventSubscribe::terminate() {
-	// if event was already terminated (including on error), we should not terminate it again
-	// otherwise it will be unreffed twice.
+	// If the event has already been terminated (including due to an error),
+	// we must avoid terminating it again to prevent it from being unreferenced twice.
 	if (mSubscriptionState == LinphoneSubscriptionError || mSubscriptionState == LinphoneSubscriptionTerminated) {
 		return;
 	}
 
 	if (mDir == LinphoneSubscriptionIncoming) {
 		auto op = dynamic_cast<SalSubscribeOp *>(mOp);
+
+		// If a dialog is already established, send a NOTIFY to close the subscription.
 		if (op && op->isDialogEstablished()) {
 			op->closeNotify();
+		} // This subscription request cannot be handled because the server does not recognize or support the event
+		  // package specified in the "Event" header field. Respond with a 489 Bad Event error as per RFC 3265,
+		  // Section 7.3.2.
+		else if (mSubscriptionState == LinphoneSubscriptionIncomingReceived) {
+			SalErrorInfo sei;
+			memset(&sei, 0, sizeof(sei));
+			sal_error_info_set(&sei, SalReasonBadEvent, "SIP", 489, "Unhandled subscribe", nullptr);
+			op->replyWithErrorInfo(&sei);
+			sal_error_info_reset(&sei);
 		}
 	} else if (mDir == LinphoneSubscriptionOutgoing) {
 		auto op = dynamic_cast<SalSubscribeOp *>(mOp);

@@ -3931,6 +3931,9 @@ void linphone_subscribe_received(LinphoneCore *lc,
 			case DenySubscription:
 				linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 				break;
+			case RetainSubscription:
+				linphone_event_ref(lev);
+				break;
 			case DoNothingWithSubscription:
 				break;
 		}

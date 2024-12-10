@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -638,7 +638,7 @@ void CallSessionPrivate::updated(bool isUpdate) {
 			           << "] is going to reject the reINVITE or UPDATE because it is already in state ["
 			           << Utils::toString(state) << "]";
 			sal_error_info_set(&sei, SalReasonNoMatch, "SIP", 0, "Incompatible SDP", nullptr);
-			op->declineWithErrorInfo(&sei, nullptr);
+			op->replyWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
 			break;
 		case CallSession::State::Idle:
@@ -1235,7 +1235,7 @@ void CallSessionPrivate::repairIfBroken() {
 		case CallSession::State::UpdatedByRemote:
 			if (op->dialogRequestPending()) {
 				sal_error_info_set(&sei, SalReasonServiceUnavailable, "SIP", 0, nullptr, nullptr);
-				op->declineWithErrorInfo(&sei, nullptr);
+				op->replyWithErrorInfo(&sei, nullptr);
 			}
 			reinviteToRecoverFromConnectionLoss();
 			broken = false;
@@ -1506,7 +1506,7 @@ LinphoneStatus CallSession::decline(const LinphoneErrorInfo *ei) {
 		linphone_error_info_set(d->ei, nullptr, linphone_error_info_get_reason(ei),
 		                        linphone_error_info_get_protocol_code(ei), linphone_error_info_get_phrase(ei), nullptr);
 		linphone_error_info_to_sal(ei, &sei);
-		d->op->declineWithErrorInfo(&sei, nullptr);
+		d->op->replyWithErrorInfo(&sei, nullptr);
 	} else d->op->decline(SalReasonDeclined);
 	sal_error_info_reset(&sei);
 	sal_error_info_reset(&sub_sei);
@@ -1665,7 +1665,7 @@ LinphoneStatus CallSession::redirect(const Address &redirectAddr) {
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);
-	d->op->declineWithErrorInfo(
+	d->op->replyWithErrorInfo(
 	    &sei, redirectAddr.getImpl(),
 	    ((getParams()->getPrivate()->getEndTime() < 0) ? 0 : getParams()->getPrivate()->getEndTime()));
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonMovedPermanently, 302, "Call redirected", nullptr);

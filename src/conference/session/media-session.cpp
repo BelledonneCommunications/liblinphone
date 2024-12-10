@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -776,7 +776,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		SalErrorInfo sei;
 		memset(&sei, 0, sizeof(sei));
 		sal_error_info_set(&sei, SalReasonNoMatch, "SIP", 0, "Incompatible SDP", nullptr);
-		op->declineWithErrorInfo(&sei, nullptr);
+		op->replyWithErrorInfo(&sei, nullptr);
 		sal_error_info_reset(&sei);
 		return;
 	}
@@ -844,7 +844,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		if (rejectMediaSession(lmd, rmd, cmd)) {
 			lWarning() << "Session [" << q << "] is going to be rejected because of an incompatible negotiated SDP";
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, "Incompatible SDP", nullptr);
-			op->declineWithErrorInfo(&sei, nullptr);
+			op->replyWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
 			return;
 		}
@@ -855,7 +855,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 				lWarning() << "Cannot accept this update, it is changing parameters that require user approval";
 				sal_error_info_set(&sei, SalReasonUnknown, "SIP", 504,
 				                   "Cannot change the session parameters without prompting the user", nullptr);
-				op->declineWithErrorInfo(&sei, nullptr);
+				op->replyWithErrorInfo(&sei, nullptr);
 				sal_error_info_reset(&sei);
 				return;
 			}

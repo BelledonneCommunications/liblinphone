@@ -711,7 +711,7 @@ static void subscribe_notify_with_missing_200ok(void) {
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
 
 	lcs = bctbx_list_append(lcs, pauline->lc);
-	pauline->subscribe_policy = DoNothingWithSubscription;
+	pauline->subscribe_policy = RetainSubscription;
 
 	lev = linphone_core_create_subscribe(marie->lc, pauline->identity, "dodo", expires);
 	linphone_event_send_subscribe(lev, NULL);
@@ -719,7 +719,8 @@ static void subscribe_notify_with_missing_200ok(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 10000));
 
-	if (BC_ASSERT_PTR_NOT_NULL(pauline->lev)) {
+	LinphoneEvent *pauline_event = pauline->lev;
+	if (BC_ASSERT_PTR_NOT_NULL(pauline_event)) {
 		sal_set_send_error(linphone_core_get_sal(pauline->lc), 1); /*to trash the message without generating error*/
 		linphone_event_accept_subscription(pauline->lev);
 		sal_set_send_error(linphone_core_get_sal(pauline->lc), 0); /*normal behavior*/
@@ -741,6 +742,35 @@ static void subscribe_notify_with_missing_200ok(void) {
 	linphone_event_terminate(pauline->lev);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
+	linphone_event_unref(lev);
+	linphone_event_unref(pauline_event);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
+
+static void subscribe_notify_not_handled(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneEvent *lev;
+	int expires = 10;
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	pauline->subscribe_policy = DoNothingWithSubscription;
+
+	lev = linphone_core_create_subscribe(marie->lc, pauline->identity, "dodo", expires);
+	linphone_event_send_subscribe(lev, NULL);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
+	BC_ASSERT_PTR_NULL(pauline->lev);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionError, 1, 5000));
+
 	linphone_event_unref(lev);
 
 	linphone_core_manager_destroy(marie);
@@ -767,6 +797,7 @@ test_t event_tests[] = {
                   "presence",
                   "LeaksMemory"),
     TEST_NO_TAG("Subscribe with missing 200 ok", subscribe_notify_with_missing_200ok),
+    TEST_NO_TAG("Subscribe not handled", subscribe_notify_not_handled),
     TEST_ONE_TAG("Publish", publish_test, "presence"),
     TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
     TEST_ONE_TAG("Publish without automatic refresh", publish_no_auto_test, "presence"),

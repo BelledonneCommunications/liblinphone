@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -60,9 +60,6 @@ public:
 	int notifyRinging(bool earlyMedia, const LinphoneSupportLevel supportLevel100Rel);
 	int accept();
 	int decline(SalReason reason, const std::string &redirectionUri = "");
-	int declineWithErrorInfo(const SalErrorInfo *info,
-	                         const SalAddress *redirectionAddr = nullptr,
-	                         const time_t expire = 0);
 
 	void haltSessionTimersTimer();
 	void restartSessionTimersTimer(belle_sip_response_t *response, int delta);
@@ -152,7 +149,6 @@ private:
 	static bool isAPendingIncomingInviteTransaction(belle_sip_transaction_t *transaction);
 	static void setCallAsReleased(SalCallOp *op);
 	static void unsupportedMethod(belle_sip_server_transaction_t *serverTransaction, belle_sip_request_t *request);
-	static belle_sip_header_reason_t *makeReasonHeader(const SalErrorInfo *info);
 	static belle_sip_header_allow_t *createAllow(bool enableUpdate);
 	static std::vector<uint8_t> marshalMediaDescription(belle_sdp_session_description_t *sessionDesc,
 	                                                    belle_sip_error_code &error);

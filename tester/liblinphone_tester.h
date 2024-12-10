@@ -588,6 +588,7 @@ typedef struct _stats {
 typedef enum _LinphoneCoreManagerSubscribePolicy {
 	AcceptSubscription,
 	DenySubscription,
+	RetainSubscription,
 	DoNothingWithSubscription
 } LinphoneCoreManagerSubscribePolicy;
 

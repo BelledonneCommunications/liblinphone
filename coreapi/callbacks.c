@@ -305,9 +305,10 @@ static void call_received(SalCallOp *h) {
 							SalErrorInfo sei;
 							memset(&sei, 0, sizeof(sei));
 							sal_error_info_set(&sei, SalReasonNotFound, "SIP", 0, nullptr, nullptr);
-							h->declineWithErrorInfo(&sei);
+							h->replyWithErrorInfo(&sei);
 							LinphoneErrorInfo *ei = linphone_error_info_new();
-							linphone_error_info_set(ei, nullptr, LinphoneReasonNotFound, 404, "Conference not found", "Conference not found");
+							linphone_error_info_set(ei, nullptr, LinphoneReasonNotFound, 404, "Conference not found",
+							                        "Conference not found");
 							core->reportEarlyCallFailed(LinphoneCallIncoming, from, to, ei, h->getCallId());
 							h->release();
 							sal_error_info_reset(&sei);
@@ -342,7 +343,7 @@ static void call_received(SalCallOp *h) {
 									    &sei, SalReasonNotAcceptable, "SIP", 0,
 									    "Trying to create a one-to-one chatroom with more than one participant",
 									    nullptr);
-									h->declineWithErrorInfo(&sei, nullptr);
+									h->replyWithErrorInfo(&sei, nullptr);
 									sal_error_info_reset(&sei);
 									h->release();
 									return;
@@ -390,7 +391,7 @@ static void call_received(SalCallOp *h) {
 					memset(&sei, 0, sizeof(sei));
 					sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);
 					SalAddress *altAddr = sal_address_new(altContact);
-					h->declineWithErrorInfo(&sei, altAddr);
+					h->replyWithErrorInfo(&sei, altAddr);
 					ms_free(altContact);
 					sal_address_unref(altAddr);
 					LinphoneErrorInfo *ei = linphone_error_info_new();
@@ -1022,14 +1023,15 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 }
 
 static void subscribe_received(SalSubscribeOp *op, const char *eventname, const SalBodyHandler *body_handler) {
-	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
-	LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
+	auto lev = (LinphoneEvent *)op->getUserPointer();
+	auto lc = (LinphoneCore *)op->getSal()->getUserPointer();
 
 	if (!check_core_state(lc, op)) return;
 
-	if (lev == NULL) {
+	if (lev == nullptr) {
 		lev = linphone_event_new_subscribe_with_op(lc, op, LinphoneSubscriptionIncoming, eventname);
-		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
+		auto cppLev = Event::toCpp(lev)->getSharedFromThis();
+		cppLev->setUnrefWhenTerminated(TRUE);
 		if (strcmp(linphone_event_get_name(lev), "conference") == 0) linphone_event_set_internal(lev, TRUE);
 		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
@@ -1037,7 +1039,13 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 		if (account && linphone_account_params_get_realm(linphone_account_get_params(account))) {
 			op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(account)));
 		}
+		auto nbRefBeforeCbs = cppLev->getRefCount();
 		linphone_core_notify_subscribe_received(lc, lev, eventname, ct);
+		auto nbRefAfterCbs = cppLev->getRefCount();
+		if ((nbRefAfterCbs <= nbRefBeforeCbs) &&
+		    (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionIncomingReceived)) {
+			linphone_event_terminate(lev);
+		}
 		if (ct) linphone_content_unref(ct);
 	} else {
 		/*subscribe refresh, unhandled*/
