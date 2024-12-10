@@ -234,6 +234,9 @@ void Account::applyParamsChanges() {
 	if (mOldParams == nullptr || mOldParams->mLimeServerUrl != mParams->mLimeServerUrl) {
 		onLimeServerUrlChanged(mParams->mLimeServerUrl);
 	}
+	if (mOldParams == nullptr || mOldParams->mLimeAlgo != mParams->mLimeAlgo) {
+		onLimeAlgoChanged(mParams->mLimeAlgo);
+	}
 
 	if (mOldParams == nullptr || mOldParams->mRegisterEnabled != mParams->mRegisterEnabled ||
 	    mOldParams->mExpires != mParams->mExpires || mOldParams->mContactParameters != mParams->mContactParameters ||
@@ -1641,6 +1644,7 @@ void Account::onLimeServerUrlChanged(const std::string &limeServerUrl) {
 		if (remove) {
 			linphone_core_remove_linphone_spec(core, "lime");
 		}
+		return;
 	}
 
 	// If the lime server URL has changed, then propagate the change to the encryption engine
@@ -1648,6 +1652,59 @@ void Account::onLimeServerUrlChanged(const std::string &limeServerUrl) {
 	if (encryptionEngine && (encryptionEngine->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)) {
 		auto account = this->getSharedFromThis();
 		encryptionEngine->onServerUrlChanged(account, limeServerUrl);
+	}
+
+#else
+	lWarning() << "Lime X3DH support is not available";
+#endif
+}
+void Account::onLimeAlgoChanged(const std::string &limeAlgo) {
+#ifdef HAVE_LIME_X3DH
+	auto core = getCCore();
+	if (!core) return;
+	if (!limeAlgo.empty()) {
+		linphone_core_add_linphone_spec(core, "lime");
+	} else {
+		// If LIME algo is still set in the Core, do not remove the spec
+		const char *core_lime_algo = linphone_config_get_string(core->config, "lime", "curve", "");
+		if (core_lime_algo && strlen(core_lime_algo)) {
+			return;
+		}
+
+		bool remove = true;
+		// Check that no other account needs the spec before removing it
+		for (const auto &account : getCore()->getAccounts()) {
+			if (account != getSharedFromThis()) {
+				const auto &params = account->getAccountParams();
+				const std::string &accountLimeAlgo = params->getLimeAlgo();
+				if (!accountLimeAlgo.empty()) {
+					remove = false;
+					break;
+				}
+			}
+		}
+		if (remove) {
+			linphone_core_remove_linphone_spec(core, "lime");
+		}
+		return;
+	}
+
+	// the lime algo has changed, propagate the change to the encryption engine
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (encryptionEngine && (encryptionEngine->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)) {
+		// just call the create lime user function, it will get the info from the account
+		shared_ptr<Address> addr = mContactAddress;
+		if (!addr) {
+			shared_ptr<Address> sip = getAccountParams()->getIdentityAddress();
+			if (sip) {
+				auto gr = getCCore()->sal->getUuid();
+				if (gr.empty()) return;
+				addr = sip->clone()->toSharedPtr();
+				addr->setUriParam("gr", "urn:uuid:" + gr);
+			}
+		}
+		auto account = this->getSharedFromThis();
+		if (addr) encryptionEngine->createLimeUser(account, addr->asStringUriOnly());
 	}
 
 #else

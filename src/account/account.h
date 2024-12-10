@@ -187,6 +187,7 @@ private:
 	onAudioVideoConferenceFactoryAddressChanged(const std::shared_ptr<Address> &audioVideoConferenceFactoryAddress);
 	void onNatPolicyChanged(const std::shared_ptr<NatPolicy> &policy);
 	void onLimeServerUrlChanged(const std::string &limeServerUrl);
+	void onLimeAlgoChanged(const std::string &limeAlgo);
 	void onMwiServerAddressChanged();
 	bool customContactChanged();
 	std::list<SalAddress *> getOtherContacts();
