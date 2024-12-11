@@ -83,7 +83,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_user_data(LinphoneAccountParams
 LINPHONE_PUBLIC void *linphone_account_params_get_user_data(const LinphoneAccountParams *params);
 
 /**
- * Sets the proxy address
+ * Sets the SIP proxy or registrar address.
  *
  * Examples of valid sip proxy address are:
  * - IP address: sip:87.98.157.38
@@ -132,7 +132,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_identity_address(Linp
  * When a route is set, all outgoing calls will go to the route's destination if this account
  * is the default one (see linphone_core_set_default_account()).
  *
- * @warning This function cannot be used if linphone_account_params_is_outbound_proxy_enabled is TRUE.
+ * @warning This function shall not be used in conjunction with linphone_account_params_enable_outbound_proxy().
  * @param params The #LinphoneAccountParams object. @notnil
  * @param routes A list of routes. \bctbx_list{LinphoneAddress} @maybenil
  * @return -1 if routes are invalid, 0 otherwise.
@@ -333,7 +333,6 @@ LINPHONE_PUBLIC void linphone_account_params_set_realm(LinphoneAccountParams *pa
 /**
  * Gets the list of the routes set for this account params.
  *
- * @warning If linphone_account_params_is_outbound_proxy_enabled is TRUE then it will only return the proxy address.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The list of routes. \bctbx_list{LinphoneAddress} @maybenil
  */
@@ -373,7 +372,7 @@ linphone_account_params_get_publish_enabled(const LinphoneAccountParams *params)
 LINPHONE_PUBLIC bool_t linphone_account_params_publish_enabled(const LinphoneAccountParams *params);
 
 /**
- * Get the account params proxy address.
+ * Get the account params SIP proxy or registrar address.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The proxy's SIP #LinphoneAddress. @maybenil
  **/
@@ -656,6 +655,12 @@ linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params
 
 /**
  * If enabled, the proxy will be used as the only route.
+ * @warning This function will replace or remove any routes previously set with
+ * linphone_account_params_set_routes_addresses() if any. For that reason
+ * linphone_account_params_enable_outbound_proxy() shall not be used with
+ * linphone_account_params_set_routes_addresses(). Application shall consider either using the restrictive notion of
+ * outbound proxy (a single route identical to the registrar URI), either the notion of predefined route-set where
+ * routes can be multiple and different from registrar URI.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to enable, FALSE otherwise.
  */
