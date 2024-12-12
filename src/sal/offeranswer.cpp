@@ -1052,6 +1052,8 @@ OfferAnswerEngine::initiateOutgoing(std::shared_ptr<SalMediaDescription> local_o
 				                                         rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
 				actualCfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled &
 				                                  rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+				actualCfg.rtcp_fb.goog_remb_enabled = ls.getChosenConfiguration().rtcp_fb.goog_remb_enabled &
+				                                      rs.getChosenConfiguration().rtcp_fb.goog_remb_enabled;
 				stream.addActualConfiguration(actualCfg);
 			}
 			result->streams.push_back(stream);
@@ -1140,6 +1142,7 @@ OfferAnswerEngine::initiateIncoming(const std::shared_ptr<SalMediaDescription> l
 			// Handle global RTCP FB attributes
 			actualCfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
 			actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+			actualCfg.rtcp_fb.goog_remb_enabled = rs.getChosenConfiguration().rtcp_fb.goog_remb_enabled;
 			// Handle media RTCP XR attribute
 			memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
 			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {

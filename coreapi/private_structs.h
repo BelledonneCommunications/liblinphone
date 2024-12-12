@@ -540,7 +540,8 @@ class Core;
 	unsigned long iterate_thread_id;                                                                                   \
 	bool_t record_aware;                                                                                               \
 	bool_t auto_send_ringing;                                                                                          \
-	int number_of_duplicated_messages;
+	int number_of_duplicated_messages;                                                                                 \
+	bool_t goog_remb_enabled;
 
 #define LINPHONE_CORE_STRUCT_FIELDS                                                                                    \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS                                                                                   \

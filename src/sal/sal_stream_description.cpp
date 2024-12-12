@@ -1586,6 +1586,9 @@ void SalStreamDescription::applyRtcpFbAttributeToPayload(SalStreamConfiguration 
 					break;
 			}
 			break;
+		case BELLE_SDP_RTCP_FB_GOOG_REMB:
+			cfg.rtcp_fb.goog_remb_enabled = true;
+			break;
 		default:
 			break;
 	}
@@ -1639,6 +1642,9 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 	}
 	if (cfg.rtcp_fb.tmmbr_enabled == TRUE) {
 		add_rtcp_fb_ccm_attribute(media_desc, -1, BELLE_SDP_RTCP_FB_TMMBR);
+	}
+	if (cfg.rtcp_fb.goog_remb_enabled == TRUE) {
+		add_rtcp_fb_goog_remb_attribute(media_desc, -1);
 	}
 
 	for (const auto &pt : cfg.payloads) {

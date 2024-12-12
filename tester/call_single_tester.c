@@ -7993,6 +7993,7 @@ void call_with_core_without_media(void) {
 	    "a=rtcp-rsize\r\n"
 	    "a=rtpmap:111 opus/48000/2\r\n"
 	    "a=rtcp-fb:111 transport-cc\r\n"
+	    "a=rtcp-fb:111 goog-remb\r\n"
 	    "a=fmtp:111 minptime=10;useinbandfec=1\r\n"
 	    "a=rtpmap:63 red/48000/2\r\n"
 	    "a=fmtp:63 111/111\r\n"

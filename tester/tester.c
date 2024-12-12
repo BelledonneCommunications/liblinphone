@@ -4119,6 +4119,12 @@ static void rtcp_received(stats *counters, mblk_t *packet) {
 				counters->number_of_tmmbr_received++;
 				counters->last_tmmbr_value_received = (int)rtcp_RTPFB_tmmbr_get_max_bitrate(rtcpMessage);
 			}
+		} else if (rtcp_is_type(rtcpMessage, RTCP_PSFB)) {
+			if (rtcp_PSFB_get_type(rtcpMessage) == RTCP_PSFB_AFB && rtcp_PSFB_is_goog_remb(rtcpMessage)) {
+				// Use the same counters as TMMBR
+				counters->number_of_tmmbr_received++;
+				counters->last_tmmbr_value_received = (int)rtcp_PSFB_goog_remb_get_max_bitrate(rtcpMessage);
+			}
 		}
 	} while ((rtcpMessage = rtcp_parser_context_next_packet(&rtcpParser)) != NULL);
 	rtcp_parser_context_uninit(&rtcpParser);

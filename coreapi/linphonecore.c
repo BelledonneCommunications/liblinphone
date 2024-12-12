@@ -10013,3 +10013,7 @@ void linphone_core_set_ekt_plugin_loaded(LinphoneCore *lc, bool_t ekt_plugin_loa
 	shared_ptr<Core> coreCpp = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
 	if (coreCpp) coreCpp->setEktPluginLoaded(true);
 }
+
+void linphone_core_enable_goog_remb(LinphoneCore *core, bool_t enable) {
+	core->goog_remb_enabled = enable;
+}

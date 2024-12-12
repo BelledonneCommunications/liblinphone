@@ -36,6 +36,7 @@ void add_rtcp_fb_ack_attribute(belle_sdp_media_description_t *media_desc,
                                int8_t id,
                                belle_sdp_rtcp_fb_val_param_t param);
 void add_rtcp_fb_trr_int_attribute(belle_sdp_media_description_t *media_desc, int8_t id, uint16_t trr_int);
+void add_rtcp_fb_goog_remb_attribute(belle_sdp_media_description_t *media_desc, int8_t id);
 
 void sdp_parse_session_rtcp_xr_parameters(const belle_sdp_session_description_t *session_desc,
                                           OrtpRtcpXrConfiguration *config);

@@ -584,11 +584,15 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
 	return std::find_if(streams.cbegin(), streams.cend(), [&attributes](const auto &stream) {
 		bool found = true;
 		for (const auto &[attrName, attrValue] : attributes) {
-			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, attrName.c_str());
-			if (foundAttrVal) {
-				found &= (strcmp(foundAttrVal, attrValue.c_str()) == 0);
+			if (attrValue.empty()) {
+				found &= (sal_custom_sdp_attribute_is_present(stream.custom_sdp_attributes, attrName.c_str()) == TRUE);
 			} else {
-				found = false;
+				const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, attrName.c_str());
+				if (foundAttrVal) {
+					found &= (strcmp(foundAttrVal, attrValue.c_str()) == 0);
+				} else {
+					found = false;
+				}
 			}
 		}
 		return found;
@@ -598,13 +602,19 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
 std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(
     const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	return std::find_if(streams.cbegin(), streams.cend(), [&type, &attributes](const auto &stream) {
+		if (type != stream.getType()) return false;
+
 		bool found = true;
 		for (const auto &[attrName, attrValue] : attributes) {
-			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, attrName.c_str());
-			if (foundAttrVal && (type == stream.getType())) {
-				found &= (strcmp(foundAttrVal, attrValue.c_str()) == 0);
+			if (attrValue.empty()) {
+				found &= (sal_custom_sdp_attribute_is_present(stream.custom_sdp_attributes, attrName.c_str()) == TRUE);
 			} else {
-				found = false;
+				const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, attrName.c_str());
+				if (foundAttrVal) {
+					found &= (strcmp(foundAttrVal, attrValue.c_str()) == 0);
+				} else {
+					found = false;
+				}
 			}
 		}
 		return found;

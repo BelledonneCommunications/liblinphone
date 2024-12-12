@@ -63,6 +63,13 @@ void add_rtcp_fb_ccm_attribute(belle_sdp_media_description_t *media_desc,
 	belle_sdp_media_description_add_attribute(media_desc, BELLE_SDP_ATTRIBUTE(attribute));
 }
 
+void add_rtcp_fb_goog_remb_attribute(belle_sdp_media_description_t *media_desc, int8_t id) {
+	belle_sdp_rtcp_fb_attribute_t *attribute = belle_sdp_rtcp_fb_attribute_new();
+	belle_sdp_rtcp_fb_attribute_set_id(attribute, id);
+	belle_sdp_rtcp_fb_attribute_set_type(attribute, BELLE_SDP_RTCP_FB_GOOG_REMB);
+	belle_sdp_media_description_add_attribute(media_desc, BELLE_SDP_ATTRIBUTE(attribute));
+}
+
 belle_sdp_attribute_t *create_rtcp_xr_attribute(const OrtpRtcpXrConfiguration *config) {
 	belle_sdp_rtcp_xr_attribute_t *attribute = belle_sdp_rtcp_xr_attribute_new();
 	if (config->rcvr_rtt_mode != OrtpRtcpXrRcvrRttNone) {

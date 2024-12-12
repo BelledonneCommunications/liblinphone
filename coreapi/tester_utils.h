@@ -434,6 +434,8 @@ LINPHONE_PUBLIC LinphoneAccountManagerServicesRequest *
 linphone_account_manager_services_create_delete_account_as_admin_request(LinphoneAccountManagerServices *ams,
                                                                          int account_id);
 
+LINPHONE_PUBLIC void linphone_core_enable_goog_remb(LinphoneCore *core, bool_t enable);
+
 #ifdef __cplusplus
 }
 #endif

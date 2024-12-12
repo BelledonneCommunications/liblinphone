@@ -528,6 +528,8 @@ void MS2Stream::configureRtpSessionForRtcpFb(const OfferAnswerContext &params) {
 	                                !!resultStreamDesc.getChosenConfiguration().rtcp_fb.generic_nack_enabled);
 	rtp_session_enable_avpf_feature(mSessions.rtp_session, ORTP_AVPF_FEATURE_TMMBR,
 	                                !!resultStreamDesc.getChosenConfiguration().rtcp_fb.tmmbr_enabled);
+	rtp_session_enable_avpf_feature(mSessions.rtp_session, ORTP_AVPF_FEATURE_GOOG_REMB,
+	                                !!resultStreamDesc.getChosenConfiguration().rtcp_fb.goog_remb_enabled);
 }
 
 void MS2Stream::configureRtpSessionForRtcpXr(const OfferAnswerContext &params) {
@@ -562,16 +564,24 @@ void MS2Stream::configureAdaptiveRateControl(const OfferAnswerContext &params) {
 		media_stream_enable_adaptive_bitrate_control(ms, false);
 		return;
 	}
+
 	bool isAdvanced = true;
 	string algo = linphone_core_get_adaptive_rate_algorithm(getCCore());
 	if (algo == "basic") isAdvanced = false;
 	else if (algo == "advanced") isAdvanced = true;
 
-	if (isAdvanced && !params.getResultStreamDescription().getChosenConfiguration().rtcp_fb.tmmbr_enabled) {
-		lWarning() << "Advanced adaptive rate control requested but avpf-tmmbr is not activated in this stream. "
+	// Check for goog-remb in any stream. If we find one, we add all streams in the bandwith controller
+	const auto &stream = params.resultMediaDescription->findStreamWithSdpAttribute({make_pair("goog-remb", "")});
+	const bool googRembEnabled = stream != Utils::getEmptyConstRefObject<SalStreamDescription>();
+
+	if (isAdvanced &&
+	    !(params.getResultStreamDescription().getChosenConfiguration().rtcp_fb.tmmbr_enabled || googRembEnabled)) {
+		lWarning() << "Advanced adaptive rate control requested but neither avpf-tmmbr nor goog-remb is activated "
+		              "in this stream. "
 		              "Reverting to basic rate control instead";
 		isAdvanced = false;
 	}
+
 	if (isAdvanced) {
 		lInfo() << "Setting up advanced rate control";
 		if (getMixer() == nullptr) {

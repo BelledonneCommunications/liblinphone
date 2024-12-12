@@ -1852,6 +1852,9 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		}
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, stream, cfg, mid);
 
+		// Only used for testing
+		if (q->getCore()->getCCore()->goog_remb_enabled) cfg.rtcp_fb.goog_remb_enabled = TRUE;
+
 		stream.addActualConfiguration(cfg);
 		fillRtpParameters(stream);
 	} else {
