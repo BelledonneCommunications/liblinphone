@@ -25,8 +25,7 @@ public class LibraryLoader {
 
         // Extract the library from the jar file.
         File tempFile = new File(tempDir, osName);
-        try {
-            InputStream ist = LibraryLoader.class.getResourceAsStream("/" + osName);
+        try(InputStream ist = LibraryLoader.class.getResourceAsStream("/" + osName);) {
             Files.copy(ist, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             tempFile.delete();
