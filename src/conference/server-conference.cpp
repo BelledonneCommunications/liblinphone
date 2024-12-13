@@ -2582,6 +2582,15 @@ void ServerConference::checkIfTerminated() {
 			setState(ConferenceInterface::State::Terminated);
 		} else {
 			setState(ConferenceInterface::State::TerminationPending);
+			bool_t eventLogEnabled = FALSE;
+#ifdef HAVE_ADVANCED_IM
+			LinphoneCore *lc = getCore()->getCCore();
+			eventLogEnabled =
+			    linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
+#endif // HAVE_ADVANCED_IM
+			if (!eventLogEnabled) {
+				setState(ConferenceInterface::State::Terminated);
+			}
 		}
 	}
 }

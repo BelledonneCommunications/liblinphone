@@ -1099,7 +1099,8 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs,
 LinphoneStatus terminate_conference(bctbx_list_t *lcs,
                                     LinphoneCoreManager *conf_mgr,
                                     LinphoneConference *conference,
-                                    LinphoneCoreManager *focus_mgr);
+                                    LinphoneCoreManager *focus_mgr,
+                                    bool_t participants_exit_conference);
 bctbx_list_t *terminate_participant_call(bctbx_list_t *participants,
                                          LinphoneCoreManager *conf_mgr,
                                          LinphoneCoreManager *participant_mgr);

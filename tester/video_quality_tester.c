@@ -933,7 +933,7 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 20000, 40000, 30000);
 	wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 40000, 60000, 50000);
 
-	terminate_conference(participants, marie, NULL, NULL);
+	terminate_conference(participants, marie, NULL, NULL, FALSE);
 
 	if (conf) {
 		linphone_conference_unref(conf);

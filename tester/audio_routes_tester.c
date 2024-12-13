@@ -1703,7 +1703,7 @@ simple_conference_with_audio_device_change_base(bool_t during_setup, bool_t befo
 	// wait a bit before ending the conference
 	wait_for_list(lcs, NULL, 0, 5000);
 
-	terminate_conference(participants, laure, conf, NULL);
+	terminate_conference(participants, laure, conf, NULL, FALSE);
 
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(marie);
@@ -1937,7 +1937,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	// wait a bit before ending the conference
 	wait_for_list(lcs, NULL, 0, 5000);
 
-	terminate_conference(participants, pauline, conf, NULL);
+	terminate_conference(participants, pauline, conf, NULL, FALSE);
 
 end:
 	if (pauline_call) linphone_call_unref(pauline_call);
@@ -2285,7 +2285,7 @@ static void conference_with_simple_audio_device_change(void) {
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), marie_current_dev);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), laure_current_dev);
 
-	terminate_conference(participants, laure, conf, NULL);
+	terminate_conference(participants, laure, conf, NULL, FALSE);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants);
@@ -2483,7 +2483,7 @@ static void simple_conference_with_audio_device_change_using_public_api(void) {
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges + 2), int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_conference_get_input_audio_device(conf), current_dev);
 
-	terminate_conference(participants, marie, conf, NULL);
+	terminate_conference(participants, marie, conf, NULL, TRUE);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants);

@@ -2515,7 +2515,8 @@ bctbx_list_t *terminate_participant_call(bctbx_list_t *participants,
 LinphoneStatus terminate_conference(bctbx_list_t *participants,
                                     LinphoneCoreManager *conf_mgr,
                                     LinphoneConference *conference,
-                                    LinphoneCoreManager *focus_mgr) {
+                                    LinphoneCoreManager *focus_mgr,
+                                    bool_t participants_exit_conference) {
 
 	bctbx_list_t *lcs = NULL;
 	stats *lcm_stats = NULL;
@@ -2600,10 +2601,25 @@ LinphoneStatus terminate_conference(bctbx_list_t *participants,
 			BC_ASSERT_PTR_NOT_NULL(conference_address);
 			if (conference_address) {
 				char *conference_address_str = linphone_address_as_string(conference_address);
-				ms_message("%s terminates conference %s", linphone_core_get_identity(conf_mgr->lc),
-				           conference_address_str);
+				if (participants_exit_conference) {
+					for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+						LinphoneCoreManager *m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+						LinphoneCall *participant_call =
+						    linphone_core_get_call_by_remote_address2(m->lc, conference_address);
+						BC_ASSERT_PTR_NOT_NULL(participant_call);
+						if (participant_call) {
+							ms_message("%s terminates its call to conference %s", linphone_core_get_identity(m->lc),
+							           conference_address_str);
+							linphone_call_terminate(participant_call);
+						}
+					}
+				} else {
+					ms_message("%s terminates conference %s", linphone_core_get_identity(conf_mgr->lc),
+					           conference_address_str);
+					linphone_conference_terminate(conferenceToDestroy);
+				}
 				ms_free(conference_address_str);
-				linphone_conference_terminate(conferenceToDestroy);
+
 				if (focus_mgr) {
 					finish_terminate_remote_conference(lcs, lcm_stats, call_is_in_conference, conf_mgr, focus_mgr,
 					                                   no_participants, core_held_conference);
