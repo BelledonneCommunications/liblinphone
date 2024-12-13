@@ -519,13 +519,14 @@ bool MediaSessionPrivate::failure() {
 	switch (ei->reason) {
 		case SalReasonUnsupportedContent: /* This is for compatibility: linphone sent 415 because of SDP offer answer
 		                                     failure */
-		case SalReasonNotAcceptable:
-			if ((linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
+		case SalReasonNotAcceptable: {
+			const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
+			if (!conferenceInfo &&
+			    (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
 			                             "retry_invite_after_offeranswer_failure", 1)) &&
 			    localDesc &&
 			    ((state == CallSession::State::OutgoingInit) || (state == CallSession::State::OutgoingProgress) ||
-			     (state == CallSession::State::OutgoingRinging) /* Push notification case */
-			     || (state == CallSession::State::OutgoingEarlyMedia))) {
+			     (state == CallSession::State::OutgoingRinging) || (state == CallSession::State::OutgoingEarlyMedia))) {
 				bool mediaEncrptionSrtp = getParams()->getMediaEncryption() == LinphoneMediaEncryptionSRTP;
 				bool avpfEnabled = getParams()->avpfEnabled();
 				if (mediaEncrptionSrtp || avpfEnabled) {
@@ -565,7 +566,7 @@ bool MediaSessionPrivate::failure() {
 					}
 				}
 			}
-			break;
+		} break;
 		default:
 			break;
 	}

@@ -948,8 +948,8 @@ static void failure_in_creating_end_to_end_encrypted_conference_bad_server_confi
 		stats focus_stat = focus.getStats();
 
 		// The organizer creates a conference scheduler
-		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler_with_type(
-		    marie.getLc(), nullptr, LinphoneConferenceSchedulerTypeSIP);
+		LinphoneConferenceScheduler *conference_scheduler =
+		    linphone_core_create_sip_conference_scheduler(marie.getLc(), nullptr);
 		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
 		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);

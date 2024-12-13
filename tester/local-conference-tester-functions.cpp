@@ -1502,6 +1502,7 @@ void create_conference_base(time_t start_time,
 			conferenceMgrs.remove(laure.getCMgr());
 			members.remove(laure.getCMgr());
 			participants.remove(laure.getCMgr());
+			BC_ASSERT_FALSE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallOutgoingInit, 2, 3000));
 		}
 
 		int idx = 1;
