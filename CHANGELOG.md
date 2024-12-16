@@ -10,14 +10,33 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## Unreleased
 
-## [5.4.0] unreleased
-### Added
-- linphone_participant_device_get_thumbnail_stream_capability() returns the direction of the thumbnail stream of a participant device
-- Added API to enable screen sharing during a conference as well as callback to be notified that a participant device is screen sharing
-- Tests for improvement of video call quality with flexible Forward Error Correction.
+## [5.4.0] 2025-01-14
 
+### Added
+- Forward Error Correction to video stream, based on FlexFEC RFC8627
+- Java wrapper for Linux and Windows (see *java-sdk-linux* and *java-sdk-windows* linphone-sdk cmake presets)
+- Python wrapper for Linux (use -DENABLE_PYTHON_WRAPPER=ON)
+- Screensharing.
+- Support for SFU-based audio and video conferencing
+- End to end encryption for audio/video conferences, using double SRTP encryption RFC8723 and RFC8870 (EKT)
+- Creation of conferences through CCMP protocol (RFC6503) via ConferenceScheduler object.
+- VCARD version 3 compatibility (in addition to version 4).
+- Bearer authentication for SIP and http utilities (remote provisioning, file transfer...).
+- Post-Quantum IM end-to-end encryption (see lime/CHANGELOG.md)
+- Added LinphoneAccountManagerServices class to encapsulate various account management features provided by Flexisip Account Manager
+- LinphoneMagicSearch can now perform contact searches through CardDav protocol.
+- Search text in IM message feature.
+- IM capability within video conferences
+- Message Waiting Indication client support (RFC3842): see LinphoneMessageWaitingIndication object.
+- Add Simple Media File Format support for recording of calls (house-made audio/video file container that supports opus, AV1, H264, H265, VP8 codecs).
+- linphone_participant_device_get_thumbnail_stream_capability() returns the direction of the thumbnail stream of a participant device.
+- new linphone_video_activation_policy_set_automatically_accept_direction() to help apps handle asymmetric video activation during calls.
+- LinphoneFriendDevice object, to present user's device and associated security levels.
+- Automatic retry of pending outgoing IMs in case of timeout or network disconnection.
 
 ### Changed
+- Unifies ChatRoom and Conferences internal classes
+- Allow IMDNs to be sent only to message sender (see linphone_core_set_imdn_to_everybody_threshold() )
 - Echo Canceller Calibrator improvements
 - LinphoneRecorderFileFormat enum has been renamed into LinphoneMediaFileFormat.
 - Participant devices now deal separately with the main video stream and the thumbnail stream
@@ -28,13 +47,21 @@ This changelog file was started on October 2019. Previous changes were more or l
 - linphone_core_get_video_activation_policy() now returns a const object. Use linphone_video_activation_policy_clone() or create a new one
   if you want to make changes before calling linphone_core_set_video_activation_policy().
 - LinphoneFriendList revision field is now a string instead of an int. If there was a revision value > 0, it is kept but as string, otherwise newly created friend list will have a revision set to empty string.
+- Improve ZRTP security and alert against security level regressions during calls.
+- Improve reliability of push notification handling on Android (avoid process suspension using wake locks)
+- CPU usage optimisations while using a large number of Account objects (typically in server applications)
+- internal refactoring of C code into C++.
+- AccountCreator object is deprecated (use LinphoneAccountManagerServices as a replacement)
+- Allow LinphoneCoreCbs' s authentication_requested() callack to be invoked during remote provisioning.
 
 ### Fixed
 - t= lines in the SDP no longer changed in the answer
 - DNS resolution of stun server for ICE is now made asynchronously at the beginning of calls.
+- UTF-8 issues with C# wrapper
 
 ### Removed
 - Removed old & deprecated VideoPolicy object.
+
 
 ## [5.3.55] 2024-05-31
 

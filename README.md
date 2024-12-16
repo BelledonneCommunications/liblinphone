@@ -19,8 +19,8 @@ Liblinphone is dual licensed, and is available either :
 
 # Documentation
 
--   Supported features and RFCs : https://www.linphone.org/technical-corner/liblinphone/features
--   API documentation, for each supported language: https://www.linphone.org/releases/docs/liblinphone/
+-   Supported features and RFCs : https://www.linphone.org/en/liblinphone-voip-sdk/#liblinphone-features
+-   API documentation, for each supported language: https://download.linphone.org/releases/docs/liblinphone/
 -   Liblinphone developer guide on Linphone public wiki: https://wiki.linphone.org/xwiki/wiki/public/view/Lib/
 
 
@@ -92,9 +92,9 @@ This software is distributed under GNU GPLv3. Please read COPYING file for full 
 
 
 - [1] Linphone: https://linphone.org/technical-corner/linphone
-- [2] bctoolbox: https://gitlab.linphone.org/BC/public/bctoolbox *or* <https://www.linphone.org/releases/sources/bctoolbox>
-- [3] belle-sip: https://gitlab.linphone.org/BC/public/belle-sip *or* <https://www.linphone.org/releases/sources/belle-sip>
-- [4] mediastreamer2: https://gitlab.linphone.org/BC/public/mediastreamer2 *or* <https://www.linphone.org/releases/sources/mediastreamer>
-- [5] belcard: https://gitlab.linphone.org/BC/public/belcard *or* <https://www.linphone.org/releases/sources/belcard>
-- [6] bzrtp: https://gitlab.linphone.org/BC/public/bzrtp *or* <https://www.linphone.org/releases/sources/bzrtp>
+- [2] bctoolbox: https://gitlab.linphone.org/BC/public/bctoolbox
+- [3] belle-sip: https://gitlab.linphone.org/BC/public/belle-sip
+- [4] mediastreamer2: https://gitlab.linphone.org/BC/public/mediastreamer2
+- [5] belcard: https://gitlab.linphone.org/BC/public/belcard
+- [6] bzrtp: https://gitlab.linphone.org/BC/public/bzrtp
 - [7] linphone-sdk https://gitlab.linphone.org/BC/public/linphone-sdk
