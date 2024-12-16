@@ -357,9 +357,9 @@ class PythonTranslator(object):
                 argType = paramDict['python_param_type']
             elif paramDict['is_enum']:
                 argType = arg.type.desc.name.translate(self.nameTranslator)
-            callbackDict['doc_python_params'] += argType
             if arg.maybenil:
-                callbackDict['doc_python_params'] += ' | None'
+                argType = 'Union[' + argType + ', None]'
+            callbackDict['doc_python_params'] += argType
 
         callbackDict['doc_python_params'] += '], None]' # assume callback returns nothing
 
@@ -515,9 +515,9 @@ class PythonTranslator(object):
                 argType = paramDict['python_param_type']
             elif paramDict['is_enum']:
                 argType = arg.type.desc.name.translate(self.nameTranslator)
-            methodDict['doc_python_params'] += paramDict['python_param_name'] + ": " + argType
             if arg.maybenil:
-                methodDict['doc_python_params'] += ' | None'
+                argType = 'Union[' + argType + ', None]'
+            methodDict['doc_python_params'] += paramDict['python_param_name'] + ": " + argType
 
         return methodDict
 

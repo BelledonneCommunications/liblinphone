@@ -24,7 +24,7 @@
 """
 
 from enum import Enum
-from typing import Callable
+from typing import Callable, Union
 
 {{#enums}}
 class {{name}}(Enum):
@@ -109,7 +109,7 @@ class {{python_name}}:
     {{#properties}}
     {{#getter}}
     @property
-    def {{python_name}}(self) -> {{doc_return_type}}{{#doc_return_maybenil}} | None{{/doc_return_maybenil}}:
+    def {{python_name}}(self) -> {{#doc_return_maybenil}}Union[{{/doc_return_maybenil}}{{doc_return_type}}{{#doc_return_maybenil}}, None]{{/doc_return_maybenil}}:
         """
         {{#briefDoc}}
         {{#lines}}
@@ -127,7 +127,7 @@ class {{python_name}}:
     {{/getter}}
     {{#setter}}
     @{{python_name}}.setter
-    def {{python_name}}(self, value: {{doc_value_type}}{{#doc_value_maybenil}} | None{{/doc_value_maybenil}}):
+    def {{python_name}}(self, value: {{#doc_value_maybenil}}Union[{{/doc_value_maybenil}}{{doc_value_type}}{{#doc_value_maybenil}}, None]{{/doc_value_maybenil}}):
         """
         {{#briefDoc}}
         {{#lines}}
@@ -145,7 +145,7 @@ class {{python_name}}:
     {{/setter}}
     {{/properties}}
     {{#methods}}
-    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}){{#has_return}} -> {{doc_return_type}}{{#doc_return_maybenil}} | None{{/doc_return_maybenil}}{{/has_return}}:
+    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}){{#has_return}} -> {{#doc_return_maybenil}}Union[{{/doc_return_maybenil}}{{doc_return_type}}{{#doc_return_maybenil}}, None]{{/doc_return_maybenil}}{{/has_return}}:
         """
         {{#briefDoc}}
         {{#lines}}
