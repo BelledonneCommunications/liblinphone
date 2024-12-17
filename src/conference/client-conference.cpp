@@ -1607,6 +1607,10 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 		call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
 	}
 
+	resetCachedScreenSharingDevice();
+	for (const auto &device : getMe()->getDevices()) {
+		device->enableScreenSharing(false);
+	}
 	if (call) call->setConference(nullptr);
 	if (!mConfParams->chatEnabled()) {
 		setState(ConferenceInterface::State::Deleted);

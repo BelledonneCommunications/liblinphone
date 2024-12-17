@@ -154,6 +154,15 @@ public:
 	void setImpl(SalAddress *value);
 	void setImpl(const SalAddress *value);
 	static void clearSipAddressesCache();
+	struct WeakLess {
+		bool operator()(const Address &address1, const Address &address2) const {
+			Address pruned1 = address1.getUri();
+			pruned1.setParams("");
+			Address pruned2 = address2.getUri();
+			pruned2.setParams("");
+			return pruned1 < pruned2;
+		}
+	};
 	struct WeakEqual {
 		bool operator()(const Address &address1, const Address &address2) const {
 			return address1.weakEqual(address2);

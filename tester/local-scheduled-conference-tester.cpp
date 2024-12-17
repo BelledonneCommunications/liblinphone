@@ -1019,6 +1019,16 @@ static void create_simple_conference_with_screen_sharing(void) {
 	                                           {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
+static void create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screensharing(void) {
+	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
+	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
+}
+
+static void create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screensharing(void) {
+	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
+	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
+}
+
 static void create_simple_conference_with_screen_sharing_override(void) {
 	create_conference_with_screen_sharing_base(
 	    ms_time(NULL), -1, LinphoneMediaEncryptionZRTP, LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE,
@@ -5940,6 +5950,10 @@ static test_t local_conference_scheduled_conference_audio_only_participant_tests
 static test_t local_conference_scheduled_conference_with_screen_sharing_tests[] = {
     TEST_NO_TAG("Create simple conference with screen sharing",
                 LinphoneTest::create_simple_conference_with_screen_sharing),
+    TEST_NO_TAG("Create simple conference with screen sharing and chat rejoining without screensharing",
+                LinphoneTest::create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screensharing),
+    TEST_NO_TAG("Create simple conference with screen sharing and chat rejoining with screensharing",
+                LinphoneTest::create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screensharing),
     TEST_NO_TAG("Participant joins simple conference with screen sharing",
                 LinphoneTest::participant_joins_simple_conference_with_screen_sharing),
     TEST_NO_TAG("Create simple conference with screen sharing override",

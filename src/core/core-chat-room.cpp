@@ -476,7 +476,7 @@ void CorePrivate::loadChatRooms() {
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
 #endif
 	if (!mainDb->isInitialized()) return;
-	std::set<Address, Address::WeakEqual> friendDeviceAddresses;
+	std::set<Address, Address::WeakLess> friendDeviceAddresses;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 		// We are looking for a one to one chatroom which isn't basic
