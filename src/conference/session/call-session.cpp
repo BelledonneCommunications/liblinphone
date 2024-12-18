@@ -1997,6 +1997,7 @@ const string &CallSession::getRemoteUserAgent() const {
 
 shared_ptr<CallSession> CallSession::getReplacedCallSession() const {
 	L_D();
+	if (!d->op) return nullptr;
 	SalOp *replacedOp = d->op->getReplaces();
 	if (!replacedOp) return nullptr;
 	return static_cast<CallSession *>(replacedOp->getUserPointer())->getSharedFromThis();
