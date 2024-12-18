@@ -1613,7 +1613,7 @@ SalCallOp *SalCallOp::getReplaces() const {
 	// to the remote tag.
 	auto dialog = belle_sip_provider_find_dialog(mRoot->mProvider, call_id, to_tag, from_tag);
 
-	if (!dialog && (to_tag == NULL || strcmp(belle_sip_header_replaces_get_to_tag(mReplaces), "0") == 0)) {
+	if (!dialog && (to_tag == NULL || strcmp(to_tag, "0") == 0)) {
 		// even if not described in rfc3891, in case of very early network switch at caller side, we might receive a
 		// replace header without to-tag. Give a chance to find the early dialog
 		dialog = belle_sip_provider_find_dialog_with_remote_tag(mRoot->mProvider, call_id, from_tag);
