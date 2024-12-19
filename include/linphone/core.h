@@ -8909,6 +8909,22 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_set_chat_database_path(Li
 LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_path(const LinphoneCore *core);
 
 /**
+ * Returns whether the database is enabled.
+ * @param core the #LinphoneCore @notnil
+ * @return a boolean indicating the enablement of the database.
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC bool_t linphone_core_database_enabled(const LinphoneCore *core);
+
+/**
+ * Enables or disables database usage. This function can only be called before starting the core up
+ * @param core the #LinphoneCore @notnil
+ * @param value a boolean to indicate whether the database is to be enabled.
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC void linphone_core_enable_database(LinphoneCore *core, bool_t value);
+
+/**
  * Create a client-side group chat room. When calling this function the chat room is only created
  * at the client-side and is empty. You need to call linphone_chat_room_add_participants() to
  * create at the server side and add participants to it.

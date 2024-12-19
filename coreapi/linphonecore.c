@@ -8896,6 +8896,20 @@ const char *linphone_core_get_chat_database_path(const LinphoneCore *) {
 	return "";
 }
 
+bool_t linphone_core_database_enabled(const LinphoneCore *lc) {
+	return linphone_config_get_bool(lc->config, "misc", "use_database", TRUE);
+}
+
+void linphone_core_enable_database(LinphoneCore *lc, bool_t value) {
+	LinphoneGlobalState state = linphone_core_get_global_state(lc);
+	if (state == LinphoneGlobalReady) {
+		linphone_config_set_bool(lc->config, "misc", "use_database", value);
+	} else {
+		lError() << "Unable to enable or disable database when the core is in state "
+		         << linphone_global_state_to_string(state);
+	}
+}
+
 void linphone_core_enable_sdp_200_ack(LinphoneCore *lc, bool_t enable) {
 	linphone_config_set_int(lc->config, "sip", "sdp_200_ack", lc->sip_conf.sdp_200_ack = enable);
 }

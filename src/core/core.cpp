@@ -153,7 +153,8 @@ void CorePrivate::init() {
 		}
 	}
 
-	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
+	if (linphone_factory_is_database_storage_available(linphone_factory_get()) &&
+	    !!linphone_core_database_enabled(lc)) {
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", nullptr));
 		if (!uri.empty())
