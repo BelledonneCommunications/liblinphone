@@ -31,13 +31,21 @@ static void resultsCb(list<shared_ptr<Friend>> friends, void *data, bool_t haveM
 	lInfo() << "[Magic Search][LDAP] Processing [" << friends.size() << "] friends created";
 
 	list<shared_ptr<SearchResult>> resultList;
+	bool filterResults = ldapPlugin->getMagicSearch().filterPluginsResults();
+	string domainFilter = ldapPlugin->getDomain();
+
 	for (auto &lFriend : friends) {
-		auto found =
-		    ldapPlugin->getMagicSearch().searchInFriend(lFriend, ldapPlugin->getDomain(), ldapPlugin->getSource());
-		if (resultList.empty()) {
-			resultList = found;
-		} else if (!found.empty()) {
-			resultList.splice(resultList.end(), found);
+		if (filterResults || !domainFilter.empty() || domainFilter != "*") {
+			auto found = ldapPlugin->getMagicSearch().searchInFriend(lFriend, domainFilter, ldapPlugin->getSource());
+			if (resultList.empty()) {
+				resultList = found;
+			} else if (!found.empty()) {
+				resultList.splice(resultList.end(), found);
+			}
+		} else {
+			auto result =
+			    ldapPlugin->getMagicSearch().createResultFromFriend(lFriend, domainFilter, ldapPlugin->getSource());
+			resultList.push_back(result);
 		}
 	}
 	ldapPlugin->setResults(resultList);

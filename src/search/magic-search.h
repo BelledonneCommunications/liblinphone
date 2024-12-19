@@ -210,6 +210,9 @@ public:
 	/** Inits all magic search plugins, allowing external sources to be used, such as LDAP or distant CardDAV queries */
 	void initPlugins();
 
+	/** Returns whether the magic search plugin should make sure the returned results match the filter or not */
+	bool filterPluginsResults() const;
+
 	/**
 	 * @return the cache of precedent result
 	 * @private
@@ -302,6 +305,17 @@ public:
 	 **/
 	std::list<std::shared_ptr<SearchResult>>
 	searchInFriend(const std::shared_ptr<Friend> &lFriend, const std::string &withDomain, int flags) const;
+
+	/**
+	 * Creates a search result from a given friend.
+	 * @param[in] lFriend friend to use (no check will be made)
+	 * @param[in] withDomain domain which we want to search only
+	 * @param[in] flags flags to set in SearchResult(s)
+	 * @return result from friend
+	 * @private
+	 **/
+	std::shared_ptr<SearchResult>
+	createResultFromFriend(const std::shared_ptr<Friend> &lFriend, const std::string &withDomain, int flags) const;
 
 	/**
 	 * Return a weight for a searched in with a filter

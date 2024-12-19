@@ -131,6 +131,11 @@ void MagicSearch::resetSearchCache() {
 	mCacheResult.clear();
 }
 
+bool MagicSearch::filterPluginsResults() const {
+	LinphoneConfig *config = linphone_core_get_config(this->getCore()->getCCore());
+	return !!linphone_config_get_bool(config, "magic_search", "filter_plugins_results", FALSE);
+}
+
 // STATES:
 // STATE_START => (STATE_WAIT) => STATE_SEND [<=] => STATE_END
 bool MagicSearch::iterate(void) {
@@ -757,6 +762,40 @@ static bool isSipUri(const string &phoneNumber) {
 		return false;
 	}
 	return (strchr(c_phone_number, '@') != NULL);
+}
+
+shared_ptr<SearchResult>
+MagicSearch::createResultFromFriend(const shared_ptr<Friend> &lFriend, const string &withDomain, int flags) const {
+	shared_ptr<Address> address = nullptr;
+	auto addresses = lFriend->getAddresses();
+	if (addresses.empty()) {
+		address = lFriend->getAddress();
+	} else {
+		unsigned int addressWeight = getMinWeight();
+		for (auto &addr : addresses) {
+			unsigned int addrWeight = searchInAddress(addr, withDomain);
+			if (addrWeight > addressWeight || address == nullptr) {
+				addressWeight = addrWeight;
+				address = addr;
+			}
+		}
+	}
+
+	std::string phoneNumber = "";
+	const auto phoneNumbers = lFriend->getPhoneNumbers();
+	unsigned int phoneNumberWeight = getMinWeight();
+	if (!phoneNumbers.empty()) {
+		for (const auto &number : phoneNumbers) {
+			unsigned int numberWeight = getWeight(number);
+			if (numberWeight > phoneNumberWeight || phoneNumber.empty()) {
+				phoneNumberWeight = numberWeight;
+				phoneNumber = number;
+			}
+		}
+	}
+
+	unsigned int weight = getMaxWeight();
+	return SearchResult::create(weight, address, phoneNumber, lFriend, flags);
 }
 
 list<shared_ptr<SearchResult>>

@@ -92,12 +92,19 @@ void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &fr
 	lDebug() << "[Magic Search][CardDAV] Found " << friends.size() << " friends in remote server";
 
 	list<shared_ptr<SearchResult>> resultList;
+	bool filterResults = getMagicSearch().filterPluginsResults();
+
 	for (auto &lFriend : friends) {
-		auto found = getMagicSearch().searchInFriend(lFriend, mDomain, getSource());
-		if (resultList.empty()) {
-			resultList = found;
-		} else if (!found.empty()) {
-			resultList.splice(resultList.end(), found);
+		if (filterResults || !mDomain.empty() || mDomain != "*") {
+			auto found = getMagicSearch().searchInFriend(lFriend, mDomain, getSource());
+			if (resultList.empty()) {
+				resultList = found;
+			} else if (!found.empty()) {
+				resultList.splice(resultList.end(), found);
+			}
+		} else {
+			auto result = getMagicSearch().createResultFromFriend(lFriend, mDomain, getSource());
+			resultList.push_back(result);
 		}
 	}
 
