@@ -2421,7 +2421,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		const auto accountParams = account->getAccountParams();
 		addr = *accountParams->getIdentityAddress();
 	} else {
-		addr = Address(linphone_core_get_identity(core));
+		addr = Address(L_C_TO_STRING(linphone_core_get_identity(core)));
 	}
 	if (!addr.getUsername().empty()) { /* Might be null in case of identity without userinfo */
 		md->username = addr.getUsername();

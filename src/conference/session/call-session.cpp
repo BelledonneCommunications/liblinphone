@@ -1462,10 +1462,14 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 		} else {
 			cAccount = linphone_core_lookup_account_by_identity(core, fromAddr);
 		}
+		std::shared_ptr<Account> account;
 		if (cAccount) {
-			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
-			d->setDestAccount(account);
+			account = Account::toCpp(cAccount)->getSharedFromThis();
+		} else {
+			lInfo() << "Unable to guess the account to associate to call session [" << this << "] - using default account";
+			account = getCore()->getDefaultAccount();
 		}
+		d->setDestAccount(account);
 	}
 }
 
@@ -2130,7 +2134,7 @@ void CallSession::updateContactAddressInOp() {
 	} else if (d->op && d->op->getContactAddress()) {
 		contactAddress.setImpl(d->op->getContactAddress());
 	} else {
-		contactAddress = Address(linphone_core_get_identity(getCore()->getCCore()));
+		contactAddress = Address(L_C_TO_STRING(linphone_core_get_identity(getCore()->getCCore())));
 	}
 
 	updateContactAddress(contactAddress);
