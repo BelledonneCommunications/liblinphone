@@ -37,6 +37,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.linphone.core.Factory;
+import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.mediastream.Version;
@@ -150,6 +151,10 @@ public class FileTransferService extends Service {
         }
         Log.i("[", ClassName, "] Notification has been created, start service as foreground for real");
         DeviceUtils.startDataSyncForegroundService(this, SERVICE_NOTIF_ID, mServiceNotification);
+
+        if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().setFileTransferServiceNotificationStarted();
+        }
     }
 
     void startForeground() {

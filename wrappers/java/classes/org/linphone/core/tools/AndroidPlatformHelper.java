@@ -150,6 +150,8 @@ public class AndroidPlatformHelper {
 
     private Class mFileTransferServiceClass;
     private boolean mFileTransferServiceStarted;
+    private boolean mFileTransferServiceNotificationStarted;
+    private boolean mFileTransferServiceStopPending;
 
     private Class mServiceClass;
 
@@ -1295,16 +1297,37 @@ public class AndroidPlatformHelper {
             Log.i("[Platform Helper] Starting foreground file transfer service");
             Intent i = new Intent(mContext, mFileTransferServiceClass);
             DeviceUtils.startForegroundService(mContext, i);
+            mFileTransferServiceNotificationStarted = false;
+            mFileTransferServiceStopPending = false;
             mFileTransferServiceStarted = true;
+        }
+    }
+
+    public void setFileTransferServiceNotificationStarted() {
+        mFileTransferServiceNotificationStarted = true;
+        Log.i("[Platform Helper] File transfer service notification was dispatched");
+
+        if (mFileTransferServiceStopPending) {
+            Log.i("[Platform Helper] File transfer service can now be stopped, doing it");
+            mFileTransferServiceStopPending = false;
+            stopFileTransferService();
         }
     }
 
     public void stopFileTransferService() {
         if (mFileTransferServiceStarted) {
             Log.i("[Platform Helper] Foreground file transfer service is no longer required");
-            Intent i = new Intent(mContext, mFileTransferServiceClass);
-            mContext.stopService(i);
-            mFileTransferServiceStarted = false;
+            if (mFileTransferServiceNotificationStarted) {
+                Intent i = new Intent(mContext, mFileTransferServiceClass);
+                mContext.stopService(i);
+                mFileTransferServiceNotificationStarted = false;
+                mFileTransferServiceStopPending = false;
+                mFileTransferServiceStarted = false;
+                Log.i("[Platform Helper] Foreground file transfer service stopped");
+            } else {
+                mFileTransferServiceStopPending = true;
+                Log.w("[Platform Helper] Trying to stop a foreground service for which notification wasn't dispatched yet, waiting...");
+            }
         }
     }
 
