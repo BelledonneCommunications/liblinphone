@@ -1053,19 +1053,23 @@ bool ChatRoom::ephemeralSupportedByAllParticipants() const {
 }
 
 uint32_t ChatRoom::getChar() {
-	uint32_t character = 0;
+	try {
+		uint32_t character = 0;
 
-	if (mReadCharacterIndex < mReceivedRttCharacters.size()) {
-		character = mReceivedRttCharacters.at(mReadCharacterIndex);
-		mReadCharacterIndex += 1;
+		if (mReadCharacterIndex < mReceivedRttCharacters.size()) {
+			character = mReceivedRttCharacters.at(mReadCharacterIndex);
+			mReadCharacterIndex += 1;
+		}
+
+		if (mReadCharacterIndex == mReceivedRttCharacters.size()) {
+			mReadCharacterIndex = 0;
+			mReceivedRttCharacters.clear();
+		}
+
+		return character;
+	} catch (std::out_of_range &) {
+		return 0;
 	}
-
-	if (mReadCharacterIndex == mReceivedRttCharacters.size()) {
-		mReadCharacterIndex = 0;
-		mReceivedRttCharacters.clear();
-	}
-
-	return character;
 }
 
 void ChatRoom::setCallId(const std::string &value) {

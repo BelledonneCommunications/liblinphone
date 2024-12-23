@@ -1187,10 +1187,13 @@ std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager() {
 
 void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, const std::string peerDeviceId) {
 	try {
-		limeManager->stale_sessions(localDeviceId, usersAlgos.at(localDeviceId), peerDeviceId);
+		auto curveIds = usersAlgos.at(localDeviceId);
+		limeManager->stale_sessions(localDeviceId, curveIds, peerDeviceId);
 	} catch (const BctbxException &e) {
 		lError() << "[LIME] fail to stale session between local [" << localDeviceId << "] and "
 		         << " remote [" << peerDeviceId << "]. lime says: " << e.what();
+	} catch (std::out_of_range &) {
+		lError() << "Unable to find curve IDs for device " << localDeviceId;
 	}
 }
 

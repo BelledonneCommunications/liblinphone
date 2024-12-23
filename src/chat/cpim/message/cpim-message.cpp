@@ -52,11 +52,12 @@ Cpim::Message::Message() : Object(*new MessagePrivate) {
 // -----------------------------------------------------------------------------
 
 Cpim::Message::HeaderList Cpim::Message::getMessageHeaders(const string &ns) const {
-	L_D();
-
-	if (d->messageHeaders.find(ns) == d->messageHeaders.end()) return nullptr;
-
-	return d->messageHeaders.at(ns);
+	try {
+		L_D();
+		return d->messageHeaders.at(ns);
+	} catch (std::out_of_range &) {
+		return nullptr;
+	}
 }
 
 bool Cpim::Message::addMessageHeader(const Header &messageHeader, const string &ns) {
@@ -75,25 +76,26 @@ bool Cpim::Message::addMessageHeader(const Header &messageHeader, const string &
 }
 
 void Cpim::Message::removeMessageHeader(const Header &messageHeader, const string &ns) {
-	L_D();
-
-	if (d->messageHeaders.find(ns) != d->messageHeaders.end())
+	try {
+		L_D();
 		d->messageHeaders.at(ns)->remove_if([&messageHeader](const shared_ptr<const Header> &header) {
 			return messageHeader.getName() == header->getName() && messageHeader.getValue() == header->getValue();
 		});
+	} catch (std::out_of_range &) {
+	}
 }
 
 shared_ptr<const Cpim::Header> Cpim::Message::getMessageHeader(const string &name, const string &ns) const {
-	L_D();
-
-	if (d->messageHeaders.find(ns) == d->messageHeaders.end()) return nullptr;
-
-	auto list = d->messageHeaders.at(ns);
-	for (const auto &messageHeader : *list) {
-		if (messageHeader->getName() == name) return messageHeader;
+	try {
+		L_D();
+		auto list = d->messageHeaders.at(ns);
+		for (const auto &messageHeader : *list) {
+			if (messageHeader->getName() == name) return messageHeader;
+		}
+		return nullptr;
+	} catch (std::out_of_range &) {
+		return nullptr;
 	}
-
-	return nullptr;
 }
 
 // -----------------------------------------------------------------------------
