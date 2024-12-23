@@ -1465,11 +1465,8 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 		std::shared_ptr<Account> account;
 		if (cAccount) {
 			account = Account::toCpp(cAccount)->getSharedFromThis();
-		} else {
-			lInfo() << "Unable to guess the account to associate to call session [" << this << "] - using default account";
-			account = getCore()->getDefaultAccount();
+			d->setDestAccount(account);
 		}
-		d->setDestAccount(account);
 	}
 }
 

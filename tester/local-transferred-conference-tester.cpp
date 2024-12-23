@@ -625,7 +625,7 @@ static void conference_joined_in_early_media(void) {
 		    linphone_core_get_call_by_remote_address2(pauline.getLc(), focus.getIdentity().toC());
 		BC_ASSERT_PTR_NOT_NULL(pauline_call);
 		if (pauline_call) {
-			LinphoneCallParams *pauline_params = linphone_core_create_call_params(marie.getLc(), nullptr);
+			LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline.getLc(), nullptr);
 			linphone_call_params_enable_video(pauline_params, FALSE);
 			linphone_call_params_enable_early_media_sending(pauline_params, TRUE);
 			ms_message("%s accepts early media in call to %s", linphone_core_get_identity(pauline.getLc()),
@@ -645,7 +645,7 @@ static void conference_joined_in_early_media(void) {
 		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), marie.getIdentity().toC());
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 		if (focus_call) {
-			LinphoneCallParams *focus_early_media_params = linphone_core_create_call_params(marie.getLc(), nullptr);
+			LinphoneCallParams *focus_early_media_params = linphone_core_create_call_params(focus.getLc(), nullptr);
 			linphone_call_params_enable_video(focus_early_media_params, FALSE);
 			linphone_call_params_enable_early_media_sending(focus_early_media_params, TRUE);
 			ms_message("%s accepts early media in call to %s", linphone_core_get_identity(focus.getLc()),

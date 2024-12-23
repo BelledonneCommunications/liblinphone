@@ -1711,7 +1711,8 @@ void ClientConference::onParticipantDeviceScreenSharingChanged(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
     const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = getMainSession();
-	if ((device->getSession() == session) && isIn()) {
+	bool isMainSession = session && (device->getSession() == session);
+	if (isMainSession && isIn()) {
 		if (device->screenSharingEnabled()) {
 			notifyActiveSpeakerParticipantDevice(device);
 		} else {
@@ -1727,7 +1728,7 @@ void ClientConference::onParticipantDeviceScreenSharingChanged(
 	const auto ms = static_pointer_cast<MediaSession>(session);
 	ConferenceLayout confLayout = ms->getMediaParams()->getConferenceVideoLayout();
 	bool isGridLayout = (confLayout == ConferenceLayout::Grid);
-	if (updateMinatureRequestedFlag() || isGridLayout) {
+	if (!isMainSession && (updateMinatureRequestedFlag() || isGridLayout)) {
 		auto updateSession = [this, device]() -> LinphoneStatus {
 			lInfo() << "Sending re-INVITE because participant thumbnails are"
 			        << (areThumbnailsRequested(false) ? " " : " no longer ") << "requested in conference "
@@ -1735,7 +1736,7 @@ void ClientConference::onParticipantDeviceScreenSharingChanged(
 			auto ret = updateMainSession();
 			if (ret != 0) {
 				lInfo() << "Delaying re-INVITE because participant thumbnails are "
-				        << (areThumbnailsRequested(false) ? "" : "no longer") << " requested in conference "
+				        << (areThumbnailsRequested(false) ? "" : "no longer") << "requested in conference "
 				        << *getConferenceAddress() << " or the conference layout is Grid cannot be sent right now";
 			}
 			return ret;
