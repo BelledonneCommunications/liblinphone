@@ -32,6 +32,7 @@ public class ShutdownReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.w("[Platform Helper] Shutdown intent received, stopping Core");
         if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().stop();
     }
 }

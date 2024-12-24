@@ -458,8 +458,16 @@ public class AndroidPlatformHelper {
     }
 
     public void stop() {
-        Log.i("[Platform Helper] Stopping");
-        stopCore(mCore.getNativePointer());
+        if (mCore != null) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    Log.i("[Platform Helper] Stopping Core");
+                    stopCore(mCore.getNativePointer());
+                }
+            };
+            dispatchOnCoreThread(runnable);
+        }
     }
 
     public void onLinphoneCoreStop() {

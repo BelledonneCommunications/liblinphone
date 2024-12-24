@@ -808,9 +808,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_stopCore(
     BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
-
-	const std::function<void()> fun = [core]() { linphone_core_stop(core); };
-	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+	linphone_core_stop(core);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_leaveConference(
