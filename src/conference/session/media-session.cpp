@@ -946,7 +946,28 @@ void MediaSessionPrivate::setCurrentParams(MediaSessionParams *msp) {
 void MediaSessionPrivate::setParams(MediaSessionParams *msp) {
 	// Pass the account used for the call to the local parameters.
 	// It has been chosen at the start and it should not be changed anymore
-	if (msp) msp->setAccount(getDestAccount());
+	if (msp) {
+		const auto newAccount = msp->getAccount();
+		if (newAccount) {
+			switch (prevState) {
+				case CallSession::State::Idle:
+				case CallSession::State::OutgoingInit:
+				case CallSession::State::IncomingReceived:
+				case CallSession::State::PushIncomingReceived:
+				case CallSession::State::IncomingEarlyMedia:
+				case CallSession::State::OutgoingEarlyMedia:
+				case CallSession::State::Connected:
+					setDestAccount(newAccount);
+					break;
+				default:
+					// Do not change the account if the call is already established
+					msp->setAccount(getDestAccount());
+					break;
+			}
+		} else {
+			msp->setAccount(getDestAccount());
+		}
+	}
 	CallSessionPrivate::setParams(msp);
 }
 
@@ -1318,11 +1339,8 @@ string MediaSessionPrivate::getLocalIpFromSignaling() const {
 }
 
 std::string MediaSessionPrivate::getLocalIpFromMedia() const {
-	L_Q();
 	string guessedIpAddress;
-	if (op && (q->getState() == CallSession::State::Idle || q->getState() == CallSession::State::IncomingReceived ||
-	           q->getState() == CallSession::State::IncomingEarlyMedia ||
-	           q->getState() == CallSession::State::UpdatedByRemote)) {
+	if (op && ((state == CallSession::State::Idle) || (state == CallSession::State::IncomingReceived) || (state == CallSession::State::IncomingEarlyMedia) || (state == CallSession::State::UpdatedByRemote))) {
 		auto remoteDesc = op->getRemoteMediaDescription();
 		string remoteAddr;
 		if (remoteDesc) {
