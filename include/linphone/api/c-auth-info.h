@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -353,6 +353,21 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_client_id(const LinphoneAuthI
  * @param client_id the client_id. @maybenil
  */
 LINPHONE_PUBLIC void linphone_auth_info_set_client_id(LinphoneAuthInfo *auth_info, const char *client_id);
+
+/**
+ * Get the expiration time for the current authentication information.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return The expiration time as a number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
+ */
+LINPHONE_PUBLIC time_t linphone_auth_info_get_expires(const LinphoneAuthInfo *auth_info);
+
+/**
+ * Set the expiration time for the current authentication information.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param expires The new expiration time in seconds.
+ *                Use 0 to indicate no expiration.
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_expires(LinphoneAuthInfo *auth_info, time_t expires);
 
 /************ */
 /* DEPRECATED */

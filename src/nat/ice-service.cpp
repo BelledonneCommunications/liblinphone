@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -226,10 +226,7 @@ void IceService::createStreams(const OfferAnswerContext &params) {
 	}
 }
 
-bool IceService::prepare() {
-
-	if (!mIceSession) return false;
-
+bool IceService::needIceGathering() {
 	// Start ICE gathering if needed.
 	if (!ice_session_candidates_gathered(mIceSession)) {
 		mInsideGatherIceCandidates = true;
@@ -245,6 +242,21 @@ bool IceService::prepare() {
 		return true;
 	}
 	return false;
+}
+
+bool IceService::prepare() {
+
+	if (!mIceSession) return false;
+
+	const auto natPolicy = getMediaSessionPrivate().getNatPolicy();
+	if (natPolicy && natPolicy->turnEnabled() && natPolicy->needToUpdateTurnConfiguration()) {
+		natPolicy->updateTurnConfiguration([this](BCTBX_UNUSED(bool ignored)) {
+			bool ret = needIceGathering();
+			if (!ret) notifyEndOfPrepare();
+		});
+		return true;
+	}
+	return needIceGathering();
 }
 
 LinphoneCore *IceService::getCCore() const {
@@ -792,6 +804,8 @@ const struct addrinfo *IceService::getIcePreferredStunServerAddrinfo(const struc
 
 void IceService::finishPrepare() {
 	if (!mIceSession) return;
+	auto natPolicy = getMediaSessionPrivate().getNatPolicy();
+	if (natPolicy) natPolicy->cancelTurnConfigurationUpdate();
 	gatheringFinished();
 }
 

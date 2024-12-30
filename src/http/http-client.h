@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Belledonne Communications SARL.
+ * Copyright (c) 2024-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -114,6 +114,7 @@ class LINPHONE_PUBLIC HttpClient : public CoreAccessor {
 
 public:
 	HttpClient(const std::shared_ptr<Core> &core);
+	HttpClient(const HttpClient &other) = delete;
 	~HttpClient();
 	/* Create a http request, throws exception if it cannot be constructed. */
 	HttpRequest &createRequest(const std::string &method, const std::string &uri);

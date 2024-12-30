@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2025 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -301,14 +301,20 @@ endif()
 
 set(SOURCE_FILES_CXX
 	tester.cpp
+	alerts_tester.cpp
 	audio-quality-tester.cpp
-	clonable-object-tester.cpp
+	bearer-auth.cpp
+	call-twisted-cases.cpp
 	call_video_tester.cpp
 	call_flexfec_tester.cpp
 	call_ice_tester.cpp
 	call_secure_tester.cpp
 	capability_negotiation_tester.cpp
+	clonable-object-tester.cpp
+	conference-info-tester.cpp
 	dtmf_tester.cpp
+	http-client-tester.cpp
+	http-server-utils.cpp
 	ice_capability_negotiation_tester.cpp
 	srtp_capability_negotiation_tester.cpp
 	zrtp_capability_negotiation_tester.cpp
@@ -334,15 +340,10 @@ set(SOURCE_FILES_CXX
 	local-chat-imdn-tester.cpp
 	local-secure-chat-tester.cpp
 	local-ephemeral-chat-tester.cpp
-	vfs-encryption-tester.cpp
 	potential_configuration_tester.cpp
-	conference-info-tester.cpp
-	alerts_tester.cpp
+	turn-server-tester.cpp
 	vcard_tester.cpp
-	bearer-auth.cpp
-	call-twisted-cases.cpp
-	http-client-tester.cpp
-	http-server-utils.cpp
+	vfs-encryption-tester.cpp
 )
 
 if(ENABLE_LIME_X3DH)

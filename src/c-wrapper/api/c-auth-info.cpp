@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -274,4 +274,12 @@ const char *linphone_auth_info_get_client_id(const LinphoneAuthInfo *auth_info) 
 
 void linphone_auth_info_set_client_id(LinphoneAuthInfo *auth_info, const char *client_id) {
 	AuthInfo::toCpp(auth_info)->setClientId(L_STRING_TO_C(client_id));
+}
+
+time_t linphone_auth_info_get_expires(const LinphoneAuthInfo *auth_info) {
+	return AuthInfo::toCpp(auth_info)->getExpires();
+}
+
+void linphone_auth_info_set_expires(LinphoneAuthInfo *auth_info, time_t expires) {
+	AuthInfo::toCpp(auth_info)->setExpires(expires);
 }

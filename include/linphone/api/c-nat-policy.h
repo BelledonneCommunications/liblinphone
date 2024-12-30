@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -273,6 +273,21 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(const Linp
  * @return the #LinphoneCore object associated. @notnil
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy);
+
+/**
+ * Get the TURN configuration endpoint.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return The TURN configuration endpoint used by this NAT policy. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_nat_policy_get_turn_configuration_endpoint(const LinphoneNatPolicy *policy);
+
+/**
+ * Set the TURN configuration endpoint.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param endpoint The TURN configuration endpoint to use with this NAT policy. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_set_turn_configuration_endpoint(LinphoneNatPolicy *policy,
+                                                                         const char *endpoint);
 
 /**
  * @}

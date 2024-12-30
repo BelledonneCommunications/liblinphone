@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -46,8 +46,8 @@ public:
 	/* Returns true if ICE is running. */
 	bool isRunning() const;
 
-	/* Returns true if ICE has finished with the check lists processing, even if it has failed for some of the check
-	 * list.*/
+	/* Returns true if ICE has finished with the checklists processing, even if it has failed for some of the
+	 * checklist.*/
 	bool hasCompletedCheckList() const;
 
 	bool isControlling() const;
@@ -145,6 +145,7 @@ private:
 	void updateFromRemoteMediaDescription(const std::shared_ptr<SalMediaDescription> &localDesc,
 	                                      const std::shared_ptr<SalMediaDescription> &remoteDesc,
 	                                      bool isOffer);
+	bool needIceGathering();
 	void gatheringFinished();
 	void deleteSession();
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);

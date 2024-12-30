@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -164,4 +164,12 @@ const char *linphone_nat_policy_get_nat_v6_address(const LinphoneNatPolicy *poli
 
 void linphone_nat_policy_set_nat_v6_address(LinphoneNatPolicy *policy, const char *v6_address) {
 	NatPolicy::toCpp(policy)->setNatV6Address(L_C_TO_STRING(v6_address));
+}
+
+const char *linphone_nat_policy_get_turn_configuration_endpoint(const LinphoneNatPolicy *policy) {
+	return L_STRING_TO_C(NatPolicy::toCpp(policy)->getTurnConfigurationEndpoint());
+}
+
+void linphone_nat_policy_set_turn_configuration_endpoint(LinphoneNatPolicy *policy, const char *endpoint) {
+	NatPolicy::toCpp(policy)->setTurnConfigurationEndpoint(L_C_TO_STRING(endpoint));
 }

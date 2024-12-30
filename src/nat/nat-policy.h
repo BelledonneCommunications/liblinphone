@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -21,24 +21,28 @@
 #ifndef nat_policy_hh
 #define nat_policy_hh
 
+#include "auth-info/auth-info.h"
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-accessor.h"
+#include "http/http-client.h"
 #include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class NatPolicy : public bellesip::HybridObject<LinphoneNatPolicy, NatPolicy>, public CoreAccessor {
+class NatPolicy : public bellesip::HybridObject<LinphoneNatPolicy, NatPolicy>,
+                  public std::enable_shared_from_this<NatPolicy>,
+                  public CoreAccessor {
 public:
 	using ResolverResultsFn = std::function<void(const struct addrinfo *)>;
 	using AsyncHandle = unsigned;
 	enum class ConstructionMethod { Default, FromSectionName, FromRefName };
-	NatPolicy(const std::shared_ptr<Core> &core,
-	          ConstructionMethod method = ConstructionMethod::Default,
-	          const std::string &value = "");
+	explicit NatPolicy(const std::shared_ptr<Core> &core,
+	                   ConstructionMethod method = ConstructionMethod::Default,
+	                   const std::string &value = "");
 	NatPolicy(const NatPolicy &other);
-	~NatPolicy();
+	~NatPolicy() override;
 
-	virtual NatPolicy *clone() const override;
+	NatPolicy *clone() const override;
 
 	void setStunServer(const std::string &stunServer);
 	const std::string &getStunServer() const;
@@ -51,6 +55,9 @@ public:
 
 	void setNatV6Address(const std::string &natV6Address);
 	const std::string &getNatV6Address() const;
+
+	const std::string &getTurnConfigurationEndpoint() const;
+	void setTurnConfigurationEndpoint(const std::string &endpoint);
 
 	void enableStun(bool enable) {
 		mStunEnabled = enable;
@@ -128,15 +135,23 @@ public:
 	void saveToConfig(LinphoneConfig *config, int index) const;
 	static void clearConfigFromIndex(LinphoneConfig *config, int index);
 
+	void updateTurnConfiguration(const std::function<void(bool)> &iceGathering);
+	bool needToUpdateTurnConfiguration();
+	void cancelTurnConfigurationUpdate();
+
 private:
+	bool processJsonConfigurationResponse(const std::shared_ptr<NatPolicy> sharedNatPolicy,
+	                                      const HttpResponse &response);
 	void initFromSection(const LinphoneConfig *config, const char *section);
 	void stunServerResolved(belle_sip_resolver_results_t *results);
 	void clearResolverContexts();
 	void *mUserData = nullptr;
+	std::function<void(bool)> mCompletionRoutine = nullptr;
 	SalResolverContext mStunResolverContext;
 	belle_sip_resolver_results_t *mResolverResults = nullptr;
 	std::map<AsyncHandle, ResolverResultsFn> mResolverResultsFunctions;
 	static AsyncHandle sAsyncHandleGenerator;
+	std::string mTurnConfigurationEndpoint;
 	std::string mStunServer;
 	std::string mStunServerUsername;
 	std::string mRef;

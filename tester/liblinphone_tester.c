@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -637,6 +637,7 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&bearer_auth_test_suite);
 	bc_tester_add_suite(&call_twisted_cases_suite);
 	bc_tester_add_suite(&http_client_test_suite);
+	bc_tester_add_suite(&turn_server_test_suite);
 }
 
 void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, va_list args)) {

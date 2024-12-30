@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,10 +19,10 @@
  */
 
 #include "nat-policy.h"
-#include "core/core.h"
 
 #include <cstring>
 
+#include "core/core.h"
 #include "private.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -46,8 +46,8 @@ NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionM
 			std::ostringstream section;
 			section << "nat_policy_" << index;
 			if (linphone_config_has_section(config, section.str().c_str())) {
-				const char *config_ref = linphone_config_get_string(config, section.str().c_str(), "ref", NULL);
-				if ((config_ref != NULL) && (strcmp(config_ref, value.c_str()) == 0)) {
+				const char *config_ref = linphone_config_get_string(config, section.str().c_str(), "ref", nullptr);
+				if ((config_ref != nullptr) && (strcmp(config_ref, value.c_str()) == 0)) {
 					initFromSection(config, section.str().c_str());
 					break;
 				}
@@ -60,7 +60,9 @@ NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionM
 }
 
 NatPolicy::NatPolicy(const NatPolicy &other)
-    : HybridObject<LinphoneNatPolicy, NatPolicy>(other), CoreAccessor(other.getCore()) {
+    : HybridObject<LinphoneNatPolicy, NatPolicy>(other), std::enable_shared_from_this<LinphonePrivate::NatPolicy>(
+                                                             other),
+      CoreAccessor(other.getCore()) {
 	mStunServer = other.mStunServer;
 	mStunServerUsername = other.mStunServerUsername;
 	mRef = other.mRef;
@@ -73,6 +75,7 @@ NatPolicy::NatPolicy(const NatPolicy &other)
 	mTurnEnabled = other.mTurnEnabled;
 	mIceEnabled = other.mIceEnabled;
 	mUpnpEnabled = other.mUpnpEnabled;
+	mTurnConfigurationEndpoint = other.mTurnConfigurationEndpoint;
 	mTurnUdpEnabled = other.mTurnUdpEnabled;
 	mTurnTcpEnabled = false;
 	mTurnTlsEnabled = false;
@@ -109,7 +112,7 @@ bool NatPolicy::stunServerActivated() const {
 
 void NatPolicy::saveToConfig(LinphoneConfig *config, int index) const {
 	char *section;
-	bctbx_list_t *l = NULL;
+	bctbx_list_t *l = nullptr;
 
 	section = belle_sip_strdup_printf("nat_policy_%i", index);
 	linphone_config_set_string(config, section, "ref", mRef.c_str());
@@ -215,15 +218,15 @@ void NatPolicy::stunServerResolved(belle_sip_resolver_results_t *results) {
 
 bool NatPolicy::resolveStunServer() {
 	LinphoneCore *lc = getCore()->getCCore();
-	const char *service = NULL;
+	const char *service = nullptr;
 
-	if (stunServerActivated() && (lc->sal != NULL) && !mStunResolverContext) {
+	if (stunServerActivated() && (lc->sal != nullptr) && !mStunResolverContext) {
 		char host[NI_MAXHOST];
 		int port = 0;
 		linphone_parse_host_port(mStunServer.c_str(), host, sizeof(host), &port);
 		if (mTurnEnabled) service = "turn";
 		else if (mStunEnabled) service = "stun";
-		if (service != NULL) {
+		if (service != nullptr) {
 			int family = AF_INET;
 			if (linphone_core_ipv6_enabled(lc) == TRUE) family = AF_INET6;
 			ms_message("Starting stun server resolution [%s]", host);
@@ -297,11 +300,11 @@ void NatPolicy::initFromSection(const LinphoneConfig *config, const char *sectio
 	mTurnUdpEnabled = !!linphone_config_get_bool(config, section, "turn_enable_udp", TRUE);
 	mTurnTcpEnabled = !!linphone_config_get_bool(config, section, "turn_enable_tcp", FALSE);
 	mTurnTlsEnabled = !!linphone_config_get_bool(config, section, "turn_enable_tls", FALSE);
-	bctbx_list_t *l = linphone_config_get_string_list(config, section, "protocols", NULL);
+	bctbx_list_t *l = linphone_config_get_string_list(config, section, "protocols", nullptr);
 
-	if (l != NULL) {
+	if (l != nullptr) {
 		bctbx_list_t *elem;
-		for (elem = l; elem != NULL; elem = elem->next) {
+		for (elem = l; elem != nullptr; elem = elem->next) {
 			const char *value = (const char *)elem->data;
 			if (strcmp(value, "stun") == 0) enableStun(true);
 			else if (strcmp(value, "turn") == 0) enableTurn(true);
@@ -310,6 +313,114 @@ void NatPolicy::initFromSection(const LinphoneConfig *config, const char *sectio
 		}
 		bctbx_list_free_with_data(l, (bctbx_list_free_func)ms_free);
 	}
+}
+
+const std::string &NatPolicy::getTurnConfigurationEndpoint() const {
+	return mTurnConfigurationEndpoint;
+}
+
+void NatPolicy::setTurnConfigurationEndpoint(const std::string &endpoint) {
+	mTurnConfigurationEndpoint = endpoint;
+}
+
+bool NatPolicy::processJsonConfigurationResponse(const std::shared_ptr<NatPolicy> sharedNatPolicy,
+                                                 const HttpResponse &response) {
+	bool ret = true;
+	try {
+		if (response.getHttpStatusCode() != 200) {
+			lError() << "Failed to fetch TURN credentials. HTTP Status Code: " << response.getHttpStatusCode();
+			throw std::runtime_error("Failed to fetch TURN credentials: Invalid HTTP status code.");
+		}
+
+		const auto &responseBody = response.getBody();
+		JsonDocument doc(responseBody);
+		const Json::Value &root = doc.getRoot();
+
+		if (root.isNull() || !root.isObject()) {
+			lError() << "Invalid JSON response for TURN credentials: " << responseBody;
+			throw std::runtime_error("Invalid JSON response for TURN credentials.");
+		}
+
+		constexpr const char *usernameKey = "username";
+		constexpr const char *passwordKey = "password";
+		constexpr const char *timeToLeaveKey = "ttl";
+		constexpr const char *urisKey = "uris";
+
+		if (!root.isMember(usernameKey) || !root[usernameKey].isString() || !root.isMember(passwordKey) ||
+		    !root[passwordKey].isString()) {
+			lError() << "Missing required fields in TURN credentials JSON response: " << responseBody;
+			throw std::runtime_error("Missing required fields in TURN credentials JSON response.");
+		}
+
+		auto turnConfiguration =
+		    AuthInfo::create(root[usernameKey].asString(), "", root[passwordKey].asString(), "", "", "", "");
+
+		if (root.isMember(timeToLeaveKey) && root[timeToLeaveKey].isInt()) {
+			// To avoid potential configuration expiration before a new request can be made, the expiration time
+			// is set to 80% of the given duration. This ensures a buffer period for timely renewal.
+			auto expiration = (int)(root[timeToLeaveKey].asInt() * 0.8);
+			time_t expires = time(nullptr) + expiration;
+			turnConfiguration->setExpires(expires);
+		}
+
+		linphone_core_add_auth_info(sharedNatPolicy->getCore()->getCCore(), turnConfiguration->toC());
+
+		if (root.isMember(urisKey) && root[urisKey].isArray() && !root[urisKey].empty()) {
+			auto firstUri = root[urisKey].begin();
+			if (firstUri->isString()) {
+				if (belle_generic_uri_t *uri = belle_generic_uri_parse(firstUri->asString().c_str())) {
+					std::string hostname = belle_generic_uri_get_host(uri);
+					int port = belle_generic_uri_get_port(uri);
+					belle_sip_object_unref(uri);
+					if (!hostname.empty()) {
+						if (port == 0) {
+							sharedNatPolicy->mStunServer = hostname;
+						} else {
+							sharedNatPolicy->mStunServer = hostname + ":" + std::to_string(port);
+						}
+					}
+				}
+			}
+		}
+
+		sharedNatPolicy->mStunServerUsername = root[usernameKey].asString();
+
+		lInfo() << "TURN credentials successfully updated.";
+
+	} catch (const std::exception &e) {
+		lError() << "Exception while updating TURN credentials: " << e.what();
+		ret = false;
+	}
+	return ret;
+}
+
+void NatPolicy::updateTurnConfiguration(const std::function<void(bool)> &completionRoutine) {
+	mCompletionRoutine = completionRoutine;
+	auto &httpClient = getCore()->getHttpClient();
+	auto &httpRequest = httpClient.createRequest("GET", mTurnConfigurationEndpoint);
+
+	std::weak_ptr<NatPolicy> natPolicyRef = shared_from_this();
+	httpRequest.execute([natPolicyRef, completionRoutine](const HttpResponse &response) -> void {
+		auto sharedNatPolicy = natPolicyRef.lock();
+		if (sharedNatPolicy) {
+			bool ret = sharedNatPolicy->processJsonConfigurationResponse(sharedNatPolicy, response);
+			if (sharedNatPolicy->mCompletionRoutine) sharedNatPolicy->mCompletionRoutine(ret);
+		}
+	});
+}
+
+bool NatPolicy::needToUpdateTurnConfiguration() {
+	if (!mTurnConfigurationEndpoint.empty()) {
+		auto ai = linphone_core_find_auth_info(getCore()->getCCore(), nullptr, mStunServerUsername.c_str(), nullptr);
+		if (ai == nullptr) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void NatPolicy::cancelTurnConfigurationUpdate() {
+	mCompletionRoutine = nullptr;
 }
 
 LINPHONE_END_NAMESPACE

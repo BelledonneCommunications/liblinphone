@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -133,6 +133,13 @@ public:
 		return mClientId;
 	}
 
+	time_t getExpires() const {
+		return mExpires;
+	}
+	void setExpires(time_t expires) {
+		mExpires = expires;
+	}
+
 	std::string toString() const override;
 	// Check if Authinfos are the same without taking account algorithms
 	bool isEqualButAlgorithms(const AuthInfo *authInfo) const;
@@ -156,6 +163,7 @@ private:
 	std::string mAuthServer;
 	std::string mTokenEndpoint;
 	std::string mClientId;
+	time_t mExpires = 0;
 	bool mNeedToRenewHa1 = false;
 
 	void setNeedToRenewHa1(bool needToRenewHa1);

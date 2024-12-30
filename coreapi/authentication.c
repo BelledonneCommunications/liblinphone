@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -187,11 +187,18 @@ LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
 	if (ai == NULL) {
 		ai = find_auth_info(lc, username, NULL, NULL, algorithm, ignore_realm);
 	}
+	if (ai && ((linphone_auth_info_get_expires(ai) != 0) && (linphone_auth_info_get_expires(ai) <= time(nullptr)))) {
+		lc->auth_info = bctbx_list_remove(lc->auth_info, ai);
+		linphone_auth_info_unref(ai);
+		linphone_core_write_auth_infos(lc);
+		ai = NULL;
+	}
 
 	if (ai)
 		ms_message("linphone_core_find_auth_info(): returning auth info username=%s, realm=%s",
 		           linphone_auth_info_get_username(ai) ? linphone_auth_info_get_username(ai) : "",
 		           linphone_auth_info_get_realm(ai) ? linphone_auth_info_get_realm(ai) : "");
+
 	return ai;
 }
 
