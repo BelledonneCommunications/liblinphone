@@ -123,7 +123,8 @@ static void aborted_provisioning_https(void) {
 		/** immediately call linphohne_core_stop() without letting the remote provisioning to complete */
 		linphone_core_stop_async(marie->lc);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(marie->lc), LinphoneGlobalShutdown, int, "%i");
-		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringFailed, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSkipped, 1));
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConfiguringFailed, 0, int, "%i");
 		/* now should move to Off state */
 		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneGlobalOff, 1));
 		linphone_core_manager_destroy(marie);

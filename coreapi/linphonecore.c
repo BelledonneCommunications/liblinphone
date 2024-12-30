@@ -2742,13 +2742,19 @@ void linphone_core_load_config_from_xml(LinphoneCore *lc, const char *xml_uri) {
 }
 
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
-	linphone_core_notify_configuring_status(lc, state, message);
-
+	bool provisioningAborted = false;
 	if (lc->state == LinphoneGlobalShutdown) {
-		/* We are aborting the provisioning, just notify the configuring status and give up */
+		/* We are aborting the provisioning, just notify the configuring status and give up.
+		 * Don't report any LinphoneConfiguringFailed status: this would trigger an error popup on application
+		 * for nothing since the provisioning is actually simply aborted.
+		 */
+		state = LinphoneConfiguringSkipped;
+		provisioningAborted = true;
+	}
+	linphone_core_notify_configuring_status(lc, state, message);
+	if (provisioningAborted) {
 		return;
 	}
-
 	if (state == LinphoneConfiguringSuccessful) {
 		if (linphone_core_is_provisioning_transient(lc)) {
 			linphone_core_set_provisioning_uri(lc, NULL);
