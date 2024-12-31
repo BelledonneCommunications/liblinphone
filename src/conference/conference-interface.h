@@ -111,7 +111,7 @@ public:
 	 Get the conference ID of this conference.
 	 @return The Address of the conference.
 	 **/
-	virtual const std::shared_ptr<Address> &getConferenceAddress() const = 0;
+	virtual std::shared_ptr<Address> getConferenceAddress() const = 0;
 
 	/*
 	 * Get the subject of this conference
@@ -216,7 +216,7 @@ public:
 	 * Get the list of participant devices in this conference including ourself if in conference.
 	 * @return \std::list<std::shared_ptr<ParticipantDevice>>
 	 */
-	virtual const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const = 0;
+	virtual std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const = 0;
 
 	/*
 	* Get the participant representing myself in this Conference (I.E local participant).<br>

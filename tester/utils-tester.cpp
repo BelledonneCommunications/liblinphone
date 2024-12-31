@@ -157,7 +157,7 @@ static void timestamp_pruning(void) {
 	BC_ASSERT_EQUAL((long long)convertedOffsetMinusDotTimestamp, expectedOffsetMinusTimestamp, long long, "%lld");
 }
 
-static void address_comparisons(void) {
+static void address_comparisons() {
 	Address a1("sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
 	BC_ASSERT_TRUE(a1.isValid());
 	Address a2("sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi");
@@ -177,7 +177,20 @@ static void address_comparisons(void) {
 	BC_ASSERT_FALSE(a3.weakEqual(a4));
 }
 
-static void conferenceId_comparisons(void) {
+static void address_serialization() {
+	Address a("sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi");
+	Address b("<sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi>");
+	Address c("<sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi>;f=dudu;e=caca");
+
+	string result = a.toStringUriOnlyOrdered();
+	BC_ASSERT_STRING_EQUAL(result.c_str(), "sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
+	result = b.toStringUriOnlyOrdered();
+	BC_ASSERT_STRING_EQUAL(result.c_str(), "sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
+	result = c.toStringUriOnlyOrdered();
+	BC_ASSERT_STRING_EQUAL(result.c_str(), "sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
+}
+
+static void conferenceId_comparisons() {
 	std::shared_ptr<Address> a1 = Address::create("sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
 	std::shared_ptr<Address> a2 = Address::create("sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi");
 	std::shared_ptr<Address> a3 = Address::create("sip:toto@sip.example.org;d=dodo;c=didi;b=dede");
@@ -216,12 +229,13 @@ static void parse_capabilities(void) {
 }
 
 // clang-format off
-test_t utils_tests[] = {
+static test_t utils_tests[] = {
     TEST_NO_TAG("split", split),
     TEST_NO_TAG("trim", trim),
     TEST_NO_TAG("Timestamp pruning", timestamp_pruning),
     TEST_NO_TAG("Version comparisons", version_comparisons),
     TEST_NO_TAG("Address comparisons", address_comparisons),
+    TEST_NO_TAG("Address serialization", address_serialization),
     TEST_NO_TAG("Conference ID comparisons", conferenceId_comparisons),
     TEST_NO_TAG("Parse capabilities", parse_capabilities)
 };

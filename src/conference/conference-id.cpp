@@ -80,7 +80,7 @@ bool ConferenceId::canUpdateAddress(const std::shared_ptr<const Address> &addr, 
 	// Local and peer addresses cannot be modified if the hash or weak hash have already been computed
 	const auto newUri = (addr) ? addr->getUri() : Address();
 	const auto currentMember = useLocal ? mLocalAddress : mPeerAddress;
-	return (!currentMember || (currentMember->toStringOrdered() == newUri.toStringOrdered()) ||
+	return (!currentMember || (currentMember->toStringUriOnlyOrdered() == newUri.toStringUriOnlyOrdered()) ||
 	        ((mHash == 0) && (mWeakHash == 0)));
 }
 
@@ -114,8 +114,8 @@ bool ConferenceId::isValid() const {
 
 size_t ConferenceId::getHash() const {
 	if (mHash == 0) {
-		const auto &pAddress = mPeerAddress ? mPeerAddress->toStringOrdered(true) : "sip:";
-		const auto &lAddress = mLocalAddress ? mLocalAddress->toStringOrdered(true) : "sip:";
+		const auto &pAddress = mPeerAddress ? mPeerAddress->toStringUriOnlyOrdered(true) : "sip:";
+		const auto &lAddress = mLocalAddress ? mLocalAddress->toStringUriOnlyOrdered(true) : "sip:";
 		mHash = hash<string>()(pAddress) ^ (hash<string>()(lAddress) << 1);
 	}
 	return mHash;

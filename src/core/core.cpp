@@ -2168,19 +2168,19 @@ const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() co
 	return encEnumList;
 }
 
-const std::shared_ptr<Address>
+std::shared_ptr<Address>
 Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
                                             const std::shared_ptr<const Address> &localAddress) {
 	auto account = core->lookupKnownAccount(localAddress, true);
 	if (!account) {
-		lWarning() << "No account found for local address: [" << *localAddress << "]";
+		// lWarning() << "No account found for local address: [" << *localAddress << "]";
 		return nullptr;
 	} else return getAudioVideoConferenceFactoryAddress(core, account);
 }
 
-const std::shared_ptr<Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-                                                                           const std::shared_ptr<Account> account) {
-	const auto &address = account->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+std::shared_ptr<Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+                                                                     const std::shared_ptr<Account> &account) {
+	auto address = account->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 	if (address == nullptr) {
 		const auto &conferenceFactoryUri = getConferenceFactoryAddress(core, account);
 		lWarning() << "Audio/video conference factory is null, fallback to default conference factory URI ["

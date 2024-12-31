@@ -123,15 +123,15 @@ public:
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create(LinphoneCore *cCore);
 
-	static const std::shared_ptr<Address>
-	getConferenceFactoryAddress(const std::shared_ptr<Core> &core, const std::shared_ptr<const Address> &localAddress);
-	static const std::shared_ptr<Address> getConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                                                  const std::shared_ptr<Account> account);
-	static const std::shared_ptr<Address>
+	static std::shared_ptr<Address> getConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+	                                                            const std::shared_ptr<const Address> &localAddress);
+	static std::shared_ptr<Address> getConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+	                                                            const std::shared_ptr<Account> &account);
+	static std::shared_ptr<Address>
 	getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 	                                      const std::shared_ptr<const Address> &localAddress);
-	static const std::shared_ptr<Address> getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                                                            const std::shared_ptr<Account> account);
+	static std::shared_ptr<Address> getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+	                                                                      const std::shared_ptr<Account> &account);
 
 	// ---------------------------------------------------------------------------
 	// Application lifecycle.

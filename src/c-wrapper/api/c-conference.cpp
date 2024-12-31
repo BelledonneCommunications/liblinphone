@@ -253,14 +253,14 @@ void linphone_conference_set_microphone_muted(LinphoneConference *conference, bo
 
 LinphoneParticipant *linphone_conference_get_screen_sharing_participant(const LinphoneConference *conference) {
 	LinphonePrivate::ConferenceLogContextualizer logContextualizer(conference);
-	auto &participant = Conference::toCpp(conference)->getScreenSharingParticipant();
+	auto participant = Conference::toCpp(conference)->getScreenSharingParticipant();
 	return participant ? participant->toC() : nullptr;
 }
 
 LinphoneParticipantDevice *
 linphone_conference_get_screen_sharing_participant_device(const LinphoneConference *conference) {
 	LinphonePrivate::ConferenceLogContextualizer logContextualizer(conference);
-	auto &device = Conference::toCpp(conference)->getScreenSharingDevice();
+	auto device = Conference::toCpp(conference)->getScreenSharingDevice();
 	return device ? device->toC() : nullptr;
 }
 

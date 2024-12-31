@@ -495,7 +495,7 @@ void CorePrivate::loadChatRooms() {
 			if (success) {
 				for (const auto &d : p->getDevices()) {
 					auto gruu = d->getAddress();
-					auto name = d->getName();
+					auto &name = d->getName();
 					lDebug() << "[Friend] Inserting existing device of participant [" << *pAddress << "] with name ["
 					         << name << "] and address [" << *gruu << "]";
 					mainDb->insertDevice(gruu, name);
@@ -685,17 +685,17 @@ static bool compare_chat_room(const shared_ptr<AbstractChatRoom> &first, const s
 	return first->getLastUpdateTime() > second->getLastUpdateTime();
 }
 
-const std::shared_ptr<Address> Core::getConferenceFactoryAddress(const shared_ptr<Core> &core,
-                                                                 const std::shared_ptr<const Address> &localAddress) {
+std::shared_ptr<Address> Core::getConferenceFactoryAddress(const shared_ptr<Core> &core,
+                                                           const std::shared_ptr<const Address> &localAddress) {
 	auto account = core->lookupKnownAccount(localAddress, true);
 	if (!account) {
-		lWarning() << "No account found for local address: [" << *localAddress << "]";
+		// lWarning() << "No account found for local address: [" << *localAddress << "]";
 		return nullptr;
 	} else return getConferenceFactoryAddress(core, account);
 }
 
-const std::shared_ptr<Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(const shared_ptr<Core> &core),
-                                                                 const std::shared_ptr<Account> account) {
+std::shared_ptr<Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(const shared_ptr<Core> &core),
+                                                           const std::shared_ptr<Account> &account) {
 	const auto &params = account->getAccountParams();
 	if (params) {
 		const auto &uri = params->getConferenceFactoryAddress();

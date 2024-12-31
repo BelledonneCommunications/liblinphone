@@ -106,12 +106,12 @@ public:
 	bool setHeader(const std::string &headerName, const std::string &headerValue);
 
 	bool hasParam(const std::string &paramName) const;
-	const std::string getParamValue(const std::string &paramName) const;
+	std::string getParamValue(const std::string &paramName) const;
 	const char *getParamValueCstr(const std::string &paramName) const;
 	bool setParam(const std::string &paramName, const std::string &paramValue = "");
 	bool setParams(const std::string &params);
 	bool removeParam(const std::string &paramName);
-	inline const std::map<std::string, std::string> getParams() const {
+	inline std::map<std::string, std::string> getParams() const {
 		std::map<std::string, std::string> params;
 		if (mImpl) sal_address_get_params(mImpl, params);
 		return params;
@@ -120,7 +120,7 @@ public:
 	bool hasUriParam(const std::string &uriParamName) const;
 	std::string getUriParamValue(const std::string &uriParamName) const;
 	const char *getUriParamValueCstr(const std::string &uriParamName) const;
-	inline const std::map<std::string, std::string> getUriParams() const {
+	inline std::map<std::string, std::string> getUriParams() const {
 		std::map<std::string, std::string> params;
 		if (mImpl) sal_address_get_uri_params(mImpl, params);
 		return params;
@@ -139,7 +139,6 @@ public:
 	}
 	char *toStringUriOnlyOrderedCstr(bool lowercaseParams = false) const;
 	std::string toStringUriOnlyOrdered(bool lowercaseParams = false) const;
-	std::string toStringOrdered(bool lowercaseParams = false) const;
 
 	std::string asStringUriOnly() const;
 
@@ -156,11 +155,7 @@ public:
 	static void clearSipAddressesCache();
 	struct WeakLess {
 		bool operator()(const Address &address1, const Address &address2) const {
-			Address pruned1 = address1.getUri();
-			pruned1.setParams("");
-			Address pruned2 = address2.getUri();
-			pruned2.setParams("");
-			return pruned1 < pruned2;
+			return address1 < address2;
 		}
 	};
 	struct WeakEqual {

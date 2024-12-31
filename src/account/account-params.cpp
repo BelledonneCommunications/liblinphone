@@ -809,11 +809,11 @@ const char *AccountParams::getConferenceFactoryCstr() const {
 	return mConferenceFactoryAddressCstr;
 }
 
-const std::shared_ptr<Address> &AccountParams::getConferenceFactoryAddress() const {
+std::shared_ptr<Address> AccountParams::getConferenceFactoryAddress() const {
 	return mConferenceFactoryAddress;
 }
 
-const std::shared_ptr<Address> &AccountParams::getAudioVideoConferenceFactoryAddress() const {
+std::shared_ptr<Address> AccountParams::getAudioVideoConferenceFactoryAddress() const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 

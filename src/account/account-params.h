@@ -125,8 +125,8 @@ public:
 	const std::string &getRefKey() const;
 	const std::string &getDependsOn() const;
 	const std::string &getIdKey() const;
-	const std::shared_ptr<Address> &getConferenceFactoryAddress() const;
-	const std::shared_ptr<Address> &getAudioVideoConferenceFactoryAddress() const;
+	std::shared_ptr<Address> getConferenceFactoryAddress() const;
+	std::shared_ptr<Address> getAudioVideoConferenceFactoryAddress() const;
 	const char *getCcmpServerUrlCstr() const;
 	const std::string &getCcmpServerUrl() const;
 	const std::string &getCcmpUserId() const;

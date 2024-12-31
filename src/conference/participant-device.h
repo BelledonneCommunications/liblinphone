@@ -97,7 +97,7 @@ public:
 
 	std::shared_ptr<Core> getCore() const;
 
-	const std::shared_ptr<Address> &getAddress() const;
+	std::shared_ptr<Address> getAddress() const;
 	void setAddress(const std::shared_ptr<Address> &address);
 	const std::string &getCallId();
 	void setCallId(const std::string &callId);

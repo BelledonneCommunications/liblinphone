@@ -3104,7 +3104,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 							// not enough. In fact, it will return that the addresses are equal if one has a different
 							// set of parameters than the other
 							bool hasCallContactChanged =
-							    (deviceAddr->toStringOrdered() != newDeviceAddress->toStringOrdered());
+							    (deviceAddr->toStringUriOnlyOrdered() != newDeviceAddress->toStringUriOnlyOrdered());
 							if (hasCallContactChanged) {
 								// The remote contact address of the device changed during the call. This may be
 								// caused by a call that started before the registration was completed

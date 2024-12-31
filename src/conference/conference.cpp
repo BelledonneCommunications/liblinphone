@@ -63,12 +63,10 @@ Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<Address> &myAddress,
                        std::shared_ptr<CallSessionListener> callSessionListener,
                        const std::shared_ptr<const ConferenceParams> params)
-    : CoreAccessor(core) {
+    : CoreAccessor(core), mConferenceId(Address(), Address(*myAddress)) {
 	mCallSessionListener = callSessionListener;
 	update(*params);
 	mConfParams->setMe(myAddress);
-
-	mConferenceId = ConferenceId(Address::create("sip:"), myAddress);
 
 	if (mConfParams->videoEnabled()) {
 		// If video is enabled, then always enable audio capabilities
@@ -123,7 +121,7 @@ void Conference::invalidateAccount() {
 	mConfParams->setAccount(nullptr);
 }
 
-const std::shared_ptr<Account> Conference::getAccount() {
+std::shared_ptr<Account> Conference::getAccount() {
 	auto account = mConfParams->getAccount();
 	if (!account) {
 		account = getCore()->findAccountByIdentityAddress(mConferenceId.getLocalAddress());
@@ -657,7 +655,7 @@ void Conference::setLayout(const ConferenceLayout layout) {
 	}
 }
 
-const std::shared_ptr<Address> &Conference::getConferenceAddress() const {
+std::shared_ptr<Address> Conference::getConferenceAddress() const {
 	return mConfParams->getConferenceAddress();
 }
 
@@ -702,7 +700,7 @@ const list<shared_ptr<Participant>> &Conference::getParticipants() const {
 	return mParticipants;
 }
 
-const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices(bool includeMe) const {
+list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices(bool includeMe) const {
 	list<shared_ptr<ParticipantDevice>> devices;
 	for (const auto &p : mParticipants) {
 		const auto &d = p->getDevices();
@@ -732,12 +730,12 @@ std::shared_ptr<ParticipantDevice> Conference::getCachedScreenSharingDevice() co
 	return mCachedScreenSharingDevice;
 }
 
-const std::shared_ptr<Participant> Conference::getScreenSharingParticipant() const {
+std::shared_ptr<Participant> Conference::getScreenSharingParticipant() const {
 	const auto device = getScreenSharingDevice();
 	return (device) ? device->getParticipant() : nullptr;
 }
 
-const std::shared_ptr<ParticipantDevice> Conference::getScreenSharingDevice() const {
+std::shared_ptr<ParticipantDevice> Conference::getScreenSharingDevice() const {
 	const auto devices = getParticipantDevices();
 	const auto screenSharingDeviceIt =
 	    std::find_if(devices.cbegin(), devices.cend(), [](const auto &d) { return d->screenSharingEnabled(); });

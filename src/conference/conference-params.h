@@ -109,7 +109,7 @@ public:
 	}
 
 	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) override;
-	const std::shared_ptr<Address> &getConferenceAddress() const {
+	std::shared_ptr<Address> getConferenceAddress() const {
 		return mConferenceAddress;
 	};
 

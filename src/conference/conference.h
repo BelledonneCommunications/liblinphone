@@ -118,9 +118,9 @@ public:
 
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
-	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const override;
-	const std::shared_ptr<Participant> getScreenSharingParticipant() const;
-	const std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;
+	std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const override;
+	std::shared_ptr<Participant> getScreenSharingParticipant() const;
+	std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;
 
 	const std::string &getSubject() const override;
 	const std::string &getUtf8Subject() const override;
@@ -156,7 +156,7 @@ public:
 		return mConfParams;
 	}
 
-	virtual const std::shared_ptr<Address> &getConferenceAddress() const override;
+	virtual std::shared_ptr<Address> getConferenceAddress() const override;
 	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 
 	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
@@ -169,7 +169,7 @@ public:
 	ConferenceLayout getLayout() const;
 	void setLayout(const ConferenceLayout layout);
 
-	const std::shared_ptr<Account> getAccount();
+	std::shared_ptr<Account> getAccount();
 	void invalidateAccount();
 	time_t getStartTime() const;
 	int getDuration() const;

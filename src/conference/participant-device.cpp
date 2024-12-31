@@ -85,7 +85,7 @@ shared_ptr<Core> ParticipantDevice::getCore() const {
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
 }
 
-const std::shared_ptr<Address> &ParticipantDevice::getAddress() const {
+std::shared_ptr<Address> ParticipantDevice::getAddress() const {
 	return mGruu;
 }
 
