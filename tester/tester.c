@@ -3250,7 +3250,7 @@ void liblinphone_tester_after_each(void) {
 			                                bc_tester_current_suite_name(), bc_tester_current_test_name());
 			belle_sip_object_dump_active_objects();
 			belle_sip_object_flush_active_objects();
-			bc_tester_printf(ORTP_MESSAGE, format);
+			bc_tester_printf(ORTP_MESSAGE, "%s", format);
 			ms_error("%s", format);
 
 			all_leaks_buffer = ms_strcat_printf(all_leaks_buffer, "\n%s", format);
