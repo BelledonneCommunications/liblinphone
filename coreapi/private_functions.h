@@ -85,7 +85,7 @@ LINPHONE_PUBLIC LinphoneCallLog *
 linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, const LinphoneAddress *from, const LinphoneAddress *to);
 void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 
-LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
+LINPHONE_PUBLIC LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC LinphoneAccount *linphone_call_get_dest_account(const LinphoneCall *call);

@@ -20,7 +20,6 @@
 
 #include "conference/participant.h"
 #include "core/core-p.h"
-#include "liblinphone_tester.h"
 #include "linphone/api/c-chat-room.h"
 #include "linphone/chat.h"
 #include "local-conference-tester-functions.h"

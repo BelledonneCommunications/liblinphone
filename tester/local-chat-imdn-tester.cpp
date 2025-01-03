@@ -20,7 +20,6 @@
 
 #include "conference/conference.h"
 #include "conference/participant.h"
-#include "liblinphone_tester.h"
 #include "linphone/api/c-participant-imdn-state.h"
 #include "local-conference-tester-functions.h"
 

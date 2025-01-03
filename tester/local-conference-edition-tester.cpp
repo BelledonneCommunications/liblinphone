@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "liblinphone_tester.h"
 #include "linphone/api/c-chat-room.h"
 #include "linphone/api/c-conference-info.h"
 #include "linphone/api/c-conference-params.h"
@@ -27,7 +26,6 @@
 #include "linphone/api/c-participant.h"
 #include "linphone/chat.h"
 #include "local-conference-tester-functions.h"
-#include "shared_tester_functions.h"
 
 namespace LinphoneTest {
 

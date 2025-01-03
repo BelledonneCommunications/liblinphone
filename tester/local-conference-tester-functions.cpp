@@ -36,7 +36,6 @@
 #include "linphone/api/c-participant-info.h"
 #include "linphone/api/c-participant.h"
 #include "linphone/chat.h"
-#include "shared_tester_functions.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)

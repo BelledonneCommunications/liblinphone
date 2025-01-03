@@ -37,7 +37,6 @@
 #include "linphone/api/c-chat-room.h"
 #include "linphone/api/c-participant-device-identity.h"
 #include "linphone/core.h"
-#include "shared_tester_functions.h"
 
 using namespace LinphonePrivate;
 using namespace std;

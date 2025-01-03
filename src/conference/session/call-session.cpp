@@ -507,8 +507,10 @@ void CallSessionPrivate::updateToFromAssertedIdentity() {
 			        << "].";
 			log->setToAddress(pAssertedIdAddr);
 
+#ifdef HAVE_DB_STORAGE
 			auto &mainDb = q->getCore()->getPrivate()->mainDb;
 			if (mainDb != nullptr) mainDb->updateCallLog(log);
+#endif // HAVE_DB_STORAGE
 		} else {
 			lWarning() << "Unsupported P-Asserted-Identity header";
 		}
@@ -529,6 +531,12 @@ void CallSessionPrivate::replaceOp(SalCallOp *newOp) {
 	op = newOp;
 	op->setUserPointer(q);
 	op->setLocalMediaDescription(oldOp->getLocalMediaDescription());
+	// Replace the call ID in the call log
+	log->setCallId(op->getCallId());
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = q->getCore()->getPrivate()->mainDb;
+	if (mainDb != nullptr) mainDb->updateCallLog(log);
+#endif // HAVE_DB_STORAGE
 	switch (state) {
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:
@@ -972,24 +980,28 @@ void CallSessionPrivate::setContactOp() {
 
 			auto guessedConferenceAddress =
 			    Address::create((direction == LinphoneCallIncoming) ? op->getTo() : op->getFrom());
-			auto &mainDb = q->getCore()->getPrivate()->mainDb;
-			const auto &confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
 			if (conference) {
 				// Try to change conference address in order to add GRUU to it
 				// Note that this operation may fail if the conference was previously created on the server
 				conference->setConferenceAddress(contactAddress);
-			} else if (confInfo) {
-				const auto &conferenceAddress = confInfo->getUri();
-				if (conferenceAddress && conferenceAddress->isValid()) {
-					// The conference may have already been terminated when setting the contact address.
-					// This happens when an admin cancel a conference by sending an INVITE with an empty resource list
-					// Add parameters stored in the conference information URI to the contact address
-					if (contactAddress && contactAddress->isValid()) {
-						contactAddress->merge(*conferenceAddress);
-					} else {
-						contactAddress = conferenceAddress;
+			} else {
+#ifdef HAVE_DB_STORAGE
+				auto &mainDb = q->getCore()->getPrivate()->mainDb;
+				const auto &confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
+				if (confInfo) {
+					const auto &conferenceAddress = confInfo->getUri();
+					if (conferenceAddress && conferenceAddress->isValid()) {
+						// The conference may have already been terminated when setting the contact address.
+						// This happens when an admin cancel a conference by sending an INVITE with an empty resource
+						// list Add parameters stored in the conference information URI to the contact address
+						if (contactAddress && contactAddress->isValid()) {
+							contactAddress->merge(*conferenceAddress);
+						} else {
+							contactAddress = conferenceAddress;
+						}
 					}
 				}
+#endif // HAVE_DB_STORAGE
 			}
 		}
 

@@ -18,8 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mediastreamer2/mspacketrouter.h"
+
 #include "conference/conference-info.h"
-#include "liblinphone_tester.h"
 #include "linphone/api/c-call-log.h"
 #include "linphone/api/c-conference-info.h"
 #include "linphone/api/c-conference-params.h"
@@ -28,8 +29,6 @@
 #include "linphone/api/c-participant-info.h"
 #include "linphone/api/c-participant.h"
 #include "local-conference-tester-functions.h"
-#include "mediastreamer2/mspacketrouter.h"
-#include "shared_tester_functions.h"
 
 namespace LinphoneTest {
 
@@ -1068,7 +1067,7 @@ static void create_simple_conference_with_screen_sharing_no_video_send_component
 	    {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
-void participant_joins_simple_conference_with_screen_sharing(void) {
+static void participant_joins_simple_conference_with_screen_sharing(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -1142,13 +1141,13 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 		                             liblinphone_tester_sip_timeout));
 
 		const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
-		int idx = 1;
 
 		std::list<LinphoneCoreManager *> addedMembers;
 		std::list<LinphoneCoreManager *> addedConferenceMgrs{focus.getCMgr()};
 		// The head of the members list enables screensharing whereas the others join the conference without vidoe
 		// capabilities and then they add it later on
 		for (auto mgr : members) {
+			focus_stat = focus.getStats();
 			addedConferenceMgrs.push_back(mgr);
 			addedMembers.push_back(mgr);
 			bool is_first_member = (mgr == members.front());
@@ -1188,7 +1187,7 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 			if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallEncryptedOn, 1,
 				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEncryptedOn, idx,
+				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEncryptedOn, 1,
 				                             liblinphone_tester_sip_timeout));
 			}
 
@@ -1206,39 +1205,33 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 			}
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived,
-			                             focus_stat.number_of_LinphoneCallIncomingReceived + idx,
+			                             focus_stat.number_of_LinphoneCallIncomingReceived + 1,
 			                             liblinphone_tester_sip_timeout));
-			int focus_no_streams_running = 2 * idx;
-			BC_ASSERT_TRUE(
-			    wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote,
-			                  focus_stat.number_of_LinphoneCallUpdatedByRemote + (focus_no_streams_running - idx),
-			                  liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote,
+			                             focus_stat.number_of_LinphoneCallUpdatedByRemote + 1,
+			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning,
-			                             focus_stat.number_of_LinphoneCallStreamsRunning + focus_no_streams_running,
+			                             focus_stat.number_of_LinphoneCallStreamsRunning + 2,
 			                             liblinphone_tester_sip_timeout));
 			// If ICE is enabled, the addition to a conference may go through a resume of the call
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateCreated,
-			                             focus_stat.number_of_LinphoneConferenceStateCreated + 1,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateCreated, 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
-			                             focus_stat.number_of_LinphoneSubscriptionIncomingReceived + idx, 5000));
+			                             focus_stat.number_of_LinphoneSubscriptionIncomingReceived + 1, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
-			                             focus_stat.number_of_LinphoneSubscriptionActive + idx, 5000));
+			                             focus_stat.number_of_LinphoneSubscriptionActive + 1, 5000));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
-			                             focus_stat.number_of_participants_added + idx,
-			                             liblinphone_tester_sip_timeout));
+			                             focus_stat.number_of_participants_added + 1, liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
-			                             focus_stat.number_of_participant_devices_added + idx,
+			                             focus_stat.number_of_participant_devices_added + 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_conference_participant_devices_present,
-			                             focus_stat.number_of_conference_participant_devices_present + idx,
+			                             focus_stat.number_of_conference_participant_devices_present + 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
-			                             focus_stat.number_of_participant_devices_present + idx,
+			                             focus_stat.number_of_participant_devices_present + 1,
 			                             liblinphone_tester_sip_timeout));
-
-			idx++;
 
 			std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
 			    fill_memmber_list(addedMembers, participantList, marie.getCMgr(), participants_info);
@@ -1534,7 +1527,7 @@ void participant_joins_simple_conference_with_screen_sharing(void) {
 	}
 }
 
-void conference_with_screen_sharing_enabled_since_the_start(void) {
+static void conference_with_screen_sharing_enabled_since_the_start(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -1931,7 +1924,7 @@ void conference_with_screen_sharing_enabled_since_the_start(void) {
 	}
 }
 
-void conference_with_two_participant_having_screen_sharing_enabled_since_the_start(void) {
+static void conference_with_two_participant_having_screen_sharing_enabled_since_the_start(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -2354,7 +2347,7 @@ void conference_with_two_participant_having_screen_sharing_enabled_since_the_sta
 	}
 }
 
-void conference_with_screen_sharing_participant_only(void) {
+static void conference_with_screen_sharing_participant_only(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -4143,7 +4136,7 @@ static void conference_with_participants_added_before_start(void) {
 	conference_with_participant_added_outside_valid_time_slot(TRUE);
 }
 
-void uninvited_participant_rejoins(void) {
+static void uninvited_participant_rejoins(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -4514,7 +4507,7 @@ void uninvited_participant_rejoins(void) {
 	}
 }
 
-void rejoining_conference_after_end(int cleanup_window) {
+static void rejoining_conference_after_end(int cleanup_window) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -4830,11 +4823,11 @@ void rejoining_conference_after_end(int cleanup_window) {
 	}
 }
 
-void rejoining_conference_after_end_with_cleanup_window(void) {
+static void rejoining_conference_after_end_with_cleanup_window(void) {
 	rejoining_conference_after_end(10);
 }
 
-void rejoining_conference_after_end_without_cleanup_window(void) {
+static void rejoining_conference_after_end_without_cleanup_window(void) {
 	rejoining_conference_after_end(-1);
 }
 
@@ -5212,15 +5205,15 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 	bc_free(soundpath);
 }
 
-void create_conference_with_chat(void) {
+static void create_conference_with_chat(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, FALSE);
 }
 
-void create_conference_with_chat_and_participant_rejoining(void) {
+static void create_conference_with_chat_and_participant_rejoining(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE);
 }
 
-void create_conference_with_chat_with_cores_restart(void) {
+static void create_conference_with_chat_with_cores_restart(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE);
 }
 
@@ -5345,7 +5338,7 @@ static void failure_in_creating_end_to_end_encrypted_conference_ekt_plugin_missi
 }
 #endif // HAVE_EKT_SERVER_PLUGIN
 
-void create_conference_with_chat_with_server_restarted_before_conference_expires(void) {
+static void create_conference_with_chat_with_server_restarted_before_conference_expires(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;

@@ -2972,10 +2972,12 @@ bool ServerConference::checkClientCompatibility(const shared_ptr<Call> &call,
 				                        "Lime (end to end encryption) is required to use this service");
 			}
 			if (ei) {
-				if (incomingReceived) {
-					call->decline(ei);
-				} else {
-					call->terminate(ei);
+				if (call) {
+					if (incomingReceived) {
+						call->decline(ei);
+					} else {
+						call->terminate(ei);
+					}
 				}
 				linphone_error_info_unref(ei);
 				return false; // The client is not compatible
@@ -3051,7 +3053,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				} else if (!cppCall) {
 					LinphoneErrorInfo *ei = linphone_error_info_new();
 					lInfo() << "Conference [" << this << " - " << *getConferenceAddress()
-					        << "] Unable to associate the media session " << ms << " to an existing call";
+					        << "]: Unable to associate the media session " << ms << " to an existing call";
 					linphone_error_info_set(ei, NULL, LinphoneReasonNotAcceptable, 488,
 					                        "Unable to associate the media session to an existing call", NULL);
 					ms->decline(ei);
@@ -3090,6 +3092,11 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				}
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::StreamsRunning: {
+				if (!cppCall) {
+					lError() << "Conference [" << this << " - " << *getConferenceAddress()
+					         << "]: Unable to associate the media session " << session
+					         << " to an existing call therefore it will not be added";
+				}
 				if (!checkClientCompatibility(cppCall, remoteContactAddress, false)) break;
 
 				if (!addParticipantDevice(cppCall)) {

@@ -19,7 +19,6 @@
  */
 
 #include "local-conference-tester-functions.h"
-#include "tester_utils.h"
 
 #include "account/account.h"
 #include "chat/encryption/encryption-engine.h"
