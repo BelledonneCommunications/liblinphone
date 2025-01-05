@@ -813,7 +813,12 @@ typedef enum _LinphoneZrtpKeyAgreement {
 	LinphoneZrtpKeyAgreementK448Kyb1024 = 18,
 	LinphoneZrtpKeyAgreementK448Hqc256 = 19,
 	LinphoneZrtpKeyAgreementK255Kyb512Hqc128 = 20,
-	LinphoneZrtpKeyAgreementK448Kyb1024Hqc256 = 21
+	LinphoneZrtpKeyAgreementK448Kyb1024Hqc256 = 21,
+	LinphoneZrtpKeyAgreementMlk1 = 22,
+	LinphoneZrtpKeyAgreementMlk2 = 23,
+	LinphoneZrtpKeyAgreementMlk3 = 24,
+	LinphoneZrtpKeyAgreementK255Mlk512 = 25,
+	LinphoneZrtpKeyAgreementK448Mlk1024 = 26
 } LinphoneZrtpKeyAgreement;
 
 /**

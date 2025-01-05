@@ -729,6 +729,12 @@ static LinphoneZrtpKeyAgreement MS2_to_Linphone_ZrtpKeyAgreement(MSZrtpKeyAgreem
 			return LinphoneZrtpKeyAgreementK255;
 		case MS_ZRTP_KEY_AGREEMENT_K448:
 			return LinphoneZrtpKeyAgreementK448;
+		case MS_ZRTP_KEY_AGREEMENT_MLK1:
+			return LinphoneZrtpKeyAgreementMlk1;
+		case MS_ZRTP_KEY_AGREEMENT_MLK2:
+			return LinphoneZrtpKeyAgreementMlk2;
+		case MS_ZRTP_KEY_AGREEMENT_MLK3:
+			return LinphoneZrtpKeyAgreementMlk3;
 		case MS_ZRTP_KEY_AGREEMENT_KYB1:
 			return LinphoneZrtpKeyAgreementKyb1;
 		case MS_ZRTP_KEY_AGREEMENT_KYB2:
@@ -741,10 +747,14 @@ static LinphoneZrtpKeyAgreement MS2_to_Linphone_ZrtpKeyAgreement(MSZrtpKeyAgreem
 			return LinphoneZrtpKeyAgreementHqc2;
 		case MS_ZRTP_KEY_AGREEMENT_HQC3:
 			return LinphoneZrtpKeyAgreementHqc3;
+		case MS_ZRTP_KEY_AGREEMENT_K255_MLK512:
+			return LinphoneZrtpKeyAgreementK255Mlk512;
 		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512:
 			return LinphoneZrtpKeyAgreementK255Kyb512;
 		case MS_ZRTP_KEY_AGREEMENT_K255_HQC128:
 			return LinphoneZrtpKeyAgreementK255Hqc128;
+		case MS_ZRTP_KEY_AGREEMENT_K448_MLK1024:
+			return LinphoneZrtpKeyAgreementK448Mlk1024;
 		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024:
 			return LinphoneZrtpKeyAgreementK448Kyb1024;
 		case MS_ZRTP_KEY_AGREEMENT_K448_HQC256:
@@ -791,6 +801,12 @@ static MSZrtpKeyAgreement Linphone_to_MS2_ZrtpKeyAgreement(LinphoneZrtpKeyAgreem
 			return MS_ZRTP_KEY_AGREEMENT_K255;
 		case LinphoneZrtpKeyAgreementK448:
 			return MS_ZRTP_KEY_AGREEMENT_K448;
+		case LinphoneZrtpKeyAgreementMlk1:
+			return MS_ZRTP_KEY_AGREEMENT_MLK1;
+		case LinphoneZrtpKeyAgreementMlk2:
+			return MS_ZRTP_KEY_AGREEMENT_MLK2;
+		case LinphoneZrtpKeyAgreementMlk3:
+			return MS_ZRTP_KEY_AGREEMENT_MLK3;
 		case LinphoneZrtpKeyAgreementKyb1:
 			return MS_ZRTP_KEY_AGREEMENT_KYB1;
 		case LinphoneZrtpKeyAgreementKyb2:
@@ -803,10 +819,14 @@ static MSZrtpKeyAgreement Linphone_to_MS2_ZrtpKeyAgreement(LinphoneZrtpKeyAgreem
 			return MS_ZRTP_KEY_AGREEMENT_HQC2;
 		case LinphoneZrtpKeyAgreementHqc3:
 			return MS_ZRTP_KEY_AGREEMENT_HQC3;
+		case LinphoneZrtpKeyAgreementK255Mlk512:
+			return MS_ZRTP_KEY_AGREEMENT_K255_MLK512;
 		case LinphoneZrtpKeyAgreementK255Kyb512:
 			return MS_ZRTP_KEY_AGREEMENT_K255_KYB512;
 		case LinphoneZrtpKeyAgreementK255Hqc128:
 			return MS_ZRTP_KEY_AGREEMENT_K255_HQC128;
+		case LinphoneZrtpKeyAgreementK448Mlk1024:
+			return MS_ZRTP_KEY_AGREEMENT_K448_MLK1024;
 		case LinphoneZrtpKeyAgreementK448Kyb1024:
 			return MS_ZRTP_KEY_AGREEMENT_K448_KYB1024;
 		case LinphoneZrtpKeyAgreementK448Hqc256:

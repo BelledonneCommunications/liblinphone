@@ -127,6 +127,12 @@ const char *EncryptionStatus::getZrtpKeyAgreementAlgo() const {
 			return "KEM-X25519";
 		case (MS_ZRTP_KEY_AGREEMENT_K448):
 			return "KEM-X448";
+		case (MS_ZRTP_KEY_AGREEMENT_MLK1):
+			return "MLKEM-512";
+		case (MS_ZRTP_KEY_AGREEMENT_MLK2):
+			return "MLKEM-768";
+		case (MS_ZRTP_KEY_AGREEMENT_MLK3):
+			return "MLKEM-1024";
 		case (MS_ZRTP_KEY_AGREEMENT_KYB1):
 			return "KYBER-512";
 		case (MS_ZRTP_KEY_AGREEMENT_KYB2):
@@ -139,10 +145,14 @@ const char *EncryptionStatus::getZrtpKeyAgreementAlgo() const {
 			return "HQC-192";
 		case (MS_ZRTP_KEY_AGREEMENT_HQC3):
 			return "HQC-256";
+		case (MS_ZRTP_KEY_AGREEMENT_K255_MLK512):
+			return "X25519/MLKem512";
 		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
 			return "X25519/Kyber512";
 		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
 			return "X25519/HQC128";
+		case (MS_ZRTP_KEY_AGREEMENT_K448_MLK1024):
+			return "X448/MLKem1024";
 		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
 			return "X448/Kyber1024";
 		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
@@ -158,14 +168,19 @@ const char *EncryptionStatus::getZrtpKeyAgreementAlgo() const {
 
 bool EncryptionStatus::isZrtpKeyAgreementAlgoPostQuantum() const {
 	switch (mZrtpAlgo.key_agreement_algo) {
+		case (MS_ZRTP_KEY_AGREEMENT_MLK1):
+		case (MS_ZRTP_KEY_AGREEMENT_MLK2):
+		case (MS_ZRTP_KEY_AGREEMENT_MLK3):
 		case (MS_ZRTP_KEY_AGREEMENT_KYB1):
 		case (MS_ZRTP_KEY_AGREEMENT_KYB2):
 		case (MS_ZRTP_KEY_AGREEMENT_KYB3):
 		case (MS_ZRTP_KEY_AGREEMENT_HQC1):
 		case (MS_ZRTP_KEY_AGREEMENT_HQC2):
 		case (MS_ZRTP_KEY_AGREEMENT_HQC3):
+		case (MS_ZRTP_KEY_AGREEMENT_K255_MLK512):
 		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
 		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
+		case (MS_ZRTP_KEY_AGREEMENT_K448_MLK1024):
 		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
 		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
 		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
