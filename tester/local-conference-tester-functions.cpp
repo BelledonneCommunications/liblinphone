@@ -1971,8 +1971,9 @@ void create_conference_base(time_t start_time,
 			}
 #endif // HAVE_ADVANCED_IM
 
-			// wait a bit more to detect side effect if any
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
+			// wait a bit more to detect side effect if any, at least 4 second to be sure we do not miss any silent
+			// pauline rtp packets
+			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(5), [] {
 				return false;
 			});
 
