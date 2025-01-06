@@ -267,7 +267,7 @@ static void abort_call_to_ice_conference(void) {
 		                             liblinphone_tester_sip_timeout));
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
-		    fill_memmber_list(members, participantList, marie.getCMgr(), participant_infos);
+		    fill_member_list(members, participantList, marie.getCMgr(), participant_infos);
 		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), memberList,
 		                            confAddr, FALSE);
 

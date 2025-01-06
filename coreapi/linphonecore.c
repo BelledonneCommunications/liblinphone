@@ -9896,10 +9896,8 @@ bctbx_list_t *linphone_core_get_conference_informations_with_participant(Linphon
 
 void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info) {
 	CoreLogContextualizer logContextualizer(core);
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	mainDb->deleteConferenceInfo(LinphonePrivate::ConferenceInfo::getSharedFromThis(conference_info));
-#endif
+	L_GET_PRIVATE_FROM_C_OBJECT(core)->deleteConferenceInfo(
+	    LinphonePrivate::ConferenceInfo::getSharedFromThis(conference_info)->getUri());
 }
 
 bool_t linphone_core_ldap_available(BCTBX_UNUSED(LinphoneCore *core)) {

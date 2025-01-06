@@ -454,7 +454,7 @@ int ClientConference::startRecording(const std::string &path) {
 }
 
 bool ClientConference::isIn() const {
-	if (mConfParams->chatEnabled()) return true;
+	if (isChatOnly()) return true;
 	if (mState != ConferenceInterface::State::Created) return false;
 	const auto &session = getMainSession();
 	if (!session) return false;
@@ -852,13 +852,6 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		switch (state) {
 			case CallSession::State::StreamsRunning: {
 				updateParticipantInConferenceInfo(getMe());
-				const auto &previousState = session->getPreviousState();
-				// NOTIFY that a participant has been added only if it follows a resume of the call
-				if (previousState == CallSession::State::Resuming) {
-					// The participant rejoins the conference
-					time_t creationTime = time(nullptr);
-					notifyParticipantAdded(creationTime, false, getMe());
-				}
 				for (const auto &device : getParticipantDevices()) {
 					device->updateStreamAvailabilities();
 				}
@@ -1368,9 +1361,8 @@ void ClientConference::onParticipantDeviceAdded(
 #endif // HAVE_ADVANCED_IM
 }
 
-void ClientConference::onParticipantDeviceRemoved(
-    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
-    const std::shared_ptr<ParticipantDevice> &device) {
+void ClientConference::onParticipantDeviceRemoved(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+                                                  const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = dynamic_pointer_cast<MediaSession>(getMainSession());
 	if (session) {
 		const MediaSessionParams *params = session->getMediaParams();
@@ -1383,6 +1375,10 @@ void ClientConference::onParticipantDeviceRemoved(
 		const auto videoNeedsReInvite = (mConfParams->videoEnabled() && params->videoEnabled());
 
 		updateMinatureRequestedFlag();
+		if (device->enableScreenSharing(false)) {
+			notifyParticipantDeviceScreenSharingChanged(ms_time(NULL), event->getFullState(), device->getParticipant(),
+			                                            device);
+		}
 
 		if ((audioNeedsReInvite || videoNeedsReInvite) && (mState == ConferenceInterface::State::Created) &&
 		    !isMe(deviceAddress) && (device->getTimeOfJoining() >= 0)) {

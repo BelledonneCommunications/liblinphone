@@ -676,7 +676,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			                             liblinphone_tester_sip_timeout));
 
 			std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
-			    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
+			    fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 			wait_for_conference_streams({focus, marie, pauline, laure, michelle, lise}, conferenceMgrs, focus.getCMgr(),
 			                            memberList, confAddr, TRUE);
 

@@ -160,6 +160,7 @@ public:
 	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
 
 	void stopChatMessagesAggregationTimer();
+	void deleteConferenceInfo(const std::shared_ptr<Address> &conferenceAddress);
 	void createConferenceCleanupTimer();
 	void stopConferenceCleanupTimer();
 

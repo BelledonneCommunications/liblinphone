@@ -1896,6 +1896,10 @@ std::shared_ptr<Player> Conference::getPlayer() const {
 	return nullptr;
 }
 
+bool Conference::isChatOnly() const {
+	return (!supportsMedia() && mConfParams->chatEnabled());
+}
+
 bool Conference::supportsMedia() const {
 	return ((mConfParams->audioEnabled() || mConfParams->videoEnabled()));
 }

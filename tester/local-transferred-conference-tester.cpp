@@ -253,7 +253,7 @@ void create_transfer_conference_base(time_t start_time,
 		                             liblinphone_tester_sip_timeout));
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
-		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
+		    fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), memberList,
 		                            confAddr, video_transfer);
 

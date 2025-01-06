@@ -337,6 +337,16 @@ bool CorePrivate::isShutdownDone() {
 	return true;
 }
 
+void CorePrivate::deleteConferenceInfo(const std::shared_ptr<Address> &conferenceAddress) {
+#ifdef HAVE_DB_STORAGE
+	mainDb->deleteConferenceInfo(conferenceAddress);
+#endif // HAVE_DB_STORAGE
+	auto chatRoom = searchChatRoom(nullptr, nullptr, conferenceAddress, std::list<std::shared_ptr<Address>>());
+	if (chatRoom) {
+		chatRoom->deleteFromDb();
+	}
+}
+
 void CorePrivate::createConferenceCleanupTimer() {
 	L_Q();
 

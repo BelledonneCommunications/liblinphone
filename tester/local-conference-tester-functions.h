@@ -413,10 +413,10 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, LinphoneConference *conference);
 
 std::map<LinphoneCoreManager *, LinphoneParticipantInfo *>
-fill_memmber_list(std::list<LinphoneCoreManager *> members,
-                  std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList,
-                  LinphoneCoreManager *organizer,
-                  bctbx_list_t *participants_info);
+fill_member_list(std::list<LinphoneCoreManager *> members,
+                 std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList,
+                 LinphoneCoreManager *organizer,
+                 bctbx_list_t *participants_info);
 
 size_t compute_no_audio_streams(LinphoneCall *call, LinphoneConference *conference);
 

@@ -2866,7 +2866,7 @@ int ServerConference::terminate() {
 		// It avoids having a growing database on the server side
 		if (conferenceAddress &&
 		    (isConferenceEnded() || (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn))) {
-			getCore()->getPrivate()->mainDb->deleteConferenceInfo(conferenceAddress);
+			getCore()->getPrivate()->deleteConferenceInfo(conferenceAddress);
 		}
 	} else {
 		setChatRoom(nullptr);

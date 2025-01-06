@@ -340,6 +340,7 @@ public:
 
 	virtual const std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 
+	bool isChatOnly() const;
 	bool supportsMedia() const;
 
 	virtual void handleRefer(SalReferOp *op,

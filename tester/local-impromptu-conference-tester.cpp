@@ -646,7 +646,7 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 		BC_ASSERT_PTR_NOT_NULL(fconference);
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
-		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
+		    fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 		wait_for_conference_streams({focus, marie, pauline}, conferenceMgrs, focus.getCMgr(), memberList, confAddr,
 		                            TRUE);
 

@@ -501,7 +501,7 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 		                             liblinphone_tester_sip_timeout));
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
-		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
+		    fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 		wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs, focus.getCMgr(),
 		                            memberList, confAddr, TRUE);
 
@@ -668,7 +668,7 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 			BC_ASSERT_TRUE(verify_participant_addition_stats(coresList, laure, laure_stat, nbParticipantsAdded,
 			                                                 nbNotifyEktReceived));
 
-			memberList = fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
+			memberList = fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 			wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs,
 			                            focus.getCMgr(), memberList, confAddr, TRUE);
 
@@ -749,7 +749,7 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 			conferenceMgrs.remove(berthe.getCMgr());
 			members.remove(berthe.getCMgr());
 
-			memberList = fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
+			memberList = fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 			wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs,
 			                            focus.getCMgr(), memberList, confAddr, TRUE);
 
