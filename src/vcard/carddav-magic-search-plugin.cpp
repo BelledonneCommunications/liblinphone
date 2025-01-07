@@ -89,13 +89,14 @@ void CardDavMagicSearchPlugin::notifyError(const string &errorMessage) {
 }
 
 void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &friends) {
-	lDebug() << "[Magic Search][CardDAV] Found " << friends.size() << " friends in remote server";
+	size_t friendsCount = friends.size();
+	lDebug() << "[Magic Search][CardDAV] Found " << friendsCount << " friends in remote server";
 
 	list<shared_ptr<SearchResult>> resultList;
-	bool filterResults = getMagicSearch().filterPluginsResults();
+	bool filterPluginResults = getMagicSearch().filterPluginsResults() || (!mDomain.empty() && mDomain != "*");
 
 	for (auto &lFriend : friends) {
-		if (filterResults || !mDomain.empty() || mDomain != "*") {
+		if (filterPluginResults) {
 			auto found = getMagicSearch().searchInFriend(lFriend, mDomain, getSource());
 			if (resultList.empty()) {
 				resultList = found;
@@ -108,7 +109,13 @@ void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &fr
 		}
 	}
 
-	lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results in remote server";
+	if (filterPluginResults) {
+		lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results in remote server ["
+		        << friendsCount << "] raw results (after local filter is applied)";
+	} else {
+		lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results in remote server ["
+		        << friendsCount << "] raw results (no local filter was applied)";
+	}
 	setResults(resultList);
 
 	if (mMoreResultsAvailable) {

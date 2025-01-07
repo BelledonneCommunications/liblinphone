@@ -2404,7 +2404,7 @@ static void search_friend_get_capabilities(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallback) {
+static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallback, bool filter_ldap_results) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -2417,24 +2417,39 @@ static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallb
 
 	char *addr = linphone_address_as_string_uri_only(pauline->identity);
 	magicSearch = linphone_magic_search_new(marie->lc);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "magic_search", "filter_plugins_results",
+	                         filter_ldap_results);
 	resultList = linphone_magic_search_get_contacts_list(magicSearch, "", "", LinphoneMagicSearchSourceAll,
 	                                                     LinphoneMagicSearchAggregationNone);
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		if (linphone_core_ldap_available(marie->lc)) {
-			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 9, int, "%d"); // Sorted by display names
-			_check_friend_result_list(marie->lc, resultList, 0, "sip:chloe@ldap.example.org", NULL); // "Chloe"
-			_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org",
-			                          NULL);                                                         // "Laure" mobile
-			_check_friend_result_list(marie->lc, resultList, 2, "sip:laure@ldap.example.org", NULL); // "Laure"	sn
-			_check_friend_result_list(marie->lc, resultList, 3, "sip:0212345678@ldap.example.org",
-			                          NULL); //"Marie" telephoneNumber
-			_check_friend_result_list(marie->lc, resultList, 4, "sip:0601234567@ldap.example.org",
-			                          NULL);                                                           // "Marie" mobile
-			_check_friend_result_list(marie->lc, resultList, 5, "sip:marie@ldap.example.org", NULL);   // "Marie" sn
-			_check_friend_result_list(marie->lc, resultList, 6, "sip:pauline@ldap.example.org", NULL); //"Pauline" sn
-			_check_friend_result_list_2(marie->lc, resultList, 7, addr, NULL, NULL,
-			                            LinphoneMagicSearchSourceChatRooms); // "pauline_***" *** is dynamic
-			_check_friend_result_list(marie->lc, resultList, 8, "sip:pauline@sip.example.org", NULL); // "Paupoche"
+			if (filter_ldap_results) {
+				BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 9, int, "%d"); // Sorted by display names
+				_check_friend_result_list(marie->lc, resultList, 0, "sip:chloe@ldap.example.org", NULL); // "Chloe"
+				_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org",
+				                          NULL); // "Laure" mobile
+				_check_friend_result_list(marie->lc, resultList, 2, "sip:laure@ldap.example.org", NULL); // "Laure"	sn
+				_check_friend_result_list(marie->lc, resultList, 3, "sip:0212345678@ldap.example.org",
+				                          NULL); //"Marie" telephoneNumber
+				_check_friend_result_list(marie->lc, resultList, 4, "sip:0601234567@ldap.example.org",
+				                          NULL); // "Marie" mobile
+				_check_friend_result_list(marie->lc, resultList, 5, "sip:marie@ldap.example.org", NULL); // "Marie" sn
+				_check_friend_result_list(marie->lc, resultList, 6, "sip:pauline@ldap.example.org",
+				                          NULL); //"Pauline" sn
+				_check_friend_result_list_2(marie->lc, resultList, 7, addr, NULL, NULL,
+				                            LinphoneMagicSearchSourceChatRooms); // "pauline_***" *** is dynamic
+				_check_friend_result_list(marie->lc, resultList, 8, "sip:pauline@sip.example.org", NULL); // "Paupoche"
+			} else {
+				BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 6, int, "%d"); // Sorted by display names
+				_check_friend_result_list(marie->lc, resultList, 0, "sip:chloe@ldap.example.org", NULL); // "Chloe"
+				_check_friend_result_list(marie->lc, resultList, 1, "sip:laure@ldap.example.org", NULL); // "Laure"
+				_check_friend_result_list(marie->lc, resultList, 2, "sip:marie@ldap.example.org", NULL); // "Marie"
+				_check_friend_result_list(marie->lc, resultList, 3, "sip:pauline@ldap.example.org",
+				                          NULL); //"Pauline" sn
+				_check_friend_result_list_2(marie->lc, resultList, 4, addr, NULL, NULL,
+				                            LinphoneMagicSearchSourceChatRooms); // "pauline_***" *** is dynamic
+				_check_friend_result_list(marie->lc, resultList, 5, "sip:pauline@sip.example.org", NULL); // "Paupoche"
+			}
 			// marie_rc has an hardcoded friend for pauline
 		} else {
 			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
@@ -2460,11 +2475,19 @@ static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallb
 }
 
 static void search_friend_chat_room_remote(void) {
-	search_friend_chat_room_remote_with_fallback(FALSE);
+	search_friend_chat_room_remote_with_fallback(FALSE, TRUE);
 }
 
 static void search_friend_chat_room_remote_ldap_fallback(void) {
-	search_friend_chat_room_remote_with_fallback(TRUE);
+	search_friend_chat_room_remote_with_fallback(TRUE, TRUE);
+}
+
+static void search_friend_chat_room_remote_no_plugin_filter(void) {
+	search_friend_chat_room_remote_with_fallback(FALSE, FALSE);
+}
+
+static void search_friend_chat_room_remote_ldap_fallback_no_plugin_filter(void) {
+	search_friend_chat_room_remote_with_fallback(TRUE, FALSE);
 }
 
 static void search_friend_non_default_list(void) {
@@ -2783,6 +2806,8 @@ static void async_search_friend_in_sources(void) {
 	LinphoneMagicSearchCbs *searchHandler = linphone_factory_create_magic_search_cbs(linphone_factory_get());
 	linphone_magic_search_cbs_set_search_results_received(searchHandler, _onMagicSearchResultsReceived);
 	magicSearch = linphone_magic_search_new(manager->lc);
+	linphone_config_set_bool(linphone_core_get_config(manager->lc), "magic_search", "filter_plugins_results",
+	                         TRUE); // Test wasn't made for not filtering
 	linphone_magic_search_add_callbacks(magicSearch, searchHandler);
 
 	bctbx_list_t *resultList = NULL;
@@ -2874,6 +2899,8 @@ static void ldap_search(void) {
 	LinphoneMagicSearchCbs *searchHandler = linphone_factory_create_magic_search_cbs(linphone_factory_get());
 	linphone_magic_search_cbs_set_search_results_received(searchHandler, _onMagicSearchResultsReceived);
 	magicSearch = linphone_magic_search_new(manager->lc);
+	linphone_config_set_bool(linphone_core_get_config(manager->lc), "magic_search", "filter_plugins_results",
+	                         TRUE); // Test wasn't made for not filtering
 	linphone_magic_search_add_callbacks(magicSearch, searchHandler);
 
 	bctbx_list_t *resultList = NULL;
@@ -3874,10 +3901,19 @@ test_t setup_tests[] = {
     TEST_ONE_TAG("Search friend with same address", search_friend_with_same_address, "MagicSearch"),
     TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
     TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
-    TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
-    TEST_ONE_TAG("Search friend result chat room remote ldap fallback",
-                 search_friend_chat_room_remote_ldap_fallback,
-                 "MagicSearch"),
+    TEST_TWO_TAGS("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch", "LDAP"),
+    TEST_TWO_TAGS("Search friend result chat room remote ldap fallback",
+                  search_friend_chat_room_remote_ldap_fallback,
+                  "MagicSearch",
+                  "LDAP"),
+    TEST_TWO_TAGS("Search friend result chat room remote without filtering LDAP results",
+                  search_friend_chat_room_remote_no_plugin_filter,
+                  "MagicSearch",
+                  "LDAP"),
+    TEST_TWO_TAGS("Search friend result chat room remote ldap fallback without filtering LDAP results",
+                  search_friend_chat_room_remote_ldap_fallback_no_plugin_filter,
+                  "MagicSearch",
+                  "LDAP"),
     TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
     TEST_ONE_TAG("Async search friend in sources", async_search_friend_in_sources, "MagicSearch"),
     TEST_TWO_TAGS("Ldap search", ldap_search, "MagicSearch", "LDAP"),

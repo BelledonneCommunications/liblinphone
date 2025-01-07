@@ -776,6 +776,11 @@ MagicSearch::createResultFromFriend(const shared_ptr<Friend> &lFriend, const str
 			unsigned int addrWeight = searchInAddress(addr, withDomain);
 			if (addrWeight > addressWeight || address == nullptr) {
 				addressWeight = addrWeight;
+				// Prefer addresses that aren't constructed from phone number as there is a dedicated field for that in
+				// the SearchResult
+				if (linphone_account_is_phone_number(nullptr, addr->getUsername().c_str())) {
+					addressWeight -= 1;
+				}
 				address = addr;
 			}
 		}

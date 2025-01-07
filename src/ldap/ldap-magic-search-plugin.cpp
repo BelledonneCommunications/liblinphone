@@ -28,14 +28,16 @@ using namespace std;
 
 static void resultsCb(list<shared_ptr<Friend>> friends, void *data, bool_t haveMoreResults) {
 	LdapMagicSearchPlugin *ldapPlugin = (LdapMagicSearchPlugin *)data;
-	lInfo() << "[Magic Search][LDAP] Processing [" << friends.size() << "] friends created";
+	size_t friendsCount = friends.size();
+	lInfo() << "[Magic Search][LDAP] Processing [" << friendsCount << "] friends created";
 
 	list<shared_ptr<SearchResult>> resultList;
-	bool filterResults = ldapPlugin->getMagicSearch().filterPluginsResults();
 	string domainFilter = ldapPlugin->getDomain();
+	bool filterPluginResults =
+	    ldapPlugin->getMagicSearch().filterPluginsResults() || (!domainFilter.empty() && domainFilter != "*");
 
 	for (auto &lFriend : friends) {
-		if (filterResults || !domainFilter.empty() || domainFilter != "*") {
+		if (filterPluginResults) {
 			auto found = ldapPlugin->getMagicSearch().searchInFriend(lFriend, domainFilter, ldapPlugin->getSource());
 			if (resultList.empty()) {
 				resultList = found;
@@ -48,11 +50,18 @@ static void resultsCb(list<shared_ptr<Friend>> friends, void *data, bool_t haveM
 			resultList.push_back(result);
 		}
 	}
+
+	if (filterPluginResults) {
+		lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results from [" << friendsCount
+		        << "] raw results (after local filter is applied)";
+	} else {
+		lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results from [" << friendsCount
+		        << "] raw results (no local filter was applied)";
+	}
 	ldapPlugin->setResults(resultList);
 
-	lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results in LDAP."
-	        << (haveMoreResults ? " More results are available." : "");
 	if (haveMoreResults) {
+		lInfo() << "[Magic Search][LDAP] More results are available.";
 		shared_ptr<LdapParams> ldapParams = ldapPlugin->getLdapProvider()->getLdapServer();
 		shared_ptr<Ldap> ldap = Ldap::create(ldapPlugin->getCore(), ldapParams);
 		// Legacy
