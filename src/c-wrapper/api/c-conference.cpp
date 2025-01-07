@@ -375,9 +375,19 @@ const char *linphone_conference_get_subject(const LinphoneConference *conference
 	return L_STRING_TO_C(Conference::toCpp(conference)->getSubject());
 }
 
+const char *linphone_conference_get_subject_utf8(const LinphoneConference *conference) {
+	ConferenceLogContextualizer logContextualizer(conference);
+	return L_STRING_TO_C(Conference::toCpp(conference)->getUtf8Subject());
+}
+
 void linphone_conference_set_subject(LinphoneConference *conference, const char *subject) {
 	ConferenceLogContextualizer logContextualizer(conference);
 	Conference::toCpp(conference)->setSubject(L_C_TO_STRING(subject));
+}
+
+void linphone_conference_set_subject_utf8(LinphoneConference *conference, const char *subject) {
+	ConferenceLogContextualizer logContextualizer(conference);
+	Conference::toCpp(conference)->setUtf8Subject(L_C_TO_STRING(subject));
 }
 
 const char *linphone_conference_get_username(const LinphoneConference *conference) {

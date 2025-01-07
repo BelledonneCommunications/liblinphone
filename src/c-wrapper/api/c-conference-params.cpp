@@ -154,7 +154,7 @@ void linphone_conference_params_set_subject(LinphoneConferenceParams *params, co
 	ConferenceParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
 }
 
-void linphone_conference_params_set_utf8_subject(LinphoneConferenceParams *params, const char *subject) {
+void linphone_conference_params_set_subject_utf8(LinphoneConferenceParams *params, const char *subject) {
 	ConferenceParams::toCpp(params)->setUtf8Subject(L_C_TO_STRING(subject));
 }
 
@@ -162,16 +162,16 @@ const char *linphone_conference_params_get_subject(const LinphoneConferenceParam
 	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getSubject());
 }
 
-const char *linphone_conference_params_get_utf8_subject(const LinphoneConferenceParams *params) {
+const char *linphone_conference_params_get_subject_utf8(const LinphoneConferenceParams *params) {
 	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getUtf8Subject());
 }
 
-const char *linphone_conference_params_get_description(const LinphoneConferenceParams *params) {
-	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getDescription());
+const char *linphone_conference_params_get_description_utf8(const LinphoneConferenceParams *params) {
+	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getUtf8Description());
 }
 
-void linphone_conference_params_set_description(LinphoneConferenceParams *params, const char *description) {
-	ConferenceParams::toCpp(params)->setDescription(L_C_TO_STRING(description));
+void linphone_conference_params_set_description_utf8(LinphoneConferenceParams *params, const char *description) {
+	ConferenceParams::toCpp(params)->setUtf8Description(L_C_TO_STRING(description));
 }
 
 void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start) {
@@ -207,7 +207,7 @@ void linphone_conference_params_set_conference_factory_address(LinphoneConferenc
 
 const LinphoneAddress *
 linphone_conference_params_get_conference_factory_address(const LinphoneConferenceParams *params) {
-	auto &conferenceAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
+	auto conferenceAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
 	if (conferenceAddress) return conferenceAddress->toC();
 	else return NULL;
 }
@@ -245,6 +245,6 @@ void linphone_conference_params_enable_group(LinphoneConferenceParams *params, b
 }
 
 LinphoneChatParams *linphone_conference_params_get_chat_params(const LinphoneConferenceParams *params) {
-	auto &chatParams = ConferenceParams::toCpp(params)->getChatParams();
+	auto chatParams = ConferenceParams::toCpp(params)->getChatParams();
 	return chatParams ? chatParams->toC() : nullptr;
 }

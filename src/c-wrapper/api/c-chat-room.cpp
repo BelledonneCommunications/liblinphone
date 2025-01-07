@@ -530,6 +530,11 @@ const char *linphone_chat_room_get_subject(const LinphoneChatRoom *cr) {
 	return L_STRING_TO_C(AbstractChatRoom::toCpp(cr)->getSubject());
 }
 
+const char *linphone_chat_room_get_subject_utf8(const LinphoneChatRoom *cr) {
+	ChatRoomLogContextualizer logContextualizer(cr);
+	return L_STRING_TO_C(AbstractChatRoom::toCpp(cr)->getSubjectUtf8());
+}
+
 LinphoneChatRoomSecurityLevel linphone_chat_room_get_security_level(LinphoneChatRoom *cr) {
 	ChatRoomLogContextualizer logContextualizer(cr);
 	return (LinphoneChatRoomSecurityLevel)AbstractChatRoom::toCpp(cr)->getSecurityLevel();
@@ -569,6 +574,11 @@ void linphone_chat_room_set_participant_admin_status(LinphoneChatRoom *cr,
 void linphone_chat_room_set_subject(LinphoneChatRoom *cr, const char *subject) {
 	ChatRoomLogContextualizer logContextualizer(cr);
 	AbstractChatRoom::toCpp(cr)->setSubject(L_C_TO_STRING(subject));
+}
+
+void linphone_chat_room_set_subject_utf8(LinphoneChatRoom *chat_room, const char *subject) {
+	ChatRoomLogContextualizer logContextualizer(chat_room);
+	AbstractChatRoom::toCpp(chat_room)->setUtf8Subject(L_C_TO_STRING(subject));
 }
 
 const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom *cr) {

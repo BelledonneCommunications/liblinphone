@@ -345,19 +345,20 @@ void ConferenceInfo::setDuration(unsigned int duration) {
 }
 
 const std::string &ConferenceInfo::getSubject() const {
+	mSubject = Utils::utf8ToLocale(mSubjectUtf8);
 	return mSubject;
 }
 
-const std::string ConferenceInfo::getUtf8Subject() const {
-	return Utils::localeToUtf8(mSubject);
+const std::string &ConferenceInfo::getUtf8Subject() const {
+	return mSubjectUtf8;
 }
 
 void ConferenceInfo::setSubject(const std::string &subject) {
-	mSubject = Utils::trim(subject);
+	setUtf8Subject(Utils::localeToUtf8(subject));
 }
 
 void ConferenceInfo::setUtf8Subject(const std::string &subject) {
-	mSubject = Utils::trim(Utils::utf8ToLocale(subject));
+	mSubjectUtf8 = Utils::trim(subject);
 }
 
 unsigned int ConferenceInfo::getIcsSequence() const {
@@ -400,20 +401,21 @@ void ConferenceInfo::setCcmpUri(const std::string &uid) {
 	mCcmpUri = Utils::trim(uid);
 }
 
-const string ConferenceInfo::getUtf8Description() const {
-	return Utils::localeToUtf8(mDescription);
+const string &ConferenceInfo::getUtf8Description() const {
+	return mDescriptionUtf8;
 }
 
 const string &ConferenceInfo::getDescription() const {
+	mDescription = Utils::utf8ToLocale(mDescriptionUtf8);
 	return mDescription;
 }
 
 void ConferenceInfo::setDescription(const string &description) {
-	mDescription = Utils::trim(description);
+	setUtf8Description(Utils::localeToUtf8(description));
 }
 
 void ConferenceInfo::setUtf8Description(const string &description) {
-	mDescription = Utils::trim(Utils::utf8ToLocale(description));
+	mDescriptionUtf8 = Utils::trim(description);
 }
 
 ConferenceParamsInterface::SecurityLevel ConferenceInfo::getSecurityLevel() const {
@@ -505,8 +507,8 @@ const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 		event->setOrganizer(uri, mOrganizer->getAllParameters());
 	}
 
-	event->setSummary(mSubject);
-	event->setDescription(mDescription);
+	event->setUtf8Summary(mSubjectUtf8);
+	event->setUtf8Description(mDescriptionUtf8);
 
 	if (mUri && mUri->isValid()) {
 		const auto uri = mUri->asStringUriOnly();

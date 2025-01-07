@@ -91,11 +91,25 @@ LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_clone(const
 LINPHONE_PUBLIC void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char *subject);
 
 /**
+ * Set the conference subject as an UTF8 string.
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param subject conference subject @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_subject_utf8(LinphoneConferenceParams *params, const char *subject);
+
+/**
  * Get the conference subject
  * @param params A #LinphoneConferenceParams @notnil
  * @return conference subject. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_params_get_subject(const LinphoneConferenceParams *params);
+
+/**
+ * Get the conference subject as an UTF-8 string.
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return conference subject. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_params_get_subject_utf8(const LinphoneConferenceParams *params);
 
 /**
  * Enable audio capabilities
@@ -334,33 +348,19 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_conference_params_get_conference_factory_address(const LinphoneConferenceParams *params);
 
 /**
- * Set the description of the conference
+ * Set the description of the conference (utf8)
  * @param params The #LinphoneConferenceParams object. @notnil
  * @param description the conference description. @maybenil
  */
-LINPHONE_PUBLIC void linphone_conference_params_set_description(LinphoneConferenceParams *params,
-                                                                const char *description);
+LINPHONE_PUBLIC void linphone_conference_params_set_description_utf8(LinphoneConferenceParams *params,
+                                                                     const char *description);
 
 /**
- * Get conference description
+ * Get conference description (utf8).
  * @param params The #LinphoneConferenceParams object. @notnil
  * @return the conference description. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_conference_params_get_description(const LinphoneConferenceParams *params);
-
-/**
- * Set the subject of the conference
- * @param params The #LinphoneConferenceParams object. @notnil
- * @param subject the conference subject. @maybenil
- */
-LINPHONE_PUBLIC void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char *subject);
-
-/**
- * Get conference subject
- * @param params The #LinphoneConferenceParams object. @notnil
- * @return the conference subject. @maybenil
- */
-LINPHONE_PUBLIC const char *linphone_conference_params_get_subject(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC const char *linphone_conference_params_get_description_utf8(const LinphoneConferenceParams *params);
 
 /**
  * Set the participant list type

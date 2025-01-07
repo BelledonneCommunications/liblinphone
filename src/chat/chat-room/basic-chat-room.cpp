@@ -104,7 +104,7 @@ void BasicChatRoom::invalidateAccount() {
 	mParams->setAccount(nullptr);
 }
 
-const std::shared_ptr<Account> BasicChatRoom::getAccount() {
+std::shared_ptr<Account> BasicChatRoom::getAccount() {
 	auto account = mParams->getAccount();
 	if (!account) {
 		mParams->setAccount(getCore()->findAccountByIdentityAddress(mConferenceId.getLocalAddress()));
@@ -127,27 +127,23 @@ void BasicChatRoom::setState(ConferenceInterface::State newState) {
 	}
 }
 
-void BasicChatRoom::setSubject(const string &subject) {
-	mParams->setSubject(subject);
-}
-
 void BasicChatRoom::setUtf8Subject(const string &subject) {
 	mParams->setUtf8Subject(subject);
 }
 
-const std::string &BasicChatRoom::getSubject() const {
-	return mParams->getSubject();
+const std::string &BasicChatRoom::getSubjectUtf8() const {
+	return mParams->getUtf8Subject();
 }
 
 bool BasicChatRoom::isMe(const std::shared_ptr<Address> &address) const {
 	return address->weakEqual(*mMe->getAddress());
 }
 
-const std::shared_ptr<Participant> BasicChatRoom::getMe() const {
+std::shared_ptr<Participant> BasicChatRoom::getMe() const {
 	return mMe;
 }
 
-const std::list<std::shared_ptr<Participant>> BasicChatRoom::getParticipants() const {
+std::list<std::shared_ptr<Participant>> BasicChatRoom::getParticipants() const {
 	return mParticipants;
 }
 

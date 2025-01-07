@@ -217,11 +217,25 @@ linphone_conference_get_current_params(const LinphoneConference *conference);
 LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *conference);
 
 /**
+ * Get the conference subject as an UTF-8 string.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference subject. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_get_subject_utf8(const LinphoneConference *conference);
+
+/**
  * Set the conference subject
  * @param conference The #LinphoneConference object. @notnil
  * @param subject conference subject @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *conference, const char *subject);
+
+/**
+ * Set the conference subject as an UTF-8 string.
+ * @param conference The #LinphoneConference object. @notnil
+ * @param subject conference subject @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_subject_utf8(LinphoneConference *conference, const char *subject);
 
 /**
  * Get the conference username
@@ -238,7 +252,7 @@ LINPHONE_PUBLIC const char *linphone_conference_get_username(const LinphoneConfe
 LINPHONE_PUBLIC void linphone_conference_set_username(LinphoneConference *conference, const char *username);
 
 /**
- * Set stream capability on me device of a local conference
+ * Set stream capability on 'me' device of a local conference
  * @param conference The #LinphoneConference object. @notnil
  * @param direction the direction of stream of type stream_type
  * @param stream_type A #LinphoneStreamType

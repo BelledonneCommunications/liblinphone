@@ -138,7 +138,6 @@ public:
 	                                  const std::shared_ptr<Participant> &participant) override;
 	virtual void onParticipantSetAdmin(const std::shared_ptr<ConferenceParticipantEvent> &event,
 	                                   const std::shared_ptr<Participant> &participant) override;
-	virtual void setSubject(const std::string &subject) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 
 	virtual void notifyStateChanged(ConferenceInterface::State state) override;
@@ -187,6 +186,7 @@ public:
 	void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
 	                               CallSession::State state,
 	                               const std::string &message) override;
+	void setUtf8Subject(const std::string &subject) override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LinphonePrivate::ClientEktManager> getClientEktManager() const;

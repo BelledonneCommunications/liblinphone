@@ -44,7 +44,7 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 	conferenceParams->enableAudio(conferenceInfo->getCapability(LinphoneStreamTypeAudio));
 	conferenceParams->enableVideo(conferenceInfo->getCapability(LinphoneStreamTypeVideo));
 	conferenceParams->enableChat(conferenceInfo->getCapability(LinphoneStreamTypeText));
-	conferenceParams->setSubject(mConferenceInfo->getSubject());
+	conferenceParams->setUtf8Subject(mConferenceInfo->getUtf8Subject());
 	conferenceParams->setSecurityLevel(mConferenceInfo->getSecurityLevel());
 
 	const auto &startTime = conferenceInfo->getDateTime();
@@ -130,7 +130,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 			    static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled() && initiate_video);
 
 			linphone_core_invite_address_with_params_2(getCore()->getCCore(), remoteAddress->toC(), new_params,
-			                                           L_STRING_TO_C(mConferenceInfo->getSubject()), NULL);
+			                                           L_STRING_TO_C(mConferenceInfo->getUtf8Subject()), NULL);
 			linphone_call_params_unref(new_params);
 		}
 

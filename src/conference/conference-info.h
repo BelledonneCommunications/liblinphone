@@ -105,7 +105,7 @@ public:
 	void setDuration(unsigned int duration);
 
 	const std::string &getSubject() const;
-	const std::string getUtf8Subject() const;
+	const std::string &getUtf8Subject() const;
 	void setSubject(const std::string &subject);
 	void setUtf8Subject(const std::string &subject);
 
@@ -123,7 +123,7 @@ public:
 	void setUtf8IcsUid(const std::string &uid);
 
 	const std::string &getDescription() const;
-	const std::string getUtf8Description() const;
+	const std::string &getUtf8Description() const;
 	void setDescription(const std::string &description);
 	void setUtf8Description(const std::string &description);
 
@@ -159,8 +159,10 @@ private:
 	std::shared_ptr<Address> mUri;
 	time_t mDateTime = (time_t)-1;
 	unsigned int mDuration = 0;
-	std::string mSubject = "";
-	std::string mDescription = "";
+	mutable std::string mSubject;
+	mutable std::string mDescription;
+	std::string mSubjectUtf8;
+	std::string mDescriptionUtf8;
 	mutable unsigned int mIcsSequence = 0;
 	mutable std::string mIcsUid = "";
 	State mState = State::New;

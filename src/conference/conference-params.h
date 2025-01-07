@@ -64,7 +64,7 @@ public:
 		mFactoryAddress = address ? address->clone()->toSharedPtr() : nullptr;
 	};
 
-	const std::shared_ptr<Address> &getConferenceFactoryAddress() const {
+	std::shared_ptr<Address> getConferenceFactoryAddress() const {
 		return mFactoryAddress;
 	};
 
@@ -113,65 +113,63 @@ public:
 		return mConferenceAddress;
 	};
 
-	void setUtf8Description(const std::string &description);
-	void setDescription(const std::string &description) {
-		mDescription = description;
-	};
-	const std::string &getDescription() const {
-		return mDescription;
-	};
-	const std::string &getUtf8Description() const;
+	void setUtf8Description(const std::string &description) {
+		mUtf8Description = description;
+	}
+	const std::string &getUtf8Description() const {
+		return mUtf8Description;
+	}
+	void setDescription(const std::string &description);
+	const std::string &getDescription() const;
 
 	virtual void setUtf8Subject(const std::string &subject) override;
-	virtual void setSubject(const std::string &subject) override {
-		mSubject = subject;
-	};
-	const std::string &getUtf8Subject() const;
-	const std::string &getSubject() const {
-		return mSubject;
-	};
+	void setSubject(const std::string &subject);
+	const std::string &getUtf8Subject() const {
+		return mUtf8Subject;
+	}
+	const std::string &getSubject() const;
 
 	virtual void setMe(const std::shared_ptr<Address> &participantAddress) override {
 		mMe = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
 	};
-	const std::shared_ptr<Address> &getMe() const {
+	std::shared_ptr<Address> getMe() const {
 		return mMe;
 	};
 
 	void setAccount(const std::shared_ptr<Account> &a);
-	const std::shared_ptr<Account> getAccount() const;
+	std::shared_ptr<Account> getAccount() const;
 
 	virtual void setStartTime(const time_t &start) override {
 		mStartTime = start;
 	};
-	inline const time_t &getStartTime() const {
+	time_t getStartTime() const {
 		return mStartTime;
 	};
-	const std::string getStartTimeString() const {
+	std::string getStartTimeString() const {
 		return Utils::timeToIso8601(getStartTime());
 	}
 
 	virtual void setEndTime(const time_t &end) override {
 		mEndTime = end;
 	};
-	inline const time_t &getEndTime() const {
+	time_t getEndTime() const {
 		return mEndTime;
 	};
-	const std::string getEndTimeString() const {
+	std::string getEndTimeString() const {
 		return Utils::timeToIso8601(getEndTime());
 	}
 
 	virtual void setParticipantListType(const ParticipantListType &type) override {
 		mParticipantListType = type;
 	};
-	const ParticipantListType &getParticipantListType() const {
+	ParticipantListType getParticipantListType() const {
 		return mParticipantListType;
 	};
 
 	virtual void setJoiningMode(const JoiningMode &mode) override {
 		mJoinMode = mode;
 	};
-	const JoiningMode &getJoiningMode() const {
+	JoiningMode getJoiningMode() const {
 		return mJoinMode;
 	};
 
@@ -185,7 +183,7 @@ public:
 		return mSecurityLevel;
 	};
 
-	std::shared_ptr<ChatParams> &getChatParams() const {
+	std::shared_ptr<ChatParams> getChatParams() const {
 		return mChatParams;
 	};
 
@@ -212,10 +210,10 @@ private:
 	std::shared_ptr<Address> mFactoryAddress = nullptr;
 	SecurityLevel mSecurityLevel = SecurityLevel::None;
 	bool mUseDefaultFactoryAddress = true;
-	std::string mSubject = "";
-	mutable std::string mUtf8Subject = "";
-	std::string mDescription = "";
-	mutable std::string mUtf8Description = "";
+	mutable std::string mSubject = "";
+	std::string mUtf8Subject = "";
+	mutable std::string mDescription = "";
+	std::string mUtf8Description = "";
 	std::shared_ptr<Address> mMe = nullptr;
 	time_t mStartTime = (time_t)-1;
 	time_t mEndTime = (time_t)-1;

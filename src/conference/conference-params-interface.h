@@ -61,13 +61,6 @@ public:
 	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) = 0;
 
 	/*
-	 * Set the subject of this conference. If not focus,  this operation is only available if the local participant
-	 * #getMe() is admin.
-	 * @param[in] subject The new subject to set for the chat room
-	 */
-	virtual void setSubject(const std::string &subject) = 0;
-
-	/*
 	 * Set the subject of this conference in UTF8. If not focus,  this operation is only available if the local
 	 * participant  #getMe() is admin.
 	 * @param[in] subject The new subject to set for the chat room

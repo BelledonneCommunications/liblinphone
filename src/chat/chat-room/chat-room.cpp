@@ -108,7 +108,7 @@ void ChatRoom::invalidateAccount() {
 	}
 }
 
-const std::shared_ptr<Account> ChatRoom::getAccount() {
+std::shared_ptr<Account> ChatRoom::getAccount() {
 	const auto conferencePtr = getConference();
 	if (conferencePtr) {
 		return conferencePtr->getAccount();
@@ -116,19 +116,12 @@ const std::shared_ptr<Account> ChatRoom::getAccount() {
 	return nullptr;
 }
 
-const std::string &ChatRoom::getSubject() const {
+const std::string &ChatRoom::getSubjectUtf8() const {
 	const auto conferencePtr = getConference();
 	if (conferencePtr) {
-		return conferencePtr->getSubject();
+		return conferencePtr->getUtf8Subject();
 	}
 	return Utils::getEmptyConstRefObject<std::string>();
-}
-
-void ChatRoom::setSubject(const std::string &subject) {
-	const auto conferencePtr = getConference();
-	if (conferencePtr) {
-		conferencePtr->setSubject(subject);
-	}
 }
 
 void ChatRoom::setUtf8Subject(const std::string &subject) {
@@ -347,7 +340,7 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 				params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
 				params->setSecurityLevel(ConferenceParams::SecurityLevel::EndToEnd);
 				std::string subject(peerAddress->toString() + "'s IMDNs");
-				params->setSubject(subject);
+				params->setUtf8Subject(subject);
 			} else {
 				params->getChatParams()->setBackend(ChatParams::Backend::Basic);
 				params->setSecurityLevel(ConferenceParams::SecurityLevel::None);
@@ -1001,7 +994,7 @@ bool ChatRoom::isMe(const std::shared_ptr<Address> &address) const {
 	return conference->isMe(address);
 }
 
-const std::shared_ptr<Participant> ChatRoom::getMe() const {
+std::shared_ptr<Participant> ChatRoom::getMe() const {
 	const auto conference = getConference();
 	if (!conference) {
 		return nullptr;
@@ -1009,7 +1002,7 @@ const std::shared_ptr<Participant> ChatRoom::getMe() const {
 	return conference->getMe();
 }
 
-const std::shared_ptr<Address> ChatRoom::getConferenceAddress() const {
+std::shared_ptr<Address> ChatRoom::getConferenceAddress() const {
 	const auto conference = getConference();
 	if (!conference) {
 		return nullptr;
@@ -1017,7 +1010,7 @@ const std::shared_ptr<Address> ChatRoom::getConferenceAddress() const {
 	return conference->getConferenceAddress();
 }
 
-const std::shared_ptr<Participant> ChatRoom::findParticipant(const std::shared_ptr<Address> &address) const {
+std::shared_ptr<Participant> ChatRoom::findParticipant(const std::shared_ptr<Address> &address) const {
 	const auto conference = getConference();
 	if (!conference) {
 		return nullptr;
@@ -1025,7 +1018,7 @@ const std::shared_ptr<Participant> ChatRoom::findParticipant(const std::shared_p
 	return conference->findParticipant(address);
 }
 
-const std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
+std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
 	const auto conference = getConference();
 	if (!conference) {
 		return std::list<std::shared_ptr<Participant>>();
@@ -1116,7 +1109,7 @@ void ChatRoom::setIsMuted(const bool muted, const bool updateDb) {
 	}
 }
 
-const std::shared_ptr<ConferenceInfo> ChatRoom::getConferenceInfo() const {
+std::shared_ptr<ConferenceInfo> ChatRoom::getConferenceInfo() const {
 	const auto conference = getConference();
 	if (!conference) {
 		return nullptr;

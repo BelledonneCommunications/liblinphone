@@ -153,6 +153,14 @@ void linphone_conference_info_set_subject(LinphoneConferenceInfo *conference_inf
 	ConferenceInfo::toCpp(conference_info)->setSubject(L_C_TO_STRING(subject));
 }
 
+const char *linphone_conference_info_get_subject_utf8(const LinphoneConferenceInfo *conference_info) {
+	return L_STRING_TO_C(ConferenceInfo::toCpp(conference_info)->getUtf8Subject());
+}
+
+void linphone_conference_info_set_subject_utf8(LinphoneConferenceInfo *conference_info, const char *subject) {
+	ConferenceInfo::toCpp(conference_info)->setUtf8Subject(L_C_TO_STRING(subject));
+}
+
 void linphone_conference_info_set_ics_sequence(LinphoneConferenceInfo *conference_info, unsigned int sequence) {
 	ConferenceInfo::toCpp(conference_info)->setIcsSequence(sequence);
 }
@@ -183,6 +191,14 @@ const char *linphone_conference_info_get_description(const LinphoneConferenceInf
 
 void linphone_conference_info_set_description(LinphoneConferenceInfo *conference_info, const char *description) {
 	ConferenceInfo::toCpp(conference_info)->setDescription(L_C_TO_STRING(description));
+}
+
+const char *linphone_conference_info_get_description_utf8(const LinphoneConferenceInfo *conference_info) {
+	return L_STRING_TO_C(ConferenceInfo::toCpp(conference_info)->getUtf8Description());
+}
+
+void linphone_conference_info_set_description_utf8(LinphoneConferenceInfo *conference_info, const char *description) {
+	ConferenceInfo::toCpp(conference_info)->setUtf8Description(L_C_TO_STRING(description));
 }
 
 LinphoneConferenceSecurityLevel

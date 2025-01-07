@@ -899,8 +899,8 @@ public:
 		bool status = ServerConference::removeParticipant(participant);
 		return status;
 	}
-	void setSubject(const std::string &subject) override {
-		ServerConference::setSubject(subject);
+	void setUtf8Subject(const std::string &subject) override {
+		ServerConference::setUtf8Subject(subject);
 	}
 };
 

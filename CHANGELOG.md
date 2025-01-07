@@ -55,6 +55,8 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Allow LinphoneCoreCbs' s authentication_requested() callack to be invoked during remote provisioning.
 
 ### Fixed
+- Added _utf8() getter and setters for subject of conference and chatrooms.
+  Avoid useless conversions when the utf8 variants of the getter/setters are used.
 - t= lines in the SDP no longer changed in the answer
 - DNS resolution of stun server for ICE is now made asynchronously at the beginning of calls.
 - UTF-8 issues with C# wrapper

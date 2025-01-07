@@ -218,6 +218,21 @@ LINPHONE_PUBLIC const char *linphone_conference_info_get_subject(const LinphoneC
 LINPHONE_PUBLIC void linphone_conference_info_set_subject(LinphoneConferenceInfo *conference_info, const char *subject);
 
 /**
+ * Retrieve the subject of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return The subject of the conference. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_info_get_subject_utf8(const LinphoneConferenceInfo *conference_info);
+
+/**
+ * Set the subject of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param subject The subject of the conference. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_info_set_subject_utf8(LinphoneConferenceInfo *conference_info,
+                                                               const char *subject);
+
+/**
  * Set the CCMP URI of the conference.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @param uri The URI of the conference in the CCMP server. @maybenil
@@ -245,6 +260,22 @@ LINPHONE_PUBLIC const char *linphone_conference_info_get_description(const Linph
  */
 LINPHONE_PUBLIC void linphone_conference_info_set_description(LinphoneConferenceInfo *conference_info,
                                                               const char *description);
+
+/**
+ * Retrieve the description of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return The description of the conference. @maybenil
+ */
+LINPHONE_PUBLIC const char *
+linphone_conference_info_get_description_utf8(const LinphoneConferenceInfo *conference_info);
+
+/**
+ * Set the description of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param description The description of the conference. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_info_set_description_utf8(LinphoneConferenceInfo *conference_info,
+                                                                   const char *description);
 
 /**
  * Retrieve the desired security level of the conference.

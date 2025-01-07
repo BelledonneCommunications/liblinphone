@@ -103,7 +103,6 @@ public:
 	virtual void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
 	virtual void onFirstNotifyReceived(const std::shared_ptr<Address> &addr) override;
 
-	virtual void setSubject(const std::string &subject) override;
 	virtual const std::shared_ptr<Address> getOrganizer() const override;
 
 	virtual int enter() override;
@@ -235,6 +234,7 @@ public:
 
 	void confirmJoining(SalCallOp *op);
 	void handleSubjectChange(SalCallOp *op);
+	void setUtf8Subject(const std::string &subject) override;
 
 	virtual LinphoneMediaDirection
 	verifyVideoDirection(const std::shared_ptr<CallSession> &session,

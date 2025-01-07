@@ -1993,7 +1993,8 @@ shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams>
 		// Check parameters only if pointer provided as argument is not null
 		if (params) {
 			const auto &conferenceParams = conference->getCurrentParams();
-			if (!params->getSubject().empty() && (params->getSubject().compare(conferenceParams->getSubject()) != 0))
+			if (!params->getUtf8Subject().empty() &&
+			    (params->getUtf8Subject().compare(conferenceParams->getUtf8Subject()) != 0))
 				return false;
 			if (params->chatEnabled() != conferenceParams->chatEnabled()) return false;
 			if (params->audioEnabled() != conferenceParams->audioEnabled()) return false;
@@ -2164,7 +2165,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (!isMediaSession) {
 		session->getPrivate()->createOp();
 	}
-	session->startInvite(nullptr, confParams->getSubject(), nullptr);
+	session->startInvite(nullptr, confParams->getUtf8Subject(), nullptr);
 	return session;
 }
 

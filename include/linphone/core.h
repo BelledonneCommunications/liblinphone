@@ -1745,7 +1745,7 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_invite_address_with_params(LinphoneC
  * @param core #LinphoneCore object @notnil
  * @param addr The destination of the call (sip address). @notnil
  * @param params Call parameters @notnil
- * @param subject Subject of the call @maybenil
+ * @param subject Subject of the call, UTF-8 encoded @maybenil
  * @param content Body of the SIP INVITE @maybenil
  * @return A #LinphoneCall object or NULL in case of failure. @maybenil
  * @ingroup call_control

@@ -340,7 +340,7 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 				time_t creationTime = time(nullptr);
 				notifyAvailableMediaChanged(creationTime, false, getMediaCapabilities());
 			}
-			setSubject(op->getSubject());
+			setUtf8Subject(op->getSubject());
 
 			mConfParams->enableOneParticipantConference(true);
 			if (remoteMd) {
@@ -476,7 +476,7 @@ void ServerConference::configure(SalCallOp *op) {
 	} else if (info) {
 		audioEnabled = info->getCapability(LinphoneStreamTypeAudio);
 		videoEnabled &= info->getCapability(LinphoneStreamTypeVideo);
-		subject = info->getSubject();
+		subject = info->getUtf8Subject();
 		setOrganizer(info->getOrganizerAddress());
 
 		startTime = info->getDateTime();
@@ -493,7 +493,7 @@ void ServerConference::configure(SalCallOp *op) {
 	mConfParams->enableVideo(videoEnabled);
 
 	if (!subject.empty()) {
-		mConfParams->setSubject(subject);
+		mConfParams->setUtf8Subject(subject);
 	}
 	mConfParams->enableLocalParticipant(false);
 	mConfParams->enableOneParticipantConference(true);
@@ -2502,9 +2502,9 @@ void ServerConference::setLocalParticipantStreamCapability(const LinphoneMediaDi
 	}
 }
 
-void ServerConference::setSubject(const std::string &subject) {
+void ServerConference::setUtf8Subject(const std::string &subject) {
 	const auto previousSubject = getUtf8Subject();
-	Conference::setSubject(subject);
+	Conference::setUtf8Subject(subject);
 	if (subject.compare(previousSubject) != 0) {
 		const auto &chatRoom = getChatRoom();
 		time_t creationTime = time(nullptr);
@@ -3227,7 +3227,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 							// Handle subject change
 							lInfo() << "conference " << conferenceAddressStr << " changed subject to \"" << subject
 							        << "\"";
-							setSubject(subject);
+							setUtf8Subject(subject);
 						}
 					}
 				}

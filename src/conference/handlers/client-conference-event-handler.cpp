@@ -213,7 +213,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		auto &subject = confDescription.get().getSubject();
 		if (subject.present() && !subject.get().empty()) {
 			if (getConference()->getUtf8Subject() != subject.get()) {
-				getConference()->Conference::setSubject(Utils::utf8ToLocale(subject.get()));
+				getConference()->Conference::setUtf8Subject(subject.get());
 				if (!isFullState) {
 					// Subject must be stored in the system locale
 					getConference()->notifySubjectChanged(creationTime, isFullState, subject.get());

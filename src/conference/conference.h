@@ -122,7 +122,7 @@ public:
 	std::shared_ptr<Participant> getScreenSharingParticipant() const;
 	std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;
 
-	const std::string &getSubject() const override;
+	const std::string &getSubject() const;
 	const std::string &getUtf8Subject() const override;
 
 	void join(const std::shared_ptr<Address> &participantAddress) override;
@@ -160,7 +160,7 @@ public:
 	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 
 	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
-	void setSubject(const std::string &subject) override;
+	void setSubject(const std::string &subject);
 	void setUtf8Subject(const std::string &subject) override;
 
 	const std::string &getUsername() const;

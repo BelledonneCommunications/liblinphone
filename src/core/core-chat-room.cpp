@@ -230,7 +230,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const string &sub
 	const auto &conferenceFactoryUri = Core::getConferenceFactoryAddress(q->getSharedFromThis(), defaultLocalAddress);
 	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
 	params->setChatDefaults();
-	params->setSubject(subject);
+	params->setUtf8Subject(subject);
 	params->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
 	                                   : ConferenceParams::SecurityLevel::None);
 	params->setGroup(!fallback);
@@ -290,7 +290,7 @@ CorePrivate::searchChatRoom(const shared_ptr<ConferenceParams> &params,
 
 			// Subject doesn't make any sense for basic chat room
 			if ((params->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
-			    (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject()))
+			    (!params->getUtf8Subject().empty() && params->getUtf8Subject() != chatRoom->getSubjectUtf8()))
 				continue;
 		}
 
@@ -432,7 +432,7 @@ CorePrivate::createChatRoom(const std::string &subject, const std::list<std::sha
 	}
 	auto defaultLocalAddress =
 	    getDefaultLocalAddress(nullptr, params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat);
-	params->setSubject(subject);
+	params->setUtf8Subject(subject);
 	return createChatRoom(params, defaultLocalAddress, participants);
 }
 

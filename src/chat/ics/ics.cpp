@@ -322,8 +322,8 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 		}
 	}
 
-	confInfo->setSubject(event->getSummary());
-	confInfo->setDescription(event->getDescription());
+	confInfo->setUtf8Subject(event->getUtf8Summary());
+	confInfo->setUtf8Description(event->getUtf8Description());
 
 	tm dur = event->getDuration();
 	int duration = dur.tm_hour * 60 + dur.tm_min + dur.tm_sec / 60;

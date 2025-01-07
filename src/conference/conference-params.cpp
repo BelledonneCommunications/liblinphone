@@ -99,7 +99,7 @@ void ConferenceParams::enableChat(bool enable) {
 	}
 };
 
-const std::shared_ptr<Account> ConferenceParams::getAccount() const {
+std::shared_ptr<Account> ConferenceParams::getAccount() const {
 	return mAccount.lock();
 }
 
@@ -133,23 +133,27 @@ void ConferenceParams::updateFromAccount(
 	} else lDebug() << "Update conference parameters from account: no account";
 }
 
-void ConferenceParams::setUtf8Description(const std::string &description) {
-	mDescription = Utils::utf8ToLocale(description);
+const std::string &ConferenceParams::getDescription() const {
+	mDescription = Utils::utf8ToLocale(getUtf8Description());
+	return mDescription;
+}
+
+void ConferenceParams::setDescription(const std::string &description) {
+	setUtf8Description(Utils::localeToUtf8(description));
 };
 
-const std::string &ConferenceParams::getUtf8Description() const {
-	mUtf8Description = Utils::localeToUtf8(mDescription);
-	return mUtf8Description;
-};
+void ConferenceParams::setSubject(const std::string &subject) {
+	setUtf8Subject(Utils::localeToUtf8(subject));
+}
+
+const std::string &ConferenceParams::getSubject() const {
+	mSubject = Utils::utf8ToLocale(getUtf8Subject());
+	return mSubject;
+}
 
 void ConferenceParams::setUtf8Subject(const std::string &subject) {
-	mSubject = Utils::utf8ToLocale(subject);
-};
-
-const std::string &ConferenceParams::getUtf8Subject() const {
-	mUtf8Subject = Utils::localeToUtf8(mSubject);
-	return mUtf8Subject;
-};
+	mUtf8Subject = subject;
+}
 
 void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
 	mConferenceAddress = Address::create(conferenceAddress->getUri());
@@ -253,7 +257,7 @@ bool ConferenceParams::isValid() const {
 		lError() << "FlexisipChat backend must be used when group is enabled";
 		return false;
 	}
-	if (mSubject.empty() && mChatParams->getBackend() == ChatParams::Backend::FlexisipChat) {
+	if (mUtf8Subject.empty() && mChatParams->getBackend() == ChatParams::Backend::FlexisipChat) {
 		lError() << "You must set a non empty subject when using the FlexisipChat backend";
 		return false;
 	}

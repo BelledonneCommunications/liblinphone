@@ -566,6 +566,13 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_participants(const Linphone
 LINPHONE_PUBLIC const char *linphone_chat_room_get_subject(const LinphoneChatRoom *chat_room);
 
 /**
+ * Gets the subject of a chat room (as an UTF8 string)
+ * @param chat_room A #LinphoneChatRoom object @notnil
+ * @return The subject of the chat room. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_chat_room_get_subject_utf8(const LinphoneChatRoom *chat_room);
+
+/**
  * Gets the security level of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @return The current #LinphoneChatRoomSecurityLevel of the chat room
@@ -610,6 +617,13 @@ LINPHONE_PUBLIC void linphone_chat_room_set_participant_admin_status(LinphoneCha
  * @param subject The new subject to set for the chat room @maybenil
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_subject(LinphoneChatRoom *chat_room, const char *subject);
+
+/**
+ * Sets the subject of a chat room (utf-8 string).
+ * @param chat_room A #LinphoneChatRoom object @notnil
+ * @param subject The new subject to set for the chat room @maybenil
+ */
+LINPHONE_PUBLIC void linphone_chat_room_set_subject_utf8(LinphoneChatRoom *chat_room, const char *subject);
 
 /**
  * Gets the list of participants that are currently composing

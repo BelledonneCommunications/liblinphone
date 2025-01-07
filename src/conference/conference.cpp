@@ -801,11 +801,11 @@ void Conference::setParticipantAdminStatus(BCTBX_UNUSED(const shared_ptr<Partici
 }
 
 void Conference::setUtf8Subject(const string &subject) {
-	setSubject(Utils::utf8ToLocale(subject));
+	mConfParams->setUtf8Subject(subject);
 }
 
 void Conference::setSubject(const string &subject) {
-	mConfParams->setSubject(subject);
+	setUtf8Subject(Utils::localeToUtf8(subject));
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent>
@@ -1436,7 +1436,7 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 		}
 
 		conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
-		conferenceInfo->setSubject(mConfParams->getSubject());
+		conferenceInfo->setUtf8Subject(mConfParams->getUtf8Subject());
 
 		// Update start time and duration as this information can be sent through the SUBSCRIBE/NOTIFY dialog. In fact,
 		// if a client dials a conference without prior knowledge (for example it is given an URI to call), the start
@@ -1450,7 +1450,7 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 		}
 
 		conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
-		conferenceInfo->setSubject(mConfParams->getSubject());
+		conferenceInfo->setUtf8Subject(mConfParams->getUtf8Subject());
 	}
 
 	return conferenceInfo;
@@ -1499,7 +1499,7 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomPartic
 		info->setDuration(duration);
 	}
 
-	info->setSubject(mConfParams->getSubject());
+	info->setUtf8Subject(mConfParams->getUtf8Subject());
 	info->setSecurityLevel(mConfParams->getSecurityLevel());
 
 	info->setCapability(LinphoneStreamTypeAudio, mConfParams->audioEnabled());
@@ -1549,7 +1549,7 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 		auto info = createOrGetConferenceInfo();
 
 		if (info) {
-			info->setSubject(subject);
+			info->setUtf8Subject(subject);
 
 			// Store into DB after the start incoming notification in order to have a valid conference address being the
 			// contact address of the call

@@ -121,22 +121,21 @@ public:
 	void setState(ConferenceInterface::State newState) override;
 
 	void invalidateAccount() override;
-	const std::shared_ptr<Account> getAccount() override;
+	std::shared_ptr<Account> getAccount() override;
 
-	const std::string &getSubject() const override;
-	void setSubject(const std::string &subject) override;
 	void setUtf8Subject(const std::string &subject) override;
+	const std::string &getSubjectUtf8() const override;
 
 	std::shared_ptr<ConferenceParams> getCurrentParams() const override;
 
 	bool isSubscriptionUnderWay() const override;
 
 	bool isMe(const std::shared_ptr<Address> &address) const override;
-	const std::shared_ptr<Participant> getMe() const override;
+	std::shared_ptr<Participant> getMe() const override;
 
-	const std::shared_ptr<Address> getConferenceAddress() const override;
-	const std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const override;
-	const std::list<std::shared_ptr<Participant>> getParticipants() const override;
+	std::shared_ptr<Address> getConferenceAddress() const override;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const override;
+	std::list<std::shared_ptr<Participant>> getParticipants() const override;
 
 	virtual std::shared_ptr<Conference> getConference() const override;
 
@@ -212,7 +211,7 @@ public:
 #endif /* HAVE_BAUDOT */
 	void setCallId(const std::string &value) override;
 
-	const std::shared_ptr<ConferenceInfo> getConferenceInfo() const override;
+	std::shared_ptr<ConferenceInfo> getConferenceInfo() const override;
 
 	Imdn *getImdnHandler() const override {
 		return mImdnHandler.get();

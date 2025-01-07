@@ -113,7 +113,7 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
 
 	setState(ConferenceInterface::State::Instantiated);
 
-	mPendingSubject = getSubject();
+	mPendingSubject = getUtf8Subject();
 	mConferenceId = conferenceId;
 	if (conferenceAddress) {
 		setConferenceAddress(conferenceAddress);
@@ -188,7 +188,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 		}
 	}
 
-	mPendingSubject = mConfParams->getSubject();
+	mPendingSubject = mConfParams->getUtf8Subject();
 	mConfParams->enableLocalParticipant(false);
 
 	if (mConfParams->chatEnabled()) {
@@ -465,20 +465,20 @@ bool ClientConference::isIn() const {
 	        focusContactAddress->hasUriParam(Conference::ConfIdParameter));
 }
 
-void ClientConference::setSubject(const std::string &subject) {
+void ClientConference::setUtf8Subject(const std::string &subject) {
 	if (!getMe()->isAdmin()) {
 		lError() << "Unable to update conference subject because focus " << *getMe()->getAddress() << " is not admin";
 		return;
 	}
 	auto session = dynamic_pointer_cast<MediaSession>(getMainSession());
 	if (session) {
-		if ((subject.compare(mPendingSubject) != 0) || (getSubject().empty() && !subject.empty())) {
+		if ((subject.compare(mPendingSubject) != 0) || (getUtf8Subject().empty() && !subject.empty())) {
 			mPendingSubject = subject;
 			auto updateSubject = [this, subject]() -> LinphoneStatus {
 				auto session = dynamic_pointer_cast<MediaSession>(getMainSession());
 				if (session) {
-					lInfo() << "Sending re-INVITE to update subject from \"" << getSubject() << "\" to \"" << subject
-					        << "\"";
+					lInfo() << "Sending re-INVITE to update subject from \"" << getUtf8Subject() << "\" to \""
+					        << subject << "\"";
 					const MediaSessionParams *params = session->getMediaParams();
 					MediaSessionParams *currentParams = params->clone();
 					auto ret = session->update(currentParams, CallSession::UpdateMethod::Default, false, subject);
@@ -496,10 +496,10 @@ void ClientConference::setSubject(const std::string &subject) {
 			}
 		}
 	} else if (!supportsMedia()) {
-		lInfo() << "Sending re-INVITE to update subject from \"" << getSubject() << "\" to \"" << subject << "\"";
+		lInfo() << "Sending re-INVITE to update subject from \"" << getUtf8Subject() << "\" to \"" << subject << "\"";
 		session = dynamic_pointer_cast<MediaSession>(createSession());
 		if (session) {
-			session->startInvite(nullptr, Utils::localeToUtf8(subject), nullptr);
+			session->startInvite(nullptr, subject, nullptr);
 		}
 	} else {
 		mPendingSubject = subject;
@@ -560,7 +560,7 @@ void ClientConference::callFocus() {
 		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter(Conference::AdminParameter,
 		                                                               Utils::toString(true));
 		linphone_call_params_enable_video(params, mConfParams->videoEnabled());
-		Conference::setSubject(mPendingSubject);
+		Conference::setUtf8Subject(mPendingSubject);
 		const std::list<std::shared_ptr<const Address>> addresses;
 		inviteAddresses(addresses, params);
 		linphone_call_params_unref(params);
@@ -1175,7 +1175,7 @@ void ClientConference::onCallSessionTransferStateChanged(const std::shared_ptr<C
 // -----------------------------------------------------------------------------
 void ClientConference::onStateChanged(ConferenceInterface::State state) {
 	auto session = getMainSession();
-	string subject = getSubject();
+	string subject = getUtf8Subject();
 	const auto mediaSupported = supportsMedia();
 
 	shared_ptr<Call> sessionCall = nullptr;
@@ -1199,7 +1199,7 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 			break;
 		case ConferenceInterface::State::Created:
 			if (session && getMe()->isAdmin() && !mPendingSubject.empty() && (subject.compare(mPendingSubject) != 0)) {
-				setSubject(mPendingSubject);
+				setUtf8Subject(mPendingSubject);
 			}
 			break;
 		case ConferenceInterface::State::TerminationPending:
@@ -2318,7 +2318,7 @@ int ClientConference::enter() {
 		const string &confId = address->getUriParamValue(Conference::ConfIdParameter);
 		linphone_call_params_set_conference_id(new_params, confId.c_str());
 
-		std::string subject = getMe()->isAdmin() ? getSubject() : std::string();
+		std::string subject = getMe()->isAdmin() ? getUtf8Subject() : std::string();
 
 		auto cCall = linphone_core_invite_address_with_params_2(getCore()->getCCore(), address->toC(), new_params,
 		                                                        L_STRING_TO_C(subject), nullptr);
@@ -2641,7 +2641,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			linphone_call_params_enable_audio(new_params, mConfParams->audioEnabled());
 			linphone_call_params_enable_realtime_text(new_params, FALSE);
 
-			const auto subject = mConfParams->getSubject();
+			const auto &subject = mConfParams->getUtf8Subject();
 			if (mediaSupported) {
 				LinphoneCall *call = linphone_core_invite_address_with_params_2(cCore, remoteAddress->toC(), new_params,
 				                                                                L_STRING_TO_C(subject),

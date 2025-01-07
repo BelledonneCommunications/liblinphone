@@ -108,4 +108,13 @@ const bctbx_list_t *AbstractChatRoom::getComposingCAddresses() const {
 	return composingCAddresses;
 }
 
+void AbstractChatRoom::setSubject(const std::string &subject) {
+	setUtf8Subject(Utils::localeToUtf8(subject));
+}
+
+const std::string &AbstractChatRoom::getSubject() const {
+	mSubject = Utils::utf8ToLocale(getSubjectUtf8());
+	return mSubject;
+}
+
 LINPHONE_END_NAMESPACE

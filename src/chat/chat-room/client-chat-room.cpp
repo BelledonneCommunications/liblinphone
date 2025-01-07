@@ -62,7 +62,7 @@ ClientChatRoom::ClientChatRoom(const shared_ptr<Core> &core, const std::shared_p
 }
 
 ClientChatRoom::ClientChatRoom(const shared_ptr<Core> &core, bool hasBeenLeft) : ChatRoom(core) {
-	auto &chatParams = getCurrentParams()->getChatParams();
+	auto chatParams = getCurrentParams()->getChatParams();
 	chatParams->setBackend(ChatParams::Backend::FlexisipChat);
 	if (chatParams->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
 		chatParams->enableEphemeral(chatParams->getEphemeralLifetime() > 0);

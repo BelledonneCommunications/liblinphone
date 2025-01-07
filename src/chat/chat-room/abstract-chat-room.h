@@ -198,11 +198,11 @@ public:
 	virtual bool isSubscriptionUnderWay() const = 0;
 
 	virtual bool isMe(const std::shared_ptr<Address> &address) const = 0;
-	virtual const std::shared_ptr<Participant> getMe() const = 0;
+	virtual std::shared_ptr<Participant> getMe() const = 0;
 
-	virtual const std::shared_ptr<Address> getConferenceAddress() const = 0;
-	virtual const std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const = 0;
-	virtual const std::list<std::shared_ptr<Participant>> getParticipants() const = 0;
+	virtual std::shared_ptr<Address> getConferenceAddress() const = 0;
+	virtual std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const = 0;
+	virtual std::list<std::shared_ptr<Participant>> getParticipants() const = 0;
 
 	virtual bool canHandleParticipants() const = 0;
 	virtual std::shared_ptr<Conference> getConference() const = 0;
@@ -212,10 +212,11 @@ public:
 	virtual void setState(ConferenceInterface::State newState) = 0;
 
 	virtual void invalidateAccount() = 0;
-	virtual const std::shared_ptr<Account> getAccount() = 0;
-	virtual const std::string &getSubject() const = 0;
-	virtual void setSubject(const std::string &subject) = 0;
+	virtual std::shared_ptr<Account> getAccount() = 0;
+	virtual const std::string &getSubjectUtf8() const = 0;
 	virtual void setUtf8Subject(const std::string &subject) = 0;
+	void setSubject(const std::string &subject);
+	const std::string &getSubject() const;
 
 	virtual uint32_t getChar() = 0;
 	virtual std::shared_ptr<Call> getCall() const = 0;
@@ -262,7 +263,7 @@ public:
 
 	virtual Imdn *getImdnHandler() const = 0;
 
-	virtual const std::shared_ptr<ConferenceInfo> getConferenceInfo() const = 0;
+	virtual std::shared_ptr<ConferenceInfo> getConferenceInfo() const = 0;
 
 protected:
 	explicit AbstractChatRoom(const std::shared_ptr<Core> &core);
@@ -270,6 +271,7 @@ protected:
 
 private:
 	mutable bctbx_list_t *composingCAddresses = nullptr;
+	mutable std::string mSubject;
 
 	L_DISABLE_COPY(AbstractChatRoom);
 };
