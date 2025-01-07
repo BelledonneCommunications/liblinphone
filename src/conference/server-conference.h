@@ -167,7 +167,7 @@ public:
 
 	virtual void notifyFullState() override;
 	void confirmCreation();
-	void updateConferenceInformation(SalCallOp *op);
+	bool updateConferenceInformation(SalCallOp *op);
 	virtual std::shared_ptr<Call> getCall() const override;
 
 	virtual void notifyStateChanged(ConferenceInterface::State state) override;

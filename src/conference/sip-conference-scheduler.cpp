@@ -79,14 +79,6 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 		// Set start time only if a conference is going to be created
 		mConferenceInfo->setDateTime(ms_time(NULL));
 	}
-
-	if (getState() != State::Error) {
-		// Update conference info in database with updated conference information
-#ifdef HAVE_DB_STORAGE
-		auto &mainDb = getCore()->getPrivate()->mainDb;
-		mainDb->insertConferenceInfo(mConferenceInfo);
-#endif // HAVE_DB_STORAGE
-	}
 }
 
 void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) {
@@ -101,6 +93,12 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		            "the server";
 		setState(State::Error);
 	} else if (getState() != State::Error) {
+		// Update conference info in database with updated conference information
+#ifdef HAVE_DB_STORAGE
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		mainDb->insertConferenceInfo(mConferenceInfo);
+#endif // HAVE_DB_STORAGE
+
 		// Do not try to call impromptu conference if a participant updates its informations
 		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
 			lInfo() << "Automatically rejoining conference " << *remoteAddress;

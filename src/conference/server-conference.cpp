@@ -277,7 +277,16 @@ bool ServerConference::update(const ConferenceParamsInterface &newParameters) {
 	}
 	return true;
 }
-void ServerConference::updateConferenceInformation(SalCallOp *op) {
+
+bool ServerConference::updateConferenceInformation(SalCallOp *op) {
+	const auto &conferenceAddress = getConferenceAddress();
+	const auto nbParticipants = getParticipantCount();
+	if (nbParticipants > 0) {
+		lError() << "Unable to update conference information of conference [" << this << " - address "
+		         << *conferenceAddress << "] right now because the conference is active (i.e. it has " << nbParticipants
+		         << " active participants)";
+		return false;
+	}
 	auto remoteContact = op->getRemoteContactAddress();
 	if (remoteContact) {
 		char *salAddress = sal_address_as_string(remoteContact);
@@ -290,7 +299,7 @@ void ServerConference::updateConferenceInformation(SalCallOp *op) {
 		    Address::create((op->getDir() == SalOp::Dir::Incoming) ? op->getFrom() : op->getTo());
 
 		if (findParticipantDevice(remoteAddress, address) || invited || address->weakEqual(*mOrganizer)) {
-			lInfo() << "Updating conference informations of conference " << *getConferenceAddress();
+			lInfo() << "Updating conference informations of conference " << *conferenceAddress;
 			const auto &remoteMd = op->getRemoteMediaDescription();
 
 			// The following informations are retrieved from the received INVITE:
@@ -366,7 +375,7 @@ void ServerConference::updateConferenceInformation(SalCallOp *op) {
 			if (mainDb) {
 				lInfo() << "Inserting updated conference information to database in order to be able to recreate the "
 				           "conference "
-				        << *getConferenceAddress() << " in case of restart";
+				        << *conferenceAddress << " in case of restart";
 				mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 			}
 #endif // HAVE_DB_STORAGE
@@ -374,9 +383,10 @@ void ServerConference::updateConferenceInformation(SalCallOp *op) {
 			lWarning() << "Device with address " << address
 			           << " is not allowed to update the conference because they have not been invited nor are "
 			              "participants to conference "
-			           << *getConferenceAddress() << " nor are the organizer";
+			           << *conferenceAddress << " nor are the organizer";
 		}
 	}
+	return true;
 }
 
 void ServerConference::configure(SalCallOp *op) {
@@ -1686,7 +1696,7 @@ void ServerConference::resumeParticipant(BCTBX_UNUSED(const std::shared_ptr<Part
 
 int ServerConference::getParticipantCount() const {
 #ifdef HAVE_ADVANCED_IM
-	if (mConfParams->chatEnabled()) {
+	if (isChatOnly()) {
 		const auto &invitedParticipants = getInvitedParticipants();
 		return (int)invitedParticipants.size();
 	}
@@ -3042,9 +3052,9 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				    [&remoteAddress](const auto &address) { return (remoteAddress->weakEqual(*address)); });
 				bool allowedParticipant = (p != allowedAddresses.end());
 				if (resourceList && !allowedParticipant) {
+					lInfo() << *remoteAddress << " is not allowed to change the participant list of conference ["
+					        << this << " - " << *getConferenceAddress() << "]";
 					LinphoneErrorInfo *ei = linphone_error_info_new();
-					lInfo() << *remoteAddress << " is not allowed to joing conference [" << this << " - "
-					        << *getConferenceAddress();
 					linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403,
 					                        "Participant not authorized to change the participant list",
 					                        "Participant not authorized to change the participant list");

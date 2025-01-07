@@ -270,7 +270,16 @@ static void call_received(SalCallOp *h) {
 
 						if ((startTime != -1) || (endTime != -1)) {
 							// If start time or end time is not -1, then the client wants to update the conference
-							serverConference->updateConferenceInformation(h);
+							if (!serverConference->updateConferenceInformation(h)) {
+								SalErrorInfo sei;
+								memset(&sei, 0, sizeof(sei));
+								const char *msg = "Conference information cannot be updated right now";
+								sal_error_info_set(&sei, SalReasonTemporarilyUnavailable, "SIP", 0, nullptr, msg);
+								h->replyWithErrorInfo(&sei);
+								sal_error_info_reset(&sei);
+								h->release();
+								return;
+							}
 						}
 					} else if (chatCapabilities) {
 #ifdef HAVE_ADVANCED_IM
@@ -304,15 +313,11 @@ static void call_received(SalCallOp *h) {
 						if (sal_address_has_uri_param(h->getToAddress(), Conference::ConfIdParameter.c_str())) {
 							SalErrorInfo sei;
 							memset(&sei, 0, sizeof(sei));
-							sal_error_info_set(&sei, SalReasonNotFound, "SIP", 0, nullptr, nullptr);
+							const char *msg = "Conference not found";
+							sal_error_info_set(&sei, SalReasonNotFound, "SIP", 0, nullptr, msg);
 							h->replyWithErrorInfo(&sei);
-							LinphoneErrorInfo *ei = linphone_error_info_new();
-							linphone_error_info_set(ei, nullptr, LinphoneReasonNotFound, 404, "Conference not found",
-							                        "Conference not found");
-							core->reportEarlyCallFailed(LinphoneCallIncoming, from, to, ei, h->getCallId());
-							h->release();
 							sal_error_info_reset(&sei);
-							linphone_error_info_unref(ei);
+							h->release();
 							return;
 						} else {
 							auto serverConference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
@@ -339,10 +344,9 @@ static void call_received(SalCallOp *h) {
 									        << participantList.size() << " participants on server " << *to;
 									SalErrorInfo sei;
 									memset(&sei, 0, sizeof(sei));
-									sal_error_info_set(
-									    &sei, SalReasonNotAcceptable, "SIP", 0,
-									    "Trying to create a one-to-one chatroom with more than one participant",
-									    nullptr);
+									const char *msg =
+									    "Trying to create a one-to-one chatroom with more than one participant";
+									sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, msg, msg);
 									h->replyWithErrorInfo(&sei, nullptr);
 									sal_error_info_reset(&sei);
 									h->release();
