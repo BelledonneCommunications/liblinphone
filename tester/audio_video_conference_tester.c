@@ -3369,7 +3369,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 	linphone_conference_info_set_participant_infos(conf_info, participants_info);
 	const int duration = 600;
 	linphone_conference_info_set_duration(conf_info, duration);
-	const time_t start_time = ms_time(NULL) + 60;
+	const time_t start_time = ms_time(NULL) - 60;
 	linphone_conference_info_set_date_time(conf_info, start_time);
 	const char *subject = "CCMP conference";
 	linphone_conference_info_set_subject(conf_info, subject);
