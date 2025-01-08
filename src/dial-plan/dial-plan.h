@@ -21,7 +21,9 @@
 #ifndef _L_DIAL_PLAN_H_
 #define _L_DIAL_PLAN_H_
 
+#include <functional>
 #include <list>
+#include <optional>
 
 #include "bctoolbox/list.h"
 #include "belle-sip/object++.hh"
@@ -33,20 +35,21 @@ LINPHONE_BEGIN_NAMESPACE
 
 class DialPlan : public bellesip::HybridObject<LinphoneDialPlan, DialPlan> {
 public:
-	DialPlan(const std::string &country = "",
-	         const std::string &isoCountryCode = "",
-	         const std::string &ccc = "",
-	         int minNnl = 0,
-	         int maxNnl = 0,
-	         const std::string &icp = "",
-	         const std::string &flag = "");
-	DialPlan(const DialPlan &other);
+	DialPlan(
+	    const std::string &country = "",
+	    const std::string &isoCountryCode = "",
+	    const std::string &ccc = "",
+	    int minNnl = 0,
+	    int maxNnl = 0,
+	    const std::string &icp = "",
+	    const std::string &flag = "",
+	    const std::optional<std::function<size_t(const std::string)>> &nationalNumberLengthFunction = std::nullopt);
+	DialPlan(const DialPlan &other) = default;
+	DialPlan &operator=(const DialPlan &other);
 
 	DialPlan *clone() const override {
 		return new DialPlan(*this);
 	}
-
-	DialPlan &operator=(const DialPlan &other);
 
 	const std::string &getCountry() const;
 	const std::string &getIsoCountryCode() const;
@@ -81,6 +84,7 @@ private:
 	int maxNationalNumberLength = 8;     // Maximum national number length.
 	std::string internationalCallPrefix; // International call prefix, ex: 00 in europe.
 	std::string flag;
+	std::function<size_t(const std::string)> mNationalNumberLengthFunction;
 
 	static const std::list<std::shared_ptr<DialPlan>> sDialPlans;
 };

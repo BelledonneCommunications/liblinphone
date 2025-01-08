@@ -81,6 +81,9 @@ static void phone_normalization_without_proxy(void) {
 	BC_ASSERT_STRING_EQUAL(phone_normalization(NULL, "0039123456789"), "+39123456789");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(NULL, "0039 1 2345678901"), "+3912345678901");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(NULL, "0039 1 23456789012"), "+3923456789012");
+
+	BC_ASSERT_STRING_EQUAL(phone_normalization(NULL, "003212345678"), "+3212345678"); // Belgium's dial plan
+	BC_ASSERT_STRING_EQUAL(phone_normalization(NULL, "0032123456789"), "+32123456789");
 }
 
 static void phone_normalization_with_proxy(void) {
@@ -214,6 +217,15 @@ static void phone_normalization_with_proxy(void) {
 	// Phone normalization for Norfolk Island dial plan
 	linphone_proxy_config_set_dial_prefix(proxy, "672");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "672 3 21234"), "+672321234");
+
+	// Phone normalization for Belgium dial plan, with 8 or 9 digits and no 0 after international prefix
+	linphone_proxy_config_set_dial_prefix(proxy, "32");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0123456"), "0123456");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "01234567"), "+3201234567");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "012345678"), "+3212345678");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0123456789"), "+32123456789");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "003212345678"), "+3212345678");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0032123456789"), "+32123456789");
 
 	linphone_proxy_config_unref(proxy);
 }

@@ -19,6 +19,7 @@
  */
 
 #include <cstring>
+#include <functional>
 
 #include "linphone/utils/utils.h"
 
@@ -58,7 +59,16 @@ const list<shared_ptr<DialPlan>> DialPlan::sDialPlans = {
     DialPlan::create("Bangladesh", "BD", "880", 6, 10, "00", "🇧🇩"),
     DialPlan::create("Barbados", "BB", "1", 10, 10, "011", "🇧🇧"),
     DialPlan::create("Belarus", "BY", "375", 9, 9, "00", "🇧🇾"),
-    DialPlan::create("Belgium", "BE", "32", 8, 9, "00", "🇧🇪"),
+    DialPlan::create("Belgium",
+                     "BE",
+                     "32",
+                     8,
+                     9,
+                     "00",
+                     "🇧🇪",
+                     [](const string &phoneNumber) -> size_t {
+	                     return phoneNumber.size() == 9 && phoneNumber[0] == '0' ? 8 : phoneNumber.size();
+                     }),
     DialPlan::create("Belize", "BZ", "501", 7, 7, "00", "🇧🇿"), DialPlan::create("Benin", "BJ", "229", 8, 8, "00", "🇧🇯"),
     DialPlan::create("Bermuda", "BM", "1", 10, 10, "011", "🇧🇲"),
     DialPlan::create("Bhutan", "BT", "975", 7, 8, "00", "🇧🇹"),
@@ -268,19 +278,15 @@ DialPlan::DialPlan(const string &country,
                    int minNnl,
                    int maxNnl,
                    const string &icp,
-                   const string &flagEmoji)
+                   const string &flagEmoji,
+                   const std::optional<std::function<size_t(const std::string)>> &nationalNumberLengthFunction)
     : country(country), isoCountryCode(isoCountryCode), countryCallingCode(ccc), minNationalNumberLength(minNnl),
       maxNationalNumberLength(maxNnl), internationalCallPrefix(icp), flag(flagEmoji) {
-}
-
-DialPlan::DialPlan(const DialPlan &other) : HybridObject(other) {
-	country = other.getCountry();
-	isoCountryCode = other.getIsoCountryCode();
-	countryCallingCode = other.getCountryCallingCode();
-	minNationalNumberLength = other.getMinNationalNumberLength();
-	maxNationalNumberLength = other.getMaxNationalNumberLength();
-	internationalCallPrefix = other.getInternationalCallPrefix();
-	flag = other.getFlag();
+	if (nationalNumberLengthFunction.has_value()) {
+		mNationalNumberLengthFunction = *nationalNumberLengthFunction;
+	} else {
+		mNationalNumberLengthFunction = nullptr;
+	}
 }
 
 DialPlan &DialPlan::operator=(const DialPlan &other) {
@@ -292,6 +298,9 @@ DialPlan &DialPlan::operator=(const DialPlan &other) {
 		maxNationalNumberLength = other.getMaxNationalNumberLength();
 		internationalCallPrefix = other.getInternationalCallPrefix();
 		flag = other.getFlag();
+		if (other.mNationalNumberLengthFunction) {
+			mNationalNumberLengthFunction = other.mNationalNumberLengthFunction;
+		}
 	}
 
 	return *this;
@@ -427,9 +436,13 @@ string DialPlan::formatPhoneNumber(const string &phoneNumber, bool escapePlus) c
 
 		// Keep at most national number significant digits
 		size_t length = flatten.length();
-		if (length > (size_t)maxNationalNumberLength) {
-			flatten = flatten.substr(length - (size_t)maxNationalNumberLength, length);
-			lDebug() << "[DialPlan] Keeping the last [" << maxNationalNumberLength << "] digits: [" << flatten << "]";
+		size_t nationalNumberLength = mNationalNumberLengthFunction
+		                                  ? MIN((size_t)maxNationalNumberLength, mNationalNumberLengthFunction(flatten))
+		                                  : (size_t)maxNationalNumberLength;
+		lDebug() << "[DialPlan] nationalNumberLength = " << nationalNumberLength;
+		if (length > nationalNumberLength) {
+			flatten = flatten.substr(length - (size_t)nationalNumberLength, length);
+			lDebug() << "[DialPlan] Keeping the last [" << nationalNumberLength << "] digits: [" << flatten << "]";
 		} else if (length < (size_t)minNationalNumberLength) {
 			lDebug() << "[DialPlan] Flattened number has not enough significant digits";
 			lDebug() << "[DialPlan] Result is [" << phoneNumber << "]";
