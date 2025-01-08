@@ -1034,6 +1034,10 @@ std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() c
 // -----------------------------------------------------------------------------
 
 bool Conference::isMe(const std::shared_ptr<const Address> &addr) const {
+	if (!addr || !addr->isValid()) {
+		lError() << "Unable to known if an invalid address is the me participant";
+		return false;
+	}
 	Address cleanedAddr = addr->getUriWithoutGruu();
 	Address cleanedMeAddr = mMe->getAddress()->getUriWithoutGruu();
 	return cleanedMeAddr == cleanedAddr;
