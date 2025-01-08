@@ -28,8 +28,7 @@ using namespace std;
 
 static void resultsCb(list<shared_ptr<Friend>> friends, void *data, bool_t haveMoreResults) {
 	LdapMagicSearchPlugin *ldapPlugin = (LdapMagicSearchPlugin *)data;
-	size_t friendsCount = friends.size();
-	lInfo() << "[Magic Search][LDAP] Processing [" << friendsCount << "] friends created";
+	lInfo() << "[Magic Search][LDAP] Processing [" << friends.size() << "] friends";
 
 	list<shared_ptr<SearchResult>> resultList;
 	string domainFilter = ldapPlugin->getDomain();
@@ -52,11 +51,9 @@ static void resultsCb(list<shared_ptr<Friend>> friends, void *data, bool_t haveM
 	}
 
 	if (filterPluginResults) {
-		lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results from [" << friendsCount
-		        << "] raw results (after local filter is applied)";
+		lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results (after local filter is applied)";
 	} else {
-		lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results from [" << friendsCount
-		        << "] raw results (no local filter was applied)";
+		lInfo() << "[Magic Search][LDAP] Found " << resultList.size() << " results (no local filter was applied)";
 	}
 	ldapPlugin->setResults(resultList);
 

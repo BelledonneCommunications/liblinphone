@@ -89,8 +89,7 @@ void CardDavMagicSearchPlugin::notifyError(const string &errorMessage) {
 }
 
 void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &friends) {
-	size_t friendsCount = friends.size();
-	lDebug() << "[Magic Search][CardDAV] Found " << friendsCount << " friends in remote server";
+	lInfo() << "[Magic Search][CardDAV] Processing [" << friends.size() << "] friends";
 
 	list<shared_ptr<SearchResult>> resultList;
 	bool filterPluginResults = getMagicSearch().filterPluginsResults() || (!mDomain.empty() && mDomain != "*");
@@ -110,11 +109,9 @@ void CardDavMagicSearchPlugin::processResults(const list<shared_ptr<Friend>> &fr
 	}
 
 	if (filterPluginResults) {
-		lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results in remote server ["
-		        << friendsCount << "] raw results (after local filter is applied)";
+		lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results (after local filter is applied)";
 	} else {
-		lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results in remote server ["
-		        << friendsCount << "] raw results (no local filter was applied)";
+		lInfo() << "[Magic Search][CardDAV] Found " << resultList.size() << " results (no local filter was applied)";
 	}
 	setResults(resultList);
 

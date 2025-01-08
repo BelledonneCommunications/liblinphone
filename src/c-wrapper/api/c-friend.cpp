@@ -330,7 +330,7 @@ LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name) {
 
 void linphone_friend_set_native_uri(LinphoneFriend *lf, const char *native_uri) {
 	if (!lf) return;
-	Friend::toCpp(lf)->setNativeUri(native_uri);
+	Friend::toCpp(lf)->setNativeUri(L_C_TO_STRING(native_uri));
 }
 
 void linphone_friend_set_organization(LinphoneFriend *lf, const char *organization) {
