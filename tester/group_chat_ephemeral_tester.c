@@ -237,23 +237,23 @@ end:
 }
 
 static void encrypted_chat_room_ephemeral_message_test(void) {
-	ephemeral_message_test(TRUE, FALSE, FALSE, 25519);
-	ephemeral_message_test(TRUE, FALSE, FALSE, 448);
+	ephemeral_message_test(TRUE, FALSE, FALSE, C25519);
+	ephemeral_message_test(TRUE, FALSE, FALSE, C448);
 }
 
 static void unencrypted_chat_room_ephemeral_message_test(void) {
-	ephemeral_message_test(FALSE, FALSE, FALSE, 25519);
-	ephemeral_message_test(FALSE, FALSE, FALSE, 448);
+	ephemeral_message_test(FALSE, FALSE, FALSE, C25519);
+	ephemeral_message_test(FALSE, FALSE, FALSE, C448);
 }
 
 static void chat_room_remaining_ephemeral_message_test(void) {
-	ephemeral_message_test(TRUE, TRUE, FALSE, 25519);
-	ephemeral_message_test(TRUE, TRUE, FALSE, 448);
+	ephemeral_message_test(TRUE, TRUE, FALSE, C25519);
+	ephemeral_message_test(TRUE, TRUE, FALSE, C448);
 }
 
 static void chat_room_expired_ephemeral_message_test(void) {
-	ephemeral_message_test(TRUE, TRUE, TRUE, 25519);
-	ephemeral_message_test(TRUE, TRUE, TRUE, 448);
+	ephemeral_message_test(TRUE, TRUE, TRUE, C25519);
+	ephemeral_message_test(TRUE, TRUE, TRUE, C448);
 }
 
 static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(const int curveId) {
@@ -349,8 +349,8 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room(void) {
-	send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(25519);
-	send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(448);
+	send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(C25519);
+	send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(C448);
 }
 
 static void mixed_ephemeral_message_test_curve(const int curveId) {
@@ -493,8 +493,8 @@ end:
 }
 
 static void mixed_ephemeral_message_test(void) {
-	mixed_ephemeral_message_test_curve(25519);
-	mixed_ephemeral_message_test_curve(448);
+	mixed_ephemeral_message_test_curve(C25519);
+	mixed_ephemeral_message_test_curve(C448);
 }
 
 static void chat_room_ephemeral_settings_curve(const int curveId) {
@@ -606,8 +606,8 @@ end:
 }
 
 static void chat_room_ephemeral_settings(void) {
-	chat_room_ephemeral_settings_curve(25519);
-	chat_room_ephemeral_settings_curve(448);
+	chat_room_ephemeral_settings_curve(C25519);
+	chat_room_ephemeral_settings_curve(C448);
 }
 
 static void ephemeral_group_message_test_curve(const int curveId) {
@@ -770,8 +770,8 @@ end:
 }
 
 static void ephemeral_group_message_test(void) {
-	ephemeral_group_message_test_curve(25519);
-	ephemeral_group_message_test_curve(448);
+	ephemeral_group_message_test_curve(C25519);
+	ephemeral_group_message_test_curve(C448);
 }
 
 test_t ephemeral_group_chat_tests[] = {

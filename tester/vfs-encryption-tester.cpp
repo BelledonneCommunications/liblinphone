@@ -97,7 +97,7 @@ static void register_user(const uint16_t encryptionModule, const char *random_id
 	// need it
 	marie = linphone_core_manager_create_local(createUsers ? "marie_rc" : NULL, localRc, linphone_db, lime_db,
 	                                           zrtp_secrets_db);
-	set_lime_server_and_curve(25519, marie);
+	set_lime_server_and_curve(C25519, marie);
 	linphone_core_manager_start(marie, TRUE);
 
 	// check it registers ok and lime user is created
@@ -204,7 +204,7 @@ static void zrtp_call(const uint16_t encryptionModule,
 	// use a local rc file built from marie_rc to check it is encrypted
 	marie = linphone_core_manager_create_local(createUsers ? "marie_rc" : NULL, marie_rc, marie_linphone_db,
 	                                           marie_lime_db, marie_zrtp_secrets_db);
-	set_lime_server_and_curve(25519, marie);
+	set_lime_server_and_curve(C25519, marie);
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
 	linphone_core_set_zrtp_secrets_file(marie->lc, marie_zidCache);
@@ -236,7 +236,7 @@ static void zrtp_call(const uint16_t encryptionModule,
 	// use a local rc file built from pauline_rc to check it is encrypted
 	pauline = linphone_core_manager_create_local(createUsers ? "pauline_rc" : NULL, pauline_rc, pauline_linphone_db,
 	                                             pauline_lime_db, pauline_zrtp_secrets_db);
-	set_lime_server_and_curve(25519, pauline);
+	set_lime_server_and_curve(C25519, pauline);
 	linphone_core_manager_start(pauline, TRUE);
 	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
 	linphone_core_set_zrtp_secrets_file(pauline->lc, pauline_zidCache);
@@ -442,7 +442,7 @@ static void file_transfer_test(const uint16_t encryptionModule,
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
 	// set lime serveur - fixed to curve25519 we're not testing lime here
-	set_lime_server_and_curve_list(25519, coresManagerList);
+	set_lime_server_and_curve_list(C25519, coresManagerList);
 
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;

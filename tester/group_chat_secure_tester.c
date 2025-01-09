@@ -70,7 +70,7 @@ static bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller,
 	return TRUE;
 }
 
-static void group_chat_lime_x3dh_create_lime_user_curve(const int curveId) {
+static void group_chat_lime_x3dh_create_lime_user_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -89,10 +89,12 @@ static void group_chat_lime_x3dh_create_lime_user_curve(const int curveId) {
 	linphone_core_manager_destroy(marie);
 }
 static void group_chat_lime_x3dh_create_lime_user(void) {
-	group_chat_lime_x3dh_create_lime_user_curve(25519);
-	group_chat_lime_x3dh_create_lime_user_curve(448);
+	group_chat_lime_x3dh_create_lime_user_curve(C25519);
+	group_chat_lime_x3dh_create_lime_user_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_create_lime_user_curve(25519512);
+		group_chat_lime_x3dh_create_lime_user_curve(C25519K512);
+		group_chat_lime_x3dh_create_lime_user_curve(C25519MLK512);
+		group_chat_lime_x3dh_create_lime_user_curve(C448MLK1024);
 	}
 }
 
@@ -140,7 +142,7 @@ static void group_chat_lime_x3dh_create_multialgo_users(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-static void group_chat_lime_x3dh_change_server_url_curve(const int curveId) {
+static void group_chat_lime_x3dh_change_server_url_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 
@@ -206,14 +208,17 @@ static void group_chat_lime_x3dh_change_server_url_curve(const int curveId) {
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_change_server_url(void) {
-	group_chat_lime_x3dh_change_server_url_curve(25519);
-	group_chat_lime_x3dh_change_server_url_curve(448);
+	group_chat_lime_x3dh_change_server_url_curve(C25519);
+	group_chat_lime_x3dh_change_server_url_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_change_server_url_curve(25519512);
+		group_chat_lime_x3dh_change_server_url_curve(C25519K512);
+		group_chat_lime_x3dh_change_server_url_curve(C25519MLK512);
+		group_chat_lime_x3dh_change_server_url_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId, bool_t legacy_lime_url_setting) {
+static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const LinphoneTesterLimeAlgo curveId,
+                                                           bool_t legacy_lime_url_setting) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -406,18 +411,22 @@ end:
 }
 
 static void group_chat_lime_x3dh_encrypted_chatrooms(void) {
-	group_chat_lime_x3dh_encrypted_chatrooms_curve(25519, FALSE);
-	group_chat_lime_x3dh_encrypted_chatrooms_curve(448, FALSE);
+	group_chat_lime_x3dh_encrypted_chatrooms_curve(C25519, FALSE);
+	group_chat_lime_x3dh_encrypted_chatrooms_curve(C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_encrypted_chatrooms_curve(25519512, FALSE);
+		group_chat_lime_x3dh_encrypted_chatrooms_curve(C25519K512, FALSE);
+		group_chat_lime_x3dh_encrypted_chatrooms_curve(C25519MLK512, FALSE);
+		group_chat_lime_x3dh_encrypted_chatrooms_curve(C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_encrypted_chatrooms_corelevel_lime_server_url(void) {
-	group_chat_lime_x3dh_encrypted_chatrooms_curve(25519, TRUE);
-	group_chat_lime_x3dh_encrypted_chatrooms_curve(448, TRUE);
+	group_chat_lime_x3dh_encrypted_chatrooms_curve(C25519, TRUE);
+	group_chat_lime_x3dh_encrypted_chatrooms_curve(C448, TRUE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_encrypted_chatrooms_curve(25519512, TRUE);
+		group_chat_lime_x3dh_encrypted_chatrooms_curve(C25519K512, TRUE);
+		group_chat_lime_x3dh_encrypted_chatrooms_curve(C25519MLK512, TRUE);
+		group_chat_lime_x3dh_encrypted_chatrooms_curve(C448MLK1024, TRUE);
 	}
 }
 
@@ -426,7 +435,7 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_corelevel_lime_server_url(v
  * - stop and start their linphone core
  * - perform an update
  */
-static void group_chat_lime_x3dh_stop_start_core_curve(const int curveId) {
+static void group_chat_lime_x3dh_stop_start_core_curve(const LinphoneTesterLimeAlgo curveId) {
 	int dummy = 0;
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -491,14 +500,17 @@ static void group_chat_lime_x3dh_stop_start_core_curve(const int curveId) {
 }
 
 static void group_chat_lime_x3dh_stop_start_core(void) {
-	group_chat_lime_x3dh_stop_start_core_curve(25519);
-	group_chat_lime_x3dh_stop_start_core_curve(448);
+	group_chat_lime_x3dh_stop_start_core_curve(C25519);
+	group_chat_lime_x3dh_stop_start_core_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_stop_start_core_curve(25519512);
+		group_chat_lime_x3dh_stop_start_core_curve(C25519K512);
+		group_chat_lime_x3dh_stop_start_core_curve(C25519MLK512);
+		group_chat_lime_x3dh_stop_start_core_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId, bool_t im_encryption_mandatory) {
+static void group_chat_lime_x3dh_basic_chat_rooms_curve(const LinphoneTesterLimeAlgo curveId,
+                                                        bool_t im_encryption_mandatory) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -669,22 +681,29 @@ end:
 }
 
 static void group_chat_lime_x3dh_basic_chat_rooms(void) {
-	group_chat_lime_x3dh_basic_chat_rooms_curve(25519, FALSE);
-	group_chat_lime_x3dh_basic_chat_rooms_curve(448, FALSE);
+	group_chat_lime_x3dh_basic_chat_rooms_curve(C25519, FALSE);
+	group_chat_lime_x3dh_basic_chat_rooms_curve(C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_basic_chat_rooms_curve(25519512, FALSE);
+		group_chat_lime_x3dh_basic_chat_rooms_curve(C25519K512, FALSE);
+		group_chat_lime_x3dh_basic_chat_rooms_curve(C25519MLK512, FALSE);
+		group_chat_lime_x3dh_basic_chat_rooms_curve(C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_basic_chat_rooms_im_encryption_mandatory(void) {
-	group_chat_lime_x3dh_basic_chat_rooms_curve(25519, TRUE);
-	group_chat_lime_x3dh_basic_chat_rooms_curve(448, TRUE);
+	group_chat_lime_x3dh_basic_chat_rooms_curve(C25519, TRUE);
+	group_chat_lime_x3dh_basic_chat_rooms_curve(C448, TRUE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_basic_chat_rooms_curve(25519512, TRUE);
+		group_chat_lime_x3dh_basic_chat_rooms_curve(C25519K512, TRUE);
+		group_chat_lime_x3dh_basic_chat_rooms_curve(C25519MLK512, TRUE);
+		group_chat_lime_x3dh_basic_chat_rooms_curve(C448MLK1024, TRUE);
 	}
 }
 
-static void lime_x3dh_message_test(bool_t with_composing, bool_t with_response, bool_t sal_error, const int curveId) {
+static void lime_x3dh_message_test(bool_t with_composing,
+                                   bool_t with_response,
+                                   bool_t sal_error,
+                                   const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -847,46 +866,56 @@ end:
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message(void) {
-	lime_x3dh_message_test(FALSE, FALSE, FALSE, 25519);
-	lime_x3dh_message_test(FALSE, FALSE, FALSE, 448);
+	lime_x3dh_message_test(FALSE, FALSE, FALSE, C25519);
+	lime_x3dh_message_test(FALSE, FALSE, FALSE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		lime_x3dh_message_test(FALSE, FALSE, FALSE, 25519512);
+		lime_x3dh_message_test(FALSE, FALSE, FALSE, C25519K512);
+		lime_x3dh_message_test(FALSE, FALSE, FALSE, C25519MLK512);
+		lime_x3dh_message_test(FALSE, FALSE, FALSE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_with_error(void) {
-	lime_x3dh_message_test(FALSE, FALSE, TRUE, 25519);
-	lime_x3dh_message_test(FALSE, FALSE, TRUE, 448);
+	lime_x3dh_message_test(FALSE, FALSE, TRUE, C25519);
+	lime_x3dh_message_test(FALSE, FALSE, TRUE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		lime_x3dh_message_test(FALSE, FALSE, TRUE, 25519512);
+		lime_x3dh_message_test(FALSE, FALSE, TRUE, C25519K512);
+		lime_x3dh_message_test(FALSE, FALSE, TRUE, C25519MLK512);
+		lime_x3dh_message_test(FALSE, FALSE, TRUE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_with_composing(void) {
-	lime_x3dh_message_test(TRUE, FALSE, FALSE, 25519);
-	lime_x3dh_message_test(TRUE, FALSE, FALSE, 448);
+	lime_x3dh_message_test(TRUE, FALSE, FALSE, C25519);
+	lime_x3dh_message_test(TRUE, FALSE, FALSE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		lime_x3dh_message_test(TRUE, FALSE, FALSE, 25519512);
+		lime_x3dh_message_test(TRUE, FALSE, FALSE, C25519K512);
+		lime_x3dh_message_test(TRUE, FALSE, FALSE, C25519MLK512);
+		lime_x3dh_message_test(TRUE, FALSE, FALSE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_with_response(void) {
-	lime_x3dh_message_test(FALSE, TRUE, FALSE, 25519);
-	lime_x3dh_message_test(FALSE, TRUE, FALSE, 448);
+	lime_x3dh_message_test(FALSE, TRUE, FALSE, C25519);
+	lime_x3dh_message_test(FALSE, TRUE, FALSE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		lime_x3dh_message_test(FALSE, TRUE, FALSE, 25519512);
+		lime_x3dh_message_test(FALSE, TRUE, FALSE, C25519K512);
+		lime_x3dh_message_test(FALSE, TRUE, FALSE, C25519MLK512);
+		lime_x3dh_message_test(FALSE, TRUE, FALSE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_with_response_and_composing(void) {
-	lime_x3dh_message_test(TRUE, TRUE, FALSE, 25519);
-	lime_x3dh_message_test(TRUE, TRUE, FALSE, 448);
+	lime_x3dh_message_test(TRUE, TRUE, FALSE, C25519);
+	lime_x3dh_message_test(TRUE, TRUE, FALSE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		lime_x3dh_message_test(TRUE, TRUE, FALSE, 25519512);
+		lime_x3dh_message_test(TRUE, TRUE, FALSE, C25519K512);
+		lime_x3dh_message_test(TRUE, TRUE, FALSE, C25519MLK512);
+		lime_x3dh_message_test(TRUE, TRUE, FALSE, C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const int curveId) {
+static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -1006,14 +1035,17 @@ end:
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_offline(void) {
-	group_chat_lime_x3dh_send_encrypted_message_offline_curve(25519);
-	group_chat_lime_x3dh_send_encrypted_message_offline_curve(448);
+	group_chat_lime_x3dh_send_encrypted_message_offline_curve(C25519);
+	group_chat_lime_x3dh_send_encrypted_message_offline_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_message_offline_curve(25519512);
+		group_chat_lime_x3dh_send_encrypted_message_offline_curve(C25519K512);
+		group_chat_lime_x3dh_send_encrypted_message_offline_curve(C25519MLK512);
+		group_chat_lime_x3dh_send_encrypted_message_offline_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(const int curveId) {
+static void
+group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -1098,15 +1130,17 @@ end:
 }
 
 static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys(void) {
-	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(25519);
-	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(448);
+	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(C25519);
+	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(25519512);
+		group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(C25519K512);
+		group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(C25519MLK512);
+		group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(
-    bool_t with_text, bool_t two_files, bool_t use_buffer, const int curveId, bool_t core_restart) {
+    bool_t with_text, bool_t two_files, bool_t use_buffer, const LinphoneTesterLimeAlgo curveId, bool_t core_restart) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -1290,47 +1324,57 @@ end:
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519, FALSE);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 448, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C25519K512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C25519MLK512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_with_core_restart(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519, TRUE);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 448, TRUE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C25519, TRUE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C448, TRUE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519512, TRUE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C25519K512, TRUE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C25519MLK512, TRUE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, C448MLK1024, TRUE);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_2(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 25519, FALSE);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 448, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, C25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 25519512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, C25519K512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, C25519MLK512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_plus_text(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 25519, FALSE);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 448, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, C25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 25519512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, C25519K512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, C25519MLK512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_send_two_encrypted_files_plus_text(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 25519, FALSE);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 448, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, C25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 25519512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, C25519K512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, C25519MLK512, FALSE);
+		group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
-    bool_t with_app_restart, bool_t forward_message, bool_t reply_message, const int curveId) {
+    bool_t with_app_restart, bool_t forward_message, bool_t reply_message, const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -1581,49 +1625,66 @@ static void group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_messag
 
 static void group_chat_lime_x3dh_unique_one_to_one_chat_room_send_forward_message(void) {
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(FALSE, TRUE,
-	                                                                                                  FALSE, 25519);
+	                                                                                                  FALSE, C25519);
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(FALSE, TRUE,
-	                                                                                                  FALSE, 448);
+	                                                                                                  FALSE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
 		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
-		    FALSE, TRUE, FALSE, 25519512);
+		    FALSE, TRUE, FALSE, C25519K512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    FALSE, TRUE, FALSE, C25519MLK512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    FALSE, TRUE, FALSE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_unique_one_to_one_chat_room_send_forward_message_with_restart(void) {
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE, TRUE, FALSE,
-	                                                                                                  25519);
+	                                                                                                  C25519);
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE, TRUE, FALSE,
-	                                                                                                  448);
+	                                                                                                  C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
 		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
-		    TRUE, TRUE, FALSE, 25519512);
+		    TRUE, TRUE, FALSE, C25519K512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    TRUE, TRUE, FALSE, C25519MLK512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    TRUE, TRUE, FALSE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_unique_one_to_one_chat_room_reply_forward_message(void) {
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(FALSE, FALSE,
-	                                                                                                  TRUE, 25519);
+	                                                                                                  TRUE, C25519);
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(FALSE, FALSE,
-	                                                                                                  TRUE, 448);
+	                                                                                                  TRUE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
 		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
-		    FALSE, FALSE, TRUE, 25519512);
+		    FALSE, FALSE, TRUE, C25519K512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    FALSE, FALSE, TRUE, C25519MLK512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    FALSE, FALSE, TRUE, C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_unique_one_to_one_chat_room_reply_forward_message_with_restart(void) {
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE, FALSE, TRUE,
-	                                                                                                  25519);
+	                                                                                                  C25519);
 	group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE, FALSE, TRUE,
-	                                                                                                  448);
+	                                                                                                  C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
 		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
-		    TRUE, FALSE, TRUE, 25519512);
+		    TRUE, FALSE, TRUE, C25519K512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    TRUE, FALSE, TRUE, C25519MLK512);
+		group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
+		    TRUE, FALSE, TRUE, C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curveId, bool_t core_restart) {
+static void group_chat_lime_x3dh_chat_room_reaction_message_base(const LinphoneTesterLimeAlgo curveId,
+                                                                 bool_t core_restart) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -1942,23 +2003,27 @@ end:
 }
 
 static void group_chat_lime_x3dh_chat_room_reaction_message(void) {
-	group_chat_lime_x3dh_chat_room_reaction_message_base(25519, FALSE);
-	group_chat_lime_x3dh_chat_room_reaction_message_base(448, FALSE);
+	group_chat_lime_x3dh_chat_room_reaction_message_base(C25519, FALSE);
+	group_chat_lime_x3dh_chat_room_reaction_message_base(C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chat_room_reaction_message_base(25519512, FALSE);
+		group_chat_lime_x3dh_chat_room_reaction_message_base(C25519K512, FALSE);
+		group_chat_lime_x3dh_chat_room_reaction_message_base(C25519MLK512, FALSE);
+		group_chat_lime_x3dh_chat_room_reaction_message_base(C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_chat_room_reaction_message_with_core_restart(void) {
-	group_chat_lime_x3dh_chat_room_reaction_message_base(25519, TRUE);
-	group_chat_lime_x3dh_chat_room_reaction_message_base(448, TRUE);
+	group_chat_lime_x3dh_chat_room_reaction_message_base(C25519, TRUE);
+	group_chat_lime_x3dh_chat_room_reaction_message_base(C448, TRUE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chat_room_reaction_message_base(25519512, TRUE);
+		group_chat_lime_x3dh_chat_room_reaction_message_base(C25519K512, TRUE);
+		group_chat_lime_x3dh_chat_room_reaction_message_base(C25519MLK512, TRUE);
+		group_chat_lime_x3dh_chat_room_reaction_message_base(C448MLK1024, TRUE);
 	}
 }
 
-static void
-group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(const int curveId) {
+static void group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(
+    const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -2184,14 +2249,16 @@ end:
 }
 
 static void group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu(void) {
-	group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(25519);
-	group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(448);
+	group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(C25519);
+	group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(25519512);
+		group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(C25519K512);
+		group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(C25519MLK512);
+		group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu_base(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curveId) {
+static void group_chat_lime_x3dh_verify_sas_before_message_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -2328,14 +2395,16 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_verify_sas_before_message(void) {
-	group_chat_lime_x3dh_verify_sas_before_message_curve(25519);
-	group_chat_lime_x3dh_verify_sas_before_message_curve(448);
+	group_chat_lime_x3dh_verify_sas_before_message_curve(C25519);
+	group_chat_lime_x3dh_verify_sas_before_message_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_verify_sas_before_message_curve(25519512);
+		group_chat_lime_x3dh_verify_sas_before_message_curve(C25519K512);
+		group_chat_lime_x3dh_verify_sas_before_message_curve(C25519MLK512);
+		group_chat_lime_x3dh_verify_sas_before_message_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curveId) {
+static void group_chat_lime_x3dh_reject_sas_before_message_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -2470,14 +2539,16 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_reject_sas_before_message(void) {
-	group_chat_lime_x3dh_reject_sas_before_message_curve(25519);
-	group_chat_lime_x3dh_reject_sas_before_message_curve(448);
+	group_chat_lime_x3dh_reject_sas_before_message_curve(C25519);
+	group_chat_lime_x3dh_reject_sas_before_message_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_reject_sas_before_message_curve(25519512);
+		group_chat_lime_x3dh_reject_sas_before_message_curve(C25519K512);
+		group_chat_lime_x3dh_reject_sas_before_message_curve(C25519MLK512);
+		group_chat_lime_x3dh_reject_sas_before_message_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_message_before_verify_sas_curve(const int curveId) {
+static void group_chat_lime_x3dh_message_before_verify_sas_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -2595,14 +2666,16 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_message_before_verify_sas(void) {
-	group_chat_lime_x3dh_message_before_verify_sas_curve(25519);
-	group_chat_lime_x3dh_message_before_verify_sas_curve(448);
+	group_chat_lime_x3dh_message_before_verify_sas_curve(C25519);
+	group_chat_lime_x3dh_message_before_verify_sas_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_message_before_verify_sas_curve(25519512);
+		group_chat_lime_x3dh_message_before_verify_sas_curve(C25519K512);
+		group_chat_lime_x3dh_message_before_verify_sas_curve(C25519MLK512);
+		group_chat_lime_x3dh_message_before_verify_sas_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_message_before_reject_sas_curve(const int curveId) {
+static void group_chat_lime_x3dh_message_before_reject_sas_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -2722,15 +2795,17 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_message_before_reject_sas(void) {
-	group_chat_lime_x3dh_message_before_reject_sas_curve(25519);
-	group_chat_lime_x3dh_message_before_reject_sas_curve(448);
+	group_chat_lime_x3dh_message_before_reject_sas_curve(C25519);
+	group_chat_lime_x3dh_message_before_reject_sas_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_message_before_reject_sas_curve(25519512);
+		group_chat_lime_x3dh_message_before_reject_sas_curve(C25519K512);
+		group_chat_lime_x3dh_message_before_reject_sas_curve(C25519MLK512);
+		group_chat_lime_x3dh_message_before_reject_sas_curve(C448MLK1024);
 	}
 }
 
-static void
-group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(const int curveId) {
+static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(
+    const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -2849,14 +2924,16 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated(void) {
-	group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(25519);
-	group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(448);
+	group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(C25519);
+	group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(25519512);
+		group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(C25519K512);
+		group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(C25519MLK512);
+		group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const int curveId) {
+static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -3014,14 +3091,17 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 static void group_chat_lime_x3dh_chatroom_security_level_upgrade(void) {
-	group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(25519);
-	group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(448);
+	group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(C25519);
+	group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(25519512);
+		group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(C25519K512);
+		group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(C25519MLK512);
+		group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(const int curveId) {
+static void
+group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -3178,16 +3258,18 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant(void) {
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(25519);
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(448);
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(C25519);
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(25519512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(C25519K512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(C25519MLK512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant_curve(C448MLK1024);
 	}
 }
 
 static void
 group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(const bool_t unsafe_if_sas_refused,
-                                                                          const int curveId) {
+                                                                          const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -3327,16 +3409,20 @@ end:
 
 static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp(void) {
 	// First try without the unsafe_if_sas_refused flag on in pauline rc file
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, 25519);
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, 448);
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, C25519);
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, 25519512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, C25519K512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, C25519MLK512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE, C448MLK1024);
 	}
 	// Second try with the unsafe_if_sas_refused flag on in pauline rc file
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, 25519);
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, 448);
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, C25519);
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, 25519512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, C25519K512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, C25519MLK512);
+		group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE, C448MLK1024);
 	}
 }
 
@@ -3351,7 +3437,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
  *  - pauline1 call pauline2 and reject the SAS (with unsafe_if_sas_rejected on)
  *  - check pauline1 chatroom security level is unsafe while others are encrypted
  */
-static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(const int curveId) {
+static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -3580,14 +3666,16 @@ end:
 	linphone_core_manager_destroy(laure);
 }
 static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices(void) {
-	group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(25519);
-	group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(448);
+	group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(C25519);
+	group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(25519512);
+		group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(C25519K512);
+		group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(C25519MLK512);
+		group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId) {
+static void group_chat_lime_x3dh_chatroom_security_alert_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -3818,14 +3906,16 @@ end:
 	linphone_core_manager_destroy(laure);
 }
 static void group_chat_lime_x3dh_chatroom_security_alert(void) {
-	group_chat_lime_x3dh_chatroom_security_alert_curve(25519);
-	group_chat_lime_x3dh_chatroom_security_alert_curve(448);
+	group_chat_lime_x3dh_chatroom_security_alert_curve(C25519);
+	group_chat_lime_x3dh_chatroom_security_alert_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_chatroom_security_alert_curve(25519512);
+		group_chat_lime_x3dh_chatroom_security_alert_curve(C25519K512);
+		group_chat_lime_x3dh_chatroom_security_alert_curve(C25519MLK512);
+		group_chat_lime_x3dh_chatroom_security_alert_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_call_security_alert_curve(const int curveId) {
+static void group_chat_lime_x3dh_call_security_alert_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -3916,7 +4006,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int curveId) {
+static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
@@ -4034,7 +4124,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(const int curveId) {
+static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
@@ -4183,22 +4273,26 @@ end:
 }
 
 static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_1(void) {
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(25519);
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(448);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(C25519);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(25519512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(C25519K512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(C25519MLK512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(C448MLK1024);
 	}
 }
 
 static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_2(void) {
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(25519);
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(448);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(C25519);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(25519512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(C25519K512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(C25519MLK512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(C448MLK1024);
 	}
 }
 
-static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const int curveId) {
+static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
@@ -4344,14 +4438,16 @@ end:
 }
 
 static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_3(void) {
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(25519);
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(448);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(C25519);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(25519512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(C25519K512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(C25519MLK512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(C448MLK1024);
 	}
 }
 
-static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(const int curveId) {
+static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
@@ -4481,22 +4577,27 @@ end:
 }
 
 static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_4(void) {
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(25519);
-	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(448);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(C25519);
+	exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(25519512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(C25519K512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(C25519MLK512);
+		exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(C448MLK1024);
 	}
 }
 
 static void group_chat_lime_x3dh_call_security_alert(void) {
-	group_chat_lime_x3dh_call_security_alert_curve(25519);
-	group_chat_lime_x3dh_call_security_alert_curve(448);
+	group_chat_lime_x3dh_call_security_alert_curve(C25519);
+	group_chat_lime_x3dh_call_security_alert_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_call_security_alert_curve(25519512);
+		group_chat_lime_x3dh_call_security_alert_curve(C25519K512);
+		group_chat_lime_x3dh_call_security_alert_curve(C25519MLK512);
+		group_chat_lime_x3dh_call_security_alert_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(const int curveId) {
+static void
+group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -4634,14 +4735,17 @@ end:
 	linphone_core_manager_destroy(laure);
 }
 static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages(void) {
-	group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(25519);
-	group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(448);
+	group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(C25519);
+	group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(25519512);
+		group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(C25519K512);
+		group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(C25519MLK512);
+		group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(const int curveId) {
+static void
+group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -4723,14 +4827,17 @@ end:
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh(void) {
-	group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(25519);
-	group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(448);
+	group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(C25519);
+	group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(25519512);
+		group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(C25519K512);
+		group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(C25519MLK512);
+		group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(const int curveId) {
+static void
+group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -4812,14 +4919,16 @@ end:
 }
 
 static void group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh(void) {
-	group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(25519);
-	group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(448);
+	group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(C25519);
+	group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(25519512);
+		group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(C25519K512);
+		group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(C25519MLK512);
+		group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(const int curveId) {
+static void group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -4893,14 +5002,17 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh(void) {
-	group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(25519);
-	group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(448);
+	group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(C25519);
+	group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(25519512);
+		group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(C25519K512);
+		group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(C25519MLK512);
+		group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(const int curveId) {
+static void
+group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
@@ -5085,14 +5197,16 @@ end:
 	linphone_core_manager_destroy(laure);
 }
 static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants(void) {
-	group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(25519);
-	group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(448);
+	group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(C25519);
+	group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(25519512);
+		group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(C25519K512);
+		group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(C25519MLK512);
+		group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const int curveId,
+static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const LinphoneTesterLimeAlgo curveId,
                                                                          bool_t unreachable_during_setup) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -5190,18 +5304,22 @@ end:
 }
 
 static void group_chat_lime_x3dh_message_while_network_unreachable(void) {
-	group_chat_lime_x3dh_message_while_network_unreachable_curve(25519, FALSE);
-	group_chat_lime_x3dh_message_while_network_unreachable_curve(448, FALSE);
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(C25519, FALSE);
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(C448, FALSE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_message_while_network_unreachable_curve(25519512, FALSE);
+		group_chat_lime_x3dh_message_while_network_unreachable_curve(C25519K512, FALSE);
+		group_chat_lime_x3dh_message_while_network_unreachable_curve(C25519MLK512, FALSE);
+		group_chat_lime_x3dh_message_while_network_unreachable_curve(C448MLK1024, FALSE);
 	}
 }
 
 static void group_chat_lime_x3dh_message_while_network_unreachable_2(void) {
-	group_chat_lime_x3dh_message_while_network_unreachable_curve(25519, TRUE);
-	group_chat_lime_x3dh_message_while_network_unreachable_curve(448, TRUE);
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(C25519, TRUE);
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(C448, TRUE);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_message_while_network_unreachable_curve(25519512, TRUE);
+		group_chat_lime_x3dh_message_while_network_unreachable_curve(C25519K512, TRUE);
+		group_chat_lime_x3dh_message_while_network_unreachable_curve(C25519MLK512, TRUE);
+		group_chat_lime_x3dh_message_while_network_unreachable_curve(C448MLK1024, TRUE);
 	}
 }
 
@@ -5213,7 +5331,7 @@ static void chat_room_message_participant_state_changed(LinphoneChatRoom *cr,
 	chloe->stat.number_of_participant_state_changed += 1;
 }
 
-static void imdn_for_group_chat_room_curve(const int curveId) {
+static void imdn_for_group_chat_room_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -5380,14 +5498,17 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 static void imdn_for_group_chat_room(void) {
-	imdn_for_group_chat_room_curve(25519);
-	imdn_for_group_chat_room_curve(448);
+	imdn_for_group_chat_room_curve(C25519);
+	imdn_for_group_chat_room_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		imdn_for_group_chat_room_curve(25519512);
+		imdn_for_group_chat_room_curve(C25519K512);
+		imdn_for_group_chat_room_curve(C25519MLK512);
+		imdn_for_group_chat_room_curve(C448MLK1024);
 	}
 }
 
-static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(const int curveId) {
+static void
+group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -5493,10 +5614,12 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(void) {
-	group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(25519);
-	group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(448);
+	group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(C25519);
+	group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(C448);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(25519512);
+		group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(C25519K512);
+		group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(C25519MLK512);
+		group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(C448MLK1024);
 	}
 }
 
@@ -5518,7 +5641,8 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 #define DELIVERY_ERROR_IMDN 2
 #define FULL_DELIVERY_IMDN 3
 
-static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint8_t paulineImdnPolicy) {
+static void group_chat_lime_x3dh_session_corrupted_curve(const LinphoneTesterLimeAlgo curveId,
+                                                         uint8_t paulineImdnPolicy) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -5719,26 +5843,32 @@ end:
 }
 
 static void group_chat_lime_x3dh_session_corrupted(void) {
-	group_chat_lime_x3dh_session_corrupted_curve(25519, FULL_DELIVERY_IMDN);
-	group_chat_lime_x3dh_session_corrupted_curve(448, FULL_DELIVERY_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(C25519, FULL_DELIVERY_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(C448, FULL_DELIVERY_IMDN);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_session_corrupted_curve(25519512, FULL_DELIVERY_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C25519K512, FULL_DELIVERY_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C25519MLK512, FULL_DELIVERY_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C448MLK1024, FULL_DELIVERY_IMDN);
 	}
 }
 
 static void group_chat_lime_x3dh_session_corrupted_error_imdn_only(void) {
-	group_chat_lime_x3dh_session_corrupted_curve(25519, DELIVERY_ERROR_IMDN);
-	group_chat_lime_x3dh_session_corrupted_curve(448, DELIVERY_ERROR_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(C25519, DELIVERY_ERROR_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(C448, DELIVERY_ERROR_IMDN);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_session_corrupted_curve(25519512, DELIVERY_ERROR_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C25519K512, DELIVERY_ERROR_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C25519MLK512, DELIVERY_ERROR_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C448MLK1024, DELIVERY_ERROR_IMDN);
 	}
 }
 
 static void group_chat_lime_x3dh_session_corrupted_no_imdn(void) {
-	group_chat_lime_x3dh_session_corrupted_curve(25519, NO_DELIVERY_IMDN);
-	group_chat_lime_x3dh_session_corrupted_curve(448, NO_DELIVERY_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(C25519, NO_DELIVERY_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(C448, NO_DELIVERY_IMDN);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		group_chat_lime_x3dh_session_corrupted_curve(25519512, NO_DELIVERY_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C25519K512, NO_DELIVERY_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C25519MLK512, NO_DELIVERY_IMDN);
+		group_chat_lime_x3dh_session_corrupted_curve(C448MLK1024, NO_DELIVERY_IMDN);
 	}
 }
 

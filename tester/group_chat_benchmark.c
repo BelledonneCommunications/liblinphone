@@ -266,7 +266,7 @@ bctbx_list_t *create_conference_cores(bctbx_list_t *participantsAddresses) {
 
 	mgr = linphone_core_manager_create("groupchat_rc");
 	if (enable_limex3dh) {
-		set_lime_server_and_curve(25519, mgr);
+		set_lime_server_and_curve(C25519, mgr);
 	}
 
 	// Enable imdn

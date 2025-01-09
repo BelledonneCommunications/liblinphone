@@ -268,7 +268,7 @@ static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceS
 
 static void send_conference_invitations(bool_t enable_encryption,
                                         const char *subject,
-                                        int curveId,
+                                        const LinphoneTesterLimeAlgo curveId,
                                         bool_t add_participant_in_error) {
 	bctbx_list_t *coresManagerList = NULL;
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
@@ -447,21 +447,21 @@ static void send_conference_invitations(bool_t enable_encryption,
 }
 
 static void send_conference_invitations_1(void) {
-	send_conference_invitations(FALSE, NULL, 0, FALSE);
+	send_conference_invitations(FALSE, NULL, UNSET, FALSE);
 }
 
 static void send_conference_invitations_2(void) {
-	send_conference_invitations(TRUE, "dummy subject", 25519, FALSE);
-	// send_conference_invitations(TRUE, "dummy subject", 448, FALSE);
+	send_conference_invitations(TRUE, "dummy subject", C25519, FALSE);
+	// send_conference_invitations(TRUE, "dummy subject", C448, FALSE);
 }
 
 static void send_conference_invitations_error_1(void) {
-	send_conference_invitations(FALSE, NULL, 0, TRUE);
+	send_conference_invitations(FALSE, NULL, UNSET, TRUE);
 }
 
 static void send_conference_invitations_error_2(void) {
-	send_conference_invitations(TRUE, "dummy subject", 25519, TRUE);
-	// send_conference_invitations(TRUE, "dummy subject", 448, TRUE);
+	send_conference_invitations(TRUE, "dummy subject", C25519, TRUE);
+	// send_conference_invitations(TRUE, "dummy subject", C448, TRUE);
 }
 
 test_t ics_tests[] = {

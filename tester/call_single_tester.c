@@ -831,13 +831,13 @@ static void call_outbound_with_multiple_proxy(void) {
 static void call_outbound_using_secondary_account(void) {
 	// Caller
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dual_proxy_rc");
-	set_lime_server_and_curve(25519, marie);
+	set_lime_server_and_curve(C25519, marie);
 	linphone_core_manager_start(marie, TRUE);
 
 	// Callee
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	set_lime_server_and_curve(25519, pauline);
+	set_lime_server_and_curve(C25519, pauline);
 	linphone_core_manager_start(pauline, TRUE);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_X3dhUserCreationSuccess, 1));
@@ -2472,7 +2472,7 @@ static void call_with_no_sdp_lime(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_sips_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	set_lime_server_and_curve(25519, pauline);
+	set_lime_server_and_curve(C25519, pauline);
 	linphone_core_manager_start(pauline, TRUE);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_X3dhUserCreationSuccess, 1));

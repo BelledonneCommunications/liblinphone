@@ -1187,13 +1187,21 @@ extern MSSndCardDesc dummy_capture_test_snd_card_desc;
  * the encryption engine (only if the given url is different than the current one). It will thus parse
  * again the curve setting that is changed BEFORE.
  */
-const char *limeCurveIdInt2String(const int curveId);
-void set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager);
-void legacy_set_lime_server_and_curve(const int curveId,
+typedef enum _LinphoneTesterLimeAlgo {
+	UNSET = 0,
+	C25519,
+	C448,
+	C25519K512,
+	C25519MLK512,
+	C448MLK1024
+} LinphoneTesterLimeAlgo;
+const char *limeAlgoEnum2String(const LinphoneTesterLimeAlgo curveId);
+void set_lime_server_and_curve(const LinphoneTesterLimeAlgo curveId, LinphoneCoreManager *manager);
+void legacy_set_lime_server_and_curve(const LinphoneTesterLimeAlgo curveId,
                                       LinphoneCoreManager *manager); // Set the lime server url in the [lime] section so
                                                                      // it is setup at core level not account
-void set_lime_server_and_curve_list(const int curveId, bctbx_list_t *managerList);
-void set_lime_server_and_curve_list_tls(const int curveId,
+void set_lime_server_and_curve_list(const LinphoneTesterLimeAlgo curveId, bctbx_list_t *managerList);
+void set_lime_server_and_curve_list_tls(const LinphoneTesterLimeAlgo curveId,
                                         bctbx_list_t *managerList,
                                         bool_t tls_auth_server,
                                         bool_t required);
@@ -1235,7 +1243,6 @@ int liblinphone_tester_check_recorded_audio(const char *hellopath, const char *r
 
 /* returns a CPU bogomips indication. Only supported for linux.*/
 float liblinphone_tester_get_cpu_bogomips(void);
-
 #ifdef __cplusplus
 };
 #endif

@@ -5658,14 +5658,18 @@ static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy_capture_test_snd_card());
 }
 
-const char *limeCurveIdInt2String(const int curveId) {
+const char *limeAlgoEnum2String(const LinphoneTesterLimeAlgo curveId) {
 	switch (curveId) {
-		case 448:
+		case C448:
 			return ("c448");
-		case 25519:
+		case C25519:
 			return ("c25519");
-		case 25519512:
+		case C25519K512:
 			return ("c25519k512");
+		case C25519MLK512:
+			return ("c25519mlk512");
+		case C448MLK1024:
+			return ("c448mlk1024");
 		default:
 			return ("unset");
 	}
@@ -5674,7 +5678,7 @@ const char *limeCurveIdInt2String(const int curveId) {
  * set the curve and lime server url to use for this test
  * This will crash whatever settings are in the linphonerc for x3dh server
  *
- * @param[in]	curveId		25519 or 448 according to the curve to use -> this MUST match server's setting
+ * @param[in]	curveId		The curveId to use as base for lime
  * @param[in]	manager		The core manager
  * @param[in]	tls_auth_server	True if we must connect to a server trying to authenticate users with client
  * certificate. Other server will use digest auth to authenticate clients
@@ -5684,17 +5688,22 @@ const char *limeCurveIdInt2String(const int curveId) {
  * False: setting in the [lime] section at core level (legacy behavior, do not use)
  *
  */
-static void set_lime_server_and_curve_tls(
-    const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req, bool_t in_account) {
+static void set_lime_server_and_curve_tls(const LinphoneTesterLimeAlgo curveId,
+                                          LinphoneCoreManager *manager,
+                                          bool_t tls_auth_server,
+                                          bool_t req,
+                                          bool_t in_account) {
 	const char *server = NULL;
 	char algo[16];
 	switch (curveId) {
-		case 448:
-		case 25519:
-		case 25519512:
-			sprintf(algo, "%s", limeCurveIdInt2String(curveId));
+		case C25519:
+		case C448:
+		case C25519K512:
+		case C25519MLK512:
+		case C448MLK1024:
+			sprintf(algo, "%s", limeAlgoEnum2String(curveId));
 			break;
-		case 0: // explicitely disable lime
+		case UNSET: // explicitely disable lime
 			sprintf(algo, "%s", "unset");
 			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "enabled", FALSE);
 			linphone_core_set_lime_x3dh_server_url(manager->lc, NULL);
@@ -5734,15 +5743,15 @@ static void set_lime_server_and_curve_tls(
 	linphone_core_set_lime_x3dh_server_url(manager->lc, server);
 }
 
-void set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager) {
+void set_lime_server_and_curve(const LinphoneTesterLimeAlgo curveId, LinphoneCoreManager *manager) {
 	set_lime_server_and_curve_tls(curveId, manager, FALSE, FALSE, TRUE);
 }
 
-void legacy_set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager) {
+void legacy_set_lime_server_and_curve(const LinphoneTesterLimeAlgo curveId, LinphoneCoreManager *manager) {
 	set_lime_server_and_curve_tls(curveId, manager, FALSE, FALSE, FALSE);
 }
 
-void set_lime_server_and_curve_list_tls(const int curveId,
+void set_lime_server_and_curve_list_tls(const LinphoneTesterLimeAlgo curveId,
                                         bctbx_list_t *managerList,
                                         bool_t tls_auth_server,
                                         bool_t req) {
@@ -5753,7 +5762,7 @@ void set_lime_server_and_curve_list_tls(const int curveId,
 	}
 }
 
-void set_lime_server_and_curve_list(const int curveId, bctbx_list_t *managerList) {
+void set_lime_server_and_curve_list(const LinphoneTesterLimeAlgo curveId, bctbx_list_t *managerList) {
 	set_lime_server_and_curve_list_tls(curveId, managerList, FALSE, FALSE);
 }
 

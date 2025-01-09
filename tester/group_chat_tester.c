@@ -5206,7 +5206,7 @@ void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
 	coresManagerList = bctbx_list_append(coresManagerList, berthe);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	if (enable_lime) {
-		set_lime_server_and_curve_list(25519, coresManagerList);
+		set_lime_server_and_curve_list(C25519, coresManagerList);
 	}
 	start_core_for_conference(coresManagerList);
 	int imdn_to_everybody_threshold = (!!add_participant) ? 5 : 4;

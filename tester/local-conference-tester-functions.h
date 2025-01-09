@@ -64,7 +64,7 @@ public:
 		                      linphone_core_add_callbacks(getLc(), cbs);
 		                      linphone_core_cbs_unref(cbs);
 		                      if (encrypted) {
-			                      set_lime_server_and_curve(25519, mMgr.get());
+			                      set_lime_server_and_curve(C25519, mMgr.get());
 		                      }
 	                      }),
 	      mFocus(nullptr) {

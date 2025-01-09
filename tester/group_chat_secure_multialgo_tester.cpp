@@ -59,7 +59,7 @@ static void group_chat_lime_x3dh_hard_migration(void) {
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	coresManagerList = bctbx_list_append(coresManagerList, chloe);
-	set_lime_server_and_curve_list(25519, coresManagerList); // all clients start on curve 25519 only
+	set_lime_server_and_curve_list(C25519, coresManagerList); // all clients start on curve 25519 only
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	stats initialLaureStats = laure->stat;
@@ -149,7 +149,7 @@ static void group_chat_lime_x3dh_hard_migration(void) {
 		linphone_core_manager_reinit(pauline);
 		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 		// Set pauline curve to c25519k512, and delete its lime DB - TODO: do it via file remote provisioning
-		set_lime_server_and_curve_list(25519512, tmpCoresManagerList);
+		set_lime_server_and_curve_list(C25519K512, tmpCoresManagerList);
 		unlink(pauline->lime_database_path);
 		bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
@@ -216,7 +216,7 @@ static void group_chat_lime_x3dh_hard_migration(void) {
 		linphone_core_manager_reinit(laure);
 		tmpCoresManagerList = bctbx_list_append(NULL, laure);
 		// Set laure curve to c25519k512, and delete its lime DB - TODO: do it via file remote provisioning
-		set_lime_server_and_curve_list(25519512, tmpCoresManagerList);
+		set_lime_server_and_curve_list(C25519K512, tmpCoresManagerList);
 		unlink(laure->lime_database_path);
 		tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
@@ -296,7 +296,7 @@ static void group_chat_lime_x3dh_hard_migration(void) {
 		linphone_core_manager_reinit(chloe);
 		tmpCoresManagerList = bctbx_list_append(NULL, chloe);
 		// Set chloe curve to c25519k512, and delete its lime DB - TODO: do it via file remote provisioning
-		set_lime_server_and_curve_list(25519512, tmpCoresManagerList);
+		set_lime_server_and_curve_list(C25519K512, tmpCoresManagerList);
 		unlink(chloe->lime_database_path);
 		tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
@@ -315,7 +315,7 @@ static void group_chat_lime_x3dh_hard_migration(void) {
 		linphone_core_manager_reinit(marie);
 		tmpCoresManagerList = bctbx_list_append(NULL, marie);
 		// Set marie curve to c25519k512, and delete its lime DB - TODO: do it via file remote provisioning
-		set_lime_server_and_curve_list(25519512, tmpCoresManagerList);
+		set_lime_server_and_curve_list(C25519K512, tmpCoresManagerList);
 		unlink(marie->lime_database_path);
 		tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
