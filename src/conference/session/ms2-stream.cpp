@@ -646,13 +646,36 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 	        ? params.resultMediaDescription->getStreamAtIdx(static_cast<unsigned int>(mBundleOwner->getIndex()))
 	        : params.getResultStreamDescription();
 
-	info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
-	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
-	info->rtpPort = stream.rtp_port;
-	info->rtcpAddr = stream.rtcp_addr.empty() == false ? stream.rtcp_addr : info->rtpAddr;
-	info->rtcpPort = (linphone_core_rtcp_enabled(getCCore()) && !isMulticast)
-	                     ? (stream.rtcp_port ? stream.rtcp_port : stream.rtp_port + 1)
-	                     : 0;
+	const auto &remoteStream =
+	    (mRtpBundle && !mOwnsBundle && mBundleOwner)
+	        ? params.remoteMediaDescription->getStreamAtIdx(static_cast<unsigned int>(mBundleOwner->getIndex()))
+	        : params.getRemoteStreamDescription();
+
+	// Work-around for WebRTC as it does not send remote candidates when it should.
+	// So in this case, re-use the IP and port already used by ICE.
+	if (!params.localIsOfferer && getIceService().isActive() && getIceService().hasCompleted() &&
+	    remoteStream.ice_remote_candidates.empty()) {
+		const auto *session =
+		    (mRtpBundle && !mOwnsBundle && mBundleOwner) ? mBundleOwner->mSessions.rtp_session : mSessions.rtp_session;
+
+		char rtpAddr[64] = {};
+		bctbx_sockaddr_to_ip_address((struct sockaddr *)&session->rtp.gs.rem_addr, session->rtp.gs.rem_addrlen, rtpAddr,
+		                             sizeof(rtpAddr), &info->rtpPort);
+		info->rtpAddr = string(rtpAddr);
+
+		char rtcpAddr[64] = {};
+		bctbx_sockaddr_to_ip_address((struct sockaddr *)&session->rtcp.gs.rem_addr, session->rtcp.gs.rem_addrlen,
+		                             rtcpAddr, sizeof(rtcpAddr), &info->rtcpPort);
+		info->rtcpAddr = string(rtcpAddr);
+	} else {
+		info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
+		bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
+		info->rtpPort = stream.rtp_port;
+		info->rtcpAddr = stream.rtcp_addr.empty() == false ? stream.rtcp_addr : info->rtpAddr;
+		info->rtcpPort = (linphone_core_rtcp_enabled(getCCore()) && !isMulticast)
+		                     ? (stream.rtcp_port ? stream.rtcp_port : stream.rtp_port + 1)
+		                     : 0;
+	}
 }
 
 /*
@@ -1105,14 +1128,14 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 		return;
 	}
 
-	std::string rtpAddr =
-	    (resultStreamDesc.rtp_addr.empty() == false) ? resultStreamDesc.rtp_addr : params.resultMediaDescription->addr;
-	std::string rtcpAddr = (resultStreamDesc.rtcp_addr.empty() == false) ? resultStreamDesc.rtcp_addr
-	                                                                     : params.resultMediaDescription->addr;
-	lInfo() << "Change audio stream destination: RTP=" << rtpAddr << ":" << resultStreamDesc.rtp_port
-	        << " RTCP=" << rtcpAddr << ":" << resultStreamDesc.rtcp_port;
-	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr.c_str(), resultStreamDesc.rtp_port,
-	                                 rtcpAddr.c_str(), resultStreamDesc.rtcp_port);
+	RtpAddressInfo info;
+	getRtpDestination(params, &info);
+
+	lInfo() << "Change audio stream destination: RTP=" << info.rtpAddr << ":" << info.rtpPort
+	        << " RTCP=" << info.rtcpAddr << ":" << info.rtcpPort;
+
+	rtp_session_set_remote_addr_full(mSessions.rtp_session, info.rtpAddr.c_str(), info.rtpPort, info.rtcpAddr.c_str(),
+	                                 info.rtcpPort);
 }
 
 bool MS2Stream::updateRtpProfile(const OfferAnswerContext &params) {
