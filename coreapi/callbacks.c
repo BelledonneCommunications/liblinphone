@@ -201,6 +201,7 @@ static void call_received(SalCallOp *h) {
 #endif
 	}
 
+	shared_ptr<Conference> conference;
 	if (chatCapabilities && !hasStreams && !isServer) {
 #ifdef HAVE_ADVANCED_IM
 		auto resourceListContent = h->getContentInRemote(ContentType::ResourceLists);
@@ -238,7 +239,7 @@ static void call_received(SalCallOp *h) {
 			    to, ConferenceId(peerAddressWithoutGruu, localAddressWithoutGruu), h, params);
 		}
 
-		shared_ptr<Conference> conference = chatRoom->getConference();
+		conference = chatRoom->getConference();
 		if (oneToOneChatRoom == "true") {
 			chatRoom->addCapability(ClientChatRoom::Capabilities::OneToOne);
 		}
@@ -255,7 +256,7 @@ static void call_received(SalCallOp *h) {
 	             (strcmp(sal_address_get_param(remoteContactAddress, "admin"), "1") == 0)))) {
 		// Create a conference if remote is trying to schedule one or it is calling a conference focus
 		if (isServer) {
-			shared_ptr<Conference> conference = core->findConference(ConferenceId(to, to));
+			conference = core->findConference(ConferenceId(to, to));
 			if (conference) {
 				auto serverConference = dynamic_pointer_cast<ServerConference>(conference);
 				if (serverConference) {
@@ -296,6 +297,7 @@ static void call_received(SalCallOp *h) {
 					lError() << "Conference [" << conference << "] is not of type ServerConference - rejecting session";
 					h->decline(SalReasonNotAcceptable);
 					h->release();
+					return;
 				}
 			} else {
 #ifdef HAVE_DB_STORAGE
@@ -304,6 +306,17 @@ static void call_received(SalCallOp *h) {
 				        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(to)
 				        : nullptr;
 				if (confInfo) {
+					params->enableAudio(confInfo->getCapability(LinphoneStreamTypeAudio));
+					params->enableVideo(confInfo->getCapability(LinphoneStreamTypeVideo));
+					params->enableChat(confInfo->getCapability(LinphoneStreamTypeText));
+					params->setSubject(confInfo->getSubject());
+					const auto startTime = confInfo->getDateTime();
+					params->setStartTime(startTime);
+					const auto duration = confInfo->getDuration();
+					if (duration > 0) {
+						// The duration is stored in minutes whereas the start time in seconds
+						params->setEndTime(startTime + duration * 60);
+					}
 					conference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
 					conference->init(h);
 				} else
@@ -446,7 +459,12 @@ static void call_received(SalCallOp *h) {
 	}
 
 	auto call = call_get_or_create(lc, h, from, to);
-	if (call) call->startIncomingNotification();
+	if (call) {
+		if (conference) {
+			call->getActiveSession()->addListener(conference);
+		}
+		call->startIncomingNotification();
+	}
 }
 
 static void call_rejected(SalCallOp *h) {

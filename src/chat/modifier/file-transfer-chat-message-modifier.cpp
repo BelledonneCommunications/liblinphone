@@ -693,7 +693,7 @@ void FileTransferChatMessageModifier::onRecvBody(BCTBX_UNUSED(belle_sip_user_bod
 			linphone_buffer_unref(lb);
 		}
 	} else {
-		lWarning() << "File transfer decrypt failed with code -" << hex << (int)(-retval);
+		lWarning() << "File transfer body download failed with code -" << hex << (int)(-retval);
 		const auto &meAddress = message->getMeAddress();
 		if (meAddress) {
 			message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferError,
@@ -814,7 +814,7 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 			message->downloadTerminated();
 		}
 	} else {
-		lWarning() << "File transfer decrypt failed with code " << (int)retval;
+		lWarning() << "File transfer chunck download failed with code " << (int)retval;
 		if (meAddress) {
 			message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferError,
 			                                           ::ms_time(nullptr));
@@ -860,14 +860,8 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 		if (!message) return;
 
 		if (code >= 400) {
-			lWarning() << "File transfer failed with code " << code;
-			const auto &meAddress = message->getMeAddress();
-			if (meAddress) {
-				message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferDone,
-				                                           ::ms_time(nullptr));
-			}
-			releaseHttpRequest();
-			currentFileTransferContent = nullptr;
+			lWarning() << "[Response Header] File transfer failed with code " << code;
+			onDownloadFailed();
 			return;
 		}
 
@@ -983,7 +977,7 @@ void FileTransferChatMessageModifier::processResponseFromGetFile(const belle_htt
 
 		int code = belle_http_response_get_status_code(event->response);
 		if (code >= 400) {
-			lWarning() << "File transfer failed with code " << code;
+			lWarning() << "[Response] File transfer failed with code " << code;
 			onDownloadFailed();
 		} else if (code != 200) {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";

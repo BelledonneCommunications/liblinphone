@@ -971,7 +971,7 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 				        << " cannot be executed right now - Retrying at the next state change";
 			}
 		}
-	} else if (mConfParams->chatEnabled()) {
+	} else if (isChatOnly()) {
 #ifdef HAVE_ADVANCED_IM
 		auto session = mFocus->getSession();
 		auto chatRoom = getChatRoom();

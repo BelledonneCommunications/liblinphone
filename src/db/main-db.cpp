@@ -6311,8 +6311,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			chatRoom->setIsEmpty(lastMessageId == 0);
 			chatRoom->setIsMuted(muted, false);
 
-			lDebug() << "Found chat room in DB: (peer=[" << *conferenceId.getPeerAddress() << "] local=["
-			         << *conferenceId.getLocalAddress() << "])";
+			lDebug() << "Found chat room in DB: " << conferenceId;
 
 			addChatroomToList(chatRoomsMap, chatRoom);
 		}
@@ -6387,7 +6386,6 @@ void MainDb::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom, unsign
 #ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
-
 		d->insertChatRoom(chatRoom, notifyId);
 		tr.commit();
 	};

@@ -459,7 +459,6 @@ create_conference_on_server(Focus &focus,
 				}
 			}
 		}
-
 		idx++;
 	}
 
@@ -7404,6 +7403,16 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 		}
 
+		for (auto mgr : members) {
+			LinphoneAddress *deviceAddr =
+			    linphone_account_get_contact_address(linphone_core_get_default_account(mgr->lc));
+			LinphoneChatRoom *chat_room = linphone_core_search_chat_room(mgr->lc, NULL, deviceAddr, confAddr, NULL);
+			BC_ASSERT_PTR_NOT_NULL(chat_room);
+			if (chat_room) {
+				BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(chat_room), 2, int, "%d");
+			}
+		}
+
 		if (!!client_reenter_conference) {
 			stats marie_stat = marie.getStats();
 			focus_stat = focus.getStats();
@@ -7462,6 +7471,42 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				}
 			}
 
+			if (client_restart) {
+				LinphoneChatRoom *chat_room = linphone_core_search_chat_room(focus.getLc(), NULL, NULL, confAddr, NULL);
+				BC_ASSERT_PTR_NOT_NULL(chat_room);
+				if (chat_room) {
+					ms_message("%s is restarting its core", linphone_core_get_identity(marie.getLc()));
+					coresList = bctbx_list_remove(coresList, marie.getLc());
+					marie.reStart();
+					coresList = bctbx_list_append(coresList, marie.getLc());
+					marie_stat = marie.getStats();
+					LinphoneAccount *account = linphone_core_get_default_account(marie.getLc());
+					LinphoneAddress *deviceAddress = linphone_account_get_contact_address(account);
+					LinphoneChatRoom *chat_room =
+					    linphone_core_search_chat_room(marie.getLc(), NULL, deviceAddress, confAddr, NULL);
+					BC_ASSERT_PTR_NOT_NULL(chat_room);
+					if (chat_room) {
+						BC_ASSERT_TRUE(linphone_chat_room_is_read_only(chat_room));
+						BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(chat_room), 2, int, "%d");
+						BC_ASSERT_EQUAL(linphone_chat_room_get_state(chat_room), LinphoneChatRoomStateTerminated, int,
+						                "%i");
+					}
+					LinphoneParticipantDeviceIdentity *identity =
+					    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddress, "");
+					bctbx_list_t *specs = linphone_core_get_linphone_specs_list(marie.getLc());
+					linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
+					bctbx_list_t *devices = NULL;
+					devices = bctbx_list_append(devices, identity);
+					bctbx_list_free_with_data(specs, ms_free);
+					linphone_chat_room_set_participant_devices(chat_room, marie.getIdentity().toC(), devices);
+					bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
+				}
+				BC_ASSERT_FALSE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallOutgoingInit,
+				                              focus_stat.number_of_LinphoneCallOutgoingInit + 1, 500));
+				BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallIncomingReceived,
+				                              marie_stat.number_of_LinphoneCallIncomingReceived + 1, 500));
+			}
+
 			LinphoneCallParams *new_params = linphone_core_create_call_params(marie.getLc(), nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
@@ -7504,10 +7549,25 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				                            focus.getCMgr(), memberList, confAddr, TRUE);
 			}
 
+			for (auto mgr : members) {
+				LinphoneAddress *deviceAddr =
+				    linphone_account_get_contact_address(linphone_core_get_default_account(mgr->lc));
+				LinphoneChatRoom *chat_room = linphone_core_search_chat_room(mgr->lc, NULL, deviceAddr, confAddr, NULL);
+				BC_ASSERT_PTR_NOT_NULL(chat_room);
+				if (chat_room) {
+					BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(chat_room), 2, int, "%d");
+				}
+			}
+
 			marie_conference =
 			    linphone_core_search_conference(marie.getLc(), NULL, marie.getIdentity().toC(), confAddr, NULL);
 			BC_ASSERT_PTR_NOT_NULL(marie_conference);
 			if (marie_conference) {
+				const LinphoneConferenceParams *conference_params =
+				    linphone_conference_get_current_params(marie_conference);
+				BC_ASSERT_TRUE(linphone_conference_params_audio_enabled(conference_params));
+				BC_ASSERT_TRUE(linphone_conference_params_video_enabled(conference_params));
+				BC_ASSERT_TRUE(linphone_conference_params_chat_enabled(conference_params));
 				LinphoneChatRoom *marie_chat_room = linphone_conference_get_chat_room(marie_conference);
 				BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 				if (marie_chat_room) {
@@ -7582,7 +7642,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		auto remaining_members = members;
 
 		for (auto mgr : members) {
-			int participant_call_ended = (!!client_reenter_conference && (mgr == marie.getCMgr())) ? 2 : 1;
+			int participant_call_ended =
+			    (!!client_reenter_conference && client_restart && (mgr == marie.getCMgr())) ? 2 : 1;
 			stats focus_stat2 = focus.getStats();
 			remaining_members.pop_front();
 			std::list<stats> remaining_members_stats;

@@ -509,7 +509,7 @@ void ServerConference::configure(SalCallOp *op) {
 		mConfParams->setJoiningMode(joiningMode);
 	}
 
-	if (mConfParams->chatEnabled() || (admin && !createdConference)) {
+	if (isChatOnly() || (admin && !createdConference)) {
 		std::shared_ptr<Address> conferenceAddress = Address::create(op->getTo());
 		MediaSessionParams *msp = new MediaSessionParams();
 		msp->initDefault(getCore(), LinphoneCallIncoming);
@@ -836,7 +836,7 @@ void ServerConference::confirmCreation() {
 		session->getPrivate()->setConferenceId(actualConferenceAddress->getUriParamValue(Conference::ConfIdParameter));
 
 #ifdef HAVE_ADVANCED_IM
-		if (!supportsMedia() && mConfParams->chatEnabled()) {
+		if (isChatOnly()) {
 			setState(ConferenceInterface::State::Created);
 		}
 #endif // HAVE_ADVANCED_IM
@@ -1026,7 +1026,8 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 	const auto &chatRoom = getChatRoom();
 	const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 	if (chatEnabled && device && (deviceState == ParticipantDevice::State::ScheduledForJoining)) {
-		lInfo() << "Inviting device " << *device->getAddress() << " because it was scheduled to join the chat room";
+		lInfo() << "Inviting device " << *device->getAddress() << " because it was scheduled to join the chat room "
+		        << *getConferenceAddress();
 		// Invite device as last time round it was attempted, the INVITE session errored out
 		inviteDevice(device);
 	}
@@ -1675,8 +1676,7 @@ bool ServerConference::tryAddMeDevice() {
  * until they 're all left. */
 void ServerConference::resumeParticipant(BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
 #ifdef HAVE_ADVANCED_IM
-	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly()) {
 		addParticipantToList(participant->getAddress());
 		for (auto device : participant->getDevices()) {
 			switch (device->getState()) {
@@ -2247,7 +2247,6 @@ int ServerConference::removeParticipant(const std::shared_ptr<Address> &addr) {
 
 int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &session, const bool preserveSession) {
 	int err = 0;
-
 	auto op = session->getPrivate()->getOp();
 	shared_ptr<Call> call = getCore()->getCallByCallId(op->getCallId());
 	CallSession::State sessionState = session->getState();
@@ -2378,7 +2377,7 @@ bool ServerConference::removeParticipant(const std::shared_ptr<Participant> &par
 	const auto devices = participant->getDevices();
 #ifdef HAVE_ADVANCED_IM
 	const auto participantHasNoDevices = (devices.size() == 0);
-	if (mConfParams->chatEnabled()) {
+	if (isChatOnly()) {
 		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
 		for (const auto &device : devices) {
 			const auto &deviceState = device->getState();
@@ -3406,7 +3405,7 @@ void ServerConference::setParticipantDeviceState(BCTBX_UNUSED(const shared_ptr<P
                                                  BCTBX_UNUSED(bool notify)) {
 #ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly() && chatRoom) {
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		// Do not change state of participants if the core is shutting down.
 		// If a participant is about to leave and its call session state is End, it will be released during shutdown
@@ -3453,7 +3452,7 @@ bool ServerConference::allDevicesLeft(const std::shared_ptr<Participant> &partic
 void ServerConference::onParticipantDeviceLeft(BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 #ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly() && chatRoom) {
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
 		lInfo() << "Conference " << *getConferenceAddress() << ": Participant device '" << *device->getAddress()
@@ -3514,7 +3513,7 @@ void ServerConference::onParticipantDeviceLeft(BCTBX_UNUSED(const std::shared_pt
  */
 void ServerConference::updateParticipantDeviceSession(BCTBX_UNUSED(const shared_ptr<ParticipantDevice> &device),
                                                       BCTBX_UNUSED(bool freshlyRegistered)) {
-	if (mConfParams->chatEnabled()) {
+	if (isChatOnly()) {
 		switch (device->getState()) {
 			case ParticipantDevice::State::ScheduledForJoining:
 				inviteDevice(device);
@@ -3545,7 +3544,7 @@ void ServerConference::updateParticipantDevices(
     BCTBX_UNUSED(const list<shared_ptr<ParticipantDeviceIdentity>> &devices)) {
 #ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly() && chatRoom) {
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		bool newParticipantReginfo = false;
 		const auto &registrationSubscriptions = serverGroupChatRoom->getRegistrationSubscriptions();
@@ -3631,11 +3630,12 @@ void ServerConference::acceptSession(const shared_ptr<CallSession> &session) {
 void ServerConference::conclude() {
 #ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly() && chatRoom) {
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		lInfo() << "Conference " << *getConferenceAddress()
 		        << " All devices are known, the chatroom creation can be concluded.";
-		shared_ptr<CallSession> session = serverGroupChatRoom->getInitiatorDevice()->getSession();
+		const auto &initiator = serverGroupChatRoom->getInitiatorDevice();
+		shared_ptr<CallSession> session = initiator ? initiator->getSession() : nullptr;
 
 		if (!session) {
 			lError() << "Conference " << *getConferenceAddress()
@@ -3686,7 +3686,7 @@ void ServerConference::setParticipantDevices(BCTBX_UNUSED(const std::shared_ptr<
                                              BCTBX_UNUSED(const list<shared_ptr<ParticipantDeviceIdentity>> &devices)) {
 #ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly()) {
 		updateParticipantDevices(participantAddress, devices);
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		if (serverGroupChatRoom->isJoiningPendingAfterCreation()) {
@@ -3717,7 +3717,7 @@ void ServerConference::updateParticipantsSessions() {
 void ServerConference::requestDeletion() {
 #ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
+	if (isChatOnly() && chatRoom) {
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		/*
 		 * Our ServerChatRoom is registered as listener to the numerous CallSession it manages,

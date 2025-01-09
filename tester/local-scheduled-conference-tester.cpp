@@ -5785,8 +5785,15 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 
 		const std::initializer_list<std::reference_wrapper<ClientConference>> cores2{marie, laure, pauline, michelle,
 		                                                                             berthe};
-		for (auto chatRoom : focus.getCore().getChatRooms()) {
+
+		LinphoneChatRoom *chat_room = linphone_core_search_chat_room(focus.getLc(), NULL, NULL, confAddr, NULL);
+		BC_ASSERT_PTR_NOT_NULL(chat_room);
+		if (chat_room) {
 			for (ClientConference &core : cores2) {
+				ms_message("%s is restarting its core", linphone_core_get_identity(core.getLc()));
+				coresList = bctbx_list_remove(coresList, core.getLc());
+				core.reStart();
+				coresList = bctbx_list_append(coresList, core.getLc());
 				LinphoneAccount *account = linphone_core_get_default_account(core.getLc());
 				LinphoneAddress *deviceAddress = linphone_account_get_contact_address(account);
 				LinphoneParticipantDeviceIdentity *identity =
@@ -5796,7 +5803,7 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 				bctbx_list_t *devices = NULL;
 				devices = bctbx_list_append(devices, identity);
 				bctbx_list_free_with_data(specs, ms_free);
-				linphone_chat_room_set_participant_devices(chatRoom->toC(), core.getIdentity().toC(), devices);
+				linphone_chat_room_set_participant_devices(chat_room, core.getIdentity().toC(), devices);
 				bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
 			}
 		}

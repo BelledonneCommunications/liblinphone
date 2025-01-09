@@ -288,8 +288,8 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext &ctx) {
 		localDesc.setBundleOnly(TRUE);
 	}
 
-	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc =
-	    mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
+	auto rtp_ssrc = mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
+	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_ssrc;
 
 	std::shared_ptr<Address> address = nullptr;
 	if (getMediaSessionPrivate().getOp()) {
@@ -304,12 +304,16 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext &ctx) {
 	// Search in the DB if this is a call toward a conference URI
 	auto &mainDb = getCore().getPrivate()->mainDb;
 	if (mainDb) {
-		confInfo = mainDb->getConferenceInfoFromURI(getMediaSession().getRemoteAddress());
+		auto &session = getMediaSession();
+		auto conferenceAddress = getMediaSessionPrivate().getParams()->getPrivate()->getInConference()
+		                             ? session.getLocalAddress()
+		                             : session.getRemoteAddress();
+		confInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
 	}
 #endif // HAVE_DB_STORAGE
-	if ((address && address->hasParam(Conference::IsFocusParameter)) || confInfo)
-		localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc =
-		    mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
+	if ((address && address->hasParam(Conference::IsFocusParameter)) || confInfo) {
+		localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc = rtp_ssrc;
+	}
 
 	// The negotiated encryption must remain unchanged if:
 	// - internal update
