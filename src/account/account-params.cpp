@@ -174,7 +174,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 		setMwiServerAddress(Address::create(mwiServerUri));
 	}
 
-	string voicemailUri = lc ? linphone_config_get_string(lc->config, "proxy", "voicemail_uri", "") : "";
+	string voicemailUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "voicemail_uri", "") : "";
 	mVoicemailAddress = nullptr;
 	if (!voicemailUri.empty()) {
 		setVoicemailAddress(Address::create(voicemailUri));
