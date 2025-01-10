@@ -1265,7 +1265,7 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 					const_cast<LinphonePrivate::MediaSessionParams *>(call->getParams())->enableVideo(false);
 				}
 
-				Conference::addParticipant(call);
+				bool success = Conference::addParticipant(call);
 
 				const auto &participant = findParticipant(session->getRemoteAddress());
 				LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
@@ -1285,6 +1285,17 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 							audioDirection = LinphoneMediaDirectionInactive;
 							videoDirection = LinphoneMediaDirectionInactive;
 							break;
+					}
+
+					auto &mainDb = getCore()->getPrivate()->mainDb;
+					if (success && conferenceAddress && mainDb) {
+						auto conferenceInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
+						if (conferenceInfo) {
+							const auto &organizerAddress = conferenceInfo->getOrganizerAddress();
+							if (organizerAddress && organizerAddress->weakEqual(*participant->getAddress())) {
+								setParticipantAdminStatus(participant, true);
+							}
+						}
 					}
 				}
 
@@ -2030,9 +2041,6 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 								}
 							}
 						}
-						bool admin = remoteContactAddress->hasParam("admin") &&
-						             Utils::stob(remoteContactAddress->getParamValue("admin"));
-						setParticipantAdminStatus(participant, admin);
 					} else {
 						lError() << "Unable to update admin status and device address as no participant with address "
 						         << *remoteAddress << " has been found in conference " << *getConferenceAddress();

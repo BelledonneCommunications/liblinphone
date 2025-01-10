@@ -2086,12 +2086,6 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 			}
 		}
 #endif
-
-		if (organizer) {
-			const auto localAddress = getLocalAddress();
-			isAdmin = (organizer->weakEqual(*localAddress));
-			contactAddress.setParam("admin", Utils::toString(isAdmin));
-		}
 	}
 }
 
