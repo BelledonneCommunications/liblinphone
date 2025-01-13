@@ -243,9 +243,8 @@ void EventSubscribe::terminate() {
 		return;
 	}
 
+	auto op = mOp ? dynamic_cast<SalSubscribeOp *>(mOp) : nullptr;
 	if (mDir == LinphoneSubscriptionIncoming) {
-		auto op = dynamic_cast<SalSubscribeOp *>(mOp);
-
 		// If a dialog is already established, send a NOTIFY to close the subscription.
 		if (op && op->isDialogEstablished()) {
 			op->closeNotify();
@@ -260,7 +259,6 @@ void EventSubscribe::terminate() {
 			sal_error_info_reset(&sei);
 		}
 	} else if (mDir == LinphoneSubscriptionOutgoing) {
-		auto op = dynamic_cast<SalSubscribeOp *>(mOp);
 		if (op) {
 			op->unsubscribe();
 		}
