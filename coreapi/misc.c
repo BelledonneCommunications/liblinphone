@@ -1147,8 +1147,8 @@ void linphone_headers_unref(LinphoneHeaders *obj) {
 	sal_custom_header_unref((SalCustomHeader *)obj);
 }
 
-const char *linphone_headers_get_value(LinphoneHeaders *obj, const char *header_name) {
-	return sal_custom_header_find((SalCustomHeader *)obj, header_name);
+const char *linphone_headers_get_value(const LinphoneHeaders *obj, const char *header_name) {
+	return sal_custom_header_find((const SalCustomHeader *)obj, header_name);
 }
 
 void linphone_headers_add(LinphoneHeaders *obj, const char *name, const char *value) {

@@ -1202,7 +1202,11 @@ LINPHONE_PUBLIC void *sal_get_user_pointer(Sal *sal) {
 	return sal->getUserPointer();
 }
 
-LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referTo)) {
+LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal,
+                                                 void (*OnReferCb)(SalOp *op,
+                                                                   const SalAddress *referTo,
+                                                                   const SalCustomHeader *custom_headers,
+                                                                   const SalBodyHandler *body)) {
 	struct Sal::Callbacks cbs = {nullptr};
 	cbs.refer_received = OnReferCb;
 	sal->setCallbacks(&cbs);

@@ -88,8 +88,14 @@ public:
 	using OnRegisterFailureCb = void (*)(SalOp *op);
 	using OnVfuRequestCb = void (*)(SalOp *op);
 	using OnDtmfReceivedCb = void (*)(SalOp *op, char dtmf);
-	using OnCallReferCb = void (*)(SalOp *op, const SalAddress *referTo);
-	using OnReferCb = void (*)(SalOp *op, const SalAddress *referTo);
+	using OnCallReferCb = void (*)(SalOp *op,
+	                               const SalAddress *referTo,
+	                               const SalCustomHeader *custom_headers,
+	                               const SalBodyHandler *body);
+	using OnReferCb = void (*)(SalOp *op,
+	                           const SalAddress *referTo,
+	                           const SalCustomHeader *custom_headers,
+	                           const SalBodyHandler *body);
 	using OnMessageReceivedCb = void (*)(SalOp *op, const SalMessage *msg);
 	using OnMessageDeliveryUpdateCb = void (*)(SalOp *op, SalMessageDeliveryStatus status);
 	using OnNotifyReferCb = void (*)(SalOp *op, SalReferStatus status);

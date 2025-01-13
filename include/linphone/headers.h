@@ -49,7 +49,7 @@ LINPHONE_PUBLIC void linphone_headers_unref(LinphoneHeaders *obj);
  * @return the header's value or NULL if not found. @maybenil
  **/
 
-LINPHONE_PUBLIC const char *linphone_headers_get_value(LinphoneHeaders *headers, const char *header_name);
+LINPHONE_PUBLIC const char *linphone_headers_get_value(const LinphoneHeaders *headers, const char *header_name);
 
 /**
  * Add given header name and corresponding value.
