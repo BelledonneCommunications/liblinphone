@@ -368,8 +368,11 @@ bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore *lc) {
 	return FALSE;
 }
 
-void linphone_core_notify_refer_received(LinphoneCore *lc, const char *refer_to) {
-	NOTIFY_IF_EXIST(refer_received, lc, refer_to);
+void linphone_core_notify_refer_received(LinphoneCore *lc,
+                                         const LinphoneAddress *referToAddr,
+                                         const LinphoneHeaders *customHeaders,
+                                         const LinphoneContent *content) {
+	NOTIFY_IF_EXIST(refer_received, lc, referToAddr, customHeaders, content);
 	cleanup_dead_vtable_refs(lc);
 }
 

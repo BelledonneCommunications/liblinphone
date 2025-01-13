@@ -1858,8 +1858,10 @@ void SalCallOp::processRefer(const belle_sip_request_event_t *event,
 		if (referredByHeader) setReferredBy(referredByHeader);
 		auto response = createResponseFromRequest(request, 202);
 		belle_sip_server_transaction_send_response(serverTransaction, response);
-		mRoot->mCallbacks.call_refer_received(this,
-		                                      reinterpret_cast<SalAddress *>(BELLE_SIP_HEADER_ADDRESS(referToHeader)));
+		auto bodyHandler = BELLE_SIP_BODY_HANDLER(getBodyHandler(BELLE_SIP_MESSAGE(request)));
+		mRoot->mCallbacks.call_refer_received(
+		    this, reinterpret_cast<SalAddress *>(BELLE_SIP_HEADER_ADDRESS(referToHeader)),
+		    reinterpret_cast<SalCustomHeader *>(request), reinterpret_cast<SalBodyHandler *>(bodyHandler));
 	} else {
 		lWarning() << "Cannot do anything with the refer without destination";
 		auto response = createResponseFromRequest(request, 400);

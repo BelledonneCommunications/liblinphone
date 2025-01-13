@@ -220,7 +220,7 @@ typedef struct _LinphoneCoreVTable {
 	    message_received_unable_decrypt; /**< an encrypted message is received but we can't decrypt it*/
 	LinphoneCoreIsComposingReceivedCb is_composing_received;   /**< An is-composing notification has been received */
 	LinphoneCoreDtmfReceivedCb dtmf_received;                  /**< A dtmf has been received received */
-	LinphoneCoreReferReceivedCb refer_received;                /**< An out of call refer was received */
+	LinphoneCoreCbsReferReceivedCb refer_received;             /**< An out of call refer was received */
 	LinphoneCoreCbsCallGoClearAckSentCb call_goclear_ack_sent; /**< Notifies on sending of GoClear Ack */
 	LinphoneCoreCallEncryptionChangedCb
 	    call_encryption_changed; /**< Notifies on change in the encryption of call streams */

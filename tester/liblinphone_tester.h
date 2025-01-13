@@ -173,6 +173,7 @@ extern test_suite_t bearer_auth_test_suite;
 extern test_suite_t call_twisted_cases_suite;
 extern test_suite_t http_client_test_suite;
 extern test_suite_t turn_server_test_suite;
+extern test_suite_t refer_test_suite;
 
 #ifdef VCARD_ENABLED
 extern test_suite_t vcard_test_suite;
@@ -607,6 +608,8 @@ typedef struct _stats {
 	int number_of_LinphoneBaudotEuropeDetected;
 	int number_of_LinphoneBaudotUsDetected;
 #endif /* HAVE_BAUDOT */
+
+	int number_of_out_of_dialog_refer_received;
 } stats;
 
 typedef enum _LinphoneCoreManagerSubscribePolicy {

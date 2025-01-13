@@ -427,14 +427,14 @@ typedef LinphoneCoreCbsDtmfReceivedCb LinphoneCoreDtmfReceivedCb;
 /**
  * Callback prototype for when a refer is received
  * @param core the #LinphoneCore @notnil
- * @param refer_to the address of the refer @notnil
+ * @param refer_to_addr the address of the refer @notnil
+ * @param custom_headers the headers of the received REFER message @notnil
+ * @param content the content of the refer @maybenil
  */
-typedef void (*LinphoneCoreCbsReferReceivedCb)(LinphoneCore *core, const char *refer_to);
-
-/**
- * Old name of #LinphoneCoreCbsReferReceivedCb.
- */
-typedef LinphoneCoreCbsReferReceivedCb LinphoneCoreReferReceivedCb;
+typedef void (*LinphoneCoreCbsReferReceivedCb)(LinphoneCore *core,
+                                               const LinphoneAddress *refer_to_addr,
+                                               const LinphoneHeaders *custom_headers,
+                                               const LinphoneContent *content);
 
 /**
  * Callback prototype when using the buddy plugin

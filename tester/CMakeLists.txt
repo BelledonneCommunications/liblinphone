@@ -344,6 +344,11 @@ set(SOURCE_FILES_CXX
 	turn-server-tester.cpp
 	vcard_tester.cpp
 	vfs-encryption-tester.cpp
+	bearer-auth.cpp
+	call-twisted-cases.cpp
+	http-client-tester.cpp
+	http-server-utils.cpp
+	refer-tester.cpp
 )
 
 if(ENABLE_LIME_X3DH)

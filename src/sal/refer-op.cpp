@@ -64,7 +64,9 @@ void SalReferOp::processRequestEventCb(void *userCtx, const belle_sip_request_ev
 	}
 
 	auto referToAddr = sal_address_new(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(referToHeader)));
-	op->mRoot->mCallbacks.refer_received(op, referToAddr);
+	auto bodyHandler = BELLE_SIP_BODY_HANDLER(op->getBodyHandler(BELLE_SIP_MESSAGE(request)));
+	op->mRoot->mCallbacks.refer_received(op, referToAddr, reinterpret_cast<SalCustomHeader *>(request),
+	                                     reinterpret_cast<SalBodyHandler *>(bodyHandler));
 	// The app is expected to reply in the callback
 	sal_address_unref(referToAddr);
 	op->unref();

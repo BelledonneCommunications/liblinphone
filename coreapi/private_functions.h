@@ -881,7 +881,10 @@ void linphone_core_notify_account_removed(LinphoneCore *lc, LinphoneAccount *acc
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore *lc);
-void linphone_core_notify_refer_received(LinphoneCore *lc, const char *refer_to);
+void linphone_core_notify_refer_received(LinphoneCore *lc,
+                                         const LinphoneAddress *referToAddr,
+                                         const LinphoneHeaders *customHeaders,
+                                         const LinphoneContent *content);
 void linphone_core_notify_buddy_info_updated(LinphoneCore *lc, LinphoneFriend *lf);
 void linphone_core_notify_transfer_state_changed(LinphoneCore *lc,
                                                  LinphoneCall *transferred,

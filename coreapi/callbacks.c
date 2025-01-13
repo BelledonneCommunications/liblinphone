@@ -696,7 +696,10 @@ static void dtmf_received(SalOp *op, char dtmf) {
 	L_GET_PRIVATE(mediaSessionRef)->dtmfReceived(dtmf);
 }
 
-static void call_refer_received(SalOp *op, const SalAddress *referTo) {
+static void call_refer_received(SalOp *op,
+                                const SalAddress *referTo,
+                                const SalCustomHeader *custom_headers,
+                                const SalBodyHandler *body_handler) {
 	LinphonePrivate::CallSession *session = static_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
 	std::shared_ptr<Address> referToAddr = Address::create();
 	referToAddr->setImpl(referTo);
@@ -708,7 +711,12 @@ static void call_refer_received(SalOp *op, const SalAddress *referTo) {
 		auto sessionRef = session->getSharedFromThis();
 		L_GET_PRIVATE(sessionRef)->referred(referToAddr);
 	} else {
-		linphone_core_notify_refer_received(lc, L_STRING_TO_C(referToAddr->toString()));
+		LinphoneContent *content = linphone_content_from_sal_body_handler(body_handler);
+		linphone_core_notify_refer_received(lc, referToAddr->toC(),
+		                                    reinterpret_cast<const LinphoneHeaders *>(custom_headers), content);
+		if (content) {
+			linphone_content_unref(content);
+		}
 	}
 }
 
@@ -1189,36 +1197,53 @@ static void on_notify_response(SalOp *op) {
 	}
 }
 
-static void refer_received(SalOp *op, const SalAddress *refer_to) {
-	char *refer_uri = sal_address_as_string(refer_to);
-	std::shared_ptr<LinphonePrivate::Address> referAddr = LinphonePrivate::Address::create(refer_uri);
-	bctbx_free(refer_uri);
-	if (referAddr && referAddr->isValid()) {
+static void refer_received(SalOp *op,
+                           const SalAddress *refer_to,
+                           const SalCustomHeader *custom_headers,
+                           const SalBodyHandler *body_handler) {
+	char *referToUri = sal_address_as_string(refer_to);
+	std::shared_ptr<LinphonePrivate::Address> referToAddr = LinphonePrivate::Address::create(referToUri);
+	bctbx_free(referToUri);
+	if (referToAddr) {
 		LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
-		if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
-			static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
-			return;
+
+		if (referToAddr->isValid()) {
+			if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+				static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
+				return;
+			}
+
+			std::string method;
+			if (referToAddr->hasUriParam("method")) {
+				method = referToAddr->getUriParamValue("method");
+			}
+			std::shared_ptr<LinphonePrivate::Address> to = LinphonePrivate::Address::create(op->getTo());
+			shared_ptr<Conference> conference;
+			if (linphone_core_conference_server_enabled(lc)) {
+				// Removal of a participant at the server side
+				conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
+			} else {
+				conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(referToAddr, to));
+			}
+			SalReferOp *referOp = dynamic_cast<SalReferOp *>(op);
+			if (conference && referOp) {
+				conference->handleRefer(referOp, referToAddr, method);
+				return;
+			}
 		}
 
-		std::string method;
-		if (referAddr->hasUriParam("method")) {
-			method = referAddr->getUriParamValue("method");
+		// Out-of-dialog REFER to be notified to the user, even if the Refer-To address is not a valid SIP address,
+		// it can be an absolute URI.
+		LinphoneContent *content = linphone_content_from_sal_body_handler(body_handler);
+		linphone_core_notify_refer_received(lc, referToAddr->toC(),
+		                                    reinterpret_cast<const LinphoneHeaders *>(custom_headers), content);
+		if (content) {
+			linphone_content_unref(content);
 		}
-		std::shared_ptr<LinphonePrivate::Address> to = LinphonePrivate::Address::create(op->getTo());
-		shared_ptr<Conference> conference;
-		if (linphone_core_conference_server_enabled(lc)) {
-			// Removal of a participant at the server side
-			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
-		} else {
-			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(referAddr, to));
-		}
-		SalReferOp *referOp = dynamic_cast<SalReferOp *>(op);
-		if (conference && referOp) {
-			conference->handleRefer(referOp, referAddr, method);
-			return;
-		}
+		static_cast<SalReferOp *>(op)->reply(SalReasonNone);
+	} else {
+		static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
 	}
-	static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
 }
 
 static int process_redirect(SalOp *op) {

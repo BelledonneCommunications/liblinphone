@@ -634,6 +634,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&wrapper_cpp_test_suite, 8);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&mwi_test_suite, 0);
+	bc_tester_add_suite(&refer_test_suite);
 	bc_tester_add_suite(&bearer_auth_test_suite);
 	bc_tester_add_suite(&call_twisted_cases_suite);
 	bc_tester_add_suite(&http_client_test_suite);
