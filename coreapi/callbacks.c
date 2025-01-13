@@ -968,10 +968,12 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) 
 	auto chatRoom = msg->getChatRoom();
 	// Check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
 	if (chatRoom) {
+		auto errorInfo = op->getErrorInfo();
+		auto reason = errorInfo ? linphone_reason_from_sal(errorInfo->reason) : LinphoneReasonNone;
 		L_GET_PRIVATE(msg)->setParticipantState(
 		    chatRoom->getMe()->getAddress(),
-		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, op->getErrorInfo()),
-		    ::ms_time(NULL));
+		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, errorInfo), ::ms_time(NULL),
+		    reason);
 	}
 }
 

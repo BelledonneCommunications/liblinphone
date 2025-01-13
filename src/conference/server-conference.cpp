@@ -584,9 +584,10 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 	}
 
+	auto conferenceAddress = getConferenceAddress();
 	std::shared_ptr<Address> contactAddr = Address::create(op->getRemoteContact());
 	if (contactAddr->getUriParamValue("gr").empty()) {
-		lError() << "Conference " << *getConferenceAddress()
+		lError() << "Conference " << *conferenceAddress
 		         << ": Declining INVITE because the contact does not have a 'gr' uri parameter [" << *contactAddr
 		         << "]";
 		op->decline(SalReasonDeclined, "");
@@ -599,10 +600,11 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 	shared_ptr<CallSession> deviceSession;
 	auto joiningPendingAfterCreation =
 	    serverGroupChatRoom ? serverGroupChatRoom->isJoiningPendingAfterCreation() : false;
+	auto from = Address::create(op->getFrom());
 	if (joiningPendingAfterCreation) {
 		// Check if the participant is already there, this INVITE may come from an unknown device of an already present
 		// participant
-		participant = addParticipantToList(Address::create(op->getFrom()));
+		participant = addParticipantToList(from);
 		participant->setAdmin(true);
 		device = participant->addDevice(gruu);
 		deviceSession = device->getSession();
@@ -620,17 +622,17 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		}
 	} else {
 		// INVITE coming from an invited participant
-		participant = findInvitedParticipant(Address::create(op->getFrom()));
+		participant = findInvitedParticipant(from);
 		if (!participant) {
-			lError() << "Conference " << *getConferenceAddress()
-			         << ": Declining INVITE coming from someone that is not a participant";
+			lError() << "Conference " << *conferenceAddress << ": Declining INVITE coming from [" << *from
+			         << "] that is not in the list of invited participants";
 			op->decline(SalReasonDeclined, "");
 			return;
 		}
 		// In protocol < 1.1, one to one chatroom can be resurected by a participant, but the participant actually never
 		// leaves from server's standpoint.
 		if (getCurrentParams()->isGroup() && op->isContentInRemote(ContentType::ResourceLists)) {
-			lError() << "Conference " << *getConferenceAddress()
+			lError() << "Conference " << *conferenceAddress
 			         << "Receiving ressource list body while not in creation step.";
 			op->decline(SalReasonNotAcceptable);
 			return;
@@ -638,7 +640,7 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		device = participant->addDevice(gruu);
 		if (!getCurrentParams()->isGroup()) {
 			if (device->getState() == ParticipantDevice::State::Left) {
-				lInfo() << "Conference " << *getConferenceAddress() << " " << *gruu
+				lInfo() << "Conference [" << *conferenceAddress << "] - " << *gruu
 				        << " is reconnected to the one to one chatroom.";
 				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 			}
@@ -1435,7 +1437,6 @@ bool ServerConference::dialOutAddresses(const std::list<std::shared_ptr<const Ad
 	return success;
 }
 
-// returns true if a new session has been created, false if there is already an existing and valid one.
 shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<ParticipantDevice> &device,
                                                       BCTBX_UNUSED(const MediaSessionParams *csp)) {
 	shared_ptr<CallSession> session = device->getSession();
@@ -1785,7 +1786,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			         << ") because conference " << *conferenceAddress << " will start at " << startTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference not started yet",
+			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, "Conference not started yet",
 			                        "Conference not started yet");
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
@@ -1797,7 +1798,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			         << ") because conference " << *conferenceAddress << " is already terminated at " << endTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Conference already terminated",
+			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, "Conference already terminated",
 			                        "Conference already terminated");
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
@@ -3054,7 +3055,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					lInfo() << *remoteAddress << " is not allowed to change the participant list of conference ["
 					        << this << " - " << *getConferenceAddress() << "]";
 					LinphoneErrorInfo *ei = linphone_error_info_new();
-					linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403,
+					linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403,
 					                        "Participant not authorized to change the participant list",
 					                        "Participant not authorized to change the participant list");
 					ms->decline(ei);

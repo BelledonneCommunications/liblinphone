@@ -272,12 +272,20 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 			return LinphoneAccountCreatorPhoneNumberStatusInvalid;
 		}
 
-		// if phone is valid, we lastly want to check that length is OK in case phone_nunber was normilized
+		// if phone is valid, we lastly want to check that length is OK in case phone_number was normalized
 		if (strcmp(normalized_phone_number, phone_number) != 0 || phone_number[0] != '+') {
 			std::shared_ptr<DialPlan> plan = DialPlan::findByCcc(creator->phone_country_code);
 			int size = (int)strlen(phone_number);
 			if (plan->isGeneric()) {
 				return_status = LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
+				goto end;
+			}
+			if (phone_number[0] == '+') {
+				// + 1 because of the '+' sign
+				size -= (int)(strlen(country_code) + 1);
+			} else if (strncmp("00", phone_number, 2) == 0) {
+				// + 2 because of the starting 00<country_code>
+				size -= (int)(strlen(country_code) + 2);
 			}
 			// DO NOT NOTIFY ABOUT PHONE NUMBER BEING TOO SHORT,
 			// OUR DIAL PLAN IMPLEMENTATION ISNT PRECISE ENOUGH TO GARANTY

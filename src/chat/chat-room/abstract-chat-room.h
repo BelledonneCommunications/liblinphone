@@ -242,6 +242,7 @@ public:
 
 	virtual LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) = 0;
 	virtual void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 
 	virtual void addTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
 	virtual void removeTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;

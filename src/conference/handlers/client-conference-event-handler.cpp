@@ -151,9 +151,13 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	const auto &conferenceAddress = getConference()->getConferenceAddress();
 	const std::string conferenceAddressString = conferenceAddress ? conferenceAddress->toString() : std::string("sip:");
 	std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity());
-	if (!conferenceAddress || (*entityAddress != *conferenceAddress)) {
-		lError() << "Unable to process received NOTIFY because the entity address " << *entityAddress
-		         << " doesn't match the conference address " << conferenceAddressString;
+	auto prunedEntityAddress = entityAddress ? entityAddress->getUriWithoutGruu() : Address();
+	auto prunedConferenceAddress = conferenceAddress ? conferenceAddress->getUriWithoutGruu() : Address();
+
+	if (!conferenceAddress || (prunedEntityAddress != prunedConferenceAddress)) {
+		lError() << "Unable to process received NOTIFY because the entity address " << prunedEntityAddress
+		         << " doesn't match the conference address " << prunedConferenceAddress
+		         << " or the conference address is not valid";
 		return;
 	}
 

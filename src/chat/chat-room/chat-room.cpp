@@ -583,6 +583,9 @@ void ChatRoom::notifyUndecryptableChatMessageReceived(const shared_ptr<ChatMessa
 }
 
 // -----------------------------------------------------------------------------
+void ChatRoom::handleMessageRejected(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
+	lDebug() << __func__ << " not implemented in chatroom [" << this;
+}
 
 std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMessage *message) {
 	shared_ptr<ChatMessage> msg;

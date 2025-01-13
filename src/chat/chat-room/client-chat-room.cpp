@@ -106,6 +106,21 @@ void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteCon
 	}
 }
 
+void ClientChatRoom::handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) {
+	// Only the one-to-one chatroom case is dealt as it has a particular behaviour.
+	// In fact, when a client deletes a one-to-one chatroom, the server is meant to destroy it on the other side as
+	// well. If, for watever reason, the BYE is not answered, the chatroom is not destroyed and therefore future message
+	// may be replied with a 403 Forbidden response. A way to recover it is to initiate the destruction of the chatroom
+	// and then exhume it
+	if (!getCurrentParams()->isGroup()) {
+		lInfo() << "ChatMessage [" << chatMessage << "] could not be sent. Terminating chatroom [" << getConferenceId()
+		        << "] and retrying";
+		getConference()->leave();
+		setState(ConferenceInterface::State::Terminated);
+		sendChatMessage(chatMessage);
+	}
+}
+
 // -----------------------------------------------------------------------------
 shared_ptr<Core> ClientChatRoom::getCore() const {
 	return ChatRoom::getCore();
@@ -197,21 +212,22 @@ int ClientChatRoom::getHistorySize(HistoryFilterMask filters) const {
 }
 
 void ClientChatRoom::exhume() {
+	auto confId = getConferenceId();
 	if (getState() != Conference::State::Terminated) {
-		lError() << "Cannot exhume a non terminated chat room";
+		lError() << "Cannot exhume non terminated chat room [" << confId << "]";
 		return;
 	}
 	if (getCurrentParams()->isGroup()) {
-		lError() << "Cannot exhume a non one-to-one chat room";
+		lError() << "Cannot exhume non one-to-one chat room [" << confId << "]";
 		return;
 	}
 	if (getParticipants().size() == 0) {
-		lError() << "Cannot exhume a chat room without any participant";
+		lError() << "Cannot exhume chat room [" << confId << "] without any participant";
 		return;
 	}
 
 	const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
-	lInfo() << "Exhuming chat room [" << getConferenceId() << "] with participant [" << *remoteParticipant << "]";
+	lInfo() << "Exhuming chat room [" << confId << "] with participant [" << *remoteParticipant << "]";
 	mLocalExhumePending = true;
 
 	auto content = Content::create();
@@ -224,8 +240,7 @@ void ClientChatRoom::exhume() {
 		content->setContentEncoding("deflate");
 	}
 
-	const auto &conferenceFactoryAddress =
-	    Core::getConferenceFactoryAddress(getCore(), getConferenceId().getLocalAddress());
+	const auto &conferenceFactoryAddress = Core::getConferenceFactoryAddress(getCore(), confId.getLocalAddress());
 	auto session = static_pointer_cast<ClientConference>(getConference())->createSessionTo(conferenceFactoryAddress);
 	session->startInvite(nullptr, getConference()->getUtf8Subject(), content);
 	setState(ConferenceInterface::State::CreationPending);

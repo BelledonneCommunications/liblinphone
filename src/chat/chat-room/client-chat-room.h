@@ -98,6 +98,7 @@ public:
 	void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	virtual void handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	void onExhumedConference(const ConferenceId &oldConfId, const ConferenceId &newConfId);
 	void onLocallyExhumedConference(const std::shared_ptr<Address> &remoteContact);
