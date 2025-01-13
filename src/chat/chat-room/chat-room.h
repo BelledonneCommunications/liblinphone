@@ -207,6 +207,9 @@ public:
 	void onIsRemoteComposingStateChanged(const std::shared_ptr<Address> &remoteAddress, bool isComposing) override;
 
 	void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) override;
+#ifdef HAVE_BAUDOT
+	void baudotCharacterReceived(char character, const std::shared_ptr<Call> &call) override;
+#endif /* HAVE_BAUDOT */
 	void setCallId(const std::string &value) override;
 
 	const std::shared_ptr<ConferenceInfo> getConferenceInfo() const override;
@@ -235,6 +238,9 @@ protected:
 	std::shared_ptr<Conference> conference;
 
 private:
+	void
+	realtimeTextOrBaudotCharacterReceived(uint32_t character, const std::shared_ptr<Call> &call, bool isRealTimeText);
+
 	time_t creationTime = std::time(nullptr);
 	time_t lastUpdateTime = std::time(nullptr);
 

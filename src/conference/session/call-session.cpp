@@ -2284,6 +2284,34 @@ void CallSession::notifyRealTimeTextCharacterReceived(RealtimeTextReceivedCharac
 	}
 }
 
+#ifdef HAVE_BAUDOT
+void CallSession::notifyBaudotCharacterReceived(char receivedCharacter) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onBaudotCharacterReceived(getSharedFromThis(), receivedCharacter);
+		}
+	}
+}
+
+void CallSession::notifyBaudotDetected(MSBaudotStandard standard) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto listenerRef = listener.lock();
+		if (listenerRef) {
+			auto logContext = listenerRef->getLogContextualizer();
+			listenerRef->onBaudotDetected(getSharedFromThis(), standard);
+		}
+	}
+}
+#endif /* HAVE_BAUDOT */
+
 void CallSession::notifyLossOfMediaDetected() {
 	L_D();
 	// Copy list of listeners as the callback might delete one

@@ -199,6 +199,11 @@ public:
 	virtual std::shared_ptr<AudioDevice> getInputDevice() const override;
 	virtual std::shared_ptr<AudioDevice> getOutputDevice() const override;
 	virtual std::shared_ptr<Player> getPlayer() const override;
+	void enableBaudotDetection(bool enabled) override;
+	void setBaudotMode(LinphoneBaudotMode mode) override;
+	void setBaudotSendingStandard(LinphoneBaudotStandard standard) override;
+	void setBaudotPauseTimeout(uint8_t seconds) override;
+	void sendBaudotCharacter(char character) override;
 	// Used for the tone manager.
 	AudioStream *getAudioStream();
 

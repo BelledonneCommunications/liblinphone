@@ -366,6 +366,20 @@ LINPHONE_PUBLIC void linphone_call_cbs_set_remote_recording(LinphoneCallCbs *cbs
 LINPHONE_PUBLIC LinphoneCallCbsRemoteRecordingCb linphone_call_cbs_get_remote_recording(LinphoneCallCbs *cbs);
 
 /**
+ * Set the Baudot detected callback.
+ * @param[in] cbs The #LinphoneCallCbs object. @notnil
+ * @param[in] cb the Baudot detected callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_baudot_detected(LinphoneCallCbs *cbs, LinphoneCallCbsBaudotDetectedCb cb);
+
+/**
+ * Get the Baudot detected callback.
+ * @param[in] cbs The #LinphoneCallCbs object. @notnil
+ * @return The Baudot detected callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsBaudotDetectedCb linphone_call_cbs_get_baudot_detected(LinphoneCallCbs *cbs);
+
+/**
  * @}
  */
 

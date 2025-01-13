@@ -777,6 +777,23 @@ void Call::onRealTimeTextCharacterReceived(BCTBX_UNUSED(const shared_ptr<CallSes
 	}
 }
 
+#ifdef HAVE_BAUDOT
+void Call::onBaudotCharacterReceived(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+                                     char receivedCharacter) {
+	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
+	if (chatRoom) {
+		chatRoom->baudotCharacterReceived(receivedCharacter, getSharedFromThis());
+	} else {
+		lError() << "Call::onBaudotCharacterReceived: no chatroom.";
+	}
+}
+
+void Call::onBaudotDetected(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), MSBaudotStandard standard) {
+	linphone_call_notify_baudot_detected(
+	    this->toC(), (standard == MSBaudotStandardEurope) ? LinphoneBaudotStandardEurope : LinphoneBaudotStandardUs);
+}
+#endif /* HAVE_BAUDOT */
+
 void Call::onTmmbrReceived(BCTBX_UNUSED(const shared_ptr<CallSession> &session), int streamIndex, int tmmbr) {
 	linphone_call_notify_tmmbr_received(this->toC(), streamIndex, tmmbr);
 }
@@ -1431,6 +1448,26 @@ void Call::setVideoSource(std::shared_ptr<const VideoSourceDescriptor> descripto
 std::shared_ptr<const VideoSourceDescriptor> Call::getVideoSource() const {
 	return getMediaSession()->getVideoSource();
 }
+
+// -----------------------------------------------------------------------------
+
+void Call::enableBaudotDetection(bool enabled) {
+	getMediaSession()->enableBaudotDetection(enabled);
+}
+
+void Call::setBaudotMode(LinphoneBaudotMode mode) {
+	getMediaSession()->setBaudotMode(mode);
+}
+
+void Call::setBaudotSendingStandard(LinphoneBaudotStandard standard) {
+	getMediaSession()->setBaudotSendingStandard(standard);
+}
+
+void Call::setBaudotPauseTimeout(uint8_t seconds) {
+	getMediaSession()->setBaudotPauseTimeout(seconds);
+}
+
+// -----------------------------------------------------------------------------
 
 std::shared_ptr<Event> Call::createNotify(const std::string &eventName) {
 	SalOp *callOp = getMediaSession()->getPrivate()->getOp();

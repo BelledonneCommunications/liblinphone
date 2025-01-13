@@ -6037,4 +6037,34 @@ bool MediaSession::requestThumbnail(const std::shared_ptr<ParticipantDevice> &de
 	return (!device->screenSharingEnabled() || !isGridLayout);
 }
 
+void MediaSession::enableBaudotDetection(bool enabled) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->enableBaudotDetection(enabled);
+}
+
+void MediaSession::setBaudotMode(LinphoneBaudotMode mode) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setBaudotMode(mode);
+}
+
+void MediaSession::setBaudotSendingStandard(LinphoneBaudotStandard standard) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setBaudotSendingStandard(standard);
+}
+
+void MediaSession::setBaudotPauseTimeout(uint8_t seconds) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setBaudotPauseTimeout(seconds);
+}
+
+void MediaSession::sendBaudotCharacter(char character) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->sendBaudotCharacter(character);
+}
+
 LINPHONE_END_NAMESPACE

@@ -196,6 +196,10 @@ public:
 	void notifyFirstVideoFrameDecoded();
 	void notifySnapshotTaken(const char *filepath);
 	void notifyRealTimeTextCharacterReceived(RealtimeTextReceivedCharacter *data);
+#ifdef HAVE_BAUDOT
+	void notifyBaudotCharacterReceived(char receivedCharacter);
+	void notifyBaudotDetected(MSBaudotStandard standard);
+#endif /* HAVE_BAUDOT */
 	void notifySendMasterKeyChanged(const std::string key);
 	void notifyReceiveMasterKeyChanged(const std::string key);
 	void notifyUpdateMediaInfoForReporting(const int type);

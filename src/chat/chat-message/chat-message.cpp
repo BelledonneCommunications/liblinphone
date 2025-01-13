@@ -2116,20 +2116,24 @@ int ChatMessage::putCharacter(uint32_t character) {
 
 	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
-	if (!chatRoomParams->getChatParams()->isRealTimeText()) {
-		lError() << "Chat room [" << chatRoom << "] that created the message doesn't have RealTimeText capability";
+	const auto isRealTimeText = chatRoomParams->getChatParams()->isRealTimeText();
+	shared_ptr<Core> core = getCore();
+	bool baudotEnabled = linphone_core_baudot_enabled(core->getCCore());
+	if (!isRealTimeText && !baudotEnabled) {
+		lError() << "Chat room [" << chatRoom
+		         << "] that created the message doesn't have RealTimeText capability and Baudot is not enabled";
 		return -1;
 	}
 
 	shared_ptr<Call> call = chatRoom->getCall();
-	if (!call || !call->getMediaStream(LinphoneStreamTypeText)) {
+	if (!call || (isRealTimeText && !call->getMediaStream(LinphoneStreamTypeText))) {
 		lError() << "Failed to find Text stream from call [" << call << "]";
 		return -1;
 	}
 
 	if (character == newLine || character == crlf || character == lf) {
-		shared_ptr<Core> core = getCore();
-		if (linphone_config_get_int(core->getCCore()->config, "misc", "store_rtt_messages", 1) == 1) {
+		const char *parameterName = isRealTimeText ? "store_rtt_messages" : "store_baudot_messages";
+		if (linphone_config_get_int(core->getCCore()->config, "misc", parameterName, 1) == 1) {
 			lInfo() << "New line sent, forge a message with content " << d->rttMessage;
 			d->state = State::Displayed;
 			d->setText(d->rttMessage);
@@ -2139,11 +2143,16 @@ int ChatMessage::putCharacter(uint32_t character) {
 	} else {
 		string value = LinphonePrivate::Utils::unicodeToUtf8(character);
 		d->rttMessage += value;
-		lDebug() << "Sent RTT character: " << value << "(" << (unsigned long)character << "), pending text is "
-		         << d->rttMessage;
+		string textType = isRealTimeText ? "RTT" : "Baudot";
+		lDebug() << "Sent " << textType << " character: " << value << "(" << (unsigned long)character
+		         << "), pending text is " << d->rttMessage;
 	}
 
-	text_stream_putchar32(reinterpret_cast<TextStream *>(call->getMediaStream(LinphoneStreamTypeText)), character);
+	if (isRealTimeText) {
+		text_stream_putchar32(reinterpret_cast<TextStream *>(call->getMediaStream(LinphoneStreamTypeText)), character);
+	} else if (baudotEnabled) {
+		call->getMediaSession()->sendBaudotCharacter((char)character);
+	}
 
 	return 0;
 }

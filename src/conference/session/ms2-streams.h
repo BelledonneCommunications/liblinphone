@@ -220,6 +220,11 @@ public:
 	virtual std::shared_ptr<AudioDevice> getInputDevice() const override;
 	virtual std::shared_ptr<AudioDevice> getOutputDevice() const override;
 	virtual std::string getLabel() const override;
+	virtual void enableBaudotDetection(bool enabled) override;
+	virtual void setBaudotMode(LinphoneBaudotMode mode) override;
+	virtual void setBaudotSendingStandard(LinphoneBaudotStandard standard) override;
+	virtual void setBaudotPauseTimeout(uint8_t seconds) override;
+	virtual void sendBaudotCharacter(char character) override;
 
 	virtual MediaStream *getMediaStream() const override;
 	virtual ~MS2AudioStream();
@@ -260,6 +265,11 @@ private:
 	void configureConference();
 	void setSoundCardType(MSSndCard *soundcard);
 	MS2AudioMixer *getAudioMixer();
+#ifdef HAVE_BAUDOT
+	void baudotDetectorEventNotified(MSFilter *f, unsigned int id, void *arg);
+	static void sBaudotDetectorEventNotified(void *userData, MSFilter *f, unsigned int id, void *arg);
+#endif /* HAVE_BAUDOT */
+	void applyBaudotModeAndStandard() const;
 
 	void audioStreamIsSpeakingCb(uint32_t speakerSsrc, bool_t isSpeaking);
 	static void sAudioStreamIsSpeakingCb(void *userData, uint32_t speakerSsrc, bool_t isSpeaking);
@@ -281,6 +291,8 @@ private:
 	bool mRestartStreamRequired = false;                // Set to true if the stream need to stop on render().
 	static constexpr const int ecStateMaxLen = 1048576; /* 1Mo */
 	static constexpr const char *ecStateStore = ".linphone.ecstate";
+	LinphoneBaudotMode mBaudotMode = LinphoneBaudotModeVoice;
+	LinphoneBaudotStandard mBaudotSendingStandard = LinphoneBaudotStandardUs;
 
 	static void
 	audioRouteChangeCb(void *userData, bool_t needReloadSoundDevices, char *newInputDevice, char *newOutputDevice);

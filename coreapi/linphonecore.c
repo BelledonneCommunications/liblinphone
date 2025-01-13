@@ -10035,3 +10035,11 @@ void linphone_core_set_ekt_plugin_loaded(LinphoneCore *lc, bool_t ekt_plugin_loa
 void linphone_core_enable_goog_remb(LinphoneCore *core, bool_t enable) {
 	core->goog_remb_enabled = enable;
 }
+
+void linphone_core_enable_baudot(LinphoneCore *lc, bool_t enabled) {
+	linphone_config_set_int(lc->config, "misc", "enable_baudot", enabled);
+}
+
+bool_t linphone_core_baudot_enabled(const LinphoneCore *lc) {
+	return !!linphone_config_get_int(lc->config, "misc", "enable_baudot", FALSE);
+}

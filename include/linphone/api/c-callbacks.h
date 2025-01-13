@@ -286,6 +286,14 @@ typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, Linphone
 typedef void (*LinphoneCallCbsRemoteRecordingCb)(LinphoneCall *call, bool_t recording);
 
 /**
+ * Callback to notify that Baudot tones have been detected in the audio received from the remote.
+ *
+ * @param call LinphoneCall where Baudot tones have been detected @notnil
+ * @param standard The Baudot standard of the detected tones.
+ */
+typedef void (*LinphoneCallCbsBaudotDetectedCb)(LinphoneCall *call, LinphoneBaudotStandard standard);
+
+/**
  * @}
  **/
 

@@ -4,7 +4,7 @@
 #
 ############################################################################
 #
-# This file is part of Liblinphone 
+# This file is part of Liblinphone
 # (see https://gitlab.linphone.org/BC/public/liblinphone).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -75,6 +75,7 @@ option(ENABLE_XML2 "Build with libxml2 support - for presence feature mainly" YE
 option(ENABLE_EXAMPLE_PLUGIN "Enable build of the example plugin" NO)
 option(ENABLE_EKT_SERVER_PLUGIN "Enable build of the EKT encryption plugin" NO)
 option(ENABLE_DEPRECATED_TESTS "Enable execution of deprecated tests" NO)
+option(ENABLE_BAUDOT "Enable Baudot text transmission." YES)
 
 option(ENABLE_SRTP "Build with the SRTP transport support." YES)
 cmake_dependent_option(ENABLE_ZRTP "Build with ZRTP support." YES "ENABLE_SRTP" NO)
@@ -374,6 +375,10 @@ else()
 	set(LINPHONE_PACKAGE_PLUGINS_DIR "${CMAKE_INSTALL_PREFIX}/${LIBLINPHONE_PLUGINS_DIR}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 endif()
 
+if(ENABLE_BAUDOT)
+    set(HAVE_BAUDOT 1)
+endif()
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/config.h" PROPERTIES GENERATED ON)
 add_definitions(-DHAVE_CONFIG_H)
@@ -475,4 +480,3 @@ endif()
 if(ENABLE_EXAMPLE_PLUGIN)
 	add_subdirectory(plugins/example)
 endif()
-

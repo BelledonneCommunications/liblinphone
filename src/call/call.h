@@ -70,6 +70,7 @@ public:
 	LinphoneCallCbsVideoDisplayErrorOccurredCb videoDisplayErrorOccurredCb;
 	LinphoneCallCbsAudioDeviceChangedCb audioDeviceChangedCb;
 	LinphoneCallCbsRemoteRecordingCb remoteRecordingCb;
+	LinphoneCallCbsBaudotDetectedCb baudotDetectedCb;
 };
 
 class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>,
@@ -258,6 +259,13 @@ public:
 	std::shared_ptr<const VideoSourceDescriptor> getVideoSource() const;
 
 	// -----------------------------------------------------------------------------
+
+	void enableBaudotDetection(bool enabled);
+	void setBaudotMode(LinphoneBaudotMode mode);
+	void setBaudotSendingStandard(LinphoneBaudotStandard standard);
+	void setBaudotPauseTimeout(uint8_t seconds);
+
+	// -----------------------------------------------------------------------------
 	/* CallSessionListener */
 	void onAckBeingSent(const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
 	void onAckReceived(const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
@@ -304,6 +312,10 @@ public:
 	bool isPlayingRingbackTone(const std::shared_ptr<CallSession> &session) override;
 	void onRealTimeTextCharacterReceived(const std::shared_ptr<CallSession> &session,
 	                                     RealtimeTextReceivedCharacter *character) override;
+#ifdef HAVE_BAUDOT
+	void onBaudotCharacterReceived(const std::shared_ptr<CallSession> &session, char receivedCharacter) override;
+	void onBaudotDetected(const std::shared_ptr<CallSession> &session, MSBaudotStandard standard) override;
+#endif /* HAVE_BAUDOT */
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
 	void onStartRingtone(const std::shared_ptr<CallSession> &session) override;

@@ -1425,4 +1425,24 @@ typedef struct _LinphoneMessageWaitingIndication LinphoneMessageWaitingIndicatio
  */
 typedef struct _LinphoneMessageWaitingIndicationSummary LinphoneMessageWaitingIndicationSummary;
 
+/**
+ * #LinphoneBaudotMode enum represents the Baudot mode to use for the call.
+ * @ingroup call_control
+ */
+typedef enum _LinphoneBaudotMode {
+	LinphoneBaudotModeVoice,            /**< Send and receive audio. */
+	LinphoneBaudotModeTty,              /**< Send and receive Baudot tones. */
+	LinphoneBaudotModeHearingCarryOver, /**< Send Baudot tones, but receive audio. */
+	LinphoneBaudotModeVoiceCarryOver,   /**< Send audio, but receive Baudot tones. */
+} LinphoneBaudotMode;
+
+/**
+ * #LinphoneBaudotStandard enum represents the Baudot standard to use to send Baudot tones in the call.
+ * @ingroup call_control
+ */
+typedef enum _LinphoneBaudotStandard {
+	LinphoneBaudotStandardUs,     /**< Send 45.45 baud US Baudot tones. */
+	LinphoneBaudotStandardEurope, /**< Send 50 baud European Baudot tones. */
+} LinphoneBaudotStandard;
+
 #endif /* LINPHONE_TYPES_H_ */

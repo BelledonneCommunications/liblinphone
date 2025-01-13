@@ -188,6 +188,10 @@ void linphone_call_notify_remote_recording(LinphoneCall *call, bool_t recording)
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_remote_recording, recording);
 }
 
+void linphone_call_notify_baudot_detected(LinphoneCall *call, LinphoneBaudotStandard standard) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_baudot_detected, standard);
+}
+
 // =============================================================================
 // Public functions.
 // =============================================================================
@@ -753,6 +757,26 @@ void linphone_call_set_params(LinphoneCall *call, const LinphoneCallParams *para
 const LinphoneCallParams *linphone_call_get_params(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	return L_GET_C_BACK_PTR(Call::toCpp(call)->getParams());
+}
+
+void linphone_call_enable_baudot_detection(LinphoneCall *call, bool_t enabled) {
+	CallLogContextualizer logContextualizer(call);
+	Call::toCpp(call)->enableBaudotDetection(!!enabled);
+}
+
+void linphone_call_set_baudot_mode(LinphoneCall *call, LinphoneBaudotMode mode) {
+	CallLogContextualizer logContextualizer(call);
+	Call::toCpp(call)->setBaudotMode(mode);
+}
+
+void linphone_call_set_baudot_sending_standard(LinphoneCall *call, LinphoneBaudotStandard standard) {
+	CallLogContextualizer logContextualizer(call);
+	Call::toCpp(call)->setBaudotSendingStandard(standard);
+}
+
+void linphone_call_set_baudot_pause_timeout(LinphoneCall *call, uint8_t seconds) {
+	CallLogContextualizer logContextualizer(call);
+	Call::toCpp(call)->setBaudotPauseTimeout(seconds);
 }
 
 // =============================================================================

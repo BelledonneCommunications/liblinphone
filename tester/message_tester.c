@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <ctype.h>
+
 #include "bctoolbox/crypto.h"
 #include <bctoolbox/defs.h>
 #include <bctoolbox/vfs.h>
@@ -4303,6 +4305,142 @@ static void received_messages_with_aggregation_enabled(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+#ifdef HAVE_BAUDOT
+
+#define BAUDOT_DETECTED_CB_BODY(mode)                                                                                  \
+	LinphoneCore *core = linphone_call_get_core(call);                                                                 \
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);                           \
+	manager->stat.number_of_LinphoneBaudotDetected++;                                                                  \
+	linphone_call_set_baudot_mode(call, mode);                                                                         \
+	switch (standard) {                                                                                                \
+		case LinphoneBaudotStandardUs:                                                                                 \
+			manager->stat.number_of_LinphoneBaudotUsDetected++;                                                        \
+			break;                                                                                                     \
+		case LinphoneBaudotStandardEurope:                                                                             \
+			manager->stat.number_of_LinphoneBaudotEuropeDetected++;                                                    \
+			break;                                                                                                     \
+	}
+
+static void baudot_detected_cb_tty(LinphoneCall *call, LinphoneBaudotStandard standard) {
+	BAUDOT_DETECTED_CB_BODY(LinphoneBaudotModeTty)
+}
+
+static void baudot_detected_cb_voice_carryover(LinphoneCall *call, LinphoneBaudotStandard standard) {
+	BAUDOT_DETECTED_CB_BODY(LinphoneBaudotModeVoiceCarryOver)
+}
+
+static void baudot_text_message(LinphoneBaudotMode initial_sender_baudot_mode,
+                                LinphoneBaudotStandard initial_sender_baudot_standard,
+                                LinphoneBaudotMode initial_receiver_baudot_mode,
+                                LinphoneBaudotStandard initial_receiver_baudot_standard,
+                                LinphoneBaudotMode mode_to_switch_to_on_detection) {
+	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCallParams *marie_params = NULL;
+	LinphoneCall *pauline_call, *marie_call;
+	char *marie_db = bc_tester_file("marie.db");
+	char *pauline_db = bc_tester_file("pauline.db");
+
+	linphone_core_enable_baudot(marie->lc, TRUE);
+	linphone_core_enable_baudot(pauline->lc, TRUE);
+
+	marie_params = linphone_core_create_call_params(marie->lc, NULL);
+
+	BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, marie_params));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	marie_call = linphone_core_get_current_call(marie->lc);
+	if (pauline_call && marie_call) {
+		LinphoneCallCbs *marie_call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+		linphone_call_cbs_set_baudot_detected(marie_call_cbs,
+		                                      (mode_to_switch_to_on_detection == LinphoneBaudotModeVoiceCarryOver)
+		                                          ? baudot_detected_cb_voice_carryover
+		                                          : baudot_detected_cb_tty);
+		linphone_call_add_callbacks(marie_call, marie_call_cbs);
+		linphone_call_cbs_unref(marie_call_cbs);
+		linphone_call_set_baudot_mode(pauline_call, initial_sender_baudot_mode);
+		linphone_call_set_baudot_mode(marie_call, initial_receiver_baudot_mode);
+		linphone_call_set_baudot_sending_standard(pauline_call, initial_sender_baudot_standard);
+		linphone_call_set_baudot_sending_standard(marie_call, initial_receiver_baudot_standard);
+
+		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
+			const char *message = "Be l3l";
+			size_t i;
+			LinphoneChatMessage *chat_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room, NULL);
+
+			for (i = 0; i < strlen(message); i++) {
+				BC_ASSERT_FALSE(linphone_chat_message_put_char(chat_message, message[i]));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
+				                              &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i + 1,
+				                              3000));
+				BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)toupper(message[i]), char, "%c");
+			}
+			linphone_chat_message_send(chat_message);
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+			linphone_chat_message_unref(chat_message);
+		}
+
+		end_call(marie, pauline);
+	}
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneBaudotDetected, 1, int, "%d");
+	switch (initial_sender_baudot_standard) {
+		case LinphoneBaudotStandardUs:
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneBaudotUsDetected, 1, int, "%d");
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneBaudotEuropeDetected, 0, int, "%d");
+			break;
+		case LinphoneBaudotStandardEurope:
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneBaudotUsDetected, 0, int, "%d");
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneBaudotEuropeDetected, 1, int, "%d");
+			break;
+	}
+
+	linphone_call_params_unref(marie_params);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	remove(marie_db);
+	bctbx_free(marie_db);
+	remove(pauline_db);
+	bctbx_free(pauline_db);
+}
+
+static void baudot_text_message_us(void) {
+	baudot_text_message(LinphoneBaudotModeTty, LinphoneBaudotStandardUs, LinphoneBaudotModeTty,
+	                    LinphoneBaudotStandardUs, LinphoneBaudotModeTty);
+}
+
+static void baudot_text_message_europe(void) {
+	baudot_text_message(LinphoneBaudotModeTty, LinphoneBaudotStandardEurope, LinphoneBaudotModeTty,
+	                    LinphoneBaudotStandardEurope, LinphoneBaudotModeTty);
+}
+
+static void baudot_text_message_voice_switch_tty_us(void) {
+	baudot_text_message(LinphoneBaudotModeTty, LinphoneBaudotStandardUs, LinphoneBaudotModeVoice,
+	                    LinphoneBaudotStandardUs, LinphoneBaudotModeTty);
+}
+
+static void baudot_text_message_voice_switch_tty_europe(void) {
+	baudot_text_message(LinphoneBaudotModeTty, LinphoneBaudotStandardEurope, LinphoneBaudotModeVoice,
+	                    LinphoneBaudotStandardEurope, LinphoneBaudotModeTty);
+}
+
+static void baudot_text_message_voice_switch_voice_carryover_us(void) {
+	baudot_text_message(LinphoneBaudotModeTty, LinphoneBaudotStandardUs, LinphoneBaudotModeVoice,
+	                    LinphoneBaudotStandardUs, LinphoneBaudotModeVoiceCarryOver);
+}
+
+static void baudot_text_message_voice_switch_voice_carryover_europe(void) {
+	baudot_text_message(LinphoneBaudotModeTty, LinphoneBaudotStandardEurope, LinphoneBaudotModeVoice,
+	                    LinphoneBaudotStandardEurope, LinphoneBaudotModeVoiceCarryOver);
+}
+
+#endif /* HAVE_BAUDOT */
+
 test_t message_tests[] = {
     TEST_NO_TAG("File transfer content", file_transfer_content),
     TEST_NO_TAG("Message with 2 attachments", message_with_two_attachments),
@@ -4438,6 +4576,22 @@ test_t rtt_message_tests[] = {
     TEST_ONE_TAG("Real Time Text copy paste", real_time_text_copy_paste, "RTT"),
     TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT")};
 
+#ifdef HAVE_BAUDOT
+test_t baudot_message_tests[] = {
+    TEST_ONE_TAG("Baudot text message US", baudot_text_message_us, "Baudot"),
+    TEST_ONE_TAG("Baudot text message Europe", baudot_text_message_europe, "Baudot"),
+    TEST_ONE_TAG("Baudot text message voice switch to US TTY", baudot_text_message_voice_switch_tty_us, "Baudot"),
+    TEST_ONE_TAG(
+        "Baudot text message voice switch to Europe TTY", baudot_text_message_voice_switch_tty_europe, "Baudot"),
+    TEST_ONE_TAG("Baudot text message voice switch to US Voice CarryOver",
+                 baudot_text_message_voice_switch_voice_carryover_us,
+                 "Baudot"),
+    TEST_ONE_TAG("Baudot text message voice switch to Europe Voice CarryOver",
+                 baudot_text_message_voice_switch_voice_carryover_europe,
+                 "Baudot"),
+};
+#endif /* HAVE_BAUDOT */
+
 static int message_tester_before_suite(void) {
 	// liblinphone_tester_keep_uuid = TRUE;
 
@@ -4487,3 +4641,14 @@ test_suite_t rtt_message_test_suite = {"RTT Message",
                                        sizeof(rtt_message_tests) / sizeof(rtt_message_tests[0]),
                                        rtt_message_tests,
                                        0};
+
+#ifdef HAVE_BAUDOT
+test_suite_t baudot_message_test_suite = {"Baudot Message",
+                                          message_tester_before_suite,
+                                          message_tester_after_suite,
+                                          liblinphone_tester_before_each,
+                                          liblinphone_tester_after_each,
+                                          sizeof(baudot_message_tests) / sizeof(baudot_message_tests[0]),
+                                          baudot_message_tests,
+                                          0};
+#endif /* HAVE_BAUDOT */

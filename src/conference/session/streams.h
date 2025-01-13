@@ -251,6 +251,11 @@ public:
 	virtual std::shared_ptr<Player> getPlayer() const {
 		return nullptr;
 	}
+	virtual void enableBaudotDetection(bool enabled) = 0;
+	virtual void setBaudotMode(LinphoneBaudotMode mode) = 0;
+	virtual void setBaudotSendingStandard(LinphoneBaudotStandard standard) = 0;
+	virtual void setBaudotPauseTimeout(uint8_t seconds) = 0;
+	virtual void sendBaudotCharacter(char character) = 0;
 	virtual ~AudioControlInterface() = default;
 };
 

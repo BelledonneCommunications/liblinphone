@@ -68,3 +68,4 @@
 #cmakedefine HAVE_DLOPEN 1
 #cmakedefine ENABLE_SANITIZER
 #cmakedefine HAVE_MANUAL_SOCI_BACKEND_REGISTRATION
+#cmakedefine HAVE_BAUDOT

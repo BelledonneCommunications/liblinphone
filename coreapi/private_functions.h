@@ -70,6 +70,7 @@ void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *cam
 void linphone_call_notify_video_display_error_occurred(LinphoneCall *call, int error_code);
 void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
 void linphone_call_notify_remote_recording(LinphoneCall *call, bool_t recording);
+void linphone_call_notify_baudot_detected(LinphoneCall *call, LinphoneBaudotStandard standard);
 
 LinphoneCall *linphone_call_new_outgoing(struct _LinphoneCore *lc,
                                          const LinphoneAddress *from,

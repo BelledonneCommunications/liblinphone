@@ -182,7 +182,7 @@ public:
 	                                                          const std::shared_ptr<const EventLog> &from,
 	                                                          LinphoneSearchDirection direction) const = 0;
 
-	virtual void sendPendingMessages(){};
+	virtual void sendPendingMessages() {};
 
 	virtual void markAsRead() = 0;
 	virtual void enableEphemeral(bool ephem, bool updateDb) = 0;
@@ -249,6 +249,9 @@ public:
 	virtual void setIsEmpty(const bool empty) = 0;
 
 	virtual void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) = 0;
+#ifdef HAVE_BAUDOT
+	virtual void baudotCharacterReceived(char character, const std::shared_ptr<Call> &call) = 0;
+#endif /* HAVE_BAUDOT */
 	virtual void setCallId(const std::string &value) = 0;
 
 	virtual void notifyAggregatedChatMessages() = 0;

@@ -204,6 +204,12 @@ public:
 
 	bool requestThumbnail(const std::shared_ptr<ParticipantDevice> &device) const;
 
+	void enableBaudotDetection(bool enabled);
+	void setBaudotMode(LinphoneBaudotMode mode);
+	void setBaudotSendingStandard(LinphoneBaudotStandard standard);
+	void setBaudotPauseTimeout(uint8_t seconds);
+	void sendBaudotCharacter(char character);
+
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

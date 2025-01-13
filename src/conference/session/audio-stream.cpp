@@ -622,6 +622,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if (vs) audio_stream_link_video(mStream, vs);
 		if (err == 0) postConfigureAudioStream((mMuted || mMicMuted) && !getMediaSession().isPlayingRingbackTone());
 		mInternalStats.number_of_starts++;
+
+#ifdef HAVE_BAUDOT
+		if (mStream->baudot_detector) {
+			ms_filter_add_notify_callback(mStream->baudot_detector, sBaudotDetectorEventNotified, this, false);
+		}
+#endif /* HAVE_BAUDOT */
 	}
 
 	if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
@@ -1114,6 +1120,86 @@ MS2AudioMixer *MS2AudioStream::getAudioMixer() {
 	}
 	return nullptr;
 }
+
+static MSBaudotMode linphone_call_baudot_standard_to_ms_baudot_mode(LinphoneBaudotStandard standard) {
+	MSBaudotMode mode = MSBaudotModeTty45;
+	switch (standard) {
+		case LinphoneBaudotStandardUs:
+			mode = MSBaudotModeTty45;
+			break;
+		case LinphoneBaudotStandardEurope:
+			mode = MSBaudotModeTty50;
+			break;
+	}
+	return mode;
+}
+
+void MS2AudioStream::enableBaudotDetection(bool enabled) {
+	if (mStream) audio_stream_enable_baudot_detection(mStream, enabled ? TRUE : FALSE);
+}
+
+void MS2AudioStream::setBaudotMode(LinphoneBaudotMode mode) {
+	mBaudotMode = mode;
+	applyBaudotModeAndStandard();
+}
+
+void MS2AudioStream::setBaudotSendingStandard(LinphoneBaudotStandard standard) {
+	mBaudotSendingStandard = standard;
+	applyBaudotModeAndStandard();
+}
+
+void MS2AudioStream::setBaudotPauseTimeout(uint8_t seconds) {
+	if (mStream) audio_stream_set_baudot_pause_timeout(mStream, seconds);
+}
+
+void MS2AudioStream::applyBaudotModeAndStandard() const {
+	if (mStream) {
+		switch (mBaudotMode) {
+			case LinphoneBaudotModeVoice:
+				audio_stream_enable_baudot_decoding(mStream, FALSE);
+				audio_stream_set_baudot_sending_mode(mStream, MSBaudotModeVoice);
+				break;
+			case LinphoneBaudotModeTty:
+				audio_stream_enable_baudot_decoding(mStream, TRUE);
+				audio_stream_set_baudot_sending_mode(
+				    mStream, linphone_call_baudot_standard_to_ms_baudot_mode(mBaudotSendingStandard));
+				break;
+			case LinphoneBaudotModeHearingCarryOver:
+				audio_stream_enable_baudot_decoding(mStream, FALSE);
+				audio_stream_set_baudot_sending_mode(
+				    mStream, linphone_call_baudot_standard_to_ms_baudot_mode(mBaudotSendingStandard));
+				break;
+			case LinphoneBaudotModeVoiceCarryOver:
+				audio_stream_enable_baudot_decoding(mStream, TRUE);
+				audio_stream_set_baudot_sending_mode(mStream, MSBaudotModeVoice);
+				break;
+		}
+	}
+}
+
+void MS2AudioStream::sendBaudotCharacter(char character) {
+	audio_stream_send_baudot_character(mStream, character);
+}
+
+#ifdef HAVE_BAUDOT
+void MS2AudioStream::baudotDetectorEventNotified(BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
+	if (id == MS_BAUDOT_DETECTOR_STATE_EVENT) {
+		MSBaudotDetectorState state = *reinterpret_cast<MSBaudotDetectorState *>(arg);
+		ms_message("Baudot detector state change notified: %s",
+		           state == MSBaudotDetectorStateTty45 ? "TTY45" : "TTY50");
+		getMediaSession().notifyBaudotDetected((state == MSBaudotDetectorStateTty50) ? MSBaudotStandardEurope
+		                                                                             : MSBaudotStandardUs);
+	} else if (id == MS_BAUDOT_DETECTOR_CHARACTER_EVENT) {
+		char receivedCharacter = *reinterpret_cast<char *>(arg);
+		getMediaSession().notifyBaudotCharacterReceived(receivedCharacter);
+	}
+}
+
+void MS2AudioStream::sBaudotDetectorEventNotified(void *userData, MSFilter *f, unsigned int id, void *arg) {
+	MS2AudioStream *zis = static_cast<MS2AudioStream *>(userData);
+	zis->baudotDetectorEventNotified(f, id, arg);
+}
+#endif /* HAVE_BAUDOT */
 
 std::string MS2AudioStream::getLabel() const {
 	return std::string();

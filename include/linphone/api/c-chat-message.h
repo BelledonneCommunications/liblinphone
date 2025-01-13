@@ -391,16 +391,17 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time(const Lin
 
 /**
  * Fulfills a chat message character by character and send the character immediately as real-time text
- * (RFC4103 / T.140).
- * The #LinphoneChatRoom the message was created from must be a real-time text capable chat room:
- * it must be obtained by placing or receiving a call with real-time text capabilities
- * (see linphone_call_params_enable_realtime_text() ), and getting the #LinphoneChatRoom interface from the call
- * with linphone_call_get_chat_room().
- * When the message is terminated (ie a new line needs to be started), use linphone_chat_message_send()
- * in order to trigger the sending of the new line character and have the full message (comprising all characters
- * sent so far) stored in local database.
+ * (RFC4103 / T.140) or as Baudot tones.
+ * The method used to send the character depends on if real-time text is enabled or not. If it is, real-time text is of
+ * course used, otherwise Baudot will be used if it is enabled in the #LinphoneCore (see linphone_core_enable_baudot()).
+ * If real-time text is used, the #LinphoneChatRoom the message was created from must be a real-time text capable chat
+ * room: it must be obtained by placing or receiving a call with real-time text capabilities (see
+ * linphone_call_params_enable_realtime_text() ), and getting the #LinphoneChatRoom interface from the call with
+ * linphone_call_get_chat_room(). When the message is terminated (ie a new line needs to be started), use
+ * linphone_chat_message_send() in order to trigger the sending of the new line character and have the full message
+ * (comprising all characters sent so far) stored in local database.
  * @param message #LinphoneChatMessage object. @notnil
- * @param character T.140 char
+ * @param character The character to send (T.140 char for real-time text).
  * @return 0 if succeed.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_chat_message_put_char(LinphoneChatMessage *message, uint32_t character);

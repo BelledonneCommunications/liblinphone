@@ -319,13 +319,26 @@ unsigned int linphone_core_get_audio_features(LinphoneCore *lc) {
 			else if (strcasecmp(name, "MIXED_RECORDING") == 0) ret |= AUDIO_STREAM_FEATURE_MIXED_RECORDING;
 			else if (strcasecmp(name, "LOCAL_PLAYING") == 0) ret |= AUDIO_STREAM_FEATURE_LOCAL_PLAYING;
 			else if (strcasecmp(name, "REMOTE_PLAYING") == 0) ret |= AUDIO_STREAM_FEATURE_REMOTE_PLAYING;
+#ifdef HAVE_BAUDOT
+			else if ((strcasecmp(name, "BAUDOT") == 0) && (linphone_core_baudot_enabled(lc)))
+				ret |= AUDIO_STREAM_FEATURE_BAUDOT;
+#endif /* HAVE_BAUDOT */
 			else if (strcasecmp(name, "ALL") == 0) ret |= AUDIO_STREAM_FEATURE_ALL;
 			else if (strcasecmp(name, "NONE") == 0) ret = 0;
 			else ms_error("Unsupported audio feature %s requested in config file.", name);
 			if (!n) break;
 			p = n;
 		}
-	} else ret = AUDIO_STREAM_FEATURE_ALL;
+	} else {
+		ret = AUDIO_STREAM_FEATURE_ALL;
+#ifdef HAVE_BAUDOT
+		if (!linphone_core_baudot_enabled(lc)) {
+			ret ^= AUDIO_STREAM_FEATURE_BAUDOT;
+		}
+#else
+		ret ^= AUDIO_STREAM_FEATURE_BAUDOT;
+#endif /* !HAVE_BAUDOT */
+	}
 
 	if (ret == AUDIO_STREAM_FEATURE_ALL) {
 		/*since call recording is specified before creation of the stream in linphonecore,

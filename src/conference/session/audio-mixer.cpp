@@ -303,4 +303,19 @@ void MS2AudioMixer::createPlayer() {
 	mPlayer = CallPlayer::create<CallPlayer>(getSession().getCore().getSharedFromThis(), getAudioConference());
 }
 
+void MS2AudioMixer::enableBaudotDetection(BCTBX_UNUSED(bool enabled)) {
+}
+
+void MS2AudioMixer::setBaudotMode(BCTBX_UNUSED(LinphoneBaudotMode mode)) {
+}
+
+void MS2AudioMixer::setBaudotSendingStandard(BCTBX_UNUSED(LinphoneBaudotStandard standard)) {
+}
+
+void MS2AudioMixer::setBaudotPauseTimeout(BCTBX_UNUSED(uint8_t seconds)) {
+}
+
+void MS2AudioMixer::sendBaudotCharacter(BCTBX_UNUSED(char character)) {
+}
+
 LINPHONE_END_NAMESPACE

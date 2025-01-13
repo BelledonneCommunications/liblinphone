@@ -93,6 +93,9 @@ extern test_suite_t ephemeral_group_chat_basic_test_suite;
 extern test_suite_t log_collection_test_suite;
 extern test_suite_t message_test_suite;
 extern test_suite_t rtt_message_test_suite;
+#ifdef HAVE_BAUDOT
+extern test_suite_t baudot_message_test_suite;
+#endif /* HAVE_BAUDOT */
 extern test_suite_t session_timers_test_suite;
 extern test_suite_t multi_call_test_suite;
 extern test_suite_t multicast_call_test_suite;
@@ -597,6 +600,12 @@ typedef struct _stats {
 	int number_of_old_LinphoneMessageWaitingIndicationVoice;
 	int number_of_new_urgent_LinphoneMessageWaitingIndicationVoice;
 	int number_of_old_urgent_LinphoneMessageWaitingIndicationVoice;
+
+#ifdef HAVE_BAUDOT
+	int number_of_LinphoneBaudotDetected;
+	int number_of_LinphoneBaudotEuropeDetected;
+	int number_of_LinphoneBaudotUsDetected;
+#endif /* HAVE_BAUDOT */
 } stats;
 
 typedef enum _LinphoneCoreManagerSubscribePolicy {

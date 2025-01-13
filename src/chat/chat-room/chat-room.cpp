@@ -47,6 +47,7 @@ LINPHONE_BEGIN_NAMESPACE
 #define NEW_LINE 0x2028
 #define CRLF 0x0D0A
 #define LF 0x0A
+#define CR 0x0D
 
 // =============================================================================
 
@@ -243,15 +244,34 @@ void ChatRoom::setIsEmpty(const bool empty) {
 }
 
 void ChatRoom::realtimeTextReceived(uint32_t character, const shared_ptr<Call> &call) {
+	realtimeTextOrBaudotCharacterReceived(character, call, true);
+}
+
+#ifdef HAVE_BAUDOT
+void ChatRoom::baudotCharacterReceived(char character, const std::shared_ptr<Call> &call) {
+	realtimeTextOrBaudotCharacterReceived((uint32_t)character, call, false);
+}
+#endif /* HAVE_BAUDOT */
+
+void ChatRoom::realtimeTextOrBaudotCharacterReceived(uint32_t character,
+                                                     const std::shared_ptr<Call> &call,
+                                                     bool isRealTimeText) {
 	shared_ptr<Core> core = getCore();
 	LinphoneCore *cCore = core->getCCore();
 
-	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
+	if (call && (!isRealTimeText || call->getCurrentParams()->realtimeTextEnabled())) {
 		mReceivedRttCharacters.push_back(character);
 		remoteIsComposing.push_back(getPeerAddress());
 		linphone_core_notify_is_composing_received(cCore, getCChatRoom());
 
-		if ((character == NEW_LINE) || (character == CRLF) || (character == LF)) {
+		bool isNewLine = false;
+		if (isRealTimeText) {
+			isNewLine = (character == NEW_LINE) || (character == CRLF) || (character == LF);
+		} else {
+			// Baudot
+			isNewLine = (character == CR) || (character == LF);
+		}
+		if (isNewLine) {
 			// End of message
 			string completeText = Utils::unicodeToUtf8(mLastMessageCharacters);
 
@@ -262,12 +282,13 @@ void ChatRoom::realtimeTextReceived(uint32_t character, const shared_ptr<Call> &
 			content->setBodyFromUtf8(completeText);
 			pendingMessage->addContent(content);
 
-			bctbx_debug("New line received, forge a message with content [%s]", content->getBodyAsString().c_str());
+			lDebug() << "New line received, forge a message with content [" << content->getBodyAsString() << "]";
 			pendingMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Delivered,
 			                                                  ::ms_time(nullptr));
 			pendingMessage->getPrivate()->setTime(::ms_time(0));
 
-			if (linphone_config_get_int(linphone_core_get_config(cCore), "misc", "store_rtt_messages", 1) == 1) {
+			const char *parameterName = isRealTimeText ? "store_rtt_messages" : "store_baudot_messages";
+			if (linphone_config_get_int(linphone_core_get_config(cCore), "misc", parameterName, 1) == 1) {
 				pendingMessage->getPrivate()->storeInDb();
 			}
 
@@ -276,7 +297,9 @@ void ChatRoom::realtimeTextReceived(uint32_t character, const shared_ptr<Call> &
 		} else {
 			mLastMessageCharacters.push_back(character);
 			string completeText = Utils::unicodeToUtf8(mLastMessageCharacters);
-			lDebug() << "Received RTT character: [" << character << "], pending text is [" << completeText << "]";
+			string textType = isRealTimeText ? "RTT" : "Baudot";
+			lDebug() << "Received " << textType << " character: [" << character << "], pending text is ["
+			         << completeText << "]";
 		}
 	}
 }

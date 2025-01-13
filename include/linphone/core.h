@@ -8329,6 +8329,24 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_set_text_codecs
 #define linphone_core_generic_confort_noise_enabled(core) linphone_core_generic_comfort_noise_enabled(core)
 
 /**
+ * Enable text sending via Baudot tones in the audio stream.
+ * @ingroup media_parameters
+ * It is disabled by default.
+ * Enablement requires a SDK built with full Baudot support: -DENABLE_BAUDOT=ON .
+ * @param core #LinphoneCore object @notnil
+ * @param enabled TRUE if enabled, FALSE otherwise.
+ **/
+LINPHONE_PUBLIC void linphone_core_enable_baudot(LinphoneCore *core, bool_t enabled);
+
+/**
+ * Returns enablement of text sending via Baudot tones in the audio stream.
+ * @ingroup media_parameters
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if text sending via Baudot tones in the audio stream is enabled, FALSE otherwise.
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_baudot_enabled(const LinphoneCore *core);
+
+/**
  * Tells whether the specified payload type is enabled.
  * @param core #LinphoneCore object.
  * @param pt The payload type to check.

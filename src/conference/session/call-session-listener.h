@@ -154,6 +154,15 @@ public:
 	                                             BCTBX_UNUSED(RealtimeTextReceivedCharacter *data)) {
 	}
 
+#ifdef HAVE_BAUDOT
+	virtual void onBaudotCharacterReceived(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+	                                       BCTBX_UNUSED(char receivedCharacter)) {
+	}
+	virtual void onBaudotDetected(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+	                              BCTBX_UNUSED(MSBaudotStandard standard)) {
+	}
+#endif /* HAVE_BAUDOT */
+
 	virtual void confirmGoClear() const {};
 
 	virtual void onAlertNotified(BCTBX_UNUSED(std::shared_ptr<Alert> &alert)){};

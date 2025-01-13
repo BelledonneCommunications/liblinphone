@@ -574,6 +574,9 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&message_test_suite, 521);
 	// liblinphone_tester_add_suite_with_default_time(&lime_message_test_suite, 27);
 	liblinphone_tester_add_suite_with_default_time(&rtt_message_test_suite, 95);
+#ifdef HAVE_BAUDOT
+	liblinphone_tester_add_suite_with_default_time(&baudot_message_test_suite, 60);
+#endif /* HAVE_BAUDOT */
 	liblinphone_tester_add_suite_with_default_time(&session_timers_test_suite, 110);
 	liblinphone_tester_add_suite_with_default_time(&presence_test_suite, 77);
 	liblinphone_tester_add_suite_with_default_time(&presence_server_test_suite, 339);

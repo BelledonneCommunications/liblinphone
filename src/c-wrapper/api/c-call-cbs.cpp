@@ -208,3 +208,11 @@ LinphoneCallCbsRemoteRecordingCb linphone_call_cbs_get_remote_recording(Linphone
 void linphone_call_cbs_set_remote_recording(LinphoneCallCbs *cbs, LinphoneCallCbsRemoteRecordingCb cb) {
 	CallCbs::toCpp(cbs)->remoteRecordingCb = cb;
 }
+
+LinphoneCallCbsBaudotDetectedCb linphone_call_cbs_get_baudot_detected(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->baudotDetectedCb;
+}
+
+void linphone_call_cbs_set_baudot_detected(LinphoneCallCbs *cbs, LinphoneCallCbsBaudotDetectedCb cb) {
+	CallCbs::toCpp(cbs)->baudotDetectedCb = cb;
+}
