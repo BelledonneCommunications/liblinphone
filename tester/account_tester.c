@@ -394,6 +394,61 @@ static void no_unregister_when_changing_transport(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void Unregister_at_stop(void) {
+
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	stats marieStats = marie->stat;
+	stats paulineStats = pauline->stat;
+
+	// Set value for unregister at stop parameter
+	LinphoneAccount *marieAccount = linphone_core_get_default_account(marie->lc);
+	LinphoneAccount *paulineAccount = linphone_core_get_default_account(pauline->lc);
+	LinphoneAccountParams *marieAccountParams =
+	    linphone_account_params_clone(linphone_account_get_params(marieAccount));
+	LinphoneAccountParams *paulineAccountParams =
+	    linphone_account_params_clone(linphone_account_get_params(paulineAccount));
+	linphone_account_params_enable_unregister_at_stop(marieAccountParams, TRUE);
+	linphone_account_params_enable_unregister_at_stop(paulineAccountParams, FALSE);
+	linphone_account_set_params(marieAccount, marieAccountParams);
+	linphone_account_set_params(paulineAccount, paulineAccountParams);
+	linphone_account_params_unref(marieAccountParams);
+	linphone_account_params_unref(paulineAccountParams);
+
+	// Stop cores
+	if (marie->lc) {
+		linphone_core_stop(marie->lc);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalShutdown,
+		                             marieStats.number_of_LinphoneGlobalShutdown + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalOff,
+		                             marieStats.number_of_LinphoneGlobalOff + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneRegistrationCleared,
+		                             marieStats.number_of_LinphoneRegistrationCleared + 1, 1000));
+	} else {
+		BC_FAIL("no core for Marie");
+	}
+	if (pauline->lc) {
+		linphone_core_stop(pauline->lc);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneGlobalShutdown,
+		                             paulineStats.number_of_LinphoneGlobalShutdown + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneGlobalOff,
+		                             paulineStats.number_of_LinphoneGlobalOff + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneRegistrationCleared,
+		                              paulineStats.number_of_LinphoneRegistrationCleared + 1, 1000));
+	} else {
+		BC_FAIL("no core for Pauline");
+	}
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void account_dependency_to_self(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dependent_proxy_rc");
 	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
@@ -448,7 +503,8 @@ static test_t account_tests[] = {
     TEST_NO_TAG("Simple account params creation", simple_account_params_creation),
     TEST_NO_TAG("Account dependency to self", account_dependency_to_self),
     TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
-    TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport)};
+    TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport),
+    TEST_NO_TAG("Unregister at stop", Unregister_at_stop)};
 
 test_suite_t account_test_suite = {"Account",
                                    NULL,

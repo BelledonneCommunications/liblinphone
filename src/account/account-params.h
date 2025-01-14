@@ -59,6 +59,7 @@ public:
 	void setPushNotificationAllowed(bool allow);
 	void setRemotePushNotificationAllowed(bool allow);
 	void setForceRegisterOnPushNotification(bool allow);
+	void setUnregisterAtStop(bool unregister);
 	void setUseInternationalPrefixForCallsAndChats(bool enable);
 	void setCpimMessagesAllowedInBasicChatRooms(bool allow);
 	void setUserData(void *userData);
@@ -111,6 +112,7 @@ public:
 	bool getPushNotificationAllowed() const;
 	bool getRemotePushNotificationAllowed() const;
 	bool getForceRegisterOnPushNotification() const;
+	bool getUnregisterAtStop() const;
 	bool getUseInternationalPrefixForCallsAndChats() const;
 	bool isPushNotificationAvailable() const;
 	bool isCpimMessagesAllowedInBasicChatRooms() const;
@@ -184,6 +186,7 @@ private:
 	bool mPushNotificationAllowed;
 	bool mRemotePushNotificationAllowed;
 	bool mForceRegisterOnPush;
+	bool mUnregisterAtStop;
 	bool mUseInternationalPrefixForCallsAndChats;
 	bool mRtpBundleEnabled;
 	bool mRtpBundleAssumption;

@@ -96,6 +96,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	       : remotePushAllowedDefault;
 	mForceRegisterOnPush =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "force_register_on_push", false) : false;
+	mUnregisterAtStop = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "unregister_at_stop", true) : true;
 	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
 
 	/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
@@ -234,6 +235,7 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	    !!linphone_config_get_int(config, key, "remote_push_notification_allowed", mRemotePushNotificationAllowed));
 	setForceRegisterOnPushNotification(
 	    !!linphone_config_get_int(config, key, "force_register_on_push", mForceRegisterOnPush));
+	setUnregisterAtStop(!!linphone_config_get_int(config, key, "unregister_at_stop", mUnregisterAtStop));
 	mAvpfMode =
 	    static_cast<LinphoneAVPFMode>(linphone_config_get_int(config, key, "avpf", static_cast<int>(mAvpfMode)));
 	mAvpfRrInterval = (uint8_t)linphone_config_get_int(config, key, "avpf_rr_interval", (int)mAvpfRrInterval);
@@ -327,6 +329,7 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	mPushNotificationAllowed = other.mPushNotificationAllowed;
 	mRemotePushNotificationAllowed = other.mRemotePushNotificationAllowed;
 	mForceRegisterOnPush = other.mForceRegisterOnPush;
+	mUnregisterAtStop = other.mUnregisterAtStop;
 	mUseInternationalPrefixForCallsAndChats = other.mUseInternationalPrefixForCallsAndChats;
 	mAllowCpimMessagesInBasicChatRooms = other.mAllowCpimMessagesInBasicChatRooms;
 
@@ -494,6 +497,10 @@ void AccountParams::setRemotePushNotificationAllowed(bool allow) {
 
 void AccountParams::setForceRegisterOnPushNotification(bool force) {
 	mForceRegisterOnPush = force;
+}
+
+void AccountParams::setUnregisterAtStop(bool enable) {
+	mUnregisterAtStop = enable;
 }
 
 void AccountParams::setUseInternationalPrefixForCallsAndChats(bool enable) {
@@ -722,6 +729,9 @@ bool AccountParams::getRemotePushNotificationAllowed() const {
 
 bool AccountParams::getForceRegisterOnPushNotification() const {
 	return mForceRegisterOnPush;
+}
+bool AccountParams::getUnregisterAtStop() const {
+	return mUnregisterAtStop;
 }
 
 bool AccountParams::getUseInternationalPrefixForCallsAndChats() const {
@@ -1098,6 +1108,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "push_notification_allowed", (int)mPushNotificationAllowed);
 	linphone_config_set_int(config, key, "remote_push_notification_allowed", (int)mRemotePushNotificationAllowed);
 	linphone_config_set_int(config, key, "force_register_on_push", (int)mForceRegisterOnPush);
+	linphone_config_set_int(config, key, "unregister_at_stop", (int)mUnregisterAtStop);
 	linphone_config_set_int(config, key, "cpim_in_basic_chat_rooms_enabled", (int)mAllowCpimMessagesInBasicChatRooms);
 	if (!mRefKey.empty()) linphone_config_set_string(config, key, "refkey", mRefKey.c_str());
 	if (!mDependsOn.empty()) linphone_config_set_string(config, key, "depends_on", mDependsOn.c_str());

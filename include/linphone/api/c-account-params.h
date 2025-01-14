@@ -769,6 +769,23 @@ LINPHONE_PUBLIC LinphonePushNotificationConfig *
 linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params);
 
 /**
+ * Sets whether the account will unREGISTER when the core stops but only if the push notifications are not allowed for
+ * the account.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param unregister TRUE to unregister the account, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_unregister_at_stop(LinphoneAccountParams *params,
+                                                                       bool_t unregister);
+
+/**
+ * Gets whether the account will unREGISTER when the core stops but only if the push notifications are not allowed for
+ * the account.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if the account will unREGISTER at stop, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_unregister_at_stop_enabled(const LinphoneAccountParams *params);
+
+/**
  * Sets the transport type of the server address.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param transport The #LinphoneTransportType to set.

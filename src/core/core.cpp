@@ -437,7 +437,8 @@ void CorePrivate::unregisterAccounts() {
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP
 			 * server.*/
-			if (!params->getPushNotificationAllowed() && !params->getRemotePushNotificationAllowed()) {
+			if (params->getUnregisterAtStop() && !params->getPushNotificationAllowed() &&
+			    !params->getRemotePushNotificationAllowed()) {
 				account->unregister(); /* to unregister without changing the stored flag enable_register */
 			}
 		}

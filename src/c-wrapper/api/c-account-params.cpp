@@ -388,6 +388,14 @@ linphone_account_params_get_push_notification_config(const LinphoneAccountParams
 	return AccountParams::toCpp(params)->getPushNotificationConfig()->toC();
 }
 
+void linphone_account_params_enable_unregister_at_stop(LinphoneAccountParams *params, bool_t enable) {
+	AccountParams::toCpp(params)->setUnregisterAtStop(enable);
+}
+
+bool_t linphone_account_params_unregister_at_stop_enabled(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getUnregisterAtStop();
+}
+
 void linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable) {
 	linphone_account_params_enable_outbound_proxy(params, enable);
 }
