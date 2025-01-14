@@ -255,10 +255,10 @@ void Conference::setConferenceAddress(const std::shared_ptr<Address> &conference
 
 		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
 		setState(ConferenceInterface::State::CreationPending);
-		lInfo() << "Conference " << this << " has been given the address " << conferenceAddress;
+		lInfo() << "Conference " << this << " has been given the address " << *conferenceAddress;
 	} else {
 		lDebug() << "Cannot set the conference address of the Conference in state " << getState() << " to "
-		         << conferenceAddress;
+		         << *conferenceAddress;
 		return;
 	}
 }

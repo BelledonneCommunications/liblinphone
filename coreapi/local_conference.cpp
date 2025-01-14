@@ -18,7 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "local_conference.h"
+#include <tuple>
+
 #include "call/call-log.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-info.h"
@@ -28,6 +29,7 @@
 #include "core/core-p.h"
 #include "db/main-db.h"
 #include "factory/factory.h"
+#include "local_conference.h"
 #ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-audio-video-conference-event-handler.h"
 #endif // HAVE_ADVANCED_IM
@@ -167,6 +169,12 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 			const auto &remoteMd = op->getRemoteMediaDescription();
 
 			const auto times = remoteMd->times;
+			time_t startTime = -1, endTime = -1;
+			if (times.size() > 0) {
+				std::tie(startTime, endTime) = times.front();
+				confParams->setStartTime(startTime);
+				confParams->setEndTime(endTime);
+			}
 
 			// The following informations are retrieved from the received INVITE:
 			// - start and end time from the SDP active time attribute
@@ -201,15 +209,11 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 
 			auto session = const_pointer_cast<LinphonePrivate::MediaSession>(
 			    static_pointer_cast<LinphonePrivate::MediaSession>(getMe()->getSession()));
-			auto msp = session->getPrivate()->getParams();
-			msp->enableAudio(audioEnabled);
-			msp->enableVideo(videoEnabled);
-			msp->getPrivate()->setInConference(true);
-
-			if (times.size() > 0) {
-				const auto [startTime, endTime] = times.front();
-				confParams->setStartTime(startTime);
-				confParams->setEndTime(endTime);
+			if (session) {
+				auto msp = session->getPrivate()->getParams();
+				msp->enableAudio(audioEnabled);
+				msp->enableVideo(videoEnabled);
+				msp->getPrivate()->setInConference(true);
 				msp->getPrivate()->setStartTime(startTime);
 				msp->getPrivate()->setEndTime(endTime);
 			}
@@ -241,10 +245,12 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 			}
 #endif
-			auto callLog = session->getLog();
-			if (callLog) {
-				callLog->setConferenceInfo(conferenceInfo);
-				callLog->setConferenceInfoId(conferenceInfoId);
+			if (session) {
+				auto callLog = session->getLog();
+				if (callLog) {
+					callLog->setConferenceInfo(conferenceInfo);
+					callLog->setConferenceInfoId(conferenceInfoId);
+				}
 			}
 			if (isEmpty) {
 				setState(ConferenceInterface::State::TerminationPending);
@@ -402,9 +408,9 @@ void LocalConference::configure(SalCallOp *op) {
 			conferenceAddress = info->getUri();
 		} else if (admin) {
 			conferenceAddress = Address::create(op->getTo());
+			shared_ptr<CallSession> session = getMe()->createSession(*this, &msp, true, nullptr);
+			session->configure(LinphoneCallIncoming, nullptr, op, organizer, conferenceAddress);
 		}
-		shared_ptr<CallSession> session = getMe()->createSession(*this, &msp, true, nullptr);
-		session->configure(LinphoneCallIncoming, nullptr, op, organizer, conferenceAddress);
 	}
 
 	me->setRole(Participant::Role::Speaker);
@@ -419,9 +425,12 @@ void LocalConference::configure(SalCallOp *op) {
 
 	if (isUpdate) {
 		const auto &conferenceInfo = createOrGetConferenceInfo();
-		auto callLog = getMe()->getSession()->getLog();
-		if (callLog) {
-			callLog->setConferenceInfo(conferenceInfo);
+		auto meSession = getMe()->getSession();
+		if (meSession) {
+			auto callLog = meSession->getLog();
+			if (callLog) {
+				callLog->setConferenceInfo(conferenceInfo);
+			}
 		}
 		updateConferenceInformation(op);
 	}
@@ -554,7 +563,7 @@ void LocalConference::finalizeCreation() {
 				}
 			} else {
 				lInfo() << "Conference " << *conferenceAddress
-				        << " has already been created therefore no need to arry out the redirection to its address";
+				        << " has already been created therefore no need to carry out the redirection to its address";
 			}
 		} else {
 			lError() << "Session of the me participant " << *me->getAddress() << " of conference " << *conferenceAddress
@@ -1228,6 +1237,10 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 		auto contactAddress = session->getContactAddress();
 		tryAddMeDevice();
 
+		if (!mMixerSession) {
+			mMixerSession.reset(new MixerSession(*getCore().get()));
+		}
+
 		// Add participant to the conference participant list
 		switch (state) {
 			case LinphoneCallOutgoingInit:
@@ -1694,22 +1707,25 @@ bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::P
 }
 
 void LocalConference::checkIfTerminated() {
-	if (!confParams->isStatic() && (getParticipantCount() == 0)) {
-		leave();
-		if (getState() == ConferenceInterface::State::TerminationPending) {
-			setState(ConferenceInterface::State::Terminated);
-		} else {
-			setState(ConferenceInterface::State::TerminationPending);
-#ifdef HAVE_ADVANCED_IM
-			bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
-			                                                  "conference_event_log_enabled", TRUE);
-			if (!eventLogEnabled || !eventHandler) {
-#endif // HAVE_ADVANCED_IM
+	if (getParticipantCount() == 0) {
+		if (!confParams->isStatic()) {
+			leave();
+			if (getState() == ConferenceInterface::State::TerminationPending) {
 				setState(ConferenceInterface::State::Terminated);
+			} else {
+				setState(ConferenceInterface::State::TerminationPending);
 #ifdef HAVE_ADVANCED_IM
-			}
+				bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()),
+				                                                  "misc", "conference_event_log_enabled", TRUE);
+				if (!eventLogEnabled || !eventHandler) {
 #endif // HAVE_ADVANCED_IM
+					setState(ConferenceInterface::State::Terminated);
+#ifdef HAVE_ADVANCED_IM
+				}
+#endif // HAVE_ADVANCED_IM
+			}
 		}
+		mMixerSession.reset();
 	}
 }
 
