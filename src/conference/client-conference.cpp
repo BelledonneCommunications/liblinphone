@@ -1598,6 +1598,7 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 			_linphone_chat_room_notify_conference_left(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
 	}
+	mClientEktManager = nullptr;
 #endif // HAVE_ADVANCED_IM
 
 	auto session = getMainSession();
@@ -1757,12 +1758,14 @@ void ClientConference::onFullStateReceived() {
 
 	if (supportsMedia()) {
 #ifdef HAVE_ADVANCED_IM
-		if ((mConfParams->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) &&
-		    (mClientEktManager == nullptr)) {
-			shared_ptr<ClientConference> clientConference = dynamic_pointer_cast<ClientConference>(getSharedFromThis());
-			mClientEktManager = make_shared<ClientEktManager>(MSEKTCipherType::MS_EKT_CIPHERTYPE_AESKW256,
-			                                                  MSCryptoSuite::MS_AEAD_AES_256_GCM);
-			mClientEktManager->init(clientConference);
+		if (mConfParams->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) {
+			if (mClientEktManager == nullptr) {
+				shared_ptr<ClientConference> clientConference =
+				    dynamic_pointer_cast<ClientConference>(getSharedFromThis());
+				mClientEktManager = make_shared<ClientEktManager>(MSEKTCipherType::MS_EKT_CIPHERTYPE_AESKW256,
+				                                                  MSCryptoSuite::MS_AEAD_AES_256_GCM);
+				mClientEktManager->init(clientConference);
+			}
 			mClientEktManager->subscribe();
 		}
 

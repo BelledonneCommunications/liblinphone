@@ -7059,6 +7059,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		}
 
 		int idx = 1;
+		int nb_client_subscribes = (security_level == LinphoneConferenceSecurityLevelEndToEnd) ? 2 : 1;
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
@@ -7073,11 +7074,16 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
 			                             ((mgr == marie.getCMgr()) ? 4 : 1), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,
+			                             nb_client_subscribes, 5000));
 			BC_ASSERT_TRUE(
-			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
+			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, nb_client_subscribes, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
+			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyEktReceived, 1,
+				                             liblinphone_tester_sip_timeout));
+			}
 
 			if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallEncryptedOn, 1,
@@ -7136,10 +7142,11 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateCreated,
 		                             focus_stat.number_of_LinphoneConferenceStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
-		                             focus_stat.number_of_LinphoneSubscriptionIncomingReceived + 5, 5000));
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
+		                  focus_stat.number_of_LinphoneSubscriptionIncomingReceived + 5 * nb_client_subscribes, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
-		                             focus_stat.number_of_LinphoneSubscriptionActive + 5, 5000));
+		                             focus_stat.number_of_LinphoneSubscriptionActive + 5 * nb_client_subscribes, 5000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participants_added,
 		                             focus_stat.number_of_chat_room_participants_added + 5,
@@ -7538,14 +7545,20 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated,
 				                             marie_stat.number_of_LinphoneChatRoomStateCreated + 1,
 				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList,
-				                             &marie.getStats().number_of_LinphoneSubscriptionOutgoingProgress,
-				                             marie_stat.number_of_LinphoneSubscriptionOutgoingProgress + 1, 5000));
+				BC_ASSERT_TRUE(wait_for_list(
+				    coresList, &marie.getStats().number_of_LinphoneSubscriptionOutgoingProgress,
+				    marie_stat.number_of_LinphoneSubscriptionOutgoingProgress + nb_client_subscribes, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
-				                             marie_stat.number_of_LinphoneSubscriptionActive + 1, 5000));
+				                             marie_stat.number_of_LinphoneSubscriptionActive + nb_client_subscribes,
+				                             5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_NotifyFullStateReceived,
 				                             marie_stat.number_of_NotifyFullStateReceived + 1,
 				                             liblinphone_tester_sip_timeout));
+				if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_NotifyEktReceived,
+					                             marie_stat.number_of_NotifyEktReceived + 1,
+					                             liblinphone_tester_sip_timeout));
+				}
 
 				if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
 					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallEncryptedOn,
