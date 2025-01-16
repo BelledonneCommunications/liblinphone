@@ -298,6 +298,56 @@ LINPHONE_PUBLIC LinphoneSrtpSuite linphone_call_stats_get_srtp_suite(const Linph
 LINPHONE_PUBLIC LinphoneMediaEncryption linphone_call_stats_get_srtp_source(const LinphoneCallStats *stats);
 
 /**
+ * Get the number of RTP outgoing packets
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The number of RTP outgoing packets
+ */
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_packet_sent(const LinphoneCallStats *stats);
+
+/**
+ * Get the number of RTP received packets
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The number of RTP received packets
+ */
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_packet_recv(const LinphoneCallStats *stats);
+
+/**
+ * Get the RTP outgoing sent_bytes (excluding IP header)
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The number of outgoing sent_bytes (excluding IP header)
+ */
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_sent(const LinphoneCallStats *stats);
+
+/**
+ * Get the RTP incoming recv_bytes of payload and delivered in time to the application
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The number of recv_bytes of payload and delivered in time to the application
+ */
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_recv(const LinphoneCallStats *stats);
+
+/**
+ * Get the number of received bytes excluding IPv4/IPv6/UDP headers and including late and duplicate packets
+ * @param stats #LinphoneCallStats object @notnil
+ * @return the number of received bytes excluding IPv4/IPv6/UDP headers and including late and duplicate packets
+ */
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_hw_recv(const LinphoneCallStats *stats);
+
+/**
+ * Get the RTP cumulative number of incoming packet lost
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The number of RTP cumulative number of incoming packet lost
+ */
+LINPHONE_PUBLIC int64_t linphone_call_stats_get_rtp_cum_packet_loss(const LinphoneCallStats *stats);
+
+/**
+ * Get the RTP incoming packets discarded because the queue exceeds its max size
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The RTP incoming packets discarded because the queue exceeds its max size
+ */
+LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_discarded(const LinphoneCallStats *stats);
+
+
+/**
  * @}
  */
 

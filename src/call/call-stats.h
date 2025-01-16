@@ -108,6 +108,15 @@ public:
 	LinphoneSrtpSuite getSrtpSuite() const;
 	LinphoneMediaEncryption getSrtpSource() const;
 
+	/* RTP stats */
+	uint64_t getRtpPacketSent() const;
+	uint64_t getRtpPacketRcv() const;
+	uint64_t getRtpSent() const;
+	uint64_t getRtpRecv() const;
+	uint64_t getRtpHwRecv() const;
+	int64_t getRtpCumPacketLoss() const;
+	uint64_t getRtpDiscarded() const;
+
 private:
 	EncryptionStatus mEncryptionStatus;
 	LinphoneStreamType mType;        /**< Type of the stream which the stats refer to */

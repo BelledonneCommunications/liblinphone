@@ -432,4 +432,28 @@ LinphoneMediaEncryption CallStats::getSrtpSource() const {
 	return mEncryptionStatus.getMediaEncryption();
 }
 
+/* RTP stats */
+
+uint64_t CallStats::getRtpPacketSent() const {
+	return mRtpStats.packet_sent;
+}
+uint64_t CallStats::getRtpPacketRcv() const {
+	return mRtpStats.packet_recv;
+}
+uint64_t CallStats::getRtpSent() const {
+	return mRtpStats.sent;
+}
+uint64_t CallStats::getRtpRecv() const {
+	return mRtpStats.recv;
+}
+uint64_t CallStats::getRtpHwRecv() const {
+	return mRtpStats.hw_recv;
+}
+int64_t CallStats::getRtpCumPacketLoss() const {
+	return mRtpStats.cum_packet_loss;
+}
+uint64_t CallStats::getRtpDiscarded() const {
+	return mRtpStats.discarded;
+}
+
 LINPHONE_END_NAMESPACE
