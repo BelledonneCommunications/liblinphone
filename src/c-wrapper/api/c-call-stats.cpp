@@ -289,3 +289,24 @@ LinphoneSrtpSuite linphone_call_stats_get_srtp_suite(const LinphoneCallStats *st
 LinphoneMediaEncryption linphone_call_stats_get_srtp_source(const LinphoneCallStats *stats) {
 	return CallStats::toCpp(stats)->getSrtpSource();
 }
+uint64_t linphone_call_stats_get_rtp_packet_sent(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpPacketSent();
+}
+uint64_t linphone_call_stats_get_rtp_packet_recv(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpPacketRcv();
+}
+uint64_t linphone_call_stats_get_rtp_sent(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpSent();
+}
+uint64_t linphone_call_stats_get_rtp_recv(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpRecv();
+}
+uint64_t linphone_call_stats_get_rtp_hw_recv(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpHwRecv();
+}
+int64_t linphone_call_stats_get_rtp_cum_packet_loss(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpCumPacketLoss();
+}
+uint64_t linphone_call_stats_get_rtp_discarded(const LinphoneCallStats *stats) {
+	return CallStats::toCpp(stats)->getRtpDiscarded();
+}
