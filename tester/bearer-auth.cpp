@@ -420,7 +420,7 @@ static void test_bearer_auth_refresh_token(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
-static void provisioning_with_http_bearer_then_register_with_digest(void) {
+static void provisioning_with_http_bearer_then_register_with_digest_base(bool with_username_in_auth_info) {
 	HttpServerWithBearerAuth httpServer("sip.example.org", "abcdefgh");
 	httpServer.addResource("/provisioning", "application/xml", "rcfiles/marie_digest_auth_xml");
 
@@ -448,7 +448,8 @@ static void provisioning_with_http_bearer_then_register_with_digest(void) {
 	/* set access token */
 	LinphoneBearerToken *token =
 	    linphone_factory_create_bearer_token(linphone_factory_get(), "abcdefgh", time(NULL) + 30);
-	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(linphone_factory_get(), NULL, token, "sip.example.org");
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(
+	    linphone_factory_get(), with_username_in_auth_info ? "marie" : NULL, token, "sip.example.org");
 	linphone_auth_info_set_access_token(ai, token);
 	linphone_bearer_token_unref(token);
 	linphone_core_add_auth_info(lcm->lc, ai);
@@ -495,6 +496,13 @@ static void provisioning_with_http_bearer_then_register_with_digest(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
+static void provisioning_with_http_bearer_then_register_with_digest(void) {
+	provisioning_with_http_bearer_then_register_with_digest_base(false);
+}
+
+static void provisioning_with_http_bearer_then_register_with_digest_with_username_in_auth_info(void) {
+	provisioning_with_http_bearer_then_register_with_digest_base(true);
+}
 static test_t bearer_auth_tests[] = {
     {"Bearer auth requested", test_bearer_auth},
     {"Bearer auth set before", test_bearer_auth_set_before},
@@ -505,7 +513,9 @@ static test_t bearer_auth_tests[] = {
      provisioning_with_http_bearer_auth_requested_on_demand_aborted},
     {"Bearer auth with refresh", test_bearer_auth_refresh_token},
     {"Provisioning with http bearer providing SIP account using digest auth",
-     provisioning_with_http_bearer_then_register_with_digest}};
+     provisioning_with_http_bearer_then_register_with_digest},
+    {"Provisioning with http bearer providing SIP account using digest auth 2",
+     provisioning_with_http_bearer_then_register_with_digest_with_username_in_auth_info}};
 
 /*
  * TODO: future tests
