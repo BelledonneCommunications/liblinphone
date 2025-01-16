@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -84,6 +84,14 @@ SalStreamDir get_video_dir_from_call_params(const LinphoneCallParams *params) {
 
 bool_t linphone_call_params_is_valid(const LinphoneCallParams *params) {
 	return !!L_GET_CPP_PTR_FROM_C_OBJECT(params)->isValid();
+}
+
+bool_t linphone_call_params_ringing_disabled(const LinphoneCallParams *params) {
+	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->ringingDisabled();
+}
+
+void linphone_call_params_disable_ringing(LinphoneCallParams *params, bool_t disable) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->disableRinging(!!disable);
 }
 
 bool_t linphone_call_params_tone_indications_enabled(const LinphoneCallParams *params) {

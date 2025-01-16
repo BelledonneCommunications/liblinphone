@@ -348,10 +348,6 @@ unsigned int linphone_core_get_audio_features(LinphoneCore *lc) {
 	return ret;
 }
 
-bool_t linphone_core_tone_indications_enabled(LinphoneCore *lc) {
-	return !!linphone_config_get_int(lc->config, "sound", "tone_indications", 1);
-}
-
 int linphone_core_get_local_ip_for(int type, const char *dest, char *result) {
 	if (dest && dest[0] == '\0')
 		dest = NULL; /*If null, bctbx_get_local_ip_for() will use an arbitrary public address instead.*/

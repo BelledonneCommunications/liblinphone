@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -105,6 +105,22 @@ LINPHONE_PUBLIC void linphone_call_params_enable_low_bandwidth(LinphoneCallParam
  * @param enabled A boolean value telling whether to enable audio or not.
  **/
 LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_params, bool_t enabled);
+
+/**
+ * Check if ringing is disabled
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if ringing is disabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_ringing_disabled(const LinphoneCallParams *params);
+
+/**
+ * Define whether ringing is disabled
+ * @param params the #LinphoneCallParams @notnil
+ * @param disable TRUE to disable ringing; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_call_params_disable_ringing(LinphoneCallParams *params, bool_t disable);
 
 /**
  * Check if tone indications are enabled

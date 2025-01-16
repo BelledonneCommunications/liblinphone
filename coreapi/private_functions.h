@@ -648,7 +648,6 @@ void linphone_chat_message_set_message_state_changed_cb(LinphoneChatMessage *msg
 void linphone_chat_message_set_message_state_changed_cb_user_data(LinphoneChatMessage *msg, void *user_data);
 void *linphone_chat_message_get_message_state_changed_cb_user_data(LinphoneChatMessage *msg);
 
-bool_t linphone_core_tone_indications_enabled(LinphoneCore *lc);
 const char *linphone_core_create_uuid(LinphoneCore *lc);
 void linphone_configure_op(LinphoneCore *lc,
                            LinphonePrivate::SalOp *op,

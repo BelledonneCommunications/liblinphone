@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -515,6 +515,7 @@ void ServerConference::configure(SalCallOp *op) {
 		msp->initDefault(getCore(), LinphoneCallIncoming);
 		msp->enableAudio(audioEnabled);
 		msp->enableVideo(videoEnabled);
+		msp->getPrivate()->disableRinging(true);
 		msp->getPrivate()->enableToneIndications(false);
 		msp->getPrivate()->setConferenceCreation(true);
 		msp->getPrivate()->setInConference(true);
@@ -1293,6 +1294,7 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 				linphone_call_params_enable_audio(new_params, audioEnabled);
 				linphone_call_params_enable_video(new_params, videoEnabled);
 			}
+			linphone_call_params_disable_ringing(new_params, supportsMedia());
 			linphone_call_params_enable_tone_indications(new_params, !supportsMedia());
 			linphone_call_params_set_in_conference(new_params, TRUE);
 			linphone_call_params_set_start_time(new_params, mConfParams->getStartTime());
@@ -1472,6 +1474,7 @@ shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<Part
 			}
 		}
 
+		currentParams->getPrivate()->disableRinging(!supportsMedia());
 		currentParams->getPrivate()->enableToneIndications(supportsMedia());
 		currentParams->getPrivate()->setInConference(TRUE);
 		session = participant->createSession(*this, currentParams, true);
@@ -1507,6 +1510,7 @@ void ServerConference::byeDevice(const std::shared_ptr<ParticipantDevice> &devic
 			                    to_string(getCurrentParams()->getChatParams()->getEphemeralLifetime()));
 		}
 	}
+	csp.getPrivate()->disableRinging(!supportsMedia());
 	csp.getPrivate()->enableToneIndications(supportsMedia());
 	csp.getPrivate()->setInConference(TRUE);
 	const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);

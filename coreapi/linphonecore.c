@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -9131,6 +9131,14 @@ void linphone_core_enable_video_multicast(LinphoneCore *lc, bool_t yesno) {
 
 bool_t linphone_core_video_multicast_enabled(const LinphoneCore *lc) {
 	return lc->rtp_conf.video_multicast_enabled;
+}
+
+void linphone_core_disable_call_ringing(const LinphoneCore *lc, bool_t yesno) {
+	linphone_config_set_int(linphone_core_get_config(lc), "sound", "disable_ringing", yesno);
+}
+
+bool_t linphone_core_call_ringing_disabled(const LinphoneCore *lc) {
+	return !!linphone_config_get_int(linphone_core_get_config(lc), "sound", "disable_ringing", FALSE);
 }
 
 void linphone_core_enable_call_tone_indications(const LinphoneCore *lc, bool_t yesno) {

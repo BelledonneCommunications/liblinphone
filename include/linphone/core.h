@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -5832,8 +5832,26 @@ LINPHONE_PUBLIC void linphone_core_enable_video_multicast(LinphoneCore *core, bo
 LINPHONE_PUBLIC bool_t linphone_core_video_multicast_enabled(const LinphoneCore *core);
 
 /**
+ * Enables or disables call ringing.
+ * This value is taken into account from next time call parameters are created.
+ * This feature can also be enabled per-call using #LinphoneCallParams.
+ * @param core the #LinphoneCore @notnil
+ * @param yesno a boolean to indicate whether the feature is to be disabled.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_disable_call_ringing(const LinphoneCore *core, bool_t yesno);
+
+/**
+ * Check whether ringing of calls is disabled
+ * @param core #LinphoneCore @notnil
+ * @return TRUE if call ringing is disabled
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_call_ringing_disabled(const LinphoneCore *core);
+
+/**
  * Enables or disables call tone indications.
- * This value is taken into account from next tine call parameters are created.
+ * This value is taken into account from next time call parameters are created.
  * This feature can also be enabled per-call using #LinphoneCallParams.
  * @param core the #LinphoneCore @notnil
  * @param yesno a boolean to indicate whether the feature is to be enabled.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -3331,9 +3331,11 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	linphone_call_ref(call_pauline);
 
 	const LinphoneCallParams *marie_call_lparams = linphone_call_get_params(call_marie);
+	BC_ASSERT_FALSE(linphone_call_params_ringing_disabled(marie_call_lparams));
 	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(marie_call_lparams));
 
 	const LinphoneCallParams *pauline_call_lparams = linphone_call_get_params(call_pauline);
+	BC_ASSERT_FALSE(linphone_call_params_ringing_disabled(pauline_call_lparams));
 	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(pauline_call_lparams));
 
 	/*check if video stream is not offered*/
@@ -6990,6 +6992,7 @@ static void simple_call_with_gruu(void) {
 	BC_ASSERT_TRUE(linphone_address_has_uri_param(pauline_addr, "gr"));
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(pauline_addr), "sip.example.org");
 
+	linphone_core_disable_call_ringing(marie->lc, TRUE);
 	linphone_core_enable_call_tone_indications(marie->lc, FALSE);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline_addr);
@@ -7019,9 +7022,11 @@ static void simple_call_with_gruu(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 
 	const LinphoneCallParams *marie_call_lparams = linphone_call_get_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_ringing_disabled(marie_call_lparams));
 	BC_ASSERT_FALSE(linphone_call_params_tone_indications_enabled(marie_call_lparams));
 
 	const LinphoneCallParams *pauline_call_lparams = linphone_call_get_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_ringing_disabled(pauline_call_lparams));
 	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(pauline_call_lparams));
 
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(marie_call));

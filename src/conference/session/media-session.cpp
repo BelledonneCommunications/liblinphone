@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -1176,6 +1176,7 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams() {
 		        << "]: disabling audio and video in our call params because the remote party didn't send a valid SDP";
 		getParams()->enableAudio(false);
 		getParams()->enableVideo(false);
+		getParams()->getPrivate()->disableRinging(true);
 		getParams()->getPrivate()->enableToneIndications(false);
 	}
 }
@@ -1340,7 +1341,8 @@ string MediaSessionPrivate::getLocalIpFromSignaling() const {
 
 std::string MediaSessionPrivate::getLocalIpFromMedia() const {
 	string guessedIpAddress;
-	if (op && ((state == CallSession::State::Idle) || (state == CallSession::State::IncomingReceived) || (state == CallSession::State::IncomingEarlyMedia) || (state == CallSession::State::UpdatedByRemote))) {
+	if (op && ((state == CallSession::State::Idle) || (state == CallSession::State::IncomingReceived) ||
+	           (state == CallSession::State::IncomingEarlyMedia) || (state == CallSession::State::UpdatedByRemote))) {
 		auto remoteDesc = op->getRemoteMediaDescription();
 		string remoteAddr;
 		if (remoteDesc) {
@@ -4395,6 +4397,10 @@ void MediaSession::cancelDtmfs() {
 void MediaSession::setNatPolicy(const std::shared_ptr<NatPolicy> &pol) {
 	L_D();
 	d->natPolicy = pol;
+}
+
+bool MediaSession::ringingDisabled() const {
+	return getMediaParams()->getPrivate()->ringingDisabled();
 }
 
 bool MediaSession::toneIndicationsEnabled() const {

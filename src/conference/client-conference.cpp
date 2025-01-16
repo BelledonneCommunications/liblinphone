@@ -306,6 +306,7 @@ std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared
 
 	csp.enableAudio(mConfParams->audioEnabled());
 	csp.enableVideo(mConfParams->videoEnabled());
+	csp.getPrivate()->disableRinging(!supportsMedia());
 	csp.getPrivate()->enableToneIndications(supportsMedia());
 
 	auto chatRoom = getChatRoom();
@@ -2597,6 +2598,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					                      to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
 				}
 			}
+			linphone_call_params_disable_ringing(new_params, !mediaSupported);
 			linphone_call_params_enable_tone_indications(new_params, mediaSupported);
 
 			const auto cCore = getCore()->getCCore();

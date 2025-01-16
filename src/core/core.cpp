@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -2136,6 +2136,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	params.getPrivate()->setEndTime(confParams->getEndTime());
 	params.getPrivate()->setDescription(confParams->getDescription());
 	params.getPrivate()->setConferenceCreation(true);
+	params.getPrivate()->disableRinging(true);
 	params.getPrivate()->enableToneIndications(false);
 
 	auto participant = Participant::create(nullptr, localAddr);

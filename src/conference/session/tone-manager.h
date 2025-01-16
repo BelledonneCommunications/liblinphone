@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -38,7 +38,7 @@ class ToneManager {
 public:
 	ToneManager(Core &core);
 	ToneManager(const ToneManager &other) = delete;
-	~ToneManager();
+	~ToneManager() = default;
 
 	/*
 	 * The CallSession's state change notification are sufficient to trigger rings and tones.

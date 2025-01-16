@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -40,14 +40,11 @@ ToneManager::ToneManager(Core &core) : mCore(core) {
 	mStats = {0, 0, 0, 0, 0, 0};
 
 	/* Assign default tones */
-	setTone(LinphoneToneBusy, NULL);
-	setTone(LinphoneToneCallEnd, NULL);
-	setTone(LinphoneToneCallLost, NULL);
-	setTone(LinphoneToneCallNotAnswered, NULL);
-	setTone(LinphoneToneCallLost, NULL);
-}
-
-ToneManager::~ToneManager() {
+	setTone(LinphoneToneBusy, nullptr);
+	setTone(LinphoneToneCallEnd, nullptr);
+	setTone(LinphoneToneCallLost, nullptr);
+	setTone(LinphoneToneCallNotAnswered, nullptr);
+	setTone(LinphoneToneCallLost, nullptr);
 }
 
 std::shared_ptr<AudioDevice> ToneManager::getOutputDevice(const shared_ptr<CallSession> &session) const {
@@ -109,7 +106,7 @@ void ToneManager::startRingbackTone() {
 
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_DTMF);
-		mRingStream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, (lc->use_files) ? NULL : ringCard);
+		mRingStream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, (lc->use_files) ? nullptr : ringCard);
 	}
 }
 
@@ -121,9 +118,8 @@ void ToneManager::stopRingbackTone() {
 
 void ToneManager::startRingtone() {
 	LinphoneCore *lc = getCore().getCCore();
-	lInfo() << "[ToneManager] " << __func__;
 
-	if (linphone_config_get_int(lc->config, "sound", "disable_ringing", 0) == 1) {
+	if (linphone_core_call_ringing_disabled(lc)) {
 		lWarning() << "[ToneManager] Ringing was disabled in configuration (disable_ringing item in [sound] section is "
 		              "set to 1)";
 		return;
@@ -133,6 +129,8 @@ void ToneManager::startRingtone() {
 		lWarning() << "[ToneManager] Platform Helper says ringing isn't allowed by platform, do not ring...";
 		return;
 	}
+
+	lInfo() << "[ToneManager] " << __func__;
 
 	mStats.number_of_startRingtone++;
 	MSSndCard *ringcard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.ring_sndcard;
@@ -152,6 +150,10 @@ void ToneManager::stopRingtone() {
 }
 
 void ToneManager::startNamedTone(LinphoneToneID toneId) {
+	auto call = getCore().getCurrentCall();
+	if (!call) return;
+	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
+	if (!mediaSession->toneIndicationsEnabled()) return;
 	lInfo() << "[ToneManager] " << __func__;
 	mStats.number_of_startNamedTone++;
 	LinphoneToneDescription *tone = getTone(toneId);
@@ -168,9 +170,9 @@ void ToneManager::stopTone() {
 	LinphoneCore *lc = getCore().getCCore();
 	mStats.number_of_stopTone++;
 	MSFilter *f = getAudioResource(LocalPlayer, lc->sound_conf.play_sndcard, false);
-	if (f != NULL) ms_filter_call_method_noarg(f, MS_PLAYER_CLOSE); // MS_PLAYER is used while being in call
-	f = getAudioResource(ToneGenerator, NULL, FALSE);
-	if (f != NULL) ms_filter_call_method_noarg(f, MS_DTMF_GEN_STOP);
+	if (f != nullptr) ms_filter_call_method_noarg(f, MS_PLAYER_CLOSE); // MS_PLAYER is used while being in call
+	f = getAudioResource(ToneGenerator, nullptr, false);
+	if (f != nullptr) ms_filter_call_method_noarg(f, MS_DTMF_GEN_STOP);
 }
 
 // ---------------------------------------------------
@@ -184,7 +186,7 @@ void ToneManager::playDtmf(char dtmf, int duration) {
 	MSSndCard *card = linphone_core_in_call(lc) ? lc->sound_conf.play_sndcard : lc->sound_conf.ring_sndcard;
 	MSFilter *f = getAudioResource(ToneGenerator, card, true);
 
-	if (f == NULL) {
+	if (f == nullptr) {
 		lError() << "[ToneManager] No dtmf generator at this time !";
 		return;
 	}
@@ -198,8 +200,8 @@ void ToneManager::playDtmf(char dtmf, int duration) {
 
 void ToneManager::stopDtmf() {
 	lInfo() << "[ToneManager] " << __func__;
-	MSFilter *f = getAudioResource(ToneGenerator, NULL, false);
-	if (f != NULL) {
+	MSFilter *f = getAudioResource(ToneGenerator, nullptr, false);
+	if (f != nullptr) {
 		ms_filter_call_method_noarg(f, MS_DTMF_GEN_STOP);
 	}
 }
@@ -248,7 +250,7 @@ LinphoneStatus ToneManager::playFile(const char *audiofile) {
 		lInfo() << "[ToneManager] " << __func__ << " requested play file " << std::string(audiofile)
 		        << " is not found. Using sound resource from platform helper "
 		        << ((fileString.empty()) ? std::string("<unknown>") : fileString);
-		if (fileString != "") audiofileToUse = fileString.c_str();
+		if (!fileString.empty()) audiofileToUse = fileString.c_str();
 	}
 
 	if (ms_filter_call_method(f, MS_PLAYER_OPEN, (void *)audiofileToUse) != 0) {
@@ -263,7 +265,7 @@ void ToneManager::playTone(const MSDtmfGenCustomTone &tone) {
 	lInfo() << "[ToneManager] " << __func__ << " playing DTMF tone " << std::string(tone.tone_name);
 	LinphoneCore *lc = getCore().getCCore();
 	shared_ptr<CallSession> session;
-	MSSndCard *card = NULL;
+	MSSndCard *card = nullptr;
 
 	std::shared_ptr<LinphonePrivate::Call> call = getCore().getCurrentCall();
 	if (call) session = call->getActiveSession();
@@ -276,12 +278,12 @@ void ToneManager::playTone(const MSDtmfGenCustomTone &tone) {
 	}
 
 	// If card is null, use the default playcard
-	if (card == NULL) {
+	if (card == nullptr) {
 		card = lc->sound_conf.play_sndcard;
 	}
 
 	MSFilter *f = getAudioResource(ToneGenerator, card, true);
-	if (f == NULL) {
+	if (f == nullptr) {
 		lError() << "[ToneManager] No tone generator at this time !";
 		return;
 	}
@@ -329,9 +331,9 @@ void ToneManager::destroyRingStream() {
 MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card, bool create) {
 	LinphoneCore *lc = getCore().getCCore();
 	LinphoneCall *call = linphone_core_get_current_call(lc);
-	AudioStream *stream = NULL;
-	RingStream *ringstream;
-	MSFilter *audioResource = NULL;
+	AudioStream *stream = nullptr;
+	RingStream *ringStream;
+	MSFilter *audioResource = nullptr;
 	float tmp;
 	if (call) {
 		stream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
@@ -347,35 +349,35 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 			ring_stop(mRingStream);
 			mRingStream = nullptr;
 		}
-		if (mRingStream == NULL) {
+		if (mRingStream == nullptr) {
 #if TARGET_OS_IPHONE
 			tmp = 0.007f;
 #else
 			tmp = 0.1f;
 #endif
 			float amp = linphone_config_get_float(lc->config, "sound", "dtmf_player_amp", tmp);
-			MSSndCard *ringcard = NULL;
+			MSSndCard *ringcard = nullptr;
 
 			if (!lc->use_files) {
 				ringcard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card
 				           : card                  ? card
 				                                   : lc->sound_conf.ring_sndcard;
-				if (ringcard == NULL) return NULL;
+				if (ringcard == nullptr) return nullptr;
 				ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_DTMF);
 			}
-			if (!create) return NULL;
+			if (!create) return nullptr;
 
-			ringstream = mRingStream = ring_start(
-			    lc->factory, NULL, 0, ringcard); // passing a NULL ringcard if core if lc->use_files is enabled
+			ringStream = mRingStream = ring_start(
+			    lc->factory, nullptr, 0, ringcard); // passing a nullptr ringcard if core if lc->use_files is enabled
 			ms_filter_call_method(mRingStream->gendtmf, MS_DTMF_GEN_SET_DEFAULT_AMPLITUDE, &amp);
 			/* A ring stream was started in the purpose of playing a tone. Make sure it is destroyed once the tone is
 			 * finished. */
 			scheduleRingStreamDestruction();
 		} else {
-			ringstream = mRingStream;
+			ringStream = mRingStream;
 		}
-		if (rtype == ToneGenerator) audioResource = ringstream->gendtmf;
-		if (rtype == LocalPlayer) audioResource = ringstream->source;
+		if (rtype == ToneGenerator) audioResource = ringStream->gendtmf;
+		if (rtype == LocalPlayer) audioResource = ringStream->source;
 	}
 	return audioResource;
 }
@@ -395,21 +397,21 @@ void ToneManager::freeAudioResources() {
 
 LinphoneToneDescription *ToneManager::getTone(LinphoneToneID id) {
 	const bctbx_list_t *elem;
-	for (elem = getCore().getCCore()->tones; elem != NULL; elem = elem->next) {
-		LinphoneToneDescription *tone = (LinphoneToneDescription *)elem->data;
+	for (elem = getCore().getCCore()->tones; elem != nullptr; elem = elem->next) {
+		auto tone = (LinphoneToneDescription *)elem->data;
 		if (tone->toneid == id) return tone;
 	}
-	return NULL;
+	return nullptr;
 }
 
-void ToneManager::setTone(LinphoneToneID id, const char *audiofile) {
+void ToneManager::setTone(LinphoneToneID id, const char *audioFile) {
 	LinphoneCore *lc = getCore().getCCore();
 	LinphoneToneDescription *tone = getTone(id);
 	if (tone) {
 		lc->tones = bctbx_list_remove(lc->tones, tone);
 		linphone_tone_description_destroy(tone);
 	}
-	tone = linphone_tone_description_new(id, audiofile);
+	tone = linphone_tone_description_new(id, audioFile);
 	lc->tones = bctbx_list_append(lc->tones, tone);
 }
 
@@ -510,6 +512,7 @@ bool ToneManager::shouldPlayWaitingTone(const std::shared_ptr<CallSession> &sess
 void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session) {
 	shared_ptr<Call> currentCall = getCore().getCurrentCall();
 	LinphoneCore *lc = getCore().getCCore();
+	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(session);
 
 	if (mSessionRinging && mSessionRinging != session) {
 		// Already a session in ringing state.
@@ -518,31 +521,33 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 
 	if (shouldPlayWaitingTone(session)) {
 		/* already in a call or in a local conference. A tone indication will be used. */
-		if (linphone_core_tone_indications_enabled(lc)) {
+		if (mediaSession->toneIndicationsEnabled()) {
 			startNamedTone(LinphoneToneCallWaiting);
-			/* Setup the way this incoming call notification has to be stopped */
+			/* Set up the way this incoming call notification has to be stopped */
 			mSessionRingingStopFunction = [this]() { this->stopTone(); };
 		}
 	} else {
-		/* Not already in a call or conference, so play the normal ringtone. */
-		/*
-		 * For ios, only one write sound card is allowed. To ensure this, free audio resources before a new incoming
-		 * call. It may be a call-end tone from a previous call, if a new call arrives closely after ending the current
-		 * one.
-		 */
-		freeAudioResources();
-		if (linphone_core_is_native_ringing_enabled(lc)) {
-			lInfo() << "Native (ie platform dependant) ringing is enabled, so not ringing from liblinphone.";
-			return;
-		}
-		if (linphone_core_callkit_enabled(lc)) {
-			lInfo() << "Callkit mode is enabled, will not play ring tone from liblinphone.";
-			return;
-		}
+		if (mediaSession && !mediaSession->ringingDisabled()) {
+			/* Not already in a call or conference, so play the normal ringtone. */
+			/*
+			 * For ios, only one write sound card is allowed. To ensure this, free audio resources before a new incoming
+			 * call. It may be a call-end tone from a previous call, if a new call arrives closely after ending the
+			 * current one.
+			 */
+			freeAudioResources();
+			if (linphone_core_is_native_ringing_enabled(lc)) {
+				lInfo() << "Native (ie platform dependant) ringing is enabled, so not ringing from liblinphone.";
+				return;
+			}
+			if (linphone_core_callkit_enabled(lc)) {
+				lInfo() << "Callkit mode is enabled, will not play ring tone from liblinphone.";
+				return;
+			}
 
-		startRingtone();
-		/* Setup the way this incoming call notification has to be stopped */
-		mSessionRingingStopFunction = [this]() { this->stopRingtone(); };
+			startRingtone();
+			/* Set up the way this incoming call notification has to be stopped */
+			mSessionRingingStopFunction = [this]() { this->stopRingtone(); };
+		}
 	}
 	mSessionRinging = session;
 }
@@ -561,7 +566,10 @@ void ToneManager::notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &
 }
 
 void ToneManager::notifyToneIndication(LinphoneReason reason) {
-	if (!linphone_core_tone_indications_enabled(getCore().getCCore())) return;
+	auto call = getCore().getCurrentCall();
+	if (!call) return;
+	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
+	if (!mediaSession->toneIndicationsEnabled()) return;
 
 	lInfo() << "[ToneManager] " << __func__ << " reason " << std::string(linphone_reason_to_string(reason));
 
@@ -600,7 +608,7 @@ bool ToneManager::inCallOrConference() const {
  */
 
 shared_ptr<CallSession> ToneManager::lookupRingingSession() const {
-	for (auto call : getCore().getCalls()) {
+	for (const auto &call : getCore().getCalls()) {
 		auto session = call->getActiveSession();
 		if (session->getState() == CallSession::State::IncomingReceived) {
 			return session;
@@ -671,7 +679,7 @@ void ToneManager::updateRingingSessions(const std::shared_ptr<CallSession> &call
 void ToneManager::prepareForNextState(const std::shared_ptr<CallSession> &callSession, CallSession::State nextState) {
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(callSession);
 	if (!session) return;
-	if (!session->toneIndicationsEnabled()) return;
+	if (!session->toneIndicationsEnabled() && session->ringingDisabled()) return;
 
 	updateRingingSessions(callSession, nextState);
 
@@ -690,7 +698,6 @@ void ToneManager::prepareForNextState(const std::shared_ptr<CallSession> &callSe
 void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, CallSession::State state) {
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(callSession);
 	if (!session) return;
-	if (!session->toneIndicationsEnabled()) return;
 
 	updateRingingSessions(callSession, state);
 
