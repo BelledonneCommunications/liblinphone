@@ -288,16 +288,18 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 		        << "] Conference has been succesfully updated: " << (uri ? uri->toString() : std::string("sip:"));
 	}
 
+	bool error = false;
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		lInfo() << "[Conference Scheduler] [" << this << "] Conference address " << *conferenceAddress
 		        << " is known, inserting conference info in database";
-		mainDb->insertConferenceInfo(mConferenceInfo);
+		error = (mainDb->insertConferenceInfo(mConferenceInfo) < 0);
 	}
 #endif
 
-	setState(State::Ready);
+	auto newState = error ? State::Error : State::Ready;
+	setState(newState);
 }
 
 shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_ptr<AbstractChatRoom> chatRoom,

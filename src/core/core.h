@@ -378,7 +378,8 @@ public:
 	void removeConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler);
 	void addConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler);
 
-	bool isCurrentlyAggregatingChatMessages();
+	bool canAggregateChatMessages() const;
+	bool isCurrentlyAggregatingChatMessages() const;
 	// ---------------------------------------------------------------------------
 	// Signal informations
 	// ---------------------------------------------------------------------------

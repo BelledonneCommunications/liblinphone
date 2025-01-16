@@ -1056,7 +1056,7 @@ static test_t local_conference_impromptu_mismatch_conference_tests[] = {
                 LinphoneTest::simple_dial_out_conference_with_no_payloads)};
 
 test_suite_t local_conference_test_suite_encrypted_impromptu_conference = {
-    "Local conference tester (Impromptu Encrypted Conference)",
+    "Local conference tester (Impromptu Encrypted Conference Point to Point Encryption)",
     NULL,
     NULL,
     liblinphone_tester_before_each,

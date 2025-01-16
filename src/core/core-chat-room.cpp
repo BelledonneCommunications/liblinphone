@@ -951,30 +951,36 @@ void CorePrivate::stopChatMessagesAggregationTimer() {
 		chatMessagesAggregationTimer = nullptr;
 	}
 
-	for (const auto &chatRoom : q->getChatRooms()) {
+	for (const auto &chatRoom : q->getRawChatRoomList()) {
 		chatRoom->notifyAggregatedChatMessages();
 	}
 
 	chatMessagesAggregationBackgroundTask.stop();
 }
 
-bool Core::isCurrentlyAggregatingChatMessages() {
+bool Core::isCurrentlyAggregatingChatMessages() const {
 	L_D();
 
 	return d->chatMessagesAggregationTimer != nullptr;
 }
 
-LinphoneReason
-Core::handleChatMessagesAggregation(shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg) {
-	L_D();
+bool Core::canAggregateChatMessages() const {
 	LinphoneCore *cCore = getCCore();
-
 	bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
 	int chatMessagesAggregationDelay =
 	    linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
 	lDebug() << "Chat messages aggregation enabled? " << chatMessagesAggregationEnabled << " with delay "
 	         << chatMessagesAggregationDelay;
-	if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
+	return (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0);
+}
+
+LinphoneReason
+Core::handleChatMessagesAggregation(shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg) {
+	L_D();
+	if (canAggregateChatMessages()) {
+		LinphoneCore *cCore = getCCore();
+		int chatMessagesAggregationDelay =
+		    linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
 		if (!d->chatMessagesAggregationTimer) {
 			d->chatMessagesAggregationTimer = cCore->sal->createTimer(
 			    [d]() -> bool {

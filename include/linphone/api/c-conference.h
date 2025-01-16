@@ -298,7 +298,7 @@ LINPHONE_PUBLIC LinphoneParticipant *linphone_conference_get_me(const LinphoneCo
 LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *conference);
 
 /**
- * Retrieves the user pointer that was given to linphone_conference_new()
+ * Retrieves the user pointer that was given to linphone_conference_set_user_data()
  * @param conference #LinphoneConference object @notnil
  * @return The user data associated with the #LinphoneConference object. @maybenil
  * @ingroup initializing
