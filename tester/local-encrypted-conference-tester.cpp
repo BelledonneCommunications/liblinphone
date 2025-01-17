@@ -999,6 +999,137 @@ static void failure_in_creating_end_to_end_encrypted_conference_bad_server_confi
 	}
 }
 
+static void create_simple_end_to_end_encrypted_conference_terminated_early(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		bool enable_lime = true;
+		LinphoneTest::ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		LinphoneTest::ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+
+		setup_conference_info_cbs(marie.getCMgr());
+		LinphoneMediaEncryption encryption = LinphoneMediaEncryptionZRTP;
+
+		bctbx_list_t *coresList = nullptr;
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()}) {
+			LinphoneVideoActivationPolicy *pol =
+			    linphone_factory_create_video_activation_policy(linphone_factory_get());
+			linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+			linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+			linphone_core_set_video_activation_policy(mgr->lc, pol);
+			linphone_video_activation_policy_unref(pol);
+
+			linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(mgr->lc, TRUE);
+			linphone_core_enable_video_display(mgr->lc, TRUE);
+
+			if (mgr != focus.getCMgr()) {
+				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
+				linphone_core_set_media_encryption(mgr->lc, encryption);
+			}
+
+			// Enable ICE at the account level but not at the core level
+			enable_stun_in_mgr(mgr, TRUE, TRUE, FALSE, FALSE);
+
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip",
+			                        "update_call_when_ice_completed_with_dtls", FALSE);
+
+			coresList = bctbx_list_append(coresList, mgr->lc);
+		}
+
+		configure_end_to_end_encrypted_conference_server(focus);
+
+		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
+
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
+
+		stats focus_stat = focus.getStats();
+
+		std::list<LinphoneCoreManager *> participants{pauline.getCMgr()};
+		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()};
+		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr()};
+
+		time_t start_time = ms_time(nullptr);
+		time_t end_time = -1;
+		const char *initialSubject = "E2E conference - short duration";
+		const char *description = "Quick end";
+
+		bctbx_list_t *participants_info = nullptr;
+		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList;
+		participantList.insert(std::make_pair(
+		    pauline.getCMgr(), add_participant_info_to_list(&participants_info, pauline.getCMgr()->identity,
+		                                                    LinphoneParticipantRoleSpeaker, -1)));
+
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, LinphoneConferenceSecurityLevelEndToEnd, TRUE, TRUE);
+		BC_ASSERT_PTR_NOT_NULL(confAddr);
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
+
+		// Chat room creation to send ICS
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		LinphoneCallParams *new_params = linphone_core_create_call_params(pauline.getLc(), nullptr);
+		linphone_call_params_set_media_encryption(new_params, encryption);
+		linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
+		ms_message("%s is entering conference %s", linphone_core_get_identity(pauline.getLc()), conference_address_str);
+		linphone_core_invite_address_with_params_2(pauline.getLc(), confAddr, new_params, nullptr, nullptr);
+		linphone_call_params_unref(new_params);
+		LinphoneCall *pauline_call = linphone_core_get_call_by_remote_address2(pauline.getLc(), confAddr);
+		BC_ASSERT_PTR_NOT_NULL(pauline_call);
+		if (pauline_call) {
+			LinphoneCallLog *call_log = linphone_call_get_call_log(pauline_call);
+			BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallOutgoingProgress, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &pauline.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneSubscriptionActive, 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyFullStateReceived, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		ms_message("%s terminates the call to conference %s", linphone_core_get_identity(pauline.getLc()),
+		           conference_address_str);
+		LinphoneConference *pauline_conference = linphone_core_search_conference_2(pauline.getLc(), confAddr);
+		BC_ASSERT_PTR_NOT_NULL(pauline_conference);
+		linphone_conference_terminate(pauline_conference);
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallReleased, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
+		                             focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
+		                             focus_stat.number_of_LinphoneCallReleased + 1, liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneSubscriptionTerminated, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateTerminationPending,
+		                             1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateTerminated, 1,
+		                             liblinphone_tester_sip_timeout));
+		// The conference doesn't go through the Deleted state as it has chat capabilities
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_search_conference_2(pauline.getLc(), confAddr));
+
+		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
+		ms_free(conference_address_str);
+		linphone_address_unref(confAddr);
+		bctbx_list_free(coresList);
+	}
+}
+
 static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
     TEST_ONE_TAG("First notify", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("SPI info", spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
@@ -1050,6 +1181,9 @@ static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[
     TEST_ONE_TAG("Create encrypted conference with chat", create_encrypted_conference_with_chat, "End2EndConf"),
     TEST_ONE_TAG("Failure in creating end-to-end encrypted conference bad server config",
                  failure_in_creating_end_to_end_encrypted_conference_bad_server_config,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple encrypted conference terminated early",
+                 create_simple_end_to_end_encrypted_conference_terminated_early,
                  "End2EndConf"),
 };
 

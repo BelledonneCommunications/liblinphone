@@ -2055,7 +2055,7 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 			lWarning()
 			    << "In an effort to ensure a satisfactory video conferencing quality, MediaSession [" << q
 			    << "] (local address " << *q->getLocalAddress() << " remote address " << *q->getRemoteAddress()
-			    << " in conference [" << conference << "] (address: " << *conference->getConferenceAddress()
+			    << ") in " << *conference
 			    << ") is not sending the thumbnail of the local participant because RTP bundle has been disabled";
 			return;
 		}
@@ -2150,14 +2150,22 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 						}
 					} else {
 						lInfo() << "Don't put " << std::string(sal_stream_type_to_string(type))
-						        << " stream for device in conference with address " << *participantDevice->getAddress()
-						        << " on local offer for CallSession [" << q << "]";
+						        << " stream for device in " << *conference << " with address "
+						        << *participantDevice->getAddress() << " on local offer for " << *q;
 						cfg.dir = SalStreamInactive;
 					}
 					PayloadTypeHandler::clearPayloadList(l);
 					newStream.addActualConfiguration(cfg);
 					newStream.setSupportedEncryptions(encs);
 					fillRtpParameters(newStream);
+				} else {
+					lWarning() << "Do not add thumbnail stream for the local participant "
+					           << *participantDevice->getAddress() << " of " << *conference << " because: ";
+					lWarning() << "- no stream has been found with content " << content << " and label " << deviceLabel
+					           << ": " << foundStreamIdx;
+					lWarning() << "- the core is an offerer and the device is not in the Joining, Present or OnHold "
+					              "state: isOfferer "
+					           << localIsOfferer << " participant device state " << Utils::toString(deviceState);
 				}
 			}
 		}
