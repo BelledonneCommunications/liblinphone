@@ -66,6 +66,10 @@ public:
 		linphone_core_manager_start(mCoreManager, check_for_proxies);
 	}
 
+	LinphoneCoreManager *getCoreManager() const {
+		return mCoreManager;
+	}
+
 	~MainDbProvider() {
 		linphone_core_manager_destroy(mCoreManager);
 	}
@@ -404,12 +408,29 @@ static void load_chatroom_conference(void) {
 	MainDbProvider provider("db/chatroom_conference.db");
 	MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
+		auto mgr = provider.getCoreManager();
+		linphone_config_set_bool(linphone_core_get_config(mgr->lc), "misc", "unify_chatroom_address", TRUE);
+		const char *chatroom_domain = "sip.example.org";
+		linphone_config_set_string(linphone_core_get_config(mgr->lc), "misc", "force_chatroom_domain", chatroom_domain);
+		const char *chatroom_gr = "459797d6-40f9-0072-a3ad-e9237e042437";
+		linphone_config_set_string(linphone_core_get_config(mgr->lc), "misc", "force_chatroom_gr", chatroom_gr);
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-		BC_ASSERT_EQUAL(chatRooms.size(), 1, size_t, "%zu");
+		BC_ASSERT_EQUAL(chatRooms.size(), 2, size_t, "%zu");
+		for (const auto &chatRoom : chatRooms) {
+			const auto &conferenceAddress = chatRoom->getConferenceAddress();
+			// Basic chatroom do not have a conference address
+			if (conferenceAddress) {
+				auto domain = conferenceAddress->getDomain();
+				BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(domain), chatroom_domain);
+				if (BC_ASSERT_TRUE(conferenceAddress->hasUriParam("gr"))) {
+					auto gr = conferenceAddress->getUriParamValue("gr");
+					BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(gr), chatroom_gr);
+				}
+			}
+		}
 
 		list<shared_ptr<ConferenceInfo>> conferenceInfos = mainDb.getConferenceInfos();
 		BC_ASSERT_EQUAL(conferenceInfos.size(), 1, size_t, "%zu");
-
 		for (const auto &conferenceInfo : conferenceInfos) {
 			const auto uri = conferenceInfo->getUri();
 			BC_ASSERT_PTR_NOT_NULL(mainDb.getConferenceInfoFromURI(uri));

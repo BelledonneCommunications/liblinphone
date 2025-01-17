@@ -6134,6 +6134,14 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 		ChatRoomWeakCompareMap chatRoomsMap;
 
 		shared_ptr<Core> core = getCore();
+		LinphoneCore *cCore = getCore()->getCCore();
+
+		bool unifyChatroomAddress =
+		    !!linphone_config_get_bool(linphone_core_get_config(cCore), "misc", "unify_chatroom_address", FALSE);
+		std::string chatroomDomain = L_C_TO_STRING(
+		    linphone_config_get_string(linphone_core_get_config(cCore), "misc", "force_chatroom_domain", ""));
+		std::string chatroomGr =
+		    L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(cCore), "misc", "force_chatroom_gr", ""));
 
 		soci::session *session = d->dbSession.getBackendSession();
 
@@ -6153,7 +6161,24 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				unreadMessageCountType = row.get_properties(12).get_data_type();
 				typeHasBeenSet = true;
 			}
-			ConferenceId conferenceId(Address(row.get<string>(1), true), Address(row.get<string>(2), true));
+			Address pAddress(row.get<string>(1), true);
+			Address oldPAddress(pAddress);
+			Address lAddress(row.get<string>(2), true);
+			bool conferenceIdChanged = false;
+			if (unifyChatroomAddress && !chatroomDomain.empty()) {
+				if (chatroomDomain.compare(pAddress.getDomain()) != 0) {
+					pAddress.setDomain(chatroomDomain);
+					conferenceIdChanged = true;
+				}
+				std::string pAddressGr;
+				if (pAddress.hasUriParam("gr")) {
+					pAddressGr = pAddress.getUriParamValue("gr");
+				}
+				if (!chatroomGr.empty() && (pAddressGr.empty() || chatroomGr.compare(pAddressGr) != 0)) {
+					pAddress.setUriParam("gr", chatroomGr);
+				}
+			}
+			ConferenceId conferenceId(std::move(pAddress), std::move(lAddress));
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
@@ -6162,6 +6187,17 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
+			if (conferenceIdChanged) {
+				// If the conference ID changed, then update the information in the database so that the next time
+				// around everything will be alright
+				auto peerAddress = conferenceId.getPeerAddress();
+				lInfo() << "Change peer address of chatroom with ID " << dbChatRoomId << " from " << oldPAddress
+				        << " to " << *peerAddress;
+				const long long &peerSipAddressId = d->insertSipAddress(peerAddress);
+				*session << "UPDATE chat_room SET peer_sip_address_id = :peerSipAddressId WHERE id = :chatRoomId",
+				    soci::use(peerSipAddressId), soci::use(dbChatRoomId);
+			}
+
 			d->cache(conferenceId, dbChatRoomId);
 			int unreadMessagesCount = 0;
 			if (unreadMessageCountType == soci::dt_string) unreadMessagesCount = std::stoi(row.get<string>(12, "0"));
