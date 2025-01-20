@@ -4866,6 +4866,9 @@ LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const c
  * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
  * @return A pointer on the freshly created conference #LinphoneConference. That object will be automatically
  * freed by the core after calling linphone_core_terminate_conference(). @maybenil
+ * @warning To guarantee the backward comatibility, this method will assign the created conference to the conference
+ * context held by the core. Nonetheless starting from release 5.4, the conference context will be override at every
+ * conference created by calling this method
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *core,
                                                                                 const LinphoneConferenceParams *params);
@@ -4972,8 +4975,10 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference_2(const Linp
  * @param core #LinphoneCore @notnil
  * @param call The current call with the participant to add @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 23/01/2025 Use linphone_conference_add_participant() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_core_add_to_conference(LinphoneCore *core, LinphoneCall *call);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_add_to_conference(LinphoneCore *core,
+                                                                                   LinphoneCall *call);
 
 /**
  * Adds all calls into the conference. If no conference is running
@@ -4982,8 +4987,9 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_add_to_conference(LinphoneCore *cor
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
  * @warning This function guarantees that the local endpoint is added to the conference.
+ * @deprecated 23/01/2025 Use linphone_conference_invite_participants() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore *core);
 
 /**
  * Removes a call from the conference.
@@ -4999,8 +5005,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore 
  *conference is automatically put in a simple call in running state.
  *
  * @return 0 if successful, -1 otherwise.
+ * @deprecated 23/01/2025 Use linphone_conference_remove_participant_2() instead.
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_core_remove_from_conference(LinphoneCore *core, LinphoneCall *call);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_remove_from_conference(LinphoneCore *core,
+                                                                                        LinphoneCall *call);
 
 /**
  * Indicates whether the local participant is part of a conference.
@@ -5011,7 +5019,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_remove_from_conference(LinphoneCore
  * @return TRUE if the local participant is in a conference, FALSE otherwise.
  * @deprecated 09/03/2021 Use linphone_conference_is_in() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
 
 /**
  * Joins the local participant to the running conference
@@ -5019,7 +5027,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
  * @return 0 if succeeded. Negative number if failed
  * @deprecated 09/03/2021 Use linphone_conference_enter() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core);
 
 /**
  * Makes the local participant leave the running conference
@@ -5027,14 +5035,15 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core
  * @return 0 if succeeded. Negative number if failed
  * @deprecated 09/03/2021 Use linphone_conference_leave() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_core_leave_conference(LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_leave_conference(LinphoneCore *core);
 
 /**
  * Returns the input volume of the local participant
  * @param core #LinphoneCore
  * @return A value inside [0.0 ; 1.0]
+ * @deprecated 23/01/2025 Use linphone_conference_get_input_volume() instead.
  */
-LINPHONE_PUBLIC float linphone_core_get_conference_local_input_volume(LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC float linphone_core_get_conference_local_input_volume(LinphoneCore *core);
 
 /**
  * Terminates the running conference. If it is a local conference, all calls
@@ -5043,8 +5052,9 @@ LINPHONE_PUBLIC float linphone_core_get_conference_local_input_volume(LinphoneCo
  * will be terminated.
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 23/01/2025 Use linphone_conference_terminate() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_core_terminate_conference(LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_terminate_conference(LinphoneCore *core);
 
 /**
  * Creates some default conference parameters for instanciating a conference with

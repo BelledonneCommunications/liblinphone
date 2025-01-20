@@ -10460,6 +10460,27 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		// wait a bit more to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
 
+		// marie creates the conference
+		LinphoneConferenceParams *conf_params2 = linphone_core_create_conference_params_2(marie.getLc(), NULL);
+		linphone_conference_params_enable_audio(conf_params2, TRUE);
+		linphone_conference_params_enable_video(conf_params2, toggle_video);
+		const char *initialSubject2 = "This is an error";
+		linphone_conference_params_set_subject(conf_params2, initialSubject2);
+		LinphoneConference *conf2 = linphone_core_create_conference_with_params(marie.getLc(), conf_params2);
+		linphone_conference_params_unref(conf_params2);
+		BC_ASSERT_PTR_NOT_NULL(conf2);
+		if (conf2) {
+			linphone_conference_terminate(conf2);
+			BC_ASSERT_TRUE(wait_for_list(coresList,
+			                             &marie.getStats().number_of_LinphoneConferenceStateTerminationPending, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateTerminated, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateDeleted, 1,
+			                             liblinphone_tester_sip_timeout));
+			linphone_conference_unref(conf2);
+		}
+
 		participant_stats.clear();
 		for (auto mgr : members) {
 			participant_stats.push_back(mgr->stat);
@@ -10909,12 +10930,13 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		    wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased, total_focus_calls, 40000));
 
 		for (auto mgr : conferenceMgrs) {
+			int nb_conferences = (mgr == marie.getCMgr()) ? 2 : 1;
 			// Wait for all conferences to be terminated
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminationPending, 1,
-			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminated, 1,
-			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, 1,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminationPending,
+			                             nb_conferences, liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminated,
+			                             nb_conferences, liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, nb_conferences,
 			                             liblinphone_tester_sip_timeout));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionTerminated,

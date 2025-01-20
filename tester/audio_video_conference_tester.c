@@ -12696,10 +12696,14 @@ static void try_to_create_second_conference_with_local_participant(void) {
 	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(new_maries_conference_params));
 	LinphoneConference *new_maries_conference =
 	    linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
-	BC_ASSERT_PTR_NULL(new_maries_conference);
+	// As a side effect of changes made to method linphone_core_create_conference_with_params, it is now possible to
+	// have multiple conference created by the core
+	BC_ASSERT_PTR_NOT_NULL(new_maries_conference);
 	linphone_conference_params_unref(new_maries_conference_params);
+	linphone_conference_terminate(new_maries_conference);
+	linphone_conference_unref(new_maries_conference);
 
-	linphone_core_terminate_conference(marie->lc);
+	linphone_conference_terminate(conference);
 
 	int idx = 0;
 	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
@@ -12758,12 +12762,12 @@ static void try_to_create_second_conference_with_local_participant(void) {
 		idx++;
 	}
 
-	// Verify that a second conference is not created
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, int, "%d");
+	// Verify that a second conference is created
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminated, 1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateDeleted, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminated, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateDeleted, 2, int, "%d");
 
 	ms_free(lcm_stats);
 

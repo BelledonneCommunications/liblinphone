@@ -2237,6 +2237,7 @@ int ClientConference::terminate() {
 		} else if (mState != ConferenceInterface::State::Deleted) {
 			setState(ConferenceInterface::State::TerminationPending);
 			if (!sessionCall) {
+				setState(ConferenceInterface::State::Terminated);
 				setState(ConferenceInterface::State::Deleted);
 			}
 		}
