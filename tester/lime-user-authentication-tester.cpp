@@ -463,9 +463,8 @@ static void Digest_Auth_multiservers(void) {
 	}
 }
 
-const char *wrong_lime_server = "https://lime.wildcard8.linphone.org:8443/lime-server/lime-server.php";
-
-static void invalid_lime_server_in_account_curve(const LinphoneTesterLimeAlgo curveId) {
+static void invalid_lime_server_in_account_curve(const LinphoneTesterLimeAlgo curveId,
+                                                 const std::string &wrongLimeServerUrl) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	linphone_core_manager_skip_lime_user_creation_asserts(marie, TRUE);
 	bctbx_list_t *coresManagerList = NULL;
@@ -476,7 +475,7 @@ static void invalid_lime_server_in_account_curve(const LinphoneTesterLimeAlgo cu
 	if (marie_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(marie_account));
 		linphone_account_params_set_lime_algo(params, limeAlgoEnum2String(curveId));
-		linphone_account_params_set_lime_server_url(params, wrong_lime_server);
+		linphone_account_params_set_lime_server_url(params, wrongLimeServerUrl.c_str());
 		linphone_account_set_params(marie_account, params);
 		linphone_account_params_unref(params);
 	}
@@ -485,7 +484,7 @@ static void invalid_lime_server_in_account_curve(const LinphoneTesterLimeAlgo cu
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 
-	// Wait for lime users to be created on X3DH server, but only for Marie & Pauline
+	// Wait for lime user to be created on X3DH server: it shall fail
 	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
 	                              initialStats.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationFailure,
@@ -498,12 +497,22 @@ static void invalid_lime_server_in_account_curve(const LinphoneTesterLimeAlgo cu
 }
 
 static void invalid_lime_server_in_account(void) {
-	invalid_lime_server_in_account_curve(C25519);
-	invalid_lime_server_in_account_curve(C448);
+	// Server does not exists - unreachable
+	const std::string wrongLimeServer = "https://lime.wildcard8.linphone.org:8443/lime-server/lime-server.php";
+	// URL is not valid
+	const std::string unparsableLimeServer = "ThisIsNotAnURL";
+
+	invalid_lime_server_in_account_curve(C25519, wrongLimeServer);
+	invalid_lime_server_in_account_curve(C448, wrongLimeServer);
+	invalid_lime_server_in_account_curve(C25519, unparsableLimeServer);
+	invalid_lime_server_in_account_curve(C448, unparsableLimeServer);
 	if (liblinphone_tester_is_lime_PQ_available()) {
-		invalid_lime_server_in_account_curve(C25519K512);
-		invalid_lime_server_in_account_curve(C25519MLK512);
-		invalid_lime_server_in_account_curve(C448MLK1024);
+		invalid_lime_server_in_account_curve(C25519K512, wrongLimeServer);
+		invalid_lime_server_in_account_curve(C25519MLK512, wrongLimeServer);
+		invalid_lime_server_in_account_curve(C448MLK1024, wrongLimeServer);
+		invalid_lime_server_in_account_curve(C25519K512, unparsableLimeServer);
+		invalid_lime_server_in_account_curve(C25519MLK512, unparsableLimeServer);
+		invalid_lime_server_in_account_curve(C448MLK1024, unparsableLimeServer);
 	}
 }
 

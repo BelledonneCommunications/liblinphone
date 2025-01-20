@@ -34,20 +34,12 @@ LINPHONE_BEGIN_NAMESPACE
 class LimeManager : public lime::LimeManager {
 public:
 	LimeManager(const std::string &db_access,
-	            belle_http_provider_t *prov,
 	            std::shared_ptr<Core> core); // LinphoneCore *lc
-
-private:
-	static void processIoError(void *data, const belle_sip_io_error_event_t *event) noexcept;
-	static void processResponse(void *data, const belle_http_response_event_t *event) noexcept;
-	static void processAuthRequested(void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
 class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
 public:
-	LimeX3dhEncryptionEngine(const std::string &db_access,
-	                         belle_http_provider_t *prov,
-	                         const std::shared_ptr<Core> core);
+	LimeX3dhEncryptionEngine(const std::string &db_access, const std::shared_ptr<Core> core);
 
 	~LimeX3dhEncryptionEngine();
 

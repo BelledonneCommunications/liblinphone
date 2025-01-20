@@ -43,6 +43,7 @@
 #include "core/core.h"
 #include "event-log/conference/conference-security-event.h"
 #include "factory/factory.h"
+#include "http/http-client.h"
 #include "lime-x3dh-encryption-engine.h"
 #include "private.h"
 #include "sqlite3_bctbx_vfs.h"
@@ -86,110 +87,44 @@ std::vector<lime::CurveId> parseBaseAlgo(const std::string &csv) {
 	}
 	return algos;
 }
-} // namespace
+} // anonymous namespace
 
-struct X3dhServerPostContext {
-	const lime::limeX3DHServerResponseProcess responseProcess;
-	const string username;
-	shared_ptr<Core> core;
-	X3dhServerPostContext(const lime::limeX3DHServerResponseProcess &response,
-	                      const string &username,
-	                      shared_ptr<Core> core)
-	    : responseProcess(response), username{username}, core{core} {};
-};
-
-void LimeManager::processIoError(void *data, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) noexcept {
-	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
-	try {
-		(userData->responseProcess)(0, vector<uint8_t>{});
-	} catch (const exception &e) {
-		lError() << "Processing IoError on lime server request triggered an exception: " << e.what();
-	}
-	delete (userData);
+LimeManager::LimeManager(const string &dbAccess, shared_ptr<Core> core)
+    : lime::LimeManager(dbAccess,
+                        [core](const string &url,
+                               const string &from,
+                               vector<uint8_t> &&message,
+                               const lime::limeX3DHServerResponseProcess &responseProcess) {
+	                        HttpClient &httpClient = core->getHttpClient();
+	                        HttpRequest &request = httpClient.createRequest("POST", url).addHeader("From", from);
+	                        request.setBody(Content(ContentType("x3dh/octet-stream"), std::move(message)));
+	                        request.execute([responseProcess](const HttpResponse &resp) {
+		                        switch (resp.getStatus()) {
+			                        case HttpResponse::Status::Valid:
+				                        try {
+					                        (responseProcess(resp.getHttpStatusCode(), resp.getBody().getBody()));
+				                        } catch (const exception &e) {
+					                        lError() << "Processing lime server response triggered an exception: "
+					                                 << e.what();
+				                        }
+				                        break;
+			                        case HttpResponse::Status::InvalidRequest:
+			                        case HttpResponse::Status::IOError:
+			                        case HttpResponse::Status::Timeout:
+				                        try {
+					                        (responseProcess)(0, vector<uint8_t>{});
+				                        } catch (const exception &e) {
+					                        lError() << "Processing communication error response with lime server "
+					                                    "request triggered an exception: "
+					                                 << e.what();
+				                        }
+				                        break;
+		                        }
+	                        });
+                        }) {
 }
 
-void LimeManager::processResponse(void *data, const belle_http_response_event_t *event) noexcept {
-	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
-
-	if (event->response) {
-		auto code = belle_http_response_get_status_code(event->response);
-		belle_sip_message_t *message = BELLE_SIP_MESSAGE(event->response);
-		auto body = reinterpret_cast<const uint8_t *>(belle_sip_message_get_body(message));
-		auto bodySize = belle_sip_message_get_body_size(message);
-		try { // the response processing might generate an exception, make sure it will not flow up to belle-sip
-			  // otherwise it will cause an abort
-			(userData->responseProcess)(code, vector<uint8_t>{body, body + bodySize});
-		} catch (const exception &e) {
-			lError() << "Processing lime server response triggered an exception: " << e.what();
-		}
-	} else {
-		try {
-			(userData->responseProcess)(0, vector<uint8_t>{});
-		} catch (const exception &e) {
-			lError() << "Processing empty response event on lime server request triggered an exception: " << e.what();
-		}
-	}
-	delete (userData);
-}
-
-void LimeManager::processAuthRequested(void *data, belle_sip_auth_event_t *event) noexcept {
-	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
-	shared_ptr<Core> core = userData->core;
-
-	/* extract username and domain from the GRUU stored in userData->username */
-	auto address = Address::create(userData->username);
-	/* we are not using a From field in the request so our event username and domain is empty,
-	 * load it with the ones stored in userData */
-	belle_sip_auth_event_set_username(event, address->getUsername().c_str());
-	belle_sip_auth_event_set_domain(event, address->getDomain().c_str());
-
-	/* Notes: when registering on the Lime server, the user is already registered on the flexisip server
-	 * the requested auth info shall thus be present in linphone core (except if registering methods are differents on
-	 * flexisip and lime server - very unlikely) This request will thus not use the auth requested callback to get the
-	 * information
-	 * - Stored auth information in linphone core are indexed by username/domain */
-	linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, address->getUsername().data(),
-	                                        address->getDomain().data());
-}
-
-LimeManager::LimeManager(const string &dbAccess, belle_http_provider_t *prov, shared_ptr<Core> core)
-    : lime::LimeManager(
-          dbAccess,
-          [prov, core](const string &url,
-                       const string &from,
-                       const vector<uint8_t> &message,
-                       const lime::limeX3DHServerResponseProcess &responseProcess) {
-	          belle_http_request_listener_callbacks_t cbs = {};
-	          belle_http_request_listener_t *l;
-	          belle_generic_uri_t *uri;
-	          belle_http_request_t *req;
-	          belle_sip_memory_body_handler_t *bh;
-
-	          stringstream userAgent;
-	          userAgent << "Linphone/" << linphone_core_get_version() << " (Lime)"
-	                    << " Belle-sip/" << belle_sip_version_to_string();
-
-	          bh = belle_sip_memory_body_handler_new_copy_from_buffer(message.data(), message.size(), NULL, NULL);
-	          uri = belle_generic_uri_parse(url.data());
-	          req = belle_http_request_create("POST", uri,
-	                                          belle_http_header_create("User-Agent", userAgent.str().c_str()),
-	                                          belle_http_header_create("Content-type", "x3dh/octet-stream"),
-	                                          belle_http_header_create("From", from.data()), NULL);
-
-	          belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req), BELLE_SIP_BODY_HANDLER(bh));
-	          cbs.process_response = processResponse;
-	          cbs.process_io_error = processIoError;
-	          cbs.process_auth_requested = processAuthRequested;
-	          X3dhServerPostContext *userData = new X3dhServerPostContext(responseProcess, from, core);
-	          l = belle_http_request_listener_create_from_callbacks(&cbs, userData);
-	          belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "http_request_listener", l, belle_sip_object_unref);
-	          belle_http_provider_send_request(prov, req, l);
-          }) {
-}
-
-LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
-                                                   belle_http_provider_t *prov,
-                                                   const shared_ptr<Core> core)
+LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess, const shared_ptr<Core> core)
     : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
 	// Default curve core config is c25519 - keep it for retrocompatibility
@@ -205,7 +140,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
 	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
 	try {
-		limeManager = std::make_shared<LimeManager>(dbAccessWithParam, prov, core);
+		limeManager = std::make_shared<LimeManager>(dbAccessWithParam, core);
 	} catch (const BctbxException &e) {
 		lInfo() << "[LIME] exception at Encryption engine instanciation" << e.what();
 	}
@@ -1354,7 +1289,11 @@ void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, cons
 			linphone_core_notify_imee_user_registration(lc, TRUE, gruu.data(), info.data());
 		}
 	} catch (const exception &e) {
-		lError() << "[LIME] user for id [" << gruu << "] cannot be created" << e.what();
+		LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
+		lError() << "[LIME] user for id [" << gruu << "] cannot be created: " << e.what();
+		account->setLimeUserAccountStatus(LimeUserAccountStatus::LimeUserAccountCreationSkiped);
+		linphone_core_notify_imee_user_registration(lc, false, gruu.data(), NULL);
+		return;
 	}
 }
 

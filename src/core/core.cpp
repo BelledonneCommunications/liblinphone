@@ -956,7 +956,6 @@ void Core::enableLimeX3dh(bool enable) {
 			}
 			string dbAccess = getX3dhDbPath();
 			lInfo() << "Using [" << dbAccess << "] as lime database path";
-			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 			/* Both Lime and MainDb use soci as database engine.
 			 * However, the initialisation of backends must be done manually on platforms where soci is statically
 			 * linked. Lime does not do it. Doing it twice is risky - soci unloads the previously loaded backend. A
@@ -964,7 +963,7 @@ void Core::enableLimeX3dh(bool enable) {
 			 * AbstractChatRoom::registerBackend() will do the job only once.
 			 */
 			AbstractDb::registerBackend(AbstractDb::Sqlite3);
-			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, prov, getSharedFromThis());
+			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, getSharedFromThis());
 			setEncryptionEngine(engine);
 			d->registerListener(engine);
 			if (!hasSpec(Core::limeSpec)) {
