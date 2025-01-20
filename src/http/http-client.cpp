@@ -117,7 +117,7 @@ HttpRequest::HttpRequest(HttpClient &client, const std::string &method, const st
 
 HttpRequest &HttpRequest::addHeader(const std::string &headerName, const std::string &headerValue) {
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(mRequest),
-	                             belle_sip_header_create(headerName.c_str(), L_STRING_TO_C(headerValue)));
+	                             belle_http_header_create(headerName.c_str(), L_STRING_TO_C(headerValue)));
 	return *this;
 }
 
