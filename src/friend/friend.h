@@ -190,16 +190,16 @@ private:
 	static LinphoneSecurityLevel getSecurityLevelFromChatRoomSecurityLevel(AbstractChatRoom::SecurityLevel level);
 	static LinphoneSecurityLevel getSecurityLevelForDevices(const std::list<std::shared_ptr<FriendDevice>> &devices);
 
-	LinphoneSubscribePolicy mSubscribePolicy = LinphoneSPAccept;
+	LinphoneSubscribePolicy mSubscribePolicy = LinphoneSPDeny;
 	LinphoneSubscriptionState mOutSubState;
-	bool mSubscribe = true;
+	bool mSubscribe = false;
 	bool mSubscribeActive = false;
 	bool mIsStarred = false;
 	bool mCommit = false;
 	bool mIncSubscribePending = false;
 	bool mPresenceReceived = false;
 	bool mInitialSubscribesSent = false; /* Used to know if initial subscribe message was sent or not. */
-	std::shared_ptr<Address> mUri = nullptr;
+	std::shared_ptr<Address> mUri;
 	std::string mNativeUri;
 	std::string mRefKey;
 	long long mStorageId = -1;
@@ -213,7 +213,7 @@ private:
 	mutable std::map<std::string, std::string> mSipUriToPhoneNumberMap;
 
 	BuddyInfo *mInfo = nullptr;
-	std::shared_ptr<Vcard> mVcard = nullptr;
+	std::shared_ptr<Vcard> mVcard;
 	FriendList *mFriendList = nullptr;
 
 	mutable ListHolder<Address> mAddresses;

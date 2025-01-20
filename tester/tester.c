@@ -108,7 +108,7 @@ const char *flexisip_tester_dns_server = "fs-test-9.linphone.org";
 // const char *flexisip_tester_dns_server = "fs-test-sandbox-2.linphone.org";
 
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
-const char *ccmp_server_url = "http://fs-test-9.linphone.org:3333/xml/";
+const char *ccmp_server_url = "http://sip.example.org:3333/xml/";
 const char *test_domain = "sipopen.example.org";
 const char *auth_domain = "sip.example.org";
 const char *test_username = "liblinphone_tester";
@@ -3565,7 +3565,7 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 		ms_message("Disabling subscription because friend has numeric host.");
 		linphone_friend_enable_subscribes(lf, FALSE);
 		bctbx_freeaddrinfo(ai);
-	}
+	} else linphone_friend_enable_subscribes(lf, TRUE);
 
 	linphone_core_add_friend(lc, lf); /*accept subscription*/
 }

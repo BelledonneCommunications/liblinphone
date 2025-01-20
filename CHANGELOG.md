@@ -53,6 +53,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - internal refactoring of C code into C++.
 - AccountCreator object is deprecated (use LinphoneAccountManagerServices as a replacement)
 - Allow LinphoneCoreCbs' s authentication_requested() callack to be invoked during remote provisioning.
+- Disable peer to peer presence by default (linphone_friend_subscribes_enabled() is FALSE, and linphone_friend_get_inc_subscribe_policy() returns LinphoneSPDeny).
 
 ### Fixed
 - Added _utf8() getter and setters for subject of conference and chatrooms.

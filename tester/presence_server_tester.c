@@ -320,6 +320,7 @@ static void subscribe_with_late_publish(void) {
 	pauline_lp = linphone_core_get_config(pauline->lc);
 	lf_identity = linphone_address_as_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc, lf_identity);
+	linphone_friend_enable_subscribes(lf, TRUE);
 	bctbx_free(lf_identity);
 
 	linphone_config_set_int(pauline_lp, "sip", "subscribe_expires", 10);
@@ -393,7 +394,6 @@ static void subscribe_with_late_publish(void) {
 }
 
 static void test_forked_subscribe_notify_publish(void) {
-
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *marie2 = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
@@ -417,7 +417,7 @@ static void test_forked_subscribe_notify_publish(void) {
 	bctbx_free(lf_identity);
 
 	linphone_config_set_int(pauline_lp, "sip", "subscribe_expires", 5);
-
+	linphone_friend_enable_subscribes(lf, TRUE);
 	linphone_core_add_friend(pauline->lc, lf);
 
 	/*wait for subscribe acknowledgment*/
@@ -1798,6 +1798,7 @@ static void publish_with_network_state_changes(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneFriend *marie_as_friend = linphone_core_create_friend_with_address(pauline->lc, get_identity(marie));
+	linphone_friend_enable_subscribes(marie_as_friend, TRUE);
 
 	LinphoneProxyConfig *proxy;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
