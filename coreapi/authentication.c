@@ -549,6 +549,8 @@ AuthStatus linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				//  - call again _linphone_core_find_indexed_tls_auth_info to retrieve the auth_info set by the
 				//  callback. Not done as we assume that authentication on flexisip server was performed before so the
 				//  application layer already got a chance to set the correct auth_info in the core
+				//  THIS IS NOT TRUE ANYMORE: Flexisip auth is performed after the access to the lime server as the
+				//  register is performed after the lime user creation.
 			}
 			status =
 			    AuthStatus::Done; // since we can't know if server requested a client certificate, assume all is good.

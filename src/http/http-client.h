@@ -85,6 +85,7 @@ public:
 	/* Execute the request, ie send it and upon response execute the responseHandler lambda.*/
 	void execute(const ResponseHandler &responseHandler);
 	void cancel();
+	void setAuthInfo(const std::string &username, const std::string &domain);
 
 private:
 	void abortAuthentication();
@@ -107,6 +108,8 @@ private:
 	belle_http_request_t *mRequest;
 	belle_http_request_listener_t *mListener = nullptr;
 	bool mAuthPending = false;
+	std::string mAuthUsername;
+	std::string mAuthDomain;
 };
 
 class LINPHONE_PUBLIC HttpClient : public CoreAccessor {

@@ -96,7 +96,16 @@ LimeManager::LimeManager(const string &dbAccess, shared_ptr<Core> core)
                                vector<uint8_t> &&message,
                                const lime::limeX3DHServerResponseProcess &responseProcess) {
 	                        HttpClient &httpClient = core->getHttpClient();
-	                        HttpRequest &request = httpClient.createRequest("POST", url).addHeader("From", from);
+	                        HttpRequest &request = httpClient.createRequest("POST", url);
+	                        request.addHeader("From", from);
+	                        // We should not use "From" header but X-Lime-user-identity, switch to it when
+	                        // lime-server 1.2.1(released 2024/05) or above is massively deployed
+	                        // request.addHeader("X-Lime-user-identity", from);
+
+	                        /* extract username and domain from the GRUU given in from parameter */
+	                        auto address = Address::create(from);
+	                        request.setAuthInfo(address->getUsername(), address->getDomain());
+
 	                        request.setBody(Content(ContentType("x3dh/octet-stream"), std::move(message)));
 	                        request.execute([responseProcess](const HttpResponse &resp) {
 		                        switch (resp.getStatus()) {
