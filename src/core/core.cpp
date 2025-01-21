@@ -964,10 +964,14 @@ void Core::enableLimeX3dh(bool enable) {
 			 */
 			AbstractDb::registerBackend(AbstractDb::Sqlite3);
 			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, getSharedFromThis());
-			setEncryptionEngine(engine);
-			d->registerListener(engine);
-			if (!hasSpec(Core::limeSpec)) {
-				addSpec(Core::limeSpec);
+			if (engine->getEngineType() == EncryptionEngine::EngineType::LimeX3dh) {
+				setEncryptionEngine(engine);
+				d->registerListener(engine);
+				if (!hasSpec(Core::limeSpec)) {
+					addSpec(Core::limeSpec);
+				}
+			} else { // LimeX3DHEncryptionEngine creation failed
+				delete engine;
 			}
 #else
 			lWarning() << "Lime X3DH support is not available";

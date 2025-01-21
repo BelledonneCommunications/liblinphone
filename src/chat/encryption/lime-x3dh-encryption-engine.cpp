@@ -89,50 +89,6 @@ std::vector<lime::CurveId> parseBaseAlgo(const std::string &csv) {
 }
 } // anonymous namespace
 
-LimeManager::LimeManager(const string &dbAccess, shared_ptr<Core> core)
-    : lime::LimeManager(dbAccess,
-                        [core](const string &url,
-                               const string &from,
-                               vector<uint8_t> &&message,
-                               const lime::limeX3DHServerResponseProcess &responseProcess) {
-	                        HttpClient &httpClient = core->getHttpClient();
-	                        HttpRequest &request = httpClient.createRequest("POST", url);
-	                        request.addHeader("From", from);
-	                        // We should not use "From" header but X-Lime-user-identity, switch to it when
-	                        // lime-server 1.2.1(released 2024/05) or above is massively deployed
-	                        // request.addHeader("X-Lime-user-identity", from);
-
-	                        /* extract username and domain from the GRUU given in from parameter */
-	                        auto address = Address::create(from);
-	                        request.setAuthInfo(address->getUsername(), address->getDomain());
-
-	                        request.setBody(Content(ContentType("x3dh/octet-stream"), std::move(message)));
-	                        request.execute([responseProcess](const HttpResponse &resp) {
-		                        switch (resp.getStatus()) {
-			                        case HttpResponse::Status::Valid:
-				                        try {
-					                        (responseProcess(resp.getHttpStatusCode(), resp.getBody().getBody()));
-				                        } catch (const exception &e) {
-					                        lError() << "Processing lime server response triggered an exception: "
-					                                 << e.what();
-				                        }
-				                        break;
-			                        case HttpResponse::Status::InvalidRequest:
-			                        case HttpResponse::Status::IOError:
-			                        case HttpResponse::Status::Timeout:
-				                        try {
-					                        (responseProcess)(0, vector<uint8_t>{});
-				                        } catch (const exception &e) {
-					                        lError() << "Processing communication error response with lime server "
-					                                    "request triggered an exception: "
-					                                 << e.what();
-				                        }
-				                        break;
-		                        }
-	                        });
-                        }) {
-}
-
 LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess, const shared_ptr<Core> core)
     : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
@@ -145,13 +101,50 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess, 
 	coreCurve = lime::string2CurveId(curveConfig);
 	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is ["
 	        << core->getX3dhServerUrl() << "] and default curve [" << curveConfig << "] DB path: " << dbAccess;
-	_dbAccess = dbAccess;
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
 	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
 	try {
-		limeManager = std::make_shared<LimeManager>(dbAccessWithParam, core);
+		limeManager = std::make_shared<lime::LimeManager>(
+		    dbAccessWithParam, [core](const string &url, const string &from, vector<uint8_t> &&message,
+		                              const lime::limeX3DHServerResponseProcess &responseProcess) {
+			    HttpClient &httpClient = core->getHttpClient();
+			    HttpRequest &request = httpClient.createRequest("POST", url);
+			    request.addHeader("From", from);
+			    // We should not use "From" header but X-Lime-user-identity, switch to it when
+			    // lime-server 1.2.1(released 2024/05) or above is massively deployed
+			    // request.addHeader("X-Lime-user-identity", from);
+
+			    /* extract username and domain from the GRUU given in from parameter */
+			    auto address = Address::create(from);
+			    request.setAuthInfo(address->getUsername(), address->getDomain());
+
+			    request.setBody(Content(ContentType("x3dh/octet-stream"), std::move(message)));
+			    request.execute([responseProcess](const HttpResponse &resp) {
+				    switch (resp.getStatus()) {
+					    case HttpResponse::Status::Valid:
+						    try {
+							    (responseProcess(resp.getHttpStatusCode(), resp.getBody().getBody()));
+						    } catch (const exception &e) {
+							    lError() << "Processing lime server response triggered an exception: " << e.what();
+						    }
+						    break;
+					    case HttpResponse::Status::InvalidRequest:
+					    case HttpResponse::Status::IOError:
+					    case HttpResponse::Status::Timeout:
+						    try {
+							    (responseProcess)(0, vector<uint8_t>{});
+						    } catch (const exception &e) {
+							    lError() << "Processing communication error response with lime server "
+							                "request triggered an exception: "
+							             << e.what();
+						    }
+						    break;
+				    }
+			    });
+		    });
 	} catch (const BctbxException &e) {
 		lInfo() << "[LIME] exception at Encryption engine instanciation" << e.what();
+		engineType = EncryptionEngine::EngineType::Undefined;
 	}
 }
 
@@ -1119,14 +1112,6 @@ LimeX3dhEncryptionEngine::onDeviceAdded(const std::shared_ptr<Address> &newDevic
 		}
 	}
 	return securityEvent;
-}
-
-void LimeX3dhEncryptionEngine::cleanDb() {
-	remove(_dbAccess.c_str());
-}
-
-std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager() {
-	return limeManager;
 }
 
 void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, const std::string peerDeviceId) {

@@ -21,6 +21,7 @@
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "private.h"
+#include <bctoolbox/vfs.h>
 
 using namespace std;
 
@@ -76,9 +77,57 @@ static void db_access_store_db_in_memory_test(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+/**
+ * Scenario:
+ * - create a lime user
+ * - stop the manager and corrupt the db so it cannot be opened by sqlite3
+ * - restart the manager -> the imee should not be created
+ */
+static void corrupted_db(void) {
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	set_lime_server_and_curve_list(C25519, coresManagerList);
+	stats initialPaulineStats = pauline->stat;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime user creation
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess,
+	                             initialPaulineStats.number_of_X3dhUserCreationSuccess + 1,
+	                             x3dhServer_creationTimeout));
+	// Check imee is not null
+	BC_ASSERT_PTR_NOT_NULL(L_GET_CPP_PTR_FROM_C_OBJECT(pauline->lc)->getEncryptionEngine());
+
+	// Restart Pauline core, so the encryption engine is stopped and started and looses his cache
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	coresList = bctbx_list_remove(coresList, pauline->lc);
+	// Corrupt Pauline database so it is not a valid sqlite3 file anymore
+	bctbx_vfs_file_t *dbFile = bctbx_file_open2(bctbx_vfs_get_default(), pauline->lime_database_path, O_RDWR);
+	const uint8_t buf[16] = {0};
+	bctbx_file_write2(dbFile, buf, 16);
+	bctbx_file_close(dbFile);
+
+	linphone_core_manager_reinit(pauline);
+	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
+	set_lime_server_and_curve_list(C25519, tmpCoresManagerList);
+	bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(tmpCoresManagerList);
+	coresList = bctbx_list_concat(coresList, tmpCoresList);
+	linphone_core_manager_start(pauline, TRUE);
+	wait_for_list(coresList, 0, 1, 2000); // Make sure Pauline's core restart is all done
+	// Check imee is null
+	BC_ASSERT_PTR_NULL(L_GET_CPP_PTR_FROM_C_OBJECT(pauline->lc)->getEncryptionEngine());
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t lime_db_tests[] = {
     TEST_NO_TAG("Data base access", db_access_test),
     TEST_NO_TAG("Data base access : Store BD in memory", db_access_store_db_in_memory_test),
+    TEST_ONE_TAG("Corrupted db", corrupted_db, "LimeX3DH"),
 };
 
 test_suite_t lime_db_test_suite = {"Lime data bases",
