@@ -239,9 +239,8 @@ void MediaSessionPrivate::accepted() {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::Connected:
-			if (q->getCore()->getCCore()->sip_conf.sdp_200_ack || q->getCore()->getCCore()->sal->mediaDisabled()) {
-				if (!q->getCore()->getCCore()->sal->mediaDisabled())
-					lInfo() << "Initializing local media description according to remote offer in 200Ok";
+			if (q->getCore()->getCCore()->sip_conf.sdp_200_ack && !q->getCore()->getCCore()->sal->mediaDisabled()) {
+				lInfo() << "Initializing local media description according to remote offer in 200Ok";
 				if (!localIsOfferer) {
 					// We were waiting for an incoming offer. Now prepare the local media description according to
 					// remote offer.
@@ -272,7 +271,7 @@ void MediaSessionPrivate::accepted() {
 	/* Reset the internal call update flag, so it doesn't risk to be copied and used in further re-INVITEs */
 	getParams()->getPrivate()->setInternalCallUpdate(false);
 	std::shared_ptr<SalMediaDescription> lmd = op->getLocalMediaDescription();
-	if (lmd) {
+	if (lmd || q->getCore()->getCCore()->sal->mediaDisabled()) {
 		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 		std::shared_ptr<SalMediaDescription> cmd = op->getFinalMediaDescription();
 		std::shared_ptr<SalMediaDescription> md = cmd;
@@ -316,7 +315,7 @@ void MediaSessionPrivate::accepted() {
 						// support some clients who accept to stop the streams by setting the RTP port to 0 If the call
 						// is part of a conference, then it shouldn't be paused if it is just trying to update the
 						// conference
-						if (isPausedByRemoteAllowed() && !localDesc->hasDir(SalStreamInactive) &&
+						if (isPausedByRemoteAllowed() && localDesc && !localDesc->hasDir(SalStreamInactive) &&
 						    (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 							nextState = CallSession::State::PausedByRemote;
 							nextStateMsg = "Call paused by remote";
@@ -4544,9 +4543,15 @@ bool MediaSession::initiateOutgoing(const string &subject, const std::shared_ptr
 	bool defer = CallSession::initiateOutgoing(subject, content);
 
 	if (!d->op) d->createOp();
-	if (!(getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled())) {
+
+	if (d->op->getSal()->mediaDisabled()) {
+		// Set localIsOfferer here, as it is normally done by makeLocalMediaDescription.
+		// But without media we do not call it.
+		d->localIsOfferer = true;
+		lInfo() << *this << ": Setting us as local offerer as the core is configured with media disabled";
+	} else if (!getCore()->getCCore()->sip_conf.sdp_200_ack) {
 		d->makeLocalMediaDescription(true, isCapabilityNegotiationEnabled(), false);
-		lInfo() << "Created local media description.";
+		lInfo() << *this << ": Created local media description";
 	}
 
 	if (d->natPolicy && d->natPolicy->iceEnabled()) {
@@ -4676,7 +4681,7 @@ LinphoneStatus MediaSession::resume() {
 
 			const auto res = d->op->update(subject.c_str(), false);
 
-			if (getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled()) {
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack && !d->op->getSal()->mediaDisabled()) {
 				/* We are NOT offering, set local media description after sending the call so that we are ready to
 				 * process the remote offer when it will arrive. */
 				d->op->setLocalMediaDescription(d->localDesc);
@@ -4990,11 +4995,12 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		bool addCapabilityNegotiationAttributesToLocalMd =
 		    isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
-		bool isOfferer = isCapabilityNegotiationUpdate ||
-		                 !(getCore()->getCCore()->sip_conf.sdp_200_ack || d->op->getSal()->mediaDisabled());
+		bool isOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack ||
+		                 d->op->getSal()->mediaDisabled();
 		d->localIsOfferer = isOfferer;
-		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd,
-		                             isCapabilityNegotiationReInvite);
+		if (!d->op->getSal()->mediaDisabled())
+			d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd,
+			                             isCapabilityNegotiationReInvite);
 		const auto &localDesc = d->localDesc;
 		const auto &contentList = msp->getCustomContents();
 
@@ -5014,14 +5020,20 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 				d->state = newState;
 			}
 
-			// We may running this code after ICE candidates have been gathered or ICE released task completed,
-			// therefore the local description must be updated to include ICE candidates for every stream
-			const auto currentLocalDesc = d->localDesc;
-			d->localDesc = localDesc;
-			d->updateLocalMediaDescriptionFromIce(isOfferer);
 			const auto &mediaDisabled = d->op->getSal()->mediaDisabled();
-			if (isOfferer && !mediaDisabled) {
-				d->op->setLocalMediaDescription(d->localDesc);
+			const auto currentLocalDesc = d->localDesc;
+
+			if (!mediaDisabled) {
+				// We may running this code after ICE candidates have been gathered or ICE released task completed,
+				// therefore the local description must be updated to include ICE candidates for every stream
+				d->localDesc = localDesc;
+				d->updateLocalMediaDescriptionFromIce(isOfferer);
+
+				if (isOfferer) {
+					d->op->setLocalMediaDescription(d->localDesc);
+				} else {
+					d->op->setLocalMediaDescription(nullptr);
+				}
 			} else {
 				d->op->setLocalMediaDescription(nullptr);
 			}
@@ -5035,7 +5047,7 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			LinphoneStatus res = d->startUpdate(method, subject);
 
 			d->localDesc = currentLocalDesc;
-			if (!isOfferer || mediaDisabled) {
+			if (!isOfferer && !mediaDisabled) {
 				/* We are NOT offering, set local media description after sending the call so that we are ready to
 				 * process the remote offer when it will arrive. */
 				d->op->setLocalMediaDescription(d->localDesc);

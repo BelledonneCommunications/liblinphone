@@ -8144,8 +8144,9 @@ void call_with_core_without_media(void) {
 	    "a=ssrc:1592583860 cname:mPaUVqJCMZayFJgz\r\n"
 	    "a=ssrc:1592583860 msid:dee12576-f30b-4893-83d3-eac27ee10d8d e879805a-7d32-4872-9781-3b0a5ae539ff\r\n");
 
-	BC_ASSERT_PTR_NOT_NULL(
-	    linphone_core_invite_address_with_params_2(marie->lc, pauline->identity, params, "Coucou", content));
+	linphone_call_params_add_custom_content(params, content);
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params_2(marie->lc, pauline->identity, params, "", NULL));
 	linphone_content_unref(content);
 	linphone_call_params_unref(params);
 

@@ -182,6 +182,7 @@ void SalCallOp::fillInvite(belle_sip_request_t *invite) {
 			// For backward compatibility, always set SDP as first content in the multipart.
 			if (body.getContentType() == ContentType::Sdp) {
 				contents.push_front(&body);
+				if (getSal()->mediaDisabled()) mSdpOffering = true;
 			} else {
 				contents.push_back(&body);
 			}
