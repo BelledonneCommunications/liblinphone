@@ -372,6 +372,10 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
                                  const LinphoneAddress *confAddr,
                                  bool_t enable_video);
 
+void check_muted(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
+                 const LinphoneParticipantDevice *d,
+                 std::list<LinphoneCoreManager *> mutedMgrs);
+
 void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout);
 
 void create_conference_with_late_participant_addition_base(time_t start_time,

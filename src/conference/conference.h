@@ -109,6 +109,8 @@ public:
 
 	bool setParticipants(const std::list<std::shared_ptr<Participant>> &&newParticipants);
 
+	void addInvitedParticipant(const std::shared_ptr<Call> &call);
+	void addInvitedParticipant(const std::shared_ptr<Address> &address);
 	void addInvitedParticipant(const std::shared_ptr<Participant> &participant);
 	bool addParticipant(std::shared_ptr<Call> call) override;
 	bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
@@ -400,6 +402,7 @@ protected:
 	bool updateMinatureRequestedFlag() const;
 
 	mutable bool thumbnailsRequested = true;
+
 	void fillInvitedParticipantList(const ConferenceInfo::participant_list_t infos);
 	void fillInvitedParticipantList(SalCallOp *op, const std::shared_ptr<Address> &organizer, bool cancelling);
 	std::shared_ptr<Participant> findInvitedParticipant(const std::shared_ptr<const Address> &participantAddress) const;
@@ -408,12 +411,21 @@ protected:
 	std::list<std::shared_ptr<const Address>> getInvitedAddresses() const;
 	std::list<std::shared_ptr<Participant>> getInvitedParticipants() const;
 	void removeInvitedParticipant(const std::shared_ptr<Address> &address);
+
+	std::shared_ptr<Participant> createParticipant(std::shared_ptr<Call> call);
+	std::shared_ptr<Participant> createParticipant(std::shared_ptr<const Address> participantAddress);
+	virtual std::shared_ptr<ParticipantDevice> createParticipantDevice(std::shared_ptr<Participant> participant,
+	                                                                   std::shared_ptr<Call> call);
+
 	std::list<std::shared_ptr<Participant>> getFullParticipantList() const;
-	void fillParticipantAttributes(std::shared_ptr<Participant> &p);
+	void fillParticipantAttributes(std::shared_ptr<Participant> &p) const;
+
 	virtual void configure(SalCallOp *op) = 0;
+
 	void incrementLastNotify();
 	void setLastNotify(unsigned int lastNotify);
 	void resetLastNotify();
+
 	void setConferenceId(const ConferenceId &conferenceId);
 
 	void setChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom);
@@ -426,6 +438,13 @@ private:
 
 	L_DISABLE_COPY(Conference);
 };
+
+inline std::ostream &operator<<(std::ostream &str, const Conference &conference) {
+	const auto &conferenceAddress = conference.getConferenceAddress();
+	str << "Conference [" << &conference << "] ("
+	    << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << ")";
+	return str;
+}
 
 class ConferenceLogContextualizer : public CoreLogContextualizer {
 public:

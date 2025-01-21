@@ -69,7 +69,8 @@ public:
 	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
 	virtual bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<Call> call) override;
-	virtual bool addParticipantDevice(std::shared_ptr<Call> call) override;
+	virtual std::shared_ptr<ParticipantDevice> createParticipantDevice(std::shared_ptr<Participant> participant,
+	                                                                   std::shared_ptr<Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<CallSession> &session, const bool preserveSession) override;
 	virtual int removeParticipant(const std::shared_ptr<Address> &addr) override;
@@ -248,6 +249,8 @@ protected:
 
 	virtual void onAckReceived(const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
 
+	virtual bool addParticipantDevice(std::shared_ptr<Call> call) override;
+
 private:
 	L_DISABLE_COPY(ServerConference);
 
@@ -257,6 +260,8 @@ private:
 	bool initializeParticipants(const std::shared_ptr<Participant> &initiator, SalCallOp *op);
 	void addParticipantDevice(const std::shared_ptr<Participant> &participant,
 	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
+	bool addParticipantAndDevice(std::shared_ptr<Call> call);
+	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
 	bool validateNewParameters(const ConferenceParams &newConfParams) const;
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device,
 	                                         const MediaSessionParams *csp);

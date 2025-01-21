@@ -1167,8 +1167,8 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			const auto &needToSyncDevice = device->isChangingSubscribeEvent();
 			if (needToSyncDevice) {
-				lInfo() << "Participant " << *dAddress << " is already part of conference [" << conferenceAddressString
-				        << "] hence send full state to be sure the client and the server are on the same page";
+				lInfo() << "Participant " << *dAddress << " is already part of " << *getConference()
+				        << " hence send full state to be sure the client and the server are on the same page";
 			} else {
 				// conf->setLastNotify(lastNotify + 1);
 			}

@@ -149,11 +149,11 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	auto chatRoom = core->findChatRoom(getConferenceId());
 
 	const auto &conferenceAddress = getConference()->getConferenceAddress();
-	const std::string conferenceAddressString = conferenceAddress ? conferenceAddress->toString() : std::string("sip:");
 	std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity());
 	if (!conferenceAddress || (*entityAddress != *conferenceAddress)) {
 		lError() << "Unable to process received NOTIFY because the entity address " << *entityAddress
-		         << " doesn't match the conference address " << conferenceAddressString;
+		         << " doesn't match the conference address "
+		         << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:"));
 		return;
 	}
 
@@ -168,8 +168,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	}
 
 	if (waitingFullState && !isFullState) {
-		lError() << "Unable to process received NOTIFY because conference " << conferenceAddressString
-		         << " is waiting a full state";
+		lError() << "Unable to process received NOTIFY because " << *getConference() << " is waiting a full state";
 		return;
 	} else {
 		waitingFullState = false;
@@ -350,9 +349,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				continue;
 			} else if (participant) {
 				getConference()->mParticipants.remove(participant);
-				lInfo() << "Participant " << *participant << " is successfully removed - conference "
-				        << conferenceAddressString << " has " << getConference()->getParticipantCount()
-				        << " participants";
+				lInfo() << "Participant " << *participant << " is successfully removed - " << *getConference()
+				        << " has " << getConference()->getParticipantCount() << " participants";
 				if (!isFullState) {
 					getConference()->notifyParticipantRemoved(creationTime, isFullState, participant);
 
@@ -376,9 +374,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				fillParticipantAttributes(participant, roles, state, isFullState, false);
 
 				getConference()->mParticipants.push_back(participant);
-				lInfo() << "Participant " << *participant << " is successfully added - conference "
-				        << conferenceAddressString << " has " << getConference()->getParticipantCount()
-				        << " participants";
+				lInfo() << "Participant " << *participant << " is successfully added - " << *getConference() << " has "
+				        << getConference()->getParticipantCount() << " participants";
 				if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !isMe)) {
 					getConference()->notifyParticipantAdded(creationTime, isFullState, participant);
 				}
@@ -394,8 +391,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		if (!participant) {
 			lDebug() << "Participant " << *address
 			         << " is not in the list of participants however it is trying to change the list of devices or "
-			            "change role! Resubscribing to conference "
-			         << conferenceAddressString << " to clear things up.";
+			            "change role! Resubscribing to "
+			         << *getConference() << " to clear things up.";
 			requestFullState();
 		} else {
 
@@ -711,8 +708,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					}
 				} else {
 					lDebug() << "Unable to update media direction of device " << *gruu
-					         << " because it has not been found in conference " << conferenceAddressString
-					         << ". Resubscribing to conference " << conferenceAddressString << " to clear things up.";
+					         << " because it has not been found in " << *getConference()
+					         << ". Resubscribing to it to clear things up.";
 					requestFullState();
 				}
 			}
@@ -742,14 +739,12 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					deviceFound = (dIt != currentDevices.cend());
 				}
 				if (!deviceFound) {
-					lInfo() << "Device " << *d->getAddress() << " is no longer a member of chatroom or conference "
-					        << conferenceAddressString;
+					lInfo() << "Device " << *d->getAddress() << " is no longer a member of " << *getConference();
 					getConference()->notifyParticipantDeviceRemoved(creationTime, isFullState, p, d);
 				}
 			}
 			if (pIt == currentParticipants.cend()) {
-				lInfo() << "Participant " << *p->getAddress() << " is no longer a member of chatroom or conference "
-				        << conferenceAddressString;
+				lInfo() << "Participant " << *p->getAddress() << " is no longer a member of " << *getConference();
 				getConference()->notifyParticipantRemoved(creationTime, isFullState, p);
 			}
 		}
@@ -760,8 +755,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			    });
 			bool deviceFound = (dIt != currentMeDevices.cend());
 			if (!deviceFound) {
-				lInfo() << "Device " << *d->getAddress() << " is no longer a member of chatroom or conference "
-				        << conferenceAddressString;
+				lInfo() << "Device " << *d->getAddress() << " is no longer a member of " << *getConference();
 				getConference()->notifyParticipantDeviceRemoved(creationTime, isFullState, getConference()->getMe(), d);
 			}
 		}

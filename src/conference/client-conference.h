@@ -60,7 +60,8 @@ public:
 	virtual bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<Call> call) override;
 	virtual bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
-	virtual bool addParticipantDevice(std::shared_ptr<Call> call) override;
+	virtual std::shared_ptr<ParticipantDevice> createParticipantDevice(std::shared_ptr<Participant> participant,
+	                                                                   std::shared_ptr<Call> call) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<CallSession> &session, const bool preserveSession) override;

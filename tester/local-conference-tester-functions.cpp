@@ -700,6 +700,20 @@ void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
 }
 #endif // HAVE_ADVANCED_IM
 
+void check_muted(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
+                 const LinphoneParticipantDevice *d,
+                 std::list<LinphoneCoreManager *> mutedMgrs) {
+	const LinphoneAddress *device_address = linphone_participant_device_get_address(d);
+	bool_t expect_mute = FALSE;
+	for (const auto &mgr : mutedMgrs) {
+		expect_mute |= (linphone_address_weak_equal(device_address, mgr->identity));
+	}
+
+	BC_ASSERT_TRUE(CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(10), [&d, &expect_mute] {
+		return ((!!linphone_participant_device_get_is_muted(d)) == expect_mute);
+	}));
+}
+
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,
                                  LinphoneCoreManager *focus,
@@ -1643,10 +1657,7 @@ void create_conference_base(time_t start_time,
 						LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
 						BC_ASSERT_PTR_NOT_NULL(d);
 						if (d) {
-							const LinphoneAddress *device_address = linphone_participant_device_get_address(d);
-							bool_t expect_mute =
-							    (linphone_address_weak_equal(device_address, pauline.getCMgr()->identity));
-							BC_ASSERT_TRUE((!!linphone_participant_device_get_is_muted(d)) == expect_mute);
+							check_muted({focus, marie, pauline, laure, michelle, berthe}, d, {pauline.getCMgr()});
 							linphone_participant_device_set_user_data(d, mgr->lc);
 							LinphoneParticipantDeviceCbs *cbs =
 							    linphone_factory_create_participant_device_cbs(linphone_factory_get());
@@ -1844,11 +1855,8 @@ void create_conference_base(time_t start_time,
 						LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
 						BC_ASSERT_PTR_NOT_NULL(d);
 						if (d) {
-							const LinphoneAddress *device_address = linphone_participant_device_get_address(d);
-							bool_t expect_mute =
-							    (linphone_address_weak_equal(device_address, marie.getCMgr()->identity)) ||
-							    (linphone_address_weak_equal(device_address, pauline.getCMgr()->identity));
-							BC_ASSERT_TRUE((!!linphone_participant_device_get_is_muted(d)) == expect_mute);
+							check_muted({focus, marie, pauline, laure, michelle, berthe}, d,
+							            {marie.getCMgr(), pauline.getCMgr()});
 						}
 					}
 					bctbx_list_free_with_data(participant_device_list,
@@ -2000,9 +2008,7 @@ void create_conference_base(time_t start_time,
 							LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
 							BC_ASSERT_PTR_NOT_NULL(d);
 							if (d) {
-								BC_ASSERT_TRUE((!!linphone_participant_device_get_is_muted(d)) ==
-								               (linphone_address_weak_equal(linphone_participant_device_get_address(d),
-								                                            pauline.getCMgr()->identity)));
+								check_muted({focus, marie, pauline, laure, michelle, berthe}, d, {pauline.getCMgr()});
 							}
 						}
 						bctbx_list_free_with_data(participant_device_list,

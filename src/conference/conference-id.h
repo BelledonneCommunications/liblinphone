@@ -84,9 +84,9 @@ private:
 
 inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {
 	auto peerAddress =
-	    (conferenceId.getPeerAddress()) ? conferenceId.getPeerAddress()->asStringUriOnly() : std::string("<undefined>");
-	auto localAddress = (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->asStringUriOnly()
-	                                                     : std::string("<undefined>");
+	    (conferenceId.getPeerAddress()) ? conferenceId.getPeerAddress()->asStringUriOnly() : std::string("sip:");
+	auto localAddress =
+	    (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->asStringUriOnly() : std::string("sip:");
 	os << "ConferenceId(peer=" << peerAddress << ", local=" << localAddress << ")";
 	return os;
 }

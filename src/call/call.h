@@ -368,6 +368,15 @@ private:
 	void forgeHalfAuthenticationToken(bool localHalfAuthToken) const;
 };
 
+inline std::ostream &operator<<(std::ostream &str, const Call &call) {
+	const auto &localAddress = call.getLocalAddress();
+	auto localAddressStr = (localAddress ? localAddress->toString() : std::string("sip:"));
+	const auto &remoteAddress = call.getRemoteAddress();
+	auto remoteAddressStr = (remoteAddress ? remoteAddress->toString() : std::string("sip:"));
+	str << "Call [" << &call << "] (local=" << localAddressStr << " remote=" << remoteAddressStr << ")";
+	return str;
+}
+
 class CallLogContextualizer : public CoreLogContextualizer {
 public:
 	CallLogContextualizer(const Call &call) : CoreLogContextualizer(call) {
