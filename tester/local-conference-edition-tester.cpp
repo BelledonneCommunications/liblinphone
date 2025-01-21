@@ -713,9 +713,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 						LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
 						BC_ASSERT_PTR_NOT_NULL(d);
 						if (d) {
-							BC_ASSERT_TRUE((!!linphone_participant_device_get_is_muted(d)) ==
-							               (linphone_address_weak_equal(linphone_participant_device_get_address(d),
-							                                            laure.getCMgr()->identity)));
+							check_muted({focus, marie, pauline, laure, michelle, lise}, d, {laure.getCMgr()});
 							linphone_participant_device_set_user_data(d, mgr->lc);
 							LinphoneParticipantDeviceCbs *cbs =
 							    linphone_factory_create_participant_device_cbs(linphone_factory_get());

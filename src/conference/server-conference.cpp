@@ -1752,13 +1752,9 @@ bool ServerConference::addParticipants(const std::list<std::shared_ptr<const Add
 }
 
 bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
-
-	const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 	const auto &remoteAddress = call->getRemoteAddress();
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
-		lError() << "Call (local address " << *call->getLocalAddress() << " remote address "
-		         << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") is already in conference "
-		         << *conferenceAddress;
+		lError() << *call << " is already in " << *this;
 		return false;
 	}
 
@@ -1771,7 +1767,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 	// participants will be dialed out
 	if ((initialState == ConferenceInterface::State::CreationPending) && dialout &&
 	    !remoteAddress->weakEqual(*mOrganizer)) {
-		lError() << "The conference must immediately start (start time: " << startTime << " end time: " << endTime
+		lError() << *this << " must immediately start (start time: " << startTime << " end time: " << endTime
 		         << "). Unable to add participant " << *remoteAddress
 		         << " because participants will be dialed out by the conference server as soon as " << *mOrganizer
 		         << " dials in";
@@ -1780,10 +1776,8 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 
 	// Add participants event after the conference ends if it is active (i.e in the Created state)
 	if (initialState != ConferenceInterface::State::Created) {
-		const auto &localAddress = call->getLocalAddress();
 		if (!isConferenceStarted()) {
-			lError() << "Unable to add call (local address " << *localAddress << " remote address " << *remoteAddress
-			         << ") because conference " << *conferenceAddress << " will start at " << startTime
+			lError() << "Unable to add " << *call << " because " << *this << " will start at " << startTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, "Conference not started yet",
@@ -1794,8 +1788,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 		}
 
 		if (isConferenceEnded()) {
-			lError() << "Unable to add call (local address " << *localAddress << " remote address " << *remoteAddress
-			         << ") because conference " << *conferenceAddress << " is already terminated at " << endTime
+			lError() << "Unable to add " << *call << " because " << *this << " is already terminated at " << endTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, "Conference already terminated",
@@ -1806,6 +1799,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 		}
 	}
 
+	const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 	const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
 	const string &callConfId = call->getConferenceId();
 
@@ -1901,7 +1895,8 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 					const_cast<MediaSessionParams *>(call->getParams())->enableVideo(false);
 				}
 
-				auto success = Conference::addParticipant(call);
+				//				auto success = Conference::addParticipant(call);
+				auto success = addParticipantAndDevice(call);
 
 				const auto &participant = findParticipant(session->getRemoteAddress());
 				LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
@@ -1941,9 +1936,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 
 			break;
 			default:
-				lError() << "Call " << call << " (local address " << *call->getLocalAddress() << " remote address "
-				         << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") is in state "
-				         << Utils::toString(call->getState())
+				lError() << *call << " is in state " << Utils::toString(call->getState())
 				         << ", hence it cannot be added to the conference right now";
 				return false;
 				break;
@@ -1972,12 +1965,10 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			case CallSession::State::Resuming: {
 				if (contactAddress && contactAddress->isValid() &&
 				    !contactAddress->hasParam(Conference::IsFocusParameter)) {
-					lInfo() << "Call " << call << " (local address " << *call->getLocalAddress() << " remote address "
-					        << (remoteAddress ? remoteAddress->toString() : "Unknown") << " because contact address "
-					        << (contactAddress ? contactAddress->toString() : "Unknown") << " has not '"
-					        << Conference::IsFocusParameter << "' parameter";
-
-					getCore()->doLater([call, session] {
+					getCore()->doLater([contactAddress, call, session] {
+						lInfo() << "Updating " << *call << " because contact address "
+						        << (contactAddress ? contactAddress->toString() : "Unknown") << " has not '"
+						        << Conference::IsFocusParameter << "' parameter";
 						const MediaSessionParams *params = session->getMediaParams();
 						MediaSessionParams *currentParams = params->clone();
 						call->update(currentParams);
@@ -1986,10 +1977,8 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 				}
 			} break;
 			default:
-				lError() << "Call " << call << " (local address " << *call->getLocalAddress() << " remote address "
-				         << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") is in state "
-				         << Utils::toString(call->getState())
-				         << ", hence the call cannot be updated following it becoming part of the conference";
+				lError() << *call << " is in state " << Utils::toString(call->getState())
+				         << ", hence the call cannot be updated following it becoming part of the " << *this;
 				return false;
 				break;
 		}
@@ -2022,15 +2011,11 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			}
 			dialOutAddresses(addresses);
 		}
-		lInfo() << "Call [" << call << "] (local address " << *call->getLocalAddress() << " remote address "
-		        << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") with session [" << session
-		        << "] has been added to conference " << *conferenceAddress;
+		lInfo() << *call << " with session [" << session << "] has been added to " << *this;
 		return true;
 	}
 
-	lError() << "Unable to add call (local address " << *call->getLocalAddress() << " remote address "
-	         << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") to conference "
-	         << *getConferenceAddress();
+	lError() << "Unable to add " << *call << " to " << *this;
 	return false;
 }
 
@@ -2170,57 +2155,83 @@ void ServerConference::addParticipantDevice(BCTBX_UNUSED(const shared_ptr<Partic
 #endif // HAVE_ADVANCED_IM
 }
 
-bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
-	bool success = Conference::addParticipantDevice(call);
-	if (success) {
+std::shared_ptr<ParticipantDevice> ServerConference::createParticipantDevice(std::shared_ptr<Participant> participant,
+                                                                             std::shared_ptr<Call> call) {
+	auto device = Conference::createParticipantDevice(participant, call);
+	if (device) {
 		call->setConference(getSharedFromThis());
 		auto session = call->getActiveSession();
 		session->addListener(getSharedFromThis());
-		auto device = findParticipantDevice(session);
-		if (device) {
-			device->setJoiningMethod((call->getDirection() == LinphoneCallIncoming)
-			                             ? ParticipantDevice::JoiningMethod::DialedIn
-			                             : ParticipantDevice::JoiningMethod::DialedOut);
-			char label[Conference::sLabelLength];
-			belle_sip_random_token(label, sizeof(label));
-			device->setStreamLabel(label, LinphoneStreamTypeAudio);
-			belle_sip_random_token(label, sizeof(label));
-			device->setStreamLabel(label, LinphoneStreamTypeVideo);
-			device->setThumbnailStreamLabel(label);
-			auto op = session->getPrivate()->getOp();
-			auto displayName = L_C_TO_STRING(sal_address_get_display_name(
-			    (call->getDirection() == LinphoneCallIncoming) ? op->getFromAddress() : op->getToAddress()));
-			if (!displayName.empty()) {
-				device->setName(displayName);
-			}
-			enableScreenSharing(session, false);
-			if (!mConfParams->isHidden()) {
-				if (mConfParams->chatEnabled()) {
-					const_cast<MediaSessionParams *>(call->getParams())
-					    ->addCustomContactParameter(Conference::TextParameter, std::string());
-				}
+		device->setJoiningMethod((call->getDirection() == LinphoneCallIncoming)
+		                             ? ParticipantDevice::JoiningMethod::DialedIn
+		                             : ParticipantDevice::JoiningMethod::DialedOut);
+		char label[Conference::sLabelLength];
+		belle_sip_random_token(label, sizeof(label));
+		device->setStreamLabel(label, LinphoneStreamTypeAudio);
+		belle_sip_random_token(label, sizeof(label));
+		device->setStreamLabel(label, LinphoneStreamTypeVideo);
+		device->setThumbnailStreamLabel(label);
+		auto op = session->getPrivate()->getOp();
+		auto displayName = L_C_TO_STRING(sal_address_get_display_name(
+		    (call->getDirection() == LinphoneCallIncoming) ? op->getFromAddress() : op->getToAddress()));
+		if (!displayName.empty()) {
+			device->setName(displayName);
+		}
+		enableScreenSharing(session, false);
+		if (!mConfParams->isHidden()) {
+			if (mConfParams->chatEnabled()) {
 				const_cast<MediaSessionParams *>(call->getParams())
-				    ->addCustomContactParameter(Conference::IsFocusParameter, std::string());
-				const auto &conferenceAddress = getConferenceAddress();
-				if (conferenceAddress) {
-					const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
-					if (!confId.empty()) {
-						const_cast<MediaSessionParams *>(call->getParams())
-						    ->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
-					}
-				}
+				    ->addCustomContactParameter(Conference::TextParameter, std::string());
 			}
-
-			const auto &p = device->getParticipant();
-			if (p) {
-				time_t creationTime = time(nullptr);
-				if (device->getState() == ParticipantDevice::State::Joining) {
-					notifyParticipantDeviceAdded(creationTime, false, p, device);
-				} else {
-					notifyParticipantDeviceJoiningRequest(creationTime, false, p, device);
+			const_cast<MediaSessionParams *>(call->getParams())
+			    ->addCustomContactParameter(Conference::IsFocusParameter, std::string());
+			const auto &conferenceAddress = getConferenceAddress();
+			if (conferenceAddress) {
+				const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
+				if (!confId.empty()) {
+					const_cast<MediaSessionParams *>(call->getParams())
+					    ->addCustomContactUriParameter(Conference::ConfIdParameter, confId);
 				}
 			}
 		}
+	}
+	return device;
+}
+
+void ServerConference::notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device) {
+	if (device) {
+		const auto &p = device->getParticipant();
+		if (p) {
+			time_t creationTime = time(nullptr);
+			if (device->getState() == ParticipantDevice::State::Joining) {
+				notifyParticipantDeviceAdded(creationTime, false, p, device);
+			} else {
+				notifyParticipantDeviceJoiningRequest(creationTime, false, p, device);
+			}
+		}
+	}
+}
+
+bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
+	auto success = (Conference::addParticipantDevice(call));
+	if (success) {
+		auto session = call->getActiveSession();
+		notifyNewDevice(findParticipantDevice(session));
+	}
+	return success;
+}
+
+bool ServerConference::addParticipantAndDevice(std::shared_ptr<Call> call) {
+	auto success = Conference::addParticipant(call);
+	if (success) {
+		auto session = call->getActiveSession();
+		// Not really useful to notify the new device as it is already done by the method Conference::addParticipant.
+		// Nonetheless this allow to call a few callback related to the participant device addition and state on the
+		// server side
+		notifyNewDevice(findParticipantDevice(session));
+	} else {
+		// If the participant has already been added, at least try to add the device
+		success = addParticipantDevice(call);
 	}
 	return success;
 }

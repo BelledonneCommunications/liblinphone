@@ -868,7 +868,7 @@ static void conference_with_participants_late_except_one(void) {
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, 1,
 			                             liblinphone_tester_sip_timeout));
 			// Update to add to conference.
 			// If ICE is enabled, the addition to a conference may go through a resume of the call
@@ -3889,7 +3889,7 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 					LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
 					BC_ASSERT_PTR_NOT_NULL(d);
 					if (d) {
-						BC_ASSERT_TRUE(!!!linphone_participant_device_get_is_muted(d));
+						check_muted({focus, marie, pauline, laure, michelle, berthe}, d, {});
 					}
 				}
 				bctbx_list_free_with_data(participant_device_list, (void (*)(void *))linphone_participant_device_unref);
