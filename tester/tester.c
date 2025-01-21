@@ -797,11 +797,21 @@ static void conference_subject_changed(LinphoneConference *conference, BCTBX_UNU
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_subject_changed++;
 }
+
+static void
+conference_active_speaker_participant_device_changed(LinphoneConference *conference,
+                                                     BCTBX_UNUSED(const LinphoneParticipantDevice *device)) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_active_speaker_participant_device_changed++;
+}
+
 static void conference_allowed_participant_list_changed(LinphoneConference *conference) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_allowed_participant_list_changed++;
 }
+
 static void conference_participant_added(LinphoneConference *conference,
                                          BCTBX_UNUSED(LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
@@ -905,6 +915,8 @@ void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
 		    cbs, conference_participant_device_screen_sharing_changed);
 		linphone_conference_cbs_set_full_state_received(cbs, conference_full_state_received);
 		linphone_conference_cbs_set_allowed_participant_list_changed(cbs, conference_allowed_participant_list_changed);
+		linphone_conference_cbs_set_active_speaker_participant_device(
+		    cbs, conference_active_speaker_participant_device_changed);
 		linphone_conference_add_callbacks(conference, cbs);
 		linphone_conference_cbs_unref(cbs);
 	}

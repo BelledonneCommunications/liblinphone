@@ -1367,9 +1367,16 @@ void ClientConference::onParticipantDeviceRemoved(const std::shared_ptr<Conferen
 		const auto videoNeedsReInvite = (mConfParams->videoEnabled() && params->videoEnabled());
 
 		updateMinatureRequestedFlag();
+
+		// If the device was screen sharing, then notify the application that it isn't anymore
 		if (device->enableScreenSharing(false)) {
 			notifyParticipantDeviceScreenSharingChanged(ms_time(NULL), event->getFullState(), device->getParticipant(),
 			                                            device);
+		}
+
+		// If the device was the active speaker, then notify the application that it isn't anymore
+		if (device == getActiveSpeakerParticipantDevice()) {
+			notifyActiveSpeakerParticipantDevice(nullptr);
 		}
 
 		if ((audioNeedsReInvite || videoNeedsReInvite) && (mState == ConferenceInterface::State::Created) &&

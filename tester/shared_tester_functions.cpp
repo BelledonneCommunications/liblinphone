@@ -609,17 +609,20 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants,
 	}
 }
 
-void _linphone_conference_video_change(bctbx_list_t *lcs,
-                                       LinphoneCoreManager *mgr1,
-                                       LinphoneCoreManager *mgr2,
-                                       LinphoneCoreManager *mgr3) {
+LinphoneCoreManager *_linphone_conference_video_change(bctbx_list_t *lcs,
+                                                       LinphoneCoreManager *mgr1,
+                                                       LinphoneCoreManager *mgr2,
+                                                       LinphoneCoreManager *mgr3) {
 	MSMireControl c1 = {{0, 5, 10, 15, 20, 25}};
 	MSMireControl c3 = {{100, 120, 140, 160, 180, 200}};
 
+	stats initial_mgr1_stat = mgr1->stat;
+	stats initial_mgr2_stat = mgr2->stat;
+	stats initial_mgr3_stat = mgr3->stat;
 	for (LinphoneCoreManager *mgr : {mgr1, mgr2, mgr3}) {
 		LinphoneCall *call = linphone_core_get_current_call(mgr->lc);
 		BC_ASSERT_PTR_NOT_NULL(call);
-		if (!call) return;
+		if (!call) return NULL;
 		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
 		if (mgr != mgr2) { // mgr2 is audio only
 			BC_ASSERT_TRUE(vstream && vstream->source && ms_filter_get_id(vstream->source) == MS_MIRE_ID);
@@ -639,8 +642,14 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 	// mgr3 speaks and mgr1's video change
 	linphone_core_enable_mic(mgr1->lc, FALSE);
 	linphone_core_enable_mic(mgr2->lc, FALSE);
-	lInfo() << __func__ << ": mgr3 speaks";
-	wait_for_list(lcs, NULL, 0, 5000);
+	linphone_core_enable_mic(mgr3->lc, TRUE);
+	lInfo() << __func__ << ": " << linphone_core_get_identity(mgr3->lc) << " speaks";
+	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr1->stat.number_of_active_speaker_participant_device_changed,
+	                             initial_mgr1_stat.number_of_active_speaker_participant_device_changed + 1,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr2->stat.number_of_active_speaker_participant_device_changed,
+	                             initial_mgr2_stat.number_of_active_speaker_participant_device_changed + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 
 	// mgr1 should see mgr3 as active speaker
@@ -673,12 +682,18 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 		bctbx_list_free_with_data(devices, (bctbx_list_free_func)linphone_participant_device_unref);
 	}
 
-	// mgr2 speaks until mgr1's video change
-	linphone_core_enable_mic(mgr2->lc, TRUE);
+	// mgr3 speaks until mgr2's video change
 	linphone_core_enable_mic(mgr3->lc, FALSE);
-	lInfo() << __func__ << ": mgr2 speaks";
+	linphone_core_enable_mic(mgr2->lc, TRUE);
+	linphone_core_enable_mic(mgr1->lc, FALSE);
+	lInfo() << __func__ << ": " << linphone_core_get_identity(mgr2->lc) << " speaks";
+	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr1->stat.number_of_active_speaker_participant_device_changed,
+	                             initial_mgr1_stat.number_of_active_speaker_participant_device_changed + 2,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr3->stat.number_of_active_speaker_participant_device_changed,
+	                             initial_mgr3_stat.number_of_active_speaker_participant_device_changed + 1,
+	                             liblinphone_tester_sip_timeout));
 	/* mg2 is audio-only, so this shall not affect video on other participants */
-	wait_for_list(lcs, NULL, 0, 5000);
 
 	// mgr1 still receives the video of the last active speaker that has video
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
@@ -700,10 +715,16 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 	}
 
 	// mgr1 speaks and mgr1's video not change
-	lInfo() << __func__ << ": mgr1 speaks";
-	linphone_core_enable_mic(mgr2->lc, FALSE);
+	lInfo() << __func__ << ": " << linphone_core_get_identity(mgr1->lc) << " speaks";
 	linphone_core_enable_mic(mgr1->lc, TRUE);
-	wait_for_list(lcs, NULL, 0, 5000);
+	linphone_core_enable_mic(mgr2->lc, FALSE);
+	linphone_core_enable_mic(mgr3->lc, FALSE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr2->stat.number_of_active_speaker_participant_device_changed,
+	                             initial_mgr2_stat.number_of_active_speaker_participant_device_changed + 2,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr3->stat.number_of_active_speaker_participant_device_changed,
+	                             initial_mgr3_stat.number_of_active_speaker_participant_device_changed + 2,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
 
@@ -721,6 +742,8 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 
 		bctbx_list_free_with_data(devices, (bctbx_list_free_func)linphone_participant_device_unref);
 	}
+
+	return mgr1;
 }
 
 const char *_linphone_call_get_subject(LinphoneCall *call) {
