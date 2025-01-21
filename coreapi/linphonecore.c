@@ -3863,9 +3863,10 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 	lc->cppPtr->removeFriendList(cppList->getSharedFromThis());
 	cppList->removeFromDb();
 
+	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
+
 	linphone_core_notify_friend_list_removed(lc, list);
 	linphone_friend_list_unref(list);
-	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
 }
 
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {

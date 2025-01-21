@@ -405,11 +405,22 @@ static void friend_list_created_cb(BCTBX_UNUSED(LinphoneCore *lc), LinphoneFrien
 	}
 }
 
-static void friend_list_removed_cb(BCTBX_UNUSED(LinphoneCore *lc), LinphoneFriendList *list) {
+static void friend_list_removed_cb(LinphoneCore *lc, LinphoneFriendList *list) {
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)linphone_friend_list_get_user_data(list);
 	if (stats) {
 		stats->removed_list_count++;
 	}
+
+	// Verify that the removed list is not in the core anymore
+	const bctbx_list_t *friends_list = linphone_core_get_friends_lists(lc);
+	bctbx_list_t *copy = bctbx_list_copy(friends_list);
+
+	for (bctbx_list_t *it = copy; it != nullptr; it = it->next) {
+		LinphoneFriendList *core_list = (LinphoneFriendList *)bctbx_list_get_data(it);
+		if (core_list) BC_ASSERT_PTR_NOT_EQUAL(core_list, list);
+	}
+
+	bctbx_list_free(copy);
 }
 
 static void friends_sqlite_storage(void) {
