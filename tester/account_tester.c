@@ -345,6 +345,27 @@ static void registration_state_changed_callback_on_account(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void reconnection_after_network_change(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1, 10000));
+
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2, 10000));
+	/* simulate a transport error*/
+	sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
+	linphone_core_refresh_registers(marie->lc);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationFailed, 1, 10000));
+	sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 3, 5000));
+
+	linphone_core_manager_destroy(marie);
+}
+
 static void no_unregister_when_changing_transport(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -394,7 +415,7 @@ static void no_unregister_when_changing_transport(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void Unregister_at_stop(void) {
+static void unregister_at_stop(void) {
 
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -504,7 +525,9 @@ static test_t account_tests[] = {
     TEST_NO_TAG("Account dependency to self", account_dependency_to_self),
     TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
     TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport),
-    TEST_NO_TAG("Unregister at stop", Unregister_at_stop)};
+    TEST_NO_TAG("Unregister at stop", unregister_at_stop),
+    TEST_NO_TAG("Account reconnection after multiple network changes", reconnection_after_network_change),
+};
 
 test_suite_t account_test_suite = {"Account",
                                    NULL,
