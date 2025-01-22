@@ -41,6 +41,7 @@
 #include "linphone/friend.h"
 #include "linphone/friendlist.h"
 #include "linphone/lpconfig.h"
+#include "mediastreamer2/mscommon.h"
 #include "tester_utils.h"
 
 #ifdef __APPLE__
@@ -3590,9 +3591,7 @@ static void echo_canceller_check(void) {
 	}
 	BC_ASSERT_PTR_NOT_NULL(ec_filter);
 
-#if defined(ANDROID)
-	expected_filter = "MSWebRTCAECM";
-#elif defined(__linux__) || (defined(__APPLE__) && !TARGET_OS_IPHONE) || defined(_WIN32)
+#if defined(__linux__) || (defined(__APPLE__) && !TARGET_OS_IPHONE) || defined(_WIN32) || defined(__ANDROID__)
 	expected_filter = "MSWebRTCAEC";
 #endif
 	if (ec_filter) {

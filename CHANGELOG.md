@@ -10,6 +10,15 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## Unreleased
 
+### Changed
+- Acoustic Echo Canceller upgraded to the AEC3 from a recent version of WebRTC.
+- The delay measured by the Echo Canceller Calibrator is not used in mswebrtcaec.
+- Voice Activity Detection updated to a recent version of WebRTC with minor changes.
+
+### Removed
+- AECM for mobile echo cancellation is removed and replaced by the new AEC.
+- removed ISAC and iLBC audio codecs.
+
 ## [5.4.0] 2025-03-11
 
 ### Added
