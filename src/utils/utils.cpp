@@ -164,6 +164,11 @@ bool Utils::containsInsensitive(const string &haystack, const string &needle) {
 	return lowercaseHaystack.find(lowercaseNeedle) != std::string::npos;
 }
 
+bool Utils::endsWith(const string &haystack, const string &needle) {
+	if (needle.size() > haystack.size()) return false;
+	return std::equal(needle.rbegin(), needle.rend(), haystack.rbegin());
+}
+
 std::vector<string> Utils::stringToLower(const std::vector<string> &strs) {
 	std::vector<std::string> results;
 	for (const auto &str : strs) {

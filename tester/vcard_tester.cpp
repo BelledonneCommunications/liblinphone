@@ -33,6 +33,7 @@
 #include "vcard/carddav-context.h"
 
 #define CARDDAV_SERVER "http://dav.example.org/baikal/html/card.php"
+#define CARDDAV_SERVER_WITH_PORT "http://dav.example.org:80/baikal/html/card.php"
 #define ME_VCF "http://dav.example.org/baikal/html/card.php/addressbooks/tester/default/me.vcf"
 #define ME_VCF_2 "/baikal/html/card.php/addressbooks/tester/default/me.vcf"
 #define CARDDAV_SYNC_TIMEOUT 15000
@@ -449,7 +450,7 @@ static void carddav_clean(
 	linphone_friend_list_add_callbacks(lfl, cbs);
 	linphone_friend_list_cbs_unref(cbs);
 	linphone_friend_list_set_display_name(lfl, "CardDAV friend list");
-	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER_WITH_PORT);
 	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_unref(lfl);

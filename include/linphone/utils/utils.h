@@ -115,6 +115,7 @@ replaceAll(const std::string &source, const std::string &pattern, const std::str
 LINPHONE_PUBLIC std::string stringToLower(const std::string &str);
 LINPHONE_PUBLIC std::vector<std::string> stringToLower(const std::vector<std::string> &strs);
 LINPHONE_PUBLIC bool containsInsensitive(const std::string &haystack, const std::string &needle);
+LINPHONE_PUBLIC bool endsWith(const std::string &haystack, const std::string &needle);
 
 LINPHONE_PUBLIC std::string unicodeToUtf8(uint32_t ic);
 LINPHONE_PUBLIC std::string unicodeToUtf8(const std::vector<uint32_t> &chars);

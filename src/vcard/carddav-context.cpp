@@ -56,7 +56,7 @@ void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
 	shared_ptr<Vcard> vcard = f->getVcard();
 	if (vcard && !vcard->getUid().empty() && !vcard->getEtag().empty()) {
 		if (vcard->getUrl().empty()) {
-			string url = CardDAVContext::generateUrlFromServerAddressAndUid(mSyncUri);
+			string url = generateUrlFromServerAddressAndUid(mSyncUri);
 			if (url.empty()) {
 				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, "
@@ -92,7 +92,7 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 	if (vcard) {
 		if (vcard->getUid().empty()) vcard->generateUniqueId();
 		if (vcard->getUrl().empty()) {
-			string url = CardDAVContext::generateUrlFromServerAddressAndUid(mSyncUri);
+			string url = generateUrlFromServerAddressAndUid(mSyncUri);
 			if (url.empty()) {
 				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, can't push it";
@@ -170,7 +170,7 @@ void CardDAVContext::clientToServerSyncDone(bool success, const string &msg) {
 
 void CardDAVContext::userPrincipalUrlRetrieved(string principalUrl) {
 	if (!principalUrl.empty()) {
-		string fullUrl = mScheme + "://" + mHost + principalUrl;
+		string fullUrl = getUrlSchemeHostAndPort() + principalUrl;
 		lDebug() << "[CardDAV] User principal URL is [" << fullUrl
 		         << "], updating sync URI and querying address book home";
 		mSyncUri = fullUrl;
@@ -189,7 +189,7 @@ void CardDAVContext::userPrincipalUrlRetrieved(string principalUrl) {
 
 void CardDAVContext::userAddressBookHomeUrlRetrieved(string addressBookHomeUrl) {
 	if (!addressBookHomeUrl.empty()) {
-		string fullUrl = mScheme + "://" + mHost + addressBookHomeUrl;
+		string fullUrl = getUrlSchemeHostAndPort() + addressBookHomeUrl;
 		lDebug() << "[CardDAV] User address book home URL is [" << fullUrl
 		         << "], updating sync URI and querying address books list";
 		mSyncUri = fullUrl;
@@ -206,7 +206,7 @@ void CardDAVContext::addressBookUrlAndCtagRetrieved(const list<CardDAVResponse> 
 		string url = addressbook.mUrl;
 		string displayName = addressbook.mDisplayName;
 		if (ctag.empty() || ctag != mCtag) {
-			string fullUrl = mScheme + "://" + mHost + url;
+			string fullUrl = getUrlSchemeHostAndPort() + url;
 			lInfo() << "[CardDAV] User address book [" << displayName << "] URL is [" << fullUrl << "] has CTAG ["
 			        << ctag << "] but our local one is [" << mCtag << "], fetching vCards";
 			mSyncUri = fullUrl;
@@ -287,9 +287,9 @@ void CardDAVContext::queryWellKnown(shared_ptr<CardDAVQuery> query) {
 	char &back = mHost.back();
 	const char *latestQueryChar = &back;
 	if (latestQueryChar != NULL && strcmp(latestQueryChar, "/") == 0) {
-		query->mUrl = mScheme + "://" + mHost + wellKnown;
+		query->mUrl = getUrlSchemeHostAndPort() + wellKnown;
 	} else {
-		query->mUrl = mScheme + "://" + mHost + "/" + wellKnown;
+		query->mUrl = getUrlSchemeHostAndPort() + "/" + wellKnown;
 	}
 	lInfo() << "[CardDAV] Trying a well-known query on URL " << query->mUrl;
 	sendQuery(query);
@@ -353,7 +353,9 @@ void CardDAVContext::setSchemeAndHostIfNotDoneYet(shared_ptr<CardDAVQuery> query
 		belle_generic_uri_t *uri = belle_generic_uri_parse(query->mUrl.c_str());
 		mScheme = belle_generic_uri_get_scheme(uri);
 		mHost = belle_generic_uri_get_host(uri);
-		lInfo() << "[CardDAV] Extracted scheme [" << mScheme << "] and host [" << mHost << "] from latest query";
+		mPort = belle_generic_uri_get_port(uri);
+		lInfo() << "[CardDAV] Extracted scheme [" << mScheme << "], host [" << mHost << "] and port [" << mPort
+		        << "] from latest query";
 	}
 }
 
@@ -362,7 +364,7 @@ void CardDAVContext::processRedirect(shared_ptr<CardDAVQuery> query, const strin
 	string newLocation = location;
 	if (newLocation.rfind(mScheme, 0) != 0 && newLocation.rfind("/", 0) == 0) {
 		// If newLocation doesn't start with http scheme but only starts with '/', recompute full URL
-		newLocation = mScheme + "://" + mHost + newLocation;
+		newLocation = getUrlSchemeHostAndPort() + newLocation;
 	}
 	lInfo() << "[CardDAV] Redirecting query from [" << query->mUrl << "] to [" << newLocation << "]";
 	query->mUrl = newLocation;
@@ -495,8 +497,11 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 	for (const auto &f : friends) {
 		const auto responseIt = find_if(vCardsToPull.cbegin(), vCardsToPull.cend(), [&](const auto &response) {
 			shared_ptr<Vcard> vcard = f->getVcard();
-			if (response.mUrl.empty() || !vcard || vcard->getUrl().empty()) return false;
-			return response.mUrl == vcard->getUrl();
+			if (!vcard || vcard->getUrl().empty()) return false;
+
+			// It's possible response.mUrl only contains the end of the URI (no scheme nor domain),
+			// so it would be different from vcard->getUrl()
+			return Utils::endsWith(vcard->getUrl(), response.mUrl);
 		});
 		if (responseIt == vCardsToPull.cend()) {
 			lInfo() << "[CardDAV] Local friend [" << f->getName() << "] with eTag [" << f->getVcard()->getEtag()
@@ -640,6 +645,13 @@ string CardDAVContext::generateUrlFromServerAddressAndUid(const string &serverUr
 	return url;
 }
 
+string CardDAVContext::getUrlSchemeHostAndPort() const {
+	if (mPort > 0 && ((mScheme == "http" && mPort != 80) || (mScheme == "https" && mPort != 443))) {
+		return mScheme + "://" + mHost + ":" + std::to_string(mPort);
+	}
+	return mScheme + "://" + mHost;
+}
+
 #ifdef HAVE_XML2
 
 list<CardDAVResponse> CardDAVContext::parseAddressBookUrlAndCtagValueFromXmlResponse(const string &body) {
@@ -772,6 +784,10 @@ list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(const stri
 					string url = xmlCtx.getTextContent("d:href");
 					CardDAVResponse response;
 					response.mEtag = etag;
+					if (url.empty()) {
+						lError() << "[CardDAV] Found vCard object with eTag [" << etag << "] but no URL, skipping it!";
+						continue;
+					}
 					response.mUrl = url;
 					result.push_back(std::move(response));
 					lInfo() << "[CardDAV] Found vCard object with eTag [" << etag << "] and URL [" << url << "]";
