@@ -21,8 +21,8 @@
 #ifndef http_client_h
 #define http_client_h
 
+#include "content/content.h"
 #include "core/core.h"
-
 #include "json/json.h"
 
 #include <functional>

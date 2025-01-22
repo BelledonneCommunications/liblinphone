@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,11 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
-
-#include <belle-sip/http-message.h>
-
 #include "conference/ccmp-conference-scheduler.h"
+
+#include "bctoolbox/defs.h"
+#include "belle-sip/http-message.h"
+
 #include "conference/conference.h"
 #include "conference/handlers/server-conference-event-handler.h"
 #include "conference/participant-info.h"
@@ -63,6 +63,21 @@ CCMPConferenceScheduler::CCMPConferenceScheduler(const shared_ptr<Core> &core, c
 				              "account is chosen";
 			}
 		}
+	}
+}
+
+void CCMPConferenceScheduler::handleCCMPResponse(const HttpResponse &response) {
+	switch (response.getStatus()) {
+		case HttpResponse::Status::Valid:
+			handleResponse(this, response);
+			break;
+		case HttpResponse::Status::IOError:
+		case HttpResponse::Status::InvalidRequest:
+			handleIoError(this, response);
+			break;
+		case HttpResponse::Status::Timeout:
+			handleTimeout(this, response);
+			break;
 	}
 }
 
@@ -210,16 +225,8 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 	serializeCcmpRequest(httpBody, requestBody, map);
 	const auto body = httpBody.str();
 
-	belle_http_request_listener_callbacks_t internalCallbacks = {};
-	internalCallbacks.process_response = CCMPConferenceScheduler::handleResponse;
-	internalCallbacks.process_io_error = CCMPConferenceScheduler::handleIoError;
-	internalCallbacks.process_timeout = CCMPConferenceScheduler::handleTimeout;
-	internalCallbacks.process_auth_requested = CCMPConferenceScheduler::handleAuthRequested;
-
-	belle_http_request_listener_t *listener =
-	    belle_http_request_listener_create_from_callbacks(&internalCallbacks, this);
-
-	if (!XmlUtils::sendCcmpRequest(getCore(), ccmpServerUrl, from, body, listener)) {
+	if (!XmlUtils::sendCcmpRequest(getCore(), ccmpServerUrl, from, body,
+	                               [this](const HttpResponse &response) { this->handleCCMPResponse(response); })) {
 		lError() << "An error occurred when sending the HTTP request of CCMPConferenceScheduler [" << this
 		         << "] to server " << ccmpServerUrl;
 	}
@@ -244,66 +251,62 @@ void CCMPConferenceScheduler::processResponse(const LinphoneErrorInfo *errorInfo
 	}
 }
 
-void CCMPConferenceScheduler::handleResponse(void *ctx, const belle_http_response_event_t *event) {
-	if (event->response) {
-		auto ccmpScheduler = static_cast<CCMPConferenceScheduler *>(ctx);
-		LinphoneErrorInfo *ei = linphone_error_info_new();
-		int code = belle_http_response_get_status_code(event->response);
-		std::shared_ptr<Address> conferenceAddress;
-		if (code >= 200 && code < 300) {
-			belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
-			char *content = belle_sip_object_to_string(body);
-			if (content) {
-				try {
-					istringstream data(content);
-					auto responseType = parseCcmpResponse(data, Xsd::XmlSchema::Flags::dont_validate);
-					ms_free(content);
-					CcmpConfResponseMessageType &response =
-					    dynamic_cast<CcmpConfResponseMessageType &>(responseType->getCcmpResponse());
-					const auto responseCodeType = response.getResponseCode();
-					code = static_cast<int>(responseCodeType);
-					auto confObjId = response.getConfObjID();
-					if (confObjId.present()) {
-						ccmpScheduler->setCcmpUri(confObjId.get());
-					} else {
-						lError() << "Unable to create conference with conference scheduler [" << ccmpScheduler
-						         << "] as its address is unknown";
-						throw std::runtime_error("undefined conference address");
-					}
-					auto &confResponse = response.getConfResponse();
-					auto &confInfo = confResponse.getConfInfo();
-					if (confInfo.present()) {
-						auto confDescription = confInfo.get().getConferenceDescription();
-						if (confDescription.present()) {
-							auto confUris = confDescription.get().getConfUris();
-							if (confUris.present()) {
-								auto uriEntry = confUris.get().getEntry();
-								if (uriEntry.size() > 1) {
-									throw std::invalid_argument("Multiple conference addresses received");
-								}
-								conferenceAddress = Address::create(uriEntry.front().getUri());
+void CCMPConferenceScheduler::handleResponse(void *ctx, const HttpResponse &event) {
+	auto ccmpScheduler = static_cast<CCMPConferenceScheduler *>(ctx);
+	LinphoneErrorInfo *ei = linphone_error_info_new();
+	int code = event.getHttpStatusCode();
+	std::shared_ptr<Address> conferenceAddress;
+	if (code >= 200 && code < 300) {
+		const auto &body = event.getBody();
+		auto content = body.getBodyAsString();
+		if (!content.empty()) {
+			try {
+				istringstream data(content);
+				auto responseType = parseCcmpResponse(data, Xsd::XmlSchema::Flags::dont_validate);
+				auto &response = dynamic_cast<CcmpConfResponseMessageType &>(responseType->getCcmpResponse());
+				const auto responseCodeType = response.getResponseCode();
+				code = static_cast<int>(responseCodeType);
+				auto confObjId = response.getConfObjID();
+				if (confObjId.present()) {
+					ccmpScheduler->setCcmpUri(confObjId.get());
+				} else {
+					lError() << "Unable to create conference with conference scheduler [" << ccmpScheduler
+					         << "] as its address is unknown";
+					throw std::runtime_error("undefined conference address");
+				}
+				auto &confResponse = response.getConfResponse();
+				auto &confInfo = confResponse.getConfInfo();
+				if (confInfo.present()) {
+					auto confDescription = confInfo.get().getConferenceDescription();
+					if (confDescription.present()) {
+						auto confUris = confDescription.get().getConfUris();
+						if (confUris.present()) {
+							auto uriEntry = confUris.get().getEntry();
+							if (uriEntry.size() > 1) {
+								throw std::invalid_argument("Multiple conference addresses received");
 							}
+							conferenceAddress = Address::create(uriEntry.front().getUri());
 						}
 					}
-				} catch (const std::bad_cast &e) {
-					lError() << "Error while casting parsed CCMP response in conference scheduler [" << ccmpScheduler
-					         << "] " << e.what();
-					code = 400;
-				} catch (const exception &e) {
-					lError() << "Error while parsing CCMP response in conference scheduler [" << ccmpScheduler << "] "
-					         << e.what();
-					code = 400;
 				}
+			} catch (const std::bad_cast &e) {
+				lError() << "Error while casting parsed CCMP response in conference scheduler [" << ccmpScheduler
+				         << "] " << e.what();
+				code = 400;
+			} catch (const exception &e) {
+				lError() << "Error while parsing CCMP response in conference scheduler [" << ccmpScheduler << "] "
+				         << e.what();
+				code = 400;
 			}
 		}
-		LinphoneReason reason = linphone_error_code_to_reason(code);
-		linphone_error_info_set(ei, nullptr, reason, code, nullptr, nullptr);
-		ccmpScheduler->processResponse(ei, conferenceAddress);
-		linphone_error_info_unref(ei);
 	}
+	LinphoneReason reason = linphone_error_code_to_reason(code);
+	linphone_error_info_set(ei, nullptr, reason, code, nullptr, nullptr);
+	ccmpScheduler->processResponse(ei, conferenceAddress);
+	linphone_error_info_unref(ei);
 }
 
-void CCMPConferenceScheduler::handleIoError(void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
+void CCMPConferenceScheduler::handleIoError(void *ctx, BCTBX_UNUSED(const HttpResponse &event)) {
 	LinphoneErrorInfo *ei = linphone_error_info_new();
 	int code = 503;
 	LinphoneReason reason = linphone_error_code_to_reason(code);
@@ -313,7 +316,7 @@ void CCMPConferenceScheduler::handleIoError(void *ctx, BCTBX_UNUSED(const belle_
 	linphone_error_info_unref(ei);
 }
 
-void CCMPConferenceScheduler::handleTimeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
+void CCMPConferenceScheduler::handleTimeout(void *ctx, BCTBX_UNUSED(const HttpResponse &event)) {
 	LinphoneErrorInfo *ei = linphone_error_info_new();
 	int code = 504;
 	LinphoneReason reason = linphone_error_code_to_reason(code);
@@ -321,13 +324,6 @@ void CCMPConferenceScheduler::handleTimeout(void *ctx, BCTBX_UNUSED(const belle_
 	auto ccmpScheduler = static_cast<CCMPConferenceScheduler *>(ctx);
 	ccmpScheduler->processResponse(ei, nullptr);
 	linphone_error_info_unref(ei);
-}
-
-void CCMPConferenceScheduler::handleAuthRequested(void *ctx, belle_sip_auth_event_t *event) {
-	const char *username = belle_sip_auth_event_get_username(event);
-	const char *domain = belle_sip_auth_event_get_domain(event);
-	auto ccmpScheduler = static_cast<CCMPConferenceScheduler *>(ctx);
-	linphone_core_fill_belle_sip_auth_event(ccmpScheduler->getCore()->getCCore(), event, username, domain);
 }
 
 LINPHONE_END_NAMESPACE

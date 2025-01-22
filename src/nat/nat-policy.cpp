@@ -395,18 +395,23 @@ bool NatPolicy::processJsonConfigurationResponse(const std::shared_ptr<NatPolicy
 }
 
 void NatPolicy::updateTurnConfiguration(const std::function<void(bool)> &completionRoutine) {
-	mCompletionRoutine = completionRoutine;
-	auto &httpClient = getCore()->getHttpClient();
-	auto &httpRequest = httpClient.createRequest("GET", mTurnConfigurationEndpoint);
+	try {
+		mCompletionRoutine = completionRoutine;
+		auto &httpClient = getCore()->getHttpClient();
+		auto &httpRequest = httpClient.createRequest("GET", mTurnConfigurationEndpoint);
 
-	std::weak_ptr<NatPolicy> natPolicyRef = shared_from_this();
-	httpRequest.execute([natPolicyRef, completionRoutine](const HttpResponse &response) -> void {
-		auto sharedNatPolicy = natPolicyRef.lock();
-		if (sharedNatPolicy) {
-			bool ret = sharedNatPolicy->processJsonConfigurationResponse(sharedNatPolicy, response);
-			if (sharedNatPolicy->mCompletionRoutine) sharedNatPolicy->mCompletionRoutine(ret);
-		}
-	});
+		std::weak_ptr<NatPolicy> natPolicyRef = shared_from_this();
+		httpRequest.execute([natPolicyRef](const HttpResponse &response) -> void {
+			auto sharedNatPolicy = natPolicyRef.lock();
+			if (sharedNatPolicy) {
+				bool ret = sharedNatPolicy->processJsonConfigurationResponse(sharedNatPolicy, response);
+				if (sharedNatPolicy->mCompletionRoutine) sharedNatPolicy->mCompletionRoutine(ret);
+			}
+		});
+	} catch (const std::exception &e) {
+		lError() << __func__
+		         << ": Error while creating or sending HTTP request to update TURN configuration : " << e.what();
+	}
 }
 
 bool NatPolicy::needToUpdateTurnConfiguration() {

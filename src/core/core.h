@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -36,6 +36,7 @@
 #include "conference/encryption/ekt-info.h"
 #endif // HAVE_ADVANCED_IM
 #include "event-log/event-log.h"
+#include "event/event-publish.h"
 #include "friend/friend-list.h"
 #include "linphone/enums/c-enums.h"
 #include "linphone/types.h"
