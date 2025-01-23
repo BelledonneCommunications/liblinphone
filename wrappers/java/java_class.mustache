@@ -247,11 +247,13 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
         }
 {{/isAndroid}}
 {{#isAndroid}}
+{{^isBundledAndroid}}
         System.loadLibrary("c++_shared");
         loadOptionalLibrary("ffmpeg-linphone");
         System.loadLibrary("bctoolbox");
         System.loadLibrary("ortp");
         System.loadLibrary("mediastreamer2");
+{{/isBundledAndroid}}
         System.loadLibrary("linphone");
         Version.dumpCapabilities();
 {{/isAndroid}}

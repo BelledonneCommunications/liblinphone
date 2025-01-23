@@ -162,6 +162,16 @@ static const char *liblinphone_version =
 #endif
     ;
 
+#ifdef HAVE_STATIC_MSAAUDIO
+extern "C" void libmsaaudio_init(MSFactory *factory);
+#endif
+#ifdef HAVE_STATIC_MSANDROIDCAMERA2
+extern "C" void libmsandroidcamera2_init(MSFactory *factory);
+#endif
+#ifdef HAVE_STATIC_MSWEBRTC
+extern "C" void libmswebrtc_init(MSFactory *factory);
+#endif
+
 inline OrtpLogLevel operator|=(OrtpLogLevel a, OrtpLogLevel b) {
 	int ia = static_cast<int>(a);
 	int ib = static_cast<int>(b);
@@ -3388,6 +3398,15 @@ static void linphone_core_init(LinphoneCore *lc,
 	// LinphonePlayer/LinphoneRecorder.
 	if (!lc->factory) {
 		lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
+#ifdef HAVE_STATIC_MSAAUDIO
+		libmsaaudio_init(lc->factory);
+#endif
+#ifdef HAVE_STATIC_MSANDROIDCAMERA2
+		libmsandroidcamera2_init(lc->factory);
+#endif
+#ifdef HAVE_STATIC_MSWEBRTC
+		libmswebrtc_init(lc->factory);
+#endif
 	}
 	lc->sal->setFactory(lc->factory);
 

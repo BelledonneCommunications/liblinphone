@@ -98,6 +98,16 @@ endif()
 if(TurboJpeg_FOUND)
 	list(APPEND LINK_LIBS ${TurboJpeg_TARGET})
 endif()
+if(MsAaudio_FOUND)
+	list(APPEND LINK_LIBS ${MsAaudio_TARGET})
+endif()
+if(MsAndroidCamera2_FOUND)
+	list(APPEND LINK_LIBS ${MsAndroidCamera2_TARGET})
+endif()
+if(MsWebRtc_FOUND)
+	list(APPEND LINK_LIBS ${MsWebRtc_TARGET})
+endif()
+
 
 #define log domain for this part of code
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")

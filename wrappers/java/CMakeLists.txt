@@ -26,7 +26,9 @@ set(jni_sources "${CMAKE_CURRENT_BINARY_DIR}/src/linphone_jni.cc")
 # Remove everything after the last point in LINPHONE_VERSION (4.5.0 --> 4.5) to create STRIPPED_LINPHONE_VERSION
 string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
 
-if(ANDROID)
+if(ANDROID_BUNDLED)
+	set(_wrapper_platform "bundled-android")
+elseif(ANDROID)
 	set(_wrapper_platform "android")
 else()
 	set(_wrapper_platform "desktop")
