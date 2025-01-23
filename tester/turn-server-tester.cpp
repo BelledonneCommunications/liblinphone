@@ -81,7 +81,7 @@ void update_turn_configuration_test() {
 	"password" : "retset-enohpnilbil",
 	"ttl" : 10,
 	"uris" : [
-		"turn://sip1.linphone.org:3479?transport=udp"
+		"turn:sip1.linphone.org:3479?transport=udp"
 	]
 }
 						)";
@@ -116,7 +116,7 @@ void update_turn_configuration_test() {
 	/*then close the call*/
 	end_call(pauline, marie);
 
-	wait_for_until(marie->lc, pauline->lc, 0, 1, 10000);
+	wait_for_until(marie->lc, pauline->lc, nullptr, 1, 10000);
 	BC_ASSERT_PTR_NULL(linphone_core_find_auth_info(marie->lc, nullptr, "liblinphone-tester", nullptr));
 	BC_ASSERT_PTR_NULL(linphone_core_find_auth_info(pauline->lc, nullptr, "liblinphone-tester", nullptr));
 
