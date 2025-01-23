@@ -3205,7 +3205,6 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 
 	L_DB_TRANSACTION_C(q) {
 		if (getModuleVersion("legacy-friends-import") >= makeVersion(1, 0, 0)) return;
-		updateModuleVersion("legacy-friends-import", ModuleVersionLegacyFriendsImport);
 
 		soci::session *inSession = inDbSession.getBackendSession();
 		if (!checkLegacyFriendsTableExists(*inSession)) return;
@@ -3273,6 +3272,10 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 			    soci::use(vCard), soci::use(vCardEtag), soci::use(vCardSyncUri);
 		}
 		tr.commit();
+
+		// Only update the module version once the import has been done.
+		updateModuleVersion("legacy-friends-import", ModuleVersionLegacyFriendsImport);
+
 		lInfo() << "Successful import of legacy friends.";
 	};
 }
@@ -3330,7 +3333,6 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 
 	L_DB_TRANSACTION_C(q) {
 		if (getModuleVersion("legacy-history-import") >= makeVersion(1, 0, 0)) return;
-		updateModuleVersion("legacy-history-import", ModuleVersionLegacyHistoryImport);
 
 		soci::session *inSession = inDbSession.getBackendSession();
 		if (!checkLegacyHistoryTableExists(*inSession)) return;
@@ -3456,6 +3458,10 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 		       "GROUP BY conference_event.chat_room_id),0))"; // if there are no messages, the first is NULL. So put
 		                                                      // a 0 to the ID
 		tr.commit();
+
+		// Only update the module version once the import has been done.
+		updateModuleVersion("legacy-history-import", ModuleVersionLegacyHistoryImport);
+
 		lInfo() << "Successful import of legacy messages.";
 	};
 }
@@ -3470,7 +3476,6 @@ void MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
 
 	L_DB_TRANSACTION_C(q) {
 		if (getModuleVersion("legacy-call-logs-import") >= makeVersion(1, 0, 0)) return;
-		updateModuleVersion("legacy-call-logs-import", ModuleVersionLegacyCallLogsImport);
 
 		soci::session *inSession = inDbSession.getBackendSession();
 		if (!checkLegacyCallLogsTableExists(*inSession)) return;
@@ -3510,6 +3515,10 @@ void MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
 		}
 
 		tr.commit();
+
+		// Only update the module version once the import has been done.
+		updateModuleVersion("legacy-call-logs-import", ModuleVersionLegacyCallLogsImport);
+
 		lInfo() << "Successful import of legacy call logs.";
 	};
 }
