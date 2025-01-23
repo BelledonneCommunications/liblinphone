@@ -60,6 +60,15 @@ LINPHONE_PUBLIC LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard);
 LINPHONE_PUBLIC const char *linphone_vcard_as_vcard4_string(LinphoneVcard *vCard);
 
 /**
+ * Returns the vCard4 representation of the LinphoneVcard,
+ * but if a local file is detected in a PHOTO field,
+ * it will be converted to base64.
+ * @param vCard the #LinphoneVcard @notnil
+ * @return a const char * that represents the vCard. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_vcard_as_vcard4_string_with_base_64_picture(LinphoneVcard *vCard);
+
+/**
  * Sets the FN attribute of the vCard (which is mandatory).
  * @param vCard the #LinphoneVcard @notnil
  * @param name the display name to set for the vCard @maybenil

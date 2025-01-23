@@ -36,6 +36,7 @@
 #define CARDDAV_SERVER_WITH_PORT "http://dav.example.org:80/baikal/html/card.php"
 #define ME_VCF "http://dav.example.org/baikal/html/card.php/addressbooks/tester/default/me.vcf"
 #define ME_VCF_2 "/baikal/html/card.php/addressbooks/tester/default/me.vcf"
+#define ME_VCF_3 "/baikal/html/card.php/addressbooks/tester/default/unknown.vcf"
 #define CARDDAV_SYNC_TIMEOUT 15000
 
 using namespace LinphonePrivate;
@@ -226,6 +227,146 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 	linphone_friend_unref(lf);
 	lf = NULL;
 	lvc = NULL;
+	linphone_core_manager_destroy(manager);
+}
+
+static void linphone_vcard_local_photo_to_base_64(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
+	LinphoneVcard *lvc = linphone_vcard_context_get_vcard_from_buffer(
+	    linphone_core_get_vcard_context(manager->lc),
+	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain Berfini\r\nTEL;TYPE=work:"
+	    "0952636505\r\nPHOTO:https://gitlab.linphone.org/uploads/-/system/appearance/header_logo/1/"
+	    "logo-BC.png\r\nEND:VCARD\r\n");
+	BC_ASSERT_PTR_NOT_NULL(lvc);
+	if (lvc == nullptr) return;
+
+	char *asString = ms_strdup(linphone_vcard_as_vcard4_string(lvc));
+	char *asStringWithBase64Picture = ms_strdup(linphone_vcard_as_vcard4_string_with_base_64_picture(lvc));
+	BC_ASSERT_STRING_EQUAL(asString, asStringWithBase64Picture);
+	linphone_vcard_unref(lvc);
+	bctbx_free(asString);
+	bctbx_free(asStringWithBase64Picture);
+
+	lvc = linphone_vcard_context_get_vcard_from_buffer(
+	    linphone_core_get_vcard_context(manager->lc),
+	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain Berfini\r\nTEL;TYPE=work:"
+	    "0952636505\r\nEND:VCARD\r\n");
+	BC_ASSERT_PTR_NOT_NULL(lvc);
+	if (lvc == nullptr) return;
+
+	const char *base64Image =
+	    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQIAdgB2AAD//gATQ3JlYXRlZCB3aXRoIEdJTVD/"
+	    "4gKwSUNDX1BST0ZJTEUAAQEAAAKgbGNtcwRAAABtbnRyUkdCIFhZWiAH6QABABcACwAeABxhY3NwQVBQTAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	    "AAAAAA9tYAAQAAAADTLWxjbXMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1kZXNjAAABIAAAAEBjcHJ0"
+	    "AAABYAAAADZ3dHB0AAABmAAAABRjaGFkAAABrAAAACxyWFlaAAAB2AAAABRiWFlaAAAB7AAAABRnWFlaAAACAAAAABRyVFJDAAACFAAAACBnVF"
+	    "JDAAACFAAAACBiVFJDAAACFAAAACBjaHJtAAACNAAAACRkbW5kAAACWAAAACRkbWRkAAACfAAAACRtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACQA"
+	    "AAAcAEcASQBNAFAAIABiAHUAaQBsAHQALQBpAG4AIABzAFIARwBCbWx1YwAAAAAAAAABAAAADGVuVVMAAAAaAAAAHABQAHUAYgBsAGkAYwAgAE"
+	    "QAbwBtAGEAaQBuAABYWVogAAAAAAAA9tYAAQAAAADTLXNmMzIAAAAAAAEMQgAABd7///MlAAAHkwAA/ZD///uh///"
+	    "9ogAAA9wAAMBuWFlaIAAAAAAAAG+gAAA49QAAA5BYWVogAAAAAAAAJJ8AAA+"
+	    "EAAC2xFhZWiAAAAAAAABilwAAt4cAABjZcGFyYQAAAAAAAwAAAAJmZgAA8qcAAA1ZAAAT0AAACltjaHJtAAAAAAADAAAAAKPXAABUfAAATM0AA"
+	    "JmaAAAmZwAAD1xtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAEcASQBNAFBtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEL"
+	    "/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/"
+	    "2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/"
+	    "wgARCAAoACgDAREAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAABwgJBQb/xAAaAQADAQEBAQAAAAAAAAAAAAAFBgcIBAID/"
+	    "9oADAMBAAIQAxAAAAG4RIGjtNg2tzECsEZGrRa/"
+	    "OmvZoJ4ZiVh9i4oZJYziJdcP6+3ylWjOKJAua7wkzLljF4ZRqM3rT4Qg7Sm9Jz0FWdAqPCNnzusWWQO2ylnES3PTLdGf/"
+	    "8QAHhAAAgICAwEBAAAAAAAAAAAABQYCBAMHAAETFBH/2gAIAQEAAQUCPn6i9TtMB9j7+NfBcCbBV/"
+	    "SEupxaSMGdqaaVFUy5h8rEiYzx5qR0sVSAQb+"
+	    "kWQaDtSmlDLvL6qh2o4uvmPNdG6tWG0VbbB6uMzhhBLWTVaya5WLRdyZV6k0CLAbaGvuX2RqKEQuHb7VjWloarDf/"
+	    "xAAsEQACAgEEAAUDAwUAAAAAAAACAwEEBQYREhMABxQhMRUiQSNSYSQyM0JR/9oACAEDAQE/"
+	    "Ac9nqmApxZsA6w97PT0MfVGGXcjbISMa1VcyMSXADa5rCBFZANs2GLQozi3qnOaillzI5mcbg1PBDFYO5Yp4ZdqSYI4tWaornUWs84ZEkZxumg"
+	    "oUCYBI+oSc8GMs6S0n05HUk4zC2JqgCGZoQu6lsCLZDvDE1gy+eGq/YHiV/"
+	    "UNiwqC42kVmg3xgfNzQN54Ua+q60NP2X9QpZHF1vmI4i++HSJTM7ABW1zP4Etp8DMEMFExMFETEjO4zE/ExP5ifxPjWWXVq/"
+	    "V2Qwy7Y1tN6fWqnqrMJdxsNXbsghelcWzfZTMzkVqr3yWSjuEr07y6cUC7essfj9G26N/Ere/"
+	    "LupsxmmwtRUPE6Ox9cFBdbg6KqqhXeud6hZZtTasN2nssdK/TOt6f9ebrV2Tt2bBSb7Fkic5xzHuTGs5Gc/wAkUzt/HjUumvpvK1VHiA+7Fx/"
+	    "bx/cP/NvzHxt/Pz5BeY9uLidE5ewT6llZ/"
+	    "QnNIiZUsJCWTjuUxP8ASuSLCrwRDFdq4QHIbACrF4Y2ah0vpTIGERWO75pa9NTJgX3OyWYqpxLmfCoE0oNE9a2DfY+"
+	    "I7dpnVGK09cKjd1DZ6EU/UJQBP6Ftba6SnfjHawxGtuALKPbmRQUR7M0Hib3prGKuyNBs7s4kNjdfv71W/"
+	    "u5RwKG8+"
+	    "MzJfIdZZjRPlrk03sW7Jrq3EV3lYeOVCH1wQMlYaxb5KrMJiJmwPVHWMFv17bxp1QUtZ4pOMuxkF1dTUF0MgtJoi4KcoqKtoUM3NXdAgzqKSkO"
+	    "XHkW3KdcUclo5vmlq+BUz6uvRa8W2Y+axXQq5SiU8Y4z1VACeEz+kaGTG/"
+	    "t41vhL2tMZgctpmzXtLWDLK1E+FpuVcgquYOS33VLFdIxAnIRINZ98EPA9I4m1gsHXx+Rer1jWvZIrZyBZsjl0oIoGWSC1yw+I7c+"
+	    "yY3COU6i8mdb5dmQrpt4saoLeyvaZYZLMgcbyiv0wveuT/AGhzGlIJmZ4y+Pu8eTWhbmS10Hr6xKRpK36rKCc/"
+	    "4sjSeYUqckstpb69EtKIklmqo4S3EogtU6ax+"
+	    "rcJcwWT7Yq24CexB8HIcooYh659xklMET4GJLPbiYkMzHi5pnzm8sltqaXyN7I4LsliTxlStkwCWHO++IuIvWKJkUyx/"
+	    "pVsrci7CsGXKYy2d8yc5nKbslf1G7OY79WihKH07FOfuGX1sfRRXFJnBytrgribQnqaZhED401T8+dXK9Nk87f0/"
+	    "hnAS33r2Px+Pv8AV7gUVUop1MtLZ/0aTaoTH3jZ+N9LaWxWkMSrE4lRQuCl1my6YO3ftnEdty43aOxzNo/EAsIFShBYCMf/"
+	    "xAAuEQACAgIBAwIEBgIDAAAAAAABAgMEBRESAAYTITEUIjJBByNCQ1FhFTNSU3H/2gAIAQIBAT8BxeLsZWwYYikUUa+W1amPGCrACAZZW/"
+	    "skLHGu3lkKxopY9QYjGYgLBVoC1kGjMgkvwRT33iHHds0rDDHYKiNMVtZIz2AD61jrrnmcvzr4w2r0YkPMUGavjI/"
+	    "lB8bXpmp4+SWP1UirikjbW45JFK9ZLs7uBEaw+HkKr6t8LYq2pj/ZSDg7a/UVgf8A9XogqSCCCCQQRogj7EfY/"
+	    "wAjrBU3weCq2zD5Mpk2axi6ci/"
+	    "IrxxGRsrcX3KUaxLwKeQhDc4wJrrGLBWbOeisQXWjSnHMlnJmHyrczViUuYVvTtKxNeHxtqKHwxqOKpHvTpFeEASKELFFGOKRxgIiKPsqqAqj+"
+	    "h1j8h59I52T7H+/4PX4idsQy1Xz9KMJZgK/"
+	    "5BEAAnhY8fiCB+9ExXyHW3jJZj+V65G7xoZbL1gSZfD2p2+"
+	    "rD6IhpLUyn0Xcsvn042R8HGhPHY6w93KQCxXxcPkkn8ckhEfkZEh5ge54KCZfVnB9eIGj7r3JdreaK7X3aT0TYMXzbH+5P40eQKa5eg9m5Cnn+"
+	    "667QW1pmavLJGscZqN45DIQI1Vk/"
+	    "OHMkCMljyJH1extHz4a01uHwebGzmzXZ1fw86z+aJpF+V+GyvMaDa3oe3Xb9mrm4u0MOCR8Cc692PftMkBepY1v15NZZwT+4JFHt12/"
+	    "fr4C5kqWWjkhZmWJnEZZoZazSqyOo+fg/"
+	    "Pe1Deqr6EHYzl2HJZGWzUjf4eNI05MmiyqdeSQDfEMz8F5HeuAOmOusf3xgKyVndLXlZo1liWEarA/XIX5cZEj/"
+	    "AEiP53A+lfbrvXPQUe3HMEqtLmYfh6ZX15wWIwZpwCPoFZ9BtbEksf36w2Xs4PIQ5GpwMkXJWSQbSSJxqSNvuOS/"
+	    "qUhlOiD1Dk+xe7ik2TgrVshxCulyV6kh0B6C5DJBHZUfTHzcSaGvEo9OqeI7coUpo6tbHx0LA4zszJNHMP8AjLPO8hkUa2qvIQp9VAPWTl/"
+	    "DrBP5q9Grkr6HlHWrWJ7UPP3HlZ5paSID7rxkZf8ApPWZzN3O3Wu3WG9cIYU2Ia0IJ4wwrs6Ub2T9TsSzEk9f/"
+	    "8QAMRAAAgIBAwIEBAMJAAAAAAAAAgMBBAUREhMAIQYUIjEjMkJRQUNSBxUWJDM0RGFi/9oACAEBAAY/"
+	    "Aos2BY97j4KNCvG61fs7ZKEpH7QMSbnFotColjJ00iWWb2VmhigbCpTirLqmKW6ddtGL9QSy3ibIz6YOniYRVmfUNwBLpdrMDSxrCWMr/"
+	    "eqxtZhvfs4cVXXkMqhTPmGb2eNg+xrUUF0NQfEIDJekIvU7tKqP+hZYN4B/zvtJGPsXt0JjIlBRBRIzuGYmNYkSj5on8J/"
+	    "GOshU8zKsHhRGpmL6S9ZKJ8JjC44vlhuTuxC7BxtmwQ7W76mNHmp2MaDmZB1dlPDRY4CoeHaiYCLB4ysKQiLb+"
+	    "UNbFjncZb2MbM6gxjrEm5zZk2taUsYwp9yMy1Ipn7z1JhHb8Y6V4VyLpZSuboxZsKZmpaiJLyozP+PZiC4x10W+BEI+"
+	    "MWmDwV2dAQLvHHison52TEuo1zj5tqqs1ogO3qybyj1aT1TuZyzwJq8ykjy8QsZY4yn2iWmQwnWBXp23SWsR2r2MZd0ot7s9UP8AR3/"
+	    "t2fq3RsIW7ts6zrqPHNqhOTivbQppNd58ZYrhGZaZgz4BcURMuARiRiC+TTWKcULHmJRl6/"
+	    "k7QAS+biuB5d4rP1hLNAOALuOuk69ftBzxxExlP4aVjX6aRNaxa/namumkcQ48UkMT/"
+	    "SlJzHqjrDZPAtVZWIMcKpcKxem4CCFgGXw+"
+	    "RUq2kByPzF3gg2kmjfcvzb2uZsBmsARjrwpmdN5AtctLbGkFyTGoxum4tZUpSsGmh5WO9yY1lahXpJqY36pdtWE/WUerpIWEEFfw/"
+	    "Z85kt35dio2fL1S07ch3FxqGvdSX+8D1YxF6WApu1i3JnRiHr7qcP0ntn3WeomMzHbtMNRiLF25id8kt2NQGQr95n1HQeqyymc+7ZhXFu/"
+	    "PZ79Iddu5R2TqzurCMMS2sX6kV64KhJT9RLUMl7FM9RWfkr+IxTI2OvXayKL+L2LhgK6Mi8yjXQoMFl9Tx16DHY4J9+"
+	    "WzZZpNi5YmNDe8o95nTQAj0LCIEY+//8QAGxABAQEBAQEBAQAAAAAAAAAAAREAITFBcVH/"
+	    "2gAIAQEAAT8hnS2p1BsIiUyMHK9d6ld6WKDUKx6AZmDRLMZ3S+AW1OabePvMB4nvGuACafIJh0BK21D6AHEllG7AZoe5M0bHulWNWpReur/"
+	    "cBkj859Q00HNJmxAkUK9DP2OK7JUtLZKlSEBUJCPcm0YgqwhjUQUj9AJ1nDl9hJIU6cvnRywrZfQJRqXDIqdp1uSJAqlENI5382AwYNieHY0PF"
+	    "CCVvTRMjD0qcE/nBTFQp7gKpiUl2KhXIx0C+PbDtMfTZFHTmJGDQDH7T+i+OlCjV875x3G4ABQMucX7ciinUXbR5d8HHEJBGBc//"
+	    "9oADAMBAAIAAwAAABBy2/TFZwMtDhsf/8QAGREBAQEBAQEAAAAAAAAAAAAAAREAITFB/9oACAEDAQE/"
+	    "EA1JNDbdMCHOcPksS1XAX9l4XKMhozFxAPHuPkxDAKiWqEeAKrjpQQ+ERDiInMVBjHubY5BV0O+"
+	    "2c5IAolCjaEAww0FjIAgABATpBHxH0XhPQkFCNi0JdAwKK2M6ZyslPqYK7w4LAVsJbEahRBWEHaemmpgIWO4lmuIayVjYCLwOkrbloAdV5yKyJ"
+	    "xgJ6/ZIehGBkahcZyGI7RINMNwgle/EbOYgLezUs1wuJPPH9g2j/O1NcTK/"
+	    "ukD8GUTpAOBdPZXx06qw5iUVTpBKnM+YOmxADDIg2VCs9UP6Z0IirU0l3lzIyv8A/8QAGxEBAQEBAQEBAQAAAAAAAAAAAREhADFBUXH/"
+	    "2gAIAQIBAT8Quj2QZSFxIGlTgkK6YUqRjcrSSXIfGmxgoRcODqiqtFjkgpU9wec8oJwirQSJo0eEW5bIrGd9fwxbb9xFeKKaMj5hWR47g4PwAG"
+	    "vuc6GAb76NJ7P6P2cknQN+GjBCh6Q9NTD4yGMOxEgAWeXbAYCnFhRTh44TB2kp+"
+	    "bZAhxYecmlvUKaiy8LcKkKdEAVjQNIXZmtJSpJKY10T1wpJWoOFmYqT3EKcqlngSgI4B1T0ooGBQUSBXet6bEjKJMUHYCoVnxxeqhsgYMRGttx"
+	    "cIRE4UYRcThCPuI8KLTmCrQIzBO4dRvUCDLiUErYzpyFQZPf/xAAZEAEBAQEBAQAAAAAAAAAAAAABEQAhMUH/"
+	    "2gAIAQEAAT8QeS4bSfF0mZlNhd8DVz6s6Ox5SjHqQXo8WooNfEmBSdDXesmEoouQcVFihAzLJgK7SFbMDYUXVYvp7pg5np1aph33fX7OiR0z1A"
+	    "48LeJ6hxLy+"
+	    "053abRtnYUGI1lzwRKDoYgzFSnHclKAiLOsaeqmZx0H3k3rgrGcanW5e0SthRjpxbZZkZV6ez0yNyIbWjuC1g6clxRIDuEKKJxSZ3l9Pc8S7pK"
+	    "kYC2fLgVyu288Fqt1HVdMk8OyoszyXYgVGt1GIwQbApYC9YmhQgjZY/7IxkFrkNeHybZ1cGwsWAS47//Z";
+	linphone_vcard_set_photo(lvc, base64Image);
+
+	asString = ms_strdup(linphone_vcard_as_vcard4_string(lvc));
+	asStringWithBase64Picture = ms_strdup(linphone_vcard_as_vcard4_string_with_base_64_picture(lvc));
+	BC_ASSERT_STRING_EQUAL(asString, asStringWithBase64Picture);
+	char *base64vCard = ms_strdup(asStringWithBase64Picture);
+	linphone_vcard_unref(lvc);
+	bctbx_free(asString);
+	bctbx_free(asStringWithBase64Picture);
+
+	lvc = linphone_vcard_context_get_vcard_from_buffer(
+	    linphone_core_get_vcard_context(manager->lc),
+	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain Berfini\r\nTEL;TYPE=work:"
+	    "0952636505\r\n\r\nEND:VCARD\r\n");
+	BC_ASSERT_PTR_NOT_NULL(lvc);
+	if (lvc == nullptr) return;
+
+	char *picture_path = bc_tester_res("images/bc.jpeg");
+	std::string picture = "file:";
+	picture.append(picture_path);
+	linphone_vcard_set_photo(lvc, picture.c_str());
+	bctbx_free(picture_path);
+
+	asString = ms_strdup(linphone_vcard_as_vcard4_string(lvc));
+	asStringWithBase64Picture = ms_strdup(linphone_vcard_as_vcard4_string_with_base_64_picture(lvc));
+	BC_ASSERT_STRING_NOT_EQUAL(asString, asStringWithBase64Picture);
+	BC_ASSERT_STRING_EQUAL(base64vCard, asStringWithBase64Picture);
+	linphone_vcard_unref(lvc);
+	bctbx_free(base64vCard);
+	bctbx_free(asString);
+	bctbx_free(asStringWithBase64Picture);
+
 	linphone_core_manager_destroy(manager);
 }
 
@@ -540,6 +681,8 @@ static void carddav_integration(void) {
 	linphone_friend_list_remove_friend(lfl, lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_friend_list_get_friends(lfl)), 1, unsigned int,
 	                "%u"); // a local Sylvain friend is there
+	LinphoneFriend *sylvain = (LinphoneFriend *)bctbx_list_get_data(linphone_friend_list_get_friends(lfl));
+	BC_ASSERT_PTR_NOT_NULL(sylvain);
 	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 3, CARDDAV_SYNC_TIMEOUT);
 	BC_ASSERT_EQUAL(stats->sync_done_count, 3, int, "%i");
 
@@ -559,11 +702,15 @@ static void carddav_integration(void) {
 	    linphone_core_get_vcard_context(manager->lc),
 	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain "
 	    "Berfini\r\nIMPP:sip:sberfini@sip.linphone.org\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nEND:VCARD\r\n");
-	linphone_vcard_set_url(lvc2, ME_VCF_2);
+	linphone_vcard_set_url(lvc2, ME_VCF_3);
 	lf2 = linphone_core_create_friend_from_vcard(manager->lc, lvc2);
 	linphone_vcard_unref(lvc2);
 	linphone_friend_set_ref_key(lf2, refkey);
 	BC_ASSERT_EQUAL(linphone_friend_list_add_local_friend(lfl, lf2), LinphoneFriendListOK, int, "%d");
+	linphone_friend_unref(lf2);
+
+	// To force update
+	linphone_vcard_set_etag(linphone_friend_get_vcard(sylvain), "wrong");
 
 	stats->new_contact_count = 0;
 	stats->removed_contact_count = 0;
@@ -582,14 +729,11 @@ static void carddav_integration(void) {
 
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(lfl)), 1, size_t, "%zu");
 	lf = (LinphoneFriend *)bctbx_list_get_data((linphone_friend_list_get_friends(lfl)));
-	BC_ASSERT_STRING_EQUAL(linphone_friend_get_ref_key(lf), refkey);
-	BC_ASSERT_EQUAL(linphone_friend_get_storage_id(lf), linphone_friend_get_storage_id(lf2), long long, "%lld");
 	addr = linphone_friend_get_address(lf);
 	BC_ASSERT_PTR_NOT_NULL(addr);
 	address = linphone_address_as_string_uri_only(addr);
 	BC_ASSERT_STRING_EQUAL(address, "sip:sylvain@sip.linphone.org");
 	ms_free(address);
-	linphone_friend_unref(lf2);
 
 	linphone_friend_edit(lf);
 	linphone_friend_done(lf);
@@ -1066,6 +1210,7 @@ test_t vcard_tests[] = {
     TEST_NO_TAG("Import a lot of friends from vCards", linphone_vcard_import_a_lot_of_friends_test),
     TEST_NO_TAG("vCard creation for existing friends", linphone_vcard_update_existing_friends_test),
     TEST_NO_TAG("vCard phone numbers and SIP addresses", linphone_vcard_phone_numbers_and_sip_addresses),
+    TEST_NO_TAG("vCard with local photo file to base64", linphone_vcard_local_photo_to_base_64),
     TEST_NO_TAG("Friends working if no db set", friends_if_no_db_set),
     TEST_NO_TAG("Friends storage in sqlite database", friends_sqlite_storage),
     TEST_ONE_TAG("CardDAV clean", carddav_clean, "CardDAV"), // This is to ensure the content of the test addressbook is

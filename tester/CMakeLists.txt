@@ -220,6 +220,7 @@ set(RC_FILES
 )
 
 set(IMAGE_FILES
+	images/bc.jpeg
 	images/linphone.svg
 	images/linphonesiteqr.jpg
 	images/linphonesiteqr_captured.jpg

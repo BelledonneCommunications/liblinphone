@@ -57,6 +57,7 @@ void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
 	if (vcard && !vcard->getUid().empty() && !vcard->getEtag().empty()) {
 		if (vcard->getUrl().empty()) {
 			string url = generateUrlFromServerAddressAndUid(mSyncUri);
+			lInfo() << "[CardDAV] vCard newly generated URL is [" << url << "]";
 			if (url.empty()) {
 				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, "
@@ -67,6 +68,8 @@ void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
 			} else {
 				vcard->setUrl(url);
 			}
+		} else {
+			lInfo() << "[CardDAV] vCard existing URL is [" << vcard->getUrl() << "]";
 		}
 		sendQuery(CardDAVQuery::createDeleteQuery(this, vcard));
 	} else {
@@ -90,9 +93,15 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 
 	shared_ptr<Vcard> vcard = f->getVcard();
 	if (vcard) {
-		if (vcard->getUid().empty()) vcard->generateUniqueId();
+		if (vcard->getUid().empty()) {
+			vcard->generateUniqueId();
+			lInfo() << "[CardDAV] vCard newly generated UID is [" << vcard->getUid() << "]";
+		} else {
+			lInfo() << "[CardDAV] vCard existing UID is [" << vcard->getUid() << "]";
+		}
 		if (vcard->getUrl().empty()) {
 			string url = generateUrlFromServerAddressAndUid(mSyncUri);
+			lInfo() << "[CardDAV] vCard newly generated URL is [" << url << "]";
 			if (url.empty()) {
 				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, can't push it";
@@ -102,6 +111,8 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 			} else {
 				vcard->setUrl(url);
 			}
+		} else {
+			lInfo() << "[CardDAV] vCard existing URL is [" << vcard->getUrl() << "]";
 		}
 		shared_ptr<CardDAVQuery> query = CardDAVQuery::createPutQuery(this, vcard);
 		query->setUserData(linphone_friend_ref(f->toC()));
@@ -302,8 +313,16 @@ void CardDAVContext::sendQuery(const shared_ptr<CardDAVQuery> &query, bool cance
 		mHttpRequest = nullptr;
 	}
 	mQuery = query;
+
+	string url = query->mUrl;
+	if (url.rfind("http://", 0) != 0 && url.rfind("https://", 0) != 0) {
+		lWarning() << "[CardDAV] Request URL [" << url << "] doesn't to be full";
+		url = getUrlSchemeHostAndPort() + url;
+		lWarning() << "[CardDAV] Newly computed request URL is [" << url << "]";
+	}
+
 	try {
-		auto &httpRequest = getCore()->getHttpClient().createRequest(query->mMethod, query->mUrl);
+		auto &httpRequest = getCore()->getHttpClient().createRequest(query->mMethod, url);
 		mHttpRequest = &httpRequest;
 	} catch (const std::exception &e) {
 		lError() << "Could not build http request: " << e.what();
@@ -495,8 +514,10 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 	const list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
 	list<shared_ptr<Friend>> friendsToRemove;
 	for (const auto &f : friends) {
+		lDebug() << "[CardDAV] Found friend [" << f->getName() << "] with eTag [" << f->getVcard()->getEtag() << "]";
+		shared_ptr<Vcard> vcard = f->getVcard();
+
 		const auto responseIt = find_if(vCardsToPull.cbegin(), vCardsToPull.cend(), [&](const auto &response) {
-			shared_ptr<Vcard> vcard = f->getVcard();
 			if (!vcard || vcard->getUrl().empty()) return false;
 
 			// It's possible response.mUrl only contains the end of the URI (no scheme nor domain),
@@ -508,13 +529,13 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 			        << "] isn't in the remote vCard list, will be removed";
 			friendsToRemove.push_back(f);
 		} else {
-			shared_ptr<Vcard> vcard = f->getVcard();
 			const string etag = vcard->getEtag();
-			lInfo() << "[CardDAV] Local friend [" << f->getName() << "] eTag is [" << etag
-			        << "], remote vCard eTag is [" << responseIt->mEtag << "]";
 			if (!etag.empty() && (etag == responseIt->mEtag)) {
-				lInfo() << "[CardDAV] Contact is already up-to-date, do not ask server for vCard: " << f->getName();
+				lInfo() << "[CardDAV] Contact [" << f->getName() << "] is already up-to-date, do not ask server for it";
 				vCardsToPull.erase(responseIt);
+			} else {
+				lInfo() << "[CardDAV] Contact [" << f->getName() << "] local eTag is [" << etag
+				        << "] and the remote one is [" << responseIt->mEtag << "], fetching changes";
 			}
 		}
 	}
@@ -524,6 +545,10 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 			        << "]";
 			mContactRemovedCb(this, f);
 		}
+	}
+
+	for (auto &vcard : vCardsToPull) {
+		lInfo() << "[CardDAV] Pulling vCard [" << vcard.mUrl << "] with eTag [" << vcard.mEtag << "]";
 	}
 	pullVcards(vCardsToPull);
 }

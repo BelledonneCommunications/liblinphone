@@ -291,6 +291,10 @@ LINPHONE_PUBLIC void configSetStringList(LpConfig *lpconfig,
 
 LINPHONE_PUBLIC std::list<std::string>
 configGetStringList(LpConfig *lpconfig, const std::string &section, const std::string &key);
+
+LINPHONE_PUBLIC std::string getFileExtension(const std::string &filePath);
+LINPHONE_PUBLIC std::string convertFileToBase64(const std::string &filePath);
+
 } // namespace Utils
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version);
