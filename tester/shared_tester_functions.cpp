@@ -625,8 +625,9 @@ LinphoneCoreManager *_linphone_conference_video_change(bctbx_list_t *lcs,
 		if (!call) return NULL;
 		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
 		if (mgr != mgr2) { // mgr2 is audio only
-			BC_ASSERT_TRUE(vstream && vstream->source && ms_filter_get_id(vstream->source) == MS_MIRE_ID);
-			if (vstream && vstream->source && ms_filter_get_id(vstream->source) == MS_MIRE_ID) {
+			bool filterIsMire = (vstream && vstream->source && ms_filter_get_id(vstream->source) == MS_MIRE_ID);
+			BC_ASSERT_TRUE(filterIsMire);
+			if (filterIsMire) {
 				if (mgr == mgr1) ms_filter_call_method(vstream->source, MS_MIRE_SET_COLOR, &c1);
 				else ms_filter_call_method(vstream->source, MS_MIRE_SET_COLOR, &c3);
 			}
@@ -650,7 +651,9 @@ LinphoneCoreManager *_linphone_conference_video_change(bctbx_list_t *lcs,
 	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr2->stat.number_of_active_speaker_participant_device_changed,
 	                             initial_mgr2_stat.number_of_active_speaker_participant_device_changed + 1,
 	                             liblinphone_tester_sip_timeout));
+	linphone_call_check_rtp_sessions(call1);
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
 
 	// mgr1 should see mgr3 as active speaker
 	LinphoneParticipantDevice *device = linphone_conference_get_active_speaker_participant_device(confMgr1);
@@ -696,6 +699,7 @@ LinphoneCoreManager *_linphone_conference_video_change(bctbx_list_t *lcs,
 	/* mg2 is audio-only, so this shall not affect video on other participants */
 
 	// mgr1 still receives the video of the last active speaker that has video
+	linphone_call_check_rtp_sessions(call1);
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
 
@@ -725,6 +729,7 @@ LinphoneCoreManager *_linphone_conference_video_change(bctbx_list_t *lcs,
 	BC_ASSERT_TRUE(wait_for_list(lcs, &mgr3->stat.number_of_active_speaker_participant_device_changed,
 	                             initial_mgr3_stat.number_of_active_speaker_participant_device_changed + 2,
 	                             liblinphone_tester_sip_timeout));
+	linphone_call_check_rtp_sessions(call1);
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
 

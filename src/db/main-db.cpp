@@ -304,15 +304,29 @@ shared_ptr<Conference> MainDbPrivate::findConference(const ConferenceId &confere
 // Low level API.
 // -----------------------------------------------------------------------------
 
-long long MainDbPrivate::insertSipAddress(BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
-#ifdef HAVE_DB_STORAGE
-	if (!address) {
+long long MainDbPrivate::insertSipAddress(const Address &address) {
+	if (!address.isValid()) {
+		return -1;
+	}
+	// This is a hack, because all addresses don't print their parameters in the same order.
+	const string sipAddress = address.toStringUriOnlyOrdered();
+	const string displayName = address.getDisplayName();
+	return insertSipAddress(sipAddress, displayName);
+}
+
+long long MainDbPrivate::insertSipAddress(const std::shared_ptr<Address> &address) {
+	if (!address || !address->isValid()) {
 		return -1;
 	}
 	// This is a hack, because all addresses don't print their parameters in the same order.
 	const string sipAddress = address->toStringUriOnlyOrdered();
 	const string displayName = address->getDisplayName();
+	return insertSipAddress(sipAddress, displayName);
+}
 
+long long MainDbPrivate::insertSipAddress(BCTBX_UNUSED(const std::string &sipAddress),
+                                          BCTBX_UNUSED(const std::string &displayName)) {
+#ifdef HAVE_DB_STORAGE
 	long long sipAddressId = selectSipAddressId(sipAddress, true);
 	if (sipAddressId < 0) {
 		lInfo() << "Insert new sip address in database: `" << sipAddress << "`.";
@@ -1022,7 +1036,7 @@ long long MainDbPrivate::insertOrUpdateDevice(const std::shared_ptr<Address> &ad
 		deviceAddressId = insertSipAddress(addressWithGruu);
 	}
 
-	auto withoutGruu = Address::create(addressWithGruu->getUriWithoutGruu());
+	auto withoutGruu = addressWithGruu->getUriWithoutGruu();
 	long long sipAaddressId = selectSipAddressId(withoutGruu, false);
 	if (sipAaddressId <= 0) {
 		sipAaddressId = insertSipAddress(withoutGruu);
@@ -1056,6 +1070,16 @@ long long MainDbPrivate::insertOrUpdateDevice(const std::shared_ptr<Address> &ad
 }
 
 // -----------------------------------------------------------------------------
+
+long long MainDbPrivate::selectSipAddressId(const Address &address, const bool caseSensitive) const {
+#ifdef HAVE_DB_STORAGE
+	// This is a hack, because all addresses don't print their parameters in the same order.
+	const string sipAddress = address.toStringUriOnlyOrdered();
+	return selectSipAddressId(sipAddress, caseSensitive);
+#else
+	return -1;
+#endif
+}
 
 long long MainDbPrivate::selectSipAddressId(const std::shared_ptr<Address> &address, const bool caseSensitive) const {
 #ifdef HAVE_DB_STORAGE
@@ -1166,7 +1190,7 @@ ConferenceId MainDbPrivate::selectConferenceId(const long long chatRoomId) const
 	soci::session *session = dbSession.getBackendSession();
 	*session << query, soci::use(chatRoomId), soci::into(peerSipAddress), soci::into(localSipAddress);
 
-	ConferenceId conferenceId = ConferenceId(Address::create(peerSipAddress), Address::create(localSipAddress));
+	ConferenceId conferenceId = ConferenceId(Address(peerSipAddress), Address(localSipAddress));
 
 	if (conferenceId.isValid()) {
 		cache(conferenceId, chatRoomId);
@@ -2041,7 +2065,7 @@ void MainDbPrivate::setChatMessageParticipantState(const shared_ptr<EventLog> &e
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
-	auto participantAddressWithoutGruu = Address::create(participantAddress->getUriWithoutGruu());
+	auto participantAddressWithoutGruu = participantAddress->getUriWithoutGruu();
 	long long participantSipAddressId = selectSipAddressId(participantAddressWithoutGruu, true);
 	long long nbEntries;
 	*dbSession.getBackendSession() << "SELECT count(*) FROM chat_message_participant WHERE event_id = :eventId AND "
@@ -2198,8 +2222,8 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setUri(uri);
 	const auto &conferenceUri = conferenceInfo->getUri();
 	if (conferenceUri && conferenceUri->isValid()) {
-		const auto &uri = Address::create(conferenceUri->getUriWithoutGruu());
-		const auto &uriStringOrdered = uri->toStringUriOnlyOrdered();
+		const auto &uri = conferenceUri->getUriWithoutGruu();
+		const auto &uriStringOrdered = uri.toStringUriOnlyOrdered();
 		if (uriStringOrdered != uriString) {
 			// Update conference address to ensure that a conference info can be successfully searched by its address
 			const long long &uriSipAddressId = insertSipAddress(uri);
@@ -3381,9 +3405,9 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 			*session << "INSERT INTO event (type, creation_time) VALUES (:type, :creationTime)", soci::use(eventType),
 			    soci::use(creationTime.first, creationTime.second);
 			const long long &eventId = dbSession.getLastInsertId();
-			const auto localAddress = Address::create(message.get<string>(LegacyMessageColLocalAddress));
+			const auto localAddress = Address(message.get<string>(LegacyMessageColLocalAddress));
 			const long long &localSipAddressId = insertSipAddress(localAddress);
-			const auto remoteAddress = Address::create(message.get<string>(LegacyMessageColRemoteAddress));
+			const auto remoteAddress = Address(message.get<string>(LegacyMessageColRemoteAddress));
 			const long long &remoteSipAddressId = insertSipAddress(remoteAddress);
 			const long long &chatRoomId =
 			    insertOrUpdateImportedBasicChatRoom(remoteSipAddressId, localSipAddressId, time);
@@ -4294,10 +4318,10 @@ void MainDb::migrateConferenceInfos() {
 	for (const auto &row : rows) {
 		const long long &dbConferenceInfoId = d->dbSession.resolveId(row, 0);
 		const std::string uriString = row.get<string>(1);
-		std::shared_ptr<Address> uri = Address::create(uriString);
+		Address uri(uriString);
 		// Update conference address to ensure that a conference info can be successfully searched by its
 		// address
-		const long long &uriSipAddressId = d->insertSipAddress(Address::create(uri->getUriWithoutGruu()));
+		const long long &uriSipAddressId = d->insertSipAddress(uri.getUriWithoutGruu());
 		*session << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId WHERE id = :conferenceInfoId",
 		    soci::use(uriSipAddressId), soci::use(dbConferenceInfoId);
 	}
@@ -4580,8 +4604,7 @@ shared_ptr<EventLog> MainDb::getEvent(const unique_ptr<MainDb> &mainDb, const lo
 		*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent), soci::into(row),
 		    soci::use(storageId);
 
-		ConferenceId conferenceId(Address::create(row.get<string>(16))->getSharedFromThis(),
-		                          Address::create(row.get<string>(17)));
+		ConferenceId conferenceId(Address(row.get<string>(16)), Address(row.get<string>(17)));
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom) return shared_ptr<EventLog>();
 
@@ -7064,9 +7087,9 @@ void MainDb::deleteConferenceInfo(long long dbConferenceId) {
 			long long localId;
 			std::string localIdQuery = "SELECT local_sip_address_id FROM chat_room WHERE (id = :chatRoomId)";
 			*session << localIdQuery, soci::use(dbConferenceId), soci::into(localId);
-			std::shared_ptr<Address> peer = Address::create(d->selectSipAddressFromId(peerId));
-			std::shared_ptr<Address> local = Address::create(d->selectSipAddressFromId(localId));
-			d->deleteChatRoom(ConferenceId(peer, local));
+			Address peer(d->selectSipAddressFromId(peerId));
+			Address local(d->selectSipAddressFromId(localId));
+			d->deleteChatRoom(ConferenceId(std::move(peer), std::move(local)));
 		}
 	}
 
@@ -7645,7 +7668,7 @@ std::list<std::shared_ptr<FriendDevice>> MainDb::getDevices(BCTBX_UNUSED(const s
 		const string query = "SELECT device_address_id, display_name FROM friend_devices WHERE sip_address_id = :1";
 		std::list<std::shared_ptr<FriendDevice>> devicesList;
 
-		const auto sipAddress = Address::create(address->getUriWithoutGruu());
+		const auto sipAddress = address->getUriWithoutGruu();
 		long long sipAddressId = d->selectSipAddressId(sipAddress, false);
 
 		if (sipAddressId > 0) {

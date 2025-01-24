@@ -256,6 +256,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
 
 	// Clean up
+	fetched = 0;
 	flexiAPIClient->adminAccountDelete(id)->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
 		code = response.code;
 		fetched = 1;
@@ -305,24 +306,23 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 
-	fetched = code = 0;
-
 	// Create the contacts accounts
+	fetched = code = 0;
 	flexiAPIClient->adminAccountCreate(usernameContact1, "1234", "MD5", "", true, "", "", "sipinfo")
 	    ->then([&code, &fetched, &contactId1](LinphonePrivate::FlexiAPIClient::Response response) {
 		    code = response.code;
+		    BC_ASSERT_EQUAL(code, 200, int, "%d");
 		    fetched = 1;
 		    contactId1 = response.json()["id"].asInt();
 	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
-	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	fetched = code = 0;
-
 	flexiAPIClient->adminAccountCreate(usernameContact2, "1234", "MD5", "", true, "", "", "rfc2833")
 	    ->then([&code, &fetched, &contactId2](LinphonePrivate::FlexiAPIClient::Response response) {
 		    code = response.code;
+		    BC_ASSERT_EQUAL(code, 200, int, "%d");
 		    fetched = 1;
 		    contactId2 = response.json()["id"].asInt();
 	    });
@@ -330,18 +330,19 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
-	fetched = code = 0;
+	auto responseCb = [&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
+		code = response.code;
+		BC_ASSERT_EQUAL(code, 200, int, "%d");
+		fetched = 1;
+	};
 
 	// Link the contacts
-	flexiAPIClient->adminAccountContactAdd(contactId0, contactId1);
-	flexiAPIClient->adminAccountContactAdd(contactId0, contactId2)
-	    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
-		    code = response.code;
-		    fetched = 1;
-	    });
-
+	fetched = code = 0;
+	flexiAPIClient->adminAccountContactAdd(contactId0, contactId1)->then(responseCb);
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
-	BC_ASSERT_EQUAL(code, 200, int, "%d");
+	fetched = code = 0;
+	flexiAPIClient->adminAccountContactAdd(contactId0, contactId2)->then(responseCb);
+	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 
 	// Provision it
 	std::string remoteProvisioningURIWithConfirmationKey = remoteProvisioningURI;
@@ -433,15 +434,12 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	// Clean up
 	flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
 
-	flexiAPIClient->adminAccountDelete(contactId1);
-	flexiAPIClient->adminAccountDelete(contactId2)
-	    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
-		    code = response.code;
-		    fetched = 1;
-	    });
-
+	fetched = 0;
+	flexiAPIClient->adminAccountDelete(contactId1)->then(responseCb);
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
-	BC_ASSERT_EQUAL(code, 200, int, "%d");
+	fetched = 0;
+	flexiAPIClient->adminAccountDelete(contactId2)->then(responseCb);
+	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 
 	linphone_core_cbs_unref(cbs);
 	ms_free(stats);

@@ -13290,20 +13290,26 @@ void change_active_speaker_base(bool transfer_mode) {
 			}
 		}
 
-		linphone_core_enable_mic(laure.getLc(), FALSE);
-		linphone_core_enable_mic(pauline.getLc(), FALSE);
-		linphone_core_enable_mic(marie.getLc(), TRUE);
+		// Make pauline and then Marie speak so that we are sure that laure is not the active speaker of none of the
+		// conference members
+		const std::initializer_list<std::reference_wrapper<ClientConference>> speakingClients{pauline, marie};
+		for (const ClientConference &speakingClient : speakingClients) {
+			for (const auto &mgr : members) {
+				linphone_core_enable_mic(mgr->lc, (mgr == speakingClient.getCMgr()));
+			}
 
-		for (const auto &mgr : members) {
-			// wait for Marie to become the active speaker
-			CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(20), [&mgr, &marie, &confAddr] {
-				LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
-				LinphoneParticipantDevice *device =
-				    linphone_conference_get_active_speaker_participant_device(pconference);
-				return device ? linphone_address_weak_equal(linphone_participant_device_get_address(device),
-				                                            marie.getIdentity().toC())
-				              : false;
-			});
+			for (const auto &mgr : members) {
+				// wait for Marie to become the active speaker
+				CoreManagerAssert({focus, marie, pauline, laure})
+				    .waitUntil(chrono::seconds(20), [&mgr, &speakingClient, &confAddr] {
+					    LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
+					    LinphoneParticipantDevice *device =
+					        linphone_conference_get_active_speaker_participant_device(pconference);
+					    return device ? linphone_address_weak_equal(linphone_participant_device_get_address(device),
+					                                                speakingClient.getIdentity().toC())
+					                  : false;
+				    });
+			}
 		}
 
 		// need time to decode video
