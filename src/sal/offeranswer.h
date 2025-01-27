@@ -120,6 +120,9 @@ private:
 	                        const SalStreamDescription &remoteStream,
 	                        const unsigned int &remoteCfgIdx,
 	                        SalStreamConfiguration &resultCfg);
+
+	static int getExtensionId(int localExtensionId, int remoteExtensionId);
+
 	MSFactory *mMsFactory = nullptr;
 	bool mUseOneMatchingCodec = false;
 	bool mAnswerWithOwnNumbering = false;

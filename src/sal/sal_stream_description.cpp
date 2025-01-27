@@ -757,6 +757,11 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription *salMediaDe
 			char *extmap_urn = (char *)bctbx_malloc0(strlen(attr_value) + 1);
 			int value = 0;
 			if (sscanf(attr_value, "%i %s", &value, extmap_urn) > 0) {
+				if (value < 1 || value > 15) {
+					lError() << "Extmap value out of range for \"" << extmap_urn << "\"";
+					continue;
+				}
+
 				if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0) {
 					actualCfg.mid_rtp_ext_header_id = value;
 				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:csrc-audio-level") == 0) {

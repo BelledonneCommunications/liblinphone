@@ -7959,6 +7959,15 @@ void call_with_core_without_media(void) {
 	linphone_core_set_nortp_timeout(pauline->lc, 3);
 
 	disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
+	// disable_all_video_codecs_except_one(pauline->lc, "vp8");
+
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_core_set_video_activation_policy(pauline->lc, pol);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_video_activation_policy_unref(pol);
 
 	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
 	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");

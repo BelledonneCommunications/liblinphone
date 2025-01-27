@@ -566,6 +566,16 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(const SalStreamDe
 	return result;
 }
 
+int OfferAnswerEngine::getExtensionId(int localExtensionId, int remoteExtensionId) {
+	// If any of the two is set to 0 then one (or both) of the party does not support the extension.
+	if (localExtensionId == 0 || remoteExtensionId == 0) return 0;
+
+	// If they are not configured with the same id, then use the remote
+	if (localExtensionId != remoteExtensionId) return remoteExtensionId;
+
+	return localExtensionId;
+}
+
 OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiateOutgoingConfiguration(
     const SalStreamDescription &local_offer,
     const SalStreamDescription &remote_answer,
@@ -666,15 +676,12 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 		}
 	}
 
-	resultCfg.mixer_to_client_extension_id = (remoteCfg.mixer_to_client_extension_id == 0)
-	                                             ? localCfg.mixer_to_client_extension_id
-	                                             : remoteCfg.mixer_to_client_extension_id;
-	resultCfg.client_to_mixer_extension_id = (remoteCfg.client_to_mixer_extension_id == 0)
-	                                             ? localCfg.client_to_mixer_extension_id
-	                                             : remoteCfg.client_to_mixer_extension_id;
-	resultCfg.frame_marking_extension_id = (remoteCfg.frame_marking_extension_id == 0)
-	                                           ? localCfg.frame_marking_extension_id
-	                                           : remoteCfg.frame_marking_extension_id;
+	resultCfg.mixer_to_client_extension_id =
+	    getExtensionId(localCfg.mixer_to_client_extension_id, remoteCfg.mixer_to_client_extension_id);
+	resultCfg.client_to_mixer_extension_id =
+	    getExtensionId(localCfg.client_to_mixer_extension_id, remoteCfg.client_to_mixer_extension_id);
+	resultCfg.frame_marking_extension_id =
+	    getExtensionId(localCfg.frame_marking_extension_id, remoteCfg.frame_marking_extension_id);
 
 	resultCfg.conference_ssrc = remoteCfg.conference_ssrc;
 
@@ -924,15 +931,12 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
 
-	resultCfg.mixer_to_client_extension_id = (localCfg.mixer_to_client_extension_id == 0)
-	                                             ? remoteCfg.mixer_to_client_extension_id
-	                                             : localCfg.mixer_to_client_extension_id;
-	resultCfg.client_to_mixer_extension_id = (localCfg.client_to_mixer_extension_id == 0)
-	                                             ? remoteCfg.client_to_mixer_extension_id
-	                                             : localCfg.client_to_mixer_extension_id;
-	resultCfg.frame_marking_extension_id = (localCfg.frame_marking_extension_id == 0)
-	                                           ? remoteCfg.frame_marking_extension_id
-	                                           : localCfg.frame_marking_extension_id;
+	resultCfg.mixer_to_client_extension_id =
+	    getExtensionId(localCfg.mixer_to_client_extension_id, remoteCfg.mixer_to_client_extension_id);
+	resultCfg.client_to_mixer_extension_id =
+	    getExtensionId(localCfg.client_to_mixer_extension_id, remoteCfg.client_to_mixer_extension_id);
+	resultCfg.frame_marking_extension_id =
+	    getExtensionId(localCfg.frame_marking_extension_id, remoteCfg.frame_marking_extension_id);
 
 	resultCfg.conference_ssrc = localCfg.conference_ssrc;
 

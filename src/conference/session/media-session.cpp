@@ -1859,19 +1859,22 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		cfg.rtcp_cname = getMe()->getAddress()->toString();
 
 		const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
-		if ((type == SalAudio) && isInConference()) {
-			bool rtpVolumesAllowed =
-			    !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "use_volumes", 1);
-			if (rtpVolumesAllowed) {
-				cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
-				cfg.client_to_mixer_extension_id = RTP_EXTENSION_CLIENT_TO_MIXER_AUDIO_LEVEL;
-			} else {
-				lInfo() << "RTP client-to-mixer and mixer-to-client volumes disabled by configuration.";
-			}
-		} else if ((type == SalVideo) && conference) {
-			validateVideoStreamDirection(cfg);
+		if (conference || (q->getRemoteContactAddress() != nullptr &&
+		                   q->getRemoteContactAddress()->hasParam(Conference::IsFocusParameter))) {
+			if (type == SalAudio) {
+				bool rtpVolumesAllowed = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()),
+				                                                   "rtp", "use_volumes", 1);
+				if (rtpVolumesAllowed) {
+					cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
+					cfg.client_to_mixer_extension_id = RTP_EXTENSION_CLIENT_TO_MIXER_AUDIO_LEVEL;
+				} else {
+					lInfo() << "RTP client-to-mixer and mixer-to-client volumes disabled by configuration.";
+				}
+			} else if (type == SalVideo) {
+				validateVideoStreamDirection(cfg);
 
-			cfg.frame_marking_extension_id = RTP_EXTENSION_FRAME_MARKING;
+				cfg.frame_marking_extension_id = RTP_EXTENSION_FRAME_MARKING;
+			}
 		}
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, stream, cfg, mid);
 

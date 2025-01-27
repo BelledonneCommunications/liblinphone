@@ -5732,9 +5732,17 @@ static void rejoining_conference_after_end_without_cleanup_window(void) {
 	rejoining_conference_after_end(-1);
 }
 
+static void on_eof(LinphonePlayer *player) {
+	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
+	LinphoneCoreManager *mgr = (LinphoneCoreManager *)linphone_player_cbs_get_user_data(cbs);
+	mgr->stat.number_of_player_eof++;
+}
+
 static void create_simple_conference_in_sfu_payload_mode(void) {
 	char *pauline_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_pauline.wav");
 	char *marie_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_marie.wav");
+	char *pauline_dummy_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_pauline_dummy.wav");
+	char *marie_dummy_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_marie_dummy.wav");
 	char *soundpath = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 
 	time_t start_time = ms_time(nullptr);
@@ -5744,12 +5752,15 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
 		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
-		linphone_core_set_record_file(marie.getCMgr()->lc, marie_recordpath);
-		linphone_core_set_record_file(pauline.getCMgr()->lc, pauline_recordpath);
+		unlink(marie_recordpath);
+		unlink(pauline_recordpath);
+
+		linphone_core_set_record_file(marie.getCMgr()->lc, marie_dummy_recordpath);
+		linphone_core_set_record_file(pauline.getCMgr()->lc, pauline_dummy_recordpath);
 		linphone_core_set_use_files(marie.getCMgr()->lc, TRUE);
 		linphone_core_set_use_files(pauline.getCMgr()->lc, TRUE);
-		linphone_core_set_play_file(marie.getCMgr()->lc, soundpath);
-		linphone_core_set_play_file(pauline.getCMgr()->lc, soundpath);
+		linphone_core_set_play_file(marie.getCMgr()->lc, nullptr);
+		linphone_core_set_play_file(pauline.getCMgr()->lc, nullptr);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -5895,13 +5906,6 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
 
-		// wait to know if the no RTP timeout is triggered
-		CoreManagerAssert({focus, marie, pauline})
-		    .waitUntil(chrono::seconds(nortp_timeout + 1), [&marie, confAddr, nortp_timeout] {
-			    LinphoneCall *marie_call = linphone_core_get_call_by_remote_address2(marie.getLc(), confAddr);
-			    return marie_call && (linphone_call_get_duration(marie_call) > nortp_timeout);
-		    });
-
 		for (auto mgr : conferenceMgrs) {
 			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pconference);
@@ -6009,6 +6013,33 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 			}
 		}
 
+		// Start playing the audio file
+		for (auto mgr : members) {
+			LinphoneCall *current_call = linphone_core_get_current_call(mgr->lc);
+			if (!BC_ASSERT_PTR_NOT_NULL(current_call)) continue;
+
+			LinphonePlayer *player = linphone_call_get_player(current_call);
+			LinphonePlayerCbs *player_cbs = NULL;
+			if (!BC_ASSERT_PTR_NOT_NULL(player)) continue;
+
+			player_cbs = linphone_factory_create_player_cbs(linphone_factory_get());
+			linphone_player_cbs_set_eof_reached(player_cbs, on_eof);
+			linphone_player_cbs_set_user_data(player_cbs, mgr);
+			linphone_player_add_callbacks(player, player_cbs);
+			linphone_player_cbs_unref(player_cbs);
+
+			if (mgr == marie.getCMgr()) linphone_core_set_record_file(mgr->lc, marie_recordpath);
+			else linphone_core_set_record_file(mgr->lc, pauline_recordpath);
+
+			BC_ASSERT_EQUAL(linphone_player_open(player, soundpath), 0, int, "%d");
+			BC_ASSERT_EQUAL(linphone_player_start(player), 0, int, "%d");
+		}
+
+		// Wait some time so the file is finished
+		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(10), [&marie, &pauline] {
+			return marie.getStats().number_of_player_eof == 1 && pauline.getStats().number_of_player_eof == 1;
+		});
+
 		// terminate all calls
 		for (auto mgr : members) {
 			const bctbx_list_t *calls = linphone_core_get_calls(mgr->lc);
@@ -6097,10 +6128,14 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 
 		unlink(marie_recordpath);
 		unlink(pauline_recordpath);
+		unlink(marie_dummy_recordpath);
+		unlink(pauline_dummy_recordpath);
 	}
 
 	bc_free(pauline_recordpath);
 	bc_free(marie_recordpath);
+	bc_free(pauline_dummy_recordpath);
+	bc_free(marie_dummy_recordpath);
 	bc_free(soundpath);
 }
 
