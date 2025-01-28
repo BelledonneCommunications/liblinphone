@@ -95,7 +95,7 @@ LINPHONE_PUBLIC void *linphone_account_params_get_user_data(const LinphoneAccoun
  * @return 0 if successful, -1 otherwise.
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
-                                                                          LinphoneAddress *server_address);
+                                                                          const LinphoneAddress *server_address);
 
 /**
  * Sets the proxy address
@@ -125,7 +125,7 @@ linphone_account_params_set_server_addr(LinphoneAccountParams *params, const cha
  * @return 0 if successful, -1 otherwise.
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
-                                                                            LinphoneAddress *identity);
+                                                                            const LinphoneAddress *identity);
 
 /**
  * Sets a list of SIP route.

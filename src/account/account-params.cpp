@@ -632,7 +632,7 @@ void AccountParams::setPrivacy(LinphonePrivacyMask privacy) {
 	mPrivacy = privacy;
 }
 
-LinphoneStatus AccountParams::setIdentityAddress(const std::shared_ptr<Address> identityAddress) {
+LinphoneStatus AccountParams::setIdentityAddress(const std::shared_ptr<const Address> &identityAddress) {
 	if (!identityAddress || identityAddress->getUsername().empty()) {
 		lWarning() << "Invalid sip identity: " << identityAddress->toString();
 		return -1;
@@ -667,7 +667,7 @@ void AccountParams::enableRtpBundleAssumption(bool value) {
 	mRtpBundleAssumption = value;
 }
 
-void AccountParams::setCustomContact(const std::shared_ptr<Address> contact) {
+void AccountParams::setCustomContact(const std::shared_ptr<const Address> &contact) {
 	mCustomContact = contact ? contact->clone()->toSharedPtr() : nullptr;
 }
 
@@ -819,11 +819,11 @@ const char *AccountParams::getConferenceFactoryCstr() const {
 	return mConferenceFactoryAddressCstr;
 }
 
-std::shared_ptr<Address> AccountParams::getConferenceFactoryAddress() const {
+std::shared_ptr<const Address> AccountParams::getConferenceFactoryAddress() const {
 	return mConferenceFactoryAddress;
 }
 
-std::shared_ptr<Address> AccountParams::getAudioVideoConferenceFactoryAddress() const {
+std::shared_ptr<const Address> AccountParams::getAudioVideoConferenceFactoryAddress() const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 
@@ -888,7 +888,7 @@ LinphonePrivacyMask AccountParams::getPrivacy() const {
 	return mPrivacy;
 }
 
-const std::shared_ptr<Address> &AccountParams::getIdentityAddress() const {
+std::shared_ptr<const Address> AccountParams::getIdentityAddress() const {
 	return mIdentityAddress;
 }
 
@@ -912,7 +912,7 @@ bool AccountParams::rtpBundleAssumptionEnabled() const {
 	return mRtpBundleAssumption;
 }
 
-const std::shared_ptr<Address> &AccountParams::getCustomContact() const {
+std::shared_ptr<const Address> AccountParams::getCustomContact() const {
 	return mCustomContact;
 }
 
@@ -944,7 +944,7 @@ void AccountParams::setMwiServerAddress(const std::shared_ptr<Address> &address)
 	mMwiServerAddress = address;
 }
 
-const std::shared_ptr<Address> &AccountParams::getMwiServerAddress() const {
+std::shared_ptr<const Address> AccountParams::getMwiServerAddress() const {
 	return mMwiServerAddress;
 }
 
@@ -952,13 +952,18 @@ void AccountParams::setVoicemailAddress(const std::shared_ptr<Address> &address)
 	mVoicemailAddress = address;
 }
 
-const std::shared_ptr<Address> &AccountParams::getVoicemailAddress() const {
+std::shared_ptr<const Address> AccountParams::getVoicemailAddress() const {
 	return mVoicemailAddress;
 }
 
 // -----------------------------------------------------------------------------
 
-LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> serverAddr) {
+LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<const Address> &serverAddr) {
+	if (serverAddr == nullptr) {
+		mProxyAddress.reset();
+		mProxy = "";
+		return 0;
+	}
 	bool outboundProxyEnabled = getOutboundProxyEnabled();
 
 	mProxyAddress = serverAddr->clone()->toSharedPtr();
@@ -973,7 +978,7 @@ LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> se
 	return 0;
 }
 
-const std::shared_ptr<Address> &AccountParams::getServerAddress() const {
+std::shared_ptr<const Address> AccountParams::getServerAddress() const {
 	return mProxyAddress;
 }
 

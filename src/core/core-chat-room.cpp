@@ -111,9 +111,10 @@ CorePrivate::getIdentityAddressWithGruu(const std::shared_ptr<const Address> &id
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 // Base server group chat room creator
-shared_ptr<AbstractChatRoom> CorePrivate::createServerChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
-                                                               SalCallOp *op,
-                                                               const std::shared_ptr<ConferenceParams> &params) {
+shared_ptr<AbstractChatRoom>
+CorePrivate::createServerChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
+                                  SalCallOp *op,
+                                  const std::shared_ptr<ConferenceParams> &params) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 	if (!params || !params->isValid()) {
@@ -151,10 +152,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createServerChatRoom(const std::shared
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 // Base client group chat room creator
-shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
-                                                               const ConferenceId &conferenceId,
-                                                               SalCallOp *op,
-                                                               const std::shared_ptr<ConferenceParams> &params) {
+shared_ptr<AbstractChatRoom>
+CorePrivate::createClientChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
+                                  const ConferenceId &conferenceId,
+                                  SalCallOp *op,
+                                  const std::shared_ptr<ConferenceParams> &params) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 	if (!params || !params->isValid()) {
@@ -685,8 +687,8 @@ static bool compare_chat_room(const shared_ptr<AbstractChatRoom> &first, const s
 	return first->getLastUpdateTime() > second->getLastUpdateTime();
 }
 
-std::shared_ptr<Address> Core::getConferenceFactoryAddress(const shared_ptr<Core> &core,
-                                                           const std::shared_ptr<const Address> &localAddress) {
+std::shared_ptr<const Address> Core::getConferenceFactoryAddress(const shared_ptr<Core> &core,
+                                                                 const std::shared_ptr<const Address> &localAddress) {
 	auto account = core->lookupKnownAccount(localAddress, true);
 	if (!account) {
 		// lWarning() << "No account found for local address: [" << *localAddress << "]";
@@ -694,8 +696,8 @@ std::shared_ptr<Address> Core::getConferenceFactoryAddress(const shared_ptr<Core
 	} else return getConferenceFactoryAddress(core, account);
 }
 
-std::shared_ptr<Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(const shared_ptr<Core> &core),
-                                                           const std::shared_ptr<Account> &account) {
+std::shared_ptr<const Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(const shared_ptr<Core> &core),
+                                                                 const std::shared_ptr<Account> &account) {
 	const auto &params = account->getAccountParams();
 	if (params) {
 		const auto &uri = params->getConferenceFactoryAddress();
@@ -739,7 +741,7 @@ void Core::updateChatRoomList() const {
 
 	bool hideChatRoomsFromRemovedProxyConfig =
 	    !!linphone_config_get_int(config, "misc", "hide_chat_rooms_from_removed_proxies", 1);
-	list<shared_ptr<Address>> localAddresses;
+	list<shared_ptr<const Address>> localAddresses;
 	if (hideChatRoomsFromRemovedProxyConfig) {
 		for (const auto &account : getAccounts()) {
 			auto localAddress = account->getAccountParams()->getIdentityAddress();

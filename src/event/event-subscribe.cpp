@@ -65,7 +65,7 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const std::shared_ptr<Address> &resource,
+                               const std::shared_ptr<const Address> &resource,
                                const string &event)
     : EventSubscribe(core, LinphoneSubscriptionIncoming, event, -1) {
 	linphone_configure_op(core->getCCore(), mOp, resource->toC(), nullptr, TRUE);
@@ -75,7 +75,7 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const std::shared_ptr<Address> &resource,
+                               const std::shared_ptr<const Address> &resource,
                                const string &event,
                                int expires)
     : EventSubscribe(core, LinphoneSubscriptionOutgoing, event, expires) {
@@ -85,7 +85,7 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const std::shared_ptr<Address> &resource,
+                               const std::shared_ptr<const Address> &resource,
                                const std::shared_ptr<Account> &account,
                                const string &event,
                                int expires)

@@ -1163,13 +1163,11 @@ static void on_expire(SalOp *op) {
 		linphone_event_set_state(lev, LinphoneSubscriptionExpiring);
 	}
 
+	/* FIXME: the Account should simply use the EventCbs to get notified of Expiring state */
 	void *user_data = linphone_event_get_user_data(lev);
 	const char *event_name = linphone_event_get_name(lev);
 	if (user_data && event_name && linphone_event_is_internal(lev) && strcmp(event_name, "presence") == 0) {
-		LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
-		LinphoneAddress *identity_address = (LinphoneAddress *)user_data;
-		auto account = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAccountByIdentityAddress(
-		    Address::toCpp(identity_address)->getSharedFromThis());
+		Account *account = (Account *)user_data;
 		if (account) {
 			lInfo() << "Presence publish about to expire, manually refreshing it for account [" << account << "]";
 			account->sendPublish();

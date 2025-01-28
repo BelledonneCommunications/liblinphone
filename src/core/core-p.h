@@ -116,10 +116,10 @@ public:
 	void reloadRemoteContactDirectories();
 
 	// Base
-	std::shared_ptr<AbstractChatRoom> createServerChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
+	std::shared_ptr<AbstractChatRoom> createServerChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
 	                                                       SalCallOp *op,
 	                                                       const std::shared_ptr<ConferenceParams> &params);
-	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
 	                                                       const ConferenceId &conferenceId,
 	                                                       SalCallOp *op,
 	                                                       const std::shared_ptr<ConferenceParams> &params);

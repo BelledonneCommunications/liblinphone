@@ -79,7 +79,7 @@ public:
 	static Participant::Role textToRole(const std::string &str);
 
 	explicit Participant(const std::shared_ptr<Conference> conference,
-	                     const std::shared_ptr<Address> &address,
+	                     const std::shared_ptr<const Address> &address,
 	                     std::shared_ptr<CallSession> callSession);
 	explicit Participant(const std::shared_ptr<Conference> conference, const std::shared_ptr<const Address> &address);
 	// acquires the address, that must be a simple URI without 'gr' parameter.

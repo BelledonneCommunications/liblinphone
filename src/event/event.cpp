@@ -111,19 +111,19 @@ const std::string &Event::getCallId() const {
 	return mOp->getCallId();
 }
 
-const std::shared_ptr<Address> Event::getResource() const {
+std::shared_ptr<Address> Event::getResource() const {
 	return cacheTo();
 }
 
-const std::shared_ptr<Address> Event::getRequestAddress() const {
+std::shared_ptr<Address> Event::getRequestAddress() const {
 	return cacheRequestAddress();
 }
 
-void Event::setRequestAddress(const std::shared_ptr<Address> &requestAddress) {
+void Event::setRequestAddress(const std::shared_ptr<const Address> &requestAddress) {
 	mRequestAddress = requestAddress->clone()->toSharedPtr();
 }
 
-const std::shared_ptr<Address> Event::getRemoteContact() const {
+std::shared_ptr<Address> Event::getRemoteContact() const {
 	if (!mRemoteContactAddress) {
 		mRemoteContactAddress = Address::create();
 	}
@@ -131,7 +131,7 @@ const std::shared_ptr<Address> Event::getRemoteContact() const {
 	return mRemoteContactAddress;
 }
 
-const std::shared_ptr<Address> Event::cacheFrom() const {
+std::shared_ptr<Address> Event::cacheFrom() const {
 	if (!mFromAddress) {
 		mFromAddress = Address::create();
 	}
@@ -139,7 +139,7 @@ const std::shared_ptr<Address> Event::cacheFrom() const {
 	return mFromAddress;
 }
 
-const std::shared_ptr<Address> Event::cacheTo() const {
+std::shared_ptr<Address> Event::cacheTo() const {
 	if (!mToAddress) {
 		mToAddress = Address::create();
 	}
@@ -147,7 +147,7 @@ const std::shared_ptr<Address> Event::cacheTo() const {
 	return mToAddress;
 }
 
-const std::shared_ptr<Address> Event::cacheRequestAddress() const {
+std::shared_ptr<Address> Event::cacheRequestAddress() const {
 	if (!mRequestAddress) {
 		mRequestAddress = Address::create();
 	}

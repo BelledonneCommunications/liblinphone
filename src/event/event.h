@@ -83,12 +83,12 @@ public:
 
 	const std::string &getCallId() const;
 
-	const std::shared_ptr<Address> getRemoteContact() const;
+	std::shared_ptr<Address> getRemoteContact() const;
 
-	const std::shared_ptr<Address> getResource() const;
+	std::shared_ptr<Address> getResource() const;
 
-	const std::shared_ptr<Address> getRequestAddress() const;
-	void setRequestAddress(const std::shared_ptr<Address> &requestAddress);
+	std::shared_ptr<Address> getRequestAddress() const;
+	void setRequestAddress(const std::shared_ptr<const Address> &requestAddress);
 
 	LinphonePrivate::SalEventOp *getOp() const;
 	void setManualRefresherMode(bool manual);
@@ -105,9 +105,9 @@ public:
 	virtual void terminate() = 0;
 
 protected:
-	const std::shared_ptr<Address> cacheFrom() const;
-	const std::shared_ptr<Address> cacheTo() const;
-	const std::shared_ptr<Address> cacheRequestAddress() const;
+	std::shared_ptr<Address> cacheFrom() const;
+	std::shared_ptr<Address> cacheTo() const;
+	std::shared_ptr<Address> cacheRequestAddress() const;
 
 	mutable std::shared_ptr<Address> mFromAddress = nullptr;
 	mutable std::shared_ptr<Address> mToAddress = nullptr;

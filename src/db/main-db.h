@@ -292,7 +292,7 @@ public:
 	// Other.
 	// ---------------------------------------------------------------------------
 
-	// Import legacy calls/messages from old db.
+	// Import legacy calls/messages from old db. Returns true if something was done.
 	bool import(Backend backend, const std::string &parameters) override;
 
 	static FilterMask getFilterMaskFromHistoryFilterMask(AbstractChatRoom::HistoryFilterMask historyFilterMask);

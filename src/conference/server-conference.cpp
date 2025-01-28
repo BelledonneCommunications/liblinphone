@@ -57,7 +57,7 @@ LINPHONE_BEGIN_NAMESPACE
 constexpr int SERVER_CONFIGURATION_FAILED = 1;
 
 ServerConference::ServerConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<Address> &myAddress,
+                                   const std::shared_ptr<const Address> &myAddress,
                                    std::shared_ptr<CallSessionListener> listener,
                                    const std::shared_ptr<ConferenceParams> params)
     : Conference(core, myAddress, listener, params) {

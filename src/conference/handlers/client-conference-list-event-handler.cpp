@@ -82,7 +82,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 	if (account->getState() != LinphoneRegistrationOk) return false;
 
 	const auto &accountParams = account->getAccountParams();
-	std::shared_ptr<Address> identityAddress = accountParams->getIdentityAddress();
+	auto identityAddress = accountParams->getIdentityAddress();
 
 	const auto &factoryUri = accountParams->getConferenceFactoryAddress();
 	if (!factoryUri || !factoryUri->isValid()) {
@@ -174,7 +174,7 @@ void ClientConferenceListEventHandler::unsubscribe(const std::shared_ptr<Account
 	}
 
 	const auto &accountParams = account->getAccountParams();
-	std::shared_ptr<Address> identityAddress = accountParams->getIdentityAddress();
+	auto identityAddress = accountParams->getIdentityAddress();
 	for (const auto &[key, handlerWkPtr] : handlers) {
 		try {
 			const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);

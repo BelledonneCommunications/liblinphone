@@ -353,7 +353,7 @@ public:
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
-	                    const std::shared_ptr<Address> &myAddress,
+	                    const std::shared_ptr<const Address> &myAddress,
 	                    std::shared_ptr<CallSessionListener> callSessionListener,
 	                    const std::shared_ptr<const ConferenceParams> params);
 

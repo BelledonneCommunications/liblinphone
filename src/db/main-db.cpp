@@ -3196,11 +3196,12 @@ static inline bool checkLegacyCallLogsTableExists(soci::session &session) {
 #endif
 
 #ifdef HAVE_DB_STORAGE
-void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
+bool MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 	L_Q();
+	bool ret;
 	if (!q->isInitialized()) {
 		lWarning() << "Unable to import legacy friend because the database has not been initialized";
-		return;
+		return false;
 	}
 
 	L_DB_TRANSACTION_C(q) {
@@ -3277,7 +3278,9 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 		updateModuleVersion("legacy-friends-import", ModuleVersionLegacyFriendsImport);
 
 		lInfo() << "Successful import of legacy friends.";
+		ret = true;
 	};
+	return ret;
 }
 
 #ifdef HAVE_XML2
@@ -3323,12 +3326,13 @@ static string extractLegacyFileContentType(const string &xml) {
 	return "";
 }
 
-void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
+bool MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 	L_Q();
+	bool ret = false;
 
 	if (!q->isInitialized()) {
 		lWarning() << "Unable to import legacy history because the database has not been initialized";
-		return;
+		return false;
 	}
 
 	L_DB_TRANSACTION_C(q) {
@@ -3463,15 +3467,18 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 		updateModuleVersion("legacy-history-import", ModuleVersionLegacyHistoryImport);
 
 		lInfo() << "Successful import of legacy messages.";
+		ret = true;
 	};
+	return ret;
 }
 
-void MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
+bool MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
 	L_Q();
+	bool ret = false;
 
 	if (!q->isInitialized()) {
 		lWarning() << "Unable to import legacy call logs because the database has not been initialized";
-		return;
+		return false;
 	}
 
 	L_DB_TRANSACTION_C(q) {
@@ -3520,7 +3527,9 @@ void MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
 		updateModuleVersion("legacy-call-logs-import", ModuleVersionLegacyCallLogsImport);
 
 		lInfo() << "Successful import of legacy call logs.";
+		ret = true;
 	};
+	return ret;
 }
 #endif
 
@@ -7710,6 +7719,7 @@ std::list<std::shared_ptr<FriendDevice>> MainDb::getDevices(BCTBX_UNUSED(const s
 bool MainDb::import(Backend, const string &parameters) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
+	bool ret = false;
 
 	// Backend is useless, it's sqlite3. (Only available legacy backend.)
 	const string uri = "sqlite3://" + LinphonePrivate::Utils::localeToUtf8(parameters);
@@ -7720,11 +7730,11 @@ bool MainDb::import(Backend, const string &parameters) {
 		return false;
 	}
 
-	d->importLegacyFriends(inDbSession);
-	d->importLegacyHistory(inDbSession);
-	d->importLegacyCallLogs(inDbSession);
+	ret |= d->importLegacyFriends(inDbSession);
+	ret |= d->importLegacyHistory(inDbSession);
+	ret |= d->importLegacyCallLogs(inDbSession);
 
-	return true;
+	return ret;
 #else
 	return false;
 #endif

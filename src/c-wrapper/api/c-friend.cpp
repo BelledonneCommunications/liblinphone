@@ -899,8 +899,8 @@ void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path)
 		}
 
 		if (L_GET_PRIVATE(lc->cppPtr)->mainDb) {
-			L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
-			linphone_core_friends_storage_resync_friends_lists(lc);
+			if (L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path))
+				linphone_core_friends_storage_resync_friends_lists(lc);
 		}
 	}
 }

@@ -123,8 +123,8 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		mAccount = getCore()->getDefaultAccount();
 	}
 
-	const auto creator = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()
-	                                  : Address::create(linphone_core_get_identity(getCore()->getCCore()));
+	auto creator = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()->clone()->toSharedPtr()
+	                            : Address::create(linphone_core_get_identity(getCore()->getCCore()));
 	if (!creator || !creator->isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this
 		           << "] Unable to determine the address of the user attempting to set the conference information!";

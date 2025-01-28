@@ -60,7 +60,7 @@ const std::string Conference::IsFocusParameter = "isfocus";
 const std::string Conference::TextParameter = "text";
 
 Conference::Conference(const shared_ptr<Core> &core,
-                       const std::shared_ptr<Address> &myAddress,
+                       const std::shared_ptr<const Address> &myAddress,
                        std::shared_ptr<CallSessionListener> callSessionListener,
                        const std::shared_ptr<const ConferenceParams> params)
     : CoreAccessor(core), mConferenceId(Address(), Address(*myAddress)) {

@@ -73,7 +73,7 @@ EventPublish::EventPublish(const shared_ptr<Core> &core, LinphonePrivate::SalPub
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,
                            const shared_ptr<Account> &account,
-                           const std::shared_ptr<Address> resourceAddr,
+                           const std::shared_ptr<const Address> &resourceAddr,
                            const string &event,
                            int expires)
     : EventPublish(core, new SalPublishOp(core->getCCore()->sal.get()), event) {
@@ -98,13 +98,15 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
 }
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,
-                           const std::shared_ptr<Address> resource,
+                           const std::shared_ptr<const Address> &resource,
                            const string &event,
                            int expires)
     : EventPublish(core, nullptr, resource, event, expires) {
 }
 
-EventPublish::EventPublish(const shared_ptr<Core> &core, const std::shared_ptr<Address> resource, const string &event)
+EventPublish::EventPublish(const shared_ptr<Core> &core,
+                           const std::shared_ptr<const Address> &resource,
+                           const string &event)
     : EventPublish(core, resource, event, -1) {
 	setOneshot(true);
 	setUnrefWhenTerminated(true);

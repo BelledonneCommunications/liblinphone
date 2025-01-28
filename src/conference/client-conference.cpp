@@ -67,7 +67,7 @@ ClientConference::~ClientConference() {
 #endif // HAVE_ADVANCED_IM
 }
 
-void ClientConference::createFocus(const std::shared_ptr<Address> focusAddr,
+void ClientConference::createFocus(const std::shared_ptr<const Address> &focusAddr,
                                    const std::shared_ptr<CallSession> focusSession) {
 	mFocus = Participant::create(getSharedFromThis(), focusAddr, focusSession);
 	if (focusSession) {
@@ -124,8 +124,8 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
 	}
 }
 
-void ClientConference::initWithFocus(const std::shared_ptr<Address> focusAddr,
-                                     const std::shared_ptr<CallSession> focusSession,
+void ClientConference::initWithFocus(const std::shared_ptr<const Address> &focusAddr,
+                                     const std::shared_ptr<CallSession> &focusSession,
                                      SalCallOp *op,
                                      ConferenceListener *confListener) {
 	createFocus(focusAddr, focusSession);
@@ -289,7 +289,7 @@ std::shared_ptr<ConferenceInfo> ClientConference::createConferenceInfo() const {
 	return createConferenceInfoWithCustomParticipantList(organizer, getFullParticipantList());
 }
 
-std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared_ptr<Address> &sessionTo) {
+std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared_ptr<const Address> &sessionTo) {
 	MediaSessionParams csp;
 	csp.addCustomHeader("Require", "recipient-list-invite");
 	csp.addCustomContactParameter(Conference::TextParameter);

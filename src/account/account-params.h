@@ -82,12 +82,12 @@ public:
 	void setAvpfMode(LinphoneAVPFMode avpfMode);
 	void setNatPolicy(const std::shared_ptr<NatPolicy> &natPolicy);
 	void setPushNotificationConfig(PushNotificationConfig *pushNotificationConfig);
-	LinphoneStatus setIdentityAddress(const std::shared_ptr<Address> identityAddress);
+	LinphoneStatus setIdentityAddress(const std::shared_ptr<const Address> &identityAddress);
 	LinphoneStatus setRoutes(const std::list<std::shared_ptr<Address>> &routes);
 	LinphoneStatus setRoutesFromStringList(const bctbx_list_t *routes);
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
-	void setCustomContact(const std::shared_ptr<Address> contact);
+	void setCustomContact(const std::shared_ptr<const Address> &contact);
 	void setLimeServerUrl(const std::string &url);
 	/**
 	 * valid algorithms are: c25519, c448 and c25519k512. Empty string is also valid, it will unset the value
@@ -127,8 +127,8 @@ public:
 	const std::string &getRefKey() const;
 	const std::string &getDependsOn() const;
 	const std::string &getIdKey() const;
-	std::shared_ptr<Address> getConferenceFactoryAddress() const;
-	std::shared_ptr<Address> getAudioVideoConferenceFactoryAddress() const;
+	std::shared_ptr<const Address> getConferenceFactoryAddress() const;
+	std::shared_ptr<const Address> getAudioVideoConferenceFactoryAddress() const;
 	const char *getCcmpServerUrlCstr() const;
 	const std::string &getCcmpServerUrl() const;
 	const std::string &getCcmpUserId() const;
@@ -141,23 +141,23 @@ public:
 	const std::list<std::string> getRoutesString() const;
 	const bctbx_list_t *getRoutesCString() const;
 	LinphonePrivacyMask getPrivacy() const;
-	const std::shared_ptr<Address> &getIdentityAddress() const;
+	std::shared_ptr<const Address> getIdentityAddress() const;
 	LinphoneAVPFMode getAvpfMode() const;
 	std::shared_ptr<NatPolicy> getNatPolicy() const;
 	PushNotificationConfig *getPushNotificationConfig() const;
 	bool rtpBundleEnabled() const;
 	bool rtpBundleAssumptionEnabled() const;
-	const std::shared_ptr<Address> &getCustomContact() const;
+	std::shared_ptr<const Address> getCustomContact() const;
 	const std::string &getLimeServerUrl() const;
 	const std::string &getLimeAlgo() const;
 	const std::string &getPictureUri() const;
-	const std::shared_ptr<Address> &getMwiServerAddress() const;
-	const std::shared_ptr<Address> &getVoicemailAddress() const;
+	std::shared_ptr<const Address> getMwiServerAddress() const;
+	std::shared_ptr<const Address> getVoicemailAddress() const;
 	bool isInstantMessagingEncryptionMandatory() const;
 
 	// Other
-	LinphoneStatus setServerAddress(const std::shared_ptr<Address> serverAddr);
-	const std::shared_ptr<Address> &getServerAddress() const;
+	LinphoneStatus setServerAddress(const std::shared_ptr<const Address> &serverAddr);
+	std::shared_ptr<const Address> getServerAddress() const;
 
 	LinphoneStatus setServerAddressAsString(const std::string &serverAddr);
 	const std::string &getServerAddressAsString() const;

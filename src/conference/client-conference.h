@@ -48,8 +48,8 @@ public:
 	                        const ConferenceId conferenceId,
 	                        const unsigned int lastNotifyId,
 	                        bool hasBeenLeft) override;
-	void initWithFocus(const std::shared_ptr<Address> focusAddr,
-	                   const std::shared_ptr<CallSession> focusSession,
+	void initWithFocus(const std::shared_ptr<const Address> &focusAddr,
+	                   const std::shared_ptr<CallSession> &focusSession,
 	                   SalCallOp *op = nullptr,
 	                   ConferenceListener *confListener = nullptr);
 	virtual int inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
@@ -176,7 +176,7 @@ public:
 	AbstractChatRoom::SecurityLevel
 	getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const;
 
-	void createFocus(const std::shared_ptr<Address> focusAddr,
+	void createFocus(const std::shared_ptr<const Address> &focusAddr,
 	                 const std::shared_ptr<CallSession> focusSession = nullptr);
 
 	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
@@ -199,7 +199,7 @@ protected:
 
 private:
 	void acceptSession(const std::shared_ptr<CallSession> &session);
-	std::shared_ptr<CallSession> createSessionTo(const std::shared_ptr<Address> &sessionTo);
+	std::shared_ptr<CallSession> createSessionTo(const std::shared_ptr<const Address> &sessionTo);
 	std::shared_ptr<CallSession> createSession();
 	virtual std::shared_ptr<CallSession> getMainSession() const override;
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const override;

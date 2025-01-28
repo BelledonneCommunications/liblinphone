@@ -1263,7 +1263,7 @@ void Account::update() {
 	    mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountNeedCreation) {
 		shared_ptr<Address> addr = mContactAddress;
 		if (!addr) {
-			shared_ptr<Address> sip = getAccountParams()->getIdentityAddress();
+			shared_ptr<const Address> sip = getAccountParams()->getIdentityAddress();
 			if (sip) {
 				auto gr = getCCore()->sal->getUuid();
 				if (gr.empty()) return;
@@ -1362,7 +1362,7 @@ int Account::sendPublish() {
 			mPresencePublishEvent->setManualRefresherMode(true);
 		}
 		const auto &identityAddress = mParams->getIdentityAddress();
-		mPresencePublishEvent->setUserData(identityAddress->toC());
+		mPresencePublishEvent->setUserData(this);
 
 		LinphoneConfig *config = linphone_core_get_config(getCCore());
 		if (linphone_config_get_bool(config, "sip", "update_presence_model_timestamp_before_publish_expires_refresh",
@@ -1492,7 +1492,7 @@ std::shared_ptr<Event> Account::getMwiEvent() const {
 }
 
 void Account::subscribeToMessageWaitingIndication() {
-	const std::shared_ptr<Address> &mwiServerAddress = mParams->getMwiServerAddress();
+	std::shared_ptr<const Address> mwiServerAddress = mParams->getMwiServerAddress();
 	if (mwiServerAddress) {
 		int expires = linphone_config_get_int(getCore()->getCCore()->config, "sip", "mwi_expires", 86400);
 		if (mMwiEvent) mMwiEvent->terminate();
@@ -1720,7 +1720,7 @@ void Account::onLimeAlgoChanged(const std::string &limeAlgo) {
 		// just call the create lime user function, it will get the info from the account
 		shared_ptr<Address> addr = mContactAddress;
 		if (!addr) {
-			shared_ptr<Address> sip = getAccountParams()->getIdentityAddress();
+			auto sip = getAccountParams()->getIdentityAddress();
 			if (sip) {
 				auto gr = getCCore()->sal->getUuid();
 				if (gr.empty()) return;

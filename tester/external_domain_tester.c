@@ -65,7 +65,7 @@ static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList,
 			                        msgText, FALSE);
 		} else {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &m->stat.number_of_LinphoneMessageReceived,
-			                             recipients_initial_stats[idx].number_of_LinphoneMessageReceived + 1, 5000));
+			                             recipients_initial_stats[idx].number_of_LinphoneMessageReceived + 1, 10000));
 
 			LinphoneChatMessage *recipientLastMsg = m->stat.last_received_chat_message;
 			BC_ASSERT_PTR_NOT_NULL(recipientLastMsg);

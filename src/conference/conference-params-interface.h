@@ -72,7 +72,7 @@ public:
 	 *If set this participant is added to the conference
 	 * @param[in]  participantAddress of the conference focus.
 	 */
-	virtual void setMe(const std::shared_ptr<Address> &participantAddress) = 0;
+	virtual void setMe(const std::shared_ptr<const Address> &participantAddress) = 0;
 
 	/*
 	 * Enable audio media type for a conference

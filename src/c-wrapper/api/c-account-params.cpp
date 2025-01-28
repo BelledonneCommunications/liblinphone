@@ -70,16 +70,17 @@ void *linphone_account_params_get_user_data(const LinphoneAccountParams *params)
 }
 
 LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
-                                                          LinphoneAddress *server_address) {
-	return AccountParams::toCpp(params)->setServerAddress(Address::toCpp(server_address)->getSharedFromThis());
+                                                          const LinphoneAddress *server_address) {
+	return AccountParams::toCpp(params)->setServerAddress(bellesip::getSharedPtr<Address>(server_address));
 }
 
 LinphoneStatus linphone_account_params_set_server_addr(LinphoneAccountParams *params, const char *server_address) {
 	return AccountParams::toCpp(params)->setServerAddressAsString(L_C_TO_STRING(server_address));
 }
 
-LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params, LinphoneAddress *identity) {
-	return AccountParams::toCpp(params)->setIdentityAddress(Address::toCpp(identity)->getSharedFromThis());
+LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
+                                                            const LinphoneAddress *identity) {
+	return AccountParams::toCpp(params)->setIdentityAddress(bellesip::getSharedPtr<Address>(identity));
 }
 
 LinphoneStatus linphone_account_params_set_routes_addresses(LinphoneAccountParams *params, const bctbx_list_t *routes) {
@@ -191,7 +192,7 @@ bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccount
 }
 
 const LinphoneAddress *linphone_account_params_get_identity_address(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getIdentityAddress()->toC();
+	return toC(AccountParams::toCpp(params)->getIdentityAddress());
 }
 
 const char *linphone_account_params_get_identity(const LinphoneAccountParams *params) {
@@ -491,7 +492,7 @@ void linphone_account_params_set_mwi_server_address(LinphoneAccountParams *param
 }
 
 const LinphoneAddress *linphone_account_params_get_mwi_server_address(const LinphoneAccountParams *params) {
-	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getMwiServerAddress();
+	const std::shared_ptr<const Address> addr = AccountParams::toCpp(params)->getMwiServerAddress();
 	return addr ? addr->toC() : nullptr;
 }
 
@@ -500,7 +501,7 @@ void linphone_account_params_set_voicemail_address(LinphoneAccountParams *params
 }
 
 const LinphoneAddress *linphone_account_params_get_voicemail_address(const LinphoneAccountParams *params) {
-	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getVoicemailAddress();
+	const std::shared_ptr<const Address> addr = AccountParams::toCpp(params)->getVoicemailAddress();
 	return addr ? addr->toC() : nullptr;
 }
 

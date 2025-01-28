@@ -661,7 +661,7 @@ static void secure_group_chat_room_with_multi_account_client(void) {
 		// Verify that the chatroom is associated to the right account
 		for (auto chatRoom : multi_account.getCore().getChatRooms()) {
 			const auto &conference = chatRoom->getConference();
-			LinphoneAddress *conference_params_accont_identity =
+			const LinphoneAddress *conference_params_accont_identity =
 			    conference->getAccount()->getAccountParams()->getIdentityAddress()->toC();
 			BC_ASSERT_TRUE(linphone_address_equal(chatroom_account_identity, conference_params_accont_identity));
 		}
@@ -688,7 +688,7 @@ static void secure_group_chat_room_with_multi_account_client(void) {
 		// Verify that the chatroom is associated to the right account after restart
 		for (auto chatRoom : multi_account.getCore().getChatRooms()) {
 			const auto &conference = chatRoom->getConference();
-			LinphoneAddress *conference_params_accont_identity =
+			const LinphoneAddress *conference_params_accont_identity =
 			    conference->getAccount()->getAccountParams()->getIdentityAddress()->toC();
 			BC_ASSERT_TRUE(linphone_address_equal(chatroom_account_identity, conference_params_accont_identity));
 		}

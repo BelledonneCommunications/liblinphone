@@ -1682,7 +1682,7 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId(const std::string &
 }
 
 void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, const Content *content) {
-	shared_ptr<Address> accountAddr = nullptr;
+	shared_ptr<const Address> accountAddr = nullptr;
 
 	if (!content) {
 		lWarning() << "MWI NOTIFY without body, doing nothing";
@@ -2087,7 +2087,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
-		std::shared_ptr<Address> conferenceFactoryUriRef;
+		std::shared_ptr<const Address> conferenceFactoryUriRef;
 		if (mediaEnabled) {
 			conferenceFactoryUriRef = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
 		} else {
@@ -2184,7 +2184,7 @@ const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() co
 	return encEnumList;
 }
 
-std::shared_ptr<Address>
+std::shared_ptr<const Address>
 Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
                                             const std::shared_ptr<const Address> &localAddress) {
 	auto account = core->lookupKnownAccount(localAddress, true);
@@ -2194,8 +2194,8 @@ Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 	} else return getAudioVideoConferenceFactoryAddress(core, account);
 }
 
-std::shared_ptr<Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-                                                                     const std::shared_ptr<Account> &account) {
+std::shared_ptr<const Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+                                                                           const std::shared_ptr<Account> &account) {
 	auto address = account->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 	if (address == nullptr) {
 		const auto &conferenceFactoryUri = getConferenceFactoryAddress(core, account);

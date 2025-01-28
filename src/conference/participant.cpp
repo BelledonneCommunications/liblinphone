@@ -40,7 +40,7 @@ Participant::Participant(const std::shared_ptr<Conference> conference, const std
 }
 
 Participant::Participant(const std::shared_ptr<Conference> conference,
-                         const std::shared_ptr<Address> &address,
+                         const std::shared_ptr<const Address> &address,
                          std::shared_ptr<CallSession> callSession)
     : Participant(conference, address) {
 	session = callSession;

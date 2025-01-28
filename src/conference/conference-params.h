@@ -129,7 +129,7 @@ public:
 	}
 	const std::string &getSubject() const;
 
-	virtual void setMe(const std::shared_ptr<Address> &participantAddress) override {
+	virtual void setMe(const std::shared_ptr<const Address> &participantAddress) override {
 		mMe = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
 	};
 	std::shared_ptr<Address> getMe() const {

@@ -52,7 +52,7 @@ MediaStatusType XmlUtils::mediaDirectionToMediaStatus(LinphoneMediaDirection dir
 
 bool XmlUtils::sendCcmpRequest(const std::shared_ptr<Core> &core,
                                const std::string &ccmpServerUrl,
-                               const std::shared_ptr<Address> &from,
+                               const std::shared_ptr<const Address> &from,
                                const std::string &body,
                                const std::function<void(const HttpResponse &)> &listener) {
 	try {

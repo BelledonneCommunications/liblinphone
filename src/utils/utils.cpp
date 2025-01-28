@@ -474,7 +474,7 @@ std::shared_ptr<Address> Utils::getSipAddress(const std::string &str, const std:
 	return address;
 }
 
-std::string Utils::getXconId(const std::shared_ptr<Address> &address) {
+std::string Utils::getXconId(const std::shared_ptr<const Address> &address) {
 	// CCMP user ID can only be made up by only 40 different characters
 	// (https://www.rfc-editor.org/rfc/rfc6501#section-4.6.5) We are therefore taking the identity and transform invalid
 	// characters into valid ones in a way that the resulting string is unique for any given mIdentity string

@@ -260,9 +260,9 @@ private:
 	// ---------------------------------------------------------------------------
 
 #ifdef HAVE_DB_STORAGE
-	void importLegacyFriends(DbSession &inDbSession);
-	void importLegacyHistory(DbSession &inDbSession);
-	void importLegacyCallLogs(DbSession &inDbSession);
+	bool importLegacyFriends(DbSession &inDbSession);
+	bool importLegacyHistory(DbSession &inDbSession);
+	bool importLegacyCallLogs(DbSession &inDbSession);
 #endif
 
 	// ---------------------------------------------------------------------------
