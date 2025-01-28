@@ -186,9 +186,31 @@ bool Conference::addParticipantDevice(std::shared_ptr<Call> call) {
 	const std::shared_ptr<Address> &remoteAddress = call->getRemoteAddress();
 	auto p = findParticipant(remoteAddress);
 	if (p) {
-		return (createParticipantDevice(p, call) != nullptr);
+		auto device = createParticipantDevice(p, call);
+		notifyNewDevice(device);
+		return (device != nullptr);
 	}
+
 	return false;
+}
+
+void Conference::addParticipantDevice(BCTBX_UNUSED(const shared_ptr<Participant> &participant),
+                                      BCTBX_UNUSED(const shared_ptr<ParticipantDeviceIdentity> &deviceInfo)) {
+	lWarning() << __func__ << " not implemented";
+}
+
+void Conference::notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device) {
+	if (device) {
+		const auto &p = device->getParticipant();
+		if (p) {
+			time_t creationTime = time(nullptr);
+			if (device->getState() == ParticipantDevice::State::Joining) {
+				notifyParticipantDeviceAdded(creationTime, false, p, device);
+			} else {
+				notifyParticipantDeviceJoiningRequest(creationTime, false, p, device);
+			}
+		}
+	}
 }
 
 Address Conference::createParticipantAddressForResourceList(const std::shared_ptr<Participant> &p) {
@@ -316,7 +338,6 @@ bool Conference::addParticipant(std::shared_ptr<Call> call) {
 		lWarning() << "Participant with address " << *remoteAddress << " is already part of " << *this;
 		success = false;
 	}
-
 	return success;
 }
 
@@ -334,7 +355,6 @@ bool Conference::addParticipant(const std::shared_ptr<const Address> &participan
 	lInfo() << "Participant with address " << *participantAddress << " has been added to " << *this;
 	time_t creationTime = time(nullptr);
 	notifyParticipantAdded(creationTime, false, participant);
-
 	return true;
 }
 

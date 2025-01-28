@@ -573,8 +573,6 @@ std::shared_ptr<ParticipantDevice> ClientConference::createParticipantDevice(std
 		device->setSession(nullptr);
 		const auto &p = device->getParticipant();
 		if (p) {
-			time_t creationTime = time(nullptr);
-			notifyParticipantDeviceAdded(creationTime, false, p, device);
 			const_cast<MediaSessionParams *>(call->getParams())
 			    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(p->isAdmin()));
 		}

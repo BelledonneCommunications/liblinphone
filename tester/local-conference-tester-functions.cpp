@@ -10253,9 +10253,10 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
                                                  bool_t enable_screen_sharing) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		bool is_encrypted = (security_level == LinphoneConferenceSecurityLevelEndToEnd);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), is_encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), is_encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), is_encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -10264,6 +10265,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		setup_conference_info_cbs(marie.getCMgr());
 
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+		LinphoneMediaEncryption encryption = is_encrypted ? LinphoneMediaEncryptionZRTP : LinphoneMediaEncryptionNone;
 
 		auto focus_proxy_config = focus.getDefaultProxyConfig();
 		const char *focus_uri = linphone_proxy_config_get_identity(focus_proxy_config);
@@ -10294,6 +10296,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 
 			if (mgr != focus.getCMgr()) {
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
+				linphone_core_set_media_encryption(mgr->lc, encryption);
 			}
 		}
 
@@ -10306,6 +10309,9 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 
 		for (auto mgr : conferenceMgrs) {
 			enable_stun_in_mgr(mgr, enable_ice, enable_ice, enable_ice, enable_ice);
+		}
+		if (is_encrypted) {
+			configure_end_to_end_encrypted_conference_server(focus);
 		}
 
 		LinphoneCall *marie_call_pauline = linphone_core_get_current_call(marie.getLc());
@@ -10324,6 +10330,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		const char *initialSubject = "Test characters: ^ :) ¤ çà @";
 		linphone_conference_params_enable_audio(conf_params, TRUE);
 		linphone_conference_params_enable_video(conf_params, toggle_video);
+		linphone_conference_params_set_security_level(conf_params, security_level);
 		linphone_conference_params_set_subject(conf_params, initialSubject);
 		LinphoneConference *conf = linphone_core_create_conference_with_params(marie.getLc(), conf_params);
 		linphone_conference_params_unref(conf_params);

@@ -2117,6 +2117,10 @@ bool ServerConference::addParticipant(const std::shared_ptr<ParticipantInfo> &in
 	return false;
 }
 
+bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
+	return Conference::addParticipantDevice(call);
+}
+
 void ServerConference::addParticipantDevice(BCTBX_UNUSED(const shared_ptr<Participant> &participant),
                                             BCTBX_UNUSED(const shared_ptr<ParticipantDeviceIdentity> &deviceInfo)) {
 #ifdef HAVE_ADVANCED_IM
@@ -2200,29 +2204,6 @@ std::shared_ptr<ParticipantDevice> ServerConference::createParticipantDevice(std
 		}
 	}
 	return device;
-}
-
-void ServerConference::notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device) {
-	if (device) {
-		const auto &p = device->getParticipant();
-		if (p) {
-			time_t creationTime = time(nullptr);
-			if (device->getState() == ParticipantDevice::State::Joining) {
-				notifyParticipantDeviceAdded(creationTime, false, p, device);
-			} else {
-				notifyParticipantDeviceJoiningRequest(creationTime, false, p, device);
-			}
-		}
-	}
-}
-
-bool ServerConference::addParticipantDevice(std::shared_ptr<Call> call) {
-	auto success = (Conference::addParticipantDevice(call));
-	if (success) {
-		auto session = call->getActiveSession();
-		notifyNewDevice(findParticipantDevice(session));
-	}
-	return success;
 }
 
 bool ServerConference::addParticipantAndDevice(std::shared_ptr<Call> call) {

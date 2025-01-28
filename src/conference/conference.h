@@ -117,6 +117,8 @@ public:
 	bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
 	bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) override;
 	virtual bool addParticipantDevice(std::shared_ptr<Call> call);
+	virtual void addParticipantDevice(const std::shared_ptr<Participant> &participant,
+	                                  const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
@@ -419,6 +421,8 @@ protected:
 
 	std::list<std::shared_ptr<Participant>> getFullParticipantList() const;
 	void fillParticipantAttributes(std::shared_ptr<Participant> &p) const;
+
+	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
 
 	virtual void configure(SalCallOp *op) = 0;
 

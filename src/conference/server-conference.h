@@ -259,9 +259,8 @@ private:
 
 	bool initializeParticipants(const std::shared_ptr<Participant> &initiator, SalCallOp *op);
 	void addParticipantDevice(const std::shared_ptr<Participant> &participant,
-	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
+	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo) override;
 	bool addParticipantAndDevice(std::shared_ptr<Call> call);
-	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
 	bool validateNewParameters(const ConferenceParams &newConfParams) const;
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device,
 	                                         const MediaSessionParams *csp);

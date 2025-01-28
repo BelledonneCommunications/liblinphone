@@ -1130,6 +1130,11 @@ static void create_simple_end_to_end_encrypted_conference_terminated_early(void)
 	}
 }
 
+static void create_simple_end_to_end_encrypted_conference_merging_calls(void) {
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE,
+	                                            LinphoneConferenceSecurityLevelEndToEnd, FALSE);
+}
+
 static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
     TEST_ONE_TAG("First notify", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("SPI info", spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
@@ -1214,6 +1219,9 @@ static test_t local_conference_end_to_end_encryption_impromptu_conference_tests[
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted dial out conference terminate call on version mismatch",
                  create_end_to_end_encrypted_conference_dial_out_terminate_call_on_version_mismatch,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple end-to-end encrypted conference by merging calls",
+                 create_simple_end_to_end_encrypted_conference_merging_calls,
                  "End2EndConf"),
 };
 
