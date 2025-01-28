@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,14 +19,15 @@
  */
 
 #include "account-params.h"
+
+#include <set>
+
 #include "c-wrapper/internal/c-tools.h"
 #include "core/core.h"
-#include "linphone/api/c-address.h"
 #include "linphone/types.h"
 #include "nat/nat-policy.h"
 #include "private.h"
 #include "push-notification/push-notification-config.h"
-#include <set>
 
 // =============================================================================
 
@@ -183,13 +184,21 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 
 	mInstantMessagingEncryptionMandatory =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "im_encryption_mandatory", 0) : 0;
+
+	if (lc) {
+		vector<string> splitTags = bctoolbox::Utils::split(lc->sal->getSupportedTags(), ",");
+		list<string> supportedTagsList;
+		for (const auto &tag : splitTags)
+			supportedTagsList.push_back(Utils::trim(tag));
+		mSupportedTagsList.mList = supportedTagsList;
+	}
 }
 
 AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullptr) {
 	LpConfig *config = lc->config;
 
 	char key[50];
-	sprintf(key, "proxy_%i", index); // TODO: change to account
+	snprintf(key, sizeof(key), "proxy_%i", index); // TODO: change to account
 
 	mIdentity = linphone_config_get_string(config, key, "reg_identity", mIdentity.c_str());
 	std::shared_ptr<Address> identity_address = Address::create(mIdentity);
@@ -261,8 +270,8 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 
 	mPublishExpires = linphone_config_get_int(config, key, "publish_expires", mPublishExpires);
 
-	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", NULL);
-	if (nat_policy_ref != NULL) {
+	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", nullptr);
+	if (nat_policy_ref != nullptr) {
 		/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
 		 * This is not consistent and error-prone.
 		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
@@ -312,6 +321,16 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	}
 
 	mInstantMessagingEncryptionMandatory = !!linphone_config_get_bool(config, key, "im_encryption_mandatory", false);
+
+	string supported_tags = linphone_config_get_string(config, key, "supported", "empty");
+	if (supported_tags != "empty") {
+		vector<string> splitTags = bctoolbox::Utils::split(supported_tags, ",");
+		list<string> supportedTagsList;
+		for (const auto &tag : splitTags)
+			supportedTagsList.push_back(Utils::trim(tag));
+		mSupportedTagsList.mList = supportedTagsList;
+		mUseSupportedTags = true;
+	}
 
 	readCustomParamsFromConfigFile(config, key);
 }
@@ -404,6 +423,9 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	}
 
 	mInstantMessagingEncryptionMandatory = other.mInstantMessagingEncryptionMandatory;
+
+	mSupportedTagsList = other.mSupportedTagsList;
+	mUseSupportedTags = other.mUseSupportedTags;
 }
 
 AccountParams::~AccountParams() {
@@ -568,7 +590,7 @@ void AccountParams::setConferenceFactoryUri(const std::string &conferenceFactory
 	setConferenceFactoryAddress(conferenceFactoryUri.empty() ? nullptr : Address::create(conferenceFactoryUri));
 }
 
-void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Address> conferenceFactoryAddress) {
+void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Address> &conferenceFactoryAddress) {
 	if (mConferenceFactoryAddress != nullptr) {
 		mConferenceFactoryAddress = nullptr;
 	}
@@ -578,7 +600,7 @@ void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Addr
 }
 
 void AccountParams::setAudioVideoConferenceFactoryAddress(
-    const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress) {
+    const std::shared_ptr<const Address> &audioVideoConferenceFactoryAddress) {
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
 		mAudioVideoConferenceFactoryAddress = nullptr;
 	}
@@ -587,11 +609,11 @@ void AccountParams::setAudioVideoConferenceFactoryAddress(
 	}
 }
 
-void AccountParams::setCcmpServerUrl(const std::string ccmpServerUrl) {
+void AccountParams::setCcmpServerUrl(const std::string &ccmpServerUrl) {
 	mCcmpServerUrl = ccmpServerUrl;
 }
 
-void AccountParams::setFileTranferServer(const std::string &fileTransferServer) {
+void AccountParams::setFileTransferServer(const std::string &fileTransferServer) {
 	mFileTransferServer = fileTransferServer;
 }
 
@@ -607,7 +629,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 	bool error = false;
 	while (iterator != nullptr) {
 		char *route = (char *)bctbx_list_get_data(iterator);
-		if (route != NULL && route[0] != '\0') {
+		if (route != nullptr && route[0] != '\0') {
 			string tmp;
 			/*try to prepend 'sip:' */
 			if (strstr(route, "sip:") == nullptr && strstr(route, "sips:") == nullptr) {
@@ -616,7 +638,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 			tmp.append(route);
 
 			SalAddress *addr = sal_address_new(tmp.c_str());
-			if (addr != NULL) {
+			if (addr != nullptr) {
 				mRoutes.emplace_back(Address::create(addr, true));
 			} else {
 				error = true;
@@ -1061,10 +1083,27 @@ void AccountParams::setInstantMessagingEncryptionMandatory(bool mandatory) {
 	mInstantMessagingEncryptionMandatory = mandatory;
 }
 
+const std::list<std::string> &AccountParams::getSupportedTagsList() const {
+	return mSupportedTagsList.mList;
+}
+
+const bctbx_list_t *AccountParams::getSupportedTagsCList() const {
+	return mSupportedTagsList.getCList();
+}
+
+void AccountParams::setSupportedTagsList(const std::list<std::string> &supportedTagsList) {
+	mSupportedTagsList.mList = supportedTagsList;
+	mUseSupportedTags = true;
+}
+
+bool AccountParams::useSupportedTags() const {
+	return mUseSupportedTags;
+}
+
 void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	char key[50];
 
-	sprintf(key, "proxy_%i", index);
+	snprintf(key, sizeof(key), "proxy_%i", index);
 	linphone_config_clean_section(config, key);
 
 	if (!mProxy.empty()) {
@@ -1120,7 +1159,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	if (!mIdKey.empty()) linphone_config_set_string(config, key, "idkey", mIdKey.c_str());
 	linphone_config_set_int(config, key, "publish_expires", mPublishExpires);
 
-	if (mNatPolicy != NULL) {
+	if (mNatPolicy != nullptr) {
 		linphone_config_set_string(config, key, "nat_policy_ref", mNatPolicy->getRef().c_str());
 	}
 
@@ -1157,6 +1196,18 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	}
 
 	linphone_config_set_bool(config, key, "im_encryption_mandatory", mInstantMessagingEncryptionMandatory);
+
+	if (mUseSupportedTags) {
+		std::ostringstream result;
+		auto cppList = mSupportedTagsList.mList;
+		for (auto &tag : cppList) {
+			if (tag != cppList.front()) {
+				result << ", ";
+			}
+			result << tag;
+		}
+		linphone_config_set_string(config, key, "supported", result.str().c_str());
+	}
 }
 
 LINPHONE_END_NAMESPACE

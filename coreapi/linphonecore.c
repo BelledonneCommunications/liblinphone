@@ -4952,6 +4952,10 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 	if (callOp && linphone_config_get_int(lc->config, "sip", "notify_all_ringings", 0)) {
 		callOp->setNotifyAllRingings(true);
 	}
+
+	if (account && Account::toCpp(account)->getAccountParams()->useSupportedTags()) {
+		op->makeSupportedHeader(Account::toCpp(account)->getAccountParams()->getSupportedTagsList());
+	}
 }
 
 void linphone_configure_op(

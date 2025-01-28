@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,26 +18,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "sal/sal.h"
+
 #include <algorithm>
 
 #include "bctoolbox/crypto.hh"
 #include "bctoolbox/defs.h"
 #include "bctoolbox/utils.hh"
-
 #include "bellesip_sal/sal_impl.h"
 
+#include "account/account.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "private.h"
 #include "sal/call-op.h"
 #include "sal/event-op.h"
 #include "sal/message-op.h"
 #include "sal/presence-op.h"
 #include "sal/refer-op.h"
-#include "sal/sal.h"
-#include "sal/sal_media_description.h"
-#include "tester_utils.h"
-
-#include "account/account.h"
-#include "c-wrapper/internal/c-tools.h"
 
 using namespace std;
 
@@ -615,14 +612,26 @@ bool Sal::isTransportAvailable(SalTransport tr) {
 	}
 }
 
+belle_sip_header_t *Sal::createSupportedHeader(const list<string> &tags) {
+	std::ostringstream result;
+	for (auto &tag : tags) {
+		if (tag != tags.front()) {
+			result << ", ";
+		}
+		result << tag;
+	}
+
+	return belle_sip_header_create("Supported", result.str().c_str());
+}
+
 void Sal::makeSupportedHeader() {
 	if (mSupportedHeader) {
 		belle_sip_object_unref(mSupportedHeader);
 		mSupportedHeader = nullptr;
 	}
-	string tags = Utils::join(mSupportedTags, ", ");
-	if (tags.empty()) return;
-	mSupportedHeader = belle_sip_header_create("Supported", tags.c_str());
+	if (mSupportedTags.empty()) return;
+	std::list<string> tagList(mSupportedTags.begin(), mSupportedTags.end());
+	mSupportedHeader = createSupportedHeader(tagList);
 	if (mSupportedHeader) belle_sip_object_ref(mSupportedHeader);
 }
 

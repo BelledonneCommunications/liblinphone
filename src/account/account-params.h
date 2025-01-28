@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -21,8 +21,10 @@
 #ifndef _L_ACCOUNT_PARAMS_H_
 #define _L_ACCOUNT_PARAMS_H_
 
-#include "address/address.h"
 #include "belle-sip/object++.hh"
+
+#include "address/address.h"
+#include "c-wrapper/list-holder.h"
 #include "linphone/api/c-push-notification-config.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
@@ -74,10 +76,11 @@ public:
 	void setDependsOn(const std::string &dependsOn);
 	void setIdKey(const std::string &idKey);
 	void setConferenceFactoryUri(const std::string &conferenceFactoryUri);
-	void setConferenceFactoryAddress(const std::shared_ptr<const Address> factoryAddress);
-	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress);
-	void setCcmpServerUrl(const std::string ccmpServerAddress);
-	void setFileTranferServer(const std::string &fileTransferServer);
+	void setConferenceFactoryAddress(const std::shared_ptr<const Address> &factoryAddress);
+	void
+	setAudioVideoConferenceFactoryAddress(const std::shared_ptr<const Address> &audioVideoConferenceFactoryAddress);
+	void setCcmpServerUrl(const std::string &ccmpServerAddress);
+	void setFileTransferServer(const std::string &fileTransferServer);
 	void setPrivacy(LinphonePrivacyMask privacy);
 	void setAvpfMode(LinphoneAVPFMode avpfMode);
 	void setNatPolicy(const std::shared_ptr<NatPolicy> &natPolicy);
@@ -98,6 +101,7 @@ public:
 	void setMwiServerAddress(const std::shared_ptr<Address> &address);
 	void setVoicemailAddress(const std::shared_ptr<Address> &address);
 	void setInstantMessagingEncryptionMandatory(bool mandatory);
+	void setSupportedTagsList(const std::list<std::string> &supportedTagsList);
 
 	// Getters
 	int getExpires() const;
@@ -154,6 +158,9 @@ public:
 	std::shared_ptr<const Address> getMwiServerAddress() const;
 	std::shared_ptr<const Address> getVoicemailAddress() const;
 	bool isInstantMessagingEncryptionMandatory() const;
+	const std::list<std::string> &getSupportedTagsList() const;
+	const bctbx_list_t *getSupportedTagsCList() const;
+	bool useSupportedTags() const;
 
 	// Other
 	LinphoneStatus setServerAddress(const std::shared_ptr<const Address> &serverAddr);
@@ -237,6 +244,9 @@ private:
 	std::shared_ptr<Address> mCustomContact = nullptr;
 	std::shared_ptr<Address> mMwiServerAddress = nullptr;
 	std::shared_ptr<Address> mVoicemailAddress = nullptr;
+
+	ListHolder<std::string> mSupportedTagsList = {};
+	bool mUseSupportedTags = false;
 };
 
 LINPHONE_END_NAMESPACE

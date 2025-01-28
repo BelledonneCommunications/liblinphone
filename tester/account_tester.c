@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -394,7 +394,7 @@ static void no_unregister_when_changing_transport(void) {
 
 	initialPaulineStats = pauline->stat;
 
-	// Change pauline tranport
+	// Change pauline transport
 	LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
 	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(pauline_account));
 	linphone_account_params_set_transport(params, LinphoneTransportUdp);
@@ -512,6 +512,55 @@ static void account_dependency_to_self(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void supported_tags_handled_by_account_test(bool_t empty_list) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1, 5000));
+
+	LinphoneAccountCbs *cbs = linphone_factory_create_account_cbs(linphone_factory_get());
+	linphone_account_cbs_set_registration_state_changed(cbs, registration_state_changed_on_account);
+	linphone_account_add_callbacks(marie_account, cbs);
+	linphone_account_cbs_unref(cbs);
+
+	// Clone Marie's account parameters to modify them
+	LinphoneAccountParams *marie_account_params =
+	    linphone_account_params_clone(linphone_account_get_params(marie_account));
+	// Define a new list of supported tags
+	bctbx_list_t *list = NULL;
+	if (!empty_list) {
+		list = bctbx_list_append(list, "replaces");
+		list = bctbx_list_append(list, "outbound");
+		list = bctbx_list_append(list, "path");
+	}
+	// Apply the new list of supported tags to Marie's account
+	linphone_account_params_set_supported_tags_list(marie_account_params, list);
+	linphone_account_set_params(marie_account, marie_account_params);
+	linphone_account_params_unref(marie_account_params);
+
+	// Simulate a network reconnection to trigger re-registration
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 3, 5000));
+
+	// Retrieve Marie's contact address and verify the "gr" parameter is absent
+	LinphoneAddress *marie_contact_address = linphone_account_get_contact_address(marie_account);
+	const char *gruu = linphone_address_get_uri_param(marie_contact_address, "gr");
+	BC_ASSERT_PTR_NULL(gruu);
+
+	bctbx_list_free(list);
+	linphone_core_manager_destroy(marie);
+}
+
+static void supported_tags_handled_by_account_without_gruu_test(void) {
+	supported_tags_handled_by_account_test(false);
+}
+
+static void supported_tags_handled_by_account_empty_list_test(void) {
+	supported_tags_handled_by_account_test(true);
+}
+
 static test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
     TEST_NO_TAG("Simple account creation with removal", simple_account_creation_with_removal),
@@ -527,6 +576,9 @@ static test_t account_tests[] = {
     TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport),
     TEST_NO_TAG("Unregister at stop", unregister_at_stop),
     TEST_NO_TAG("Account reconnection after multiple network changes", reconnection_after_network_change),
+    TEST_NO_TAG("Supported tags handled by account (without gruu)",
+                supported_tags_handled_by_account_without_gruu_test),
+    TEST_NO_TAG("Supported tags handled by account (empty list)", supported_tags_handled_by_account_empty_list_test),
 };
 
 test_suite_t account_test_suite = {"Account",

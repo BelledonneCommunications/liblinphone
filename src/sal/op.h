@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -254,6 +254,8 @@ public:
 		return mDialog;
 	}
 
+	void makeSupportedHeader(const std::list<std::string> &supportedTags);
+
 protected:
 	enum class State {
 		Early = 0,
@@ -369,6 +371,7 @@ protected:
 	std::string mEntityTag; // As defined by rfc3903 (I.E publih)
 	std::string mChannelBankIdentifier;
 	ReleaseCb mReleaseCb = nullptr;
+	belle_sip_header_t *mSupportedHeader = nullptr;
 
 	const belle_sip_listener_callbacks_t *mCallbacks = nullptr;
 	SalErrorInfo mErrorInfo;
@@ -403,6 +406,7 @@ protected:
 	bool mSupportsSessionTimers = false;
 	bool mOpReleased = false;
 	bool mOwnsDialog = true;
+	bool mUseSupportedTags = false;
 
 	friend class Sal;
 	friend class Call;
