@@ -108,6 +108,7 @@ protected:
 	std::shared_ptr<Address> cacheFrom() const;
 	std::shared_ptr<Address> cacheTo() const;
 	std::shared_ptr<Address> cacheRequestAddress() const;
+	void fillOpFields();
 
 	mutable std::shared_ptr<Address> mFromAddress = nullptr;
 	mutable std::shared_ptr<Address> mToAddress = nullptr;

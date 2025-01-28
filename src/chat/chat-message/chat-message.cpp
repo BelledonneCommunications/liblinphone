@@ -813,14 +813,15 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 	// issues such as IMDN not received
 	std::shared_ptr<Address> localAddress = nullptr;
 	if (account && account->getContactAddress()) {
-		localAddress = account->getContactAddress();
+		localAddress = account->getContactAddress()->clone()->toSharedPtr();
 	} else {
 		lInfo() << "It looks that chatroom " << chatRoom << " with ID " << conferenceId
 		        << " has no account associated to or the contact address is not available yet, setting conference ID's "
 		           "local address as message local address";
-		localAddress = conferenceId.getLocalAddress();
+		localAddress = conferenceId.getLocalAddress()->clone()->toSharedPtr();
 	}
-	const auto peerAddress = conferenceId.getPeerAddress();
+
+	auto peerAddress = conferenceId.getPeerAddress()->clone()->toSharedPtr();
 	const bool isBasicChatRoom =
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 	if (isBasicChatRoom && localAddress) {

@@ -21,6 +21,7 @@
 #include <bctoolbox/defs.h>
 
 #include "call/call.h"
+#include "conference/conference-id-params.h"
 #include "conference/conference.h"
 #include "conference/notify-conference-listener.h"
 #include "conference/params/media-session-params-p.h"
@@ -63,7 +64,7 @@ Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<const Address> &myAddress,
                        std::shared_ptr<CallSessionListener> callSessionListener,
                        const std::shared_ptr<const ConferenceParams> params)
-    : CoreAccessor(core), mConferenceId(Address(), Address(*myAddress)) {
+    : CoreAccessor(core), mConferenceId(Address(), Address(*myAddress), core->createConferenceIdParams()) {
 	mCallSessionListener = callSessionListener;
 	update(*params);
 	mConfParams->setMe(myAddress);
@@ -712,14 +713,9 @@ void Conference::setConferenceAddress(const std::shared_ptr<Address> &conference
 			return;
 		}
 
-		if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
-			mConfParams->setConferenceAddress(Address::create(conferenceAddress->getUriWithoutGruu()));
-		} else {
-			// Handle backward compatibility with release/5.3
-			mConfParams->setConferenceAddress(conferenceAddress);
-		}
+		mConfParams->setConferenceAddress(conferenceAddress);
 		setState(ConferenceInterface::State::CreationPending);
-		lInfo() << "Conference " << this << " has been given the address " << *conferenceAddress;
+		lInfo() << "Conference " << this << " has been given the address " << *mConfParams->getConferenceAddress();
 	} else {
 		lDebug() << "Cannot set the conference address of the Conference in state " << state << " to "
 		         << *conferenceAddress;
@@ -1365,9 +1361,9 @@ void Conference::setState(ConferenceInterface::State state) {
 	     (state == ConferenceInterface::State::Instantiated))) {
 		if (mState != state) {
 			if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
-				lDebug() << "Switching conference [" << this << "] from state " << mState << " to " << state;
+				lDebug() << "Switching " << *this << " from state " << mState << " to " << state;
 			} else {
-				lInfo() << "Switching conference [" << this << "] from state " << mState << " to " << state;
+				lInfo() << "Switching " << *this << " from state " << mState << " to " << state;
 			}
 			mState = state;
 			notifyStateChanged(mState);

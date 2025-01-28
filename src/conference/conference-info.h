@@ -174,6 +174,12 @@ private:
 
 std::ostream &operator<<(std::ostream &lhs, ConferenceInfo::State s);
 
+inline std::ostream &operator<<(std::ostream &str, const ConferenceInfo &conferenceInfo) {
+	const auto &uri = conferenceInfo.getUri();
+	str << "ConferenceInfo [" << &conferenceInfo << "] (" << (uri ? uri->toString() : std::string("sip:")) << ")";
+	return str;
+}
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CONFERENCE_INFO_H_

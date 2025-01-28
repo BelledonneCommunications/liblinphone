@@ -165,7 +165,8 @@ bool MediaSessionPrivate::tryEnterConference() {
 	L_Q();
 	q->updateContactAddressInOp();
 	const auto updatedContactAddress = q->getContactAddress();
-	ConferenceId serverConferenceId = ConferenceId(updatedContactAddress, updatedContactAddress);
+	ConferenceId serverConferenceId =
+	    ConferenceId(updatedContactAddress, updatedContactAddress, q->getCore()->createConferenceIdParams());
 	shared_ptr<Conference> conference = q->getCore()->findConference(serverConferenceId, false);
 	// If the call conference ID is not an empty string but no conference is linked to the call means that it was added
 	// to the conference after the INVITE session was started but before its completition
@@ -867,7 +868,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		const auto videoEnabled = getParams()->videoEnabled();
 		const auto remoteContactAddress = q->getRemoteContactAddress();
 		const auto localAddress = q->getLocalAddress();
-		const auto conference = q->getCore()->findConference(ConferenceId(localAddress, localAddress), false);
+		const auto conference = q->getCore()->findConference(
+		    ConferenceId(localAddress, localAddress, q->getCore()->createConferenceIdParams()), false);
 		// If the media session is in a conference, the remote media description is empty and audio video capabilities
 		// are disabled, then just call end the update
 		if ((((!!linphone_core_conference_server_enabled(q->getCore()->getCCore())) && conference) ||
@@ -929,7 +931,7 @@ MediaSessionParams *MediaSessionPrivate::createMediaSessionParams() {
 	MediaSessionParams *msp = new MediaSessionParams(*getParams());
 
 	auto videoDir = computeNewVideoDirection(q->getCore()->getCCore()->video_policy->accept_media_direction);
-	const auto &conference = q->getCore()->findConference(q->getSharedFromThis());
+	const auto &conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 	if (conference) {
 		videoDir = conference->verifyVideoDirection(q->getSharedFromThis(), videoDir);
 	}
@@ -1163,7 +1165,8 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams() {
 	CallSessionPrivate::initializeParamsAccordingToIncomingCallParams();
 	const auto remoteContactAddress = q->getRemoteContactAddress();
 	const auto localAddress = q->getLocalAddress();
-	const auto conference = q->getCore()->findConference(ConferenceId(localAddress, localAddress), false);
+	const auto conference = q->getCore()->findConference(
+	    ConferenceId(localAddress, localAddress, q->getCore()->createConferenceIdParams()), false);
 	std::shared_ptr<SalMediaDescription> md = op->getRemoteMediaDescription();
 	if (md) {
 		/* It is implicit to receive an INVITE without SDP, in this case WE choose the media parameters according to
@@ -4778,16 +4781,17 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 
 	auto log = getLog();
 	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
+	auto conferenceIdParams = getCore()->createConferenceIdParams();
 	if (conferenceInfo) {
 		auto conferenceAddress = conferenceInfo->getUri();
-		serverConferenceId = ConferenceId(conferenceAddress, conferenceAddress);
+		serverConferenceId = ConferenceId(conferenceAddress, conferenceAddress, conferenceIdParams);
 		conference = getCore()->findConference(serverConferenceId, false);
 	}
 	if (!conference) {
 		auto contactAddress = getContactAddress();
 		if (contactAddress) {
 			updateContactAddress(*contactAddress);
-			serverConferenceId = ConferenceId(contactAddress, contactAddress);
+			serverConferenceId = ConferenceId(contactAddress, contactAddress, conferenceIdParams);
 			conference = getCore()->findConference(serverConferenceId, false);
 		}
 	}
@@ -4795,7 +4799,7 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 		const auto to = Address::create(d->op->getTo());
 		// Local conference
 		if (to->hasUriParam(Conference::ConfIdParameter)) {
-			serverConferenceId = ConferenceId(to, to);
+			serverConferenceId = ConferenceId(to, to, conferenceIdParams);
 			conference = getCore()->findConference(serverConferenceId, false);
 		}
 	}

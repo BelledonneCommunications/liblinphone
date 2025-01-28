@@ -760,6 +760,7 @@ static void group_chat_room_with_client_deletes_chatroom_after_restart(void) {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
 
 		stats focus_stat = focus.getStats();
 		marie_stat = marie.getStats();
@@ -3444,6 +3445,7 @@ static void group_chat_room_with_duplications(void) {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
 		linphone_config_set_string(linphone_core_get_config(laure.getLc()), "misc", "uuid", NULL);
 		linphone_core_remove_linphone_spec(laure.getLc(), "groupchat");
 		const char *spec = "groupchat/1.2";
@@ -3560,6 +3562,7 @@ static void group_chat_room_with_duplications(void) {
 		ms_message("%s reinitializes one last time its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
 		// Keep the same uuid
 		linphone_config_set_string(linphone_core_get_config(laure.getLc()), "misc", "uuid", uuid);
 		if (uuid) {
@@ -3644,7 +3647,7 @@ static void group_chat_room_with_duplications(void) {
 		    }));
 
 		for (const auto &conferenceId : oldConferenceIds) {
-			const auto chatRoom = laure.getCore().findChatRoom(conferenceId);
+			const auto chatRoom = laure.getCore().findChatRoom(conferenceId, false);
 			BC_ASSERT_PTR_NOT_NULL(chatRoom);
 			if (chatRoom) {
 				BC_ASSERT_EQUAL(laureMainDb->getConferenceNotifiedEvents(conferenceId, 0).size(),

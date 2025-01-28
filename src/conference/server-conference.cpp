@@ -146,7 +146,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 #endif // HAVE_ADVANCED_IM
 
 		if (!eventLogEnabled) {
-			setConferenceId(ConferenceId(contactAddress, contactAddress));
+			setConferenceId(ConferenceId(contactAddress, contactAddress, getCore()->createConferenceIdParams()));
 		}
 
 #ifdef HAVE_DB_STORAGE
@@ -154,6 +154,9 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		if (conferenceInfo) {
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
+				lInfo() << "Inserting new conference information to database in order to be able to recreate the "
+				           "conference "
+				        << *getConferenceAddress() << " in case of restart";
 				mainDb->insertConferenceInfo(conferenceInfo);
 			}
 		}
@@ -533,7 +536,7 @@ void ServerConference::configure(SalCallOp *op) {
 
 	if (createdConference) {
 		const auto &conferenceAddress = info->getUri();
-		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
+		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
 		setConferenceAddress(conferenceAddress);
 	}
 
@@ -946,7 +949,7 @@ void ServerConference::finalizeCreation() {
 		}
 #endif // HAVE_ADVANCED_IM
 		const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
-		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
+		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
 		std::shared_ptr<ConferenceInfo> info = nullptr;
 #ifdef HAVE_DB_STORAGE
 		auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -1323,14 +1326,13 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 				    Call::toCpp(linphone_core_invite_address_with_params_2(
 				                    lc, address->toC(), new_params, L_STRING_TO_C(mConfParams->getUtf8Subject()), NULL))
 				        ->getSharedFromThis();
-				session = call->getActiveSession();
-				session->addListener(getSharedFromThis());
-
-				tryAddMeDevice();
 
 				if (!call) {
 					lError() << "ServerConference::inviteAddresses(): could not invite participant";
 				} else {
+					tryAddMeDevice();
+					session = call->getActiveSession();
+					session->addListener(getSharedFromThis());
 					addParticipant(call);
 					auto participant = findParticipant(address);
 					participant->setPreserveSession(false);

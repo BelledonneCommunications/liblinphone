@@ -54,6 +54,7 @@
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
 #endif // HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-server-engine.h"
+#include "conference/conference-id-params.h"
 #include "conference/conference.h"
 #include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/handlers/server-conference-list-event-handler.h"
@@ -1937,12 +1938,12 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 	if (!isStartup) {
 		if (conference->getCurrentParams()->chatEnabled()) {
 			// Handling of chat room exhume
-			const auto &chatRoom = findChatRoom(conferenceId);
+			const auto &chatRoom = findChatRoom(conferenceId, false);
 			if (chatRoom) {
 				conf = chatRoom->getConference();
 			}
 		} else {
-			conf = findConference(conferenceId);
+			conf = findConference(conferenceId, false);
 		}
 		// When starting the LinphoneCore, it may happen to have 2 audio video conferences or chat room that have the
 		// same conference ID apart from the GRUU which is not taken into the account for the comparison. In such a
@@ -3043,6 +3044,10 @@ string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
 	return xmlBody.str();
 }
 #endif // HAVE_ADVANCED_IM
+
+ConferenceIdParams Core::createConferenceIdParams() const {
+	return ConferenceIdParams(getSharedFromThis());
+}
 
 void Core::addFriendList(const shared_ptr<FriendList> &list) {
 	L_D();

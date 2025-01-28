@@ -819,18 +819,18 @@ bool ClientConferenceEventHandler::subscribe() {
 		return false;
 	}
 
-	const auto &conferenceAddress = getConference()->getConferenceAddress();
-	if (!conferenceAddress) return false; // Unknown peer address
+	const auto &subscribeToHeader = conference->getConferenceAddress();
+	if (!subscribeToHeader) return false; // Unknown peer address
 	try {
 		ev = dynamic_pointer_cast<EventSubscribe>(
-		    (new EventSubscribe(getCore(), conferenceAddress, account, "conference", 600))->toSharedPtr());
+		    (new EventSubscribe(getCore(), subscribeToHeader, account, "conference", 600))->toSharedPtr());
 		ev->getOp()->setFromAddress(localAddress->getImpl());
 		setInitialSubscriptionUnderWayFlag(true);
 		const string &lastNotifyStr = Utils::toString(getLastNotify());
 		ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
 		ev->setInternal(true);
 		ev->setProperty("event-handler-private", this);
-		lInfo() << *localAddress << " is subscribing to chat room or conference: " << *conferenceAddress
+		lInfo() << *localAddress << " is subscribing to chat room or conference: " << *subscribeToHeader
 		        << " with last notify: " << lastNotifyStr;
 		return (ev->send(nullptr) == 0);
 	} catch (const bad_weak_ptr &) {

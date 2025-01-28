@@ -108,7 +108,7 @@ public:
 		return mAllowOneParticipantConference;
 	}
 
-	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) override;
+	virtual void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) override;
 	std::shared_ptr<Address> getConferenceAddress() const {
 		return mConferenceAddress;
 	};

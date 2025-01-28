@@ -54,6 +54,29 @@ Event::~Event() {
 	if (mSendCustomHeaders) sal_custom_header_free(mSendCustomHeaders);
 }
 
+void Event::fillOpFields() {
+	if (!mOp) return;
+	auto dir = mOp->getDir();
+	auto resourceSalAddress = (dir == SalOp::Dir::Incoming) ? mOp->getToAddress() : mOp->getFromAddress();
+	auto accountIdentity = Address::create(resourceSalAddress);
+	auto account = getCore()->findAccountByIdentityAddress(accountIdentity);
+	if (account) {
+		// Set the contact address to avoid putting down a local address
+		auto state = account->getState();
+		auto contactAddress = account->getContactAddress();
+		if (contactAddress && contactAddress->isValid() && (state == LinphoneRegistrationOk)) {
+			// setContactAddress clones the SalAddress
+			Address contactUri(contactAddress->getUri());
+			contactUri.merge(*accountIdentity);
+			mOp->setContactAddress(contactUri.getImpl());
+		}
+		auto realm = account->getAccountParams()->getRealm();
+		if (!realm.empty()) {
+			mOp->setRealm(L_STRING_TO_C(realm));
+		}
+	}
+}
+
 LinphoneReason Event::getReason() const {
 	return linphone_error_info_get_reason(getErrorInfo());
 }

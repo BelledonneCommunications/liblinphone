@@ -201,13 +201,16 @@ static void conferenceId_comparisons() {
 	std::shared_ptr<Address> b3 = Address::create("sip:popo@sip.example.org;d=dodo;c=didi;b=dede");
 	std::shared_ptr<Address> b4 = Address::create("sip:popo@sip.example.org;d=tutu;c=didi;b=dede");
 
-	ConferenceId c1(a1, b1);
-	ConferenceId c2(a2, b2);
-	ConferenceId c3(a1, b3);
-	ConferenceId c4(a3, b2);
-	ConferenceId c5(a3, b3);
-	ConferenceId c6(a4, b3);
-	ConferenceId c7(a3, b4);
+	ConferenceIdParams conferenceIdParams;
+	conferenceIdParams.enableExtractUri(false);
+	conferenceIdParams.setKeepGruu(false);
+	ConferenceId c1(a1, b1, conferenceIdParams);
+	ConferenceId c2(a2, b2, conferenceIdParams);
+	ConferenceId c3(a1, b3, conferenceIdParams);
+	ConferenceId c4(a3, b2, conferenceIdParams);
+	ConferenceId c5(a3, b3, conferenceIdParams);
+	ConferenceId c6(a4, b3, conferenceIdParams);
+	ConferenceId c7(a3, b4, conferenceIdParams);
 	BC_ASSERT_TRUE(c1 == c2);
 	BC_ASSERT_TRUE(c3 == c2);
 	BC_ASSERT_TRUE(c1 == c4);

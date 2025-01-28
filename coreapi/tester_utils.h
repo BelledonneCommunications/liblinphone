@@ -434,6 +434,22 @@ linphone_account_manager_services_create_delete_account_as_admin_request(Linphon
 
 LINPHONE_PUBLIC void linphone_core_enable_goog_remb(LinphoneCore *core, bool_t enable);
 
+/**
+ * Do not prune gr parameter in conference address
+ * @param core #LinphoneCore object @notnil
+ * @param enabled TRUE if enabled, FALSE otherwise.
+ **/
+LINPHONE_PUBLIC void linphone_core_enable_gruu_in_conference_address(LinphoneCore *core, bool_t enabled);
+
+/**
+ * Return whether the gr parameter is kept in the conference address
+ * Returns enablement of text sending via Baudot tones in the audio stream.
+ * @ingroup media_parameters
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if the "gr" parameter is kept in the conference address, FALSE otherwise.
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_gruu_in_conference_address_enabled(const LinphoneCore *core);
+
 #ifdef __cplusplus
 }
 #endif

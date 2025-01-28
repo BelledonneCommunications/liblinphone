@@ -426,7 +426,8 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 
 		if (!op->getTo().empty()) {
 			const auto to = Address::create(op->getTo());
-			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
+			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(
+			    ConferenceId(to, to, getCore()->createConferenceIdParams()), false);
 		}
 	}
 
@@ -492,7 +493,8 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 					} else if (!confId.empty()) {
 						auto localAddress = session->getContactAddress();
 						if (localAddress && localAddress->isValid()) {
-							ConferenceId serverConferenceId = ConferenceId(localAddress, localAddress);
+							ConferenceId serverConferenceId =
+							    ConferenceId(localAddress, localAddress, getCore()->createConferenceIdParams());
 							conference = getCore()->findConference(serverConferenceId, false);
 							if (conference) {
 								setConference(conference);
@@ -543,7 +545,8 @@ void Call::createClientConference(const shared_ptr<CallSession> &session) {
 	const auto op = session->getPrivate()->getOp();
 	std::shared_ptr<Address> remoteContactAddress = Address::create();
 	remoteContactAddress->setImpl(op->getRemoteContactAddress());
-	ConferenceId conferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+	ConferenceId conferenceId =
+	    ConferenceId(remoteContactAddress, getLocalAddress(), getCore()->createConferenceIdParams());
 
 	const auto &conference = getCore()->findConference(conferenceId, false);
 

@@ -22,6 +22,7 @@
 #define _L_CONFERENCE_ID_H_
 
 #include "address/address.h"
+#include "conference-id-params.h"
 
 // =============================================================================
 
@@ -32,9 +33,10 @@ public:
 	ConferenceId();
 	// Caution: this optimized constructor does not care about extracting the URI part only. Use it for URI only
 	// Address.
-	ConferenceId(Address &&peerAddress, Address &&localAddress);
-	ConferenceId(const std::shared_ptr<const Address> &peerAddress, const std::shared_ptr<const Address> &localAddress);
-	ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<Address> &localAddress);
+	ConferenceId(Address &&peerAddress, Address &&localAddress, const ConferenceIdParams &params);
+	ConferenceId(const std::shared_ptr<const Address> &peerAddress,
+	             const std::shared_ptr<const Address> &localAddress,
+	             const ConferenceIdParams &params);
 	ConferenceId(const ConferenceId &other);
 	ConferenceId(ConferenceId &&other) = default;
 
@@ -78,8 +80,10 @@ private:
 	std::shared_ptr<Address> mLocalAddress;
 	mutable size_t mHash = 0;
 	mutable size_t mWeakHash = 0;
+	ConferenceIdParams mParams;
 
 	bool canUpdateAddress(const std::shared_ptr<const Address> &addr, bool useLocal) const;
+	std::shared_ptr<Address> processAddress(const Address &addr) const;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {

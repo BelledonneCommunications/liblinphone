@@ -2915,6 +2915,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
                                                    LinphoneEvent *lev,
                                                    const char *notified_event,
                                                    const LinphoneContent *body) {
+	std::shared_ptr<Core> core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
 	if (strcmp(notified_event, "Presence") == 0) {
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
@@ -2941,10 +2942,9 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 		}
 
 		const auto fromAddr = ev->getFrom();
-		LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(resourceAddr, fromAddr);
-		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
-		shared_ptr<Conference> conference =
-		    (chatRoom) ? chatRoom->getConference() : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(conferenceId);
+		LinphonePrivate::ConferenceId conferenceId =
+		    LinphonePrivate::ConferenceId(resourceAddr, fromAddr, core->createConferenceIdParams());
+		shared_ptr<Conference> conference = core->findConference(conferenceId, false);
 		Content content = body ? *Content::toCpp(body) : Content();
 		if (conference) {
 			shared_ptr<ClientConference> clientConference = dynamic_pointer_cast<ClientConference>(conference);
@@ -2953,13 +2953,16 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 			} else {
 				clientConference->notifyReceived(ev, content);
 			}
+		} else {
+			lError() << "Unable to handle NOTIFY message because no conference with id " << conferenceId
+			         << " has been found";
 		}
 #else
-		ms_message("Advanced IM such as group chat is disabled!");
+		lWarning() << "Unable to handle NOTIFY because advanced IM such as group chat is disabled!";
 #endif
 	} else if (Utils::iequals(notified_event, "message-summary")) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->handleIncomingMessageWaitingIndication(Event::getSharedFromThis(lev),
-		                                                                        body ? Content::toCpp(body) : nullptr);
+		core->handleIncomingMessageWaitingIndication(Event::getSharedFromThis(lev),
+		                                             body ? Content::toCpp(body) : nullptr);
 	}
 }
 
@@ -2980,15 +2983,18 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
 	const std::shared_ptr<Address> conferenceAddress = evSub->getResource();
-	LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress);
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
-	shared_ptr<Conference> conference =
-	    (chatRoom) ? chatRoom->getConference() : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(conferenceId);
+	std::shared_ptr<Core> core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	LinphonePrivate::ConferenceId conferenceId =
+	    LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams());
+	shared_ptr<Conference> conference = core->findConference(conferenceId, false);
 	if (conference) static_pointer_cast<ServerConference>(conference)->subscribeReceived(evSub);
-	else linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+	else {
+		lError() << "Denying subscription because no conference with id " << conferenceId << " has been found";
+		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+	}
 #else  // !HAVE_ADVANCED_IM
 	linphone_event_deny_subscription(lev, LinphoneReasonNotAcceptable);
-	ms_warning("Advanced IM such as group chat is disabled!");
+	lWarning() << "Denying subscription because advanced IM such as group chat is disabled!";
 #endif // HAVE_ADVANCED_IM
 }
 #ifndef _MSC_VER
@@ -3029,15 +3035,20 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 	} else {
 		/* This has to be done only when running as server */
 		const auto &conferenceAddress = evSub->getResource();
+		std::shared_ptr<Core> core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
 		LinphonePrivate::ConferenceId conferenceId =
-		    LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress);
-		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
-		shared_ptr<Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(conferenceId);
-		if (chatRoom) static_pointer_cast<ServerChatRoom>(chatRoom)->subscriptionStateChanged(evSub, state);
-		else if (conference) static_pointer_cast<ServerConference>(conference)->subscriptionStateChanged(evSub, state);
+		    LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams());
+		shared_ptr<Conference> conference = core->findConference(conferenceId, false);
+		if (conference) static_pointer_cast<ServerConference>(conference)->subscriptionStateChanged(evSub, state);
+		else {
+			lWarning() << "Unable to handle subscripton state changed to "
+			           << linphone_subscription_state_to_string(state) << " because no conference with id "
+			           << conferenceId << " has been found";
+		}
 	}
 #else
-	ms_warning("Advanced IM such as group chat is disabled!");
+	lWarning() << "Unable to handle subscripton state changed to " << linphone_subscription_state_to_string(state)
+	           << " because advanced IM such as group chat is disabled!";
 #endif
 }
 #ifndef _MSC_VER
@@ -4905,7 +4916,8 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 		    linphone_account_params_get_identity_address(linphone_account_get_params(account));
 
 		if (!identity) {
-			lError() << "No from identity to configure the op.";
+			lError() << "Unable to set the from address of op [" << op << "] because the identity address of account "
+			         << *Account::toCpp(account) << " has not been set";
 			return;
 		}
 
@@ -4918,7 +4930,7 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 		const char *identity = linphone_core_get_primary_contact(lc);
 
 		if (!identity) {
-			lError() << "No from identity to configure the op.";
+			lError() << "Unable to set the from address of op [" << op << "] because the primary contact is not known";
 			return;
 		}
 
@@ -10088,4 +10100,12 @@ void linphone_core_enable_baudot(LinphoneCore *lc, bool_t enabled) {
 
 bool_t linphone_core_baudot_enabled(const LinphoneCore *lc) {
 	return !!linphone_config_get_int(lc->config, "misc", "enable_baudot", FALSE);
+}
+
+void linphone_core_enable_gruu_in_conference_address(LinphoneCore *lc, bool_t enabled) {
+	linphone_config_set_int(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", enabled);
+}
+
+bool_t linphone_core_gruu_in_conference_address_enabled(const LinphoneCore *lc) {
+	return !!linphone_config_get_bool(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", TRUE);
 }

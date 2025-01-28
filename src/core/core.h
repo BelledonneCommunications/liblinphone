@@ -63,6 +63,7 @@ class CallLog;
 class CallSession;
 class Conference;
 class ConferenceId;
+class ConferenceIdParams;
 class ConferenceInfo;
 class Participant;
 class CallSessionListener;
@@ -191,6 +192,8 @@ public:
 	std::shared_ptr<AbstractChatRoom> findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms(const std::shared_ptr<Address> &peerAddress) const;
 
+	std::shared_ptr<AbstractChatRoom>
+	findOneToOneChatRoom(const ConferenceId &conferenceId, bool basicOnly, bool conferenceOnly, bool encrypted) const;
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom(const std::shared_ptr<const Address> &localAddress,
 	                                                       const std::shared_ptr<const Address> &participantAddress,
 	                                                       bool basicOnly,
@@ -242,6 +245,7 @@ public:
 	// Conference.
 	// ---------------------------------------------------------------------------
 
+	ConferenceIdParams createConferenceIdParams() const;
 	void setConferenceCleanupPeriod(long seconds);
 	long getConferenceCleanupPeriod() const;
 	void setAccountDeletionTimeout(unsigned int seconds);

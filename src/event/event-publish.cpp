@@ -43,6 +43,7 @@ LinphoneStatus EventPublish::sendPublish(const std::shared_ptr<const Content> &b
 		mSendCustomHeaders = nullptr;
 	} else mOp->setSentCustomHeaders(nullptr);
 
+	fillOpFields();
 	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr);
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->publish(mName, mExpires, body_handler);
@@ -140,6 +141,7 @@ LinphoneStatus EventPublish::accept() {
 		ms_error("EventPublish::accept(): cannot accept publish if subscription wasn't just received.");
 		return -1;
 	}
+	fillOpFields();
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->accept();
 	if (err == 0) {

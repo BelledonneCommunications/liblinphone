@@ -304,6 +304,7 @@ void SalSubscribeOp::handleSubscribeResponse(unsigned int statusCode, const char
 }
 
 int SalSubscribeOp::subscribe(const string &eventName, int expires, const SalBodyHandler *bodyHandler) {
+	mDir = Dir::Outgoing;
 	if (!mDialog) {
 		fillCallbacks();
 		auto request = buildRequest("SUBSCRIBE");
@@ -331,11 +332,13 @@ int SalSubscribeOp::subscribe(const string &eventName, int expires, const SalBod
 }
 
 int SalSubscribeOp::accept() {
+	mDir = Dir::Incoming;
 	if (mPendingServerTransaction) {
 		auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
 		auto expiresHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
 		auto response = createResponseFromRequest(request, 200);
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(expiresHeader));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(createContact()));
 		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
 	}
 	return 0;
@@ -546,6 +549,7 @@ void SalPublishOp::publishRefresherListenerCb(BCTBX_UNUSED(belle_sip_refresher_t
 }
 
 int SalPublishOp::publish(const string &eventName, int expires, const SalBodyHandler *bodyHandler) {
+	mDir = Dir::Outgoing;
 	if (!mRefresher || !belle_sip_refresher_get_transaction(mRefresher)) {
 		fillCallbacks();
 		auto request = buildRequest("PUBLISH");
@@ -572,12 +576,14 @@ int SalPublishOp::publish(const string &eventName, int expires, const SalBodyHan
 }
 
 int SalPublishOp::accept() {
+	mDir = Dir::Incoming;
 	if (mPendingServerTransaction) {
 		auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
 
 		auto expiresHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
 		int expires = expiresHeader ? belle_sip_header_expires_get_expires(expiresHeader) : 600;
 		auto response = createResponseFromRequest(request, 200);
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(createContact()));
 		if (expires > 0) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
 			                             belle_sip_header_create("SIP-ETag", mETag.c_str()));

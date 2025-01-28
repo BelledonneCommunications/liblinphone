@@ -203,7 +203,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	}
 
 	if (focusSession || conferenceInfo) {
-		ConferenceId conferenceId(conferenceAddress, meAddress);
+		ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
 		setConferenceId(conferenceId);
 	}
 
@@ -637,7 +637,7 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 				return false;
 		}
 	} else if (!getMe()->isAdmin()) {
-		lError() << "Could not add call " << call << " to the conference because local participant "
+		lError() << "Could not add call " << *call << " to " << *this << " because local participant "
 		         << *getMe()->getAddress() << " is not admin.";
 	} else {
 		const auto &endTime = mConfParams->getEndTime();
@@ -904,7 +904,8 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					}
 
 					if (!mFinalized) {
-						setConferenceId(ConferenceId(focusContactAddress, getMe()->getAddress()));
+						setConferenceId(ConferenceId(focusContactAddress, getMe()->getAddress(),
+						                             getCore()->createConferenceIdParams()));
 						if (call) {
 							if (focusContactAddress->hasUriParam(Conference::ConfIdParameter)) {
 								call->setConferenceId(
@@ -1534,7 +1535,7 @@ void ClientConference::onParticipantsCleared() {
 void ClientConference::onConferenceCreated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
 #ifdef HAVE_ADVANCED_IM
 	const auto &conferenceId = getConferenceId();
-	const ConferenceId newConferenceId(addr, conferenceId.getLocalAddress());
+	const ConferenceId newConferenceId(addr, conferenceId.getLocalAddress(), getCore()->createConferenceIdParams());
 	if (!getCore()->getPrivate()->findExumedChatRoomFromPreviousConferenceId(newConferenceId)) {
 		setConferenceId(newConferenceId);
 	}
@@ -2522,8 +2523,8 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 		auto ref = getSharedFromThis();
 		getCore()->removeConferencePendingCreation(ref);
 		if (remoteAddress == nullptr) {
-			lError() << "[Conference] [" << this
-			         << "] The session to update the conference information did not succesfully establish hence it is "
+			lError() << *this
+			         << " The session to update the conference information did not succesfully establish hence it is "
 			            "likely that the request wasn't taken into account by the server";
 			setState(ConferenceInterface::State::CreationFailed);
 		} else if (dynamic_pointer_cast<MediaSession>(session) &&
@@ -2533,9 +2534,9 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			// TODO: same code as in the conference scheduler and core.cpp. Needs refactoring?
 			auto conferenceAddress = remoteAddress;
 
-			lInfo() << "Conference [" << this << "] has been succesfully created: " << *conferenceAddress;
+			lInfo() << *this << " has been succesfully created: " << *conferenceAddress;
 			const auto &meAddress = getMe()->getAddress();
-			ConferenceId conferenceId(conferenceAddress, meAddress);
+			ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
 			// Do not change the conference ID yet if exhuming a chatroom
 			if (!isLocalExhume) {
 				setConferenceId(conferenceId);
@@ -2546,7 +2547,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			// will be always greater than 1 (the core holds it)
 			getMe()->setConference(getSharedFromThis());
 
-			lInfo() << "Automatically rejoining conference " << *remoteAddress;
+			lInfo() << "Automatically rejoining " << *this;
 			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 
 			// Participant with the focus call is admin

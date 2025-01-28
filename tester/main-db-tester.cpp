@@ -43,15 +43,24 @@ using namespace LinphonePrivate;
 
 class MainDbProvider {
 public:
+	constexpr static const char *chatroom_domain = "sip.example.org";
+	constexpr static const char *chatroom_gr = "459797d6-40f9-0072-a3ad-e9237e042437";
 	MainDbProvider() : MainDbProvider("db/linphone.db") {
 	}
 
-	MainDbProvider(const char *db_file) {
+	MainDbProvider(const char *db_file, bool_t keep_gruu = TRUE, bool_t unify_chatroom_address = FALSE) {
 		mCoreManager = linphone_core_manager_create("empty_rc");
 		char *roDbPath = bc_tester_res(db_file);
 		char *rwDbPath = bc_tester_file(core_db);
 		BC_ASSERT_FALSE(liblinphone_tester_copy_file(roDbPath, rwDbPath));
 		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", rwDbPath);
+		linphone_core_enable_gruu_in_conference_address(mCoreManager->lc, keep_gruu);
+		linphone_config_set_bool(linphone_core_get_config(mCoreManager->lc), "misc", "unify_chatroom_address",
+		                         unify_chatroom_address);
+		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "misc", "force_chatroom_domain",
+		                           chatroom_domain);
+		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "misc", "force_chatroom_gr",
+		                           chatroom_gr);
 		bc_free(roDbPath);
 		bc_free(rwDbPath);
 		linphone_core_manager_start(mCoreManager, false);
@@ -104,10 +113,10 @@ static void get_messages_count(void) {
 	const MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
 		BC_ASSERT_EQUAL(mainDb.getChatMessageCount(), 5157, int, "%d");
-		BC_ASSERT_EQUAL(
-		    mainDb.getChatMessageCount(ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
-		                                            Address::create("sip:test-1@sip.linphone.org"))),
-		    861, int, "%d");
+		BC_ASSERT_EQUAL(mainDb.getChatMessageCount(
+		                    ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
+		                                 Address::create("sip:test-1@sip.linphone.org"), ConferenceIdParams())),
+		                861, int, "%d");
 	} else {
 		BC_FAIL("Database not initialized");
 	}
@@ -120,7 +129,7 @@ static void get_unread_messages_count(void) {
 		BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(), 2, int, "%d");
 		BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(
 		                    ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
-		                                 Address::create("sip:test-1@sip.linphone.org"))),
+		                                 Address::create("sip:test-1@sip.linphone.org"), ConferenceIdParams())),
 		                0, int, "%d");
 	} else {
 		BC_FAIL("Database not initialized");
@@ -134,28 +143,28 @@ static void get_history(void) {
 		BC_ASSERT_EQUAL(
 		    mainDb
 		        .getHistoryRange(ConferenceId(Address::create("sip:test-4@sip.linphone.org")->getSharedFromThis(),
-		                                      Address::create("sip:test-1@sip.linphone.org")),
+		                                      Address::create("sip:test-1@sip.linphone.org"), ConferenceIdParams()),
 		                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
 		        .size(),
 		    54, size_t, "%zu");
 		BC_ASSERT_EQUAL(
 		    mainDb
 		        .getHistoryRange(ConferenceId(Address::create("sip:test-7@sip.linphone.org")->getSharedFromThis(),
-		                                      Address::create("sip:test-7@sip.linphone.org")),
+		                                      Address::create("sip:test-7@sip.linphone.org"), ConferenceIdParams()),
 		                         0, -1, MainDb::Filter::ConferenceCallFilter)
 		        .size(),
 		    0, size_t, "%zu");
 		BC_ASSERT_EQUAL(
 		    mainDb
 		        .getHistoryRange(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
-		                                      Address::create("sip:test-1@sip.linphone.org")),
+		                                      Address::create("sip:test-1@sip.linphone.org"), ConferenceIdParams()),
 		                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
 		        .size(),
 		    804, size_t, "%zu");
 		BC_ASSERT_EQUAL(
 		    mainDb
 		        .getHistory(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
-		                                 Address::create("sip:test-1@sip.linphone.org")),
+		                                 Address::create("sip:test-1@sip.linphone.org"), ConferenceIdParams()),
 		                    100, MainDb::Filter::ConferenceChatMessageFilter)
 		        .size(),
 		    100, size_t, "%zu");
@@ -170,7 +179,7 @@ static void get_conference_notified_events(void) {
 	if (mainDb.isInitialized()) {
 		list<shared_ptr<EventLog>> events = mainDb.getConferenceNotifiedEvents(
 		    ConferenceId(Address::create("sip:test-44@sip.linphone.org")->getSharedFromThis(),
-		                 Address::create("sip:test-1@sip.linphone.org")),
+		                 Address::create("sip:test-1@sip.linphone.org"), ConferenceIdParams()),
 		    1);
 		BC_ASSERT_EQUAL(events.size(), 3, size_t, "%zu");
 		if (events.size() != 3) return;
@@ -364,7 +373,7 @@ static void get_chat_rooms() {
 	}
 }
 
-static void load_a_lot_of_chatrooms(void) {
+static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
 	long expectedDurationMs = 600;
 #ifndef _WIN32
 	int current_priority = getpriority(PRIO_PROCESS, 0);
@@ -376,7 +385,7 @@ static void load_a_lot_of_chatrooms(void) {
 #endif
 
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
-	MainDbProvider provider("db/chatrooms.db");
+	MainDbProvider provider("db/chatrooms.db", keep_gruu);
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
 	long ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 #ifdef ENABLE_SANITIZER
@@ -404,16 +413,18 @@ static void load_a_lot_of_chatrooms(void) {
 #endif
 }
 
-static void load_chatroom_conference(void) {
-	MainDbProvider provider("db/chatroom_conference.db");
+static void load_a_lot_of_chatrooms(void) {
+	load_a_lot_of_chatrooms_base(TRUE);
+}
+
+static void load_a_lot_of_chatrooms_cleaning_gruu(void) {
+	load_a_lot_of_chatrooms_base(FALSE);
+}
+
+static void load_chatroom_conference_base(bool_t keep_gruu) {
+	MainDbProvider provider("db/chatroom_conference.db", keep_gruu, TRUE);
 	MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
-		auto mgr = provider.getCoreManager();
-		linphone_config_set_bool(linphone_core_get_config(mgr->lc), "misc", "unify_chatroom_address", TRUE);
-		const char *chatroom_domain = "sip.example.org";
-		linphone_config_set_string(linphone_core_get_config(mgr->lc), "misc", "force_chatroom_domain", chatroom_domain);
-		const char *chatroom_gr = "459797d6-40f9-0072-a3ad-e9237e042437";
-		linphone_config_set_string(linphone_core_get_config(mgr->lc), "misc", "force_chatroom_gr", chatroom_gr);
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
 		BC_ASSERT_EQUAL(chatRooms.size(), 2, size_t, "%zu");
 		for (const auto &chatRoom : chatRooms) {
@@ -421,10 +432,12 @@ static void load_chatroom_conference(void) {
 			// Basic chatroom do not have a conference address
 			if (conferenceAddress) {
 				auto domain = conferenceAddress->getDomain();
-				BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(domain), chatroom_domain);
-				if (BC_ASSERT_TRUE(conferenceAddress->hasUriParam("gr"))) {
+				BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(domain), MainDbProvider::chatroom_domain);
+				auto hasGruu = conferenceAddress->hasUriParam("gr");
+				BC_ASSERT_TRUE(conferenceAddress->hasUriParam("gr") == !!keep_gruu);
+				if (hasGruu) {
 					auto gr = conferenceAddress->getUriParamValue("gr");
-					BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(gr), chatroom_gr);
+					BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(gr), MainDbProvider::chatroom_gr);
 				}
 			}
 		}
@@ -441,8 +454,17 @@ static void load_chatroom_conference(void) {
 	}
 }
 
-static void database_with_chatroom_duplicates(void) {
-	MainDbProvider provider("db/chatroom_duplicates.db");
+static void load_chatroom_conference(void) {
+	load_chatroom_conference_base(TRUE);
+}
+
+static void load_chatroom_conference_cleaning_gruu(void) {
+	load_chatroom_conference_base(FALSE);
+}
+
+static void database_with_chatroom_duplicates_base(bool_t keep_gruu) {
+	MainDbProvider provider("db/chatroom_duplicates.db", keep_gruu);
+	BC_ASSERT_TRUE(linphone_core_gruu_in_conference_address_enabled(provider.getCoreManager()->lc) == keep_gruu);
 	MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
@@ -473,6 +495,14 @@ static void database_with_chatroom_duplicates(void) {
 			BC_ASSERT_EQUAL(mainDb.getChatMessageCount(chatRoom->getConferenceId()), messageCount, size_t, "%zu");
 		}
 	}
+}
+
+static void database_with_chatroom_duplicates(void) {
+	database_with_chatroom_duplicates_base(TRUE);
+}
+
+static void database_with_chatroom_duplicates_gruu_pruned(void) {
+	database_with_chatroom_duplicates_base(FALSE);
 }
 
 static void search_messages_in_chat_room(void) {
@@ -562,17 +592,21 @@ static void search_messages_in_chat_room(void) {
 	}
 }
 
-test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
-                          TEST_NO_TAG("Get messages count", get_messages_count),
-                          TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
-                          TEST_NO_TAG("Get history", get_history),
-                          TEST_NO_TAG("Get conference events", get_conference_notified_events),
-                          TEST_NO_TAG("Get chat rooms", get_chat_rooms),
-                          TEST_NO_TAG("Set/get conference info", set_get_conference_info),
-                          TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference),
-                          TEST_NO_TAG("Database with chatroom duplicates", database_with_chatroom_duplicates),
-                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
-                          TEST_NO_TAG("Search messages in chatroom", search_messages_in_chat_room)};
+test_t main_db_tests[] = {
+    TEST_NO_TAG("Get events count", get_events_count),
+    TEST_NO_TAG("Get messages count", get_messages_count),
+    TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
+    TEST_NO_TAG("Get history", get_history),
+    TEST_NO_TAG("Get conference events", get_conference_notified_events),
+    TEST_NO_TAG("Get chat rooms", get_chat_rooms),
+    TEST_NO_TAG("Set/get conference info", set_get_conference_info),
+    TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference),
+    TEST_NO_TAG("Load chatroom and conference cleaning gruu", load_chatroom_conference_cleaning_gruu),
+    TEST_NO_TAG("Database with chatroom duplicates", database_with_chatroom_duplicates),
+    TEST_NO_TAG("Database with chatroom duplicates and GRUU pruned", database_with_chatroom_duplicates_gruu_pruned),
+    TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
+    TEST_NO_TAG("Load a lot of chatrooms cleaning GRUU", load_a_lot_of_chatrooms_cleaning_gruu),
+    TEST_NO_TAG("Search messages in chatroom", search_messages_in_chat_room)};
 
 test_suite_t main_db_test_suite = {"MainDb",
                                    NULL,

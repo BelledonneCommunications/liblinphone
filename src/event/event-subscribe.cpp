@@ -106,15 +106,15 @@ LinphoneStatus EventSubscribe::send(const std::shared_ptr<const Content> &body) 
 	int err;
 
 	if (mDir != LinphoneSubscriptionOutgoing) {
-		ms_error("EventSubscribe::send(): cannot send or update something that is not an outgoing subscription.");
+		lError() << "EventSubscribe::send(): cannot send or update something that is not an outgoing subscription.";
 		return -1;
 	}
 	switch (mSubscriptionState) {
 		case LinphoneSubscriptionIncomingReceived:
 		case LinphoneSubscriptionTerminated:
 		case LinphoneSubscriptionOutgoingProgress:
-			ms_error("EventSubscribe::send(): cannot update subscription while in state [%s]",
-			         linphone_subscription_state_to_string(mSubscriptionState));
+			lError() << "EventSubscribe::send(): cannot update subscription while in state ["
+			         << linphone_subscription_state_to_string(mSubscriptionState) << "]";
 			return -1;
 		case LinphoneSubscriptionNone:
 		case LinphoneSubscriptionActive:
@@ -133,7 +133,7 @@ LinphoneStatus EventSubscribe::send(const std::shared_ptr<const Content> &body) 
 	if (mRequestAddress) {
 		mOp->setRequestUri(mRequestAddress->asStringUriOnly());
 	}
-
+	fillOpFields();
 	const LinphoneContent *cBody = (body && !body->isEmpty()) ? body->toC() : nullptr;
 	body_handler = sal_body_handler_from_content(cBody);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
@@ -155,11 +155,13 @@ LinphoneStatus EventSubscribe::refresh() {
 LinphoneStatus EventSubscribe::accept() {
 	int err;
 	if (mSubscriptionState != LinphoneSubscriptionIncomingReceived) {
-		ms_error("EventSubscribe::accept(): cannot accept subscription if subscription wasn't just received.");
+		lError() << "EventSubscribe::accept(): cannot accept subscription if subscription wasn't just received.";
 		return -1;
 	}
+	fillOpFields();
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
 	err = subscribeOp->accept();
+
 	if (err == 0) {
 		setState(LinphoneSubscriptionActive);
 	}
@@ -169,7 +171,7 @@ LinphoneStatus EventSubscribe::accept() {
 LinphoneStatus EventSubscribe::deny(LinphoneReason reason) {
 	int err;
 	if (mSubscriptionState != LinphoneSubscriptionIncomingReceived) {
-		ms_error("EventSubscribe::deny(): cannot deny subscription if subscription wasn't just received.");
+		lError() << "EventSubscribe::deny(): cannot deny subscription if subscription wasn't just received.";
 		return -1;
 	}
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
@@ -182,11 +184,11 @@ LinphoneStatus EventSubscribe::notify(const std::shared_ptr<const Content> &body
 	SalBodyHandler *body_handler;
 	if (mSubscriptionState != LinphoneSubscriptionActive &&
 	    mSubscriptionState != LinphoneSubscriptionIncomingReceived) {
-		ms_error("EventSubscribe::notify(): cannot notify if subscription is not active.");
+		lError() << "EventSubscribe::notify(): cannot notify if subscription is not active.";
 		return -1;
 	}
 	if (mDir != LinphoneSubscriptionIncoming) {
-		ms_error("EventSubscribe::notify(): cannot notify if not an incoming subscription.");
+		lError() << "EventSubscribe::notify(): cannot notify if not an incoming subscription.";
 		return -1;
 	}
 	const LinphoneContent *cBody = (body && !body->isEmpty()) ? body->toC() : nullptr;
@@ -205,7 +207,8 @@ LinphoneSubscriptionState EventSubscribe::getState() const {
 
 void EventSubscribe::setState(LinphoneSubscriptionState state) {
 	if (mSubscriptionState != state) {
-		ms_message("Event [%p] moving to subscription state %s", this, linphone_subscription_state_to_string(state));
+		lInfo() << "Event [" << this << "] moving to subscription state "
+		        << linphone_subscription_state_to_string(state);
 		mSubscriptionState = state;
 		ref();
 		linphone_core_notify_subscription_state_changed(getCore()->getCCore(), this->toC(), state);

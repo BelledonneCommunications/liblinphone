@@ -450,7 +450,7 @@ bool Address::removeUriParam(const string &uriParamName) {
 }
 
 void Address::copyUriParams(const Address &other) {
-	const auto otherUriParams = other.getParams();
+	const auto otherUriParams = other.getUriParams();
 	for (const auto &[name, value] : otherUriParams) {
 		setUriParam(name, value);
 	}

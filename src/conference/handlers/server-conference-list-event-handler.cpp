@@ -115,16 +115,17 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 		return;
 	}
 
+	auto core = getCore();
 	for (const auto &l : rl->getList()) {
 		for (const auto &entry : l.getEntry()) {
 			std::shared_ptr<Address> addr = Address::create(entry.getUri());
 			string notifyIdStr = addr->getUriParamValue("Last-Notify");
 			addr->removeUriParam("Last-Notify");
-			ConferenceId conferenceId(addr, addr);
+			ConferenceId conferenceId(addr, addr, core->createConferenceIdParams());
 			std::shared_ptr<ServerConferenceEventHandler> handler = findHandler(conferenceId);
 			if (!handler) continue;
 
-			shared_ptr<AbstractChatRoom> chatRoom = ev->getCore()->findChatRoom(conferenceId);
+			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (!chatRoom) {
 				lError() << "Received subscribe for unknown chat room: " << conferenceId;
 				continue;
@@ -132,15 +133,15 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 
 			shared_ptr<Participant> participant = chatRoom->findParticipant(participantAddr);
 			if (!participant) {
-				lError() << "Received subscribe for unknown participant: " << participantAddr
-				         << " for chat room: " << conferenceId;
+				lError() << "Received subscribe for unknown participant [" << *participantAddr
+				         << "] in chat room: " << conferenceId;
 				continue;
 			}
 			shared_ptr<ParticipantDevice> device = participant->findDevice(deviceAddr);
 			if (!device || (device->getState() != ParticipantDevice::State::Present &&
 			                device->getState() != ParticipantDevice::State::Joining)) {
-				lError() << "Received subscribe for unknown device: " << deviceAddr
-				         << " for participant: " << participantAddr << " for chat room: " << conferenceId;
+				lError() << "Received subscribe for unknown device [" << *deviceAddr << "] of participant ["
+				         << *participantAddr << "] in chat room: " << conferenceId;
 				continue;
 			}
 			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? ev
@@ -191,8 +192,7 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
 	auto multipart = Content::create(ContentManager::contentListToMultipart(contentsAsPtr));
-	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
-		multipart->setContentEncoding("deflate");
+	if (linphone_core_content_encoding_supported(core->getCCore(), "deflate")) multipart->setContentEncoding("deflate");
 	ev->notify(multipart);
 }
 

@@ -285,7 +285,7 @@ std::string HttpResponse::getHeaderValue(const std::string &headerName) const {
 }
 
 const Content &HttpResponse::getBody() const {
-	if (mBody.isEmpty()) {
+	if (mBody.isEmpty() && mResponse) {
 		auto bh = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(mResponse));
 		if (bh) {
 			mBody = Content((SalBodyHandler *)bh, false);

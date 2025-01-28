@@ -175,6 +175,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-params-interface.h
 	conference/conference-enums.h
 	conference/conference-id.h
+	conference/conference-id-params.h
 	conference/conference-info.h
 	conference/conference-scheduler.h
 	conference/sip-conference-scheduler.h
@@ -493,6 +494,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-params-interface.cpp
 	conference/conference-enums.cpp
 	conference/conference-id.cpp
+	conference/conference-id-params.cpp
 	conference/conference-info.cpp
 	conference/conference-scheduler.cpp
 	conference/conference.cpp

@@ -35,6 +35,7 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room.h"
+#include "conference/conference-id-params.h"
 #include "conference/conference.h"
 #include "conference/server-conference.h"
 #include "linphone/api/c-account-params.h"
@@ -226,7 +227,11 @@ static void call_received(SalCallOp *h) {
 			}
 		}
 		auto remoteContact = Address::create(h->getRemoteContact());
-		shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(ConferenceId(remoteContact, to));
+		auto conferenceIdParams = core->createConferenceIdParams();
+		conferenceIdParams.setKeepGruu(false);
+		conferenceIdParams.enableExtractUri(true);
+		ConferenceId conferenceId(remoteContact, to, conferenceIdParams);
+		shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 		if (chatRoom && chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic) {
 			lError() << "Invalid basic chat room found. It should have been a ClientChatRoom... Recreating it...";
 			chatRoom->deleteFromDb();
@@ -235,8 +240,7 @@ static void call_received(SalCallOp *h) {
 		if (!chatRoom) {
 			const auto localAddressWithoutGruu = Address::create(to->getUriWithoutGruu());
 			const auto peerAddressWithoutGruu = Address::create(remoteContact->getUriWithoutGruu());
-			chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientChatRoom(
-			    to, ConferenceId(peerAddressWithoutGruu, localAddressWithoutGruu), h, params);
+			chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientChatRoom(to, conferenceId, h, params);
 		}
 
 		conference = chatRoom->getConference();
@@ -254,9 +258,10 @@ static void call_received(SalCallOp *h) {
 	           sal_address_has_uri_param(h->getToAddress(), Conference::ConfIdParameter.c_str()) ||
 	           ((sal_address_has_param(remoteContactAddress, "admin") &&
 	             (strcmp(sal_address_get_param(remoteContactAddress, "admin"), "1") == 0)))) {
+		const auto conferenceIdParams = core->createConferenceIdParams();
 		// Create a conference if remote is trying to schedule one or it is calling a conference focus
 		if (isServer) {
-			conference = core->findConference(ConferenceId(to, to));
+			conference = core->findConference(ConferenceId(to, to, conferenceIdParams), false);
 			if (conference) {
 				auto serverConference = dynamic_pointer_cast<ServerConference>(conference);
 				if (serverConference) {
@@ -371,7 +376,7 @@ static void call_received(SalCallOp *h) {
 								        fromOp, participant, encrypted);
 								if (confAddr && confAddr->isValid()) {
 									shared_ptr<AbstractChatRoom> chatRoom =
-									    core->findChatRoom(ConferenceId(confAddr, confAddr));
+									    core->findChatRoom(ConferenceId(confAddr, confAddr, conferenceIdParams));
 									static_pointer_cast<ServerChatRoom>(chatRoom)->confirmRecreation(h);
 									return;
 								}
@@ -1067,10 +1072,6 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 		if (strcmp(linphone_event_get_name(lev), "conference") == 0) linphone_event_set_internal(lev, TRUE);
 		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
-		LinphoneAccount *account = linphone_core_lookup_known_account(lc, Address(op->getTo()).toC());
-		if (account && linphone_account_params_get_realm(linphone_account_get_params(account))) {
-			op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(account)));
-		}
 		auto nbRefBeforeCbs = cppLev->getRefCount();
 		linphone_core_notify_subscribe_received(lc, lev, eventname, ct);
 		auto nbRefAfterCbs = cppLev->getRefCount();
@@ -1218,12 +1219,14 @@ static void refer_received(SalOp *op,
 				method = referToAddr->getUriParamValue("method");
 			}
 			std::shared_ptr<LinphonePrivate::Address> to = LinphonePrivate::Address::create(op->getTo());
-			shared_ptr<Conference> conference;
+			std::shared_ptr<Conference> conference;
+			std::shared_ptr<Core> core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+			const auto conferenceIdParams = core->createConferenceIdParams();
 			if (linphone_core_conference_server_enabled(lc)) {
 				// Removal of a participant at the server side
-				conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
+				conference = core->findConference(ConferenceId(to, to, conferenceIdParams), false);
 			} else {
-				conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(referToAddr, to));
+				conference = core->findConference(ConferenceId(referToAddr, to, conferenceIdParams), false);
 			}
 			SalReferOp *referOp = dynamic_cast<SalReferOp *>(op);
 			if (conference && referOp) {

@@ -102,7 +102,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 			const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
 			const ConferenceId &conferenceId = handler->getConferenceId();
 			if (identityAddress->weakEqual(*conferenceId.getLocalAddress())) {
-				shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
+				shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId, false);
 				if (!cr) {
 					lError() << "Couldn't add chat room " << conferenceId
 					         << " in the chat room list subscription because chat room couldn't be found";
@@ -203,6 +203,8 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 		auto it = std::find_if(levs.begin(), levs.end(), [&from](const auto &lev) {
 			return (*Address::create(lev->getOp()->getFrom()) == *from);
 		});
+		auto core = getCore();
+		const auto conferenceIdParams = core->createConferenceIdParams();
 		const auto levFound = (it != levs.end());
 		if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
 			// Simple notify received directly from a chat-room
@@ -217,7 +219,7 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 			}
 
 			std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity().c_str());
-			ConferenceId id(entityAddress, from);
+			ConferenceId id(entityAddress, from, conferenceIdParams);
 			auto handler = findHandler(id);
 			if (!handler) return;
 
@@ -245,7 +247,7 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 			if (it == addresses.cend()) continue;
 
 			std::shared_ptr<Address> peer = it->second;
-			ConferenceId id(peer, from);
+			ConferenceId id(peer, from, conferenceIdParams);
 			auto handler = findHandler(id);
 			if (!handler) continue;
 

@@ -136,7 +136,7 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 	}
 
 	std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress, conf->getCore()->createConferenceIdParams());
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	const bool oneToOne = chatRoom ? !!!chatRoom->getCurrentParams()->isGroup() : false;
@@ -502,8 +502,10 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyMultipart(int
 		return nullptr;
 	}
 
-	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
-	    ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()), static_cast<unsigned int>(notifyId));
+	auto core = conf->getCore();
+	list<shared_ptr<EventLog>> events = core->getPrivate()->mainDb->getConferenceNotifiedEvents(
+	    ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress(), core->createConferenceIdParams()),
+	    static_cast<unsigned int>(notifyId));
 
 	list<shared_ptr<Content>> contents;
 	for (const auto &eventLog : events) {
@@ -971,7 +973,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralMode(const EventLog::T
 		confDescr.setKeywords(keywords);
 	}
 
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress, conf->getCore()->createConferenceIdParams());
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	const ModeType mode =
@@ -1016,7 +1018,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralLifetime(const long &l
 		}
 	}
 
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress, conf->getCore()->createConferenceIdParams());
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	shared_ptr<Core> core = conf->getCore();
@@ -1169,21 +1171,10 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 			if (needToSyncDevice) {
 				lInfo() << "Participant " << *dAddress << " is already part of " << *getConference()
 				        << " hence send full state to be sure the client and the server are on the same page";
-			} else {
-				// conf->setLastNotify(lastNotify + 1);
 			}
 			lInfo() << "Sending initial notify of conference [" << conferenceAddressString << "] to: " << *dAddress
 			        << " with last notify version set to " << conf->getLastNotify();
 			notifyFullState(createNotifyFullState(ev), device);
-			// Do not notify everybody that a particiant has been added if it was already part of the conference. It may
-			// mean that the client and the server wanted to synchronize to each other
-			if (!needToSyncDevice) {
-				// Notify everybody that a participant device has been added and its capabilities after receiving the
-				// SUBSCRIBE
-				// const auto notify = createNotifyParticipantDeviceDataChanged(pAddress, dAddress);
-				// notifyAllExceptDevice(makeContent(notify), device);
-			}
-			// As a SUBSCRIBE has been received, clear the flag in case the device unsubscribes again
 			device->clearChangingSubscribeEvent();
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for conference ["
@@ -1195,8 +1186,8 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 			// FIXME: Temporary workaround until chatrooms and conference will be one single class with different
 			// capabilities. Every subscribe sent for a conference will be answered by a notify full state as events are
 			// not stored in the database
-			const auto &conference = conf->getCore()->findConference(conf->getConferenceId());
-			if ((conference && !conference->getCurrentParams()->chatEnabled()) || forceFullState) {
+			const auto &conference = conf->getCore()->findConference(conf->getConferenceId(), false);
+			if ((conference && !conference->isChatOnly()) || forceFullState) {
 				notifyFullState(createNotifyFullState(ev), device);
 			} else {
 				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);

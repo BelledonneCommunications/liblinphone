@@ -306,10 +306,14 @@ private:
 	using ChatRoomWeakCompareMap = std::
 	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
 	void initCleanup();
-	void addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
-	                       const std::shared_ptr<AbstractChatRoom> &chatRoom) const;
-	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> chatRoom1,
-	                                                 const std::shared_ptr<AbstractChatRoom> chatRoom2) const;
+	bool addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+	                       const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                       long long id,
+	                       int unreadMessageCount) const;
+	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> &chatRoom1,
+	                                                 const std::shared_ptr<AbstractChatRoom> &chatRoom2,
+	                                                 long long id,
+	                                                 int unreadMessageCount) const;
 
 	std::string getConferenceInfoTypeQuery(const std::list<LinphoneStreamType> &capabilities) const;
 };

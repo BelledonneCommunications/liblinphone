@@ -90,11 +90,6 @@ void ServerChatRoom::confirmRecreation(SalCallOp *op) {
 	session->redirect(confAddr);
 }
 
-void ServerChatRoom::subscriptionStateChanged(const shared_ptr<EventSubscribe> &event,
-                                              LinphoneSubscriptionState state) {
-	static_pointer_cast<ServerConference>(getConference())->eventHandler->subscriptionStateChanged(event, state);
-}
-
 // -----------------------------------------------------------------------------
 
 LinphoneReason ServerChatRoom::onSipMessageReceived(SalOp *op, const SalMessage *message) {
