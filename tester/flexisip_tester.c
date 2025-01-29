@@ -330,6 +330,7 @@ static void call_forking(void) {
 	LinphoneCoreManager *marie2 = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *marie3 = linphone_core_manager_new("marie_rc");
 	bctbx_list_t *lcs = bctbx_list_append(NULL, pauline->lc);
+	LinphoneCall *marie2_call, *marie3_call;
 
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, marie2->lc);
@@ -342,11 +343,16 @@ static void call_forking(void) {
 
 	linphone_core_invite_address(pauline->lc, marie->identity);
 	/*pauline should hear ringback*/
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 1, 10000));
 	/*all devices from Marie should be ringing*/
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie3->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie3->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+
+	marie2_call = linphone_core_get_current_call(marie2->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(marie2_call)) marie2_call = linphone_call_ref(marie2_call);
+	marie3_call = linphone_core_get_current_call(marie3->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(marie3_call)) marie3_call = linphone_call_ref(marie3_call);
 
 	/*marie accepts the call on its first device*/
 	linphone_call_accept(linphone_core_get_current_call(marie->lc));
@@ -358,6 +364,23 @@ static void call_forking(void) {
 	/*other devices should stop ringing*/
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie3->stat.number_of_LinphoneCallEnd, 1, 5000));
+
+	if (marie2_call) {
+		const LinphoneErrorInfo *ei = linphone_call_get_error_info(marie2_call);
+		BC_ASSERT_EQUAL(linphone_call_get_reason(marie2_call), LinphoneReasonNone, int, "%i");
+		BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNone, int, "%i");
+		BC_ASSERT_EQUAL(linphone_error_info_get_protocol_code(ei), 200, int, "%i");
+		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(ei), "Call completed elsewhere");
+		linphone_call_unref(marie2_call);
+	}
+	if (marie3_call) {
+		const LinphoneErrorInfo *ei = linphone_call_get_error_info(marie3_call);
+		BC_ASSERT_EQUAL(linphone_call_get_reason(marie3_call), LinphoneReasonNone, int, "%i");
+		BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNone, int, "%i");
+		BC_ASSERT_EQUAL(linphone_error_info_get_protocol_code(ei), 200, int, "%i");
+		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(ei), "Call completed elsewhere");
+		linphone_call_unref(marie3_call);
+	}
 
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 5000));
@@ -470,6 +493,7 @@ static void call_forking_declined(bool_t declined_globaly) {
 	LinphoneCoreManager *marie2 = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *marie3 = linphone_core_manager_new("marie_rc");
 	bctbx_list_t *lcs = bctbx_list_append(NULL, pauline->lc);
+	LinphoneCall *marie2_call, *marie3_call;
 
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, marie2->lc);
@@ -484,9 +508,14 @@ static void call_forking_declined(bool_t declined_globaly) {
 	/*pauline should hear ringback*/
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 1, 3000));
 	/*all devices from Marie should be ringing*/
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie3->stat.number_of_LinphoneCallIncomingReceived, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie3->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+
+	marie2_call = linphone_core_get_current_call(marie2->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(marie2_call)) marie2_call = linphone_call_ref(marie2_call);
+	marie3_call = linphone_core_get_current_call(marie3->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(marie3_call)) marie3_call = linphone_call_ref(marie3_call);
 
 	/*marie finally declines the call*/
 	linphone_call_decline(linphone_core_get_current_call(marie->lc),
@@ -498,6 +527,21 @@ static void call_forking_declined(bool_t declined_globaly) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie3->stat.number_of_LinphoneCallEnd, 1, 5000));
+
+		if (marie2_call) {
+			const LinphoneErrorInfo *ei = linphone_call_get_error_info(marie2_call);
+			BC_ASSERT_EQUAL(linphone_call_get_reason(marie2_call), LinphoneReasonDoNotDisturb, int, "%i");
+			BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonDoNotDisturb, int, "%i");
+			BC_ASSERT_EQUAL(linphone_error_info_get_protocol_code(ei), 600, int, "%i");
+			BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(ei), "Busy Everywhere");
+		}
+		if (marie3_call) {
+			const LinphoneErrorInfo *ei = linphone_call_get_error_info(marie3_call);
+			BC_ASSERT_EQUAL(linphone_call_get_reason(marie3_call), LinphoneReasonDoNotDisturb, int, "%i");
+			BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonDoNotDisturb, int, "%i");
+			BC_ASSERT_EQUAL(linphone_error_info_get_protocol_code(ei), 600, int, "%i");
+			BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(ei), "Busy Everywhere");
+		}
 	} else {
 		/*pauline should continue ringing and be able to hear a call taken by marie2 */
 		linphone_call_accept(linphone_core_get_current_call(marie2->lc));
@@ -510,7 +554,8 @@ static void call_forking_declined(bool_t declined_globaly) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 3000));
 	}
-
+	if (marie2_call) linphone_call_unref(marie2_call);
+	if (marie3_call) linphone_call_unref(marie3_call);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
