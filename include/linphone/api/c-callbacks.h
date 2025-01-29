@@ -917,7 +917,7 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceJoiningRequestCb)(LinphoneC
 /**
  * Callback used to notify which participant device video is being displayed as "actively speaking".
  * @param[in] conference #LinphoneConference object @notnil
- * @param[in] participant_device the participant device currently displayed as active speaker @notnil
+ * @param[in] participant_device the participant device currently displayed as active speaker @maybenil
  */
 typedef void (*LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb)(
     LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
