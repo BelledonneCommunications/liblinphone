@@ -125,8 +125,8 @@ void ToneManager::startRingtone() {
 		return;
 	}
 
-	if (!getPlatformHelpers(lc)->isRingingAllowed()) {
-		lWarning() << "[ToneManager] Platform Helper says ringing isn't allowed by platform, do not ring...";
+	if (!getPlatformHelpers(lc)->isPlayingSoundAllowed()) {
+		lWarning() << "[ToneManager] Platform Helper says playing sound isn't allowed by platform, do not ring...";
 		return;
 	}
 
@@ -154,6 +154,7 @@ void ToneManager::startNamedTone(LinphoneToneID toneId) {
 	if (!call) return;
 	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
 	if (!mediaSession->toneIndicationsEnabled()) return;
+
 	lInfo() << "[ToneManager] " << __func__;
 	mStats.number_of_startNamedTone++;
 	LinphoneToneDescription *tone = getTone(toneId);
@@ -571,6 +572,7 @@ void ToneManager::notifyToneIndication(LinphoneReason reason) {
 	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
 	if (!mediaSession->toneIndicationsEnabled()) return;
 
+	LinphoneCore *lc = getCore().getCCore();
 	lInfo() << "[ToneManager] " << __func__ << " reason " << std::string(linphone_reason_to_string(reason));
 
 	switch (reason) {
@@ -579,7 +581,12 @@ void ToneManager::notifyToneIndication(LinphoneReason reason) {
 			startNamedTone(LinphoneToneCallEnd);
 			break;
 		case LinphoneReasonNotAnswered:
-			startNamedTone(LinphoneToneCallNotAnswered);
+			if (!getPlatformHelpers(lc)->isPlayingSoundAllowed()) {
+				lWarning() << "[ToneManager] Platform Helper says playsing sound isn't allowed by platform, do not "
+				              "play call not answered tone";
+			} else {
+				startNamedTone(LinphoneToneCallNotAnswered);
+			}
 			break;
 		case LinphoneReasonBusy:
 			startNamedTone(LinphoneToneBusy);
