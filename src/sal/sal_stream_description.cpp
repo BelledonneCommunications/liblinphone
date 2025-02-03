@@ -1218,7 +1218,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 	}
 
 	if (actualCfg.conference_ssrc) {
-		char *ssrc_attribute = ms_strdup_printf("%u", actualCfg.conference_ssrc);
+		char *ssrc_attribute = ms_strdup_printf("%u cname:%s", actualCfg.conference_ssrc, actualCfg.rtcp_cname.c_str());
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc", ssrc_attribute));
 		ms_free(ssrc_attribute);
 	}
