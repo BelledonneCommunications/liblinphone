@@ -23,6 +23,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant-device.h"
+#include "conference/participant.h"
 #include "private.h"
 
 // =============================================================================
@@ -147,6 +148,10 @@ bool_t linphone_participant_device_get_is_muted(const LinphoneParticipantDevice 
 
 bool_t linphone_participant_device_screen_sharing_enabled(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->screenSharingEnabled();
+}
+
+LinphoneParticipant *linphone_participant_device_get_participant(const LinphoneParticipantDevice *participant_device) {
+	return bellesip::toC(ParticipantDevice::toCpp(participant_device)->getParticipant());
 }
 
 LinphoneCore *linphone_participant_device_get_core(const LinphoneParticipantDevice *participant_device) {

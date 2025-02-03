@@ -64,6 +64,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ### Removed
 - Removed old & deprecated VideoPolicy object.
+- ISAC and iLBC audio codecs are deprecated and will be removed in a future release.
 
 
 ## [5.3.55] 2024-05-31

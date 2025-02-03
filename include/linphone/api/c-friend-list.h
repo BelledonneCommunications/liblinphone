@@ -422,7 +422,7 @@ LINPHONE_PUBLIC void linphone_friend_list_update_dirty_friends(LinphoneFriendLis
 /**
  * Returns the #LinphoneCore object attached to this LinphoneFriendList.
  * @param friend_list #LinphoneFriendList object. @notnil
- * @return a #LinphoneCore object @notnil
+ * @return a #LinphoneCore object @maybenil
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_friend_list_get_core(const LinphoneFriendList *friend_list);
 

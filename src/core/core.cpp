@@ -2951,7 +2951,8 @@ bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
 					    return;
 				    }
 			    }
-			    lError() << "Token refreshing failed.";
+			    lError() << "Token refreshing failed, invoking authentication_requested...";
+			    linphone_core_notify_authentication_requested(getCCore(), ai->toC(), LinphoneAuthBearer);
 		    });
 	} catch (const std::exception &e) {
 		lError() << "Cannot refresh access token: " << e.what();
