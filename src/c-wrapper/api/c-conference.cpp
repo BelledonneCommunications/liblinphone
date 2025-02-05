@@ -90,7 +90,7 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
                                                                LinphoneAddress *focus,
                                                                LinphoneAddress *addr,
                                                                const LinphoneConferenceParams *params) {
-	std::shared_ptr<const ConferenceParams> conf_params = NULL;
+	std::shared_ptr<const ConferenceParams> conf_params = nullptr;
 	if (params) {
 		conf_params = ConferenceParams::toCpp(params)->getSharedFromThis();
 	} else {
@@ -117,7 +117,7 @@ linphone_conference_get_active_speaker_participant_device(const LinphoneConferen
 	if (p) {
 		return p->toC();
 	}
-	return NULL;
+	return nullptr;
 }
 
 const LinphoneConferenceParams *linphone_conference_get_current_params(const LinphoneConference *conference) {
@@ -164,7 +164,7 @@ LinphoneParticipant *linphone_conference_find_participant(LinphoneConference *co
 	if (p) {
 		return p->toC();
 	}
-	return NULL;
+	return nullptr;
 }
 
 int linphone_conference_update_params(LinphoneConference *conference, const LinphoneConferenceParams *params) {
@@ -218,7 +218,7 @@ const LinphoneAudioDevice *linphone_conference_get_input_audio_device(const Linp
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
-	return NULL;
+	return nullptr;
 }
 const LinphoneAudioDevice *linphone_conference_get_output_audio_device(const LinphoneConference *conference) {
 	ConferenceLogContextualizer logContextualizer(conference);
@@ -226,7 +226,7 @@ const LinphoneAudioDevice *linphone_conference_get_output_audio_device(const Lin
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
-	return NULL;
+	return nullptr;
 }
 
 int linphone_conference_get_participant_device_volume(LinphoneConference *conference,
@@ -272,7 +272,7 @@ int linphone_conference_get_participant_count(const LinphoneConference *conferen
 bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference) {
 	ConferenceLogContextualizer logContextualizer(conference);
 	bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
-	bctbx_list_t *participant_addresses = NULL;
+	bctbx_list_t *participant_addresses = nullptr;
 	for (bctbx_list_t *iterator = participants; iterator; iterator = bctbx_list_next(iterator)) {
 		LinphoneParticipant *p = (LinphoneParticipant *)bctbx_list_get_data(iterator);
 		LinphoneAddress *a = linphone_address_clone(linphone_participant_get_address(p));
@@ -342,7 +342,7 @@ LinphoneStatus linphone_conference_invite_participants(LinphoneConference *confe
                                                        const LinphoneCallParams *params) {
 	ConferenceLogContextualizer logContextualizer(conference);
 	std::list<std::shared_ptr<const LinphonePrivate::Address>> addressList;
-	for (const bctbx_list_t *elem = addresses; elem != NULL; elem = elem->next) {
+	for (const bctbx_list_t *elem = addresses; elem != nullptr; elem = elem->next) {
 		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
 		addressList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
 	}
@@ -358,7 +358,7 @@ LinphoneStatus linphone_conference_add_participants(LinphoneConference *conferen
 LinphoneStatus linphone_conference_add_participants_2(LinphoneConference *conference, const bctbx_list_t *addresses) {
 	ConferenceLogContextualizer logContextualizer(conference);
 	std::list<std::shared_ptr<const LinphonePrivate::Address>> addressList;
-	for (const bctbx_list_t *elem = addresses; elem != NULL; elem = elem->next) {
+	for (const bctbx_list_t *elem = addresses; elem != nullptr; elem = elem->next) {
 		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
 		addressList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
 	}
@@ -420,7 +420,7 @@ LinphoneCall *linphone_conference_get_call(const LinphoneConference *conference)
 	if (call) {
 		return call->toC();
 	}
-	return NULL;
+	return nullptr;
 }
 
 void linphone_conference_set_local_participant_stream_capability(LinphoneConference *conference,
@@ -617,7 +617,7 @@ const char *linphone_conference_layout_to_string(const LinphoneConferenceLayout 
 		case LinphoneConferenceLayoutActiveSpeaker:
 			return "LinphoneConferenceLayoutActiveSpeaker";
 	}
-	return NULL;
+	return nullptr;
 }
 
 LinphonePlayer *linphone_conference_get_player(LinphoneConference *conference) {
@@ -628,4 +628,9 @@ LinphonePlayer *linphone_conference_get_player(LinphoneConference *conference) {
 const LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference) {
 	std::shared_ptr<ConferenceInfo> info = Conference::toCpp(conference)->createOrGetConferenceInfo();
 	return info ? info->toC() : nullptr;
+}
+
+LinphoneAccount *linphone_conference_get_account(LinphoneConference *conference) {
+	shared_ptr<Account> account = Conference::toCpp(conference)->getAccount();
+	return account ? account->toC() : nullptr;
 }

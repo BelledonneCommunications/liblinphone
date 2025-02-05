@@ -554,6 +554,13 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_conference_get_player(LinphoneConferenc
  */
 LINPHONE_PUBLIC const LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference);
 
+/**
+ * Gets the #LinphoneAccount object associated with the conference
+ * @param conference #LinphoneConference object. @notnil
+ * @return A #LinphoneAccount object. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneAccount *linphone_conference_get_account(LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

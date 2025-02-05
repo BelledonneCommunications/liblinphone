@@ -2988,8 +2988,7 @@ shared_ptr<EktInfo> Core::createEktInfoFromXml(const std::string &xmlBody) const
 		return ei;
 	}
 
-	auto &sSpi = crypto->getSspi();
-	if (sSpi) {
+	if (const auto &sSpi = crypto->getSspi()) {
 		ei->setSSpi(static_cast<uint16_t>(sSpi));
 	} else {
 		lError() << "Core::createEktInfoFromXml : Missing sSPI";
@@ -3013,11 +3012,20 @@ shared_ptr<EktInfo> Core::createEktInfoFromXml(const std::string &xmlBody) const
 	return ei;
 }
 
-string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
-	auto account = getDefaultAccount();
-	auto addr = account->getContactAddress();
+string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei, const shared_ptr<const Account> &account) const {
+	stringstream xmlBody;
+	shared_ptr<Address> addr = nullptr;
+	if (account) {
+		addr = account->getContactAddress();
+	} else if (getDefaultAccount()) {
+		lWarning() << __func__ << " : The account passed as an argument is null, using the default account";
+		addr = getDefaultAccount()->getContactAddress();
+	} else {
+		lError() << __func__ << " : No valid account found, return an empty XML body";
+		return xmlBody.str();
+	}
 
-	CryptoType crypto = CryptoType(ei->getSSpi(), addr->asStringUriOnly());
+	auto crypto = CryptoType(ei->getSSpi(), addr->asStringUriOnly());
 
 	if (ei->getFrom()) crypto.setFrom(ei->getFrom()->asStringUriOnly());
 
@@ -3032,12 +3040,11 @@ string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
 		for (const auto &cipher : cipherMap) {
 			vector<uint8_t> cipherVec(ei->getCiphers()->getBuffer(cipher.first)->getContent().begin(),
 			                          ei->getCiphers()->getBuffer(cipher.first)->getContent().end());
-			EncryptedektType ekt = EncryptedektType(bctoolbox::encodeBase64(cipherVec), cipher.first);
+			auto ekt = EncryptedektType(bctoolbox::encodeBase64(cipherVec), cipher.first);
 			crypto.getCiphers()->getEncryptedekt().push_back(ekt);
 		}
 	}
 
-	stringstream xmlBody;
 	Xsd::XmlSchema::NamespaceInfomap map;
 	map[""].name = "linphone:xml:ns:ekt-linphone-extension";
 	serializeCrypto(xmlBody, crypto, map);

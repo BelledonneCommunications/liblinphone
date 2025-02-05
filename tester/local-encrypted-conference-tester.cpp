@@ -73,7 +73,8 @@ static void ekt_xml_composing_parsing_test(EktXmlContent exc) {
 		}
 	}
 
-	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->createXmlFromEktInfo(ei);
+	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->createXmlFromEktInfo(
+	    ei, Account::toCpp(marieAccount)->getSharedFromThis());
 	lInfo() << "Generated XML body : " << endl << xmlBody;
 	auto outputEi = L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->createEktInfoFromXml(xmlBody);
 
@@ -252,7 +253,7 @@ static void create_simple_end_to_end_encrypted_conference_with_screen_sharing() 
 
 static void connection_method_check(LinphoneConference *conference, LinphoneParticipantDevice *participant_device) {
 	LinphoneConferenceCbs *cbs = linphone_conference_get_current_callbacks(conference);
-	auto berthe = (LinphoneCoreManager *)linphone_conference_cbs_get_user_data(cbs);
+	auto berthe = static_cast<LinphoneCoreManager *>(linphone_conference_cbs_get_user_data(cbs));
 	LinphoneParticipantDeviceJoiningMethod expected_joining_method = LinphoneParticipantDeviceJoiningMethodDialedIn;
 	if (linphone_address_weak_equal(berthe->identity, linphone_participant_device_get_address(participant_device))) {
 		expected_joining_method = LinphoneParticipantDeviceJoiningMethodDialedOut;
@@ -872,15 +873,15 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 	}
 }
 
-static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted(void) {
+static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted() {
 	create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin(true);
 }
 
-static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined(void) {
+static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined() {
 	create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin(false);
 }
 
-static void create_encrypted_conference_with_chat(void) {
+static void create_encrypted_conference_with_chat() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE, TRUE);
 }
 
@@ -999,7 +1000,7 @@ static void failure_in_creating_end_to_end_encrypted_conference_bad_server_confi
 	}
 }
 
-static void create_simple_end_to_end_encrypted_conference_terminated_early(void) {
+static void create_simple_end_to_end_encrypted_conference_terminated_early() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool enable_lime = true;
@@ -1130,7 +1131,7 @@ static void create_simple_end_to_end_encrypted_conference_terminated_early(void)
 	}
 }
 
-static void create_simple_end_to_end_encrypted_conference_merging_calls(void) {
+static void create_simple_end_to_end_encrypted_conference_merging_calls() {
 	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE,
 	                                            LinphoneConferenceSecurityLevelEndToEnd, FALSE);
 }

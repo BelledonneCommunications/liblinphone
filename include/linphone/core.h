@@ -9290,9 +9290,23 @@ LINPHONE_PUBLIC const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(co
  * @param core the #LinphoneCore
  * @param ekt_info the #LinphoneEktInfo @notnil
  * @return The XML body @maybenil @tobefreed
+ * @deprecated 06/02/2025 use linphone_core_create_xml_from_ekt_info_2().
  * @ingroup ekt_api
  */
-LINPHONE_PUBLIC char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const LinphoneEktInfo *ekt_info);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core,
+                                                                                 const LinphoneEktInfo *ekt_info);
+
+/**
+ * Gets an XML body using a specific account
+ * @param core the #LinphoneCore
+ * @param ekt_info the #LinphoneEktInfo @notnil
+ * @param account the #LinphoneAccount associated with the conference @maybenil
+ * @return The XML body @maybenil @tobefreed
+ * @ingroup ekt_api
+ */
+LINPHONE_PUBLIC char *linphone_core_create_xml_from_ekt_info_2(const LinphoneCore *core,
+                                                               const LinphoneEktInfo *ekt_info,
+                                                               const LinphoneAccount *account);
 
 /**
  * Gets if the EKT plugin is currently loaded in the Linphone core instance.

@@ -415,7 +415,8 @@ public:
 	// ---------------------------------------------------------------------------
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<EktInfo> createEktInfoFromXml(const std::string &xmlBody) const;
-	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei) const;
+	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei,
+	                                 const std::shared_ptr<const Account> &account) const;
 #endif // HAVE_ADVANCED_IM
 
 	// ---------------------------------------------------------------------------

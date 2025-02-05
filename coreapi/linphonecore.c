@@ -10049,22 +10049,28 @@ int linphone_core_get_conference_max_thumbnails(const LinphoneCore *core) {
 
 const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(const LinphoneCore *core, const char *xml_body) {
 #ifdef HAVE_ADVANCED_IM
-	auto ei = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createEktInfoFromXml(xml_body);
-	if (ei) {
+	if (const auto ei = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createEktInfoFromXml(xml_body)) {
 		ei->ref();
 		return ei->toC();
 	}
 #endif // HAVE_ADVANCED_IM
-	return NULL;
+	return nullptr;
 }
 
 char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const LinphoneEktInfo *ekt_info) {
+	return linphone_core_create_xml_from_ekt_info_2(core, ekt_info, nullptr);
+}
+
+char *linphone_core_create_xml_from_ekt_info_2(const LinphoneCore *core,
+                                               const LinphoneEktInfo *ekt_info,
+                                               const LinphoneAccount *account) {
 #ifdef HAVE_ADVANCED_IM
-	auto ei = EktInfo::toCpp(ekt_info)->getSharedFromThis();
-	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createXmlFromEktInfo(ei);
+	const auto ei = EktInfo::toCpp(ekt_info)->getSharedFromThis();
+	const auto cppAccount = account ? Account::toCpp(account)->getSharedFromThis() : nullptr;
+	const string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createXmlFromEktInfo(ei, cppAccount);
 	return bctbx_strdup(xmlBody.c_str());
 #else
-	return NULL;
+	return nullptr;
 #endif // HAVE_ADVANCED_IM
 }
 
