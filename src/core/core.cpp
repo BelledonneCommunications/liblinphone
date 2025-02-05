@@ -247,6 +247,10 @@ bool CorePrivate::listenerAlreadyRegistered(CoreListener *listener) const {
 }
 
 void CorePrivate::registerListener(CoreListener *listener) {
+	if (!listener) {
+		lError() << __func__ << " : Ignoring attempt to register a null listener";
+		return;
+	}
 	if (listenerAlreadyRegistered(listener)) return;
 	listeners.push_back(listener);
 }
