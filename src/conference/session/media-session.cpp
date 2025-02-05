@@ -2069,7 +2069,7 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			const auto &participantDevice = isInLocalConference
 			                                    ? conference->findParticipantDevice(q->getSharedFromThis())
-			                                    : conference->getMe()->findDevice(q->getSharedFromThis());
+			                                    : conference->getMe()->findDevice(q->getSharedFromThis(), true);
 			if (participantDevice) {
 				const auto &deviceState = participantDevice->getState();
 				std::string content;

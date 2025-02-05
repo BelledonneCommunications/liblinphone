@@ -152,9 +152,9 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 	try {
 		const auto &core = getCore();
-		auto chatRoom = core->findChatRoom(getConferenceId());
-
-		const auto &conferenceAddress = getConference()->getConferenceAddress();
+		const auto &conference = getConference();
+		const auto &chatRoom = conference->getChatRoom();
+		const auto &conferenceAddress = conference->getConferenceAddress();
 		std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity());
 		auto prunedEntityAddress = entityAddress ? entityAddress->getUriWithoutGruu() : Address();
 		auto prunedConferenceAddress = conferenceAddress ? conferenceAddress->getUriWithoutGruu() : Address();
@@ -177,7 +177,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		}
 
 		if (waitingFullState && !isFullState) {
-			lError() << "Unable to process received NOTIFY because " << *getConference() << " is waiting a full state";
+			lError() << "Unable to process received NOTIFY because " << *conference << " is waiting a full state";
 			return;
 		} else {
 			waitingFullState = false;
@@ -208,7 +208,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					requestFullState();
 					return;
 				}
-				getConference()->setLastNotify(version.get());
+				conference->setLastNotify(version.get());
 				if (chatRoom) {
 					// Update last notify ID in the DB just in case the notify does not generate any further event
 					core->getPrivate()->mainDb->updateNotifyId(chatRoom, getLastNotify());
@@ -220,11 +220,11 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		if (confDescription.present()) {
 			auto &subject = confDescription.get().getSubject();
 			if (subject.present() && !subject.get().empty()) {
-				if (getConference()->getUtf8Subject() != subject.get()) {
-					getConference()->Conference::setUtf8Subject(subject.get());
+				if (conference->getUtf8Subject() != subject.get()) {
+					conference->Conference::setUtf8Subject(subject.get());
 					if (!isFullState) {
 						// Subject must be stored in the system locale
-						getConference()->notifySubjectChanged(creationTime, isFullState, subject.get());
+						conference->notifySubjectChanged(creationTime, isFullState, subject.get());
 					}
 				}
 			}
@@ -236,28 +236,33 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			}
 
 			const auto &availableMedia = confDescription.get().getAvailableMedia();
-			// Take into consideration available media only if the conference is not a chat room
-			if (availableMedia.present() && !chatRoom) {
+			// Take into consideration available media only if the conference supports media.
+			// A client that has not received an ICS will join the conference with an audio and/or video stream. If the
+			// conference server accept any of the offered media stream, the client will assume that such a capability
+			// is supported by the conference. The NOTIFY full state will only refine and set the final set of
+			// conference capabilities. For instance, if the client joined the conference without offering a video
+			// stream, the conference video capability will be known only upon reception of the NOTIFY full state.
+			if (availableMedia.present() && conference->supportsMedia()) {
 				for (auto &mediaEntry : availableMedia.get().getEntry()) {
 					const std::string mediaType = mediaEntry.getType();
 					const LinphoneMediaDirection mediaDirection =
 					    XmlUtils::mediaStatusToMediaDirection(mediaEntry.getStatus().get());
 					const bool enabled = (mediaDirection == LinphoneMediaDirectionSendRecv);
 					if (mediaType.compare("audio") == 0) {
-						getConference()->getCurrentParams()->enableAudio(enabled);
+						conference->getCurrentParams()->enableAudio(enabled);
 					} else if (mediaType.compare("video") == 0) {
-						getConference()->getCurrentParams()->enableVideo(enabled);
+						conference->getCurrentParams()->enableVideo(enabled);
 					} else if (mediaType.compare("text") == 0) {
 						// Do not allow to turn off chat capabilities in order to preserve backward compatibility
-						getConference()->getCurrentParams()->enableChat(
-						    enabled || getConference()->getCurrentParams()->chatEnabled());
+						conference->getCurrentParams()->enableChat(enabled ||
+						                                           conference->getCurrentParams()->chatEnabled());
 					} else {
 						lError() << "Unrecognized media type " << mediaType;
 					}
 				}
 				if (!isFullState) {
-					getConference()->notifyAvailableMediaChanged(creationTime, isFullState,
-					                                             getConference()->getMediaCapabilities());
+					conference->notifyAvailableMediaChanged(creationTime, isFullState,
+					                                        conference->getMediaCapabilities());
 				}
 			}
 
@@ -273,7 +278,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					auto ephemeralMode = ephemeral.getMode();
 
 					std::shared_ptr<LinphonePrivate::ClientChatRoom> cgcr = nullptr;
-					if (chatRoom && (chatRoom->getConference() == getConference())) {
+					if (chatRoom) {
 						cgcr = dynamic_pointer_cast<LinphonePrivate::ClientChatRoom>(chatRoom);
 					}
 					if (cgcr) {
@@ -285,11 +290,10 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 								cgcr->getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
 								cgcr->enableEphemeral((lifetime != 0), false);
 								if (!isFullState) {
-									getConference()->notifyEphemeralLifetimeChanged(creationTime, isFullState,
-									                                                lifetime);
+									conference->notifyEphemeralLifetimeChanged(creationTime, isFullState, lifetime);
 
-									getConference()->notifyEphemeralMessageEnabled(creationTime, isFullState,
-									                                               (lifetime != 0));
+									conference->notifyEphemeralMessageEnabled(creationTime, isFullState,
+									                                          (lifetime != 0));
 								}
 							}
 						} else if (ephemeralMode.compare("device-managed") == 0) {
@@ -301,17 +305,17 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					ConferenceTimes conferenceTimes{anyElement};
 					if (conferenceTimes.getStart().present()) {
 						auto startTime = conferenceTimes.getStart().get();
-						getConference()->getCurrentParams()->setStartTime(dateTimeToTimeT(startTime));
+						conference->getCurrentParams()->setStartTime(dateTimeToTimeT(startTime));
 					}
 					if (conferenceTimes.getEnd().present()) {
 						auto endTime = conferenceTimes.getEnd().get();
-						getConference()->getCurrentParams()->setEndTime(dateTimeToTimeT(endTime));
+						conference->getCurrentParams()->setEndTime(dateTimeToTimeT(endTime));
 					}
 				} else if (nodeName == "linphone-cie:crypto-security-level") {
 					CryptoSecurityLevel cryptoSecurityLevel{anyElement};
 					auto securityLevelString = cryptoSecurityLevel.getLevel();
 					auto securityLevel = ConferenceParams::getSecurityLevelFromAttribute(securityLevelString);
-					getConference()->getCurrentParams()->setSecurityLevel(securityLevel);
+					conference->getCurrentParams()->setSecurityLevel(securityLevel);
 				}
 			}
 		}
@@ -327,8 +331,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			}
 		}
 
-		auto oldParticipants = getConference()->getParticipants();
-		auto oldMeDevices = getConference()->getMe()->getDevices();
+		auto oldParticipants = conference->getParticipants();
+		auto oldMeDevices = conference->getMe()->getDevices();
 		if (isFullState) {
 			confListener->onParticipantsCleared();
 		}
@@ -336,16 +340,19 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		auto &users = confInfo->getUsers();
 		if (!users.present()) return;
 
+		auto account = conference->getAccount();
+		auto accountContactAddress = account ? account->getContactAddress() : nullptr;
+
 		// 4. Notify changes on users.
 		for (auto &user : users->getUser()) {
 			std::shared_ptr<Address> address = core->interpretUrl(user.getEntity().get(), false);
 			StateType state = user.getState();
 
-			bool isMe = getConference()->isMe(address);
+			bool isMe = conference->isMe(address);
 
 			shared_ptr<Participant> participant = nullptr;
-			if (isMe) participant = getConference()->getMe();
-			else participant = getConference()->findParticipant(address);
+			if (isMe) participant = conference->getMe();
+			else participant = conference->findParticipant(address);
 
 			const auto &pIt = std::find_if(
 			    oldParticipants.cbegin(), oldParticipants.cend(),
@@ -357,11 +364,11 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					lInfo() << "Participant " << *address << " requested to be deleted is me.";
 					continue;
 				} else if (participant) {
-					getConference()->mParticipants.remove(participant);
-					lInfo() << "Participant " << *participant << " is successfully removed - " << *getConference()
-					        << " has " << getConference()->getParticipantCount() << " participants";
+					conference->mParticipants.remove(participant);
+					lInfo() << "Participant " << *participant << " is successfully removed - " << *conference << " has "
+					        << conference->getParticipantCount() << " participants";
 					if (!isFullState) {
-						getConference()->notifyParticipantRemoved(creationTime, isFullState, participant);
+						conference->notifyParticipantRemoved(creationTime, isFullState, participant);
 
 						// TODO FIXME: Remove later when devices for friends will be notified through presence
 						lInfo() << "[Friend] Removing device with address [" << address->asStringUriOnly() << "]";
@@ -379,29 +386,29 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				} else if (participant) {
 					lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 				} else {
-					participant = Participant::create(getConference(), address);
+					participant = Participant::create(conference, address);
 					fillParticipantAttributes(participant, roles, state, isFullState, false);
 
-					getConference()->mParticipants.push_back(participant);
-					lInfo() << "Participant " << *participant << " is successfully added - " << *getConference()
-					        << " has " << getConference()->getParticipantCount() << " participants";
+					conference->mParticipants.push_back(participant);
+					lInfo() << "Participant " << *participant << " is successfully added - " << *conference << " has "
+					        << conference->getParticipantCount() << " participants";
 					if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !isMe)) {
-						getConference()->notifyParticipantAdded(creationTime, isFullState, participant);
+						conference->notifyParticipantAdded(creationTime, isFullState, participant);
 					}
 				}
 			}
 
 			if (!participant) {
 				// Try to get participant again as it may have been added or removed earlier on
-				if (isMe) participant = getConference()->getMe();
-				else participant = getConference()->findParticipant(address);
+				if (isMe) participant = conference->getMe();
+				else participant = conference->findParticipant(address);
 			}
 
 			if (!participant) {
 				lDebug() << "Participant " << *address
 				         << " is not in the list of participants however it is trying to change the list of devices or "
 				            "change role! Resubscribing to "
-				         << *getConference() << " to clear things up.";
+				         << *conference << " to clear things up.";
 				requestFullState();
 			} else {
 
@@ -474,8 +481,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							device->setState(ParticipantDevice::State::Left);
 
 							if (!isFullState && participant) {
-								getConference()->notifyParticipantDeviceRemoved(creationTime, isFullState, participant,
-								                                                device);
+								conference->notifyParticipantDeviceRemoved(creationTime, isFullState, participant,
+								                                           device);
 							}
 						}
 					} else if (device) {
@@ -557,7 +564,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 								}
 							}
 						}
-						const auto &mainSession = getConference()->getMainSession();
+						const auto &mainSession = conference->getMainSession();
 						if (!thumbnailTagFound) {
 							lInfo()
 							    << "It seems that we are dealing with a legacy conference server that doesn't provide "
@@ -582,11 +589,11 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 								mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
 							}
 						}
-						getConference()->setCachedScreenSharingDevice();
+						conference->setCachedScreenSharingDevice();
 						const auto screenSharingChanged = device->enableScreenSharing(isScreenSharing);
 						if (!isFullState && (state != StateType::full) && screenSharingChanged) {
-							getConference()->notifyParticipantDeviceScreenSharingChanged(creationTime, isFullState,
-							                                                             participant, device);
+							conference->notifyParticipantDeviceScreenSharingChanged(creationTime, isFullState,
+							                                                        participant, device);
 						}
 
 						auto mediaAvailabilityChanged = device->updateStreamAvailabilities();
@@ -597,16 +604,16 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						    (previousDeviceState != ParticipantDevice::State::Joining) &&
 						    (previousDeviceState != ParticipantDevice::State::Alerting)) {
 							if (!mediaAvailabilityChanged.empty()) {
-								getConference()->notifyParticipantDeviceMediaAvailabilityChanged(
-								    creationTime, isFullState, participant, device);
+								conference->notifyParticipantDeviceMediaAvailabilityChanged(creationTime, isFullState,
+								                                                            participant, device);
 							}
 
 							if (!mediaCapabilityChanged.empty()) {
-								getConference()->notifyParticipantDeviceMediaCapabilityChanged(
-								    creationTime, isFullState, participant, device);
+								conference->notifyParticipantDeviceMediaCapabilityChanged(creationTime, isFullState,
+								                                                          participant, device);
 							}
 						}
-						getConference()->resetCachedScreenSharingDevice();
+						conference->resetCachedScreenSharingDevice();
 
 						if (endpoint.getJoiningMethod().present()) {
 							const auto &joiningMethod = endpoint.getJoiningMethod().get();
@@ -690,10 +697,17 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						core->getPrivate()->mainDb->insertDevice(gruu, name);
 
 						// For chat rooms, the session is handled by the participant
-						if (isMe && mainSession &&
-						    (getConference()->getCurrentParams()->audioEnabled() ||
-						     getConference()->getCurrentParams()->videoEnabled()))
-							device->setSession(mainSession);
+						if (isMe && mainSession && conference->supportsMedia()) {
+							if (accountContactAddress) {
+								if (*gruu == *accountContactAddress) {
+									device->setSession(mainSession);
+								}
+							} else {
+								lError() << "The account " << account << " linked to conference " << *conference
+								         << " has no contact address, therefore the core is not able to assign the "
+								            "main session to any participant device";
+							}
+						}
 
 						if (state == StateType::full) {
 							lInfo() << "Participant device " << *gruu << " has been successfully added";
@@ -707,11 +721,11 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							}
 							if (!isFullState || sendNotify) {
 								if (device->getState() == ParticipantDevice::State::RequestingToJoin) {
-									getConference()->notifyParticipantDeviceJoiningRequest(creationTime, isFullState,
-									                                                       participant, device);
+									conference->notifyParticipantDeviceJoiningRequest(creationTime, isFullState,
+									                                                  participant, device);
 								} else {
-									getConference()->notifyParticipantDeviceAdded(creationTime, isFullState,
-									                                              participant, device);
+									conference->notifyParticipantDeviceAdded(creationTime, isFullState, participant,
+									                                         device);
 								}
 							}
 						} else {
@@ -719,7 +733,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						}
 					} else {
 						lDebug() << "Unable to update media direction of device " << *gruu
-						         << " because it has not been found in " << *getConference()
+						         << " because it has not been found in " << *conference
 						         << ". Resubscribing to it to clear things up.";
 						requestFullState();
 					}
@@ -728,10 +742,10 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		}
 
 		if (isFullState) {
-			auto currentParticipants = getConference()->getParticipants();
-			auto currentMeDevices = getConference()->getMe()->getDevices();
-			// Send participant and participant device removed notifys if the full state has less participants than the
-			// current chat room or conference
+			auto currentParticipants = conference->getParticipants();
+			auto currentMeDevices = conference->getMe()->getDevices();
+			// Send participant and participant device removed notifys if the full state has less participants than
+			// the current chat room or conference
 			for (const auto &p : oldParticipants) {
 				const auto &pIt = std::find_if(currentParticipants.cbegin(), currentParticipants.cend(),
 				                               [&p](const auto &currentParticipant) {
@@ -750,13 +764,13 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						deviceFound = (dIt != currentDevices.cend());
 					}
 					if (!deviceFound) {
-						lInfo() << "Device " << *d->getAddress() << " is no longer a member of " << *getConference();
-						getConference()->notifyParticipantDeviceRemoved(creationTime, isFullState, p, d);
+						lInfo() << "Device " << *d->getAddress() << " is no longer a member of " << *conference;
+						conference->notifyParticipantDeviceRemoved(creationTime, isFullState, p, d);
 					}
 				}
 				if (pIt == currentParticipants.cend()) {
-					lInfo() << "Participant " << *p->getAddress() << " is no longer a member of " << *getConference();
-					getConference()->notifyParticipantRemoved(creationTime, isFullState, p);
+					lInfo() << "Participant " << *p->getAddress() << " is no longer a member of " << *conference;
+					conference->notifyParticipantRemoved(creationTime, isFullState, p);
 				}
 			}
 			for (const auto &d : oldMeDevices) {
@@ -766,12 +780,11 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				    });
 				bool deviceFound = (dIt != currentMeDevices.cend());
 				if (!deviceFound) {
-					lInfo() << "Device " << *d->getAddress() << " is no longer a member of " << *getConference();
-					getConference()->notifyParticipantDeviceRemoved(creationTime, isFullState, getConference()->getMe(),
-					                                                d);
+					lInfo() << "Device " << *d->getAddress() << " is no longer a member of " << *conference;
+					conference->notifyParticipantDeviceRemoved(creationTime, isFullState, conference->getMe(), d);
 				}
 			}
-			getConference()->notifyFullState();
+			conference->notifyFullState();
 			if (!synchronizing) {
 				confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
 			}
@@ -845,8 +858,8 @@ bool ClientConferenceEventHandler::subscribe() {
 void ClientConferenceEventHandler::unsubscribePrivate() {
 	if (ev) {
 		/* The following tricky code is to break a cycle. Indeed linphone_event_terminate() will change the event's
-		 * state, which will be notified to the core, that will call us immediately in invalidateSubscription(), which
-		 * resets 'ev' while we still have to unref it.*/
+		 * state, which will be notified to the core, that will call us immediately in invalidateSubscription(),
+		 * which resets 'ev' while we still have to unref it.*/
 		shared_ptr<EventSubscribe> tmpEv = ev;
 		ev = nullptr;
 		tmpEv->terminate();
@@ -884,8 +897,8 @@ void ClientConferenceEventHandler::invalidateSubscription() {
 	if (ev) {
 		if ((ev->getState() == LinphoneSubscriptionError) &&
 		    (getConference()->getState() == ConferenceInterface::State::CreationPending)) {
-			// The conference received an answer to its SUBSCRIBE and the server is not supporting the conference event
-			// package
+			// The conference received an answer to its SUBSCRIBE and the server is not supporting the conference
+			// event package
 			getConference()->setState(ConferenceInterface::State::Created);
 		}
 		ev = nullptr;

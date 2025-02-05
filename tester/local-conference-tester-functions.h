@@ -325,7 +325,8 @@ void create_conference_base(time_t start_time,
                             std::list<LinphoneParticipantRole> allowedRoles,
                             bool_t add_participant_after_end,
                             bool_t version_mismatch,
-                            bool_t slow_ice_negotiation);
+                            bool_t slow_ice_negotiation,
+                            bool_t enable_chat);
 
 void create_conference_with_screen_sharing_base(time_t start_time,
                                                 int duration,

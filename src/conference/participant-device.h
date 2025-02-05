@@ -269,6 +269,14 @@ private:
 	L_DISABLE_COPY(ParticipantDevice);
 };
 
+inline std::ostream &operator<<(std::ostream &os, const ParticipantDevice &device) {
+	auto address = device.getAddress();
+	auto addressStr = address ? address->toString() : std::string("sip:");
+	return os << "ParticipantDevice [" << &device << "] (" << addressStr << ")";
+	;
+	return os;
+}
+
 std::ostream &operator<<(std::ostream &stream, ParticipantDevice::State state);
 
 class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDeviceCbs, ParticipantDeviceCbs>,

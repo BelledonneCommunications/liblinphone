@@ -2261,7 +2261,7 @@ int ServerConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 	} else {
 		if (!sessionHasEnded) {
 			lError() << "Trying to remove participant " << *session->getRemoteAddress() << " with session " << session
-			         << " which is not part of conference " << *getConferenceAddress();
+			         << " which is not part of " << *this;
 		}
 		return -1;
 	}
@@ -2408,35 +2408,34 @@ bool ServerConference::removeParticipant(const std::shared_ptr<Participant> &par
 		}
 	} else {
 		success = Conference::removeParticipant(participant);
-	}
-
 #ifdef HAVE_ADVANCED_IM
-	// Add event to DB only for server group chat rooms
-	const auto &chatRoom = getChatRoom();
-	if (mConfParams->chatEnabled() && chatRoom) {
-		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
-		unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-		time_t creationTime = time(nullptr);
-		shared_ptr<ConferenceParticipantEvent> event = notifyParticipantRemoved(creationTime, false, participant);
-		mainDb->addConferenceParticipantEventToDb(event);
+		// Add event to DB only for server group chat rooms
+		const auto &chatRoom = getChatRoom();
+		if (mConfParams->chatEnabled() && chatRoom) {
+			auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
+			unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
+			time_t creationTime = time(nullptr);
+			shared_ptr<ConferenceParticipantEvent> event = notifyParticipantRemoved(creationTime, false, participant);
+			mainDb->addConferenceParticipantEventToDb(event);
 
-		serverGroupChatRoom->removeQueuedParticipantMessages(participant);
+			serverGroupChatRoom->removeQueuedParticipantMessages(participant);
 
-		// Remove participant from the database immediately because it has no devices associated.
-		// In case of registration in the future, the devices will attempt to subscribe and the conference server will
-		// reply 603 Decline
-		if (participantHasNoDevices) {
-			lInfo()
-			    << "Conference " << *getConferenceAddress() << ": Participant '" << *participant->getAddress()
-			    << "' is immediately removed because there has been an explicit request to do it and it has no devices "
-			       "associated to it, unsubscribing";
-			serverGroupChatRoom->unSubscribeRegistrationForParticipant(participant->getAddress());
-			mainDb->deleteChatRoomParticipant(serverGroupChatRoom, participant->getAddress());
+			// Remove participant from the database immediately because it has no devices associated.
+			// In case of registration in the future, the devices will attempt to subscribe and the conference server
+			// will reply 603 Decline
+			if (participantHasNoDevices) {
+				lInfo() << "Conference " << *getConferenceAddress() << ": Participant '" << *participant->getAddress()
+				        << "' is immediately removed because there has been an explicit request to do it and it has no "
+				           "devices "
+				           "associated to it, unsubscribing";
+				serverGroupChatRoom->unSubscribeRegistrationForParticipant(participant->getAddress());
+				mainDb->deleteChatRoomParticipant(serverGroupChatRoom, participant->getAddress());
+			}
+
+			if (!hasAdminLeft()) chooseAnotherAdminIfNoneInConference();
 		}
-
-		if (!hasAdminLeft()) chooseAnotherAdminIfNoneInConference();
-	}
 #endif // HAVE_ADVANCED_IM
+	}
 
 	return success;
 }
@@ -2505,10 +2504,9 @@ void ServerConference::setUtf8Subject(const std::string &subject) {
 	const auto previousSubject = getUtf8Subject();
 	Conference::setUtf8Subject(subject);
 	if (subject.compare(previousSubject) != 0) {
-		const auto &chatRoom = getChatRoom();
 		time_t creationTime = time(nullptr);
 		auto event = notifySubjectChanged(creationTime, false, getUtf8Subject());
-		if (mConfParams->chatEnabled() && chatRoom) {
+		if (isChatOnly()) {
 			getCore()->getPrivate()->mainDb->addEvent(event);
 		}
 	}
@@ -2520,8 +2518,7 @@ void ServerConference::cleanup() {
 	}
 	try {
 #ifdef HAVE_ADVANCED_IM
-		const auto chatEnabled = mConfParams->chatEnabled();
-		if (chatEnabled && getCore()->getPrivate()->serverListEventHandler) {
+		if (isChatOnly() && getCore()->getPrivate()->serverListEventHandler) {
 			getCore()->getPrivate()->serverListEventHandler->removeHandler(eventHandler);
 		}
 #endif // HAVE_ADVANCED_IM

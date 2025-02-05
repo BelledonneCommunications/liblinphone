@@ -183,7 +183,10 @@ private:
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Participant &participant) {
-	return os << participant.getAddress()->toString();
+	auto address = participant.getAddress();
+	auto addressStr = address ? address->toString() : std::string("sip:");
+	return os << "Participant [" << &participant << "] (" << addressStr << ")";
+	;
 	return os;
 }
 
