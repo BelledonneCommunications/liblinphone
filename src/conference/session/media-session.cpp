@@ -5621,11 +5621,15 @@ void MediaSession::setAuthenticationTokenVerified(bool value) {
 	if (!value) {
 		char *peerDeviceId = nullptr;
 		auto encryptionEngine = getCore()->getEncryptionEngine();
-		if (encryptionEngine) { // inform lime that zrtp no longuer guaranty the trust
+		if (encryptionEngine) { // inform lime that zrtp no longer guarantees the trust
 			const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
-			peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-			encryptionEngine->authenticationRejected(peerDeviceId);
-			ms_free(peerDeviceId);
+			if (!remoteAddress) {
+				lError() << __func__ << " : MediaSession [" << this << "] Failed to retrieve remote address";
+			} else {
+				peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+				encryptionEngine->authenticationRejected(peerDeviceId);
+				ms_free(peerDeviceId);
+			}
 		}
 	} else {
 		d->getStreamsGroup().setZrtpCacheMismatch(false);
