@@ -435,14 +435,15 @@ static void call_received(SalCallOp *h) {
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall()) { /* Busy */
 		h->decline(SalReasonBusy);
 		LinphoneErrorInfo *ei = linphone_error_info_new();
-		linphone_error_info_set(ei, nullptr, LinphoneReasonBusy, 486, "Busy - too many calls", nullptr);
+		linphone_error_info_set(ei, nullptr, LinphoneReasonBusy, 486, "Busy - too many calls", "Busy - too many calls");
 		core->reportEarlyCallFailed(LinphoneCallIncoming, from, to, ei, h->getCallId());
 		h->release();
 		linphone_error_info_unref(ei);
 		return;
 	}
 
-	if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "reject_duplicated_calls", 1)) {
+	if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "reject_duplicated_calls", 1) &&
+	    !sal_address_has_param(remoteContactAddress, Conference::IsFocusParameter.c_str())) {
 		/* Check if I'm the caller */
 		std::shared_ptr<Address> fromAddressToSearchIfMe = nullptr;
 		if (h->getPrivacy() == SalPrivacyNone) fromAddressToSearchIfMe = from->clone()->toSharedPtr();
@@ -455,7 +456,8 @@ static void call_received(SalCallOp *h) {
 			           << "] is initiated, refusing this one with busy message";
 			h->decline(SalReasonBusy);
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, nullptr, LinphoneReasonBusy, 486, "Busy - duplicated call", nullptr);
+			linphone_error_info_set(ei, nullptr, LinphoneReasonBusy, 486, "Busy - duplicated call",
+			                        "Busy - duplicated call");
 			core->reportEarlyCallFailed(LinphoneCallIncoming, from, to, ei, h->getCallId());
 			h->release();
 			linphone_error_info_unref(ei);

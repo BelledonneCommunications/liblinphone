@@ -1351,35 +1351,39 @@ bool Conference::isTerminationState(ConferenceInterface::State state) {
 }
 
 void Conference::setState(ConferenceInterface::State state) {
-	ConferenceInterface::State previousState = getState();
-	shared_ptr<Conference> ref = getSharedFromThis();
-	// Change state if:
-	// - current state is not Deleted
-	// - current state is Deleted and trying to move to Instantiated state
-	if ((previousState != ConferenceInterface::State::Deleted) ||
-	    ((previousState == ConferenceInterface::State::Deleted) &&
-	     (state == ConferenceInterface::State::Instantiated))) {
-		if (mState != state) {
-			if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
-				lDebug() << "Switching " << *this << " from state " << mState << " to " << state;
-			} else {
-				lInfo() << "Switching " << *this << " from state " << mState << " to " << state;
+	try {
+		ConferenceInterface::State previousState = getState();
+		shared_ptr<Conference> ref = getSharedFromThis();
+		// Change state if:
+		// - current state is not Deleted
+		// - current state is Deleted and trying to move to Instantiated state
+		if ((previousState != ConferenceInterface::State::Deleted) ||
+		    ((previousState == ConferenceInterface::State::Deleted) &&
+		     (state == ConferenceInterface::State::Instantiated))) {
+			if (mState != state) {
+				if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+					lDebug() << "Switching " << *this << " from state " << mState << " to " << state;
+				} else {
+					lInfo() << "Switching " << *this << " from state " << mState << " to " << state;
+				}
+				mState = state;
+				notifyStateChanged(mState);
 			}
-			mState = state;
-			notifyStateChanged(mState);
 		}
-	}
 
-	if (mState == ConferenceInterface::State::Terminated) {
-		onConferenceTerminated(getConferenceAddress());
-	} else if (mState == ConferenceInterface::State::Deleted) {
-		// If core is in Global Shutdown state, then do not remove it from the map as it will be freed by Core::uninit()
-		if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalShutdown) {
-			getCore()->deleteConference(ref);
-		}
+		if (mState == ConferenceInterface::State::Terminated) {
+			onConferenceTerminated(getConferenceAddress());
+		} else if (mState == ConferenceInterface::State::Deleted) {
+			// If core is in Global Shutdown state, then do not remove it from the map as it will be freed by
+			// Core::uninit()
+			if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalShutdown) {
+				getCore()->deleteConference(ref);
+			}
 #ifdef HAVE_ADVANCED_IM
-		setChatRoom(nullptr);
+			setChatRoom(nullptr);
 #endif // HAVE_ADVANCED_IM
+		}
+	} catch (const bad_weak_ptr &) {
 	}
 }
 

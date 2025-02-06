@@ -365,7 +365,7 @@ void CorePrivate::createConferenceCleanupTimer() {
 				const auto conferenceIsEnded = conference->isConferenceEnded();
 				const auto conferenceHasNoParticipantDevices = (conference->getParticipantDevices(false).size() == 0);
 				if (conferenceIsEnded && conferenceHasNoParticipantDevices) {
-					lInfo() << "Automatically terminating conference " << *conference->getConferenceAddress()
+					lInfo() << "Automatically terminating " << *conference
 					        << " because it is ended and no devices are left";
 					conference->terminate();
 				}
@@ -1916,7 +1916,7 @@ std::shared_ptr<Conference> Core::findConference(const ConferenceId &conferenceI
 	L_D();
 	try {
 		auto conference = d->mConferenceById.at(conferenceId);
-		lInfo() << "Found conference " << conference << " in RAM with conference ID " << conferenceId << ".";
+		lInfo() << "Found " << *conference << " in RAM with conference ID " << conferenceId << ".";
 		return conference;
 	} catch (const out_of_range &) {
 		if (logIfNotFound) {
@@ -1933,7 +1933,7 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 
 	const ConferenceId &conferenceId = conference->getConferenceId();
 	if (!conferenceId.isValid()) {
-		lInfo() << "Attempting to insert conference " << conference << " with invalid conference ID " << conferenceId;
+		lInfo() << "Attempting to insert " << *conference << " with invalid conference ID " << conferenceId;
 		return;
 	}
 
@@ -1956,7 +1956,7 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 		L_ASSERT(conf == nullptr || conf == conference);
 	}
 	if ((conf == nullptr) || (conf != conference)) {
-		lInfo() << "Insert conference " << conference << " in RAM with conference ID " << conferenceId << ".";
+		lInfo() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
 		d->mConferenceById.insert_or_assign(conferenceId, conference);
 	}
 }
@@ -1965,19 +1965,14 @@ void Core::deleteConference(const ConferenceId &conferenceId) {
 	L_D();
 	auto it = d->mConferenceById.find(conferenceId);
 	if (it != d->mConferenceById.cend()) {
-		lInfo() << "Delete conference in RAM with conference ID " << conferenceId << ".";
+		lInfo() << "Delete " << *(it->second) << " in RAM with conference ID " << conferenceId << ".";
 		d->mConferenceById.erase(it);
 	}
 }
 
 void Core::deleteConference(const shared_ptr<const Conference> &conference) {
-	L_D();
 	const ConferenceId &conferenceId = conference->getConferenceId();
-	auto it = d->mConferenceById.find(conferenceId);
-	if (it != d->mConferenceById.cend()) {
-		lInfo() << "Delete conference in RAM with conference ID " << conferenceId << ".";
-		d->mConferenceById.erase(it);
-	}
+	deleteConference(conferenceId);
 }
 
 shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams> &params,

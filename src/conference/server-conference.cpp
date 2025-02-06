@@ -64,8 +64,15 @@ ServerConference::ServerConference(const shared_ptr<Core> &core,
 }
 
 ServerConference::~ServerConference() {
-	if ((mState != ConferenceInterface::State::Terminated) && (mState != ConferenceInterface::State::Deleted)) {
+	if ((mState != ConferenceInterface::State::TerminationPending) &&
+	    (mState != ConferenceInterface::State::Terminated) && (mState != ConferenceInterface::State::Deleted)) {
 		terminate();
+	}
+	if (mState == ConferenceInterface::State::TerminationPending) {
+		setState(ConferenceInterface::State::Terminated);
+	}
+	if (mState == ConferenceInterface::State::Terminated) {
+		setState(ConferenceInterface::State::Deleted);
 	}
 	cleanup();
 }
@@ -839,6 +846,10 @@ void ServerConference::confirmCreation() {
 
 		const_cast<CallSessionParamsPrivate *>(L_GET_PRIVATE(session->getParams()))->setInConference(true);
 		const auto &actualConferenceAddress = getConferenceAddress();
+		if (!actualConferenceAddress) {
+			lError() << "Something went wrong while creating " << *this
+			         << " because the conference address is not yet known";
+		}
 		session->getPrivate()->setConferenceId(actualConferenceAddress->getUriParamValue(Conference::ConfIdParameter));
 
 #ifdef HAVE_ADVANCED_IM
@@ -852,8 +863,7 @@ void ServerConference::confirmCreation() {
 #ifdef HAVE_DB_STORAGE
 		// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
 		// doesn't have any of the codecs the server supports
-		if ((mConfParams->audioEnabled() || mConfParams->videoEnabled()) &&
-		    (getState() != ConferenceInterface::State::CreationFailed)) {
+		if (supportsMedia() && (getState() != ConferenceInterface::State::CreationFailed)) {
 			// Store into DB after the start incoming notification in order to have a valid conference address being the
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;

@@ -236,6 +236,7 @@ private:
 	std::shared_ptr<Participant> mFocus;
 	std::list<std::shared_ptr<Call>> mPendingCalls;
 	std::list<std::shared_ptr<Call>> mTransferingCalls;
+	MediaSessionParams *mJoiningParams = nullptr;
 
 	uint32_t mDisplayedSpeaker = 0;
 	uint32_t mLouderSpeaker = 0;

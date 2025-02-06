@@ -48,6 +48,14 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 	conferenceParams->setSecurityLevel(mConferenceInfo->getSecurityLevel());
 
 	const auto &startTime = conferenceInfo->getDateTime();
+
+	if (startTime < 0) {
+		lError() << "[Conference Scheduler] [" << this << "] unable to schedule a conference with start time "
+		         << startTime;
+		setState(State::Error);
+		return;
+	}
+
 	conferenceParams->setStartTime(startTime);
 	const auto &duration = conferenceInfo->getDuration();
 	if (duration > 0) {
@@ -98,41 +106,6 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		auto &mainDb = getCore()->getPrivate()->mainDb;
 		mainDb->insertConferenceInfo(mConferenceInfo);
 #endif // HAVE_DB_STORAGE
-
-		// Do not try to call impromptu conference if a participant updates its informations
-		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
-			lInfo() << "Automatically rejoining conference " << *remoteAddress;
-			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-			// Participant with the focus call is admin
-			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
-			std::list<Address> addressesList;
-			for (const auto &participantInfo : mConferenceInfo->getParticipants()) {
-				addressesList.push_back(Conference::createParticipantAddressForResourceList(participantInfo));
-			}
-			addressesList.sort([](const auto &addr1, const auto &addr2) { return addr1 < addr2; });
-			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1.weakEqual(addr2); });
-
-			if (!addressesList.empty()) {
-				auto content = Content::create();
-				content->setBodyFromUtf8(Utils::getResourceLists(addressesList));
-				content->setContentType(ContentType::ResourceLists);
-				content->setContentDisposition(ContentDisposition::RecipientList);
-				if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-					content->setContentEncoding("deflate");
-				}
-
-				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(content);
-			}
-			const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(getCore()->getCCore());
-			bool_t initiate_video = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-			linphone_call_params_enable_video(
-			    new_params,
-			    static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled() && initiate_video);
-
-			linphone_core_invite_address_with_params_2(getCore()->getCCore(), remoteAddress->toC(), new_params,
-			                                           L_STRING_TO_C(mConferenceInfo->getUtf8Subject()), NULL);
-			linphone_call_params_unref(new_params);
-		}
 
 		auto conferenceAddress = remoteAddress;
 		setConferenceAddress(conferenceAddress);

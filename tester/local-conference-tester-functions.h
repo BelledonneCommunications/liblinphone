@@ -382,7 +382,7 @@ void check_muted(std::initializer_list<std::reference_wrapper<CoreManager>> core
                  const LinphoneParticipantDevice *d,
                  std::list<LinphoneCoreManager *> mutedMgrs);
 
-void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout);
+void two_overlapping_conferences_base(bool_t same_organizer, bool_t is_dialout);
 
 void create_conference_with_late_participant_addition_base(time_t start_time,
                                                            int duration,
@@ -396,7 +396,7 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
                                                          bool_t enable_ice,
                                                          bool_t enable_stun);
 
-void create_conference_with_active_call_base(bool_t dialout);
+void create_conference_with_active_call_base(bool_t is_dialout);
 
 LinphoneAddress *
 create_conference_on_server(Focus &focus,
@@ -435,8 +435,7 @@ void update_sequence_number(bctbx_list_t **participants_info,
                             int exp_sequence,
                             int exp_new_participant_sequence);
 
-void create_conference_dial_out_base(bool_t send_ics,
-                                     LinphoneConferenceLayout layout,
+void create_conference_dial_out_base(LinphoneConferenceLayout layout,
                                      LinphoneVideoActivationPolicy *pol,
                                      bool_t enable_stun,
                                      bool_t enable_ice,
