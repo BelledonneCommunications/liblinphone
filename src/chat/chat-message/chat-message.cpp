@@ -229,6 +229,82 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		return;
 	}
 
+	if (linphone_config_get_bool(linphone_core_get_config(chatRoom->getCore()->getCCore()), "misc",
+	                             "enable_simple_group_chat_message_state", FALSE)) {
+		setState(newState);
+	} else {
+		lInfo() << "Chat message " << sharedMessage << ": moving participant '" << *participantAddress << "' state to "
+		        << Utils::toString(newState);
+		if (eventLog) {
+			mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
+		}
+
+		// Update chat message state if it doesn't depend on IMDN
+		if (isMe && !isImdnControlledState(newState)) {
+			setState(newState);
+		}
+
+		if (isImdnControlledState(newState)) {
+			const auto imdnStates = q->getParticipantsState();
+			size_t nbRecipients = 0;
+			size_t nbDisplayedStates = 0;
+			size_t nbDeliveredStates = 0;
+			size_t nbDeliveredToUserStates = 0;
+			size_t nbNotDeliveredStates = 0;
+			for (const auto &imdnState : imdnStates) {
+				const auto &participantState = imdnState.getState();
+				const auto &imdnParticipant = imdnState.getParticipant();
+				if (fromAddress->weakEqual(*(imdnParticipant->getAddress()))) {
+					if (participantState == ChatMessage::State::NotDelivered) {
+						nbNotDeliveredStates++;
+					}
+				} else {
+					nbRecipients++;
+					switch (participantState) {
+						case ChatMessage::State::Displayed:
+							nbDisplayedStates++;
+							break;
+						case ChatMessage::State::DeliveredToUser:
+							nbDeliveredToUserStates++;
+							break;
+						case ChatMessage::State::Delivered:
+							nbDeliveredStates++;
+							break;
+						case ChatMessage::State::NotDelivered:
+							nbNotDeliveredStates++;
+							break;
+						default:
+							break;
+					}
+				}
+			}
+
+			if (nbNotDeliveredStates > 0) {
+				setState(ChatMessage::State::NotDelivered);
+			} else if ((nbRecipients > 0) && (nbDisplayedStates == nbRecipients)) {
+				setState(ChatMessage::State::Displayed);
+			} else if ((nbRecipients > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
+				setState(ChatMessage::State::DeliveredToUser);
+			} else if ((nbRecipients > 0) &&
+			           ((nbDeliveredStates + nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
+				setState(ChatMessage::State::Delivered);
+			}
+		}
+
+		if (isMe) {
+			// Set me participant state to displayed if we are the sender, set the message as Displayed as soon as we
+			// received the 202 Accepted response
+			if (fromAddress->weakEqual(*participantAddress) && (newState == ChatMessage::State::DeliveredToUser)) {
+				setParticipantState(participantAddress, ChatMessage::State::Displayed, ::ms_time(nullptr));
+			}
+			if ((newState == ChatMessage::State::NotDelivered) && (reason == LinphoneReasonForbidden)) {
+				// Try to recover from a situation where the server replied 403 to an outgoing message
+				chatRoom->handleMessageRejected(sharedMessage);
+			}
+		}
+	}
+
+	// Once the participant and IMDN state are updated, it is possible to notify the application
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoom *cr = chatRoom->toC();
 	auto participant = isMe ? me : chatRoom->findParticipant(participantAddress);
@@ -244,82 +320,6 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	const LinphoneParticipantImdnState *c_state = _linphone_participant_imdn_state_from_cpp_obj(imdnState);
 	_linphone_chat_message_notify_participant_imdn_state_changed(msg, c_state);
 	_linphone_chat_room_notify_chat_message_participant_imdn_state_changed(cr, msg, c_state);
-
-	if (linphone_config_get_bool(linphone_core_get_config(chatRoom->getCore()->getCCore()), "misc",
-	                             "enable_simple_group_chat_message_state", FALSE)) {
-		setState(newState);
-		return;
-	}
-
-	lInfo() << "Chat message " << sharedMessage << ": moving participant '" << *participantAddress << "' state to "
-	        << Utils::toString(newState);
-	if (eventLog) {
-		mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
-	}
-
-	// Update chat message state if it doesn't depend on IMDN
-	if (isMe && !isImdnControlledState(newState)) {
-		setState(newState);
-	}
-
-	if (isImdnControlledState(newState)) {
-		const auto imdnStates = q->getParticipantsState();
-		size_t nbRecipients = 0;
-		size_t nbDisplayedStates = 0;
-		size_t nbDeliveredStates = 0;
-		size_t nbDeliveredToUserStates = 0;
-		size_t nbNotDeliveredStates = 0;
-		for (const auto &imdnState : imdnStates) {
-			const auto &participantState = imdnState.getState();
-			const auto &imdnParticipant = imdnState.getParticipant();
-			if (fromAddress->weakEqual(*(imdnParticipant->getAddress()))) {
-				if (participantState == ChatMessage::State::NotDelivered) {
-					nbNotDeliveredStates++;
-				}
-			} else {
-				nbRecipients++;
-				switch (participantState) {
-					case ChatMessage::State::Displayed:
-						nbDisplayedStates++;
-						break;
-					case ChatMessage::State::DeliveredToUser:
-						nbDeliveredToUserStates++;
-						break;
-					case ChatMessage::State::Delivered:
-						nbDeliveredStates++;
-						break;
-					case ChatMessage::State::NotDelivered:
-						nbNotDeliveredStates++;
-						break;
-					default:
-						break;
-				}
-			}
-		}
-
-		if (nbNotDeliveredStates > 0) {
-			setState(ChatMessage::State::NotDelivered);
-		} else if ((nbRecipients > 0) && (nbDisplayedStates == nbRecipients)) {
-			setState(ChatMessage::State::Displayed);
-		} else if ((nbRecipients > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
-			setState(ChatMessage::State::DeliveredToUser);
-		} else if ((nbRecipients > 0) &&
-		           ((nbDeliveredStates + nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
-			setState(ChatMessage::State::Delivered);
-		}
-	}
-
-	if (isMe) {
-		// Set me participant state to displayed if we are the sender, set the message as Displayed as soon as we
-		// received the 202 Accepted response
-		if (fromAddress->weakEqual(*participantAddress) && (newState == ChatMessage::State::DeliveredToUser)) {
-			setParticipantState(participantAddress, ChatMessage::State::Displayed, ::ms_time(nullptr));
-		}
-		if ((newState == ChatMessage::State::NotDelivered) && (reason == LinphoneReasonForbidden)) {
-			// Try to recover from a situation where the server replied 403 to an outgoing message
-			chatRoom->handleMessageRejected(sharedMessage);
-		}
-	}
 }
 
 void ChatMessagePrivate::setAutomaticallyResent(bool enable) {
