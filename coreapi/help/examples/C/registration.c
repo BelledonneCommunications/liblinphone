@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	lc = linphone_core_new(&vtable, NULL, NULL, NULL);
 
 	/*create account parameters*/
-	LinphoneAccountParams *params = linphone_account_params_new(NULL);
+	LinphoneAccountParams *params = linphone_account_params_new(nullptr, FALSE);
 	/*parse identity*/
 	LinphoneAddress *from = linphone_address_new(identity);
 	LinphoneAuthInfo *info;

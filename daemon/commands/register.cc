@@ -81,7 +81,7 @@ void RegisterCommand::exec(Daemon *app, const string &args) {
 			linphone_auth_info_unref(info);
 		}
 	}
-	LinphoneAccountParams *params = linphone_account_params_new(lc);
+	LinphoneAccountParams *params = linphone_account_params_new(lc, TRUE);
 	linphone_account_params_set_identity_address(params, from);
 	if (from) linphone_address_unref(from);
 	linphone_account_params_set_server_addr(params, cproxy);

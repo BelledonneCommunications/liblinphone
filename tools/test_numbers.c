@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 	}
 	linphone_core_enable_logs(stderr);
 	linphone_core_set_log_level(ORTP_DEBUG);
-	LinphoneAccountParams *params = linphone_account_params_new(NULL);
+	LinphoneAccountParams *params = linphone_account_params_new(nullptr, FALSE);
 	if (argc > 2) linphone_account_params_set_international_prefix(params, argv[2]);
 	if (argc > 3 && strcmp(argv[3], "--escape-plus") == 0) linphone_account_params_set_dial_escape_plus(params, TRUE);
 	account = linphone_core_create_account(NULL, params);

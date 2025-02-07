@@ -32,8 +32,8 @@
 
 using namespace LinphonePrivate;
 
-LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc) {
-	return AccountParams::createCObject(lc);
+LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc, bool_t use_default_values) {
+	return AccountParams::createCObject(lc, !!use_default_values);
 }
 
 LinphoneAccountParams *linphone_account_params_new_with_config(LinphoneCore *lc, int index) {

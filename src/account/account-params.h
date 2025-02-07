@@ -41,7 +41,7 @@ class LINPHONE_PUBLIC AccountParams : public bellesip::HybridObject<LinphoneAcco
 	friend class Account;
 
 public:
-	AccountParams(LinphoneCore *lc);
+	AccountParams(LinphoneCore *lc, bool useDefaultValues);
 	AccountParams(LinphoneCore *lc, int index);
 	AccountParams(const AccountParams &other);
 	virtual ~AccountParams();

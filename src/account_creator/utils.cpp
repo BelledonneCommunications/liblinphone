@@ -46,7 +46,7 @@ char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creato
 	if (username) {
 		// we must escape username
 		LinphoneCore *lc = creator->core;
-		LinphoneAccountParams *params = linphone_account_params_new(lc);
+		LinphoneAccountParams *params = linphone_account_params_new(lc, TRUE);
 		LinphoneAccount *account = linphone_core_create_account(lc, params);
 		linphone_account_params_unref(params);
 		LinphoneAddress *addr = linphone_account_normalize_sip_uri(account, username);

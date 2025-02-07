@@ -36,9 +36,10 @@ extern "C" {
 /**
  * Create a new #LinphoneAccountParams object.
  * @param lc The #LinphoneCore object. @maybenil
+ * @param use_default_values If TRUE, use proxy default values
  * @return The newly created #LinphoneAccountParams object. @notnil
  */
-LINPHONE_PUBLIC LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc);
+LINPHONE_PUBLIC LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc, bool_t use_default_values);
 
 /**
  * Create a new #LinphoneAccountParams object from a configuration.

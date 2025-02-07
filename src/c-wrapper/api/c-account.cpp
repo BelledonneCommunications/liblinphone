@@ -362,7 +362,7 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 	} else {
-		LinphoneAccountParams *accountParams = linphone_account_params_new(NULL);
+		LinphoneAccountParams *accountParams = linphone_account_params_new(nullptr, FALSE);
 		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 		linphone_account_params_unref(accountParams);

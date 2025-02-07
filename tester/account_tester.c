@@ -489,7 +489,7 @@ static void account_dependency_to_self(void) {
 	linphone_core_clear_proxy_config(marie->lc);
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared, 2));
 
-	LinphoneAccountParams *marie_dependent_params = linphone_account_params_new(marie->lc);
+	LinphoneAccountParams *marie_dependent_params = linphone_account_params_new(marie->lc, TRUE);
 	linphone_account_params_set_identity_address(marie_dependent_params, marie_secondary_address);
 	linphone_account_params_set_server_addr(marie_dependent_params, "sip:external.example.org:5068;transport=tcp");
 
