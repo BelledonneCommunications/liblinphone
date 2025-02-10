@@ -3235,15 +3235,15 @@ bool_t linphone_core_push_notification_enabled(LinphoneCore *core) {
 }
 
 void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token) {
-	getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
+	if (lc->platform_helper) getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
 }
 
 void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneCore *lc, const char *device_token_str) {
-	getPlatformHelpers(lc)->didRegisterForRemotePushWithStringifiedToken(device_token_str);
+	if (lc->platform_helper) getPlatformHelpers(lc)->didRegisterForRemotePushWithStringifiedToken(device_token_str);
 }
 
 void linphone_core_set_push_and_app_delegate_dispatch_queue(LinphoneCore *lc, void *dispatch_queue) {
-	getPlatformHelpers(lc)->setPushAndAppDelegateDispatchQueue(dispatch_queue);
+	if (lc->platform_helper) getPlatformHelpers(lc)->setPushAndAppDelegateDispatchQueue(dispatch_queue);
 }
 
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
@@ -6500,7 +6500,7 @@ void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height)
 	if (!auto_camera_preview_resize) return;
 #ifdef VIDEO_ENABLED
 	bctbx_message("Resizing camera video preview to: %ix%i", width, height);
-	getPlatformHelpers(lc)->resizeVideoPreview(width, height);
+	if (lc->platform_helper) getPlatformHelpers(lc)->resizeVideoPreview(width, height);
 #endif
 }
 #ifndef _MSC_VER
@@ -7079,7 +7079,7 @@ void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 
 void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #ifdef __ANDROID__
-	getPlatformHelpers(lc)->setVideoWindow(id);
+	if (lc->platform_helper) getPlatformHelpers(lc)->setVideoWindow(id);
 #else
 	_linphone_core_set_native_video_window_id(lc, id);
 #endif
@@ -7147,7 +7147,7 @@ void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 #endif // _MSC_VER
 void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 #ifdef __ANDROID__
-	getPlatformHelpers(lc)->setVideoPreviewWindow(id);
+	if (lc->platform_helper) getPlatformHelpers(lc)->setVideoPreviewWindow(id);
 #else
 	_linphone_core_set_native_preview_window_id(lc, id);
 #endif
@@ -8134,10 +8134,9 @@ static void stop_refreshing_account(bool_t is_sip_reachable, LinphoneAccount *ac
 }
 
 static void set_sip_network_reachable(LinphoneCore *lc, bool_t is_sip_reachable, time_t curtime) {
-
 	if (is_sip_reachable) {
 		// Update DNS servers even if network was reachable and is still is, a change might have occured
-		getPlatformHelpers(lc)->setDnsServers();
+		if (lc->platform_helper) getPlatformHelpers(lc)->setDnsServers();
 	}
 
 	if (lc->sip_network_state.global_state == is_sip_reachable) return; // no change, ignore.
