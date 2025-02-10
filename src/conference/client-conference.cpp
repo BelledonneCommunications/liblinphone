@@ -123,7 +123,8 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
 	}
 
 	if (!hasBeenLeft) {
-		initializeHandlers(this, true);
+		// No need to add a conference with media to the client conference list event handler
+		initializeHandlers(this, isChatOnly());
 	}
 }
 
@@ -855,6 +856,18 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		list<std::shared_ptr<Call>>::iterator it;
 		switch (state) {
 			case CallSession::State::StreamsRunning: {
+#ifdef HAVE_ADVANCED_IM
+				// Handle session reconnection if network dropped only for a short period of time
+				if (eventHandler && eventHandler->needToSubscribe()) {
+					const auto &conferenceId = getConferenceId();
+					if (conferenceId.isValid()) {
+						eventHandler->subscribe(conferenceId);
+					}
+				}
+				if (mClientEktManager) {
+					mClientEktManager->subscribe();
+				}
+#endif // HAVE_ADVANCED_IM
 				updateParticipantInConferenceInfo(getMe());
 				for (const auto &device : getParticipantDevices()) {
 					device->updateStreamAvailabilities();
@@ -2376,15 +2389,17 @@ void ClientConference::leave() {
 			eventHandler->unsubscribe();
 		}
 		shared_ptr<CallSession> session = mFocus->getSession();
-		if (session) session->terminate();
-		else {
+		if (session) {
+			session->terminate();
+		} else if (mState != ConferenceInterface::State::CreationFailed) {
+			// No need to create a session if the creation already failed
 			session = createSession();
 			session->startInvite(nullptr, "", nullptr);
 		}
-
-		const auto &chatRoom = getChatRoom();
-		if (chatRoom) {
-			setState(ConferenceInterface::State::TerminationPending);
+		setState(ConferenceInterface::State::TerminationPending);
+		if (!session) {
+			setState(ConferenceInterface::State::Terminated);
+			setState(ConferenceInterface::State::Deleted);
 		}
 #endif // HAVE_ADVANCED_IM
 	}
@@ -2456,7 +2471,7 @@ AudioStream *ClientConference::getAudioStream() {
 }
 
 bool ClientConference::hasBeenLeft() const {
-	return (mState != State::Created);
+	return (mState == State::TerminationPending) || (mState == State::Terminated) || (mState == State::Deleted);
 }
 
 void ClientConference::handleRefer(SalReferOp *op,

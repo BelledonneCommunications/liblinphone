@@ -162,7 +162,7 @@ static void create_simple_conference_dial_out_organizer_codec_mismatch(void) {
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, TRUE, security_level, TRUE, FALSE);
+		                                                        description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -286,7 +286,7 @@ static void simple_dial_out_conference_with_no_payloads(void) {
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, FALSE, security_level, TRUE, FALSE);
+		                                                        description, FALSE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -463,7 +463,7 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 		}
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
-		                                                        description, FALSE, security_level, TRUE, FALSE);
+		                                                        description, FALSE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,

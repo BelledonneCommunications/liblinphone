@@ -382,7 +382,9 @@ static void call_received(SalCallOp *h) {
 								}
 							}
 							auto chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createServerChatRoom(to, h, params);
-							static_pointer_cast<ServerChatRoom>(chatRoom)->confirmCreation();
+							if (chatRoom) {
+								static_pointer_cast<ServerChatRoom>(chatRoom)->confirmCreation();
+							}
 						} else {
 							// invite is for an unknown chatroom
 							h->decline(SalReasonNotFound);

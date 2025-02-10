@@ -1133,14 +1133,10 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 	const auto &participantAddress = ev->getFrom();
 	unsigned int lastNotify = conf->getLastNotify();
 
-	const auto &conferenceAddress = conf->getConferenceAddress();
-	const std::string conferenceAddressString =
-	    conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:");
-
 	shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 	if (!participant) {
-		lError() << "Declining SUBSCRIBE because participant " << *participantAddress
-		         << " cannot be found in conference [" << conferenceAddressString << "]";
+		lError() << "Declining SUBSCRIBE because participant " << *participantAddress << " cannot be found in "
+		         << *conf;
 		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
@@ -1150,8 +1146,8 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 	const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 	if (!device ||
 	    ((deviceState != ParticipantDevice::State::Present) && (deviceState != ParticipantDevice::State::Joining))) {
-		lError() << "Received SUBSCRIBE for conference [" << conferenceAddressString << "], device sending subscribe ["
-		         << *contactAddr << "] is not known, no NOTIFY sent";
+		lError() << "Received SUBSCRIBE for " << *conf << ", device sending subscribe [" << *contactAddr
+		         << "] is not known, no NOTIFY sent";
 		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
@@ -1169,16 +1165,16 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			const auto &needToSyncDevice = device->isChangingSubscribeEvent();
 			if (needToSyncDevice) {
-				lInfo() << "Participant " << *dAddress << " is already part of " << *getConference()
+				lInfo() << "Participant " << *dAddress << " is already part of " << *conf
 				        << " hence send full state to be sure the client and the server are on the same page";
 			}
-			lInfo() << "Sending initial notify of conference [" << conferenceAddressString << "] to: " << *dAddress
+			lInfo() << "Sending initial notify of " << *conf << " to: " << *dAddress
 			        << " with last notify version set to " << conf->getLastNotify();
 			notifyFullState(createNotifyFullState(ev), device);
 			device->clearChangingSubscribeEvent();
 		} else if (evLastNotify < lastNotify) {
-			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for conference ["
-			        << conferenceAddressString << "] to: " << *pAddress;
+			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for " << *conf
+			        << " to: " << *pAddress;
 			const int fullStateTrigger =
 			    linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
 			                            "full_state_trigger_due_to_missing_updates", 10);
@@ -1193,9 +1189,9 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
 			}
 		} else if (evLastNotify > lastNotify) {
-			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference ["
-			           << conferenceAddressString << "] should not be higher than last notify sent by server ["
-			           << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
+			lWarning() << "Last notify received by client [" << evLastNotify << "] for " << *conf
+			           << " should not be higher than last notify sent by server [" << lastNotify
+			           << "] - sending a notify full state in an attempt to recover from this situation";
 			notifyFullState(createNotifyFullState(ev), device);
 		} else {
 			notifyParticipantDevice(Content::create(), device);
@@ -1216,8 +1212,7 @@ void ServerConferenceEventHandler::subscriptionStateChanged(const shared_ptr<Eve
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device) return;
 		if (ev == device->getConferenceSubscribeEvent()) {
-			lInfo() << "End of subscription for device [" << *device->getAddress() << "] of conference ["
-			        << *conf->getConferenceAddress() << "]";
+			lInfo() << "End of subscription for device [" << *device->getAddress() << "] of " << *conf;
 			device->setConferenceSubscribeEvent(nullptr);
 		}
 	}

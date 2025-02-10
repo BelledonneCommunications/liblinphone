@@ -804,7 +804,7 @@ void ClientConferenceEventHandler::requestFullState() {
 	auto conference = getConference();
 	lInfo() << "Requesting full state for " << *conference;
 	unsubscribe();
-	conference->setLastNotify(0);
+	conference->resetLastNotify();
 	subscribe(getConferenceId());
 	fullStateRequested = true;
 }
@@ -871,7 +871,10 @@ void ClientConferenceEventHandler::unsubscribePrivate() {
 void ClientConferenceEventHandler::onNetworkReachable(bool sipNetworkReachable,
                                                       BCTBX_UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable) {
-		subscribe(getConferenceId());
+		auto conference = getConference();
+		if (conference && conference->isChatOnly()) {
+			subscribe(getConferenceId());
+		}
 	} else {
 		unsubscribePrivate();
 	}
@@ -884,7 +887,11 @@ void ClientConferenceEventHandler::onAccountRegistrationStateChanged(std::shared
 	const auto &localAddress = conferenceId.getLocalAddress();
 	const auto &params = account->getAccountParams();
 	const auto &address = params->getIdentityAddress();
-	if (localAddress && address->weakEqual(*localAddress) && (state == LinphoneRegistrationOk)) subscribe(conferenceId);
+	auto conference = getConference();
+	bool isChatOnly = conference && conference->isChatOnly();
+	if (localAddress && address->weakEqual(*localAddress) && (state == LinphoneRegistrationOk) && isChatOnly) {
+		subscribe(conferenceId);
+	}
 }
 
 void ClientConferenceEventHandler::onEnteringBackground() {
@@ -892,7 +899,11 @@ void ClientConferenceEventHandler::onEnteringBackground() {
 }
 
 void ClientConferenceEventHandler::onEnteringForeground() {
-	subscribe();
+	auto conference = getConference();
+	bool isChatOnly = conference && conference->isChatOnly();
+	if (isChatOnly) {
+		subscribe();
+	}
 }
 
 void ClientConferenceEventHandler::invalidateSubscription() {

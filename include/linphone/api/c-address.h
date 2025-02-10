@@ -65,7 +65,7 @@ LINPHONE_PUBLIC void linphone_address_unref(LinphoneAddress *address);
 /**
  * Returns if address is valid.
  * @param address a #LinphoneAddress object. @maybenil
- * @return the scheme if any, NULL otherwise. @maybenil
+ * @return TRUE is the address is valid, FALSE otherwise
  **/
 LINPHONE_PUBLIC bool_t linphone_address_is_valid(const LinphoneAddress *address);
 

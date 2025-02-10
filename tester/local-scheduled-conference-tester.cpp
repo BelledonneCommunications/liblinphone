@@ -97,7 +97,7 @@ static void conference_with_media_lost(void) {
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -338,7 +338,7 @@ static void alone_in_conference_with_chat_exits_enter(void) {
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, TRUE);
+		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, TRUE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -804,7 +804,7 @@ static void conference_with_participants_late_except_one(void) {
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, FALSE);
+		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -1971,7 +1971,7 @@ static void participant_joins_simple_conference_with_screen_sharing(void) {
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -2449,7 +2449,7 @@ static void conference_with_screen_sharing_enabled_since_the_start(void) {
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -2895,7 +2895,7 @@ static void conference_with_two_participant_having_screen_sharing_enabled_since_
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -3316,7 +3316,7 @@ static void conference_with_screen_sharing_participant_only(void) {
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -3753,7 +3753,7 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -4126,7 +4126,7 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 		                                                                 LinphoneParticipantRoleSpeaker, -1)));
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
@@ -4481,7 +4481,7 @@ static void create_simple_conference_with_update_deferred(void) {
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -4988,7 +4988,7 @@ static void conference_with_participant_added_outside_valid_time_slot(bool_t bef
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
@@ -5098,7 +5098,7 @@ static void uninvited_participant_rejoins(void) {
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -5467,7 +5467,7 @@ static void rejoining_conference_after_end(int cleanup_window) {
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, FALSE);
+		                                description, TRUE, security_level, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -5797,7 +5797,7 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, FALSE);
+		                                description, TRUE, LinphoneConferenceSecurityLevelNone, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -6105,15 +6105,19 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 }
 
 static void create_conference_with_chat(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, FALSE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, FALSE, FALSE);
 }
 
 static void create_conference_with_chat_and_participant_rejoining(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE);
 }
 
-static void create_conference_with_chat_with_cores_restart(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE);
+static void create_conference_with_chat_and_cores_restart(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE, FALSE);
+}
+
+static void create_conference_with_chat_network_drops_and_participant_rejoining(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE);
 }
 
 #ifndef HAVE_EKT_SERVER_PLUGIN
@@ -6334,7 +6338,7 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, TRUE);
+		                                description, TRUE, security_level, TRUE, TRUE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -6878,8 +6882,10 @@ static test_t local_conference_scheduled_conference_with_chat_tests[] = {
     TEST_NO_TAG("Create conference with chat", LinphoneTest::create_conference_with_chat),
     TEST_NO_TAG("Create conference with chat and participant rejoining",
                 LinphoneTest::create_conference_with_chat_and_participant_rejoining),
-    TEST_NO_TAG("Create conference with chat with cores restart",
-                LinphoneTest::create_conference_with_chat_with_cores_restart),
+    TEST_NO_TAG("Create conference with chat and cores restart",
+                LinphoneTest::create_conference_with_chat_and_cores_restart),
+    TEST_NO_TAG("Create conference with chat network drops and participant rejoining",
+                LinphoneTest::create_conference_with_chat_network_drops_and_participant_rejoining),
     TEST_NO_TAG("Create conference with chat with server restarted before conference expiration",
                 LinphoneTest::create_conference_with_chat_with_server_restarted_before_conference_expires),
     TEST_NO_TAG("Create conference with chat, only speakers and uninvited participant",

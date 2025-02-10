@@ -86,8 +86,8 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 
 	const auto &factoryUri = accountParams->getConferenceFactoryAddress();
 	if (!factoryUri || !factoryUri->isValid()) {
-		lError() << "Couldn't send chat room list subscription for account " << account << " (" << *identityAddress
-		         << ") because there's no conference factory uri";
+		lError() << "Couldn't send chat room list subscription for " << *account
+		         << " because there's no conference factory uri";
 		return false;
 	}
 

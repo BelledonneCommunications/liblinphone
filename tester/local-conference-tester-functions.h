@@ -351,7 +351,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t join_after_termination,
                                       long cleanup_window,
                                       bool_t slow_ice_negotiation,
-                                      bool_t client_reenter_conference);
+                                      bool_t client_reenter_conference,
+                                      bool_t network_drops);
 
 void configure_end_to_end_encrypted_conference_server(Focus &focus);
 
@@ -409,7 +410,8 @@ create_conference_on_server(Focus &focus,
                             bool_t send_ics,
                             LinphoneConferenceSecurityLevel security_level,
                             bool_t enable_video,
-                            bool_t enable_chat);
+                            bool_t enable_chat,
+                            LinphoneConferenceParams *ics_chat_room_params);
 
 void set_video_settings_in_conference(LinphoneCoreManager *focus,
                                       LinphoneCoreManager *participant,

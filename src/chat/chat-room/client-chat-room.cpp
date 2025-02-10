@@ -261,7 +261,7 @@ void ClientChatRoom::onExhumedConference(const ConferenceId &oldConfId, const Co
 	conference->setConferenceId(newConfId);
 	getCore()->getPrivate()->updateChatRoomConferenceId(chatRoom, oldConfId);
 
-	conference->setLastNotify(0);
+	conference->resetLastNotify();
 }
 
 // Will be called on A when A is sending a message into a chat room with B previously terminated by B

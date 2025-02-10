@@ -351,6 +351,8 @@ public:
 	                         const std::shared_ptr<LinphonePrivate::Address> &referAddr,
 	                         const std::string method) = 0;
 
+	void resetLastNotify();
+
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
 	                    const std::shared_ptr<const Address> &myAddress,
@@ -428,7 +430,6 @@ protected:
 
 	void incrementLastNotify();
 	void setLastNotify(unsigned int lastNotify);
-	void resetLastNotify();
 
 	void setConferenceId(const ConferenceId &conferenceId);
 

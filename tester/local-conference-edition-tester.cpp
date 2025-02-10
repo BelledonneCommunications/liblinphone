@@ -353,7 +353,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, enable_chat);
+		                                description, TRUE, security_level, TRUE, enable_chat, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -1380,7 +1380,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -1788,7 +1788,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -2312,7 +2312,7 @@ static void conference_cancelled_through_edit_while_active(void) {
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 

@@ -6185,6 +6185,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 
 		shared_ptr<Core> core = getCore();
 		LinphoneCore *cCore = getCore()->getCCore();
+		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 
 		soci::session *session = d->dbSession.getBackendSession();
 
@@ -6249,6 +6250,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				continue;
 			}
 
+			bool updateFlags = false;
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
 			time_t creationTime = d->dbSession.getTime(row, 3);
 			time_t lastUpdateTime = d->dbSession.getTime(row, 4);
@@ -6286,11 +6288,10 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				const long long &conferenceInfoId = d->dbSession.resolveId(row, 14);
 				shared_ptr<ConferenceInfo> confInfo;
 				if (conferenceInfoId > 0) {
-					soci::row row;
-					soci::session *session = d->dbSession.getBackendSession();
-					*session << Statements::get(Statements::SelectConferenceInfoFromId), soci::into(row),
+					soci::row conferenceInfoRow;
+					*session << Statements::get(Statements::SelectConferenceInfoFromId), soci::into(conferenceInfoRow),
 					    soci::use(conferenceInfoId);
-					confInfo = d->selectConferenceInfo(row);
+					confInfo = d->selectConferenceInfo(conferenceInfoRow);
 				}
 
 				if (confInfo) {
@@ -6306,9 +6307,15 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					}
 				}
 
-				bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 				std::shared_ptr<Conference> conference = nullptr;
-				if (!serverMode) {
+				if (serverMode) {
+					params->enableLocalParticipant(false);
+					conference =
+					    (new ServerConference(core, conferenceId.getLocalAddress(), nullptr, params))->toSharedPtr();
+					conference->initFromDb(me, conferenceId, lastNotifyId, false);
+					chatRoom = conference->getChatRoom();
+					conference->setState(ConferenceInterface::State::Created);
+				} else {
 					if (!me) {
 						lError() << "Unable to find me in: " << conferenceId;
 						continue;
@@ -6317,6 +6324,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					conference = (new ClientConference(core, me->getAddress(), nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
 					chatRoom = conference->getChatRoom();
+					updateFlags = confInfo && !hasBeenLeft;
 					if (hasBeenLeft) {
 						conference->setState(ConferenceInterface::State::Terminated);
 					} else {
@@ -6342,13 +6350,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 							}
 						}
 					}
-				} else {
-					params->enableLocalParticipant(false);
-					conference =
-					    (new ServerConference(core, conferenceId.getLocalAddress(), nullptr, params))->toSharedPtr();
-					conference->initFromDb(me, conferenceId, lastNotifyId, false);
-					chatRoom = conference->getChatRoom();
-					conference->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : participants) {
 					participant->setConference(conference);
@@ -6401,19 +6402,38 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 
 			lDebug() << "Found chat room in DB: " << conferenceId;
 
-			if (addChatroomToList(chatRoomsMap, chatRoom, dbChatRoomId, unreadMessagesCount) && conferenceIdChanged) {
-				// If the conference ID changed, then update the information in the database so that the next time
-				// around everything will be alright
-				auto peerAddress = conferenceId.getPeerAddress();
-				auto localAddress = conferenceId.getLocalAddress();
-				lInfo() << "Change peer and local address of chatroom with ID " << dbChatRoomId << ":";
-				lInfo() << "- peer: " << oldPAddress << " -> " << *peerAddress;
-				lInfo() << "- local: " << oldLAddress << " -> " << *localAddress;
-				const long long &peerSipAddressId = d->insertSipAddress(peerAddress);
-				const long long &localSipAddressId = d->insertSipAddress(localAddress);
-				*session << "UPDATE chat_room SET peer_sip_address_id = :peerSipAddressId, local_sip_address_id = "
-				            ":localSipAddressId WHERE id = :chatRoomId",
-				    soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(dbChatRoomId);
+			if (addChatroomToList(chatRoomsMap, chatRoom, dbChatRoomId, unreadMessagesCount) &&
+			    (conferenceIdChanged || updateFlags)) {
+				std::string query("UPDATE chat_room SET ");
+				if (conferenceIdChanged) {
+					// If the conference ID changed, then update the information in the database so that the next time
+					// around everything will be alright
+					auto peerAddress = conferenceId.getPeerAddress();
+					auto localAddress = conferenceId.getLocalAddress();
+					lInfo() << "Change peer and local address of chatroom [" << chatRoom << "] with ID " << dbChatRoomId
+					        << ":";
+					lInfo() << "- peer: " << oldPAddress << " -> " << *peerAddress;
+					lInfo() << "- local: " << oldLAddress << " -> " << *localAddress;
+					const long long &peerSipAddressId = d->insertSipAddress(peerAddress);
+					const long long &localSipAddressId = d->insertSipAddress(localAddress);
+					query += "peer_sip_address_id = " + Utils::toString(peerSipAddressId) +
+					         ", local_sip_address_id = " + Utils::toString(localSipAddressId) + " ";
+				}
+				if (updateFlags) {
+					// If we end up here, it means that there was a problem with a media conference supporting chat
+					// capabilities. The core might have lost the connection while the conference was ongoing therefore
+					// the database could not be updated to reflect the termination of the conference.
+					lInfo() << "Updating flags of chatroom [" << chatRoom << "] with ID " << dbChatRoomId
+					        << ": setting it as terminated and reset the last notify ID to 0";
+					query += "flags = 1, last_notify_id = 0 ";
+					auto chatConference = chatRoom->getConference();
+					if (chatConference) {
+						chatConference->resetLastNotify();
+						chatConference->setState(ConferenceInterface::State::Terminated);
+					}
+				}
+				query += "WHERE id = :chatRoomId";
+				*session << query, soci::use(dbChatRoomId);
 			}
 		}
 

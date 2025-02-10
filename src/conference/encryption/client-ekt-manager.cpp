@@ -166,9 +166,7 @@ ClientEktManager::~ClientEktManager() {
 }
 
 void ClientEktManager::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
-	if (sipNetworkReachable) {
-		subscribe();
-	} else {
+	if (!sipNetworkReachable) {
 		if (mEventSubscribe) {
 			mEventSubscribe->terminate();
 			mEventSubscribe = nullptr;
@@ -177,14 +175,6 @@ void ClientEktManager::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED
 			mEventPublish->terminate();
 			mEventPublish = nullptr;
 		}
-	}
-}
-
-void ClientEktManager::onAccountRegistrationStateChanged(BCTBX_UNUSED(std::shared_ptr<Account> account),
-                                                         LinphoneRegistrationState state,
-                                                         BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk) {
-		subscribe();
 	}
 }
 

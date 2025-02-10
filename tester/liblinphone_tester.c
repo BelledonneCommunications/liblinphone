@@ -45,7 +45,7 @@ static const char *liblinphone_helper =
     "\t\t\t--auth-domain <test auth domain>	(deprecated)\n"
     "\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names or 'none' for no overriding (default: "
     "tester_hosts)> (deprecated)\n"
-    "\t\t\t--max-failed  max number of failed tests until program exit with return code 1. Current default is 2"
+    "\t\t\t--max-failed  max number of failed tests until program exit with return code 1. Current default is 2\n"
     "\t\t\t--max-cpucount max number of cpu declared at mediastremaer2 level Current default is 2";
 
 typedef struct _MireData {
@@ -607,6 +607,8 @@ void liblinphone_tester_add_suites(void) {
 	    &local_conference_test_suite_end_to_end_encryption_scheduled_conference_audio_only_participant, 337);
 	liblinphone_tester_add_suite_with_default_time(
 	    &local_conference_test_suite_end_to_end_encryption_impromptu_conference, 155);
+	liblinphone_tester_add_suite_with_default_time(
+	    &local_conference_test_suite_end_to_end_encryption_scheduled_conference_with_chat, 155);
 #endif // HAVE_EKT_SERVER_PLUGIN
 	liblinphone_tester_add_suite_with_default_time(&clonable_object_test_suite, 0);
 #ifdef HAVE_DB_STORAGE

@@ -90,10 +90,6 @@ public:
 	~ClientEktManager() override;
 
 	void onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) override;
-	void onAccountRegistrationStateChanged(BCTBX_UNUSED(std::shared_ptr<Account> account),
-	                                       LinphoneRegistrationState state,
-	                                       BCTBX_UNUSED(const std::string &message)) override;
-
 	void onStateChanged(ConferenceInterface::State newState) override;
 
 	static void onPublishStateChangedCb(LinphoneEvent *lev, LinphonePublishState state);

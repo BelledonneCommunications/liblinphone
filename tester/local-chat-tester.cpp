@@ -1456,7 +1456,6 @@ static void group_chat_room_with_client_removed_while_stopped_base(bool_t use_re
 		}
 
 		setup_mgr_for_conference(michelle.getCMgr(), NULL);
-		coresList = bctbx_list_append(coresList, michelle.getLc());
 		if (use_remote_event_list_handler) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive,
 			                             initialMichelleStats.number_of_LinphoneSubscriptionActive + 1,
