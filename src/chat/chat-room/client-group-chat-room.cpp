@@ -194,10 +194,12 @@ void ClientGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 		const auto participantList = Utils::parseResourceLists(op->getContentInRemote(ContentType::ResourceLists));
 		for (const auto &participantInfo : participantList) {
 			const auto &address = participantInfo->getAddress();
-			auto participant = q->findParticipant(address);
-			if (!participant) {
-				participant = Participant::create(q->getConference().get(), address);
-				q->getConference()->participants.push_back(participant);
+			if (!q->isMe(address)) {
+				auto participant = q->findParticipant(address);
+				if (!participant) {
+					participant = Participant::create(q->getConference().get(), address);
+					q->getConference()->participants.push_back(participant);
+				}
 			}
 		}
 	}
@@ -422,8 +424,10 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 	getConference()->setSubject(subject);
 	const auto participantList = Utils::parseResourceLists(content);
 	for (const auto &participantInfo : participantList) {
-		getConference()->participants.push_back(
-		    Participant::create(getConference().get(), participantInfo->getAddress()));
+		const auto &address = participantInfo->getAddress();
+		if (!isMe(address)) {
+			getConference()->participants.push_back(Participant::create(getConference().get(), address));
+		}
 	}
 
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
