@@ -2277,12 +2277,17 @@ static void group_chat_room_with_server_database_corruption(void) {
 	}
 }
 
-static void group_chat_room_bulk_notify_to_participant(void) {
+static void group_chat_room_bulk_notify_to_participant_base(bool_t trigger_full_state) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
 		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+
+		if (trigger_full_state) {
+			linphone_config_set_int(linphone_core_get_config(focus.getLc()), "misc",
+			                        "full_state_trigger_due_to_missing_updates", 1);
+		}
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -2485,28 +2490,37 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 
 		initialPaulineStats = pauline.getStats();
 		// Pauline comes up online
+		ms_message("%s turns network on again", linphone_core_get_identity(pauline.getLc()));
 		linphone_core_set_network_reachable(pauline.getLc(), TRUE);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneRegistrationOk,
 		                             initialPaulineStats.number_of_LinphoneRegistrationOk + 1,
 		                             liblinphone_tester_sip_timeout));
 
-		// Check that Pauline receives the backlog of events occurred while she was offline
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
-		                             initialPaulineStats.number_of_participants_added + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
-		                             initialPaulineStats.number_of_participant_devices_added + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed,
-		                             initialPaulineStats.number_of_subject_changed + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_removed,
-		                             initialPaulineStats.number_of_participant_devices_removed + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
-		                             initialPaulineStats.number_of_participants_removed + 1,
-		                             liblinphone_tester_sip_timeout));
+		if (trigger_full_state) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyFullStateReceived,
+			                             initialPaulineStats.number_of_NotifyFullStateReceived + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomConferenceJoined,
+			                              initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 2000));
+		} else {
+			// Check that Pauline receives the backlog of events occurred while she was offline
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
+			                             initialPaulineStats.number_of_participants_added + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+			                             initialPaulineStats.number_of_participant_devices_added + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed,
+			                             initialPaulineStats.number_of_subject_changed + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_removed,
+			                             initialPaulineStats.number_of_participant_devices_removed + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
+			                             initialPaulineStats.number_of_participants_removed + 1,
+			                             liblinphone_tester_sip_timeout));
+		}
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
 		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject2);
@@ -2538,6 +2552,14 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 
 		bctbx_list_free(coresList);
 	}
+}
+
+static void group_chat_room_bulk_notify_to_participant(void) {
+	group_chat_room_bulk_notify_to_participant_base(FALSE);
+}
+
+static void group_chat_room_bulk_notify_full_state_to_participant(void) {
+	group_chat_room_bulk_notify_to_participant_base(TRUE);
 }
 
 static void one_to_one_chatroom_backward_compatibility_base(const char *groupchat_spec) {
@@ -3742,8 +3764,9 @@ static test_t local_conference_chat_basic_tests[] = {
     TEST_ONE_TAG("Group chat with client restart",
                  LinphoneTest::group_chat_room_with_client_restart,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
-    TEST_NO_TAG("Group chat room bulk notify to participant",
-                LinphoneTest::group_chat_room_bulk_notify_to_participant), /* because of network up and down*/
+    TEST_NO_TAG("Group chat room bulk notify to participant", LinphoneTest::group_chat_room_bulk_notify_to_participant),
+    TEST_NO_TAG("Group chat room bulk notify full state to participant",
+                LinphoneTest::group_chat_room_bulk_notify_full_state_to_participant),
     TEST_ONE_TAG("One to one chatroom exhumed while participant is offline",
                  LinphoneTest::one_to_one_chatroom_exhumed_while_offline,
                  "LeaksMemory"), /* because of network up and down*/

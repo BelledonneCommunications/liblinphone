@@ -151,8 +151,17 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	}
 
 	try {
+		bool isFullState = (confInfo->getState() == StateType::full);
+		const auto conference = getConference();
+		if (waitingFullState && !isFullState) {
+			// No need to do any processing if the client is waiting a full state
+			lError() << "Unable to process received NOTIFY because " << *conference << " is waiting a full state";
+			return;
+		} else {
+			waitingFullState = false;
+		}
+
 		const auto &core = getCore();
-		const auto &conference = getConference();
 		const auto &chatRoom = conference->getChatRoom();
 		const auto &conferenceAddress = conference->getConferenceAddress();
 		std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity());
@@ -160,27 +169,23 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		auto prunedConferenceAddress = conferenceAddress ? conferenceAddress->getUriWithoutGruu() : Address();
 
 		if (!conferenceAddress || (prunedEntityAddress != prunedConferenceAddress)) {
-			lError() << "Unable to process received NOTIFY because the entity address " << prunedEntityAddress
+			lError() << "Unable to process received NOTIFY for conference " << *conference
+			         << " because the entity address " << prunedEntityAddress
 			         << " doesn't match the conference address " << prunedConferenceAddress
 			         << " or the conference address is not valid";
 			return;
 		}
 
-		bool isFullState = confInfo->getState() == StateType::full;
-
 		if (isFullState) {
 			setInitialSubscriptionUnderWayFlag(false);
 		}
-		bool synchronizing = fullStateRequested;
+
+		// The client is synchronizing when it requested a full state as there was a discrepancy between its last notify
+		// ID and the one from the server or the server sent a full state to catch up a big number of missed events
+		const auto currentNotifyVersion = getLastNotify();
+		bool synchronizing = fullStateRequested || (isFullState && (currentNotifyVersion != 0));
 		if (isFullState && fullStateRequested) {
 			fullStateRequested = false;
-		}
-
-		if (waitingFullState && !isFullState) {
-			lError() << "Unable to process received NOTIFY because " << *conference << " is waiting a full state";
-			return;
-		} else {
-			waitingFullState = false;
 		}
 
 		auto &confDescription = confInfo->getConferenceDescription();
@@ -196,15 +201,14 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 		// 2. Update last notify.
 		{
-			const auto previousLastNotify = getLastNotify();
 			auto &version = confInfo->getVersion();
 			if (version.present()) {
 				unsigned int notifyVersion = version.get();
-				synchronizing |= isFullState && (previousLastNotify >= notifyVersion);
-				if (!isFullState && (previousLastNotify >= notifyVersion)) {
-					lWarning() << "Ignoring conference notify for: " << getConferenceId()
-					           << ", notify version received is: " << notifyVersion
-					           << ", should be stricly more than last notify id of conference: " << previousLastNotify;
+				if (!isFullState && (currentNotifyVersion >= notifyVersion)) {
+					lWarning() << "Ignoring conference notify for " << *conference << " (" << getConferenceId()
+					           << "): notify version received (" << notifyVersion
+					           << ") should be stricly larger than the current notify version (" << currentNotifyVersion
+					           << ")";
 					requestFullState();
 					return;
 				}
@@ -798,9 +802,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 void ClientConferenceEventHandler::requestFullState() {
 	auto conference = getConference();
-	lInfo() << "Requesting full state for conference "
-	        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-	                                               : std::string("sip:"));
+	lInfo() << "Requesting full state for " << *conference;
 	unsubscribe();
 	conference->setLastNotify(0);
 	subscribe(getConferenceId());
