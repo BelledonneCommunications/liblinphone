@@ -871,6 +871,14 @@ void ChatRoom::deleteFromDb() {
 	shared_ptr<AbstractChatRoom> ref = this->getSharedFromThis();
 	Core::deleteChatRoom(ref);
 	setState(ConferenceInterface::State::Deleted);
+
+	// Clear all transient events after deleting the chatroom.
+	// The application might still keep a reference to the chatroom, therefore the destructor may not be called
+	// immediately after the chatroom reference is freed by the core
+	remoteIsComposing.clear();
+	transientEvents.clear();
+	transientMessages.clear();
+	aggregatedMessages.clear();
 }
 
 void ChatRoom::deleteHistory() {
