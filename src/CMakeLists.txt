@@ -183,6 +183,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
+	conference/conference-context.h
 	conference/server-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
@@ -498,6 +499,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-info.cpp
 	conference/conference-scheduler.cpp
 	conference/conference.cpp
+	conference/conference-context.cpp
 	conference/conference-interface.cpp
 	conference/sip-conference-scheduler.cpp
 	conference/ccmp-conference-scheduler.cpp

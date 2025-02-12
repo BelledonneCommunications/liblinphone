@@ -203,6 +203,7 @@ public:
 	virtual std::shared_ptr<Address> getConferenceAddress() const = 0;
 	virtual std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const = 0;
 	virtual std::list<std::shared_ptr<Participant>> getParticipants() const = 0;
+	virtual std::list<std::shared_ptr<Address>> getParticipantAddresses() const = 0;
 
 	virtual bool canHandleParticipants() const = 0;
 	virtual std::shared_ptr<Conference> getConference() const = 0;
@@ -282,6 +283,13 @@ std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::Capabilities e);
 std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::SecurityLevel e);
 
 std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::EphemeralMode e);
+
+inline std::ostream &operator<<(std::ostream &str, const AbstractChatRoom &chatRoom) {
+	const auto &conferenceAddress = chatRoom.getConferenceAddress();
+	str << "Conference [" << &chatRoom << "] ("
+	    << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << ")";
+	return str;
+}
 
 LINPHONE_END_NAMESPACE
 

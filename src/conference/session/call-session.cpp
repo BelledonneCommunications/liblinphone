@@ -133,9 +133,8 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 								ref->addListener(conference);
 							}
 						} else if (op->getRemoteContactAddress()) {
-							std::shared_ptr<Address> remoteContactAddress = Address::create();
-							remoteContactAddress->setImpl(op->getRemoteContactAddress());
-							if (remoteContactAddress->hasParam(Conference::IsFocusParameter)) {
+							if (sal_address_has_param(op->getRemoteContactAddress(),
+							                          Conference::IsFocusParameter.c_str())) {
 								const auto &conferenceInfo = Utils::createConferenceInfoFromOp(op, true);
 								if (conferenceInfo->getUri()->isValid()) {
 #ifdef HAVE_DB_STORAGE

@@ -30,6 +30,7 @@
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/chat-room/basic-chat-room.h"
 #include "chat/chat-room/chat-room.h"
+#include "conference/conference-context.h"
 #include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/server-conference.h"
@@ -271,69 +272,25 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom(const ConferenceId
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom>
-CorePrivate::searchChatRoom(const shared_ptr<ConferenceParams> &params,
+std::shared_ptr<AbstractChatRoom>
+CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
                             const std::shared_ptr<const Address> &localAddress,
                             const std::shared_ptr<const Address> &remoteAddress,
                             const std::list<std::shared_ptr<Address>> &participants) const {
 	L_Q();
-	for (const auto &chatRoom : q->getRawChatRoomList()) {
-		if (params) {
-			const auto &chatRoomParams = chatRoom->getCurrentParams();
+	ConferenceContext referenceConferenceContext(params, localAddress, remoteAddress, participants);
+	const auto &chatRooms = q->getRawChatRoomList();
+	const auto it = std::find_if(chatRooms.begin(), chatRooms.end(), [&](const auto &chatRoom) {
+		ConferenceContext conferenceContext(chatRoom->getCurrentParams(), chatRoom->getLocalAddress(),
+		                                    chatRoom->getPeerAddress(), chatRoom->getParticipantAddresses());
+		return (referenceConferenceContext == conferenceContext);
+	});
 
-			if (params->audioEnabled() != chatRoomParams->audioEnabled()) continue;
-			if (params->videoEnabled() != chatRoomParams->videoEnabled()) continue;
-
-			if (params->getChatParams()->getBackend() != chatRoomParams->getChatParams()->getBackend()) continue;
-
-			if (params->isGroup() != chatRoomParams->isGroup()) continue;
-
-			if (params->isGroup() &&
-			    (chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::Basic))
-				continue;
-
-			if (params->getChatParams()->isEncrypted() != chatRoomParams->getChatParams()->isEncrypted()) continue;
-
-			// Subject doesn't make any sense for basic chat room
-			if ((params->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
-			    (!params->getUtf8Subject().empty() && params->getUtf8Subject() != chatRoom->getSubjectUtf8()))
-				continue;
-		}
-
-		std::shared_ptr<Address> curLocalAddress = chatRoom->getLocalAddress();
-		const auto curLocalAddressWithoutGruu = curLocalAddress->getUriWithoutGruu();
-		const auto localAddressWithoutGruu =
-		    (localAddress && localAddress->isValid()) ? localAddress->getUriWithoutGruu() : Address();
-		if (localAddressWithoutGruu.isValid() && (localAddressWithoutGruu != curLocalAddressWithoutGruu)) continue;
-
-		std::shared_ptr<Address> curRemoteAddress = chatRoom->getPeerAddress();
-		const auto curRemoteAddressWithoutGruu = curRemoteAddress->getUriWithoutGruu();
-		const auto remoteAddressWithoutGruu =
-		    (remoteAddress && remoteAddress->isValid()) ? remoteAddress->getUriWithoutGruu() : Address();
-		if (remoteAddressWithoutGruu.isValid() && (remoteAddressWithoutGruu != curRemoteAddressWithoutGruu)) continue;
-
-		const auto &chatRoomParticipants = chatRoom->getParticipants();
-		const auto expectedParticipantNb = participants.size();
-		if ((expectedParticipantNb > 0) && (chatRoomParticipants.size() != expectedParticipantNb)) continue;
-		bool allFound = true;
-		for (const auto &participant : participants) {
-			bool found = false;
-			for (const auto &p : chatRoomParticipants) {
-				if (participant->weakEqual(*(p->getAddress()))) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				allFound = false;
-				break;
-			}
-		}
-		if (!allFound) continue;
-
-		return chatRoom;
+	std::shared_ptr<AbstractChatRoom> chatRoom;
+	if (it != chatRooms.cend()) {
+		chatRoom = *it;
 	}
-	return nullptr;
+	return chatRoom;
 }
 
 shared_ptr<AbstractChatRoom>
@@ -374,7 +331,7 @@ CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
 			chatRoom = q->findOneToOneChatRoom(localAddr, participants.front(), false, true,
 			                                   params->getChatParams()->isEncrypted());
 			if (chatRoom != nullptr) {
-				lWarning() << "Found already existing 1-1 chat room that matches, using this one " << chatRoom;
+				lWarning() << "Found already existing 1-1 chat room that matches, using this one " << *chatRoom;
 				return chatRoom;
 			}
 		}

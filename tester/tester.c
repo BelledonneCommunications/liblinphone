@@ -2038,10 +2038,9 @@ static LinphoneStatus check_participant_removal(bctbx_list_t *lcs,
 		                             (conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),
 		                             liblinphone_tester_sip_timeout));
 
-		LinphoneAddress *conf_uri = linphone_address_new(linphone_core_get_identity(conf_mgr->lc));
-		conference = linphone_core_search_conference(conf_mgr->lc, NULL, conf_uri, local_conference_address, NULL);
+		conference = linphone_core_search_conference(conf_mgr->lc, NULL, local_conference_address,
+		                                             local_conference_address, NULL);
 		BC_ASSERT_PTR_NULL(conference);
-		linphone_address_unref(conf_uri);
 	} else {
 		expected_no_participants = (participant_size - 1);
 

@@ -54,6 +54,7 @@
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
 #endif // HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-server-engine.h"
+#include "conference/conference-context.h"
 #include "conference/conference-id-params.h"
 #include "conference/conference.h"
 #include "conference/handlers/client-conference-list-event-handler.h"
@@ -1975,49 +1976,23 @@ void Core::deleteConference(const shared_ptr<const Conference> &conference) {
 	deleteConference(conferenceId);
 }
 
-shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams> &params,
-                                              const std::shared_ptr<const Address> &localAddress,
-                                              const std::shared_ptr<const Address> &remoteAddress,
-                                              const std::list<std::shared_ptr<Address>> &participants) const {
+std::shared_ptr<Conference> Core::searchConference(const std::shared_ptr<ConferenceParams> &params,
+                                                   const std::shared_ptr<const Address> &localAddress,
+                                                   const std::shared_ptr<const Address> &remoteAddress,
+                                                   const std::list<std::shared_ptr<Address>> &participants) const {
 	L_D();
-	auto localAddressUri = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
-	auto remoteAddressUri = (remoteAddress) ? remoteAddress->getUriWithoutGruu() : Address();
-	const auto it = std::find_if(d->mConferenceById.begin(), d->mConferenceById.end(), [&](const auto &p) {
-		// p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
-		const auto &conference = p.second;
-		const ConferenceId &conferenceId = conference->getConferenceId();
-		auto curLocalAddress =
-		    (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->getUriWithoutGruu() : Address();
-		if (localAddressUri.isValid() && (localAddressUri != curLocalAddress)) return false;
+	ConferenceContext referenceConferenceContext(params, localAddress, remoteAddress, participants);
+	const auto it = std::find_if(
+	    d->mConferenceById.begin(), d->mConferenceById.end(), [&referenceConferenceContext](const auto &p) {
+		    // p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
+		    const auto &conference = p.second;
+		    const ConferenceId &conferenceId = conference->getConferenceId();
+		    ConferenceContext conferenceContext(conference->getCurrentParams(), conferenceId.getLocalAddress(),
+		                                        conferenceId.getPeerAddress(), conference->getParticipantAddresses());
+		    return (referenceConferenceContext == conferenceContext);
+	    });
 
-		auto curPeerAddress =
-		    (conferenceId.getPeerAddress()) ? conferenceId.getPeerAddress()->getUriWithoutGruu() : Address();
-		if (remoteAddressUri.isValid() && (remoteAddressUri != curPeerAddress)) return false;
-
-		// Check parameters only if pointer provided as argument is not null
-		if (params) {
-			const auto &conferenceParams = conference->getCurrentParams();
-			if (!params->getUtf8Subject().empty() &&
-			    (params->getUtf8Subject().compare(conferenceParams->getUtf8Subject()) != 0))
-				return false;
-			if (params->chatEnabled() != conferenceParams->chatEnabled()) return false;
-			if (params->audioEnabled() != conferenceParams->audioEnabled()) return false;
-			if (params->videoEnabled() != conferenceParams->videoEnabled()) return false;
-			if (params->localParticipantEnabled() != conferenceParams->localParticipantEnabled()) return false;
-		}
-
-		// Check participants only if list provided as argument is not empty
-		bool participantListMatch = true;
-		if (participants.empty() == false) {
-			const std::list<std::shared_ptr<Participant>> &confParticipants = conference->getParticipants();
-			participantListMatch =
-			    equal(participants.cbegin(), participants.cend(), confParticipants.cbegin(), confParticipants.cend(),
-			          [](const auto &p1, const auto &p2) { return (p1->weakEqual(*p2->getAddress())); });
-		}
-		return participantListMatch;
-	});
-
-	shared_ptr<Conference> conference = nullptr;
+	std::shared_ptr<Conference> conference;
 	if (it != d->mConferenceById.cend()) {
 		conference = it->second;
 	}

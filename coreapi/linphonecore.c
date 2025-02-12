@@ -9494,13 +9494,12 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
 		    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(
 		        participants);
 	}
-	shared_ptr<const LinphonePrivate::Address> identityAddress =
-	    localAddr ? LinphonePrivate::Address::getSharedFromThis(localAddr)
-	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
+	shared_ptr<const LinphonePrivate::Address> localAddress =
+	    localAddr ? LinphonePrivate::Address::getSharedFromThis(localAddr) : nullptr;
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =
 	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<LinphonePrivate::Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchConference(
-	    conferenceParams, identityAddress, remoteAddress, participantsList);
+	    conferenceParams, localAddress, remoteAddress, participantsList);
 	LinphoneConference *c_conference = NULL;
 	if (conf) {
 		c_conference = conf->toC();

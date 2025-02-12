@@ -735,6 +735,14 @@ const list<shared_ptr<Participant>> &Conference::getParticipants() const {
 	return mParticipants;
 }
 
+std::list<std::shared_ptr<Address>> Conference::getParticipantAddresses() const {
+	list<std::shared_ptr<Address>> addresses;
+	for (auto &participant : mParticipants) {
+		addresses.push_back(participant->getAddress());
+	}
+	return addresses;
+}
+
 list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices(bool includeMe) const {
 	list<shared_ptr<ParticipantDevice>> devices;
 	for (const auto &p : mParticipants) {

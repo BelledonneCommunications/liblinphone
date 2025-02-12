@@ -2719,7 +2719,7 @@ static void conference_with_screen_sharing_enabled_since_the_start(void) {
 
 			if (!remaining_members.empty()) {
 				LinphoneConference *conference =
-				    linphone_core_search_conference(focus.getLc(), NULL, focus.getCMgr()->identity, confAddr, NULL);
+				    linphone_core_search_conference(focus.getLc(), NULL, confAddr, confAddr, NULL);
 				BC_ASSERT_PTR_NOT_NULL(conference);
 				if (conference) {
 					LinphoneParticipantDevice *screen_sharing_device =

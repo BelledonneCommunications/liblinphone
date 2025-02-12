@@ -147,4 +147,12 @@ std::list<std::shared_ptr<Participant>> BasicChatRoom::getParticipants() const {
 	return mParticipants;
 }
 
+std::list<std::shared_ptr<Address>> BasicChatRoom::getParticipantAddresses() const {
+	list<std::shared_ptr<Address>> addresses;
+	for (auto &participant : mParticipants) {
+		addresses.push_back(participant->getAddress());
+	}
+	return addresses;
+}
+
 LINPHONE_END_NAMESPACE

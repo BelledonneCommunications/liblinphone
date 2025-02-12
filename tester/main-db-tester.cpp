@@ -423,10 +423,11 @@ static void load_a_lot_of_chatrooms_cleaning_gruu(void) {
 
 static void load_chatroom_conference_base(bool_t keep_gruu) {
 	MainDbProvider provider("db/chatroom_conference.db", keep_gruu, TRUE);
+	BC_ASSERT_TRUE(linphone_core_gruu_in_conference_address_enabled(provider.getCoreManager()->lc) == keep_gruu);
 	MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-		BC_ASSERT_EQUAL(chatRooms.size(), 2, size_t, "%zu");
+		BC_ASSERT_EQUAL(chatRooms.size(), 4, size_t, "%zu");
 		for (const auto &chatRoom : chatRooms) {
 			const auto &conferenceAddress = chatRoom->getConferenceAddress();
 			// Basic chatroom do not have a conference address
@@ -434,13 +435,35 @@ static void load_chatroom_conference_base(bool_t keep_gruu) {
 				auto domain = conferenceAddress->getDomain();
 				BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(domain), MainDbProvider::chatroom_domain);
 				auto hasGruu = conferenceAddress->hasUriParam("gr");
-				BC_ASSERT_TRUE(conferenceAddress->hasUriParam("gr") == !!keep_gruu);
+				BC_ASSERT_TRUE(hasGruu == !!keep_gruu);
 				if (hasGruu) {
 					auto gr = conferenceAddress->getUriParamValue("gr");
 					BC_ASSERT_STRING_EQUAL(L_STRING_TO_C(gr), MainDbProvider::chatroom_gr);
 				}
 			}
 		}
+
+		LinphoneAddress *local_address = linphone_address_new("sip:berthe_fmmz-@sip.example.org");
+		LinphoneAddress *new_conference_address = linphone_address_new(
+		    "sip:chloe_khumi@sip.example.org;gr=urn:uuid:459797d6-40f9-0072-a3ad-e9237e042437;conf-id=abcdef");
+		LinphoneAddress *short_conference_address =
+		    linphone_address_new("sip:chloe_khumi@sip.example.org;gr=urn:uuid:459797d6-40f9-0072-a3ad-e9237e042437");
+		LinphoneAddress *long_conference_address = linphone_address_new(
+		    "sip:chloe_khumi@sip.example.org;gr=urn:uuid:459797d6-40f9-0072-a3ad-e9237e042437;conf-id=CvN8Rr69~");
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room_2(provider.getCoreManager()->lc, NULL, local_address,
+		                                                        short_conference_address, NULL));
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room_2(provider.getCoreManager()->lc, NULL, local_address,
+		                                                        long_conference_address, NULL));
+		// Verify that linphone_core_search_chat_room_2 doesn't do a SIP address comparison as stated in the RFC. In
+		// fact, doing that leads to being too exposed to server instabilities. For example, if a server for whatever
+		// reason removes the conf-id parameter from the chatroom peer address, it will prevent to client to join any
+		// new chatroom as all will match the corrupted chat
+		BC_ASSERT_PTR_NULL(linphone_core_search_chat_room_2(provider.getCoreManager()->lc, NULL, local_address,
+		                                                    new_conference_address, NULL));
+		linphone_address_unref(local_address);
+		linphone_address_unref(new_conference_address);
+		linphone_address_unref(short_conference_address);
+		linphone_address_unref(long_conference_address);
 
 		list<shared_ptr<ConferenceInfo>> conferenceInfos = mainDb.getConferenceInfos();
 		BC_ASSERT_EQUAL(conferenceInfos.size(), 1, size_t, "%zu");
