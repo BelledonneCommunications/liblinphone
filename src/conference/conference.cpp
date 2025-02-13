@@ -1097,6 +1097,13 @@ const ConferenceId &Conference::getConferenceId() const {
 	return mConferenceId;
 }
 
+std::optional<std::reference_wrapper<const std::string>> Conference::getIdentifier() const {
+	if (mState == ConferenceInterface::State::Instantiated) {
+		return std::nullopt;
+	}
+	return mConferenceId.getIdentifier();
+}
+
 void Conference::notifyFullState() {
 	for (const auto &l : mConfListeners) {
 		l->onFullStateReceived();

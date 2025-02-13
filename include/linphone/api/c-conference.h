@@ -193,6 +193,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_2(LinphoneCon
                                                                      const LinphoneAddress *uri);
 
 /**
+ * Returns the conference identifier
+ * @warning This method returns a NULL pointer if the Conference is in the Instantiated state
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference identifier. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_get_identifier(const LinphoneConference *conference);
+
+/**
  * Update parameters of the conference.
  * This is typically used enable or disable the video stream in the conference.
  * @param conference The #LinphoneConference object. @notnil

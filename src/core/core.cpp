@@ -2000,6 +2000,14 @@ std::shared_ptr<Conference> Core::searchConference(const std::shared_ptr<Confere
 	return conference;
 }
 
+std::shared_ptr<Conference> Core::searchConference(const std::string identifier) const {
+	auto [localAddress, peerAddress] = ConferenceId::parseIdentifier(identifier);
+	if (!localAddress || !localAddress->isValid() || !peerAddress || !peerAddress->isValid()) {
+		return nullptr;
+	}
+	return searchConference(nullptr, localAddress, peerAddress, {});
+}
+
 shared_ptr<Conference> Core::searchConference(const std::shared_ptr<const Address> &conferenceAddress) const {
 	L_D();
 

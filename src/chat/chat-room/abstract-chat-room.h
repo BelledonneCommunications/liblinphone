@@ -116,6 +116,7 @@ public:
 
 	virtual const std::shared_ptr<Address> &getPeerAddress() const = 0;
 	virtual const std::shared_ptr<Address> &getLocalAddress() const = 0;
+	virtual std::optional<std::reference_wrapper<const std::string>> getIdentifier() const = 0;
 
 	virtual time_t getCreationTime() const = 0;
 	virtual time_t getLastUpdateTime() const = 0;

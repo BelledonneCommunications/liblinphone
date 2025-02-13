@@ -183,6 +183,7 @@ public:
 	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
 
 	const ConferenceId &getConferenceId() const override;
+	std::optional<std::reference_wrapper<const std::string>> getIdentifier() const;
 	inline unsigned int getLastNotify() const {
 		return mLastNotify;
 	};

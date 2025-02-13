@@ -1693,10 +1693,23 @@ void create_conference_base(time_t start_time,
 			    return marie_call && (linphone_call_get_duration(marie_call) > nortp_timeout);
 		    });
 
+		// Test invalid peer address
+		BC_ASSERT_PTR_NULL(linphone_core_search_conference_by_identifier(
+		    marie.getLc(), "==sip:toto@sip.conference.org##sip:me@sip.local.org"));
+		// Test inexistent chat room identifier
+		BC_ASSERT_PTR_NULL(linphone_core_search_conference_by_identifier(
+		    marie.getLc(), "sip:toto@sip.conference.org##sip:me@sip.local.org"));
+
 		for (auto mgr : conferenceMgrs) {
 			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pconference);
 			if (pconference) {
+				const char *conference_identifier = linphone_conference_get_identifier(pconference);
+				LinphoneConference *found_pconference =
+				    linphone_core_search_conference_by_identifier(mgr->lc, conference_identifier);
+				BC_ASSERT_PTR_NOT_NULL(found_pconference);
+				BC_ASSERT_PTR_EQUAL(pconference, found_pconference);
+
 				const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(pconference);
 				int no_participants = 0;
 				if (start_time >= 0) {

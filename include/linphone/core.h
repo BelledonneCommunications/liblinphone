@@ -4969,6 +4969,16 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference_2(const Linp
                                                                       const LinphoneAddress *conferenceAddr);
 
 /**
+ * Find a conference by its identifier.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param identifier The conference identifier @notnil
+ * @return A matching conference or NULL if none matches. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference_by_identifier(const LinphoneCore *core,
+                                                                                  const char *identifier);
+
+/**
  * Adds a participant to the conference. If no conference is going on
  * a new internal conference context is created and the participant is
  * added to it.
@@ -6266,6 +6276,16 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room_2(const Linphon
                                                                    const LinphoneAddress *localAddr,
                                                                    const LinphoneAddress *remoteAddr,
                                                                    const bctbx_list_t *participants);
+
+/**
+ * Find a chat room by its identifier.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param identifier The chat room identifier @notnil
+ * @return A matching chat room or NULL if none matches. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room_by_identifier(const LinphoneCore *core,
+                                                                               const char *identifier);
 
 /**
  * Removes a chatroom including all message history from the LinphoneCore.

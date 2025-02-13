@@ -9519,6 +9519,13 @@ LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, co
 	return c_conference;
 }
 
+LinphoneConference *linphone_core_search_conference_by_identifier(const LinphoneCore *lc, const char *identifier) {
+	shared_ptr<LinphonePrivate::Conference> conference =
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchConference(L_C_TO_STRING(identifier));
+	if (conference) return conference->toC();
+	return NULL;
+}
+
 LinphoneConferenceParams *linphone_core_create_conference_params_2(LinphoneCore *lc, LinphoneConference *conference) {
 	CoreLogContextualizer logContextualizer(lc);
 	if (!conference) return linphone_conference_params_new(lc);

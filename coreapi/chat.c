@@ -191,6 +191,13 @@ LinphoneChatRoom *linphone_core_search_chat_room_2(const LinphoneCore *lc,
 	return NULL;
 }
 
+LinphoneChatRoom *linphone_core_search_chat_room_by_identifier(const LinphoneCore *lc, const char *identifier) {
+	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
+	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(L_C_TO_STRING(identifier));
+	if (room) return room->toC();
+	return NULL;
+}
+
 LinphoneChatRoomParams *linphone_core_create_default_chat_room_params(LinphoneCore *lc) {
 	auto params = linphone_chat_room_params_new_and_init(lc);
 	return params;

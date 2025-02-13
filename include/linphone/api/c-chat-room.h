@@ -134,6 +134,14 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_peer_address(Linph
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *chat_room);
 
 /**
+ * Returns the chat room identifier
+ * @warning This method returns a NULL pointer if the ChatRoom is in the Instantiated state
+ * @param chat_room The #LinphoneChatRoom object. @notnil
+ * @return the conference identifier. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_chat_room_get_identifier(const LinphoneChatRoom *chat_room);
+
+/**
  * Used to receive a chat message when using async mechanism with IM enchat_roomyption engine
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param message #LinphoneChatMessage object @notnil
@@ -317,7 +325,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_near(Linphone
  * @param filters The #LinphoneChatRoomHistoryFilterMask mask to filter the results with #LinphoneChatRoomHistoryFilter
  * @return A list of \bctbx_list{LinphoneEventLog} between the two provided events, if any. @tobefreed
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_between(LinphoneChatRoom *cr,
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_between(LinphoneChatRoom *chat_room,
                                                                            LinphoneEventLog *first_event,
                                                                            LinphoneEventLog *last_event,
                                                                            LinphoneChatRoomHistoryFilterMask filters);

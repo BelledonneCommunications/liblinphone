@@ -1044,6 +1044,14 @@ std::list<std::shared_ptr<Address>> ChatRoom::getParticipantAddresses() const {
 	return conference->getParticipantAddresses();
 }
 
+std::optional<std::reference_wrapper<const std::string>> ChatRoom::getIdentifier() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return std::nullopt;
+	}
+	return conference->getIdentifier();
+}
+
 std::shared_ptr<ConferenceParams> ChatRoom::getCurrentParams() const {
 	const auto conference = getConference();
 	if (!conference) {

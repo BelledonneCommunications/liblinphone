@@ -293,6 +293,14 @@ CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	return chatRoom;
 }
 
+std::shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom(const std::string identifier) const {
+	auto [localAddress, peerAddress] = ConferenceId::parseIdentifier(identifier);
+	if (!localAddress || !localAddress->isValid() || !peerAddress || !peerAddress->isValid()) {
+		return nullptr;
+	}
+	return searchChatRoom(nullptr, localAddress, peerAddress, std::list<std::shared_ptr<Address>>());
+}
+
 shared_ptr<AbstractChatRoom>
 CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
                             const std::shared_ptr<const Address> &localAddr,

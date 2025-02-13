@@ -116,6 +116,13 @@ const ConferenceId &BasicChatRoom::getConferenceId() const {
 	return mConferenceId;
 }
 
+std::optional<std::reference_wrapper<const std::string>> BasicChatRoom::getIdentifier() const {
+	if (mState == ConferenceInterface::State::Instantiated) {
+		return std::nullopt;
+	}
+	return mConferenceId.getIdentifier();
+}
+
 ConferenceInterface::State BasicChatRoom::getState() const {
 	return mState;
 }

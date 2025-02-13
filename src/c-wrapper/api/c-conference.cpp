@@ -106,6 +106,14 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
 	return conference->toC();
 }
 
+const char *linphone_conference_get_identifier(const LinphoneConference *conference) {
+	const auto &identifier = Conference::toCpp(conference)->getIdentifier();
+	if (identifier) {
+		return L_STRING_TO_C(identifier.value());
+	}
+	return NULL;
+}
+
 LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *conference) {
 	return (LinphoneConferenceState)Conference::toCpp(conference)->getState();
 }

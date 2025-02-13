@@ -47,6 +47,7 @@ public:
 
 	const std::shared_ptr<Address> &getPeerAddress() const override;
 	const std::shared_ptr<Address> &getLocalAddress() const override;
+	std::optional<std::reference_wrapper<const std::string>> getIdentifier() const override;
 
 	time_t getCreationTime() const override;
 	time_t getLastUpdateTime() const override;

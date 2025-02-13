@@ -77,7 +77,7 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 	}
 
 	// Check participants only if list provided as argument is not empty
-	if (mParticipants.empty() == false) {
+	if (!mParticipants.empty()) {
 		const auto &otherParticipants = other.getParticipants();
 		if (mParticipants.size() != otherParticipants.size()) return false;
 		for (const auto &participant : mParticipants) {

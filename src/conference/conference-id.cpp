@@ -29,6 +29,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const std::string ConferenceId::IdentifierDelimiter = "##";
+
 ConferenceId::ConferenceId() {
 }
 
@@ -143,6 +145,15 @@ size_t ConferenceId::getHash() const {
 	return mHash;
 }
 
+const std::string &ConferenceId::getIdentifier() const {
+	if (mIdentifier.empty()) {
+		const auto &pAddress = mPeerAddress ? reducedAddress(*mPeerAddress).toStringUriOnlyOrdered(false) : "sip:";
+		const auto &lAddress = mLocalAddress ? reducedAddress(*mLocalAddress).toStringUriOnlyOrdered(false) : "sip:";
+		mIdentifier += pAddress + ConferenceId::IdentifierDelimiter + lAddress;
+	}
+	return mIdentifier;
+}
+
 Address ConferenceId::reducedAddress(const Address &addr) {
 	Address ret = addr.getUriWithoutGruu();
 	ret.removeUriParam(Conference::SecurityModeParameter);
@@ -162,6 +173,17 @@ bool ConferenceId::weakEqual(const ConferenceId &other) const {
 	return mPeerAddress && other.mPeerAddress && reducedAddress(*mPeerAddress) == reducedAddress(*other.mPeerAddress) &&
 	       mLocalAddress && other.mLocalAddress &&
 	       reducedAddress(*mLocalAddress) == reducedAddress(*other.mLocalAddress);
+}
+
+std::pair<std::shared_ptr<Address>, std::shared_ptr<Address>>
+ConferenceId::parseIdentifier(const std::string &identifier) {
+	std::string peerAddressString = identifier.substr(0, identifier.find(ConferenceId::IdentifierDelimiter));
+	std::string localAddressString =
+	    identifier.substr(identifier.find(ConferenceId::IdentifierDelimiter) + ConferenceId::IdentifierDelimiter.size(),
+	                      identifier.size() - 1);
+	auto localAddress = Address::create(localAddressString);
+	auto peerAddress = Address::create(peerAddressString);
+	return std::make_pair(localAddress, peerAddress);
 }
 
 LINPHONE_END_NAMESPACE
