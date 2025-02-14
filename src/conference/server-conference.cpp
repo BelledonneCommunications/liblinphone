@@ -454,8 +454,8 @@ void ServerConference::configure(SalCallOp *op) {
 			}
 		}
 	}
-
 	mConfParams->setSecurityLevel(securityLevel);
+
 	if (mMixerSession) {
 		mMixerSession->setSecurityLevel(mConfParams->getSecurityLevel());
 	}

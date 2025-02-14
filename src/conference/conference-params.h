@@ -173,12 +173,7 @@ public:
 		return mJoinMode;
 	};
 
-	virtual void setSecurityLevel(const SecurityLevel &level) override {
-		mSecurityLevel = level;
-		if (mChatParams) {
-			mChatParams->updateSecurityParams((mSecurityLevel != SecurityLevel::None));
-		}
-	};
+	virtual void setSecurityLevel(const SecurityLevel &level) override;
 	const SecurityLevel &getSecurityLevel() const {
 		return mSecurityLevel;
 	};

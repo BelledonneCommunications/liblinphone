@@ -181,13 +181,13 @@ static void call_received(SalCallOp *h) {
 #endif
 
 	auto params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	params->setUtf8Subject(h->getSubject());
 	if (hasStreams) {
 		params->setAudioVideoDefaults();
 	}
 	if (chatCapabilities) {
 #ifdef HAVE_ADVANCED_IM
 		params->setChatDefaults();
-		params->setUtf8Subject(h->getSubject());
 		params->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
 		                                   : ConferenceParams::SecurityLevel::None);
 		params->setGroup(!isOneToOne);

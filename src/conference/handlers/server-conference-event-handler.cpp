@@ -210,7 +210,7 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 	}
 
 	ConferenceParamsInterface::SecurityLevel securityLevel = conferenceParams->getSecurityLevel();
-	if (chatRoom) {
+	if (conf->isChatOnly()) {
 		securityLevel = (chatRoom->getCurrentParams()->getChatParams()->isEncrypted()
 		                     ? ConferenceParamsInterface::SecurityLevel::EndToEnd
 		                     : ConferenceParamsInterface::SecurityLevel::None);

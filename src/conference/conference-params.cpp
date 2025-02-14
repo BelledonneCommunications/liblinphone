@@ -176,6 +176,13 @@ void ConferenceParams::setGroup(bool group) {
 	}
 }
 
+void ConferenceParams::setSecurityLevel(const SecurityLevel &level) {
+	mSecurityLevel = level;
+	if (mChatParams) {
+		mChatParams->updateSecurityParams((mSecurityLevel == SecurityLevel::EndToEnd));
+	}
+};
+
 void ConferenceParams::updateAccordingToCapabilities(AbstractChatRoom::CapabilitiesMask capabilities) {
 	if (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Basic)) {
 		mChatParams->setBackend(ChatParams::Backend::Basic);

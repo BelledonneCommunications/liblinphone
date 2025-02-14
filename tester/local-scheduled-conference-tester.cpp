@@ -6108,6 +6108,11 @@ static void create_conference_with_chat(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, FALSE, FALSE);
 }
 
+static void create_point_to_point_encrypted_conference_with_chat(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, FALSE, TRUE, -1, TRUE, FALSE,
+	                                 FALSE);
+}
+
 static void create_conference_with_chat_and_participant_rejoining(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE);
 }
@@ -6880,6 +6885,8 @@ static test_t local_conference_scheduled_conference_with_screen_sharing_tests[] 
 
 static test_t local_conference_scheduled_conference_with_chat_tests[] = {
     TEST_NO_TAG("Create conference with chat", LinphoneTest::create_conference_with_chat),
+    TEST_NO_TAG("Create point-to-point encrypted conference with chat",
+                LinphoneTest::create_point_to_point_encrypted_conference_with_chat),
     TEST_NO_TAG("Create conference with chat and participant rejoining",
                 LinphoneTest::create_conference_with_chat_and_participant_rejoining),
     TEST_NO_TAG("Create conference with chat and cores restart",
