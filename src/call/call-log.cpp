@@ -233,7 +233,7 @@ const std::shared_ptr<AbstractChatRoom> CallLog::getChatRoom() const {
 	auto conferenceInfo = getConferenceInfo();
 	if (conferenceInfo && conferenceInfo->getCapability(LinphoneStreamTypeText)) {
 		return getCore()->getPrivate()->searchChatRoom(nullptr, nullptr, conferenceInfo->getUri(),
-		                                               std::list<std::shared_ptr<Address>>{});
+		                                               std::list<std::shared_ptr<const Address>>{});
 	}
 	return nullptr;
 }

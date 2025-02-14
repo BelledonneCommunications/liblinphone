@@ -148,7 +148,6 @@ LinphoneChatRoom *linphone_core_create_chat_room_7(LinphoneCore *lc,
 		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
 		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
 	}
-
 	shared_ptr<const LinphonePrivate::Address> localAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
@@ -179,8 +178,13 @@ LinphoneChatRoom *linphone_core_search_chat_room_2(const LinphoneCore *lc,
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
-	    LinphonePrivate::Address::getCppListFromCList(participants);
+	// If a participant has an invalid address, the pointer to its address is NULL.
+	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
+	std::list<std::shared_ptr<const LinphonePrivate::Address>> participantsList;
+	for (const bctbx_list_t *elem = participants; elem != NULL; elem = elem->next) {
+		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
+		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
+	}
 	shared_ptr<const LinphonePrivate::Address> localAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =

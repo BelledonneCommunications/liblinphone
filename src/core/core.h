@@ -192,14 +192,6 @@ public:
 	std::shared_ptr<AbstractChatRoom> findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms(const std::shared_ptr<Address> &peerAddress) const;
 
-	std::shared_ptr<AbstractChatRoom>
-	findOneToOneChatRoom(const ConferenceId &conferenceId, bool basicOnly, bool conferenceOnly, bool encrypted) const;
-	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom(const std::shared_ptr<const Address> &localAddress,
-	                                                       const std::shared_ptr<const Address> &participantAddress,
-	                                                       bool basicOnly,
-	                                                       bool conferenceOnly,
-	                                                       bool encrypted) const;
-
 	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject, bool fallback = true);
 	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject,
 	                                                       LinphoneChatRoomCapabilitiesMask capabilities,
@@ -260,7 +252,7 @@ public:
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<ConferenceParams> &params,
 	                                             const std::shared_ptr<const Address> &localAddress,
 	                                             const std::shared_ptr<const Address> &remoteAddress,
-	                                             const std::list<std::shared_ptr<Address>> &participants) const;
+	                                             const std::list<std::shared_ptr<const Address>> &participants) const;
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<const Address> &conferenceAddress) const;
 	std::shared_ptr<Conference> searchConference(const std::string identifier) const;
 

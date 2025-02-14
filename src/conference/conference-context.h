@@ -37,7 +37,7 @@ public:
 	ConferenceContext(const std::shared_ptr<ConferenceParams> &params,
 	                  const std::shared_ptr<const Address> &localAddress,
 	                  const std::shared_ptr<const Address> &remoteAddress,
-	                  const std::list<std::shared_ptr<Address>> &participants);
+	                  const std::list<std::shared_ptr<const Address>> &participants);
 	ConferenceContext(ConferenceContext &&other) = delete;
 	ConferenceContext(const ConferenceContext &other) = delete;
 	virtual ~ConferenceContext() = default;
@@ -45,7 +45,7 @@ public:
 	inline const std::shared_ptr<const ConferenceParams> getParams() const {
 		return mParams;
 	}
-	inline const std::list<std::shared_ptr<Address>> &getParticipants() const {
+	inline const std::list<std::shared_ptr<const Address>> &getParticipants() const {
 		return mParticipants;
 	}
 	inline const Address &getLocalAddress() const {
@@ -59,7 +59,7 @@ public:
 
 private:
 	std::shared_ptr<const ConferenceParams> mParams;
-	std::list<std::shared_ptr<Address>> mParticipants;
+	std::list<std::shared_ptr<const Address>> mParticipants;
 	Address mLocalAddress;
 	Address mRemoteAddress;
 };

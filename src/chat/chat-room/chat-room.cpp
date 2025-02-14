@@ -329,12 +329,14 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 	if (*peerAddress == chatRoomPeerAddress->getUriWithoutGruu()) {
 		chatRoom = getSharedFromThis();
 	} else {
-		auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
-		chatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), peerAddress, false, false, isEncrypted);
+		std::list<std::shared_ptr<const Address>> emptyList;
+		chatRoom =
+		    getCore()->getPrivate()->searchChatRoom(getCurrentParams(), getLocalAddress(), peerAddress, emptyList);
 		if (!chatRoom) {
 			shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
 			params->setChatDefaults();
 			params->setGroup(false);
+			auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
 			if (isEncrypted) {
 				// Try to infer chat room type based on requested participants number
 				params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
@@ -1036,10 +1038,10 @@ std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
 	return conference->getParticipants();
 }
 
-std::list<std::shared_ptr<Address>> ChatRoom::getParticipantAddresses() const {
+std::list<std::shared_ptr<const Address>> ChatRoom::getParticipantAddresses() const {
 	const auto conference = getConference();
 	if (!conference) {
-		return std::list<std::shared_ptr<Address>>();
+		return std::list<std::shared_ptr<const Address>>();
 	}
 	return conference->getParticipantAddresses();
 }

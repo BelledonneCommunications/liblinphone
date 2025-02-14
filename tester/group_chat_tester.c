@@ -9240,6 +9240,26 @@ static void group_chat_forward_file_transfer_message_url(const char *file_transf
 	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
+	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	LinphoneConferenceParams *conference_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_enable_chat(conference_params, TRUE);
+	linphone_conference_params_enable_group(conference_params, FALSE);
+	linphone_conference_params_set_subject(conference_params, initialSubject);
+	linphone_conference_params_set_security_level(conference_params, LinphoneConferenceSecurityLevelNone);
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(conference_params);
+	linphone_chat_params_set_backend(chat_params, LinphoneChatRoomBackendFlexisipChat);
+	linphone_chat_params_set_ephemeral_mode(chat_params, LinphoneChatRoomEphemeralModeDeviceManaged);
+	// Try search with the actual chat room subject
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room_2(marie->lc, conference_params, marie->identity, confAddr,
+	                                                        participantsAddresses));
+
+	linphone_conference_params_set_subject(conference_params, "Default one to one subject");
+	// Try search with a different chat room subject. As it is a one-to-one, the subject comparison should be ignored
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room_2(marie->lc, conference_params, marie->identity, confAddr,
+	                                                        participantsAddresses));
+	linphone_conference_params_unref(conference_params);
+	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
+
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
 	                                                                   confAddr, initialSubject, 1, FALSE);

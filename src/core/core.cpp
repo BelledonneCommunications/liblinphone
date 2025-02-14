@@ -347,7 +347,7 @@ void CorePrivate::deleteConferenceInfo(const std::shared_ptr<Address> &conferenc
 #ifdef HAVE_DB_STORAGE
 	mainDb->deleteConferenceInfo(conferenceAddress);
 #endif // HAVE_DB_STORAGE
-	auto chatRoom = searchChatRoom(nullptr, nullptr, conferenceAddress, std::list<std::shared_ptr<Address>>());
+	auto chatRoom = searchChatRoom(nullptr, nullptr, conferenceAddress, std::list<std::shared_ptr<const Address>>());
 	if (chatRoom) {
 		chatRoom->deleteFromDb();
 	}
@@ -1976,10 +1976,11 @@ void Core::deleteConference(const shared_ptr<const Conference> &conference) {
 	deleteConference(conferenceId);
 }
 
-std::shared_ptr<Conference> Core::searchConference(const std::shared_ptr<ConferenceParams> &params,
-                                                   const std::shared_ptr<const Address> &localAddress,
-                                                   const std::shared_ptr<const Address> &remoteAddress,
-                                                   const std::list<std::shared_ptr<Address>> &participants) const {
+std::shared_ptr<Conference>
+Core::searchConference(const std::shared_ptr<ConferenceParams> &params,
+                       const std::shared_ptr<const Address> &localAddress,
+                       const std::shared_ptr<const Address> &remoteAddress,
+                       const std::list<std::shared_ptr<const Address>> &participants) const {
 	L_D();
 	ConferenceContext referenceConferenceContext(params, localAddress, remoteAddress, participants);
 	const auto it = std::find_if(

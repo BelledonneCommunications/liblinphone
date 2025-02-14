@@ -58,7 +58,7 @@ public:
 	bool isMe(const std::shared_ptr<Address> &address) const override;
 	std::shared_ptr<Participant> getMe() const override;
 	std::list<std::shared_ptr<Participant>> getParticipants() const override;
-	std::list<std::shared_ptr<Address>> getParticipantAddresses() const override;
+	std::list<std::shared_ptr<const Address>> getParticipantAddresses() const override;
 
 protected:
 	explicit BasicChatRoom(const std::shared_ptr<Core> &core,

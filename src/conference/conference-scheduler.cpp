@@ -472,7 +472,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenc
 	for (auto participant : mInvitationsToSend) {
 		list<std::shared_ptr<const Address>> chatRoomParticipantList;
 		chatRoomParticipantList.push_back(participant);
-		list<std::shared_ptr<Address>> participantList;
+		list<std::shared_ptr<const Address>> participantList;
 		std::shared_ptr<Address> remoteAddress = nullptr;
 		if (conferenceParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) {
 			participantList.push_back(participant);

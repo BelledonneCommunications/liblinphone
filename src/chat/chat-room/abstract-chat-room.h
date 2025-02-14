@@ -204,7 +204,7 @@ public:
 	virtual std::shared_ptr<Address> getConferenceAddress() const = 0;
 	virtual std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const = 0;
 	virtual std::list<std::shared_ptr<Participant>> getParticipants() const = 0;
-	virtual std::list<std::shared_ptr<Address>> getParticipantAddresses() const = 0;
+	virtual std::list<std::shared_ptr<const Address>> getParticipantAddresses() const = 0;
 
 	virtual bool canHandleParticipants() const = 0;
 	virtual std::shared_ptr<Conference> getConference() const = 0;

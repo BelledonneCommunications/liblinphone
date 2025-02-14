@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceContext::ConferenceContext(const std::shared_ptr<ConferenceParams> &params,
                                      const std::shared_ptr<const Address> &localAddress,
                                      const std::shared_ptr<const Address> &remoteAddress,
-                                     const std::list<std::shared_ptr<Address>> &participants) {
+                                     const std::list<std::shared_ptr<const Address>> &participants) {
 	mParams = params;
 	mParticipants = participants;
 	mLocalAddress = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
@@ -69,8 +69,9 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 
 			if (mParams->getChatParams()->isEncrypted() != otherParams->getChatParams()->isEncrypted()) return false;
 
-			// Subject doesn't make any sense for basic chat room
-			if ((mParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
+			// Subject doesn't make any sense for basic chat room and one to one chats
+			if (mParams->isGroup() &&
+			    (mParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
 			    (!mParams->getUtf8Subject().empty() && mParams->getUtf8Subject() != otherParams->getUtf8Subject()))
 				return false;
 		}

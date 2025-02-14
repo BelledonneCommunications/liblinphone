@@ -741,8 +741,8 @@ const list<shared_ptr<Participant>> &Conference::getParticipants() const {
 	return mParticipants;
 }
 
-std::list<std::shared_ptr<Address>> Conference::getParticipantAddresses() const {
-	list<std::shared_ptr<Address>> addresses;
+std::list<std::shared_ptr<const Address>> Conference::getParticipantAddresses() const {
+	list<std::shared_ptr<const Address>> addresses;
 	for (auto &participant : mParticipants) {
 		addresses.push_back(participant->getAddress());
 	}

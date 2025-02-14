@@ -137,7 +137,7 @@ public:
 	std::shared_ptr<Address> getConferenceAddress() const override;
 	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const override;
 	std::list<std::shared_ptr<Participant>> getParticipants() const override;
-	std::list<std::shared_ptr<Address>> getParticipantAddresses() const override;
+	std::list<std::shared_ptr<const Address>> getParticipantAddresses() const override;
 
 	virtual std::shared_ptr<Conference> getConference() const override;
 
