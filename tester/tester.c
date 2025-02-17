@@ -161,7 +161,7 @@ const int x3dhServer_creationTimeout = 20000;     // in ms, use this value for d
                                                   //
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with
             our Freebox v6 when connecting to Ipv6 addresses. It was found that the freebox sometimes block SYN-ACK
-            packets, which prevents connection to be succesful. Thanks to the timeout, it will fallback to IPv4*/
+            packets, which prevents connection to be successful. Thanks to the timeout, it will fallback to IPv4*/
 char *message_external_body_url = NULL;
 static const char *notify_content = "<somexml2>blabla</somexml2>";
 

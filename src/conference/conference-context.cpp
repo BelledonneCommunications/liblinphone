@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceContext::ConferenceContext(const std::shared_ptr<ConferenceParams> &params,
                                      const std::shared_ptr<const Address> &localAddress,
                                      const std::shared_ptr<const Address> &remoteAddress,
-                                     const std::list<std::shared_ptr<const Address>> &participants) {
+                                     const std::list<std::shared_ptr<Address>> &participants) {
 	mParams = params;
 	mParticipants = participants;
 	mLocalAddress = (localAddress) ? localAddress->getUriWithoutGruu() : Address();

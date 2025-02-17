@@ -880,7 +880,7 @@ public:
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::addParticipant;
-	bool addParticipant(const std::shared_ptr<const Address> &addr) override {
+	bool addParticipant(const std::shared_ptr<Address> &addr) override {
 		bool status = Conference::addParticipant(addr);
 		std::shared_ptr<Participant> p = findParticipant(addr);
 		p->addDevice(addr);

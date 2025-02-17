@@ -329,9 +329,7 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 	if (*peerAddress == chatRoomPeerAddress->getUriWithoutGruu()) {
 		chatRoom = getSharedFromThis();
 	} else {
-		std::list<std::shared_ptr<const Address>> emptyList;
-		chatRoom =
-		    getCore()->getPrivate()->searchChatRoom(getCurrentParams(), getLocalAddress(), peerAddress, emptyList);
+		chatRoom = getCore()->getPrivate()->searchChatRoom(getCurrentParams(), getLocalAddress(), peerAddress, {});
 		if (!chatRoom) {
 			shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
 			params->setChatDefaults();
@@ -1038,10 +1036,10 @@ std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
 	return conference->getParticipants();
 }
 
-std::list<std::shared_ptr<const Address>> ChatRoom::getParticipantAddresses() const {
+std::list<std::shared_ptr<Address>> ChatRoom::getParticipantAddresses() const {
 	const auto conference = getConference();
 	if (!conference) {
-		return std::list<std::shared_ptr<const Address>>();
+		return {};
 	}
 	return conference->getParticipantAddresses();
 }

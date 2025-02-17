@@ -97,7 +97,7 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 		         << "] The session to update the conference information of conference "
 		         << (conferenceAddress && conferenceAddress->isValid() ? conferenceAddress->toString()
 		                                                               : std::string("sip:"))
-		         << " did not succesfully establish hence it is likely that the request wasn't taken into account by "
+		         << " did not successfully establish hence it is likely that the request wasn't taken into account by "
 		            "the server";
 		setState(State::Error);
 	} else if (getState() != State::Error) {

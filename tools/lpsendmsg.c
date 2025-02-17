@@ -63,7 +63,7 @@ static void on_msg_state_changed(BCTBX_UNUSED(LinphoneChatMessage *msg), Linphon
 			running = FALSE;
 			break;
 		case LinphoneChatMessageStateDelivered:
-			printf("Message transmitted succesfully.\n");
+			printf("Message transmitted successfully.\n");
 			running = FALSE;
 			break;
 		case LinphoneChatMessageStateDeliveredToUser:

@@ -252,7 +252,7 @@ public:
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<ConferenceParams> &params,
 	                                             const std::shared_ptr<const Address> &localAddress,
 	                                             const std::shared_ptr<const Address> &remoteAddress,
-	                                             const std::list<std::shared_ptr<const Address>> &participants) const;
+	                                             const std::list<std::shared_ptr<Address>> &participants) const;
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<const Address> &conferenceAddress) const;
 	std::shared_ptr<Conference> searchConference(const std::string identifier) const;
 

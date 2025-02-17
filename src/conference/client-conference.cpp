@@ -566,8 +566,7 @@ void ClientConference::callFocus() {
 		                                                               Utils::toString(true));
 		linphone_call_params_enable_video(params, mConfParams->videoEnabled());
 		Conference::setUtf8Subject(mPendingSubject);
-		const std::list<std::shared_ptr<const Address>> addresses;
-		inviteAddresses(addresses, params);
+		inviteAddresses({}, params);
 		linphone_call_params_unref(params);
 	}
 }
@@ -592,7 +591,7 @@ bool ClientConference::addParticipant(BCTBX_UNUSED(const std::shared_ptr<Partici
 	return false;
 }
 
-bool ClientConference::addParticipant(const std::shared_ptr<const Address> &participantAddress) {
+bool ClientConference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	// Search call that matches participant session
 	const std::list<std::shared_ptr<Call>> &coreCalls = getCore()->getCalls();
 	auto callIt = std::find_if(coreCalls.cbegin(), coreCalls.cend(), [&](const std::shared_ptr<Call> &c) {
@@ -603,7 +602,7 @@ bool ClientConference::addParticipant(const std::shared_ptr<const Address> &part
 		std::shared_ptr<Call> call = *callIt;
 		ret = addParticipant(call);
 	} else {
-		const list<std::shared_ptr<const Address>> addresses{participantAddress};
+		const list<std::shared_ptr<Address>> addresses{participantAddress};
 		ret = addParticipants(addresses);
 	}
 	return ret;
@@ -669,7 +668,7 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 
 // Removes own address and existing participants from the list.
 // Also removes gruu from kept addresses
-std::list<Address> ClientConference::cleanAddressesList(const list<std::shared_ptr<const Address>> &addresses) const {
+std::list<Address> ClientConference::cleanAddressesList(const list<std::shared_ptr<Address>> &addresses) const {
 	std::list<Address> cleanedList;
 	const auto &meAddress = getMe()->getAddress();
 	for (const auto &address : addresses) {
@@ -705,7 +704,7 @@ bool ClientConference::addParticipants(const std::list<std::shared_ptr<Call>> &c
 	return false;
 }
 
-bool ClientConference::addParticipants(const list<std::shared_ptr<const Address>> &addresses) {
+bool ClientConference::addParticipants(const list<std::shared_ptr<Address>> &addresses) {
 	const auto isChat = mConfParams->chatEnabled();
 	if (getMe()->isAdmin() || ((mState == ConferenceInterface::State::Instantiated) && isChat)) {
 		const auto mediaSupported = supportsMedia();
@@ -2009,7 +2008,7 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-int ClientConference::inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
+int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
                                       const LinphoneCallParams *params) {
 	const auto &account = mConfParams->getAccount();
 	const auto organizer = account ? account->getAccountParams()->getIdentityAddress()
@@ -2045,7 +2044,7 @@ int ClientConference::inviteAddresses(const std::list<std::shared_ptr<const Addr
 	return 0;
 }
 
-bool ClientConference::dialOutAddresses(BCTBX_UNUSED(const std::list<std::shared_ptr<const Address>> &addressList)) {
+bool ClientConference::dialOutAddresses(BCTBX_UNUSED(const std::list<std::shared_ptr<Address>> &addressList)) {
 	lError() << *this << ": ClientConference::dialOutAddresses() not implemented";
 	return false;
 }
@@ -2551,7 +2550,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 		getCore()->removeConferencePendingCreation(ref);
 		if (remoteAddress == nullptr) {
 			lError() << *this
-			         << " The session to update the conference information did not succesfully establish hence it is "
+			         << " The session to update the conference information did not successfully establish hence it is "
 			            "likely that the request wasn't taken into account by the server";
 			setState(ConferenceInterface::State::CreationFailed);
 		} else if (dynamic_pointer_cast<MediaSession>(session) &&
@@ -2560,7 +2559,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 		           (session->getParams()->getPrivate()->getStartTime() < 0)) {
 			auto conferenceAddress = remoteAddress;
 
-			lInfo() << *this << " has been succesfully created: " << *conferenceAddress;
+			lInfo() << *this << " has been successfully created: " << *conferenceAddress;
 			const auto &meAddress = getMe()->getAddress();
 			ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
 			// Do not change the conference ID yet if exhuming a chatroom

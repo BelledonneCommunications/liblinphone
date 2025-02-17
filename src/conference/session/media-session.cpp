@@ -4778,8 +4778,8 @@ void MediaSession::sendVfuRequest() {
 	} else lInfo() << "vfu request using sip disabled from config [sip,vfu_with_info]";
 }
 
-// Try to search the local conference by first looking at the contact address and if it is unsuccesfull to the to
-// address as a client may try to be calling a conference URI directly Typically, the seach using the contact address
+// Try to search the local conference by first looking at the contact address and if it is unsuccessfull to the to
+// address as a client may try to be calling a conference URI directly Typically, the search using the contact address
 // will succeed when a client creates a conference.
 const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	L_D();

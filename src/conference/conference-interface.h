@@ -148,7 +148,7 @@ public:
 	 <br>
 	 @param[in] participantAddress The address of the participant to add to this Conference.
 	*/
-	virtual bool addParticipant(const std::shared_ptr<const Address> &participantAddress) = 0;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) = 0;
 
 	/*
 	 * Same as function addParticipant(const std::shared_ptr<Address> &participantAddress), except that call to add is
@@ -171,7 +171,7 @@ public:
 	 * @param[in] addresses
 	 * @return True if everything is OK, False otherwise
 	 */
-	virtual bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) = 0;
+	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) = 0;
 
 	/*
 	 * Add local participant to this conference, this fonction is only available for local focus. Behavior is the same

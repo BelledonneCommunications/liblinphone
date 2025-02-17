@@ -9488,12 +9488,11 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	// If a participant has an invalid address, the pointer to its address is NULL.
-	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
-	std::list<std::shared_ptr<const LinphonePrivate::Address>> participantsList;
-	for (const bctbx_list_t *elem = participants; elem != NULL; elem = elem->next) {
-		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
+	list<std::shared_ptr<LinphonePrivate::Address>> participantsList;
+	if (participants) {
+		participantsList =
+		    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(
+		        participants);
 	}
 	shared_ptr<const LinphonePrivate::Address> localAddress =
 	    localAddr ? LinphonePrivate::Address::getSharedFromThis(localAddr) : nullptr;

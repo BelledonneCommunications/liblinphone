@@ -1067,8 +1067,7 @@ bool CallSessionPrivate::reportEvents() const {
 	const auto clientConferenceGuessedAddress =
 	    (remoteContactAddress && remoteContactAddress->hasUriParam("conf-id")) ? remoteContactAddress : remoteAddress;
 	const auto &peerAddress = isInConference() ? serverConferenceGuessedAddress : clientConferenceGuessedAddress;
-	const auto conference =
-	    q->getCore()->searchConference(nullptr, nullptr, peerAddress, std::list<std::shared_ptr<const Address>>());
+	const auto conference = q->getCore()->searchConference(nullptr, nullptr, peerAddress, {});
 	ConferenceInterface::State conferenceState =
 	    (conference) ? conference->getState() : ConferenceInterface::State::Instantiated;
 	bool conferenceCreated = !((conferenceState == ConferenceInterface::State::Instantiated) ||

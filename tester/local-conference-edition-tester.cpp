@@ -879,9 +879,9 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			if (conf_info) {
 				linphone_conference_info_set_subject(conf_info, subject);
 				linphone_conference_info_set_description(conf_info, description2);
-				// If the edition is not succesfull, the conference information is not updated
-				// It bring about that if Marie joined the conference, the old conference information information stays
-				// in the database and it has Marie as a participant
+				// If the edition is not successfull, the conference information is not updated
+				// It bring about that if Marie joined the conference, the old conference information stays in the
+				// database and it has Marie as a participant
 				size_t ics_participant_number = 0;
 				if (add) {
 					linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);

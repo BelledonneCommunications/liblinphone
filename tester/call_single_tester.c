@@ -5862,7 +5862,7 @@ static void call_state_changed_3(BCTBX_UNUSED(LinphoneCore *lc),
 	ms_free(from);
 }
 
-static void call_with_transport_change_base(bool_t succesfull_call) {
+static void call_with_transport_change_base(bool_t successfull_call) {
 	LinphoneSipTransports sip_tr;
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
@@ -5896,14 +5896,14 @@ static void call_with_transport_change_base(bool_t succesfull_call) {
 		}
 	}
 
-	if (succesfull_call) {
+	if (successfull_call) {
 		BC_ASSERT_TRUE(call(marie, pauline));
 		end_call(marie, pauline);
 	} else linphone_core_invite(marie->lc, "nexiste_pas");
 
-	if (succesfull_call) BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+	if (successfull_call) BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
-	if (succesfull_call) {
+	if (successfull_call) {
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
 	}

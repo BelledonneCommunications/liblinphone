@@ -276,7 +276,7 @@ std::shared_ptr<AbstractChatRoom>
 CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
                             const std::shared_ptr<const Address> &localAddress,
                             const std::shared_ptr<const Address> &remoteAddress,
-                            const std::list<std::shared_ptr<const Address>> &participants) const {
+                            const std::list<std::shared_ptr<Address>> &participants) const {
 	L_Q();
 	ConferenceContext referenceConferenceContext(params, localAddress, remoteAddress, participants);
 	const auto &chatRooms = q->getRawChatRoomList();
@@ -298,13 +298,12 @@ std::shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom(const std::string 
 	if (!localAddress || !localAddress->isValid() || !peerAddress || !peerAddress->isValid()) {
 		return nullptr;
 	}
-	return searchChatRoom(nullptr, localAddress, peerAddress, std::list<std::shared_ptr<Address>>());
+	return searchChatRoom(nullptr, localAddress, peerAddress, {});
 }
 
-shared_ptr<AbstractChatRoom>
-CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
-                            const std::shared_ptr<const Address> &localAddr,
-                            const std::list<std::shared_ptr<const Address>> &participants) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
+                                                         const std::shared_ptr<const Address> &localAddr,
+                                                         const std::list<std::shared_ptr<Address>> &participants) {
 	L_Q();
 	if (!params) {
 		lWarning() << "Trying to create chat room with null parameters";
@@ -323,12 +322,7 @@ CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
 		lWarning() << "Tying to create chat room with unavailable backend";
 		return nullptr;
 	}
-	shared_ptr<AbstractChatRoom> chatRoom = searchChatRoom(params, localAddr, nullptr, participants);
-	if (chatRoom != nullptr) {
-		lWarning() << "Found already existing chat room that matches the given parameters, using this one "
-		           << *chatRoom;
-		return chatRoom;
-	}
+	shared_ptr<AbstractChatRoom> chatRoom;
 
 	if (params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
@@ -337,6 +331,15 @@ CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
 			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr
 			           << "]";
 			return nullptr;
+		}
+
+		if (!params->isGroup() && participants.size() > 0) {
+			chatRoom = searchChatRoom(params, localAddr, nullptr, participants);
+			if (chatRoom) {
+				lWarning() << "Found already existing 1-1 chat room that matches the given parameters, using this one "
+				           << *chatRoom;
+				return chatRoom;
+			}
 		}
 
 		ConferenceId conferenceId = ConferenceId(nullptr, localAddr, q->createConferenceIdParams());
@@ -362,23 +365,28 @@ CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
 		}
 
 		std::shared_ptr<const Address> remoteAddr = participants.front();
-		chatRoom = createBasicChatRoom(ConferenceId(remoteAddr, localAddr, q->createConferenceIdParams()), params);
-		insertChatRoom(chatRoom);
-		insertChatRoomWithDb(chatRoom);
+		chatRoom = searchChatRoom(params, localAddr, remoteAddr, {});
+		if (chatRoom == nullptr) {
+			std::shared_ptr<const Address> remoteAddr = participants.front();
+			chatRoom = createBasicChatRoom(ConferenceId(remoteAddr, localAddr, q->createConferenceIdParams()), params);
+			insertChatRoom(chatRoom);
+			insertChatRoomWithDb(chatRoom);
+		} else {
+			lInfo() << "Found an existing BasicChatRoom with this participant, using it instead of creating a new one";
+		}
 	}
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom>
-CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
-                            const std::list<std::shared_ptr<const Address>> &participants) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
+                                                         const std::list<std::shared_ptr<Address>> &participants) {
 	auto defaultLocalAddress =
 	    getDefaultLocalAddress(nullptr, params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat);
 	return createChatRoom(params, defaultLocalAddress, participants);
 }
 
-shared_ptr<AbstractChatRoom>
-CorePrivate::createChatRoom(const std::string &subject, const std::list<std::shared_ptr<const Address>> &participants) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subject,
+                                                         const std::list<std::shared_ptr<Address>> &participants) {
 	L_Q();
 
 	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
@@ -397,13 +405,13 @@ CorePrivate::createChatRoom(const std::string &subject, const std::list<std::sha
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
                                                          const std::shared_ptr<Address> &localAddr,
-                                                         const std::shared_ptr<const Address> &participant) {
-	const std::list<std::shared_ptr<const Address>> &participants{participant};
+                                                         const std::shared_ptr<Address> &participant) {
+	const std::list<std::shared_ptr<Address>> &participants{participant};
 	return createChatRoom(params, localAddr, participants);
 }
 
 // Assume basic chat room creation
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::shared_ptr<const Address> &participant) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::shared_ptr<Address> &participant) {
 	return createChatRoom("", {participant});
 }
 
@@ -750,9 +758,7 @@ const bctbx_list_t *Core::getChatRoomsCList() const {
 
 shared_ptr<AbstractChatRoom> Core::findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
-	std::list<std::shared_ptr<const Address>> emptyList;
-	auto chatRoom =
-	    d->searchChatRoom(nullptr, conferenceId.getLocalAddress(), conferenceId.getPeerAddress(), emptyList);
+	auto chatRoom = d->searchChatRoom(nullptr, conferenceId.getLocalAddress(), conferenceId.getPeerAddress(), {});
 	if (chatRoom) {
 		lDebug() << "Found chat room in RAM for conference ID " << conferenceId << ".";
 		return chatRoom;
@@ -783,9 +789,8 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom(const ConferenceId &
 	L_D();
 	ChatRoom::CapabilitiesMask capabilities({ChatRoom::Capabilities::Basic, ChatRoom::Capabilities::OneToOne});
 	auto params = ConferenceParams::fromCapabilities(capabilities, getSharedFromThis());
-	std::list<std::shared_ptr<const Address>> emptyList;
 	shared_ptr<AbstractChatRoom> chatRoom =
-	    d->searchChatRoom(params, conferenceId.getLocalAddress(), conferenceId.getPeerAddress(), emptyList);
+	    d->searchChatRoom(params, conferenceId.getLocalAddress(), conferenceId.getPeerAddress(), {});
 	if (chatRoom) {
 		return chatRoom;
 	}

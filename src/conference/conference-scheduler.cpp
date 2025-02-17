@@ -279,13 +279,13 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 
 	if (getState() == State::AllocationPending) {
 		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully created: " << *conferenceAddress;
+		        << "] Conference has been successfully created: " << *conferenceAddress;
 		mConferenceInfo->setUri(conferenceAddress);
 	} else {
 		const auto &uri = mConferenceInfo->getUri();
 		// No need to update the conference address during an update
 		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully updated: " << (uri ? uri->toString() : std::string("sip:"));
+		        << "] Conference has been successfully updated: " << (uri ? uri->toString() : std::string("sip:"));
 	}
 
 	bool error = false;
@@ -470,9 +470,9 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenc
 
 	// Sending the ICS once for each participant in a separated chat room each time.
 	for (auto participant : mInvitationsToSend) {
-		list<std::shared_ptr<const Address>> chatRoomParticipantList;
+		list<std::shared_ptr<Address>> chatRoomParticipantList;
 		chatRoomParticipantList.push_back(participant);
-		list<std::shared_ptr<const Address>> participantList;
+		list<std::shared_ptr<Address>> participantList;
 		std::shared_ptr<Address> remoteAddress = nullptr;
 		if (conferenceParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) {
 			participantList.push_back(participant);

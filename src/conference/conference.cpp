@@ -348,7 +348,7 @@ bool Conference::addParticipant(std::shared_ptr<Call> call) {
 	return success;
 }
 
-bool Conference::addParticipant(const std::shared_ptr<const Address> &participantAddress) {
+bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
 		lWarning() << "Not adding participant '" << *participantAddress << "' because it is already a participant of "
@@ -369,8 +369,8 @@ std::shared_ptr<CallSession> Conference::getMainSession() const {
 	return mMe->getSession();
 }
 
-bool Conference::addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) {
-	list<std::shared_ptr<const Address>> sortedAddresses(addresses);
+bool Conference::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
+	list<std::shared_ptr<Address>> sortedAddresses(addresses);
 	sortedAddresses.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
 	sortedAddresses.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 
@@ -741,8 +741,8 @@ const list<shared_ptr<Participant>> &Conference::getParticipants() const {
 	return mParticipants;
 }
 
-std::list<std::shared_ptr<const Address>> Conference::getParticipantAddresses() const {
-	list<std::shared_ptr<const Address>> addresses;
+std::list<std::shared_ptr<Address>> Conference::getParticipantAddresses() const {
+	list<std::shared_ptr<Address>> addresses;
 	for (auto &participant : mParticipants) {
 		addresses.push_back(participant->getAddress());
 	}

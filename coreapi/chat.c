@@ -61,7 +61,7 @@ LinphoneChatRoom *linphone_core_create_client_group_chat_room(LinphoneCore *lc, 
 	return linphone_core_create_client_group_chat_room_2(lc, subject, fallback, FALSE);
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc,
                                                                 const char *subject,
                                                                 bool_t fallback,
@@ -71,7 +71,7 @@ LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc
 	    ->toC();
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc,
                                                  const LinphoneChatRoomParams *params,
                                                  const LinphoneAddress *localAddr,
@@ -84,7 +84,7 @@ LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc,
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const char *subject,
@@ -96,7 +96,7 @@ LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc,
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *
 linphone_core_create_chat_room_3(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants) {
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
@@ -106,7 +106,7 @@ linphone_core_create_chat_room_3(LinphoneCore *lc, const char *subject, const bc
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const LinphoneAddress *localAddr,
@@ -117,7 +117,7 @@ LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc,
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const LinphoneAddress *participant) {
 	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)participant);
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
@@ -141,13 +141,8 @@ LinphoneChatRoom *linphone_core_create_chat_room_7(LinphoneCore *lc,
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	// If a participant has an invalid address, the pointer to its address is NULL.
-	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
-	std::list<std::shared_ptr<const LinphonePrivate::Address>> participantsList;
-	for (const bctbx_list_t *elem = participants; elem != NULL; elem = elem->next) {
-		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
-	}
+	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, Address>(participants);
 	shared_ptr<const LinphonePrivate::Address> localAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
@@ -178,13 +173,8 @@ LinphoneChatRoom *linphone_core_search_chat_room_2(const LinphoneCore *lc,
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	// If a participant has an invalid address, the pointer to its address is NULL.
-	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
-	std::list<std::shared_ptr<const LinphonePrivate::Address>> participantsList;
-	for (const bctbx_list_t *elem = participants; elem != NULL; elem = elem->next) {
-		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
-	}
+	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, Address>(participants);
 	shared_ptr<const LinphonePrivate::Address> localAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =

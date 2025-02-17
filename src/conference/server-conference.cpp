@@ -1240,7 +1240,7 @@ shared_ptr<ConferenceAvailableMediaEvent> ServerConference::notifyAvailableMedia
 	return Conference::notifyAvailableMediaChanged(creationTime, isFullState, mediaCapabilities);
 }
 
-int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>> &addresses,
+int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
                                       const LinphoneCallParams *params) {
 
 	const auto &coreCurrentCall = getCore()->getCurrentCall();
@@ -1385,7 +1385,7 @@ int ServerConference::inviteAddresses(const list<std::shared_ptr<const Address>>
 	return 0;
 }
 
-bool ServerConference::dialOutAddresses(const std::list<std::shared_ptr<const Address>> &addressList) {
+bool ServerConference::dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) {
 	auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 	linphone_call_params_enable_audio(new_params, mConfParams->audioEnabled());
 	linphone_call_params_enable_video(new_params, mConfParams->videoEnabled());
@@ -1763,7 +1763,7 @@ bool ServerConference::addParticipants(const std::list<std::shared_ptr<Call>> &c
 	return success;
 }
 
-bool ServerConference::addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) {
+bool ServerConference::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
 	return Conference::addParticipants(addresses);
 }
 
@@ -2017,7 +2017,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 
 		// If no resource list is provided in the INVITE, there is not need to call participants
 		if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !isEmpty) {
-			list<std::shared_ptr<const Address>> addresses;
+			std::list<std::shared_ptr<Address>> addresses;
 			for (auto &participant : mInvitedParticipants) {
 				const auto &addr = participant->getAddress();
 				// Do not invite organizer as it is already dialing in
@@ -2035,7 +2035,7 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 	return false;
 }
 
-bool ServerConference::addParticipant(const std::shared_ptr<const Address> &participantAddress) {
+bool ServerConference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	auto participantInfo = Factory::get()->createParticipantInfo(participantAddress);
 	// Participants invited after the start of a conference through the address can only listen to it
 	participantInfo->setRole(Participant::Role::Listener);
@@ -2061,7 +2061,7 @@ bool ServerConference::addParticipant(const std::shared_ptr<ParticipantInfo> &in
 					mInvitedParticipants.push_back(participant);
 				}
 
-				std::list<std::shared_ptr<const Address>> addressesList{participantAddress};
+				std::list<std::shared_ptr<Address>> addressesList{participantAddress};
 				return dialOutAddresses(addressesList);
 			}
 		} else {

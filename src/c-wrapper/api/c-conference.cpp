@@ -349,11 +349,8 @@ LinphoneStatus linphone_conference_invite_participants(LinphoneConference *confe
                                                        const bctbx_list_t *addresses,
                                                        const LinphoneCallParams *params) {
 	ConferenceLogContextualizer logContextualizer(conference);
-	std::list<std::shared_ptr<const LinphonePrivate::Address>> addressList;
-	for (const bctbx_list_t *elem = addresses; elem != nullptr; elem = elem->next) {
-		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-		addressList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
-	}
+	std::list<std::shared_ptr<LinphonePrivate::Address>> addressList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(addresses);
 	return Conference::toCpp(conference)->inviteAddresses(addressList, params);
 }
 
@@ -365,11 +362,8 @@ LinphoneStatus linphone_conference_add_participants(LinphoneConference *conferen
 
 LinphoneStatus linphone_conference_add_participants_2(LinphoneConference *conference, const bctbx_list_t *addresses) {
 	ConferenceLogContextualizer logContextualizer(conference);
-	std::list<std::shared_ptr<const LinphonePrivate::Address>> addressList;
-	for (const bctbx_list_t *elem = addresses; elem != nullptr; elem = elem->next) {
-		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-		addressList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
-	}
+	std::list<std::shared_ptr<LinphonePrivate::Address>> addressList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(addresses);
 	return Conference::toCpp(conference)->addParticipants(addressList);
 }
 

@@ -2973,6 +2973,8 @@ static void multidomain_group_chat_room(void) {
 		initialMichelleStats = michelle.getStats();
 		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
+		ms_message("%s creates chat on conference server %s", linphone_core_get_identity(marie.getLc()),
+		           focusAuth1DotExampleDotOrgFactoryAddress.toString().c_str());
 		LinphoneChatRoom *marieCrfocusAuth1DotExampleDotOrg =
 		    create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses,
 		                                 initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);

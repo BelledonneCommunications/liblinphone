@@ -469,11 +469,8 @@ void linphone_chat_room_add_participant(LinphoneChatRoom *chat_room, LinphoneAdd
 bool_t linphone_chat_room_add_participants(LinphoneChatRoom *chat_room, const bctbx_list_t *addresses) {
 	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(chat_room);
 	if (linphone_chat_room_can_handle_participants(chat_room)) {
-		std::list<std::shared_ptr<const LinphonePrivate::Address>> addressList;
-		for (const bctbx_list_t *elem = addresses; elem != NULL; elem = elem->next) {
-			const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-			addressList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
-		}
+		std::list<std::shared_ptr<LinphonePrivate::Address>> addressList =
+		    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(addresses);
 		return AbstractChatRoom::toCpp(chat_room)->getConference()->addParticipants(addressList);
 	}
 	return FALSE;
@@ -570,7 +567,7 @@ void linphone_chat_room_remove_participants(LinphoneChatRoom *chat_room, const b
 	ChatRoomLogContextualizer logContextualizer(chat_room);
 	if (linphone_chat_room_can_handle_participants(chat_room)) {
 		AbstractChatRoom::toCpp(chat_room)->getConference()->removeParticipants(
-		    Participant::getCppListFromCList(participants));
+		    Utils::bctbxListToCppSharedPtrList<LinphoneParticipant, Participant>(participants));
 	}
 }
 
@@ -644,7 +641,8 @@ void linphone_chat_room_set_participant_devices(LinphoneChatRoom *chat_room,
                                                 const bctbx_list_t *deviceIdentities) {
 #ifdef HAVE_ADVANCED_IM
 	list<shared_ptr<ParticipantDeviceIdentity>> lDevicesIdentities =
-	    ParticipantDeviceIdentity::getCppListFromCList(deviceIdentities);
+	    Utils::bctbxListToCppSharedPtrList<LinphoneParticipantDeviceIdentity,
+	                                       LinphonePrivate::ParticipantDeviceIdentity>(deviceIdentities);
 	shared_ptr<ServerChatRoom> sgcr =
 	    dynamic_pointer_cast<ServerChatRoom>(AbstractChatRoom::toCpp(chat_room)->getSharedFromThis());
 	if (sgcr)

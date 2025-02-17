@@ -80,9 +80,9 @@ public:
 
 	virtual ~Conference();
 
-	virtual int inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) = 0;
-	virtual bool dialOutAddresses(const std::list<std::shared_ptr<const Address>> &addressList) = 0;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) = 0;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<Call> call) = 0;
 
 	std::shared_ptr<Participant> getActiveParticipant() const;
@@ -114,15 +114,15 @@ public:
 	void addInvitedParticipant(const std::shared_ptr<Participant> &participant);
 	bool addParticipant(std::shared_ptr<Call> call) override;
 	bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
-	bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
-	bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipantDevice(std::shared_ptr<Call> call);
 	virtual void addParticipantDevice(const std::shared_ptr<Participant> &participant,
 	                                  const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
-	std::list<std::shared_ptr<const Address>> getParticipantAddresses() const;
+	std::list<std::shared_ptr<Address>> getParticipantAddresses() const;
 	std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const override;
 	std::shared_ptr<Participant> getScreenSharingParticipant() const;
 	std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;

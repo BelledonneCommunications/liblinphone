@@ -52,14 +52,14 @@ public:
 	                   const std::shared_ptr<CallSession> &focusSession,
 	                   SalCallOp *op = nullptr,
 	                   ConferenceListener *confListener = nullptr);
-	virtual int inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) override;
-	virtual bool dialOutAddresses(const std::list<std::shared_ptr<const Address>> &addressList) override;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) override;
 	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<Call>> &call) override;
-	virtual bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) override;
+	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<Call> call) override;
-	virtual bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	virtual std::shared_ptr<ParticipantDevice> createParticipantDevice(std::shared_ptr<Participant> participant,
 	                                                                   std::shared_ptr<Call> call) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<Call> call) override;
@@ -211,7 +211,7 @@ private:
 
 	void onFocusCallStateChanged(CallSession::State state, const std::string &message);
 	void onPendingCallStateChanged(std::shared_ptr<Call> call, CallSession::State callState);
-	std::list<Address> cleanAddressesList(const std::list<std::shared_ptr<const Address>> &addresses) const;
+	std::list<Address> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 
 	virtual void configure(SalCallOp *op) override;
 

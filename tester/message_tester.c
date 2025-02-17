@@ -4610,7 +4610,7 @@ static int message_tester_before_suite(void) {
 	command = bctbx_strdup_printf("mkdir -p %s/.local/share/linphone", home);
 	err = system(command);
 	if (err != -1 && WIFEXITED(err) && WEXITSTATUS(err) == 0) {
-		bctbx_message("%s done succesfully.", command);
+		bctbx_message("%s done successfully.", command);
 	} else {
 		bctbx_error("%s failed. Some tests may fail.", command);
 	}
