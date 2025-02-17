@@ -1291,7 +1291,7 @@ void CallSessionPrivate::repairIfBroken() {
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
-			if (op->getRemoteTag() != nullptr) {
+			if (op->getRemoteTag() != nullptr && strlen(op->getRemoteTag()) > 0) {
 				repairByNewInvite(true);
 				broken = false;
 			} else {
