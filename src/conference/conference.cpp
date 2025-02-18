@@ -176,6 +176,8 @@ std::shared_ptr<ParticipantDevice> Conference::createParticipantDevice(std::shar
 			        << " (address " << *dAddress << ") which is requesting to join " << *this;
 		}
 		device->setState(deviceState, false);
+		// By default send a NOTIFY to inform the other clients that has been added
+		device->setSendAddedNotify(true);
 		return device;
 	} else {
 		lDebug() << "Participant with address " << *remoteAddress << " has already a device with session " << session;
@@ -188,8 +190,11 @@ bool Conference::addParticipantDevice(std::shared_ptr<Call> call) {
 	auto p = findParticipant(remoteAddress);
 	if (p) {
 		auto device = createParticipantDevice(p, call);
-		notifyNewDevice(device);
-		return (device != nullptr);
+		bool added = (device != nullptr);
+		if (added) {
+			notifyNewDevice(device);
+		}
+		return added;
 	}
 
 	return false;
@@ -319,7 +324,8 @@ std::shared_ptr<Participant> Conference::createParticipant(std::shared_ptr<Call>
 		participant->setAdmin(value);
 	}
 
-	createParticipantDevice(participant, call);
+	auto device = createParticipantDevice(participant, call);
+	device->setSendAddedNotify(false);
 
 	return participant;
 }

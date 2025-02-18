@@ -865,6 +865,7 @@ static void conference_with_participants_late_except_one(void) {
 			}
 		}
 
+		stats pauline_stat = pauline.getStats();
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
@@ -912,6 +913,21 @@ static void conference_with_participants_late_except_one(void) {
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_present,
 		                             focus_stat.number_of_participant_devices_present + 5,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
+		                             pauline_stat.number_of_participants_added + 4, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+		                             pauline_stat.number_of_participant_devices_added + 4,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+		                              pauline_stat.number_of_participant_devices_added + 5,
+		                              liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_conference_participant_devices_present,
+		                             pauline_stat.number_of_conference_participant_devices_present + 4,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_present,
+		                             pauline_stat.number_of_participant_devices_present + 4,
 		                             liblinphone_tester_sip_timeout));
 
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =

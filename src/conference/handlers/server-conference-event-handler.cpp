@@ -617,7 +617,6 @@ string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::sha
 	confInfo.setUsers(users);
 	UserType user = UserType();
 	UserRolesType roles;
-	UserType::EndpointSequence endpoints;
 
 	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
@@ -713,7 +712,6 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceAdded(const st
 	confInfo.setUsers(users);
 
 	UserType user = UserType();
-	UserType::EndpointSequence endpoints;
 	user.setEntity(pAddress->asStringUriOnly());
 	user.setState(StateType::partial);
 
@@ -1393,11 +1391,13 @@ void ServerConferenceEventHandler::onParticipantDeviceAdded(
 	if (conf) {
 		auto participant = device->getParticipant();
 		const auto &pAddress = participant->getAddress();
-		// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
-		if ((device->getSsrc(LinphoneStreamTypeAudio) != 0) || (device->getSsrc(LinphoneStreamTypeVideo) != 0)) {
-			notifyAll(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)));
-		} else {
-			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
+		if (device->addedNotifySent()) {
+			// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
+			if ((device->getSsrc(LinphoneStreamTypeAudio) != 0) || (device->getSsrc(LinphoneStreamTypeVideo) != 0)) {
+				notifyAll(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)));
+			} else {
+				notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
+			}
 		}
 		// Enquire whether this conference belongs to a server group chat room
 		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();

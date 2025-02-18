@@ -2222,9 +2222,8 @@ bool ServerConference::addParticipantAndDevice(std::shared_ptr<Call> call) {
 	auto success = Conference::addParticipant(call);
 	if (success) {
 		auto session = call->getActiveSession();
-		// Not really useful to notify the new device as it is already done by the method Conference::addParticipant.
-		// Nonetheless this allow to call a few callback related to the participant device addition and state on the
-		// server side
+		// Just notify the application that a new device has been added but do not send out the XML
+		// In fact the list of endpoints has already been sent out by onParticipantAdded callback
 		notifyNewDevice(findParticipantDevice(session));
 	} else {
 		// If the participant has already been added, at least try to add the device

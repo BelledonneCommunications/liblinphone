@@ -847,6 +847,14 @@ void *ParticipantDevice::getWindowId() const {
 	return mWindowId;
 }
 
+void ParticipantDevice::setSendAddedNotify(bool sendNotify) {
+	mSendAddedNotify = sendNotify;
+}
+
+bool ParticipantDevice::addedNotifySent() const {
+	return mSendAddedNotify;
+}
+
 void ParticipantDevice::setIsSpeaking(bool isSpeaking) {
 	mIsSpeaking = isSpeaking;
 }
