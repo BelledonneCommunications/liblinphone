@@ -2017,6 +2017,10 @@ SalStreamDescription &MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMedi
 						md->streams[static_cast<size_t>(freeSlot)] = stream;
 					}
 				} else {
+					if (idxOldMd == streamIdx) {
+						lFatal() << "Unable to find available free stream description index:\n- Index in previous SDP: "
+						         << idxOldMd << "\n- Guessed index: " << streamIdx;
+					}
 					auto &streamToFill = addStreamToMd(md, idxOldMd, oldMd);
 					streamToFill = stream;
 				}
@@ -2188,6 +2192,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 		const auto &currentConfParams = conference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams->videoEnabled();
 		bool isVideoStream = (type == SalVideo);
+		bool isConferenceServer = linphone_core_conference_server_enabled(q->getCore()->getCCore());
+		const auto &remoteContactAddress = q->getRemoteContactAddress();
 
 		// Add additional video streams if required
 		if ((isVideoStream && isVideoConferenceEnabled) || (type == SalAudio)) {
@@ -2200,7 +2206,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 			}
 			const auto &confLayout = parameters->getConferenceVideoLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-			if (localIsOfferer && !linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+			if (localIsOfferer && !isConferenceServer) {
 				bool request = true;
 				if (isVideoStream) {
 					request = conference->areThumbnailsRequested(false);
@@ -2213,7 +2219,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 					                                             : ""));
 					const std::string bundleNameStreamPrefix((isVideoStream) ? "vs" : "as");
 					const auto participantDeviceAddress =
-					    (isInLocalConference) ? q->getRemoteContactAddress() : q->getContactAddress();
+					    (isInLocalConference) ? remoteContactAddress : q->getContactAddress();
 					for (const auto &p : conference->getParticipants()) {
 						for (const auto &dev : p->getDevices()) {
 							const auto &devAddress = dev->getAddress();
@@ -2259,81 +2265,84 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 				} else {
 					if (getParams()->rtpBundleEnabled()) {
 						lWarning() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress()
-						           << " remote address " << *q->getRemoteAddress() << " in conference [" << conference
-						           << "] (address: " << *conference->getConferenceAddress()
-						           << ") is not requesting other participants' camera stream because their number "
+						           << " remote address " << *q->getRemoteAddress() << "] in " << *conference
+						           << " is not requesting other participants' camera stream because their number "
 						           << conference->getParticipantCount()
 						           << " is bigger than the maximum allowed for this core "
 						           << linphone_core_get_conference_max_thumbnails(q->getCore()->getCCore());
 					} else {
 						lWarning() << "In an effort to ensure a satisfactory video conferencing quality, MediaSession ["
 						           << q << "] (local address " << *q->getLocalAddress() << " remote address "
-						           << *q->getRemoteAddress() << " in conference [" << conference
-						           << "] (address: " << *conference->getConferenceAddress()
-						           << ") is not requesting other participants' camera stream because RTP bundle has "
+						           << *q->getRemoteAddress() << "] in " << *conference
+						           << " is not requesting other participants' camera stream because RTP bundle has "
 						              "been disabled";
 					}
 				}
-			} else {
-				// The conference server is a passive core, therefore he must not add any stream to the SDP
-				// Do not attempt to modify already existing streams
-				const auto &refMd =
-				    (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && localIsOfferer)
-				        ? oldMd
-				        : op->getRemoteMediaDescription();
-
-				// By default, every participant has a main stream and a thumbnail to send its video stream to the
-				// conference server
-				const unsigned int protectedStreams = (type == SalVideo) ? 2 : 1;
-				unsigned int nbStream = 0;
-
+			} else if (isConferenceServer ||
+			           (remoteContactAddress && remoteContactAddress->hasParam(Conference::IsFocusParameter))) {
+				// The conference server is a passive element, therefore it should always look at the client offer to
+				// know the participant stream order Clients may also enter this if branch if they receive an INVITE by
+				// a conference server. This is the case at the beginning of dial out conference for the initial INVITE
+				// and the ICE reINVITE, should ICE be enabled In the case of clients, it is important to verify that
+				// they are still in a conference. As they end up executing this code when they receive an offer from
+				// the server, it is important to make sure that the isfocus parameter is found in the remote contact
+				// address. In fact, if the server remove a participant from a conference, the client conference is
+				// still alive (i.e. its pointer is not null). In such a scenario, the conference will not add any
+				// content to the streams (including the main one) and the client will associate it to a thumbnail
+				// stream when the conference is in the Grid layout
+				const auto &refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
+				// Other participants thumbnails are send by the server to the client
+				const auto thumbnailDirection = isConferenceServer ? SalStreamRecvOnly : SalStreamSendOnly;
 				auto beginIt = refMd->streams.cbegin();
 				for (auto sIt = beginIt; sIt != refMd->streams.end(); sIt++) {
 					const auto &s = *sIt;
-					if (s.getType() == type) {
-						nbStream++;
-						if (nbStream > protectedStreams) {
+					const std::string contentAttrValue = s.getContent();
+					if ((s.getType() == type) && (s.getDirection() == thumbnailDirection) &&
+					    !MediaSessionPrivate::isMainStreamContent(contentAttrValue)) {
+						const auto idx = std::distance(refMd->streams.cbegin(), sIt);
+						const std::string participantsAttrValue = s.getLabel();
 
-							const auto idx = std::distance(refMd->streams.cbegin(), sIt);
-							const std::string contentAttrValue = s.getContent();
-							const std::string participantsAttrValue = s.getLabel();
-
-							std::shared_ptr<ParticipantDevice> dev = nullptr;
-							if (!participantsAttrValue.empty()) {
-								dev = conference->findParticipantDeviceByLabel(sal_stream_type_to_linphone(type),
-								                                               participantsAttrValue);
-								if (!dev && conference->getMe()) {
-									// It might be me
-									dev = conference->getMe()->findDevice(sal_stream_type_to_linphone(type),
-									                                      participantsAttrValue, false);
-								}
+						std::shared_ptr<ParticipantDevice> dev = nullptr;
+						if (!participantsAttrValue.empty()) {
+							dev = conference->findParticipantDeviceByLabel(sal_stream_type_to_linphone(type),
+							                                               participantsAttrValue);
+							if (!dev && conference->getMe()) {
+								// It might be me
+								dev = conference->getMe()->findDevice(sal_stream_type_to_linphone(type),
+								                                      participantsAttrValue, false);
 							}
+						}
 
-							SalStreamDescription &newStream = addStreamToMd(md, static_cast<int>(idx), oldMd);
-							if (dev) {
-								newStream.setContent(contentAttrValue);
-								fillConferenceParticipantStream(newStream, oldMd, md, dev, pth, encs, type, s.getMid());
-							} else {
-								const auto &s = refMd->streams[static_cast<size_t>(idx)];
-								SalStreamConfiguration cfg;
-								cfg.dir = SalStreamInactive;
-								newStream.disable();
-								newStream.type = s.type;
-								newStream.rtp_port = 0;
-								newStream.rtcp_port = 0;
-								newStream.addActualConfiguration(cfg);
-								lWarning() << *q
-								           << ": New stream added as disabled and inactive because no device has been "
-								              "found with label "
-								           << participantsAttrValue << " in conference "
-								           << *conference->getConferenceAddress();
-							}
+						SalStreamDescription &newStream = addStreamToMd(md, static_cast<int>(idx), oldMd);
+						if (dev) {
+							newStream.setContent(contentAttrValue);
+							fillConferenceParticipantStream(newStream, oldMd, md, dev, pth, encs, type, s.getMid());
+						} else {
+							const auto &s = refMd->streams[static_cast<size_t>(idx)];
+							SalStreamConfiguration cfg;
+							cfg.dir = SalStreamInactive;
+							newStream.disable();
+							newStream.type = s.type;
+							newStream.rtp_port = 0;
+							newStream.rtcp_port = 0;
+							newStream.addActualConfiguration(cfg);
+							lWarning() << *q
+							           << ": New stream added as disabled and inactive because no device has been "
+							              "found with label "
+							           << participantsAttrValue << " in " << *conference;
 						}
 					}
 				}
 			}
 		}
 	}
+}
+
+bool MediaSessionPrivate::isMainStreamContent(const std::string &content) {
+	// The main stream has always a content whereas participant stream may not have a content
+	return ((content == MediaSessionPrivate::ScreenSharingContentAttribute) ||
+	        (content == MediaSessionPrivate::ActiveSpeakerVideoContentAttribute) ||
+	        (content == MediaSessionPrivate::GridVideoContentAttribute));
 }
 
 void MediaSessionPrivate::validateVideoStreamDirection(SalStreamConfiguration &cfg) const {

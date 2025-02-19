@@ -318,7 +318,7 @@ void ParticipantDevice::setState(State newState, bool notify) {
 bool ParticipantDevice::enableScreenSharing(bool enabled) {
 	bool changed = (screenSharingEnabled() != enabled);
 	if (changed) {
-		lInfo() << *this << std::string(enabled ? "starts" : "stops") << " sharing its screen";
+		lInfo() << *this << " " << std::string(enabled ? "starts" : "stops") << " sharing its screen";
 		mIsScreenSharing = enabled;
 		if (mSession && mSession->getPrivate()->isInConference()) {
 			if (enabled) {

@@ -54,6 +54,7 @@ public:
 	static const std::string ThumbnailVideoContentAttribute;
 	static const std::string ScreenSharingContentAttribute;
 
+	static bool isMainStreamContent(const std::string &content);
 	static int resumeAfterFailedTransfer(void *userData, unsigned int);
 	static void stunAuthRequestedCb(void *userData,
 	                                const char *realm,
