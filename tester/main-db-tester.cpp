@@ -374,43 +374,56 @@ static void get_chat_rooms() {
 }
 
 static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
-	long expectedDurationMs = 600;
+	long expectedDurationMs;
+	long ms;
+	/*
+	 * This test makes a performance assertion.
+	 * It is then quite unreliable: for example it may be to slower if the database read requires disk access and disk
+	 * is busy compared to the case where the database file is cached by the system into RAM. To circumvent this, we
+	 * give two attempts. It the first fails, there is a second attempt, where normally disk access shall no longer be a
+	 * problem.
+	 */
+	for (int attempts = 0; attempts < 2; attempts++) {
+		expectedDurationMs = 600;
 #ifndef _WIN32
-	int current_priority = getpriority(PRIO_PROCESS, 0);
-	int err = setpriority(PRIO_PROCESS, 0, -20);
-	if (err != 0) {
-		ms_warning("load_a_lot_of_chatrooms(): setpriority failed [%s]- the time measurement may be unreliable",
-		           strerror(errno));
-	}
+		int current_priority = getpriority(PRIO_PROCESS, 0);
+		int err = setpriority(PRIO_PROCESS, 0, -20);
+		if (err != 0) {
+			ms_warning("load_a_lot_of_chatrooms(): setpriority failed [%s]- the time measurement may be unreliable",
+			           strerror(errno));
+		}
 #endif
 
-	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
-	MainDbProvider provider("db/chatrooms.db", keep_gruu);
-	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
-	long ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
+		chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
+		MainDbProvider provider("db/chatrooms.db", keep_gruu);
+		chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+		ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 #ifdef ENABLE_SANITIZER
-	expectedDurationMs = 3000;
+		expectedDurationMs = 3000;
 #else
 #if __APPLE__
-	expectedDurationMs = 1000;
+		expectedDurationMs = 1000;
 #endif
 #endif
 #ifndef __arm__
-	float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
-	float bogomips = liblinphone_tester_get_cpu_bogomips();
-	if (bogomips != 0) {
-		expectedDurationMs = (long)(((float)expectedDurationMs) * referenceBogomips / bogomips);
-		bctbx_message("Adjusted expected duration with current bogomips (%f): %li ms", bogomips, expectedDurationMs);
-	}
+		float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
+		float bogomips = liblinphone_tester_get_cpu_bogomips();
+		if (bogomips != 0) {
+			expectedDurationMs = (long)(((float)expectedDurationMs) * referenceBogomips / bogomips);
+			bctbx_message("Adjusted expected duration with current bogomips (%f): %li ms", bogomips,
+			              expectedDurationMs);
+		}
 #endif
-	BC_ASSERT_LOWER(ms, expectedDurationMs, long, "%li");
-
 #ifndef _WIN32
-	err = setpriority(PRIO_PROCESS, 0, current_priority);
-	if (err != 0) {
-		ms_warning("load_a_lot_of_chatrooms(): cannot restore priority to [%i]: %s", current_priority, strerror(errno));
-	}
+		err = setpriority(PRIO_PROCESS, 0, current_priority);
+		if (err != 0) {
+			ms_warning("load_a_lot_of_chatrooms(): cannot restore priority to [%i]: %s", current_priority,
+			           strerror(errno));
+		}
 #endif
+		if (ms <= expectedDurationMs) break;
+	}
+	BC_ASSERT_LOWER(ms, expectedDurationMs, long, "%li");
 }
 
 static void load_a_lot_of_chatrooms(void) {

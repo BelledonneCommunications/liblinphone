@@ -17,8 +17,6 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Java wrapper for Linux and Windows (see *java-sdk-linux* and *java-sdk-windows* linphone-sdk cmake presets)
 - Python wrapper for Linux (use -DENABLE_PYTHON_WRAPPER=ON)
 - Screensharing.
-- Support for SFU-based audio and video conferencing
-- End to end encryption for audio/video conferences, using double SRTP encryption RFC8723 and RFC8870 (EKT)
 - Creation of conferences through CCMP protocol (RFC6503) via ConferenceScheduler object.
 - VCARD version 3 compatibility (in addition to version 4).
 - Bearer authentication for SIP and http utilities (remote provisioning, file transfer...).
@@ -33,6 +31,9 @@ This changelog file was started on October 2019. Previous changes were more or l
 - new linphone_video_activation_policy_set_automatically_accept_direction() to help apps handle asymmetric video activation during calls.
 - LinphoneFriendDevice object, to present user's device and associated security levels.
 - Automatic retry of pending outgoing IMs in case of timeout or network disconnection.
+- BETA features:
+  - SFU-based audio and video conferencing
+  - End to end encryption for audio/video conferences, using double SRTP encryption RFC8723 and RFC8870 (EKT)
 
 ### Changed
 - Unifies ChatRoom and Conferences internal classes
