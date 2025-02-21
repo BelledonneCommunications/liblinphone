@@ -118,9 +118,6 @@ public:
 private:
 	ClientChatRoom(const std::shared_ptr<Core> &core, const std::shared_ptr<Conference> &conf);
 
-	// Create a chat room from the main database.
-	ClientChatRoom(const std::shared_ptr<Core> &core, bool hasBeenLeft = false);
-
 	virtual void sendPendingMessages() override;
 
 	void sendEphemeralUpdate();

@@ -380,10 +380,12 @@ void ServerChatRoom::sendMessage(BCTBX_UNUSED(const shared_ptr<ServerChatRoom::M
 
 bool ServerChatRoom::dispatchMessagesAfterFullState(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) const {
 #ifdef HAVE_ADVANCED_IM
-	auto device = getConference()->findInvitedParticipantDevice(session);
+	const auto &conference = getConference();
+	auto device = conference->findInvitedParticipantDevice(session);
 	if (!device) {
-		lWarning() << "Conference " << *getConference()->getConferenceAddress()
-		           << " dispatchMessagesAfterFullState on unknown device.";
+		lWarning() << *conference << ": unable to dispatch messages to a device attached to " << *session
+		           << " (local address " << *session->getLocalAddress() << " remote address "
+		           << *session->getRemoteAddress() << ")";
 		return false; // Assume it is a recent device.
 	}
 	return dispatchMessagesAfterFullState(device);

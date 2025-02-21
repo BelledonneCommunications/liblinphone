@@ -61,30 +61,6 @@ ClientChatRoom::ClientChatRoom(const shared_ptr<Core> &core, const std::shared_p
 		getCurrentParams()->setSecurityLevel(ConferenceParams::SecurityLevel::EndToEnd);
 }
 
-ClientChatRoom::ClientChatRoom(const shared_ptr<Core> &core, bool hasBeenLeft) : ChatRoom(core) {
-	auto chatParams = getCurrentParams()->getChatParams();
-	chatParams->setBackend(ChatParams::Backend::FlexisipChat);
-	if (chatParams->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
-		chatParams->enableEphemeral(chatParams->getEphemeralLifetime() > 0);
-	}
-
-	auto conference = getConference();
-	if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
-		lDebug() << "Last notify set to [" << conference->getLastNotify() << "] for " << *conference;
-	} else {
-		lInfo() << "Last notify set to [" << conference->getLastNotify() << "] for " << *conference;
-	}
-
-	if (!hasBeenLeft) {
-		auto eventHandler = static_pointer_cast<ClientConference>(conference)->eventHandler;
-		getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
-		mListHandlerUsed = getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId()) != nullptr;
-		if (!mListHandlerUsed) {
-			eventHandler->subscribe(getConferenceId());
-		}
-	}
-}
-
 // -----------------------------------------------------------------------------
 void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
 	auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
@@ -92,18 +68,12 @@ void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatM
 }
 
 void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteContact) {
-	getConference()->onConferenceCreated(remoteContact);
-	if (remoteContact->hasParam(Conference::IsFocusParameter)) {
-		if (!getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
-			mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
-			auto conference = dynamic_pointer_cast<ClientConference>(getConference());
-			auto eventHandler = conference->eventHandler;
-			if (!eventHandler) {
-				conference->initializeHandlers(conference.get(), true);
-				eventHandler = conference->eventHandler;
-			}
-			eventHandler->subscribe(getConferenceId());
-		}
+	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
+	conference->onConferenceCreated(remoteContact);
+	if (remoteContact->hasParam(Conference::IsFocusParameter) &&
+	    !getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
+		mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
+		conference->subscribe(true, false);
 	}
 }
 
@@ -277,15 +247,7 @@ void ClientChatRoom::onLocallyExhumedConference(const std::shared_ptr<Address> &
 	onExhumedConference(oldConfId, newConfId);
 
 	setState(ConferenceInterface::State::Created);
-	auto eventHandler = conference->eventHandler;
-	if (eventHandler) {
-		eventHandler->unsubscribe(); // Required for next subscribe to be sent
-	} else {
-		conference->initializeHandlers(conference.get(), true);
-		eventHandler = conference->eventHandler;
-	}
-	getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
-	eventHandler->subscribe(getConferenceId());
+	conference->subscribe(true);
 
 	lInfo() << "Found " << mPendingExhumeMessages.size() << " messages waiting for exhume";
 	for (auto &chatMessage : mPendingExhumeMessages) {
@@ -329,11 +291,7 @@ void ClientChatRoom::onRemotelyExhumedConference(SalCallOp *op) {
 	conference->confirmJoining(op);
 
 	setState(ConferenceInterface::State::Created);
-
-	auto eventHandler = conference->eventHandler;
-	eventHandler->unsubscribe(); // Required for next subscribe to be sent
-	getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
-	eventHandler->subscribe(getConferenceId());
+	conference->subscribe(true);
 }
 
 void ClientChatRoom::removeConferenceIdFromPreviousList(const ConferenceId &confId) {

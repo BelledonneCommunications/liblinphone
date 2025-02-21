@@ -2752,6 +2752,19 @@ void ClientConference::requestFullState() {
 #endif // HAVE_ADVANCED_IM
 }
 
+void ClientConference::subscribe(BCTBX_UNUSED(bool addToListEventHandler), BCTBX_UNUSED(bool unsubscribeFirst)) {
+#ifdef HAVE_ADVANCED_IM
+	if (eventHandler) {
+		if (unsubscribeFirst) {
+			eventHandler->unsubscribe(); // Required for next subscribe to be sent
+		}
+	} else {
+		initializeHandlers(this, addToListEventHandler);
+	}
+	eventHandler->subscribe(getConferenceId());
+#endif // HAVE_ADVANCED_IM
+}
+
 #ifdef HAVE_ADVANCED_IM
 shared_ptr<ClientEktManager> ClientConference::getClientEktManager() const {
 	return mClientEktManager;
