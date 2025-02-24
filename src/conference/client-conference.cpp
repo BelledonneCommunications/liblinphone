@@ -195,11 +195,11 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	mPendingSubject = mConfParams->getUtf8Subject();
 	mConfParams->enableLocalParticipant(false);
 
-	if (mConfParams->chatEnabled()) {
 #ifdef HAVE_ADVANCED_IM
+	if (isChatOnly()) {
 		setChatRoom((new ClientChatRoom(core, getSharedFromThis()))->toSharedPtr());
-#endif // HAVE_ADVANCED_IM
 	}
+#endif // HAVE_ADVANCED_IM
 
 	if (supportsMedia()) {
 		getMe()->setAdmin((focusSession == nullptr) || (organizerAddress == nullptr) ||

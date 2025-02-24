@@ -6266,13 +6266,13 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				chatRoom->setUtf8Subject(subject);
 			} else if (backend == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
+				const auto &localAddress = conferenceId.getLocalAddress();
 				unsigned int lastNotifyId = d->dbSession.getUnsignedInt(row, 7, 0);
 				list<shared_ptr<Participant>> participants = selectChatRoomParticipants(dbChatRoomId);
 				const auto meIt =
-				    std::find_if(participants.begin(), participants.end(),
-				                 [&localAddress = conferenceId.getLocalAddress()](const auto &participant) {
-					                 return (participant->getAddress()->weakEqual(*localAddress));
-				                 });
+				    std::find_if(participants.begin(), participants.end(), [&localAddress](const auto &participant) {
+					    return (participant->getAddress()->weakEqual(*localAddress));
+				    });
 				shared_ptr<Participant> me;
 				if (meIt != participants.end()) {
 					me = *meIt;
@@ -6310,8 +6310,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				std::shared_ptr<Conference> conference = nullptr;
 				if (serverMode) {
 					params->enableLocalParticipant(false);
-					conference =
-					    (new ServerConference(core, conferenceId.getLocalAddress(), nullptr, params))->toSharedPtr();
+					conference = (new ServerConference(core, localAddress, nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, false);
 					chatRoom = conference->getChatRoom();
 					conference->setState(ConferenceInterface::State::Created);
@@ -6341,10 +6340,11 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 						for (const auto &row : rows) {
 							ConferenceId previousId = ConferenceId(Address::create(row.get<string>(0), true),
-							                                       conferenceId.getLocalAddress(), conferenceIdParams);
+							                                       localAddress, conferenceIdParams);
 							if (previousId != conferenceId) {
 								lInfo() << "Keeping around previous chat room ID [" << previousId
-								        << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
+								        << "] in case BYE is received for exhumed chat room " << *conference << " ["
+								        << conferenceId << "]";
 								auto clientChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
 								clientChatRoom->addConferenceIdToPreviousList(previousId);
 							}

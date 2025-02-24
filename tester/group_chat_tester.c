@@ -322,7 +322,15 @@ void setup_chat_room_callbacks(LinphoneChatRoomCbs *cbs) {
 }
 
 void core_chat_room_state_changed(BCTBX_UNUSED(LinphoneCore *core), LinphoneChatRoom *cr, LinphoneChatRoomState state) {
-	if (state == LinphoneChatRoomStateInstantiated) {
+	const LinphoneConferenceParams *chat_params = linphone_chat_room_get_current_params(cr);
+	bool hasAudio = !!linphone_conference_params_audio_enabled(chat_params) ||
+	                !!linphone_conference_params_video_enabled(chat_params);
+	// When a chatroom is instantied as part of a conference, the first state it will be notifed is the Created state as
+	// the core waits for the full state to arrive before creating it. In fact, it may happen that a core wishes to
+	// create a conference with chat capabilities but the server doesn't supports it. The client would end up having a
+	// dangling tchat and needs to destroy it
+	if ((!hasAudio && (state == LinphoneChatRoomStateInstantiated)) ||
+	    (hasAudio && (state == LinphoneChatRoomStateCreated))) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
 		setup_chat_room_callbacks(cbs);
 		linphone_chat_room_add_callbacks(cr, cbs);
