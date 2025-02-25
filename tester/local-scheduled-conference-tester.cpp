@@ -1721,7 +1721,7 @@ static void schedule_simple_conference_db_conference_scheduler(void) {
 }
 
 static void create_simple_conference(void) {
-	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
+	create_conference_base(ms_time(NULL), 1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
@@ -6156,24 +6156,28 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 }
 
 static void create_conference_with_chat(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, FALSE, FALSE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, 1, TRUE, FALSE, FALSE,
+	                                 ms_time(NULL));
 }
 
 static void create_point_to_point_encrypted_conference_with_chat(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, FALSE, TRUE, -1, TRUE, FALSE,
-	                                 FALSE);
+	                                 FALSE, ms_time(NULL));
 }
 
 static void create_conference_with_chat_and_participant_rejoining(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE,
+	                                 (ms_time(NULL) - 45));
 }
 
 static void create_conference_with_chat_and_cores_restart(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE, FALSE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE, FALSE,
+	                                 (ms_time(NULL) - 45));
 }
 
 static void create_conference_with_chat_network_drops_and_participant_rejoining(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
+	                                 (ms_time(NULL) - 45));
 }
 
 #ifndef HAVE_EKT_SERVER_PLUGIN
@@ -6819,9 +6823,18 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 	}
 }
 
+static void conference_joined_multiple_times(void) {
+	conference_joined_multiple_times(LinphoneConferenceSecurityLevelPointToPoint, FALSE, 1);
+}
+
+static void conference_with_chat_joined_multiple_times(void) {
+	conference_joined_multiple_times(LinphoneConferenceSecurityLevelNone, TRUE, 1);
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_scheduled_conference_basic_tests[] = {
+    TEST_NO_TAG("Conference joined multiple times", LinphoneTest::conference_joined_multiple_times),
     TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
     TEST_NO_TAG("Conference with media lost", LinphoneTest::conference_with_media_lost),
     TEST_NO_TAG("Conference with participants are late except for one",
@@ -6935,6 +6948,7 @@ static test_t local_conference_scheduled_conference_with_screen_sharing_tests[] 
                 LinphoneTest::create_simple_conference_with_screen_sharing_no_video_send_component)};
 
 static test_t local_conference_scheduled_conference_with_chat_tests[] = {
+    TEST_NO_TAG("Conference with chat joined multiple times", LinphoneTest::conference_with_chat_joined_multiple_times),
     TEST_NO_TAG("Create conference with chat", LinphoneTest::create_conference_with_chat),
     TEST_NO_TAG("Create point-to-point encrypted conference with chat",
                 LinphoneTest::create_point_to_point_encrypted_conference_with_chat),

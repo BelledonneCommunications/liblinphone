@@ -231,16 +231,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	}
 
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
-	auto conferenceAddress = chatRoom->getConferenceAddress();
-	auto conferenceAddressStr = conferenceAddress ? conferenceAddress->asString() : std::string("sip:");
 
 	// Check if chatroom is encrypted or not
 	if (chatRoomParams->getChatParams()->isEncrypted()) {
-		lInfo() << "[LIME] chatroom " << chatRoom << " (address " << conferenceAddressStr
-		        << ") is encrypted, proceed to encrypt outgoing message";
+		lInfo() << "[LIME] " << *chatRoom << " is encrypted, proceed to encrypt outgoing message";
 	} else {
-		lInfo() << "[LIME] chatroom " << chatRoom << " (address " << conferenceAddressStr
-		        << ") is not encrypted, no need to encrypt outgoing message";
+		lInfo() << "[LIME] " << *chatRoom << " is not encrypted, no need to encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -279,7 +275,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				nbDevice++;
 			} else {
 				lWarning() << "Multiple instances of participant device with address " << address
-				           << " have been found in chat room " << conferenceAddressStr;
+				           << " have been found in " << *chatRoom;
 				requestFullState = true;
 			}
 		}
@@ -306,7 +302,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				nbDevice++;
 			} else {
 				lWarning() << "Multiple instances of me participant device with address " << address
-				           << " have been found in chat room " << conferenceAddressStr;
+				           << " have been found in " << *chatRoom;
 				requestFullState = true;
 			}
 		}
@@ -315,8 +311,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	// Check if there is at least one recipient
 	if (recipientAddresses.empty()) {
-		lError() << "[LIME] encrypting message on chatroom " << chatRoom << " (address " << conferenceAddressStr
-		         << ") with no recipient";
+		lError() << "[LIME] encrypting message on " << *chatRoom << " with no recipient";
 		errorCode = 488;
 		return ChatMessageModifier::Result::Error;
 	}
@@ -489,9 +484,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	// Check if chatroom is encrypted or not
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	if (chatRoomParams->getChatParams()->isEncrypted()) {
-		lInfo() << "[LIME] this chatroom is encrypted, proceed to decrypt incoming message";
+		lInfo() << "[LIME] " << *chatRoom << " is encrypted, proceed to decrypt incoming message";
 	} else {
-		lInfo() << "[LIME] this chatroom is not encrypted, no need to decrypt incoming message";
+		lInfo() << "[LIME] " << *chatRoom << " is not encrypted, no need to decrypt incoming message";
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -501,7 +496,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 
 	// Check if the message is encrypted and unwrap the multipart
 	if (!isMessageEncrypted(*internalContent)) {
-		lError() << "[LIME] unexpected content-type: " << internalContent->getContentType();
+		lError() << "[LIME] " << *chatRoom << ": unexpected content-type: " << internalContent->getContentType();
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
 		// Disable sender authentication otherwise the unexpected message will always be discarded
@@ -512,7 +507,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 
 	const auto &account = chatRoom->getAccount();
 	if (!account) {
-		lWarning() << "Receiving encrypted message with unknown account";
+		lWarning() << "[LIME] " << *chatRoom << ": Receiving encrypted message with unknown account";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
@@ -520,7 +515,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	const auto &localDevice =
 	    accountContactAddress ? accountContactAddress : chatRoom->getConferenceId().getLocalAddress();
 	if (!localDevice) {
-		lWarning() << "Receiving encrypted message but the local device address is unknown";
+		lWarning() << "[LIME] " << *chatRoom << ": Receiving encrypted message but the local device address is unknown";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
@@ -554,8 +549,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 
 	// Early discard of malformed incoming message: we must have a sender Id to decrypt the message
 	if (senderDeviceId.empty()) {
-		lWarning() << "[LIME] discard malformed incoming message [" << message << "] for [" << localDeviceId
-		           << "]: no sender Device Id found ";
+		lWarning() << "[LIME] " << *chatRoom << " for [" << localDeviceId << "]: no sender Device Id found ";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
@@ -565,7 +559,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime",
 	                            "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
-			lWarning() << "[LIME] discard incoming message from unsafe sender device " << senderDeviceId;
+			lWarning() << "[LIME]  " << *chatRoom << ": discard incoming message from unsafe sender device "
+			           << senderDeviceId;
 			errorCode = 488; // Not Acceptable
 			return ChatMessageModifier::Result::Error;
 		}
@@ -598,13 +593,15 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	}
 
 	if (forceFailure) {
-		lError() << "No key found (on purpose for tests) for [" << localDeviceId << "] for message [" << message << "]";
+		lError() << "[LIME] " << *chatRoom << ": No key found (on purpose for tests) for [" << localDeviceId
+		         << "] for message [" << message << "]";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
 
 	if (cipherHeader.empty()) {
-		lError() << "No key found for [" << localDeviceId << "] for message [" << message << "]";
+		lError() << "[LIME] " << *chatRoom << ": No key found for [" << localDeviceId << "] for message [" << message
+		         << "]";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
@@ -619,12 +616,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 		peerDeviceStatus = limeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader,
 		                                        decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
-		lError() << e.what() << " while decrypting message";
+		lError() << "[LIME] " << *chatRoom << ": " << e.what() << " while decrypting message";
 		peerDeviceStatus = lime::PeerDeviceStatus::fail;
 	}
 
 	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) {
-		lError() << "Failed to decrypt message from " << senderDeviceId;
+		lError() << "[LIME] " << *chatRoom << ": Failed to decrypt message from " << senderDeviceId;
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}

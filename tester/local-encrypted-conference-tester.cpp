@@ -893,17 +893,18 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 }
 
 static void create_encrypted_conference_with_chat() {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE, TRUE,
-	                                 FALSE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE, TRUE, FALSE,
+	                                 ms_time(NULL));
 }
 
 static void create_encrypted_conference_with_chat_and_cores_restart(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, TRUE, TRUE, 1, FALSE, TRUE, FALSE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, TRUE, TRUE, 1, FALSE, TRUE, FALSE,
+	                                 (ms_time(NULL) - 45));
 }
 
 static void create_encrypted_conference_with_chat_network_drops_and_participant_rejoining(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, FALSE, -1, TRUE, TRUE,
-	                                 TRUE);
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
+	                                 (ms_time(NULL) - 45));
 }
 
 static void scheduling_failure_check(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state) {
@@ -1157,12 +1158,19 @@ static void create_simple_end_to_end_encrypted_conference_merging_calls() {
 	                                            LinphoneConferenceSecurityLevelEndToEnd, FALSE);
 }
 
+static void encrypted_conference_joined_multiple_times(void) {
+	conference_joined_multiple_times(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1);
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
     TEST_ONE_TAG("First notify", LinphoneTest::first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("SPI info", LinphoneTest::spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
     TEST_ONE_TAG("Cipher transport", LinphoneTest::cipher_transport_ekt_xml_composing_parsing_test, "End2EndConf"),
+    TEST_ONE_TAG("End-to-End Conference joined multiple times",
+                 LinphoneTest::encrypted_conference_joined_multiple_times,
+                 "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted conference",
                  LinphoneTest::create_simple_end_to_end_encrypted_conference,
                  "End2EndConf"),

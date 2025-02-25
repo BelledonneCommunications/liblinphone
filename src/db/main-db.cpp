@@ -7155,7 +7155,7 @@ void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
 		        ? "(julianday(:maxExpireTime) - julianday(conference_info.start_time)) * 24 * 60"
 		        : "TIMESTAMPDIFF(MINUTES, :maxExpireTime, conference_info.start_time)";
 		// The logic to find conference that may be deleted because their end time is in the past is the following:
-		// - compute how much time has elapsed since the start of the conference ans verify yhay this value is larger or
+		// - compute how much time has elapsed since the start of the conference and verify that this value is larger or
 		// equal to the duration.
 		// - verify that the duration is larger than 0
 		std::string findQuery = "SELECT conference_info.id, uri_sip_address.value FROM conference_info, sip_address AS "

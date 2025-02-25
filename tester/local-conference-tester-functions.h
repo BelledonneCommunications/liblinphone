@@ -305,6 +305,10 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
                                                  LinphoneConferenceSecurityLevel security_level,
                                                  bool_t enable_screen_sharing);
 
+void conference_joined_multiple_times(LinphoneConferenceSecurityLevel security_level,
+                                      bool_t enable_chat,
+                                      long cleanup_window);
+
 void create_conference_base(time_t start_time,
                             int duration,
                             bool_t uninvited_participant_dials,
@@ -352,7 +356,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       long cleanup_window,
                                       bool_t slow_ice_negotiation,
                                       bool_t client_reenter_conference,
-                                      bool_t network_drops);
+                                      bool_t network_drops,
+                                      time_t start_time);
 
 void configure_end_to_end_encrypted_conference_server(Focus &focus);
 

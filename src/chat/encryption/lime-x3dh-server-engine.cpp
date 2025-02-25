@@ -63,9 +63,9 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	// Check if chatroom is encrypted or not
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	if (chatRoomParams->getChatParams()->isEncrypted()) {
-		lInfo() << "[LIME][server] this chatroom is encrypted, proceed to encrypt outgoing message";
+		lInfo() << "[LIME][server] " << *chatRoom << " is encrypted, proceed to encrypt outgoing message";
 	} else {
-		lInfo() << "[LIME][server] this chatroom is not encrypted, no need to encrypt outgoing message";
+		lInfo() << "[LIME][server] " << *chatRoom << " is not encrypted, no need to encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -92,7 +92,8 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	}
 
 	if (!hasKey) {
-		lError() << "[LIME][server] this message doesn't contain the cipher key for participant " << toDeviceId;
+		lError() << "[LIME][server] " << *chatRoom << ": message [" << message
+		         << "] doesn't contain the cipher key for participant " << toDeviceId;
 		return ChatMessageModifier::Result::Error;
 	}
 
@@ -105,7 +106,9 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
 		finalContent.setContentEncoding("deflate");
 	} else {
-		lWarning() << "Cannot use 'deflate' Content-Encoding to compress body - consider rebuilding with libz support.";
+		lWarning()
+		    << "[LIME][server] " << *chatRoom
+		    << ": Cannot use 'deflate' Content-Encoding to compress body - consider rebuilding with libz support.";
 	}
 	message->setInternalContent(finalContent);
 	return ChatMessageModifier::Result::Done;
