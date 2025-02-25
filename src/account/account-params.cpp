@@ -949,7 +949,7 @@ LinphonePrivacyMask AccountParams::getPrivacy() const {
 	return mPrivacy;
 }
 
-std::shared_ptr<const Address> AccountParams::getIdentityAddress() const {
+std::shared_ptr<Address> AccountParams::getIdentityAddress() const {
 	return mIdentityAddress;
 }
 

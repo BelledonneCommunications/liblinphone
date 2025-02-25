@@ -145,7 +145,7 @@ public:
 	const std::list<std::string> getRoutesString() const;
 	const bctbx_list_t *getRoutesCString() const;
 	LinphonePrivacyMask getPrivacy() const;
-	std::shared_ptr<const Address> getIdentityAddress() const;
+	std::shared_ptr<Address> getIdentityAddress() const;
 	LinphoneAVPFMode getAvpfMode() const;
 	std::shared_ptr<NatPolicy> getNatPolicy() const;
 	PushNotificationConfig *getPushNotificationConfig() const;

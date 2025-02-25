@@ -287,7 +287,7 @@ std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::EphemeralMode e);
 
 inline std::ostream &operator<<(std::ostream &str, const AbstractChatRoom &chatRoom) {
 	const auto &conferenceAddress = chatRoom.getConferenceAddress();
-	str << "Conference [" << &chatRoom << "] ("
+	str << "ChatRoom [" << &chatRoom << "] ("
 	    << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << ")";
 	return str;
 }

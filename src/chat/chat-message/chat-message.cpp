@@ -800,28 +800,49 @@ std::string ChatMessagePrivate::createFakeFileTransferFromUrl(const std::string 
 }
 
 void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
+	L_Q();
 	mChatRoom = chatRoom;
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	const auto &account = chatRoom->getAccount();
-	// If an account is attached to a chatroom, use its contact address otherwise use the local address of the
-	// conference ID. Note that the conference ID's local address may not have the "gr" parameter hence this may lead to
-	// issues such as IMDN not received
+	const bool isBasicChatRoom =
+	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+	// If an account is attached to a chatroom, use its contact or the identity address otherwise use the local address
+	// of the conference ID. For Flexisip based chatrooms, it is paramount to use a contact address as the From header.
+	// RFC3428 forbids adding a Contact header to MESSAGE requests, therefore the From header is the only way a
+	// conference server knows which device sent the request and can be forwarded to the other tchat members as well as
+	// other devices of the same participant.
 	std::shared_ptr<Address> localAddress = nullptr;
-	if (account && account->getContactAddress()) {
-		localAddress = account->getContactAddress()->clone()->toSharedPtr();
-	} else {
-		lInfo() << "It looks that chatroom " << chatRoom << " with ID " << conferenceId
-		        << " has no account associated to or the contact address is not available yet, setting conference ID's "
-		           "local address as message local address";
-		localAddress = conferenceId.getLocalAddress()->clone()->toSharedPtr();
+	if (account) {
+		if (isBasicChatRoom) {
+			localAddress = account->getAccountParams()->getIdentityAddress();
+			lInfo() << *chatRoom << " with ID " << conferenceId
+			        << " is a basic chatroom therefore set the local address of message [" << q
+			        << "] to the account identity address " << *localAddress;
+		} else {
+			localAddress = account->getContactAddress();
+			if (localAddress) {
+				lInfo() << *chatRoom << " with ID " << conferenceId
+				        << " is not a basic chatroom therefore set the local address of message [" << q
+				        << "] to the account contact address " << *localAddress;
+			}
+		}
+	}
+	if (!localAddress) {
+		lInfo() << *chatRoom << " with ID " << conferenceId
+		        << " has no account associated to or the contact or the identity address is not available yet, setting "
+		           "conference ID's local address as message local address";
+		localAddress = conferenceId.getLocalAddress();
+	}
+
+	if (localAddress) {
+		if (isBasicChatRoom) {
+			localAddress = Address::create(localAddress->getUriWithoutGruu());
+		} else {
+			localAddress = localAddress->clone()->toSharedPtr();
+		}
 	}
 
 	auto peerAddress = conferenceId.getPeerAddress()->clone()->toSharedPtr();
-	const bool isBasicChatRoom =
-	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
-	if (isBasicChatRoom && localAddress) {
-		localAddress = Address::create(localAddress->getUriWithoutGruu());
-	}
 	if (direction == ChatMessage::Direction::Outgoing) {
 		fromAddress = localAddress;
 		toAddress = peerAddress;
