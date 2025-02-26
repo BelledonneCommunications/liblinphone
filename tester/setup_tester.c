@@ -265,6 +265,7 @@ static void core_init_test_2(void) {
 		BC_ASSERT_PTR_NULL(tmp);
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_proxy_config(lc));
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 
@@ -289,7 +290,7 @@ static void core_init_test_3(void) {
 		BC_ASSERT_PTR_NULL(filename);
 		BC_ASSERT_PTR_NULL(factory);
 		BC_ASSERT_PTR_NULL(tmp);
-
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -318,7 +319,7 @@ static void core_init_test_4(void) {
 		char test_tmp_name[1024] = {0};
 		snprintf(test_tmp_name, sizeof(test_tmp_name), "%s.tmp", filename);
 		BC_ASSERT_STRING_EQUAL(tmp, test_tmp_name);
-
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 
@@ -358,6 +359,7 @@ static void core_init_unref_test(void) {
 		/* until we have good certificates on our test server... */
 		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -383,7 +385,7 @@ static void core_init_stop_start_test(void) {
 		const char *uuid2 = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
 		BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
 		BC_ASSERT_STRING_EQUAL(uuid, uuid2);
-
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -401,6 +403,7 @@ static void core_set_user_agent(void) {
 		linphone_core_set_user_agent(lc, "part1b", "part2b");
 		linphone_core_start(lc);
 		BC_ASSERT_EQUAL(strcmp(linphone_core_get_user_agent(lc), "part1b/part2b"), 0, int, "%d");
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -455,7 +458,7 @@ static void core_sip_transport_test(void) {
 	                LC_SIP_TRANSPORT_RANDOM, int, "%d");
 	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc), "sip", "sip_tls_port", -2),
 	                LC_SIP_TRANSPORT_RANDOM, int, "%d");
-
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -527,6 +530,7 @@ static void linphone_interpret_url_test(void) {
 	linphone_address_unref(address);
 	ms_free(tmp);
 
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -807,6 +811,7 @@ static void chat_room_test(void) {
 	linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
 	linphone_core_start(lc);
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room_from_uri(lc, "sip:toto@titi.com"));
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -961,6 +966,7 @@ static void custom_tones_setup_before_start(void) {
 	if (tone) {
 		BC_ASSERT_STRING_EQUAL(tone, "callonhold2.wav");
 	}
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 

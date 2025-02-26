@@ -3019,6 +3019,7 @@ void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 		if (linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL))
 			uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL));
 		linphone_core_set_network_reachable(mgr->lc, FALSE); // to avoid unregister
+		linphone_core_stop(mgr->lc);
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
 	}
