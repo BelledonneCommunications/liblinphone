@@ -360,12 +360,20 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	// Compress plain text message - compression after encryption is much less efficient
 	// To keep compatibility with version not supporting the encryption at this stage, do it (for now: may 2024)
-	// only when the only supported algorithm is c25519k512
+	// only when all the supported algorithm are in c25519k512, c25519mlk512, c448mlk1024
 	bool compressedPlain = false;
 	Content plainContent(message->getInternalContent());
 	const string localDeviceId = localDevice->asStringUriOnly();
 	if (usersAlgos.find(localDeviceId) != usersAlgos.end()) {
-		if (usersAlgos[localDeviceId].size() == 1 && usersAlgos[localDeviceId][0] == lime::CurveId::c25519k512) {
+		bool skipDeflate = false;
+		for (const auto &algo : usersAlgos[localDeviceId]) {
+			if (algo <
+			    lime::CurveId::c25519k512) { // enum class is ordered, values under c2519k512 are the older base algo
+				skipDeflate = true;
+				break;
+			}
+		}
+		if (!skipDeflate) {
 			compressedPlain = plainContent.deflateBody();
 		}
 	}
