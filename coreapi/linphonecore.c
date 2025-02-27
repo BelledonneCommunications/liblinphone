@@ -9301,8 +9301,13 @@ static int _linphone_core_delayed_conference_destruction_cb(void *user_data, BCT
 static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate) {
 	if (cstate == LinphoneConferenceStateDeleted) {
 		LinphoneCore *lc = linphone_conference_get_core(conf);
-		linphone_core_queue_task(lc, _linphone_core_delayed_conference_destruction_cb, conf,
-		                         "Conference destruction task");
+		if (linphone_core_get_global_state(lc) == LinphoneGlobalShutdown) {
+			// If the core is in the Shutdown state, there is no time to queue a task
+			linphone_conference_unref(conf);
+		} else {
+			linphone_core_queue_task(lc, _linphone_core_delayed_conference_destruction_cb, conf,
+			                         "Conference destruction task");
+		}
 		lc->conf_ctx = NULL;
 	}
 }

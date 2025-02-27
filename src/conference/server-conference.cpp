@@ -183,12 +183,12 @@ void ServerConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confL
 	bool eventLogEnabled =
 	    !!linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
 	if (eventLogEnabled) {
-		eventHandler = std::make_shared<ServerConferenceEventHandler>(getSharedFromThis(), confListener);
+		mEventHandler = std::make_shared<ServerConferenceEventHandler>(getSharedFromThis(), confListener);
 		const auto chatEnabled = mConfParams->chatEnabled();
 		if (chatEnabled && getCore()->getPrivate()->serverListEventHandler && getConferenceId().isValid()) {
-			getCore()->getPrivate()->serverListEventHandler->addHandler(eventHandler);
+			getCore()->getPrivate()->serverListEventHandler->addHandler(mEventHandler);
 		}
-		addListener(eventHandler);
+		addListener(mEventHandler);
 	} else {
 #endif // HAVE_ADVANCED_IM
 		lInfo() << "Unable to add listener to local conference as conference event package (RFC 4575) is disabled or "
@@ -1010,7 +1010,7 @@ void ServerConference::finalizeCreation() {
 #ifdef HAVE_ADVANCED_IM
 				if (chatRoom) {
 					auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
-					getCore()->getPrivate()->serverListEventHandler->addHandler(eventHandler);
+					getCore()->getPrivate()->serverListEventHandler->addHandler(mEventHandler);
 					serverGroupChatRoom->setJoiningPendingAfterCreation(true);
 					getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 				}
@@ -1048,8 +1048,8 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 		inviteDevice(device);
 	}
 
-	if (eventHandler) {
-		if (eventHandler->subscribeReceived(event) == 0) {
+	if (mEventHandler) {
+		if (mEventHandler->subscribeReceived(event) == 0) {
 			if (device && chatEnabled) {
 				vector<string> acceptedContents = vector<string>();
 				const auto message = (belle_sip_message_t *)event->getOp()->getRecvCustomHeaders();
@@ -1094,8 +1094,8 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 #endif // _MSC_VER
 void ServerConference::subscriptionStateChanged(shared_ptr<EventSubscribe> event, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
-		eventHandler->subscriptionStateChanged(event, state);
+	if (mEventHandler) {
+		mEventHandler->subscriptionStateChanged(event, state);
 	} else {
 #endif // HAVE_ADVANCED_IM
 		lInfo() << "Unable to handle subscription state change because conference event package (RFC 4575) is disabled "
@@ -2528,7 +2528,7 @@ void ServerConference::cleanup() {
 	try {
 #ifdef HAVE_ADVANCED_IM
 		if (isChatOnly() && getCore()->getPrivate()->serverListEventHandler) {
-			getCore()->getPrivate()->serverListEventHandler->removeHandler(eventHandler);
+			getCore()->getPrivate()->serverListEventHandler->removeHandler(mEventHandler);
 		}
 #endif // HAVE_ADVANCED_IM
 		getCore()->getPrivate()->unregisterListener(this);
@@ -2536,8 +2536,8 @@ void ServerConference::cleanup() {
 		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
 #ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
-		eventHandler.reset();
+	if (mEventHandler) {
+		mEventHandler.reset();
 	}
 #endif // HAVE_ADVANCED_IM
 }
@@ -2870,17 +2870,20 @@ int ServerConference::terminate() {
 		const auto zeroDevices = (noDevices == 0);
 		if (zeroDevices
 #ifdef HAVE_ADVANCED_IM
-		    || !eventHandler
+		    || !mEventHandler
 #endif // HAVE_ADVANCED_IM
 		) {
 			setState(ConferenceInterface::State::Terminated);
 		}
 
-		// The server deletes the conference info once the conference is terminated.
-		// It avoids having a growing database on the server side
-		if (conferenceAddress &&
-		    (isConferenceEnded() || (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn))) {
-			getCore()->getPrivate()->deleteConferenceInfo(conferenceAddress);
+		try {
+			// The server deletes the conference info once the conference is terminated.
+			// It avoids having a growing database on the server side
+			if (conferenceAddress &&
+			    (isConferenceEnded() || (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn))) {
+				getCore()->getPrivate()->deleteConferenceInfo(conferenceAddress);
+			}
+		} catch (const bad_weak_ptr &) {
 		}
 	} else {
 		setChatRoom(nullptr);

@@ -450,7 +450,8 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
                                      bool_t accept,
                                      bool_t participant_codec_mismatch,
                                      LinphoneConferenceSecurityLevel security_level,
-                                     bool_t version_mismatch);
+                                     bool_t version_mismatch,
+                                     bool_t enable_chat);
 
 void create_conference_with_audio_only_participants_base(LinphoneConferenceSecurityLevel security_level);
 

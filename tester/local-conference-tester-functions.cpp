@@ -8722,7 +8722,24 @@ void conference_joined_multiple_times(LinphoneConferenceSecurityLevel security_l
 
 			for (auto mgr : conferenceMgrs) {
 				LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
-				if (BC_ASSERT_PTR_NOT_NULL(info)) {
+				bool info_deleted = false;
+				if (!!linphone_core_conference_server_enabled(mgr->lc) && (focus_cleanup_window > 0) &&
+				    (end_time > 0)) {
+					time_t now = ms_time(NULL);
+					time_t time_left = end_time - now;
+					if (time_left < 0) {
+						ms_message("Attempt #%0d - conference information of conference %s was deleted on the server "
+						           "core %s because the conference ended %ld seconds ago",
+						           attempt, conference_address_str, linphone_core_get_identity(mgr->lc), -time_left);
+						info_deleted = true;
+					}
+				}
+				if (info_deleted) {
+					BC_ASSERT_PTR_NULL(info);
+				} else {
+					BC_ASSERT_PTR_NOT_NULL(info);
+				}
+				if (info) {
 					linphone_conference_info_unref(info);
 				}
 			}
@@ -11715,7 +11732,8 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
                                      bool_t accept,
                                      bool_t participant_codec_mismatch,
                                      LinphoneConferenceSecurityLevel security_level,
-                                     bool_t version_mismatch) {
+                                     bool_t version_mismatch,
+                                     bool_t enable_chat) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -11817,7 +11835,7 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject, description, send_ics,
-		                                security_level, TRUE, FALSE, NULL);
+		                                security_level, TRUE, enable_chat, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -12041,7 +12059,7 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 					    (send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew,
 					    mgr == laure.getCMgr() && version_mismatch ? LinphoneConferenceSecurityLevelNone
 					                                               : security_level,
-					    FALSE, TRUE, TRUE, FALSE);
+					    FALSE, TRUE, TRUE, enable_chat);
 				}
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
@@ -12187,7 +12205,7 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 						check_conference_info_in_db(
 						    mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0, initialSubject,
 						    (send_ics || (mgr == marie.getCMgr())) ? description : NULL, 0,
-						    LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE, FALSE);
+						    LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE, enable_chat);
 						bctbx_list_free_with_data(participants_info3,
 						                          (bctbx_list_free_func)linphone_participant_info_unref);
 
@@ -12425,14 +12443,21 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 					                             liblinphone_tester_sip_timeout));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminated, 1,
 					                             liblinphone_tester_sip_timeout));
-					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, 1,
-					                             liblinphone_tester_sip_timeout));
+					if (enable_chat) {
+						BC_ASSERT_FALSE(
+						    wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, 1, 2000));
+					} else {
+						BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, 1,
+						                             liblinphone_tester_sip_timeout));
+					}
 
-					LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(mgr->lc));
 					LinphoneConference *pconference =
-					    linphone_core_search_conference(mgr->lc, NULL, uri, confAddr, NULL);
-					BC_ASSERT_PTR_NULL(pconference);
-					linphone_address_unref(uri);
+					    linphone_core_search_conference(mgr->lc, NULL, mgr->identity, confAddr, NULL);
+					if (enable_chat) {
+						BC_ASSERT_PTR_NOT_NULL(pconference);
+					} else {
+						BC_ASSERT_PTR_NULL(pconference);
+					}
 				}
 			}
 
@@ -12571,7 +12596,7 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 			    mgr, NULL, confAddr, marie.getCMgr()->identity, participants_info3, 0, 0, initialSubject,
 			    ((accept && send_ics) || (mgr == marie.getCMgr())) ? description : NULL, 0,
 			    LinphoneConferenceInfoStateNew, (accept) ? security_level : LinphoneConferenceSecurityLevelNone, FALSE,
-			    TRUE, TRUE, FALSE);
+			    TRUE, TRUE, enable_chat);
 			bctbx_list_free_with_data(participants_info3, (bctbx_list_free_func)linphone_participant_info_unref);
 		}
 

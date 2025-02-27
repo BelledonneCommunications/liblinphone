@@ -513,7 +513,7 @@ void liblinphone_tester_add_suites(void) {
 	    &local_conference_test_suite_scheduled_conference_audio_only_participant, 581);
 	liblinphone_tester_add_suite_with_default_time(
 	    &local_conference_test_suite_scheduled_conference_with_screen_sharing, 581);
-	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_with_chat, 200);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_with_chat, 600);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_ice_conference, 563);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_impromptu_conference, 384);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_encrypted_impromptu_conference, 150);

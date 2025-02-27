@@ -161,7 +161,7 @@ public:
 	virtual void onEphemeralLifetimeChanged(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 
 #ifdef HAVE_ADVANCED_IM
-	std::shared_ptr<ClientConferenceEventHandler> eventHandler;
+	std::shared_ptr<ClientConferenceEventHandler> mEventHandler;
 #endif // HAVE_ADVANCED_IM
 
 	void requestFullState();

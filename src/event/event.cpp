@@ -42,8 +42,9 @@ Event::~Event() {
 
 	if (mEi) linphone_error_info_unref(mEi);
 	try {
-		if (getCore()) {
-			LinphoneCore *lc = this->getCore()->getCCore();
+		auto core = getCore();
+		if (core) {
+			LinphoneCore *lc = core->getCCore();
 			if (lc != NULL && linphone_core_get_global_state(lc) != LinphoneGlobalOff) {
 				if (mOp) mOp->release();
 			}

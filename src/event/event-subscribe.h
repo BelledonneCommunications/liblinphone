@@ -57,6 +57,8 @@ public:
 	               const std::string &event,
 	               int expires);
 
+	virtual ~EventSubscribe() = default;
+
 	std::string toString() const override;
 
 	LinphoneStatus send(const std::shared_ptr<const Content> &body) override;

@@ -60,13 +60,15 @@ ClientConference::ClientConference(const shared_ptr<Core> &core,
 }
 
 ClientConference::~ClientConference() {
-	terminate();
+	if (getState() != ConferenceInterface::State::Deleted) {
+		terminate();
+	}
 	if (mJoiningParams) {
 		delete mJoiningParams;
 	}
 
 #ifdef HAVE_ADVANCED_IM
-	eventHandler.reset();
+	mEventHandler.reset();
 #endif // HAVE_ADVANCED_IM
 }
 
@@ -217,7 +219,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 		setConferenceAddress(conferenceAddress);
 	}
 
-	if (focusSession || mConfParams->chatEnabled()) {
+	if (focusSession || isChatOnly()) {
 		finalizeCreation();
 	}
 }
@@ -228,15 +230,16 @@ void ClientConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confL
 	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
 	                                                  "conference_event_log_enabled", TRUE);
 	if (eventLogEnabled) {
-		if (!eventHandler) {
-			eventHandler = std::make_shared<ClientConferenceEventHandler>(getCore(), getSharedFromThis(), confListener);
+		if (!mEventHandler) {
+			mEventHandler =
+			    std::make_shared<ClientConferenceEventHandler>(getCore(), getSharedFromThis(), confListener);
 		}
 		if (addToListEventHandler) {
-			getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
+			getCore()->getPrivate()->clientListEventHandler->addHandler(mEventHandler);
 		}
 		const auto &conferenceId = getConferenceId();
 		if (conferenceId.isValid()) {
-			eventHandler->subscribe(conferenceId);
+			mEventHandler->subscribe(conferenceId);
 		}
 	} else {
 #endif // HAVE_ADVANCED_IM
@@ -857,10 +860,10 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 			case CallSession::State::StreamsRunning: {
 #ifdef HAVE_ADVANCED_IM
 				// Handle session reconnection if network dropped only for a short period of time
-				if (eventHandler && eventHandler->needToSubscribe()) {
+				if (mEventHandler && mEventHandler->needToSubscribe()) {
 					const auto &conferenceId = getConferenceId();
 					if (conferenceId.isValid()) {
-						eventHandler->subscribe(conferenceId);
+						mEventHandler->subscribe(conferenceId);
 					}
 				}
 				if (mClientEktManager) {
@@ -1219,8 +1222,8 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 			break;
 		case ConferenceInterface::State::TerminationPending:
 #ifdef HAVE_ADVANCED_IM
-			if (eventHandler) {
-				eventHandler->unsubscribe();
+			if (mEventHandler) {
+				mEventHandler->unsubscribe();
 			}
 #endif // HAVE_ADVANCED_IM
 			resetLastNotify();
@@ -1233,8 +1236,10 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 				}
 			}
 			if (mediaSupported) {
-				Conference::terminate();
-				setState(ConferenceInterface::State::Terminated);
+				getCore()->doLater([this]() {
+					Conference::terminate();
+					setState(ConferenceInterface::State::Terminated);
+				});
 			}
 			break;
 		case ConferenceInterface::State::Deleted:
@@ -1587,13 +1592,13 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 #ifdef HAVE_ADVANCED_IM
 	auto chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
-		if (eventHandler) {
-			eventHandler->unsubscribe();
+		if (mEventHandler) {
+			mEventHandler->unsubscribe();
 		}
 		resetLastNotify();
 		// remove event handler from list event handler if used
 		if (getCore()->getPrivate()->clientListEventHandler) {
-			getCore()->getPrivate()->clientListEventHandler->removeHandler(eventHandler);
+			getCore()->getPrivate()->clientListEventHandler->removeHandler(mEventHandler);
 		}
 
 		// No need to notify such event during the core startup.
@@ -1943,7 +1948,7 @@ bool ClientConference::isSubscriptionUnderWay() const {
 		underWay =
 		    getCore()->getPrivate()->clientListEventHandler->getInitialSubscriptionUnderWayFlag(getConferenceId());
 	} else {
-		underWay = eventHandler ? eventHandler->getInitialSubscriptionUnderWayFlag() : false;
+		underWay = mEventHandler ? mEventHandler->getInitialSubscriptionUnderWayFlag() : false;
 	}
 #endif // HAVE_ADVANCED_IM
 
@@ -1956,12 +1961,12 @@ bool ClientConference::isSubscriptionUnderWay() const {
 #endif // _MSC_VER
 void ClientConference::multipartNotifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content) {
 #ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
-		const auto initialSubscription = eventHandler->getInitialSubscriptionUnderWayFlag();
-		eventHandler->multipartNotifyReceived(notifyLev, content);
+	if (mEventHandler) {
+		const auto initialSubscription = mEventHandler->getInitialSubscriptionUnderWayFlag();
+		mEventHandler->multipartNotifyReceived(notifyLev, content);
 		const auto &chatRoom = getChatRoom();
 		if (mConfParams->chatEnabled() && chatRoom && initialSubscription &&
-		    !eventHandler->getInitialSubscriptionUnderWayFlag()) {
+		    !mEventHandler->getInitialSubscriptionUnderWayFlag()) {
 			chatRoom->sendPendingMessages();
 		}
 		return;
@@ -1988,12 +1993,12 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 			return;
 		}
 	} else {
-		if (eventHandler) {
-			const auto initialSubscription = eventHandler->getInitialSubscriptionUnderWayFlag();
-			eventHandler->notifyReceived(notifyLev, content);
+		if (mEventHandler) {
+			const auto initialSubscription = mEventHandler->getInitialSubscriptionUnderWayFlag();
+			mEventHandler->notifyReceived(notifyLev, content);
 			const auto &chatRoom = getChatRoom();
 			if (mConfParams->chatEnabled() && chatRoom && initialSubscription &&
-			    !eventHandler->getInitialSubscriptionUnderWayFlag()) {
+			    !mEventHandler->getInitialSubscriptionUnderWayFlag()) {
 				chatRoom->sendPendingMessages();
 			}
 			return;
@@ -2384,8 +2389,8 @@ void ClientConference::leave() {
 		}
 #ifdef HAVE_ADVANCED_IM
 	} else if (mConfParams->chatEnabled()) {
-		if (eventHandler) {
-			eventHandler->unsubscribe();
+		if (mEventHandler) {
+			mEventHandler->unsubscribe();
 		}
 		shared_ptr<CallSession> session = mFocus->getSession();
 		if (session) {
@@ -2748,20 +2753,20 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 
 void ClientConference::requestFullState() {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->requestFullState();
+	mEventHandler->requestFullState();
 #endif // HAVE_ADVANCED_IM
 }
 
 void ClientConference::subscribe(BCTBX_UNUSED(bool addToListEventHandler), BCTBX_UNUSED(bool unsubscribeFirst)) {
 #ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
+	if (mEventHandler) {
 		if (unsubscribeFirst) {
-			eventHandler->unsubscribe(); // Required for next subscribe to be sent
+			mEventHandler->unsubscribe(); // Required for next subscribe to be sent
 		}
 	} else {
 		initializeHandlers(this, addToListEventHandler);
 	}
-	eventHandler->subscribe(getConferenceId());
+	mEventHandler->subscribe(getConferenceId());
 #endif // HAVE_ADVANCED_IM
 }
 

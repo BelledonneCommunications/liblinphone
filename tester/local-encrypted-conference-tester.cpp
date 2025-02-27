@@ -228,7 +228,17 @@ static void create_simple_end_to_end_encrypted_conference_dial_out() {
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 	create_conference_dial_out_base(LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelEndToEnd, FALSE);
+	                                LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE);
+	linphone_video_activation_policy_unref(pol);
+}
+
+static void create_simple_end_to_end_encrypted_conference_dial_out_with_chat() {
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	create_conference_dial_out_base(LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
+	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
+	                                LinphoneConferenceSecurityLevelEndToEnd, FALSE, TRUE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -238,7 +248,7 @@ static void create_end_to_end_encrypted_conference_dial_out_terminate_call_on_ve
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 	create_conference_dial_out_base(LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelEndToEnd, TRUE);
+	                                LinphoneConferenceSecurityLevelEndToEnd, TRUE, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -1235,6 +1245,9 @@ static test_t local_conference_end_to_end_encryption_scheduled_conference_with_c
                   "End2EndConf"),
     TEST_ONE_TAG("Create encrypted conference with chat network drops and participant rejoining",
                  LinphoneTest::create_encrypted_conference_with_chat_network_drops_and_participant_rejoining,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple end-to-end encrypted dial out conference with chat",
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out_with_chat,
                  "End2EndConf"),
 };
 

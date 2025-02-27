@@ -199,10 +199,6 @@ public:
 
 	virtual void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	// TODO: move to private once server group chat room class has been deleted
-#ifdef HAVE_ADVANCED_IM
-	std::shared_ptr<ServerConferenceEventHandler> eventHandler;
-#endif // HAVE_ADVANCED_IM
 	void moveDeviceToPresent(const std::shared_ptr<CallSession> &session);
 	void moveDeviceToPresent(const std::shared_ptr<ParticipantDevice> &device);
 	void setParticipantDeviceState(const std::shared_ptr<ParticipantDevice> &device,
@@ -254,6 +250,9 @@ protected:
 private:
 	L_DISABLE_COPY(ServerConference);
 
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<ServerConferenceEventHandler> mEventHandler;
+#endif // HAVE_ADVANCED_IM
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
 

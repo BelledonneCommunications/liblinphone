@@ -743,7 +743,7 @@ static const char *aliceUri = "sip:alice@example.com";
 static const char *frankUri = "sip:frank@example.com";
 static const char *confUri = "sips:conf233@example.com";
 
-L_ENABLE_ATTR_ACCESS(ServerConference, shared_ptr<ServerConferenceEventHandler>, eventHandler);
+L_ENABLE_ATTR_ACCESS(ServerConference, shared_ptr<ServerConferenceEventHandler>, mEventHandler);
 
 class ConferenceEventTester : public ClientConference {
 public:
@@ -873,8 +873,7 @@ public:
 		getCurrentParams()->enableAudio(true);
 		getCurrentParams()->enableChat(false);
 	}
-	virtual ~ServerConferenceTester() {
-	}
+	virtual ~ServerConferenceTester() = default;
 
 	/* ConferenceInterface */
 
@@ -1034,7 +1033,6 @@ void first_notify_parsing() {
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1082,7 +1080,6 @@ void first_notify_with_extensions_parsing() {
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1123,7 +1120,6 @@ void first_notify_parsing_wrong_conf() {
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1186,7 +1182,6 @@ void participant_added_parsing() {
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_address_unref(frankAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1289,10 +1284,11 @@ void participant_not_added_parsing() {
 	                              (initial_marie_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),
 	                              liblinphone_tester_sip_timeout));
 
+	tester->handler->unsubscribe();
+
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_address_unref(frankAddr);
-	tester = nullptr;
 	destroy_mgr_in_conference(marie);
 }
 
@@ -1350,7 +1346,6 @@ void participant_deleted_parsing() {
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1407,7 +1402,6 @@ void participant_admined_parsing() {
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1464,7 +1458,6 @@ void participant_unadmined_parsing() {
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
-	tester = nullptr;
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1498,7 +1491,7 @@ void send_first_notify() {
 	alice->setAdmin(true);
 
 	ServerConferenceEventHandler *localHandler =
-	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), eventHandler)).get();
+	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), mEventHandler)).get();
 	localConf->setState(ConferenceInterface::State::Instantiated);
 	localConf->setConferenceAddress(addr);
 	auto content = localHandler->createNotifyFullState(NULL);
@@ -1515,9 +1508,6 @@ void send_first_notify() {
 	BC_ASSERT_TRUE(!tester->participants.find(bobAddr->toString())->second);
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr->toString())->second);
 
-	tester = nullptr;
-	localConf = nullptr;
-	alice = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -1572,7 +1562,6 @@ void send_added_notify_through_address() {
 
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), size_t, "%zu");
 
-	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2156,7 +2145,6 @@ void send_removed_notify() {
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
-	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2205,7 +2193,6 @@ void send_admined_notify() {
 
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
-	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2252,7 +2239,6 @@ void send_unadmined_notify() {
 	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
-	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2303,7 +2289,6 @@ void send_subject_changed_notify() {
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
-	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2407,7 +2392,6 @@ void send_device_added_notify() {
 
 	linphone_event_unref(lev);
 	localConf = nullptr;
-	alice = nullptr;
 	linphone_core_manager_destroy(pauline);
 }
 
@@ -2463,8 +2447,6 @@ void send_device_removed_notify() {
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr->toString())->second, 0, size_t, "%zu");
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr->toString())->second, 0, size_t, "%zu");
 
-	localConf = nullptr;
-	alice = nullptr;
 	linphone_core_manager_destroy(pauline);
 }
 
@@ -2495,7 +2477,7 @@ void one_to_one_keyword() {
 
 	localConf->Conference::addParticipant(bobAddr);
 	ServerConferenceEventHandler *localHandler =
-	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), eventHandler)).get();
+	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), mEventHandler)).get();
 	localConf->setState(ConferenceInterface::State::Instantiated);
 	localConf->setConferenceAddress(addr);
 	auto content = localHandler->createNotifyFullState(NULL);
@@ -2509,8 +2491,6 @@ void one_to_one_keyword() {
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr->toString())->second, 0, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->oneToOne);
 
-	tester = nullptr;
-	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
