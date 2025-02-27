@@ -33,8 +33,7 @@ public:
 	CCMPConferenceScheduler(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account = nullptr);
 	virtual ~CCMPConferenceScheduler() = default;
 
-	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-	                                      const std::shared_ptr<Address> &creator) override;
+	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo) override;
 
 	virtual void processResponse(const LinphoneErrorInfo *errorInfo,
 	                             const std::shared_ptr<Address> conferenceAddress) override;

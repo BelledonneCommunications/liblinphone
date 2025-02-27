@@ -38,8 +38,7 @@ public:
 	virtual void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
 	                                       CallSession::State state,
 	                                       const std::string &message) override;
-	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-	                                      const std::shared_ptr<Address> &creator) override;
+	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo) override;
 	virtual void processResponse(const LinphoneErrorInfo *errorInfo,
 	                             const std::shared_ptr<Address> conferenceAddress) override;
 	inline std::shared_ptr<CallSession> getSession() {

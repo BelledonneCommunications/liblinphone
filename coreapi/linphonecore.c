@@ -4742,7 +4742,7 @@ LinphoneProxyConfig *linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, co
 }
 
 /*
- * Returns an account matching the given identity address
+ * Returns an account matching the given conference factory address
  * Prefers registered, then first registering matching, otherwise first matching
  * returns NULL if none is found
  */
@@ -9333,16 +9333,10 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	linphone_conference_params_enable_audio(params2, TRUE);
 	LinphoneAccount *conference_account = linphone_conference_params_get_account(params2);
 	LinphoneAccount *default_account = linphone_core_get_default_account(lc);
-	const std::shared_ptr<LinphonePrivate::Address> &meAddress =
-	    LinphonePrivate::ConferenceParams::toCpp(params2)->getMe();
-	bool isMeValid = (meAddress && meAddress->isValid());
 	if (!conference_account) {
 		lWarning() << "The application didn't explicitely specified the account to use to create a conference, "
-		              "therefore the core is going to find the one matching the me address or the default account";
+		              "therefore the core is going to use the default account";
 		conference_account = linphone_core_get_default_account(lc);
-		if (isMeValid) {
-			conference_account = linphone_core_lookup_account_by_identity(lc, meAddress->toC());
-		}
 		linphone_conference_params_set_account(params2, conference_account);
 	}
 	const LinphoneAddress *factory_uri_const = linphone_conference_params_get_conference_factory_address(params2);
@@ -9354,10 +9348,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 		// backward compatibility : use default identity even if set in conference parameters
 		identity = linphone_address_new(core_identity);
 	} else {
-		if (isMeValid) {
-			lInfo() << "Creating conference with identity from conference params : " << *meAddress;
-			identity = linphone_address_clone(meAddress->toC());
-		} else if (conference_account) {
+		if (conference_account) {
 			identity = linphone_address_clone(
 			    linphone_account_params_get_identity_address(linphone_account_get_params(conference_account)));
 			lInfo() << "Creating conference with identity from conference " << *Account::toCpp(conference_account);

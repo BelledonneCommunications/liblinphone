@@ -132,14 +132,10 @@ public:
 	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject, bool fallback, bool encrypted);
 
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
-	                                                 const std::shared_ptr<const Address> &localAddr,
-	                                                 const std::list<std::shared_ptr<Address>> &participants);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
 	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
-	                                                 const std::shared_ptr<Address> &localAddr,
 	                                                 const std::shared_ptr<Address> &participant);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<Address> &participant);
 

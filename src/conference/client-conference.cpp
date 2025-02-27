@@ -53,10 +53,9 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ClientConference::ClientConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<Address> &myAddress,
                                    std::shared_ptr<CallSessionListener> listener,
                                    const std::shared_ptr<const ConferenceParams> params)
-    : Conference(core, myAddress, listener, params) {
+    : Conference(core, listener, params) {
 }
 
 ClientConference::~ClientConference() {
@@ -100,7 +99,7 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
                                   bool hasBeenLeft) {
 	const auto &conferenceAddress = mConfParams->getConferenceAddress();
 	createFocus(conferenceAddress, nullptr);
-	mMe = Participant::create(getSharedFromThis(), mConfParams->getMe());
+	mMe = Participant::create(getSharedFromThis(), me->getAddress());
 	mMe->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices()) {
 		mMe->addDevice(device);
@@ -143,11 +142,11 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	// Local conference sets last notify to 1 in its constructor
 	setLastNotify(0);
 
-	const auto &meAddress = mConfParams->getMe();
-	mMe = Participant::create(getSharedFromThis(), meAddress);
+	inititializeMe();
+
+	const auto &core = getCore();
 	std::shared_ptr<Address> organizerAddress = nullptr;
 	auto conferenceAddress = mFocus ? mFocus->getAddress() : nullptr;
-	const auto &core = getCore();
 	std::shared_ptr<ConferenceInfo> conferenceInfo = nullptr;
 #ifdef HAVE_DB_STORAGE
 	if (conferenceAddress && core->getPrivate()->mainDb && supportsMedia()) {
@@ -203,6 +202,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	}
 #endif // HAVE_ADVANCED_IM
 
+	const auto &meAddress = mMe->getAddress();
 	if (supportsMedia()) {
 		getMe()->setAdmin((focusSession == nullptr) || (organizerAddress == nullptr) ||
 		                  organizerAddress->weakEqual(*meAddress));
@@ -434,13 +434,20 @@ void ClientConference::setConferenceId(const ConferenceId &conferenceId) {
 	if (mFocus) {
 		shared_ptr<CallSession> session = mFocus->getSession();
 		if (session) {
-			shared_ptr<CallLog> sessionLog = session->getLog();
+			std::shared_ptr<Address> address;
 			if (conferenceId.getPeerAddress()->isValid()) {
-				// Use the peer address of the conference ID because it has also the conf-id param hence the To field
-				// can be used to search in the map of chat rooms
-				sessionLog->setToAddress(conferenceId.getPeerAddress());
+				// Use the peer address of the conference ID because it has also the conf-id param hence the To or From
+				// field can be used to search in the map of conferences or chat rooms
+				address = conferenceId.getPeerAddress();
 			} else {
-				sessionLog->setToAddress(mFocus->getAddress());
+				address = mFocus->getAddress();
+			}
+			const auto &direction = session->getDirection();
+			auto sessionLog = session->getLog();
+			if (direction == LinphoneCallIncoming) {
+				sessionLog->setFromAddress(address);
+			} else {
+				sessionLog->setToAddress(address);
 			}
 		}
 	}
@@ -2035,8 +2042,7 @@ int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 
 	// The main session for the time being is the one used to create the conference. It will later replaced by the
 	// actual session used to join the conference
-	auto session =
-	    getCore()->createOrUpdateConferenceOnServer(mConfParams, organizer, invitees, getConferenceAddress(), ref);
+	auto session = getCore()->createOrUpdateConferenceOnServer(mConfParams, invitees, getConferenceAddress(), ref);
 	if (!session) {
 		lInfo() << "Aborting creation of conference " << *this << " because the call session cannot be established";
 		setState(ConferenceInterface::State::CreationFailed);

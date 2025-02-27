@@ -127,27 +127,37 @@ LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const Linph
 	return result;
 }
 
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const LinphoneAddress *localAddr,
                                                    const bctbx_list_t *participants) {
-	return linphone_core_create_chat_room_7(lc, params, localAddr, participants);
+	LinphoneConferenceParams *cloned_params = NULL;
+	if (params) {
+		cloned_params = linphone_conference_params_clone(params);
+	} else {
+		cloned_params = linphone_core_create_conference_params_2(lc, NULL);
+	}
+	if (!linphone_conference_params_get_account(cloned_params) && localAddr) {
+		linphone_conference_params_set_account(cloned_params, linphone_core_lookup_account_by_identity(lc, localAddr));
+	}
+	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_7(lc, cloned_params, participants);
+	if (cloned_params) {
+		linphone_conference_params_unref(cloned_params);
+	}
+	return chat_room;
 }
 
 LinphoneChatRoom *linphone_core_create_chat_room_7(LinphoneCore *lc,
                                                    const LinphoneConferenceParams *params,
-                                                   const LinphoneAddress *localAddr,
                                                    const bctbx_list_t *participants) {
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
 	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, Address>(participants);
-	shared_ptr<const LinphonePrivate::Address> localAddress =
-	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
-	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
-	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(conferenceParams, localAddress, participantsList);
+	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(conferenceParams, participantsList);
 	if (room) {
 		auto cRoom = room->toC();
 		linphone_chat_room_ref(cRoom);

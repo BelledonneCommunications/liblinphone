@@ -7299,12 +7299,21 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				                             liblinphone_tester_sip_timeout));
 			}
 
+			const LinphoneAddress *from = ((mgr == marie.getCMgr()) || (start_time > 0)) ? mgr->identity : confAddr;
+			const LinphoneAddress *to = ((mgr == marie.getCMgr()) || (start_time > 0)) ? confAddr : mgr->identity;
+
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
 				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(pcall);
 				const LinphoneMediaEncryption pcall_enc = linphone_call_params_get_media_encryption(call_cparams);
 				BC_ASSERT_EQUAL(pcall_enc, encryption, int, "%d");
+				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
+				BC_ASSERT_PTR_NOT_NULL(call_log);
+				if (call_log) {
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_from_address(call_log), from));
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_to_address(call_log), to));
+				}
 			}
 			LinphoneCall *ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
 			BC_ASSERT_PTR_NOT_NULL(ccall);
@@ -7312,6 +7321,12 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(ccall);
 				const LinphoneMediaEncryption ccall_enc = linphone_call_params_get_media_encryption(call_cparams);
 				BC_ASSERT_EQUAL(ccall_enc, encryption, int, "%d");
+				LinphoneCallLog *call_log = linphone_call_get_call_log(ccall);
+				BC_ASSERT_PTR_NOT_NULL(call_log);
+				if (call_log) {
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_from_address(call_log), from));
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_to_address(call_log), to));
+				}
 			}
 
 			LinphoneAddress *deviceAddr =
@@ -7410,6 +7425,36 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 					}
 					return nb_devices == 5;
 				}));
+			}
+
+			const LinphoneAddress *from = ((mgr == marie.getCMgr()) || (start_time > 0)) ? mgr->identity : confAddr;
+			const LinphoneAddress *to = ((mgr == marie.getCMgr()) || (start_time > 0)) ? confAddr : mgr->identity;
+
+			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
+			BC_ASSERT_PTR_NOT_NULL(pcall);
+			if (pcall) {
+				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(pcall);
+				const LinphoneMediaEncryption pcall_enc = linphone_call_params_get_media_encryption(call_cparams);
+				BC_ASSERT_EQUAL(pcall_enc, encryption, int, "%d");
+				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
+				BC_ASSERT_PTR_NOT_NULL(call_log);
+				if (call_log) {
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_from_address(call_log), from));
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_to_address(call_log), to));
+				}
+			}
+			LinphoneCall *ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
+			BC_ASSERT_PTR_NOT_NULL(ccall);
+			if (ccall) {
+				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(ccall);
+				const LinphoneMediaEncryption ccall_enc = linphone_call_params_get_media_encryption(call_cparams);
+				BC_ASSERT_EQUAL(ccall_enc, encryption, int, "%d");
+				LinphoneCallLog *call_log = linphone_call_get_call_log(ccall);
+				BC_ASSERT_PTR_NOT_NULL(call_log);
+				if (call_log) {
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_from_address(call_log), from));
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_to_address(call_log), to));
+				}
 			}
 		}
 
@@ -12167,6 +12212,34 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 				bool_t video_enabled =
 				    !!((mgr == marie.getCMgr()) ? linphone_video_activation_policy_get_automatically_initiate(mgr_pol)
 				                                : linphone_video_activation_policy_get_automatically_accept(mgr_pol));
+
+				if (mgr != focus.getCMgr()) {
+					const LinphoneAddress *from = (mgr == marie.getCMgr()) ? mgr->identity : confAddr;
+					const LinphoneAddress *to = (mgr == marie.getCMgr()) ? confAddr : mgr->identity;
+
+					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
+					BC_ASSERT_PTR_NOT_NULL(pcall);
+					if (pcall) {
+						LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
+						BC_ASSERT_PTR_NOT_NULL(call_log);
+						if (call_log) {
+							BC_ASSERT_TRUE(
+							    linphone_address_weak_equal(linphone_call_log_get_from_address(call_log), from));
+							BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_to_address(call_log), to));
+						}
+					}
+					LinphoneCall *ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
+					BC_ASSERT_PTR_NOT_NULL(ccall);
+					if (ccall) {
+						LinphoneCallLog *call_log = linphone_call_get_call_log(ccall);
+						BC_ASSERT_PTR_NOT_NULL(call_log);
+						if (call_log) {
+							BC_ASSERT_TRUE(
+							    linphone_address_weak_equal(linphone_call_log_get_from_address(call_log), from));
+							BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_to_address(call_log), to));
+						}
+					}
+				}
 
 				if (pconference) {
 					int no_participants = 0;

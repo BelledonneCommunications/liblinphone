@@ -206,7 +206,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 
 	mConferenceInfo = clone;
 
-	createOrUpdateConference(mConferenceInfo, creator);
+	createOrUpdateConference(mConferenceInfo);
 }
 
 void ConferenceScheduler::onChatMessageStateChanged(const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
@@ -485,7 +485,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenc
 		if (!chatRoom) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Existing chat room between [" << *sender << "] and ["
 			        << *participant << "] wasn't found, creating it.";
-			chatRoom = getCore()->getPrivate()->createChatRoom(conferenceParams, sender, chatRoomParticipantList);
+			chatRoom = getCore()->getPrivate()->createChatRoom(conferenceParams, chatRoomParticipantList);
 		} else {
 			lInfo() << "[Conference Scheduler] [" << this << "] Found existing chat room ["
 			        << *chatRoom->getPeerAddress() << "] between [" << *sender << "] and [" << *participant

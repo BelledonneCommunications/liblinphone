@@ -81,10 +81,10 @@ void CCMPConferenceScheduler::handleCCMPResponse(const HttpResponse &response) {
 	}
 }
 
-void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-                                                       const std::shared_ptr<Address> &creator) {
+void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
 	const auto &account = getAccount() ? getAccount() : getCore()->getDefaultAccount();
 	const auto accountParams = account ? account->getAccountParams() : nullptr;
+	const auto &creator = accountParams->getIdentityAddress();
 
 	if (!accountParams) {
 		lError() << "Aborting creation of conference because the account of conference scheduler [" << this

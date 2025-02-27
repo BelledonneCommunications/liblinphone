@@ -564,6 +564,7 @@ void Call::createClientConference(const shared_ptr<CallSession> &session) {
 		}
 	} else {
 		auto confParams = ConferenceParams::create(getCore());
+		confParams->setAccount(getParams()->getAccount());
 		std::shared_ptr<SalMediaDescription> md = (op) ? op->getFinalMediaDescription() : nullptr;
 
 		if (op && op->getSal()->mediaDisabled()) md = op->getRemoteMediaDescription();
@@ -576,7 +577,7 @@ void Call::createClientConference(const shared_ptr<CallSession> &session) {
 
 		if (confParams->audioEnabled() || confParams->videoEnabled() || confParams->chatEnabled()) {
 			clientConference = dynamic_pointer_cast<ClientConference>(
-			    (new ClientConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))->toSharedPtr());
+			    (new ClientConference(getCore(), nullptr, confParams))->toSharedPtr());
 			clientConference->initWithFocus(remoteContactAddress, session, op);
 		} else {
 			lError() << "Unable to attach call (local address " << *session->getLocalAddress() << " remote address "

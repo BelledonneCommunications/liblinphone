@@ -357,7 +357,6 @@ public:
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
-	                    const std::shared_ptr<const Address> &myAddress,
 	                    std::shared_ptr<CallSessionListener> callSessionListener,
 	                    const std::shared_ptr<const ConferenceParams> params);
 
@@ -429,6 +428,7 @@ protected:
 	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
 
 	virtual void configure(SalCallOp *op) = 0;
+	void inititializeMe();
 
 	void incrementLastNotify();
 	void setLastNotify(unsigned int lastNotify);

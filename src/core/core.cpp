@@ -1891,7 +1891,8 @@ std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const Cal
 
 	L_D();
 	for (const auto &[id, conference] : d->mConferenceById) {
-		if (session == conference->getMainSession()) {
+		const auto &conferenceSession = conference->getMainSession();
+		if (conferenceSession && (session == conferenceSession)) {
 			return conference;
 		}
 	}
@@ -2050,7 +2051,6 @@ void Core::addConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &sc
 }
 
 shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-                                                               const std::shared_ptr<const Address> &localAddr,
                                                                const std::list<Address> &participants,
                                                                const std::shared_ptr<Address> &confAddr,
                                                                std::shared_ptr<CallSessionListener> listener) {
@@ -2062,7 +2062,10 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	MediaSessionParams params;
 	params.initDefault(getSharedFromThis(), LinphoneCallOutgoing);
 
-	const auto &account = confParams->getAccount();
+	auto account = confParams->getAccount();
+	if (!account) {
+		account = getDefaultAccount();
+	}
 	params.setAccount(account);
 
 	std::shared_ptr<Address> conferenceFactoryUri;
@@ -2072,12 +2075,13 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	} else {
 		std::shared_ptr<const Address> conferenceFactoryUriRef;
 		if (mediaEnabled) {
-			conferenceFactoryUriRef = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
+			conferenceFactoryUriRef = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), account);
 		} else {
-			conferenceFactoryUriRef = Core::getConferenceFactoryAddress(getSharedFromThis(), localAddr);
+			conferenceFactoryUriRef = account->getAccountParams()->getConferenceFactoryAddress();
 		}
 		if (!conferenceFactoryUriRef || !conferenceFactoryUriRef->isValid()) {
-			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
+			lWarning() << "Not creating conference: no conference factory uri for local address ["
+			           << *account->getAccountParams()->getIdentityAddress() << "]";
 			return nullptr;
 		}
 		conferenceFactoryUri = conferenceFactoryUriRef->clone()->toSharedPtr();
@@ -2122,6 +2126,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	params.getPrivate()->disableRinging(true);
 	params.getPrivate()->enableToneIndications(false);
 
+	const auto &localAddr = account->getAccountParams()->getIdentityAddress();
 	auto participant = Participant::create(nullptr, localAddr);
 	auto session = participant->createSession(getSharedFromThis(), &params, true);
 	session->addListener(listener);

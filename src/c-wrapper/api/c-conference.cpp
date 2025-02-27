@@ -71,12 +71,22 @@ LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAd
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core,
                                                               LinphoneAddress *addr,
                                                               const LinphoneConferenceParams *params) {
+
+	LinphoneConferenceParams *cloned_params = NULL;
+	if (params) {
+		cloned_params = linphone_conference_params_clone(params);
+	} else {
+		cloned_params = linphone_core_create_conference_params_2(core, NULL);
+	}
+	if (!linphone_conference_params_get_account(cloned_params) && addr) {
+		linphone_conference_params_set_account(cloned_params, linphone_core_lookup_account_by_identity(core, addr));
+	}
+	std::shared_ptr<ConferenceParams> conf_params = ConferenceParams::toCpp(cloned_params)->getSharedFromThis();
 	std::shared_ptr<Conference> localConf =
-	    (new ServerConference(
-	         L_GET_CPP_PTR_FROM_C_OBJECT(core), Address::toCpp(addr)->getSharedFromThis(), nullptr,
-	         params ? ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()
-	                : ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(core))))
-	        ->toSharedPtr();
+	    (new ServerConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), nullptr, conf_params))->toSharedPtr();
+	if (cloned_params) {
+		linphone_conference_params_unref(cloned_params);
+	}
 	localConf->init();
 	localConf->ref();
 	return localConf->toC();
@@ -90,16 +100,21 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
                                                                LinphoneAddress *focus,
                                                                LinphoneAddress *addr,
                                                                const LinphoneConferenceParams *params) {
-	std::shared_ptr<const ConferenceParams> conf_params = nullptr;
+	LinphoneConferenceParams *cloned_params = NULL;
 	if (params) {
-		conf_params = ConferenceParams::toCpp(params)->getSharedFromThis();
+		cloned_params = linphone_conference_params_clone(params);
 	} else {
-		conf_params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(core));
+		cloned_params = linphone_core_create_conference_params_2(core, NULL);
 	}
+	if (!linphone_conference_params_get_account(cloned_params) && addr) {
+		linphone_conference_params_set_account(cloned_params, linphone_core_lookup_account_by_identity(core, addr));
+	}
+	std::shared_ptr<const ConferenceParams> conf_params = ConferenceParams::toCpp(cloned_params)->getSharedFromThis();
 	std::shared_ptr<Conference> conference =
-	    (new ClientConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), Address::toCpp(addr)->getSharedFromThis(), nullptr,
-	                          conf_params))
-	        ->toSharedPtr();
+	    (new ClientConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), nullptr, conf_params))->toSharedPtr();
+	if (cloned_params) {
+		linphone_conference_params_unref(cloned_params);
+	}
 	static_pointer_cast<ClientConference>(conference)
 	    ->initWithFocus(Address::toCpp(focus)->getSharedFromThis(), nullptr, nullptr, conference.get());
 	conference->ref();

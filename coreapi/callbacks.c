@@ -181,6 +181,10 @@ static void call_received(SalCallOp *h) {
 #endif
 
 	auto params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	LinphoneAccount *account = linphone_core_lookup_account_by_identity(lc, to->toC());
+	if (account) {
+		params->setAccount(Account::toCpp(account)->getSharedFromThis());
+	}
 	params->setUtf8Subject(h->getSubject());
 	if (hasStreams) {
 		params->setAudioVideoDefaults();
@@ -322,7 +326,7 @@ static void call_received(SalCallOp *h) {
 						// The duration is stored in minutes whereas the start time in seconds
 						params->setEndTime(startTime + duration * 60);
 					}
-					conference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
+					conference = (new ServerConference(core, nullptr, params))->toSharedPtr();
 					conference->init(h);
 				} else
 #endif // HAVE_DB_STORAGE
@@ -338,7 +342,7 @@ static void call_received(SalCallOp *h) {
 							h->release();
 							return;
 						} else {
-							auto serverConference = (new ServerConference(core, to, nullptr, params))->toSharedPtr();
+							auto serverConference = (new ServerConference(core, nullptr, params))->toSharedPtr();
 							serverConference->init(h);
 							static_pointer_cast<ServerConference>(serverConference)->confirmCreation();
 							return;
@@ -985,12 +989,14 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) 
 	auto chatRoom = msg->getChatRoom();
 	// Check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
 	if (chatRoom) {
-		auto errorInfo = op->getErrorInfo();
-		auto reason = errorInfo ? linphone_reason_from_sal(errorInfo->reason) : LinphoneReasonNone;
-		L_GET_PRIVATE(msg)->setParticipantState(
-		    chatRoom->getMe()->getAddress(),
-		    (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, errorInfo), ::ms_time(NULL),
-		    reason);
+		const auto &me = chatRoom->getMe();
+		if (me) {
+			auto errorInfo = op->getErrorInfo();
+			auto reason = errorInfo ? linphone_reason_from_sal(errorInfo->reason) : LinphoneReasonNone;
+			L_GET_PRIVATE(msg)->setParticipantState(
+			    me->getAddress(), (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(lc, status, errorInfo),
+			    ::ms_time(NULL), reason);
+		}
 	}
 }
 

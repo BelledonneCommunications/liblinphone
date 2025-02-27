@@ -36,8 +36,7 @@ SIPConferenceScheduler::SIPConferenceScheduler(const shared_ptr<Core> &core, con
     : ConferenceScheduler(core, account) {
 }
 
-void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-                                                      const std::shared_ptr<Address> &creator) {
+void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
 
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore());
 	conferenceParams->setAccount(getAccount());
@@ -70,7 +69,7 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 
 	auto ref = getSharedFromThis();
 	const auto &conferenceAddress = conferenceInfo->getUri();
-	mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress,
+	mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, invitees, conferenceAddress,
 	                                                       dynamic_pointer_cast<SIPConferenceScheduler>(ref));
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";

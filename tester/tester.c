@@ -686,7 +686,7 @@ static void conference_state_changed(LinphoneConference *conference, LinphoneCon
 	ms_free(newStateStr);
 
 	if ((newState != LinphoneConferenceStateNone) && (newState != LinphoneConferenceStateInstantiated) &&
-	    (newState != LinphoneConferenceStateCreationPending)) {
+	    (newState != LinphoneConferenceStateCreationPending) && !linphone_core_conference_server_enabled(core)) {
 		LinphoneParticipant *me = linphone_conference_get_me(conference);
 		BC_ASSERT_PTR_NOT_NULL(me);
 	}

@@ -850,7 +850,10 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		fromAddress = peerAddress;
 		toAddress = localAddress;
 	}
-	mMeAddress = chatRoom->getMe()->getAddress()->clone()->toSharedPtr();
+	const auto &me = chatRoom->getMe();
+	if (me) {
+		mMeAddress = me->getAddress()->clone()->toSharedPtr();
+	}
 }
 
 // -----------------------------------------------------------------------------

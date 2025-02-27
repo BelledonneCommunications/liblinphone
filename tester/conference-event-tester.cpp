@@ -747,7 +747,7 @@ L_ENABLE_ATTR_ACCESS(ServerConference, shared_ptr<ServerConferenceEventHandler>,
 
 class ConferenceEventTester : public ClientConference {
 public:
-	ConferenceEventTester(const shared_ptr<Core> &core, const std::shared_ptr<Address> &confAddr);
+	ConferenceEventTester(const shared_ptr<Core> &core);
 	virtual ~ConferenceEventTester();
 
 private:
@@ -779,8 +779,9 @@ public:
 	virtual void init(SalCallOp *op = nullptr, ConferenceListener *confListener = nullptr) override;
 };
 
-ConferenceEventTester::ConferenceEventTester(const shared_ptr<Core> &core, const std::shared_ptr<Address> &confAddr)
-    : ClientConference(core, confAddr, nullptr, ConferenceParams::create(core)) {
+ConferenceEventTester::ConferenceEventTester(const shared_ptr<Core> &core)
+    : ClientConference(core, nullptr, ConferenceParams::create(core)) {
+	getCurrentParams()->setAccount(core->getDefaultAccount());
 	getCurrentParams()->enableAudio(true);
 }
 
@@ -865,10 +866,9 @@ void ConferenceEventTester::onParticipantDeviceRemoved(const shared_ptr<Conferen
 
 class ServerConferenceTester : public ServerConference {
 public:
-	ServerConferenceTester(const std::shared_ptr<Core> &core,
-	                       const std::shared_ptr<Address> &myAddress,
-	                       std::shared_ptr<CallSessionListener> listener)
-	    : ServerConference(core, myAddress, listener, ConferenceParams::create(core)) {
+	ServerConferenceTester(const std::shared_ptr<Core> &core, std::shared_ptr<CallSessionListener> listener)
+	    : ServerConference(core, listener, ConferenceParams::create(core)) {
+		getCurrentParams()->setAccount(core->getDefaultAccount());
 		getCurrentParams()->enableLocalParticipant(false);
 		getCurrentParams()->enableAudio(true);
 		getCurrentParams()->enableChat(false);
@@ -992,16 +992,15 @@ static void setParticipantAsAdmin(shared_ptr<Conference> localConf, std::shared_
 void first_notify_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 
@@ -1031,6 +1030,7 @@ void first_notify_parsing() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_core_manager_destroy(marie);
@@ -1039,16 +1039,15 @@ void first_notify_parsing() {
 void first_notify_with_extensions_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 
@@ -1078,6 +1077,7 @@ void first_notify_with_extensions_parsing() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_core_manager_destroy(marie);
@@ -1086,16 +1086,15 @@ void first_notify_with_extensions_parsing() {
 void first_notify_parsing_wrong_conf() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, "sips:conf322@example.com");
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
@@ -1118,6 +1117,7 @@ void first_notify_parsing_wrong_conf() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_core_manager_destroy(marie);
@@ -1126,10 +1126,8 @@ void first_notify_parsing_wrong_conf() {
 void participant_added_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
@@ -1139,6 +1137,7 @@ void participant_added_parsing() {
 	size_t size2 = strlen(participant_added_notify) + strlen(confUri);
 	char *notify_added = new char[size2];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
@@ -1179,6 +1178,7 @@ void participant_added_parsing() {
 	BC_ASSERT_TRUE(!tester->participants.find(frankAddrStr)->second);
 	bctbx_free(frankAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_address_unref(frankAddr);
@@ -1189,10 +1189,8 @@ void participant_not_added_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	setup_mgr_for_conference(marie, NULL);
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
@@ -1206,6 +1204,7 @@ void participant_not_added_parsing() {
 	size_t size4 = strlen(participant_device_not_added_notify) + strlen(confUri) + sizeof(int);
 	char *notify_device_not_added = new char[size4];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId())
@@ -1286,6 +1285,7 @@ void participant_not_added_parsing() {
 
 	tester->handler->unsubscribe();
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_address_unref(frankAddr);
@@ -1295,10 +1295,8 @@ void participant_not_added_parsing() {
 void participant_deleted_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
@@ -1307,6 +1305,7 @@ void participant_deleted_parsing() {
 	size_t size2 = strlen(participant_deleted_notify) + strlen(confUri);
 	char *notify_deleted = new char[size2];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
@@ -1344,6 +1343,7 @@ void participant_deleted_parsing() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_core_manager_destroy(marie);
@@ -1352,10 +1352,8 @@ void participant_deleted_parsing() {
 void participant_admined_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
@@ -1364,6 +1362,7 @@ void participant_admined_parsing() {
 	size_t size2 = strlen(participant_admined_notify) + strlen(confUri);
 	char *notify_admined = new char[size2];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
@@ -1400,6 +1399,7 @@ void participant_admined_parsing() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_core_manager_destroy(marie);
@@ -1408,10 +1408,8 @@ void participant_admined_parsing() {
 void participant_unadmined_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
-	linphone_address_unref(confAddress);
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
@@ -1420,6 +1418,7 @@ void participant_unadmined_parsing() {
 	size_t size2 = strlen(participant_unadmined_notify) + strlen(confUri);
 	char *notify_unadmined = new char[size2];
 
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
@@ -1456,6 +1455,7 @@ void participant_unadmined_parsing() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	linphone_address_unref(confAddress);
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
 	linphone_core_manager_destroy(marie);
@@ -1465,14 +1465,13 @@ void send_first_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	auto params = ConferenceParams::create(pauline->lc->cppPtr);
 	params->enableAudio(true);
-	shared_ptr<Conference> localConf =
-	    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
+	params->enableLocalParticipant(false);
+	shared_ptr<Conference> localConf = (new ServerConference(pauline->lc->cppPtr, nullptr, params))->toSharedPtr();
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -1493,6 +1492,7 @@ void send_first_notify() {
 	ServerConferenceEventHandler *localHandler =
 	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), mEventHandler)).get();
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 	auto content = localHandler->createNotifyFullState(NULL);
 
@@ -1516,9 +1516,7 @@ void send_added_notify_through_address() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<ServerConferenceTester> localConf =
-	    make_shared<ServerConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
+	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -1537,6 +1535,7 @@ void send_added_notify_through_address() {
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, size_t, "%zu");
@@ -1866,7 +1865,7 @@ add_participant_to_conference_through_call(bctbx_list_t **mgrs,
 	size_t increment = 0;
 	if (participantSize == 0) {
 		// Also me is added as participant
-		increment = 2;
+		increment = 1 + ((conf->getCurrentParams()->localParticipantEnabled()) ? 1 : 0);
 	} else {
 		increment = 1;
 	}
@@ -1874,11 +1873,12 @@ add_participant_to_conference_through_call(bctbx_list_t **mgrs,
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), (participantDeviceSize + increment), size_t, "%zu");
 
 	if (participantCall) {
-		auto cppAddress = Call::toCpp(participantCall)->getToAddress()->clone()->toSharedPtr();
+		auto cppAddress = Call::toCpp(participantCall)->getLog()->getToAddress()->clone()->toSharedPtr();
 		auto addressParams = cppAddress->getUriParams();
 		for (const auto &[name, value] : addressParams) {
 			cppAddress->removeUriParam(name);
 		}
+		BC_ASSERT_TRUE(linphone_address_weak_equal(cppAddress->toC(), participant_mgr->identity));
 		const auto participant = confListener->participants.find(cppAddress->asStringUriOnly());
 		BC_ASSERT_TRUE(participant != confListener->participants.end());
 
@@ -1925,13 +1925,11 @@ void send_added_notify_through_call() {
 	bctbx_list_t *mgrs = NULL;
 	mgrs = bctbx_list_append(mgrs, pauline);
 
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	stats initialPaulineStats = pauline->stat;
 	{
 		auto params = ConferenceParams::create(pauline->lc->cppPtr);
 		params->enableAudio(true);
-		shared_ptr<Conference> localConf =
-		    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
+		shared_ptr<Conference> localConf = (new ServerConference(pauline->lc->cppPtr, nullptr, params))->toSharedPtr();
 		localConf->init();
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending,
@@ -2006,14 +2004,12 @@ void send_removed_notify_through_call() {
 
 	bctbx_list_t *removed_mgrs = NULL;
 
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	stats initialPaulineStats = pauline->stat;
-
 	{
 		auto params = ConferenceParams::create(pauline->lc->cppPtr);
 		params->enableAudio(true);
-		shared_ptr<Conference> localConf =
-		    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
+		params->enableLocalParticipant(false);
+		shared_ptr<Conference> localConf = (new ServerConference(pauline->lc->cppPtr, nullptr, params))->toSharedPtr();
 		localConf->init();
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending,
@@ -2105,9 +2101,7 @@ void send_removed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<ServerConferenceTester> localConf =
-	    make_shared<ServerConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
+	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2123,6 +2117,7 @@ void send_removed_notify() {
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, size_t, "%zu");
@@ -2153,9 +2148,7 @@ void send_admined_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<ServerConferenceTester> localConf =
-	    make_shared<ServerConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
+	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2171,6 +2164,7 @@ void send_admined_notify() {
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, size_t, "%zu");
@@ -2201,9 +2195,7 @@ void send_unadmined_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<ServerConferenceTester> localConf =
-	    make_shared<ServerConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
+	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2219,6 +2211,7 @@ void send_unadmined_notify() {
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, size_t, "%zu");
@@ -2247,9 +2240,8 @@ void send_subject_changed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
-	    (new ServerConferenceTester(pauline->lc->cppPtr, addr, nullptr))->toSharedPtr());
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr());
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2266,6 +2258,7 @@ void send_subject_changed_notify() {
 	localConf->setSubject("A random test subject");
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_STRING_EQUAL(confListener->confSubject.c_str(), "A random test subject");
@@ -2301,8 +2294,7 @@ void send_device_added_notify() {
 	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
 	linphone_core_cbs_unref(cbs);
 
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, addr, nullptr))->toSharedPtr();
+	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr();
 	;
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
@@ -2320,6 +2312,7 @@ void send_device_added_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr->toString()) !=
@@ -2398,8 +2391,7 @@ void send_device_added_notify() {
 void send_device_removed_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, addr, nullptr))->toSharedPtr();
+	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr();
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2417,6 +2409,7 @@ void send_device_removed_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	localConf->setState(ConferenceInterface::State::Instantiated);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, size_t, "%zu");
@@ -2454,16 +2447,14 @@ void one_to_one_keyword() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
-	shared_ptr<ConferenceEventTester> tester = dynamic_pointer_cast<ConferenceEventTester>(
-	    (new ConferenceEventTester(marie->lc->cppPtr, addr))->toSharedPtr());
+	shared_ptr<ConferenceEventTester> tester =
+	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
 	auto params = ConferenceParams::create(pauline->lc->cppPtr);
 	params->enableAudio(false);
 	params->enableChat(true);
 	params->setGroup(false);
-	shared_ptr<Conference> localConf =
-	    (new ServerConference(pauline->lc->cppPtr, addr, nullptr, params))->toSharedPtr();
+	shared_ptr<Conference> localConf = (new ServerConference(pauline->lc->cppPtr, nullptr, params))->toSharedPtr();
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2471,6 +2462,8 @@ void one_to_one_keyword() {
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
+
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 
 	// Create basic chat room with OneToOne capability to ensure that one to one is added to notify
 	pauline->lc->cppPtr->getOrCreateBasicChatRoom(addr, addr);

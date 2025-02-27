@@ -365,7 +365,6 @@ public:
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 
 	std::shared_ptr<CallSession> createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-	                                                              const std::shared_ptr<const Address> &localAddr,
 	                                                              const std::list<Address> &participants,
 	                                                              const std::shared_ptr<Address> &confAddr,
 	                                                              std::shared_ptr<CallSessionListener> listener);

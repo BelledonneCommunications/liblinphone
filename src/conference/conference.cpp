@@ -61,14 +61,11 @@ const std::string Conference::IsFocusParameter = "isfocus";
 const std::string Conference::TextParameter = "text";
 
 Conference::Conference(const shared_ptr<Core> &core,
-                       const std::shared_ptr<const Address> &myAddress,
                        std::shared_ptr<CallSessionListener> callSessionListener,
                        const std::shared_ptr<const ConferenceParams> params)
-    : CoreAccessor(core), mConferenceId(Address(), Address(*myAddress), core->createConferenceIdParams()) {
+    : CoreAccessor(core) {
 	mCallSessionListener = callSessionListener;
 	update(*params);
-	mConfParams->setMe(myAddress);
-
 	if (mConfParams->videoEnabled()) {
 		// If video is enabled, then always enable audio capabilities
 		mConfParams->enableAudio(true);
@@ -101,6 +98,27 @@ Conference::~Conference() {
 }
 
 // -----------------------------------------------------------------------------
+void Conference::inititializeMe() {
+	const auto &core = getCore();
+	auto account = mConfParams->getAccount();
+	if (!account) {
+		account = core->getDefaultAccount();
+		if (account) {
+			lInfo() << "Using default account " << *account << " for " << *this
+			        << " because it was not set in the conference parameters";
+			mConfParams->setAccount(account);
+		} else {
+			lInfo() << "Not setting account for " << *this
+			        << " because it was not set in the conference parameters and the core has no default account";
+		}
+	}
+
+	if (account) {
+		auto meAddress = account->getAccountParams()->getIdentityAddress()->getUri();
+		mConferenceId = ConferenceId(Address(), std::move(meAddress), core->createConferenceIdParams());
+		mMe = Participant::create(getSharedFromThis(), mConferenceId.getLocalAddress());
+	}
+}
 
 void Conference::removeListener(std::shared_ptr<ConferenceListenerInterface> listener) {
 	mConfListeners.remove(listener);
@@ -366,7 +384,7 @@ bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddre
 }
 
 std::shared_ptr<CallSession> Conference::getMainSession() const {
-	return mMe->getSession();
+	return mMe ? mMe->getSession() : nullptr;
 }
 
 bool Conference::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
@@ -1071,6 +1089,14 @@ std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() c
 // -----------------------------------------------------------------------------
 
 bool Conference::isMe(const std::shared_ptr<const Address> &addr) const {
+	if (!mMe) {
+		// Cannot know if it is the me participant if it is not defined.
+		// This may happen when a server chat room is retrieved from the database. The me participant is not defined as
+		// it has already been created. The server is therefore a passive component whose task is to dispatch MESSAGE
+		// request or handle participants.
+		lDebug() << *this << ": Unable to known if the me participant is not defined";
+		return false;
+	}
 	if (!addr || !addr->isValid()) {
 		lError() << *this << ": Unable to known if an invalid address is the me participant";
 		return false;
@@ -1838,7 +1864,7 @@ int Conference::stopRecording() {
 	if (aci) {
 		aci->stopRecording();
 	} else {
-		lError() << "ServerConference::stopRecording(): no audio mixer.";
+		lError() << "Conference::stopRecording(): no audio mixer.";
 		return -1;
 	}
 	return 0;

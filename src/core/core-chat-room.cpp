@@ -113,7 +113,7 @@ CorePrivate::getIdentityAddressWithGruu(const std::shared_ptr<const Address> &id
 #endif // _MSC_VER
 // Base server group chat room creator
 shared_ptr<AbstractChatRoom>
-CorePrivate::createServerChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
+CorePrivate::createServerChatRoom(BCTBX_UNUSED(const std::shared_ptr<const Address> &conferenceFactoryUri),
                                   SalCallOp *op,
                                   const std::shared_ptr<ConferenceParams> &params) {
 #ifdef HAVE_ADVANCED_IM
@@ -135,8 +135,7 @@ CorePrivate::createServerChatRoom(const std::shared_ptr<const Address> &conferen
 	}
 
 	auto conference = dynamic_pointer_cast<ServerConference>(
-	    (new ServerConference(q->getSharedFromThis(), conferenceFactoryUri, nullptr, newConferenceParameters))
-	        ->toSharedPtr());
+	    (new ServerConference(q->getSharedFromThis(), nullptr, newConferenceParameters))->toSharedPtr());
 	conference->init(op, conference.get());
 	return conference->getChatRoom();
 #else
@@ -179,8 +178,7 @@ CorePrivate::createClientChatRoom(const std::shared_ptr<const Address> &conferen
 	}
 
 	auto conference = dynamic_pointer_cast<ClientConference>(
-	    (new ClientConference(q->getSharedFromThis(), conferenceId.getLocalAddress(), nullptr, newConferenceParameters))
-	        ->toSharedPtr());
+	    (new ClientConference(q->getSharedFromThis(), nullptr, newConferenceParameters))->toSharedPtr());
 	conference->initWithFocus(conferenceFactoryUri, nullptr, op, conference.get());
 	if (conferenceId.isValid()) {
 		conference->setConferenceId(conferenceId);
@@ -302,7 +300,6 @@ std::shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom(const std::string 
 }
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
-                                                         const std::shared_ptr<const Address> &localAddr,
                                                          const std::list<std::shared_ptr<Address>> &participants) {
 	L_Q();
 	if (!params) {
@@ -322,13 +319,20 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 		lWarning() << "Tying to create chat room with unavailable backend";
 		return nullptr;
 	}
-	shared_ptr<AbstractChatRoom> chatRoom;
 
+	auto account = params->getAccount();
+	if (!account) {
+		account = q->getDefaultAccount();
+	}
+	const std::shared_ptr<const Address> localAddr =
+	    account ? account->getAccountParams()->getIdentityAddress() : getDefaultLocalAddress(nullptr, false);
+
+	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
-		const auto &conferenceFactoryUri = Core::getConferenceFactoryAddress(q->getSharedFromThis(), localAddr);
+		const auto &conferenceFactoryUri = account->getAccountParams()->getConferenceFactoryAddress();
 		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
-			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr
+			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << *localAddr
 			           << "]";
 			return nullptr;
 		}
@@ -342,9 +346,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 			}
 		}
 
-		ConferenceId conferenceId = ConferenceId(nullptr, localAddr, q->createConferenceIdParams());
+		ConferenceId conferenceId(nullptr, localAddr, q->createConferenceIdParams());
 		chatRoom = createClientChatRoom(conferenceFactoryUri, conferenceId, nullptr, params);
-
 		if (!chatRoom) {
 			lWarning() << "Cannot create createClientChatRoom with subject [" << params->getSubject() << "]";
 			return nullptr;
@@ -372,23 +375,16 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 			insertChatRoom(chatRoom);
 			insertChatRoomWithDb(chatRoom);
 		} else {
-			lInfo() << "Found an existing BasicChatRoom with this participant, using it instead of creating a new one";
+			lInfo() << "Found an existing BasicChatRoom with " << *remoteAddr
+			        << ", using it instead of creating a new one";
 		}
 	}
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
-                                                         const std::list<std::shared_ptr<Address>> &participants) {
-	auto defaultLocalAddress =
-	    getDefaultLocalAddress(nullptr, params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat);
-	return createChatRoom(params, defaultLocalAddress, participants);
-}
-
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subject,
                                                          const std::list<std::shared_ptr<Address>> &participants) {
 	L_Q();
-
 	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
 	params->setChatDefaults();
 	if (participants.size() > 1) {
@@ -397,17 +393,15 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subj
 	} else {
 		params->getChatParams()->setBackend(ChatParams::Backend::Basic);
 	}
-	auto defaultLocalAddress =
-	    getDefaultLocalAddress(nullptr, params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat);
+	params->setAccount(q->getDefaultAccount());
 	params->setUtf8Subject(subject);
-	return createChatRoom(params, defaultLocalAddress, participants);
+	return createChatRoom(params, participants);
 }
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ConferenceParams> &params,
-                                                         const std::shared_ptr<Address> &localAddr,
                                                          const std::shared_ptr<Address> &participant) {
-	const std::list<std::shared_ptr<Address>> &participants{participant};
-	return createChatRoom(params, localAddr, participants);
+	const std::list<std::shared_ptr<Address>> participants{participant};
+	return createChatRoom(params, participants);
 }
 
 // Assume basic chat room creation

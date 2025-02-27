@@ -332,6 +332,7 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 		chatRoom = getCore()->getPrivate()->searchChatRoom(getCurrentParams(), getLocalAddress(), peerAddress, {});
 		if (!chatRoom) {
 			shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
+			params->setAccount(getCurrentParams()->getAccount());
 			params->setChatDefaults();
 			params->setGroup(false);
 			auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
@@ -345,7 +346,7 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 				params->getChatParams()->setBackend(ChatParams::Backend::Basic);
 				params->setSecurityLevel(ConferenceParams::SecurityLevel::None);
 			}
-			chatRoom = getCore()->getPrivate()->createChatRoom(params, getLocalAddress(), peerAddress);
+			chatRoom = getCore()->getPrivate()->createChatRoom(params, peerAddress);
 		}
 	}
 	return chatRoom;

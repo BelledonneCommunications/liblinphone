@@ -47,7 +47,6 @@ public:
 	static constexpr int sConfIdLength = 32;
 
 	ServerConference(const std::shared_ptr<Core> &core,
-	                 const std::shared_ptr<const Address> &myAddress,
 	                 std::shared_ptr<CallSessionListener> listener,
 	                 const std::shared_ptr<ConferenceParams> params);
 	virtual ~ServerConference();

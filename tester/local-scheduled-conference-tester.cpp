@@ -6992,7 +6992,7 @@ test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
 };
 
 test_suite_t local_conference_test_suite_scheduled_conference_audio_only_participant = {
-    "Local conference tester (Audio only participants)",
+    "Local conference tester (Scheduled Conference with Audio only participants)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
@@ -7005,7 +7005,7 @@ test_suite_t local_conference_test_suite_scheduled_conference_audio_only_partici
 };
 
 test_suite_t local_conference_test_suite_scheduled_conference_with_screen_sharing = {
-    "Local conference tester (Screen sharing)",
+    "Local conference tester (Scheduled Conference with Screen sharing)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
@@ -7018,7 +7018,7 @@ test_suite_t local_conference_test_suite_scheduled_conference_with_screen_sharin
 };
 
 test_suite_t local_conference_test_suite_scheduled_conference_with_chat = {
-    "Local conference tester (Conference with chat)",
+    "Local conference tester (Scheduled Conference with chat)",
     NULL,
     NULL,
     liblinphone_tester_before_each,

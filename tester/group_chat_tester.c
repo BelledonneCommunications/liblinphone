@@ -6223,8 +6223,7 @@ static void basic_chat_room_with_cpim_base(bool_t use_gruu) {
 	linphone_conference_params_enable_group(marie_params, FALSE);
 	LinphoneChatParams *marie_chat_params = linphone_conference_params_get_chat_params(marie_params);
 	linphone_chat_params_set_backend(marie_chat_params, LinphoneChatRoomBackendBasic);
-	LinphoneChatRoom *marieCr =
-	    linphone_core_create_chat_room_7(marie->lc, marie_params, marie->identity, participantsAddresses);
+	LinphoneChatRoom *marieCr = linphone_core_create_chat_room_7(marie->lc, marie_params, participantsAddresses);
 	bctbx_list_free(participantsAddresses);
 	participantsAddresses = NULL;
 	linphone_chat_room_params_unref(marie_params);

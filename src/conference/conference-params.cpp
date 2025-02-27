@@ -113,12 +113,6 @@ void ConferenceParams::updateFromAccount(
 	if (account) {
 		auto accountParams = account->getAccountParams();
 		if (accountParams) {
-			auto identity = accountParams->getIdentityAddress();
-			if (identity) {
-				setMe(identity);
-			} else {
-				setMe(nullptr);
-			}
 			if (mUseDefaultFactoryAddress) {
 				const auto &conferenceFactory = (audioEnabled() || videoEnabled())
 				                                    ? accountParams->getAudioVideoConferenceFactoryAddress()

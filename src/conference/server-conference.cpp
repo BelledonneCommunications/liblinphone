@@ -57,10 +57,9 @@ LINPHONE_BEGIN_NAMESPACE
 constexpr int SERVER_CONFIGURATION_FAILED = 1;
 
 ServerConference::ServerConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<const Address> &myAddress,
                                    std::shared_ptr<CallSessionListener> listener,
                                    const std::shared_ptr<ConferenceParams> params)
-    : Conference(core, myAddress, listener, params) {
+    : Conference(core, listener, params) {
 }
 
 ServerConference::~ServerConference() {
@@ -77,11 +76,13 @@ ServerConference::~ServerConference() {
 	cleanup();
 }
 
-void ServerConference::initFromDb(BCTBX_UNUSED(const std::shared_ptr<Participant> &me),
+void ServerConference::initFromDb(const std::shared_ptr<Participant> &me,
                                   const ConferenceId conferenceId,
                                   const unsigned int lastNotifyId,
                                   BCTBX_UNUSED(bool hasBeenLeft)) {
-	mMe = Participant::create(getSharedFromThis(), mConfParams->getMe());
+	if (me) {
+		mMe = me->clone()->toSharedPtr();
+	}
 	setLastNotify(lastNotifyId);
 	mConferenceId = conferenceId;
 	getCore()->getPrivate()->registerListener(this);
@@ -104,27 +105,29 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 	// Set last notify to 1 in order to ensure that the 1st notify to client conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
 	setLastNotify(1);
-	mMe = Participant::create(getSharedFromThis(), mConfParams->getMe());
+
+	inititializeMe();
 	setOrganizer(op ? Address::create(op->getFrom()) : mMe->getAddress());
 
+	const auto &core = getCore();
 	createEventHandler(confListener);
 	if (mConfParams->chatEnabled()) {
 		mConfParams->enableLocalParticipant(false);
-		getCore()->getPrivate()->registerListener(this);
+		core->getPrivate()->registerListener(this);
 #ifdef HAVE_ADVANCED_IM
 		auto chatRoom =
-		    dynamic_pointer_cast<ServerChatRoom>((new ServerChatRoom(getCore(), getSharedFromThis()))->toSharedPtr());
+		    dynamic_pointer_cast<ServerChatRoom>((new ServerChatRoom(core, getSharedFromThis()))->toSharedPtr());
 		setChatRoom(chatRoom);
 #endif // HAVE_ADVANCED_IM
 	}
 	setState(ConferenceInterface::State::Instantiated);
-	LinphoneCore *lc = getCore()->getCCore();
+	LinphoneCore *lc = core->getCCore();
 	if (op) {
 		configure(op);
 	} else {
 		// Update proxy contact address to add conference ID
 		// Do not use organizer address directly as it may lack some parameter like gruu
-		auto account = getCore()->lookupKnownAccount(mOrganizer, true);
+		auto account = core->lookupKnownAccount(mOrganizer, true);
 		char *contactAddressStr = nullptr;
 		if (account && account->getOp()) {
 			contactAddressStr = sal_address_as_string(account->getOp()->getContactAddress());
@@ -153,13 +156,13 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 #endif // HAVE_ADVANCED_IM
 
 		if (!eventLogEnabled) {
-			setConferenceId(ConferenceId(contactAddress, contactAddress, getCore()->createConferenceIdParams()));
+			setConferenceId(ConferenceId(contactAddress, contactAddress, core->createConferenceIdParams()));
 		}
 
 #ifdef HAVE_DB_STORAGE
 		const auto &conferenceInfo = createOrGetConferenceInfo();
 		if (conferenceInfo) {
-			auto &mainDb = getCore()->getPrivate()->mainDb;
+			auto &mainDb = core->getPrivate()->mainDb;
 			if (mainDb) {
 				lInfo() << "Inserting new conference information to database in order to be able to recreate the "
 				           "conference "
@@ -971,7 +974,7 @@ void ServerConference::finalizeCreation() {
 		if (createdConference) {
 			lInfo() << "Conference [" << this << "] with address " << *conferenceAddress
 			        << " has already been created therefore no need to carry out the redirection to its address";
-		} else {
+		} else if (mMe) {
 			shared_ptr<CallSession> session = mMe->getSession();
 			if (session) {
 				if (mConfParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut) {

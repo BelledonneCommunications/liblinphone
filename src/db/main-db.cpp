@@ -6310,7 +6310,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				std::shared_ptr<Conference> conference = nullptr;
 				if (serverMode) {
 					params->enableLocalParticipant(false);
-					conference = (new ServerConference(core, localAddress, nullptr, params))->toSharedPtr();
+					conference = (new ServerConference(core, nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, false);
 					chatRoom = conference->getChatRoom();
 					conference->setState(ConferenceInterface::State::Created);
@@ -6320,7 +6320,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						continue;
 					}
 					bool hasBeenLeft = !!row.get<int>(8, 0);
-					conference = (new ClientConference(core, me->getAddress(), nullptr, params))->toSharedPtr();
+					conference = (new ClientConference(core, nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
 					chatRoom = conference->getChatRoom();
 					updateFlags = confInfo && !hasBeenLeft;

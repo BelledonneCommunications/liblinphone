@@ -128,14 +128,6 @@ public:
 		return mUtf8Subject;
 	}
 	const std::string &getSubject() const;
-
-	virtual void setMe(const std::shared_ptr<const Address> &participantAddress) override {
-		mMe = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
-	};
-	std::shared_ptr<Address> getMe() const {
-		return mMe;
-	};
-
 	void setAccount(const std::shared_ptr<Account> &a);
 	std::shared_ptr<Account> getAccount() const;
 

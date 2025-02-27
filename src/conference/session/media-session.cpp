@@ -1055,7 +1055,7 @@ void MediaSessionPrivate::setState(CallSession::State newState, const string &me
 	if ((newState != state) && (newState != CallSession::State::StreamsRunning)) q->cancelDtmfs();
 	CallSessionPrivate::setState(newState, message);
 	q->notifyCallSessionStateChangedForReporting();
-	std::shared_ptr<SalMediaDescription> rmd = nullptr;
+	std::shared_ptr<SalMediaDescription> rmd;
 	switch (newState) {
 		case CallSession::State::UpdatedByRemote:
 			// Handle specifically the case of an incoming ICE-concluded reINVITE
@@ -2302,7 +2302,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 						const auto idx = std::distance(refMd->streams.cbegin(), sIt);
 						const std::string participantsAttrValue = s.getLabel();
 
-						std::shared_ptr<ParticipantDevice> dev = nullptr;
+						std::shared_ptr<ParticipantDevice> dev;
 						if (!participantsAttrValue.empty()) {
 							dev = conference->findParticipantDeviceByLabel(sal_stream_type_to_linphone(type),
 							                                               participantsAttrValue);
@@ -2517,7 +2517,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	bool isAudioConferenceEnabled = false;
 	ConferenceLayout confLayout = ConferenceLayout::ActiveSpeaker;
 	auto deviceState = ParticipantDevice::State::ScheduledForJoining;
-	std::shared_ptr<ParticipantDevice> participantDevice = nullptr;
+	std::shared_ptr<ParticipantDevice> participantDevice;
 	if (conference) {
 		const auto &currentConfParams = conference->getCurrentParams();
 		const auto &conferenceState = conference->getState();
@@ -3969,10 +3969,15 @@ void MediaSessionPrivate::updateCurrentParams() const {
 	getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(isUpdateSentWhenIceCompleted());
 	bool deviceIsScreenSharing = false;
 	if (conference) {
-		const auto meDevices = conference->getMe()->getDevices();
-		const auto &participantDevice = ((meDevices.size() == 0) || isInConference())
-		                                    ? conference->findParticipantDevice(q->getSharedFromThis())
-		                                    : meDevices.front();
+		std::shared_ptr<ParticipantDevice> participantDevice;
+		if (isInConference()) {
+			participantDevice = conference->findParticipantDevice(q->getSharedFromThis());
+		} else {
+			const auto meDevices = conference->getMe()->getDevices();
+			if (meDevices.size() > 0) {
+				participantDevice = meDevices.front();
+			}
+		}
 		if (participantDevice) {
 			deviceIsScreenSharing = participantDevice->screenSharingEnabled();
 		}
@@ -4261,7 +4266,7 @@ void MediaSessionPrivate::stunAuthRequestedCb(const char *realm,
                                               const char **ha1) {
 	L_Q();
 	/* Get the username from the nat policy or the proxy config */
-	std::shared_ptr<Account> stunAccount = nullptr;
+	std::shared_ptr<Account> stunAccount;
 	const auto &account = getDestAccount();
 	if (account) stunAccount = account;
 	else {
@@ -4792,10 +4797,8 @@ void MediaSession::sendVfuRequest() {
 // will succeed when a client creates a conference.
 const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	L_D();
-
 	ConferenceId serverConferenceId;
-	shared_ptr<Conference> conference = nullptr;
-
+	shared_ptr<Conference> conference;
 	auto log = getLog();
 	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
 	auto conferenceIdParams = getCore()->createConferenceIdParams();
@@ -5586,8 +5589,8 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 shared_ptr<CallStats> MediaSession::getStats(LinphoneStreamType type) const {
 	L_D();
 	if (type == LinphoneStreamTypeUnknown) return nullptr;
-	shared_ptr<CallStats> stats = nullptr;
-	shared_ptr<CallStats> statsCopy = nullptr;
+	shared_ptr<CallStats> stats;
+	shared_ptr<CallStats> statsCopy;
 	Stream *s = d->getStream(type);
 	if (s && (stats = s->getStats())) {
 		statsCopy = stats->clone()->toSharedPtr();
