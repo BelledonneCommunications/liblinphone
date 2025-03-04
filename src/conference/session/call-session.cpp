@@ -1142,7 +1142,7 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 		if (addr && (account->getOp() || (account->getDependency() != nullptr) ||
 		             linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
 			/* If using a account, use the contact address as guessed with the REGISTERs */
-			lInfo() << "Contact " << *addr << " has been fixed using account";
+			lInfo() << "Contact " << *addr << " has been fixed using account " << *account;
 			result = addr->clone()->toSharedPtr();
 			return result;
 		}

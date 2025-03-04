@@ -145,6 +145,7 @@ set(RC_FILES
 	rcfiles/claire_rc
 	rcfiles/claire_sips_rc
 	rcfiles/chloe_rc
+	rcfiles/chloe_dual_proxy_rc
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
 	rcfiles/friends_rc

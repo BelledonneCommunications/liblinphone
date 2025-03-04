@@ -250,15 +250,18 @@ private:
 		linphone_core_enable_rtp_bundle(getLc(), TRUE);
 		linphone_core_set_conference_cleanup_period(getLc(), 1);
 
-		LinphoneAccount *account = linphone_core_get_default_account(getLc());
-		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
-		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
-		linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
-		Address factoryAddress = getIdentity();
-		linphone_account_params_set_conference_factory_address(new_account_params, factoryAddress.toC());
-		linphone_account_set_params(account, new_account_params);
-		linphone_account_params_unref(new_account_params);
-		BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
+		const bctbx_list_t *accounts = linphone_core_get_account_list(getLc());
+		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+			LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+			LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+			linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
+			linphone_account_params_set_conference_factory_address(
+			    new_account_params, linphone_account_params_get_identity_address(account_params));
+			linphone_account_set_params(account, new_account_params);
+			linphone_account_params_unref(new_account_params);
+			BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
+		}
 
 		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
@@ -403,6 +406,8 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
                                                          bool_t enable_stun);
 
 void create_conference_with_active_call_base(bool_t is_dialout);
+
+void check_conference_me(LinphoneConference *conference, bool_t is_me);
 
 LinphoneAddress *
 create_conference_on_server(Focus &focus,

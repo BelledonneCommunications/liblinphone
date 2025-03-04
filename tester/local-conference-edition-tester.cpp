@@ -781,10 +781,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 					BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pconference), no_participants, int,
 					                "%0d");
 					BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), initialSubject);
-					LinphoneParticipant *me = linphone_conference_get_me(pconference);
-					BC_ASSERT_TRUE(linphone_participant_is_admin(me) ==
-					               ((mgr == marie.getCMgr()) || (mgr == focus.getCMgr())));
-					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_participant_get_address(me), mgr->identity));
+					check_conference_me(pconference, ((mgr == marie.getCMgr()) || (mgr == focus.getCMgr())));
 					bctbx_list_t *participants = linphone_conference_get_participant_list(pconference);
 					for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
 						LinphoneParticipant *p = (LinphoneParticipant *)bctbx_list_get_data(itp);
