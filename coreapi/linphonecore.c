@@ -6368,12 +6368,13 @@ void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *pat
 	CoreLogContextualizer logContextualizer(lc);
 	if (!linphone_core_conference_server_enabled(lc)) {
 		auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
-		if (mainDb) {
+		if (mainDb && mainDb->isInitialized()) {
 			mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
 			linphone_core_migrate_logs_from_rc_to_db(lc);
 		} else {
-			ms_warning("linphone_core_set_call_logs_database_path() needs to be called once linphone_core_start() has "
-			           "been called");
+			ms_warning("%s() needs to be called once linphone_core_start() has been called or Database has not been "
+			           "initialized, therefore it is not possible to import call log database at %s",
+			           __func__, path);
 		}
 	}
 }
@@ -8922,12 +8923,13 @@ void linphone_core_set_chat_database_path(LinphoneCore *lc, const char *path) {
 	CoreLogContextualizer logContextualizer(lc);
 	if (!linphone_core_conference_server_enabled(lc)) {
 		auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
-		if (mainDb) {
+		if (mainDb && mainDb->isInitialized()) {
 			mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->loadChatRooms();
 		} else {
-			ms_warning("linphone_core_set_chat_database_path() needs to be called once linphone_core_start() has "
-			           "been called");
+			ms_warning("%s() needs to be called once linphone_core_start() has been called or Database has not been "
+			           "initialized, therefore it is not possible to import chat database at %s",
+			           __func__, path);
 		}
 	}
 }

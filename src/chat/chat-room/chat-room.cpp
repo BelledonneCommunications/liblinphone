@@ -724,10 +724,12 @@ void ChatRoom::notifyAggregatedChatMessages() {
 	bctbx_list_t *cEvents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(eventsList);
 	_linphone_chat_room_notify_chat_messages_received(cChatRoom, cEvents);
 
-	// Notify delivery
+	// Notify delivery - do the same things as when chat messages are not aggregated: send the delivery notification
+	// when the message is in the Delivered state
 	for (auto &chatMessage : aggregatedMessages) {
-		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::DeliveredToUser,
+		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Delivered,
 		                                               ::ms_time(nullptr));
+		sendDeliveryNotification(chatMessage);
 	}
 
 	bctbx_list_free_with_data(cMessages, (bctbx_list_free_func)linphone_chat_message_unref);

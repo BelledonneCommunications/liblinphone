@@ -231,6 +231,8 @@ void CorePrivate::init() {
 				linphone_core_set_friends_database_path(lc, friendsDbPath.c_str());
 			} else lWarning() << "Friends database explicitely not requested";
 		}
+	} else {
+		lInfo() << "The Core was explicitely requested not to use any database";
 	}
 
 	createConferenceCleanupTimer();

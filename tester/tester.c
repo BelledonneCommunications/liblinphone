@@ -3461,6 +3461,7 @@ void messages_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), c
 	counters = get_stats(lc);
 	int count = (int)bctbx_list_size(messages);
 	counters->number_of_LinphoneAggregatedMessagesReceived += count;
+	ms_message("Received %0d aggregated messages", count);
 }
 
 void message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {

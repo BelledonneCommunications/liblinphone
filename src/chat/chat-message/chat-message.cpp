@@ -816,8 +816,8 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		if (isBasicChatRoom) {
 			localAddress = account->getAccountParams()->getIdentityAddress();
 			lInfo() << *chatRoom << " with ID " << conferenceId
-			        << " is a basic chatroom therefore set the local address of message [" << q
-			        << "] to the account identity address " << *localAddress;
+			        << " is a basic chatroom therefore set the local address of message [" << q << "] to the account ["
+			        << account << "]'s identity address " << *localAddress;
 		} else {
 			localAddress = account->getContactAddress();
 			if (localAddress) {
@@ -828,10 +828,14 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		}
 	}
 	if (!localAddress) {
-		lInfo() << *chatRoom << " with ID " << conferenceId
-		        << " has no account associated to or the contact or the identity address is not available yet, setting "
-		           "conference ID's local address as message local address";
 		localAddress = conferenceId.getLocalAddress();
+		if (localAddress) {
+			lInfo()
+			    << *chatRoom << " with ID " << conferenceId
+			    << " has no account associated to or the contact or the identity address is not available yet, setting "
+			       "conference ID's local address as message local address "
+			    << *localAddress;
+		}
 	}
 
 	if (localAddress) {
@@ -840,6 +844,8 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 		} else {
 			localAddress = localAddress->clone()->toSharedPtr();
 		}
+	} else {
+		lError() << "Unable to set local address of message [" << q << "] in " << *chatRoom;
 	}
 
 	auto peerAddress = conferenceId.getPeerAddress()->clone()->toSharedPtr();

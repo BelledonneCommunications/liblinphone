@@ -148,6 +148,7 @@ set(RC_FILES
 	rcfiles/chloe_dual_proxy_rc
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
+	rcfiles/empty_with_some_db_rc
 	rcfiles/friends_rc
 	rcfiles/groupchat_rc
 	rcfiles/invalid_friends_rc
