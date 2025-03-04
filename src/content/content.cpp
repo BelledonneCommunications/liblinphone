@@ -442,6 +442,7 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 			plainPathTest = cacheDir + std::to_string(index) + "_" + basename;
 		}
 		plainPath = plainPathTest;
+		lInfo() << "[Content] Using file [" << plainPath << "]";
 	}
 	bctbx_free(basename);
 
