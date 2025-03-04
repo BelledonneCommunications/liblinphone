@@ -41,5 +41,16 @@
 	<string>True</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow camera for video sessions</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow microphone for audio sessions</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Use for wireless headsets</string>
+	<key>com.apple.security.device.camera</key>
+	<true/>
+	<key>com.apple.security.device.microphone</key>
+	<true/>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+
 </dict>
 </plist>

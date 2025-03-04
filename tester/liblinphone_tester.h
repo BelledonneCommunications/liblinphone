@@ -1251,6 +1251,50 @@ int liblinphone_tester_check_recorded_audio(const char *hellopath, const char *r
 
 /* returns a CPU bogomips indication. Only supported for linux.*/
 float liblinphone_tester_get_cpu_bogomips(void);
+
+/**
+ * @brief liblinphone_tester_audio_device_name_match compare device name with string
+ *
+ * @param audio_device the audio device to compare @notnil
+ * @param name the name to find in device name
+ * @return the result of strcmp
+ */
+int liblinphone_tester_audio_device_name_match(const LinphoneAudioDevice *audio_device, const char *name);
+
+/**
+ * @brief liblinphone_tester_audio_device_match compare device ids between 2 devices
+ *
+ * @param a the first device
+ * @param b the second device
+ * @return the result of strcmp
+ */
+int liblinphone_tester_audio_device_match(const LinphoneAudioDevice *a, LinphoneAudioDevice *b);
+
+/**
+ * @brief liblinphone_tester_find_changing_devices Find the device that is missed/new into 2 lists.
+ *
+ * @param a first list to check. @maybenil
+ * @param b second list to check. @maybenil
+ * @param is_new TRUE if the changed device is new.
+ * @return the device that changed or NULL if no change. Set is_new if the device has been
+ * connected. @tobefreed @maybenil
+ */
+bctbx_list_t *liblinphone_tester_find_changing_devices(bctbx_list_t *a, bctbx_list_t *b, bool_t *is_new);
+
+/**
+ * @brief liblinphone_tester_sound_detection Check sounds between 2 Core on 200ms and exit the function on detection.
+ *
+ * @param a the first core manager to retrieve current call and make wait loop @notnil
+ * @param b the second core manager to retrieve current call and make wait loop @notnil
+ * @param timeout_ms timeout in ms
+ * @param log_tag Use this tag to monitor level in logs. If NULL, log is switched off @maybenil
+ * @return -1 if timed out else 0.
+ */
+int liblinphone_tester_sound_detection(LinphoneCoreManager *a,
+                                       LinphoneCoreManager *b,
+                                       int timeout_ms,
+                                       const char *log_tag);
+
 #ifdef __cplusplus
 };
 #endif
