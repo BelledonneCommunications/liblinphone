@@ -61,7 +61,9 @@ static bool_t wait_for_chat_room_participants(bctbx_list_t *lcs, LinphoneChatRoo
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -457,6 +459,7 @@ void _send_file_plus_text(
 
 	msg = linphone_chat_room_create_empty_message(cr);
 	linphone_chat_message_add_file_content(msg, content);
+	BC_ASSERT_PTR_NULL(linphone_content_get_related_chat_message_id(content));
 	linphone_content_unref(content);
 
 	if (text) linphone_chat_message_add_utf8_text_content(msg, text);
@@ -473,6 +476,7 @@ void _send_file_plus_text(
 			linphone_content_set_file_path(content2, sendFilepath2);
 		}
 		linphone_chat_message_add_file_content(msg, content2);
+		BC_ASSERT_PTR_NULL(linphone_content_get_related_chat_message_id(content2));
 		linphone_content_unref(content2);
 	}
 
@@ -532,6 +536,10 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 		if (!use_buffer) {
 			linphone_content_set_file_path(fileTransferContent, downloaded_file);
 		}
+
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(fileTransferContent),
+		                       linphone_chat_message_get_message_id(msg));
+
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 		                "%d");
@@ -566,6 +574,8 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 			if (!use_buffer) {
 				linphone_content_set_file_path(fileTransferContent2, downloaded_file);
 			}
+			BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(fileTransferContent2),
+			                       linphone_chat_message_get_message_id(msg));
 			linphone_chat_message_download_content(msg, fileTransferContent2);
 			BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 			                "%d");
@@ -4309,11 +4319,15 @@ static void group_chat_room_send_multipart_custom_content_types(void) {
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content1), "application");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content1), "vnd.3gpp.mcptt-info+xml");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content1), data1);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(content1),
+		                       linphone_chat_message_get_message_id(pauline->stat.last_received_chat_message));
 
 		LinphoneContent *content2 = bctbx_list_nth_data(contents, 1);
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content2), "application");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content2), "vnd.3gpp.mcptt-location-info+xml");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content2), data2);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(content2),
+		                       linphone_chat_message_get_message_id(pauline->stat.last_received_chat_message));
 	}
 
 	// Clean db from chat room

@@ -281,6 +281,14 @@ void Content::setFilePath(const std::string &path) {
 	mCache.filePath = path;
 }
 
+void Content::setRelatedChatMessageId(const string &messageId) {
+	mMessageId = messageId;
+}
+
+const string &Content::getRelatedChatMessageId() const {
+	return mMessageId;
+}
+
 void Content::addHeader(const string &headerName, const string &headerValue) {
 	removeHeader(headerName);
 	Header header = Header(headerName, headerValue);

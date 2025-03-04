@@ -380,6 +380,11 @@ time_t linphone_content_get_creation_timestamp(const LinphoneContent *content) {
 	return -1;
 }
 
+const char *linphone_content_get_related_chat_message_id(const LinphoneContent *content) {
+	const auto c = Content::toCpp(content);
+	return L_STRING_TO_C(c->getRelatedChatMessageId());
+}
+
 // =============================================================================
 // Private functions.
 // =============================================================================

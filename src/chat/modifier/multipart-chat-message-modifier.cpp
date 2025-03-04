@@ -64,6 +64,7 @@ ChatMessageModifier::Result MultipartChatMessageModifier::decode(const shared_pt
 			} else {
 				content = Content::create(c);
 			}
+			content->setRelatedChatMessageId(message->getImdnMessageId());
 			message->addContent(content);
 		}
 		return ChatMessageModifier::Result::Done;

@@ -1198,6 +1198,8 @@ void ChatMessagePrivate::handleAutoDownload() {
 	}
 
 	for (auto &c : contents) {
+		c->setRelatedChatMessageId(imdnId);
+
 		ContentType contentType = c->getContentType();
 		if (contentType.strongEqual(ContentType::Icalendar)) {
 			LinphoneConferenceInfo *cConfInfo =
@@ -1250,7 +1252,9 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 		if (content && content->isFileTransfer()) {
 			auto fileTransferContent = static_pointer_cast<FileTransferContent>(content);
 			auto fileContent = fileTransferContent->getFileContent();
+
 			if (fileContent) {
+				fileContent->setRelatedChatMessageId(imdnId);
 				it = contents.erase(it);
 				it = contents.insert(it, fileContent);
 			} else {
@@ -1712,6 +1716,10 @@ const string &ChatMessage::getImdnMessageId() const {
 
 void ChatMessagePrivate::setImdnMessageId(const string &id) {
 	imdnId = id;
+
+	for (auto &content : contents) {
+		content->setRelatedChatMessageId(id);
+	}
 }
 
 const string &ChatMessagePrivate::getCallId() const {

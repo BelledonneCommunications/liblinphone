@@ -5026,7 +5026,8 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
 #ifdef HAVE_DB_STORAGE
 	static const string query =
-	    "SELECT name, path, size, content_type.value, conference_chat_message_event.time "
+	    "SELECT name, path, size, content_type.value, conference_chat_message_event.time, "
+	    "conference_chat_message_event.imdn_message_id "
 	    " FROM chat_message_file_content "
 	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
 	    " JOIN content_type ON content_type.id = chat_message_content.content_type_id "
@@ -5047,6 +5048,8 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 			int size = row.get<int>(2);
 			ContentType contentType(row.get<string>(3));
 			time_t creation = d->dbSession.getTime(row, 4);
+			string messageId = row.get<string>(5);
+			lDebug() << "Fetched media content [" << name << "] message id is [" << messageId << "]";
 
 			auto fileContent = FileContent::create<FileContent>();
 			fileContent->setFileName(name);
@@ -5054,6 +5057,7 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 			fileContent->setFilePath(path);
 			fileContent->setContentType(contentType);
 			fileContent->setCreationTimestamp(creation);
+			fileContent->setRelatedChatMessageId(messageId);
 
 			result.push_back(fileContent);
 		}
@@ -5068,7 +5072,8 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
 #ifdef HAVE_DB_STORAGE
 	static const string query =
-	    "SELECT name, path, size, content_type.value, conference_chat_message_event.time "
+	    "SELECT name, path, size, content_type.value, conference_chat_message_event.time, "
+	    "conference_chat_message_event.imdn_message_id "
 	    " FROM chat_message_file_content "
 	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
 	    " JOIN content_type ON content_type.id = chat_message_content.content_type_id "
@@ -5088,6 +5093,8 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 			int size = row.get<int>(2);
 			ContentType contentType(row.get<string>(3));
 			time_t creation = d->dbSession.getTime(row, 4);
+			string messageId = row.get<string>(5);
+			lDebug() << "Fetched document content [" << name << "] message id is [" << messageId << "]";
 
 			auto fileContent = FileContent::create<FileContent>();
 			fileContent->setFileName(name);
@@ -5095,6 +5102,7 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 			fileContent->setFilePath(path);
 			fileContent->setContentType(contentType);
 			fileContent->setCreationTimestamp(creation);
+			fileContent->setRelatedChatMessageId(messageId);
 
 			result.push_back(fileContent);
 		}
@@ -5870,6 +5878,8 @@ void MainDb::loadChatMessageContents(const shared_ptr<ChatMessage> &chatMessage)
 			content->setContentType(contentType);
 			if (bodyEncodingType == 1) content->setBodyFromUtf8(row.get<string>(3));
 			else content->setBodyFromLocale(row.get<string>(3));
+
+			content->setRelatedChatMessageId(chatMessage->getImdnMessageId());
 
 			// 1.2 - Fetch contents' app data.
 			// TODO: Do not test backend, encapsulate!!!
