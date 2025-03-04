@@ -991,6 +991,12 @@ bool LocalConference::dialOutAddresses(const std::list<std::shared_ptr<Address>>
 
 	linphone_call_params_set_in_conference(new_params, TRUE);
 
+	// Set account of outgoing call in order to correctly set the contact address as well the from address
+	const auto &account = getAccount();
+	if (account) {
+		linphone_call_params_set_account(new_params, account->toC());
+	}
+
 	const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 	const string &confId = conferenceAddress->getUriParamValue("conf-id");
 	linphone_call_params_set_conference_id(new_params, confId.c_str());

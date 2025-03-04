@@ -171,3 +171,8 @@ const LinphoneAddress *linphone_conference_get_conference_address(const Linphone
 	const auto &address = MediaConference::Conference::toCpp(conference)->getConferenceAddress();
 	return address && address->isValid() ? address->toC() : nullptr;
 }
+
+LinphoneAccount *linphone_conference_get_account(LinphoneConference *conference) {
+	shared_ptr<Account> account = MediaConference::Conference::toCpp(conference)->getAccount();
+	return account ? account->toC() : nullptr;
+}

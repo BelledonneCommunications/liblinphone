@@ -1748,6 +1748,7 @@ Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
 
 	auto localAddressUri = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
 	auto remoteAddressUri = (remoteAddress) ? remoteAddress->getUriWithoutGruu() : Address();
+
 	const auto it = std::find_if(audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&](const auto &p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
 		const auto &audioVideoConference = p.second;

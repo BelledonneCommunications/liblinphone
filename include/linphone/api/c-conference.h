@@ -223,6 +223,13 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *
 linphone_conference_get_active_speaker_participant_device(const LinphoneConference *conference);
 
 /**
+ * Gets the #LinphoneAccount object associated with the conference
+ * @param conference #LinphoneConference object. @notnil
+ * @return A #LinphoneAccount object. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneAccount *linphone_conference_get_account(LinphoneConference *conference);
+
+/**
  * @}
  */
 
