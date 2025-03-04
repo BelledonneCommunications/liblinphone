@@ -763,14 +763,14 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_call_get_chat_room(LinphoneCall *call
 /**
  * Gets the mesured playback volume level (received from remote) in dbm0.
  * @param call The call. @notnil
- * @return float Volume level in percentage.
+ * @return float Volume level in dbm0.
  */
 LINPHONE_PUBLIC float linphone_call_get_play_volume(const LinphoneCall *call);
 
 /**
  * Gets the mesured record volume level (sent to remote) in dbm0.
  * @param call The call. @notnil
- * @return float Volume level in percentage.
+ * @return float Volume level in dbm0.
  */
 LINPHONE_PUBLIC float linphone_call_get_record_volume(const LinphoneCall *call);
 

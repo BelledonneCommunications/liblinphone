@@ -719,3 +719,77 @@ float liblinphone_tester_get_cpu_bogomips(void) {
 #endif
 	return ret;
 }
+
+int liblinphone_tester_audio_device_name_match(const LinphoneAudioDevice *audio_device, const char *name) {
+	return strcmp(linphone_audio_device_get_device_name(audio_device), name);
+}
+
+int liblinphone_tester_audio_device_match(const LinphoneAudioDevice *a, LinphoneAudioDevice *b) {
+	return strcmp(linphone_audio_device_get_id(a), linphone_audio_device_get_id(b));
+}
+
+bctbx_list_t *liblinphone_tester_find_changing_devices(bctbx_list_t *a, bctbx_list_t *b, bool_t *is_new) {
+	bctbx_list_t *devices_changed = NULL;
+	bctbx_list_t *device_it = a;
+	bctbx_list_t *dev_found = NULL;
+	if (!a && !b) return NULL;
+	// Check for disconnected device
+	while (device_it) {
+		LinphoneAudioDevice *device = (LinphoneAudioDevice *)bctbx_list_get_data(device_it);
+		dev_found = bctbx_list_find_custom(b, (bctbx_compare_func)liblinphone_tester_audio_device_match, device);
+		device_it = bctbx_list_next(device_it);
+		if (!dev_found) {
+			devices_changed = bctbx_list_append(devices_changed, device);
+			linphone_audio_device_ref(device);
+			*is_new = FALSE;
+		}
+	}
+	// Check for connected device
+	if (!devices_changed) {
+		device_it = b;
+		while (device_it) {
+			LinphoneAudioDevice *device = (LinphoneAudioDevice *)bctbx_list_get_data(device_it);
+			dev_found = bctbx_list_find_custom(a, (bctbx_compare_func)liblinphone_tester_audio_device_match, device);
+			device_it = bctbx_list_next(device_it);
+			if (!dev_found) {
+				devices_changed = bctbx_list_append(devices_changed, device);
+				linphone_audio_device_ref(device);
+				*is_new = TRUE;
+			}
+		}
+	}
+
+	return devices_changed;
+}
+
+int liblinphone_tester_sound_detection(LinphoneCoreManager *a,
+                                       LinphoneCoreManager *b,
+                                       int timeout_ms,
+                                       const char *log_tag) {
+	int have_sound_count = 0;
+	const float silence_threshold = -20.f;
+
+	LinphoneCall *calls[2] = {linphone_core_get_current_call(a->lc), linphone_core_get_current_call(b->lc)};
+	MSTimeSpec start;
+
+	liblinphone_tester_clock_start(&start);
+	while (have_sound_count < 2 &&
+	       !liblinphone_tester_clock_elapsed(
+	           &start, timeout_ms)) { // We want to avoid potential sound spikes while disconnection.
+		float record_levels[2] = {linphone_call_get_record_volume(calls[0]), linphone_call_get_record_volume(calls[1])};
+		float playback_levels[2] = {linphone_call_get_play_volume(calls[0]), linphone_call_get_play_volume(calls[1])};
+		bool_t have_sounds[2] = {record_levels[1] > silence_threshold && playback_levels[0] > silence_threshold,
+		                         record_levels[0] > silence_threshold && playback_levels[1] > silence_threshold};
+
+		// Note: Sounds are send from Pauline to Marie without passing by the capture device (send from file)
+		// The test must check for Marie => Pauline, because the sound comes directly from the capture device.
+		// At this point, playback device cannot be tested without complex code (device monitoring).
+		if (have_sounds[0] && have_sounds[1]) ++have_sound_count;
+		else have_sound_count = 0;
+		if (log_tag)
+			ms_message("%s Record => Playback levels: %f => %f, %f => %f", log_tag, record_levels[0],
+			           playback_levels[1], record_levels[1], playback_levels[0]);
+		wait_for_until(a->lc, b->lc, NULL, 0, 100);
+	}
+	return have_sound_count >= 2 ? 0 : -1;
+}
