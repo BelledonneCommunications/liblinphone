@@ -1905,9 +1905,9 @@ std::list<unsigned int> MediaSessionPrivate::getProtectedStreamNumbers(std::shar
 	// Protected streams are the first audio stream and the first 2 video streams as they handle local participant
 	// medias
 	if (conference) {
-		auto firstAudioStream = md->findFirstStreamIdxOfType(SalAudio);
-		if (firstAudioStream > -1) {
-			streamNumbers.push_back(static_cast<unsigned int>(firstAudioStream));
+		auto audioStream = md->findIdxBestStream(SalAudio);
+		if (audioStream > -1) {
+			streamNumbers.push_back(static_cast<unsigned int>(audioStream));
 		}
 
 		const std::string activeSpeakerAttribute(MediaSessionPrivate::ActiveSpeakerVideoContentAttribute);
@@ -1995,14 +1995,24 @@ SalStreamDescription &MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMedi
 			// If a stream at the index requested in the the function argument has already been allocated and it is
 			// active, then it must be replaced.
 			if ((stream.getDirection() != SalStreamInactive) && oldMd) {
+				const auto &currentStreamLabel = stream.getLabel();
+				bool currentStreamLabelEmpty = currentStreamLabel.empty();
 				const auto oldMdSize = oldMd->streams.size();
 				int idxOldMd = -1;
+				// Search in the previous media description a free stream with the same label
 				for (size_t mdStreamIdx = 0; mdStreamIdx < oldMdSize; mdStreamIdx++) {
 					const auto &protectedIdx =
 					    (std::find(protectedStreamNumbersOldMd.cbegin(), protectedStreamNumbersOldMd.cend(),
 					               mdStreamIdx) != protectedStreamNumbersOldMd.cend());
 					auto oldStream = oldMd->getStreamAtIdx(static_cast<unsigned int>(mdStreamIdx));
-					if (conference && !protectedIdx && (oldStream.getLabel() == stream.getLabel())) {
+					const auto &oldStreamLabel = oldStream.getLabel();
+					bool oldStreamLabelEmpty = oldStreamLabel.empty();
+					// Select index if either the labels match or the new and old stream have no labels and the index is
+					// not the same. In fact it may happen that a faulty core sends an SDP with multiple streams without
+					// label while in a conference causing a fatal error.
+					if (conference && !protectedIdx &&
+					    ((oldStreamLabel == currentStreamLabel) || (oldStreamLabelEmpty && currentStreamLabelEmpty &&
+					                                                (static_cast<int>(mdStreamIdx) != streamIdx)))) {
 						idxOldMd = static_cast<int>(mdStreamIdx);
 						break;
 					}
@@ -2200,8 +2210,9 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			const auto &parameters = isInLocalConference ? getRemoteParams() : getParams();
 			if (!parameters) {
-				lInfo() << "Not adding streams of type " << std::string(sal_stream_type_to_string(type))
-				        << " because the layout is not known yet";
+				lInfo() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress() << " remote address "
+				        << *q->getRemoteAddress() << "] in " << *conference << " is not adding streams of type "
+				        << std::string(sal_stream_type_to_string(type)) << " because the layout is not known yet";
 				return;
 			}
 			const auto &confLayout = parameters->getConferenceVideoLayout();
@@ -2211,6 +2222,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 				if (isVideoStream) {
 					request = conference->areThumbnailsRequested(false);
 				}
+
 				if (request) {
 					const std::string participantContent(
 					    (type == SalAudio)
@@ -2242,6 +2254,11 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 								const auto &foundStreamIdx =
 								    devLabel.empty() ? -1
 								                     : oldMd->findIdxStreamWithContent(participantContent, devLabel);
+								lInfo() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress()
+								        << " remote address " << *q->getRemoteAddress() << "] in " << *conference
+								        << " is adding a stream of type "
+								        << std::string(sal_stream_type_to_string(type)) << " for participant device "
+								        << *devAddress;
 								SalStreamDescription &newParticipantStream = addStreamToMd(md, foundStreamIdx, oldMd);
 								if (isConferenceLayoutActiveSpeaker || (type == SalAudio)) {
 									newParticipantStream.setContent(participantContent);

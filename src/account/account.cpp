@@ -1205,10 +1205,10 @@ int Account::done() {
 		if (mOp) {
 			if (res == LinphoneAccountAddressDifferent) {
 				unregister();
+				mOp->setUserPointer(nullptr); /*we don't want to receive status for this un register*/
+				mOp->unref();                 /*but we keep refresher to handle authentication if needed*/
+				mOp = nullptr;
 			}
-			mOp->setUserPointer(nullptr); /*we don't want to receive status for this un register*/
-			mOp->unref();                 /*but we keep refresher to handle authentication if needed*/
-			mOp = nullptr;
 		}
 		if (mPresencePublishEvent) {
 			if (res == LinphoneAccountAddressDifferent) {
