@@ -119,6 +119,12 @@ LINPHONE_PUBLIC void linphone_participant_info_remove_parameter(LinphoneParticip
                                                                 const char *name);
 
 /**
+ * Get the CCMP uri of the object #LinphoneParticipantInfo.
+ * @param participant_info The #LinphoneParticipantInfo object. @notnil
+ * @return the CCMP uri of the #LinphoneParticipantInfo or NULL. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_participant_info_get_ccmp_uri(const LinphoneParticipantInfo *participant_info);
+/**
  * @}
  */
 

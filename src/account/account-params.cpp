@@ -168,7 +168,6 @@ AccountParams::AccountParams(LinphoneCore *lc, bool useDefaultValues) {
 
 	mCcmpServerUrl =
 	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_server_url", "") : "";
-	mCcmpUserId = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_user_id", "") : "";
 
 	if (lc && lc->push_config) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
@@ -336,7 +335,6 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc, fa
 	}
 
 	mCcmpServerUrl = linphone_config_get_string(config, key, "ccmp_server_url", "");
-	mCcmpUserId = linphone_config_get_default_string(config, key, "ccmp_user_id", "");
 
 	mRtpBundleEnabled = !!linphone_config_get_bool(config, key, "rtp_bundle", linphone_core_rtp_bundle_enabled(lc));
 	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
@@ -483,6 +481,10 @@ AccountParams::~AccountParams() {
 	if (mCcmpServerUrlCstr) {
 		ms_free(mCcmpServerUrlCstr);
 		mCcmpServerUrlCstr = nullptr;
+	}
+	if (mCcmpUserIdCstr) {
+		ms_free(mCcmpUserIdCstr);
+		mCcmpUserIdCstr = nullptr;
 	}
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mRoutesCString) {
@@ -888,6 +890,18 @@ std::shared_ptr<const Address> AccountParams::getAudioVideoConferenceFactoryAddr
 	return mAudioVideoConferenceFactoryAddress;
 }
 
+const char *AccountParams::getCcmpUserIdCstr() const {
+	const auto &userId = getCcmpUserId();
+	if (mCcmpUserIdCstr) {
+		ms_free(mCcmpUserIdCstr);
+		mCcmpUserIdCstr = nullptr;
+	}
+	if (!userId.empty()) {
+		mCcmpUserIdCstr = ms_strdup(userId.c_str());
+	}
+	return mCcmpUserIdCstr;
+}
+
 const std::string &AccountParams::getCcmpUserId() const {
 	if (mCcmpUserId.empty()) {
 		mCcmpUserId = Utils::getXconId(mIdentityAddress);
@@ -1214,9 +1228,6 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 
 	if (!mCcmpServerUrl.empty()) {
 		linphone_config_set_string(config, key, "ccmp_server_url", mCcmpServerUrl.c_str());
-	}
-	if (!mCcmpUserId.empty()) {
-		linphone_config_set_string(config, key, "ccmp_user_id", mCcmpUserId.c_str());
 	}
 
 	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);

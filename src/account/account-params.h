@@ -135,6 +135,7 @@ public:
 	std::shared_ptr<const Address> getAudioVideoConferenceFactoryAddress() const;
 	const char *getCcmpServerUrlCstr() const;
 	const std::string &getCcmpServerUrl() const;
+	const char *getCcmpUserIdCstr() const;
 	const std::string &getCcmpUserId() const;
 	const std::string &getFileTransferServer() const;
 	const std::string &getIdentity() const;
@@ -206,6 +207,7 @@ private:
 	mutable char *mMwiServerAddressCstr = nullptr;
 	mutable char *mVoicemailAddressCstr = nullptr;
 	mutable char *mCcmpServerUrlCstr = nullptr;
+	mutable char *mCcmpUserIdCstr = nullptr;
 
 	std::string mInternationalPrefix;
 	std::string mInternationalPrefixIsoCountryCode;

@@ -62,6 +62,7 @@ public:
 	const std::shared_ptr<ConferenceInfo> getInfo() const;
 	void cancelConference(const std::shared_ptr<ConferenceInfo> &info);
 	void setInfo(const std::shared_ptr<ConferenceInfo> &info);
+	void updateInfo(const std::shared_ptr<ConferenceInfo> &info);
 
 	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 
