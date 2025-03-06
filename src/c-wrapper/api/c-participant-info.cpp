@@ -81,7 +81,10 @@ bool_t linphone_participant_info_has_parameter(const LinphoneParticipantInfo *pa
 	return (bool_t)ParticipantInfo::toCpp(participant_info)->hasParameter(L_C_TO_STRING(name));
 }
 
-LINPHONE_PUBLIC void linphone_participant_info_remove_parameter(LinphoneParticipantInfo *participant_info,
-                                                                const char *name) {
+void linphone_participant_info_remove_parameter(LinphoneParticipantInfo *participant_info, const char *name) {
 	ParticipantInfo::toCpp(participant_info)->removeParameter(L_C_TO_STRING(name));
+}
+
+const char *linphone_participant_info_get_ccmp_uri(const LinphoneParticipantInfo *participant_info) {
+	return ParticipantInfo::toCpp(participant_info)->getCcmpUriCstr();
 }

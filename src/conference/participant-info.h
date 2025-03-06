@@ -51,6 +51,7 @@ public:
 
 	void setCcmpUri(const std::string &ccmpUri);
 	std::string getCcmpUri() const;
+	const char *getCcmpUriCstr() const;
 
 	void setRole(Participant::Role role);
 	Participant::Role getRole() const;
@@ -78,6 +79,8 @@ private:
 	Participant::Role mRole = Participant::Role::Unknown;
 	int mSequence = -1;
 	participant_params_t mParameters;
+
+	mutable char *mCcmpUriCstr = nullptr;
 };
 
 inline std::ostream &operator<<(std::ostream &ostr, const ParticipantInfo &participantInfo) {

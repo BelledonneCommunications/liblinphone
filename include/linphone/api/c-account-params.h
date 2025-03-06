@@ -708,6 +708,13 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params);
 
 /**
+ * Get the CCMP user ID.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @return The ID of the CCMP user. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_account_params_get_ccmp_user_id(const LinphoneAccountParams *params);
+
+/**
  * Get the CCMP server address.
  * @param params The #LinphoneAccountParams object @notnil
  * @return The URL of the CCMP server. @maybenil

@@ -37,6 +37,10 @@ ParticipantInfo::ParticipantInfo(const std::shared_ptr<const Address> &address) 
 }
 
 ParticipantInfo::~ParticipantInfo() {
+	if (mCcmpUriCstr) {
+		ms_free(mCcmpUriCstr);
+		mCcmpUriCstr = nullptr;
+	}
 }
 
 ParticipantInfo *ParticipantInfo::clone() const {
@@ -69,6 +73,17 @@ Participant::Role ParticipantInfo::getRole() const {
 
 void ParticipantInfo::setCcmpUri(const std::string &ccmpUri) {
 	mCcmpUri = ccmpUri;
+};
+
+const char *ParticipantInfo::getCcmpUriCstr() const {
+	if (mCcmpUriCstr) {
+		ms_free(mCcmpUriCstr);
+		mCcmpUriCstr = nullptr;
+	}
+	if (!mCcmpUri.empty()) {
+		mCcmpUriCstr = ms_strdup(mCcmpUri.c_str());
+	}
+	return mCcmpUriCstr;
 };
 
 std::string ParticipantInfo::getCcmpUri() const {

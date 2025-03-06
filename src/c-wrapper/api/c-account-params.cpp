@@ -350,6 +350,10 @@ linphone_account_params_get_audio_video_conference_factory_address(const Linphon
 	return address != nullptr ? address->toC() : nullptr;
 }
 
+const char *linphone_account_params_get_ccmp_user_id(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getCcmpUserIdCstr();
+}
+
 void linphone_account_params_set_ccmp_server_url(LinphoneAccountParams *params, const char *url) {
 	AccountParams::toCpp(params)->setCcmpServerUrl(L_C_TO_STRING(url));
 }

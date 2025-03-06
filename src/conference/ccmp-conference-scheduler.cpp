@@ -196,7 +196,7 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 	}
 
 	// Conference user ID
-	std::string organizerXconUserId = Utils::getXconId(creator);
+	std::string organizerXconUserId = accountParams->getCcmpUserId();
 	if (organizerXconUserId.empty()) {
 		lError() << "Aborting creation of conference using conference scheduler [" << this
 		         << "] because the CCMP user id of the creator " << *creator << " cannot be found";
@@ -287,6 +287,41 @@ void CCMPConferenceScheduler::handleResponse(void *ctx, const HttpResponse &even
 							}
 							conferenceAddress = Address::create(uriEntry.front().getUri());
 						}
+					}
+					auto &users = confInfo->getUsers();
+					if (users.present()) {
+						auto info = ccmpScheduler->getInfo()->clone()->toSharedPtr();
+						for (auto &user : users->getUser()) {
+							auto ccmpUri = user.getEntity().get();
+							auto &associatedAors = user.getAssociatedAors();
+							std::shared_ptr<const Address> address;
+							if (associatedAors.present()) {
+								for (auto &aor : associatedAors->getEntry()) {
+									auto tmpAddress = Address::create(aor.getUri());
+									if (tmpAddress) {
+										address = tmpAddress;
+									}
+								}
+							}
+							if (address) {
+								auto participantInfo = info->findParticipant(address);
+								if (participantInfo) {
+									auto updatedParticipantInfo = participantInfo->clone()->toSharedPtr();
+									updatedParticipantInfo->setCcmpUri(ccmpUri);
+									info->updateParticipant(updatedParticipantInfo);
+								} else if (address->weakEqual(*info->getOrganizerAddress())) {
+									auto updatedOrganizerInfo = info->getOrganizer()->clone()->toSharedPtr();
+									updatedOrganizerInfo->setCcmpUri(ccmpUri);
+									info->setOrganizer(updatedOrganizerInfo);
+								} else {
+									lError()
+									    << "Unable to find participant or organizer with address " << *address
+									    << " among those in the list sent to the CCMP server by conference scheduler ["
+									    << ccmpScheduler << "]";
+								}
+							}
+						}
+						ccmpScheduler->updateInfo(info);
 					}
 				}
 			} catch (const std::bad_cast &e) {

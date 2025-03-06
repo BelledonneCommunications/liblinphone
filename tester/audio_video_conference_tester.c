@@ -3371,9 +3371,16 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 	coresList = bctbx_list_append(coresList, michelle->lc);
 
 	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
-	LinphoneAccountParams *account_params =
-	    marie_account ? linphone_account_params_clone(linphone_account_get_params(marie_account)) : NULL;
-	if (account_params) {
+	BC_ASSERT_PTR_NOT_NULL(marie_account);
+	const LinphoneAccountParams *marie_account_params =
+	    marie_account ? linphone_account_get_params(marie_account) : NULL;
+	BC_ASSERT_PTR_NOT_NULL(marie_account_params);
+	LinphoneAddress *marie_identity = NULL;
+	if (marie_account_params) {
+		marie_identity = linphone_address_clone(marie_account_params
+		                                            ? linphone_account_params_get_identity_address(marie_account_params)
+		                                            : marie->identity);
+		LinphoneAccountParams *account_params = linphone_account_params_clone(marie_account_params);
 		linphone_account_params_set_ccmp_server_url(account_params, ccmp_server_url);
 		linphone_account_set_params(marie_account, account_params);
 		linphone_account_params_unref(account_params);
@@ -3389,11 +3396,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 	linphone_conference_scheduler_cbs_unref(cbs);
 
 	LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
-	LinphoneAddress *organizer_address =
-	    marie_account ? linphone_address_clone(
-	                        linphone_account_params_get_identity_address(linphone_account_get_params(marie_account)))
-	                  : linphone_address_clone(marie->identity);
-	linphone_conference_info_set_organizer(conf_info, organizer_address);
+	linphone_conference_info_set_organizer(conf_info, marie_identity);
 	bctbx_list_t *participants_info = NULL;
 	add_participant_info_to_list(&participants_info, pauline->identity, LinphoneParticipantRoleSpeaker, -1);
 	add_participant_info_to_list(&participants_info, laure->identity, LinphoneParticipantRoleListener, -1);
@@ -3449,6 +3452,23 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 				linphone_conference_info_check_participant(info, mgr->identity, 0);
 			}
 		}
+		const bctbx_list_t *participant_infos = linphone_conference_info_get_participant_infos(info);
+		for (const bctbx_list_t *it = participant_infos; it; it = bctbx_list_next(it)) {
+			LinphoneParticipantInfo *participant_info = (LinphoneParticipantInfo *)bctbx_list_get_data(it);
+			BC_ASSERT_PTR_NOT_NULL(linphone_participant_info_get_ccmp_uri(participant_info));
+		}
+
+		const LinphoneParticipantInfo *organizer_info = linphone_conference_info_get_organizer_info(info);
+		BC_ASSERT_PTR_NOT_NULL(organizer_info);
+		if (organizer_info) {
+			const char *organizer_ccmp_uri = linphone_participant_info_get_ccmp_uri(organizer_info);
+			BC_ASSERT_PTR_NOT_NULL(organizer_ccmp_uri);
+			if (organizer_ccmp_uri) {
+				marie_account_params = marie_account ? linphone_account_get_params(marie_account) : NULL;
+				BC_ASSERT_STRING_EQUAL(organizer_ccmp_uri,
+				                       linphone_account_params_get_ccmp_user_id(marie_account_params));
+			}
+		}
 		linphone_conference_info_unref(info);
 	}
 
@@ -3494,7 +3514,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 					LinphoneConferenceInfo *conf_info_in_db =
 					    linphone_core_find_conference_information_from_uri(mgr->lc, conference_address);
 					if (BC_ASSERT_PTR_NOT_NULL(conf_info_in_db)) {
-						check_conference_info_members(conf_info_in_db, uid, conference_address, organizer_address,
+						check_conference_info_members(conf_info_in_db, uid, conference_address, marie_identity,
 						                              participants_info, start_time, duration, subject, description, 0,
 						                              LinphoneConferenceInfoStateNew,
 						                              LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, FALSE);
@@ -3629,7 +3649,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 								exp_state = LinphoneConferenceInfoStateUpdated;
 							}
 
-							check_conference_info_members(conf_info_in_db, uid2, conference_address, organizer_address,
+							check_conference_info_members(conf_info_in_db, uid2, conference_address, marie_identity,
 							                              participants_info, start_time, duration, subject, description,
 							                              (mgr == michelle) ? 0 : 1, exp_state,
 							                              LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, FALSE);
@@ -3746,7 +3766,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 							} else {
 								ics_sequence = 2;
 							}
-							check_conference_info_members(conf_info_in_db, uid2, conference_address, organizer_address,
+							check_conference_info_members(conf_info_in_db, uid2, conference_address, marie_identity,
 							                              NULL, start_time, duration, subject, description,
 							                              ics_sequence, exp_state, LinphoneConferenceSecurityLevelNone,
 							                              TRUE, TRUE, TRUE, FALSE);
@@ -3834,7 +3854,7 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 
 end:
 	if (conference_scheduler) linphone_conference_scheduler_unref(conference_scheduler);
-	if (organizer_address) linphone_address_unref(organizer_address);
+	if (marie_identity) linphone_address_unref(marie_identity);
 	if (conference_address) linphone_address_unref(conference_address);
 	if (conference_address_str) bctbx_free(conference_address_str);
 	bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);

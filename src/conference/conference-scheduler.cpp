@@ -209,6 +209,10 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	createOrUpdateConference(mConferenceInfo);
 }
 
+void ConferenceScheduler::updateInfo(const std::shared_ptr<ConferenceInfo> &info) {
+	mConferenceInfo = info->clone()->toSharedPtr();
+}
+
 void ConferenceScheduler::onChatMessageStateChanged(const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	auto participantAddress = message->getRecipientAddress();
@@ -293,7 +297,7 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		lInfo() << "[Conference Scheduler] [" << this << "] Conference address " << *conferenceAddress
-		        << " is known, inserting conference info in database";
+		        << " is known, inserting conference info [" << mConferenceInfo << "] in database";
 		error = (mainDb->insertConferenceInfo(mConferenceInfo) < 0);
 	}
 #endif
