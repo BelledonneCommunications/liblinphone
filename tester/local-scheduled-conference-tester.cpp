@@ -6145,27 +6145,27 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 
 static void create_conference_with_chat(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, 1, TRUE, FALSE, FALSE,
-	                                 ms_time(NULL));
+	                                 ms_time(NULL), FALSE);
 }
 
 static void create_point_to_point_encrypted_conference_with_chat(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, FALSE, TRUE, -1, TRUE, FALSE,
-	                                 FALSE, ms_time(NULL));
+	                                 FALSE, ms_time(NULL), FALSE);
 }
 
 static void create_conference_with_chat_and_participant_rejoining(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE,
-	                                 (ms_time(NULL) - 45));
+	                                 (ms_time(NULL) - 45), FALSE);
 }
 
 static void create_conference_with_chat_and_cores_restart(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE, FALSE,
-	                                 (ms_time(NULL) - 45));
+	                                 (ms_time(NULL) - 45), TRUE);
 }
 
 static void create_conference_with_chat_network_drops_and_participant_rejoining(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
-	                                 (ms_time(NULL) - 45));
+	                                 (ms_time(NULL) - 45), FALSE);
 }
 
 #ifndef HAVE_EKT_SERVER_PLUGIN

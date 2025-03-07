@@ -305,6 +305,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		focus.registerAsParticipantDevice(michelle);
 		focus.registerAsParticipantDevice(lise);
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+
 		setup_conference_info_cbs(marie.getCMgr());
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 

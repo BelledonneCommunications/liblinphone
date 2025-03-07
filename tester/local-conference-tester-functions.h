@@ -360,7 +360,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t slow_ice_negotiation,
                                       bool_t client_reenter_conference,
                                       bool_t network_drops,
-                                      time_t start_time);
+                                      time_t start_time,
+                                      bool_t enable_gruu_in_conference_address);
 
 void configure_end_to_end_encrypted_conference_server(Focus &focus);
 

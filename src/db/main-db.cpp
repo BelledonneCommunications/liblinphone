@@ -432,7 +432,8 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 	L_Q();
 	if (q->isInitialized()) {
 		const ConferenceId &conferenceId = chatRoom->getConferenceId();
-		const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress());
+		const auto &peerAddress = conferenceId.getPeerAddress();
+		const long long &peerSipAddressId = insertSipAddress(peerAddress);
 		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress());
 
 		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
@@ -462,7 +463,8 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 			const string &subject = chatRoomParams->getUtf8Subject();
 			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
 			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
-			const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressId);
+			const long long peerSipAddressNoGruuId = selectSipAddressId(peerAddress->getUriWithoutGruu(), true);
+			const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressNoGruuId);
 			const long long conferenceInfoId = (dbConferenceInfoId <= 0) ? 0 : dbConferenceInfoId;
 			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
 			                                  "  peer_sip_address_id, local_sip_address_id, creation_time,"

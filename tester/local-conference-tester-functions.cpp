@@ -7127,7 +7127,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t use_relay_ice_candidates,
                                       bool_t client_reenter_conference,
                                       bool_t network_drops,
-                                      time_t start_time) {
+                                      time_t start_time,
+                                      bool_t enable_gruu_in_conference_address) {
 
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -7156,6 +7157,10 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 			linphone_core_set_video_activation_policy(mgr->lc, pol);
 			linphone_video_activation_policy_unref(pol);
+
+			if (mgr != pauline.getCMgr()) {
+				linphone_core_enable_gruu_in_conference_address(mgr->lc, enable_gruu_in_conference_address);
+			}
 
 			linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
 			linphone_core_enable_video_capture(mgr->lc, TRUE);
