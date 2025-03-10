@@ -956,12 +956,13 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 								// The thumbnail video stream can only be sendonly (or recvonly from the server
 								// standpoint) or inactive. Henceherefore a client that can only receive video, will
 								// have to set it to inactive
+								uint32_t stream_ssrc = linphone_participant_device_get_ssrc(device, type);
 								if (media_direction == LinphoneMediaDirectionInactive) {
-									if (linphone_participant_device_get_ssrc(device, type) != 0) {
+									if (stream_ssrc != 0) {
 										ret = false;
 									}
 								} else {
-									if (linphone_participant_device_get_ssrc(device, type) == 0) {
+									if (stream_ssrc == 0) {
 										ret = false;
 									}
 								}
@@ -972,17 +973,14 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 									if (!stream_available) {
 										continue;
 									}
-									uint32_t video_ssrc = linphone_participant_device_get_ssrc(device, type);
-
 									auto cppDevice = ParticipantDevice::toCpp(device)->getSharedFromThis();
 									bool thumbnail_available = cppDevice->getThumbnailStreamAvailability();
 									uint32_t thumbnail_ssrc = cppDevice->getThumbnailStreamSsrc();
-
 									if (thumbnail_available) {
 										if (thumbnail_ssrc == 0) {
 											ret = false;
 										}
-										if (thumbnail_ssrc == video_ssrc) {
+										if (thumbnail_ssrc == stream_ssrc) {
 											ret = false;
 										}
 									}

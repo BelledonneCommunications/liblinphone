@@ -151,7 +151,9 @@ std::shared_ptr<Address> Event::getRemoteContact() const {
 	if (!mRemoteContactAddress) {
 		mRemoteContactAddress = Address::create();
 	}
-	mRemoteContactAddress->setImpl(mOp->getRemoteContactAddress());
+	if (mOp) {
+		mRemoteContactAddress->setImpl(mOp->getRemoteContactAddress());
+	}
 	return mRemoteContactAddress;
 }
 
@@ -159,7 +161,9 @@ std::shared_ptr<Address> Event::cacheFrom() const {
 	if (!mFromAddress) {
 		mFromAddress = Address::create();
 	}
-	mFromAddress->setImpl(mOp->getFromAddress());
+	if (mOp) {
+		mFromAddress->setImpl(mOp->getFromAddress());
+	}
 	return mFromAddress;
 }
 
@@ -167,7 +171,9 @@ std::shared_ptr<Address> Event::cacheTo() const {
 	if (!mToAddress) {
 		mToAddress = Address::create();
 	}
-	mToAddress->setImpl(mOp->getToAddress());
+	if (mOp) {
+		mToAddress->setImpl(mOp->getToAddress());
+	}
 	return mToAddress;
 }
 
@@ -175,7 +181,9 @@ std::shared_ptr<Address> Event::cacheRequestAddress() const {
 	if (!mRequestAddress) {
 		mRequestAddress = Address::create();
 	}
-	mRequestAddress->setImpl(mOp->getRequestAddress());
+	if (mOp) {
+		mRequestAddress->setImpl(mOp->getRequestAddress());
+	}
 	return mRequestAddress;
 }
 

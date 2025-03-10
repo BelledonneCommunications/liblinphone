@@ -398,7 +398,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	bool localScreenSharingChanged = false, displayModeChanged = false;
 	auto participantDevice = getMediaSession().getParticipantDevice(LinphoneStreamTypeVideo, label);
 	if (!participantDevice) {
-		if (conference) {
+		if (conference && conference->getMe()) {
 			participantDevice = conference->getMe()->findDevice(LinphoneStreamTypeVideo, label, false);
 			// is Me. Q : Me is always local? (multi account)
 			isScreenSharing = (participantDevice && participantDevice->screenSharingEnabled());
@@ -418,7 +418,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 						}
 					}
 				} else { // Get Thumbnail Stream.
-					int idx = getMediaSession().getLocalThumbnailStreamIdx();
+					int idx = getMediaSession().getThumbnailStreamIdx();
 					if (idx >= 0) auxStream = dynamic_cast<MS2VideoStream *>(getGroup().getStream(idx));
 					localScreenSharingChanged = enableLocalScreenSharing(isScreenSharing);
 				}
@@ -747,7 +747,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 						link_video_stream_with_itc_sink(mStream);
 						// Current stream is Main, search for the thumbnail to connect with ITC.
 						MS2VideoStream *vs = nullptr;
-						int idx = getMediaSession().getLocalThumbnailStreamIdx();
+						int idx = getMediaSession().getThumbnailStreamIdx();
 						if (idx >= 0) vs = dynamic_cast<MS2VideoStream *>(getGroup().getStream(idx));
 						if (vs) {
 							VideoStream *itcStream = vs->getVideoStream();

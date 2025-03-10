@@ -1144,6 +1144,8 @@ static void on_publish_response(SalOp *op) {
 	const SalErrorInfo *ei = op->getErrorInfo();
 
 	if (lev == NULL) return;
+	LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) return;
 	if (ei->reason == SalReasonNone) {
 		if (linphone_event_get_publish_state(lev) != LinphonePublishTerminating) {
 			SalPublishOp *publishOp = static_cast<SalPublishOp *>(op);

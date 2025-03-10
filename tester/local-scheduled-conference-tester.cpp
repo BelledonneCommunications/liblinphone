@@ -666,19 +666,8 @@ static void alone_in_conference_with_chat_exits_enter(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, 1,
 		                             liblinphone_tester_sip_timeout));
 
-		long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus.getLc());
-		if (end_time > 0) {
-			time_t now = ms_time(NULL);
-			time_t time_left = end_time - now;
-			if (focus_cleanup_window > 0) {
-				time_left += focus_cleanup_window;
-			}
-			if (time_left > 0) {
-				// wait for the conference to end
-				CoreManagerAssert({focus, marie, pauline, michelle, laure, berthe})
-				    .waitUntil(chrono::seconds((time_left + 1)), [] { return false; });
-			}
-		}
+		check_delete_focus_conference_info({focus, marie, pauline, michelle, laure, berthe}, conferenceMgrs,
+		                                   focus.getCMgr(), confAddr, end_time);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, 1,
 		                             liblinphone_tester_sip_timeout));
@@ -1049,19 +1038,8 @@ static void conference_with_participants_late_except_one(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, 1,
 		                             liblinphone_tester_sip_timeout));
 
-		long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus.getLc());
-		if (end_time > 0) {
-			time_t now = ms_time(NULL);
-			time_t time_left = end_time - now;
-			if (focus_cleanup_window > 0) {
-				time_left += focus_cleanup_window;
-			}
-			if (time_left > 0) {
-				// wait for the conference to end
-				CoreManagerAssert({focus, marie, pauline, michelle, laure, berthe})
-				    .waitUntil(chrono::seconds((time_left + 1)), [] { return false; });
-			}
-		}
+		check_delete_focus_conference_info({focus, marie, pauline, michelle, laure, berthe}, conferenceMgrs,
+		                                   focus.getCMgr(), confAddr, end_time);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, 1,
 		                             liblinphone_tester_sip_timeout));
@@ -6068,28 +6046,8 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 			}
 		}
 
-		if (end_time > 0) {
-			LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(focus.getLc(), confAddr);
-			BC_ASSERT_PTR_NOT_NULL(info);
-			if (info) {
-				linphone_conference_info_unref(info);
-				info = NULL;
-			}
-			time_t now = ms_time(NULL);
-			time_t time_left = end_time - now + linphone_core_get_conference_cleanup_period(focus.getLc());
-			if (time_left > 0) {
-				// wait for the conference to end
-				CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds((time_left + 1)), [] {
-					return false;
-				});
-			}
-			info = linphone_core_find_conference_information_from_uri(focus.getLc(), confAddr);
-			BC_ASSERT_PTR_NULL(info);
-			if (info) {
-				linphone_conference_info_unref(info);
-				info = NULL;
-			}
-		}
+		check_delete_focus_conference_info({focus, marie, pauline}, conferenceMgrs, focus.getCMgr(), confAddr,
+		                                   end_time);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending,
 		                             1, liblinphone_tester_sip_timeout));

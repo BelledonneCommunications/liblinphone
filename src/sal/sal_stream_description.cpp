@@ -524,7 +524,6 @@ SalStreamDescription::addAcapsToConfiguration(const SalStreamConfiguration &base
 				cfgList.push_back(cfg);
 				cfg = baseCfg;
 			}
-
 		} else if (enc == LinphoneMediaEncryptionZRTP) {
 			for (const auto &attr : attrs) {
 				const auto &capNameValue = attr.second;
@@ -1217,7 +1216,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 		bctbx_free(value);
 	}
 
-	if (actualCfg.conference_ssrc) {
+	if ((actualCfg.conference_ssrc != 0) && !actualCfg.rtcp_cname.empty()) {
 		char *ssrc_attribute = ms_strdup_printf("%u cname:%s", actualCfg.conference_ssrc, actualCfg.rtcp_cname.c_str());
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc", ssrc_attribute));
 		ms_free(ssrc_attribute);
