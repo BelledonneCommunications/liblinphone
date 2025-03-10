@@ -220,7 +220,6 @@ bool ParticipantDevice::setThumbnailStreamSsrc(uint32_t newSsrc) {
 			lInfo() << "Setting thumbnail stream ssrc of " << *this << " to " << newSsrc;
 		}
 	}
-
 	return changed;
 }
 
@@ -606,8 +605,8 @@ std::set<LinphoneStreamType> ParticipantDevice::updateMediaCapabilities() {
 					audioDir = getStreamDirectionFromSession(LinphoneStreamTypeAudio);
 					videoDir = getStreamDirectionFromSession(LinphoneStreamTypeVideo);
 					textDir = getStreamDirectionFromSession(LinphoneStreamTypeText);
-					thumbnailDir =
-					    mMediaSession->getDirectionOfStream(MediaSessionPrivate::ThumbnailVideoContentAttribute);
+					thumbnailDir = mMediaSession->getDirectionOfStream(
+					    MediaSessionPrivate::ThumbnailVideoContentAttribute, getThumbnailStreamLabel());
 				}
 
 				updateSsrc = isInConference;
@@ -649,7 +648,7 @@ std::set<LinphoneStreamType> ParticipantDevice::updateMediaCapabilities() {
 			mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
 		}
 
-		bool updateThumbnailSsrc = ((resultThumbnailDir != LinphoneMediaDirectionInactive) || (thumbnailSsrc == 0));
+		bool updateThumbnailSsrc = (resultThumbnailDir != LinphoneMediaDirectionInactive);
 		if (setThumbnailStreamSsrc(thumbnailSsrc) && updateThumbnailSsrc) {
 			mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
 		}

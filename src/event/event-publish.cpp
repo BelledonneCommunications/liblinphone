@@ -224,7 +224,7 @@ void EventPublish::terminate() {
 	}
 
 	if (mPublishState != LinphonePublishNone) {
-		if (mPublishState == LinphonePublishOk && mExpires != -1) {
+		if (mOp && (mPublishState == LinphonePublishOk) && (mExpires != -1)) {
 			auto op = dynamic_cast<SalPublishOp *>(mOp);
 			op->unpublish();
 		}
@@ -237,7 +237,7 @@ void EventPublish::terminate() {
 
 void EventPublish::startTimeoutHandling() {
 	stopTimeoutHandling();
-	if (mExpires > 0)
+	if (mExpires > 0) {
 		mTimer = getCore()->createTimer(
 		    [this]() {
 			    lInfo() << "Publish event [" << this << "] has expired";
@@ -245,6 +245,7 @@ void EventPublish::startTimeoutHandling() {
 			    return true;
 		    },
 		    static_cast<unsigned int>(mExpires) * 1000, "Publish timer");
+	}
 }
 
 void EventPublish::stopTimeoutHandling() {

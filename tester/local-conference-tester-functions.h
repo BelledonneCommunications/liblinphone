@@ -409,6 +409,11 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 void create_conference_with_active_call_base(bool_t is_dialout);
 
 void check_conference_me(LinphoneConference *conference, bool_t is_me);
+void check_delete_focus_conference_info(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
+                                        std::list<LinphoneCoreManager *> conferenceMgrs,
+                                        LinphoneCoreManager *focus,
+                                        LinphoneAddress *confAddr,
+                                        time_t end_time);
 
 LinphoneAddress *
 create_conference_on_server(Focus &focus,

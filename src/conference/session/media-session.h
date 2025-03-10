@@ -187,8 +187,7 @@ public:
 	uint32_t getSsrc(LinphoneStreamType type) const;
 	uint32_t getSsrc(std::string content) const;
 
-	int getLocalThumbnailStreamIdx() const;
-	int getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
+	int getThumbnailStreamIdx() const;
 	int getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
 
 	/**
@@ -199,7 +198,8 @@ public:
 	void setEkt(const MSEKTParametersSet *ekt_params) const;
 	bool dtmfSendingAllowed() const;
 
-	LinphoneMediaDirection getDirectionOfStream(const std::string content) const;
+	LinphoneMediaDirection getDirectionOfStream(const std::string &content,
+	                                            const std::string &label = std::string()) const;
 	bool isScreenSharingNegotiated() const;
 	const std::shared_ptr<const VideoSourceDescriptor> getVideoSourceDescriptor() const;
 

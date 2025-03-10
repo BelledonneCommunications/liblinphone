@@ -740,7 +740,7 @@ void CorePrivate::updateVideoDevice() {
 			auto vs = i->getVideoStream();
 			if (vs && video_stream_local_screen_sharing_enabled(vs)) {
 				auto &group = ms->getStreamsGroup();
-				int idx = ms->getLocalThumbnailStreamIdx();
+				int idx = ms->getThumbnailStreamIdx();
 				if (idx >= 0) i = dynamic_cast<MS2VideoControl *>(group.getStream(idx));
 			}
 			if (i) i->parametersChanged();
