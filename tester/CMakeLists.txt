@@ -145,8 +145,10 @@ set(RC_FILES
 	rcfiles/claire_rc
 	rcfiles/claire_sips_rc
 	rcfiles/chloe_rc
+	rcfiles/chloe_dual_proxy_rc
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
+	rcfiles/empty_with_some_db_rc
 	rcfiles/friends_rc
 	rcfiles/groupchat_rc
 	rcfiles/invalid_friends_rc
@@ -220,6 +222,7 @@ set(RC_FILES
 )
 
 set(IMAGE_FILES
+	images/bc.jpeg
 	images/linphone.svg
 	images/linphonesiteqr.jpg
 	images/linphonesiteqr_captured.jpg

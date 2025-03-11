@@ -63,7 +63,7 @@ static void on_msg_state_changed(BCTBX_UNUSED(LinphoneChatMessage *msg), Linphon
 			running = FALSE;
 			break;
 		case LinphoneChatMessageStateDelivered:
-			printf("Message transmitted succesfully.\n");
+			printf("Message transmitted successfully.\n");
 			running = FALSE;
 			break;
 		case LinphoneChatMessageStateDeliveredToUser:
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 		linphone_address_set_display_name(route, NULL);
 	}
 
-	LinphoneAccountParams *account_params = linphone_account_params_new(lc);
+	LinphoneAccountParams *account_params = linphone_account_params_new(lc, TRUE);
 	linphone_account_params_set_identity_address(account_params, from);
 	tmp = linphone_address_as_string(route);
 	linphone_account_params_set_server_addr(account_params, tmp);

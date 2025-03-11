@@ -63,9 +63,12 @@ extern test_suite_t call_flexfec_suite;
 extern test_suite_t call_video_advanced_scenarios_test_suite;
 #endif // if VIDEO_ENABLED
 
+#ifdef HAVE_EKT_SERVER_PLUGIN
 extern test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference;
 extern test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference_audio_only_participant;
+extern test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference_with_chat;
 extern test_suite_t local_conference_test_suite_end_to_end_encryption_impromptu_conference;
+#endif // HAVE_EKT_SERVER_PLUGIN
 extern test_suite_t clonable_object_test_suite;
 extern test_suite_t conference_event_test_suite;
 extern test_suite_t conference_test_suite;
@@ -517,6 +520,7 @@ typedef struct _stats {
 
 	int number_of_chat_room_subject_changed;
 
+	int number_of_active_speaker_participant_device_changed;
 	int number_of_allowed_participant_list_changed;
 	int number_of_participants_added;
 	int number_of_participant_role_changed;

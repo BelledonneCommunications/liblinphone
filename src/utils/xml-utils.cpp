@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,6 +19,7 @@
  */
 
 #include "utils/xml-utils.h"
+
 #include "address/address.h"
 #include "core/core.h"
 #include "http/http-client.h"
@@ -49,37 +50,27 @@ MediaStatusType XmlUtils::mediaDirectionToMediaStatus(LinphoneMediaDirection dir
 	return MediaStatusType::sendrecv;
 }
 
-bool XmlUtils::sendCcmpRequest(const std::shared_ptr<Core> core,
-                               const std::string ccmpServerUrl,
-                               const std::shared_ptr<Address> from,
-                               const std::string body,
-                               belle_http_request_listener_t *listener) {
-	belle_http_request_t *req =
-	    belle_http_request_create("POST", belle_generic_uri_parse(ccmpServerUrl.c_str()),
-	                              belle_sip_header_content_type_create("application", "ccmp+xml"), nullptr, nullptr);
-	if (!req) {
-		lError() << "Cannot create a http request from config url [" << ccmpServerUrl << "]";
+bool XmlUtils::sendCcmpRequest(const std::shared_ptr<Core> &core,
+                               const std::string &ccmpServerUrl,
+                               const std::shared_ptr<const Address> &from,
+                               const std::string &body,
+                               const std::function<void(const HttpResponse &)> &listener) {
+	try {
+		auto &httpClient = core->getHttpClient();
+		auto &httpRequest = httpClient.createRequest("POST", ccmpServerUrl);
+		httpRequest.addHeader("From", from->asStringUriOnly());
+
+		if (!body.empty()) {
+			auto content = Content(ContentType("application/ccmp+xml"), body);
+			httpRequest.setBody(content);
+		}
+
+		httpRequest.execute([listener](const HttpResponse &response) -> void { listener(response); });
+	} catch (const std::exception &e) {
+		lError() << __func__ << ": Error while sending CCMP request : " << e.what();
 		return false;
 	}
 
-	const auto fromStr = from->asStringUriOnly();
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", fromStr.c_str()));
-
-	if (!body.empty()) {
-		belle_sip_message_set_body(BELLE_SIP_MESSAGE(req), body.c_str(), body.size());
-	}
-
-	// Set the same User-Agent header as for the SAL
-	belle_sip_header_user_agent_t *userAgentHeader = belle_sip_header_user_agent_new();
-	belle_sip_object_ref(userAgentHeader);
-	belle_sip_header_user_agent_set_products(userAgentHeader, nullptr);
-	const auto cCore = core->getCCore();
-	belle_sip_header_user_agent_add_product(userAgentHeader, linphone_core_get_user_agent(cCore));
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), BELLE_SIP_HEADER(userAgentHeader));
-
-	belle_http_provider_send_request(core->getHttpClient().getProvider(), req, listener);
-	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
-	belle_sip_object_unref(userAgentHeader);
 	return true;
 }
 

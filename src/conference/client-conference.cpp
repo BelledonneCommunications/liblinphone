@@ -53,27 +53,31 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ClientConference::ClientConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<Address> &myAddress,
                                    std::shared_ptr<CallSessionListener> listener,
                                    const std::shared_ptr<const ConferenceParams> params)
-    : Conference(core, myAddress, listener, params) {
+    : Conference(core, listener, params) {
 }
 
 ClientConference::~ClientConference() {
-	terminate();
+	if (getState() != ConferenceInterface::State::Deleted) {
+		terminate();
+	}
+	if (mJoiningParams) {
+		delete mJoiningParams;
+	}
 
 #ifdef HAVE_ADVANCED_IM
-	eventHandler.reset();
+	mEventHandler.reset();
 #endif // HAVE_ADVANCED_IM
 }
 
-void ClientConference::createFocus(const std::shared_ptr<Address> focusAddr,
+void ClientConference::createFocus(const std::shared_ptr<const Address> &focusAddr,
                                    const std::shared_ptr<CallSession> focusSession) {
 	mFocus = Participant::create(getSharedFromThis(), focusAddr, focusSession);
 	if (focusSession) {
 		focusSession->addListener(getSharedFromThis());
 	}
-	lInfo() << "Create focus '" << *mFocus->getAddress() << "' from address : " << *focusAddr;
+	lInfo() << *this << ": Create focus '" << *mFocus->getAddress() << "' from address : " << *focusAddr;
 }
 
 void ClientConference::configure(SalCallOp *op) {
@@ -95,7 +99,7 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
                                   bool hasBeenLeft) {
 	const auto &conferenceAddress = mConfParams->getConferenceAddress();
 	createFocus(conferenceAddress, nullptr);
-	mMe = Participant::create(getSharedFromThis(), mConfParams->getMe());
+	mMe = Participant::create(getSharedFromThis(), me->getAddress());
 	mMe->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices()) {
 		mMe->addDevice(device);
@@ -120,12 +124,13 @@ void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
 	}
 
 	if (!hasBeenLeft) {
-		initializeHandlers(this, true);
+		// No need to add a conference with media to the client conference list event handler
+		initializeHandlers(this, isChatOnly());
 	}
 }
 
-void ClientConference::initWithFocus(const std::shared_ptr<Address> focusAddr,
-                                     const std::shared_ptr<CallSession> focusSession,
+void ClientConference::initWithFocus(const std::shared_ptr<const Address> &focusAddr,
+                                     const std::shared_ptr<CallSession> &focusSession,
                                      SalCallOp *op,
                                      ConferenceListener *confListener) {
 	createFocus(focusAddr, focusSession);
@@ -137,11 +142,11 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	// Local conference sets last notify to 1 in its constructor
 	setLastNotify(0);
 
-	const auto &meAddress = mConfParams->getMe();
-	mMe = Participant::create(getSharedFromThis(), meAddress);
+	inititializeMe();
+
+	const auto &core = getCore();
 	std::shared_ptr<Address> organizerAddress = nullptr;
 	auto conferenceAddress = mFocus ? mFocus->getAddress() : nullptr;
-	const auto &core = getCore();
 	std::shared_ptr<ConferenceInfo> conferenceInfo = nullptr;
 #ifdef HAVE_DB_STORAGE
 	if (conferenceAddress && core->getPrivate()->mainDb && supportsMedia()) {
@@ -191,19 +196,20 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	mPendingSubject = mConfParams->getUtf8Subject();
 	mConfParams->enableLocalParticipant(false);
 
-	if (mConfParams->chatEnabled()) {
 #ifdef HAVE_ADVANCED_IM
+	if (isChatOnly()) {
 		setChatRoom((new ClientChatRoom(core, getSharedFromThis()))->toSharedPtr());
-#endif // HAVE_ADVANCED_IM
 	}
+#endif // HAVE_ADVANCED_IM
 
+	const auto &meAddress = mMe->getAddress();
 	if (supportsMedia()) {
 		getMe()->setAdmin((focusSession == nullptr) || (organizerAddress == nullptr) ||
 		                  organizerAddress->weakEqual(*meAddress));
 	}
 
 	if (focusSession || conferenceInfo) {
-		ConferenceId conferenceId(conferenceAddress, meAddress);
+		ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
 		setConferenceId(conferenceId);
 	}
 
@@ -213,7 +219,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 		setConferenceAddress(conferenceAddress);
 	}
 
-	if (focusSession || mConfParams->chatEnabled()) {
+	if (focusSession || isChatOnly()) {
 		finalizeCreation();
 	}
 }
@@ -224,15 +230,16 @@ void ClientConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confL
 	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
 	                                                  "conference_event_log_enabled", TRUE);
 	if (eventLogEnabled) {
-		if (!eventHandler) {
-			eventHandler = std::make_shared<ClientConferenceEventHandler>(getCore(), getSharedFromThis(), confListener);
+		if (!mEventHandler) {
+			mEventHandler =
+			    std::make_shared<ClientConferenceEventHandler>(getCore(), getSharedFromThis(), confListener);
 		}
 		if (addToListEventHandler) {
-			getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
+			getCore()->getPrivate()->clientListEventHandler->addHandler(mEventHandler);
 		}
 		const auto &conferenceId = getConferenceId();
 		if (conferenceId.isValid()) {
-			eventHandler->subscribe(conferenceId);
+			mEventHandler->subscribe(conferenceId);
 		}
 	} else {
 #endif // HAVE_ADVANCED_IM
@@ -289,7 +296,7 @@ std::shared_ptr<ConferenceInfo> ClientConference::createConferenceInfo() const {
 	return createConferenceInfoWithCustomParticipantList(organizer, getFullParticipantList());
 }
 
-std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared_ptr<Address> &sessionTo) {
+std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared_ptr<const Address> &sessionTo) {
 	MediaSessionParams csp;
 	csp.addCustomHeader("Require", "recipient-list-invite");
 	csp.addCustomContactParameter(Conference::TextParameter);
@@ -306,6 +313,7 @@ std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared
 
 	csp.enableAudio(mConfParams->audioEnabled());
 	csp.enableVideo(mConfParams->videoEnabled());
+	csp.getPrivate()->disableRinging(!supportsMedia());
 	csp.getPrivate()->enableToneIndications(supportsMedia());
 
 	auto chatRoom = getChatRoom();
@@ -355,8 +363,8 @@ void ClientConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		if (focusOp) {
 			auto focusOpFrom = Address::create(focusOp->getFrom());
 			auto focusOpTo = Address::create(focusOp->getTo());
-			lInfo() << "Releasing focus session " << focusSession << " (from: " << *focusOpFrom << " to " << *focusOpTo
-			        << ")";
+			lInfo() << *this << ": Releasing focus session " << focusSession << " (from: " << *focusOpFrom << " to "
+			        << *focusOpTo << ")";
 			focusOp->terminate();
 			focusOp->release();
 		}
@@ -426,13 +434,20 @@ void ClientConference::setConferenceId(const ConferenceId &conferenceId) {
 	if (mFocus) {
 		shared_ptr<CallSession> session = mFocus->getSession();
 		if (session) {
-			shared_ptr<CallLog> sessionLog = session->getLog();
+			std::shared_ptr<Address> address;
 			if (conferenceId.getPeerAddress()->isValid()) {
-				// Use the peer address of the conference ID because it has also the conf-id param hence the To field
-				// can be used to search in the map of chat rooms
-				sessionLog->setToAddress(conferenceId.getPeerAddress());
+				// Use the peer address of the conference ID because it has also the conf-id param hence the To or From
+				// field can be used to search in the map of conferences or chat rooms
+				address = conferenceId.getPeerAddress();
 			} else {
-				sessionLog->setToAddress(mFocus->getAddress());
+				address = mFocus->getAddress();
+			}
+			const auto &direction = session->getDirection();
+			auto sessionLog = session->getLog();
+			if (direction == LinphoneCallIncoming) {
+				sessionLog->setFromAddress(address);
+			} else {
+				sessionLog->setToAddress(address);
 			}
 		}
 	}
@@ -444,7 +459,7 @@ int ClientConference::startRecording(const std::string &path) {
 		session->setRecordPath(path);
 		session->startRecording();
 	} else {
-		lError() << "ClientConference::startRecording(): no audio session.";
+		lError() << *this << ": ClientConference::startRecording(): no audio session.";
 		return -1;
 	}
 	return 0;
@@ -464,7 +479,8 @@ bool ClientConference::isIn() const {
 
 void ClientConference::setUtf8Subject(const std::string &subject) {
 	if (!getMe()->isAdmin()) {
-		lError() << "Unable to update conference subject because focus " << *getMe()->getAddress() << " is not admin";
+		lError() << *this << ": Unable to update conference subject because focus " << *getMe()->getAddress()
+		         << " is not admin";
 		return;
 	}
 	auto session = dynamic_pointer_cast<MediaSession>(getMainSession());
@@ -493,14 +509,15 @@ void ClientConference::setUtf8Subject(const std::string &subject) {
 			}
 		}
 	} else if (!supportsMedia()) {
-		lInfo() << "Sending re-INVITE to update subject from \"" << getUtf8Subject() << "\" to \"" << subject << "\"";
+		lInfo() << *this << ": Sending re-INVITE to update subject from \"" << getUtf8Subject() << "\" to \"" << subject
+		        << "\"";
 		session = dynamic_pointer_cast<MediaSession>(createSession());
 		if (session) {
 			session->startInvite(nullptr, subject, nullptr);
 		}
 	} else {
 		mPendingSubject = subject;
-		lInfo() << "Unable to update subject to \"" << subject
+		lInfo() << *this << ": Unable to update subject to \"" << subject
 		        << "\" right now because the focus session has not been established yet.";
 	}
 }
@@ -511,7 +528,7 @@ bool ClientConference::update(const ConferenceParamsInterface &newParameters) {
 	if (getMe()->isAdmin()) {
 		ret = Conference::update(newParameters);
 	} else {
-		lError() << "Unable to update conference parameters because focus " << getMe()->getAddress()->toString()
+		lError() << *this << " Unable to update conference parameters because focus " << *getMe()->getAddress()
 		         << " is not admin";
 	}
 	return ret;
@@ -520,7 +537,8 @@ bool ClientConference::update(const ConferenceParamsInterface &newParameters) {
 std::shared_ptr<Call> ClientConference::getCall() const {
 	auto session = getMainSession();
 	if (session) {
-		return getCore()->getCallByRemoteAddress(session->getRemoteAddress());
+		auto op = session->getPrivate()->getOp();
+		return getCore()->getCallByCallId(op->getCallId());
 	}
 	return nullptr;
 }
@@ -529,7 +547,7 @@ void ClientConference::setParticipantAdminStatus(const shared_ptr<Participant> &
 	if (isAdmin == participant->isAdmin()) return;
 
 	if (!getMe()->isAdmin()) {
-		lError() << "Unable to set admin status of participant " << *participant->getAddress() << " to "
+		lError() << *this << ": Unable to set admin status of participant " << *participant->getAddress() << " to "
 		         << (isAdmin ? "true" : "false") << " because focus " << *getMe()->getAddress() << " is not admin";
 		return;
 	}
@@ -550,7 +568,7 @@ void ClientConference::setParticipantAdminStatus(const shared_ptr<Participant> &
 void ClientConference::callFocus() {
 	if (!mFocus->getSession()) {
 		std::shared_ptr<Address> focusAddress = mFocus->getAddress();
-		lInfo() << "Calling the conference focus (" << *focusAddress
+		lInfo() << *this << ": Calling the conference focus (" << *focusAddress
 		        << ") as there is no session towards the focus yet";
 		LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 		// Participant with the focus call is admin
@@ -558,8 +576,7 @@ void ClientConference::callFocus() {
 		                                                               Utils::toString(true));
 		linphone_call_params_enable_video(params, mConfParams->videoEnabled());
 		Conference::setUtf8Subject(mPendingSubject);
-		const std::list<std::shared_ptr<const Address>> addresses;
-		inviteAddresses(addresses, params);
+		inviteAddresses({}, params);
 		linphone_call_params_unref(params);
 	}
 }
@@ -572,8 +589,6 @@ std::shared_ptr<ParticipantDevice> ClientConference::createParticipantDevice(std
 		device->setSession(nullptr);
 		const auto &p = device->getParticipant();
 		if (p) {
-			time_t creationTime = time(nullptr);
-			notifyParticipantDeviceAdded(creationTime, false, p, device);
 			const_cast<MediaSessionParams *>(call->getParams())
 			    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(p->isAdmin()));
 		}
@@ -582,11 +597,11 @@ std::shared_ptr<ParticipantDevice> ClientConference::createParticipantDevice(std
 }
 
 bool ClientConference::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
-	lError() << "addParticipant() with a participant info is not allowed on a ClientConference";
+	lError() << *this << ": addParticipant() with a participant info is not allowed on a ClientConference";
 	return false;
 }
 
-bool ClientConference::addParticipant(const std::shared_ptr<const Address> &participantAddress) {
+bool ClientConference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	// Search call that matches participant session
 	const std::list<std::shared_ptr<Call>> &coreCalls = getCore()->getCalls();
 	auto callIt = std::find_if(coreCalls.cbegin(), coreCalls.cend(), [&](const std::shared_ptr<Call> &c) {
@@ -597,7 +612,7 @@ bool ClientConference::addParticipant(const std::shared_ptr<const Address> &part
 		std::shared_ptr<Call> call = *callIt;
 		ret = addParticipant(call);
 	} else {
-		const list<std::shared_ptr<const Address>> addresses{participantAddress};
+		const list<std::shared_ptr<Address>> addresses{participantAddress};
 		ret = addParticipants(addresses);
 	}
 	return ret;
@@ -638,7 +653,7 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 				return false;
 		}
 	} else if (!getMe()->isAdmin()) {
-		lError() << "Could not add call " << call << " to the conference because local participant "
+		lError() << "Could not add call " << *call << " to " << *this << " because local participant "
 		         << *getMe()->getAddress() << " is not admin.";
 	} else {
 		const auto &endTime = mConfParams->getEndTime();
@@ -663,7 +678,7 @@ bool ClientConference::addParticipant(std::shared_ptr<Call> call) {
 
 // Removes own address and existing participants from the list.
 // Also removes gruu from kept addresses
-std::list<Address> ClientConference::cleanAddressesList(const list<std::shared_ptr<const Address>> &addresses) const {
+std::list<Address> ClientConference::cleanAddressesList(const list<std::shared_ptr<Address>> &addresses) const {
 	std::list<Address> cleanedList;
 	const auto &meAddress = getMe()->getAddress();
 	for (const auto &address : addresses) {
@@ -699,7 +714,7 @@ bool ClientConference::addParticipants(const std::list<std::shared_ptr<Call>> &c
 	return false;
 }
 
-bool ClientConference::addParticipants(const list<std::shared_ptr<const Address>> &addresses) {
+bool ClientConference::addParticipants(const list<std::shared_ptr<Address>> &addresses) {
 	const auto isChat = mConfParams->chatEnabled();
 	if (getMe()->isAdmin() || ((mState == ConferenceInterface::State::Instantiated) && isChat)) {
 		const auto mediaSupported = supportsMedia();
@@ -710,11 +725,11 @@ bool ClientConference::addParticipants(const list<std::shared_ptr<const Address>
 			} else if (isChat) {
 				auto addressesList = cleanAddressesList(addresses);
 				if (addressesList.empty()) {
-					lError() << "No new participants were given.";
+					lError() << *this << ": no new participants were given.";
 					return false;
 				}
 				if (!mConfParams->isGroup() && (addressesList.size() > 1 || getParticipantCount() != 0)) {
-					lError() << "Cannot add more than one participant in a one-to-one chatroom";
+					lError() << *this << ": Cannot add more than one participant in a one-to-one chatroom";
 					return false;
 				}
 
@@ -850,6 +865,18 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		list<std::shared_ptr<Call>>::iterator it;
 		switch (state) {
 			case CallSession::State::StreamsRunning: {
+#ifdef HAVE_ADVANCED_IM
+				// Handle session reconnection if network dropped only for a short period of time
+				if (mEventHandler && mEventHandler->needToSubscribe()) {
+					const auto &conferenceId = getConferenceId();
+					if (conferenceId.isValid()) {
+						mEventHandler->subscribe(conferenceId);
+					}
+				}
+				if (mClientEktManager) {
+					mClientEktManager->subscribe();
+				}
+#endif // HAVE_ADVANCED_IM
 				updateParticipantInConferenceInfo(getMe());
 				for (const auto &device : getParticipantDevices()) {
 					device->updateStreamAvailabilities();
@@ -905,7 +932,8 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					}
 
 					if (!mFinalized) {
-						setConferenceId(ConferenceId(focusContactAddress, getMe()->getAddress()));
+						setConferenceId(ConferenceId(focusContactAddress, getMe()->getAddress(),
+						                             getCore()->createConferenceIdParams()));
 						if (call) {
 							if (focusContactAddress->hasUriParam(Conference::ConfIdParameter)) {
 								call->setConferenceId(
@@ -1002,8 +1030,8 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 				const auto errorInfo = session->getErrorInfo();
 				const auto code = linphone_error_info_get_protocol_code(errorInfo);
 				if (errorInfo != nullptr && code > 299) {
-					lWarning() << "Chat room [" << getConferenceId()
-					           << "] received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo)
+					lWarning() << *this
+					           << ": received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo)
 					           << ", not leaving it.";
 				} else {
 					const auto &clientConferenceAddress = session->getRemoteAddress();
@@ -1012,7 +1040,7 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
 						ConferenceId confId = static_cast<ConferenceId>(*it);
 						if (*confId.getPeerAddress() == *clientConferenceAddress) {
-							lInfo() << "Found previous chat room conference ID [" << confId
+							lInfo() << *this << ": found previous chat room conference ID [" << confId
 							        << "] for chat room with current ID [" << getConferenceId() << "]";
 							clientGroupChatRoom->removeConferenceIdFromPreviousList(confId);
 							found = true;
@@ -1025,10 +1053,10 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					if (found) {
 						/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change
 						 * it's state */
-						lInfo() << "Chat room [" << *clientConferenceAddress
-						        << "] from before the exhume has been terminated";
+						lInfo() << *this << ": received a BYE referred to previous conference address ["
+						        << *clientConferenceAddress << "] before the exhume has been terminated";
 					} else if (isLocalExhume) {
-						lInfo() << "Chat room [" << *clientConferenceAddress << "] has been successfully recreated";
+						lInfo() << *this << " has been successfully recreated";
 					} else {
 						setState(ConferenceInterface::State::TerminationPending);
 					}
@@ -1201,8 +1229,8 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 			break;
 		case ConferenceInterface::State::TerminationPending:
 #ifdef HAVE_ADVANCED_IM
-			if (eventHandler) {
-				eventHandler->unsubscribe();
+			if (mEventHandler) {
+				mEventHandler->unsubscribe();
 			}
 #endif // HAVE_ADVANCED_IM
 			resetLastNotify();
@@ -1215,8 +1243,10 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 				}
 			}
 			if (mediaSupported) {
-				Conference::terminate();
-				setState(ConferenceInterface::State::Terminated);
+				getCore()->doLater([this]() {
+					Conference::terminate();
+					setState(ConferenceInterface::State::Terminated);
+				});
 			}
 			break;
 		case ConferenceInterface::State::Deleted:
@@ -1366,9 +1396,16 @@ void ClientConference::onParticipantDeviceRemoved(const std::shared_ptr<Conferen
 		const auto videoNeedsReInvite = (mConfParams->videoEnabled() && params->videoEnabled());
 
 		updateMinatureRequestedFlag();
+
+		// If the device was screen sharing, then notify the application that it isn't anymore
 		if (device->enableScreenSharing(false)) {
 			notifyParticipantDeviceScreenSharingChanged(ms_time(NULL), event->getFullState(), device->getParticipant(),
 			                                            device);
+		}
+
+		// If the device was the active speaker, then notify the application that it isn't anymore
+		if (device == getActiveSpeakerParticipantDevice()) {
+			notifyActiveSpeakerParticipantDevice(nullptr);
 		}
 
 		if ((audioNeedsReInvite || videoNeedsReInvite) && (mState == ConferenceInterface::State::Created) &&
@@ -1457,11 +1494,11 @@ void ClientConference::onParticipantDeviceMediaAvailabilityChanged(
 		if ((!isMe(deviceAddress)) && (mState == ConferenceInterface::State::Created) && isIn()) {
 			updateMinatureRequestedFlag();
 			auto updateSession = [this, deviceAddress]() -> LinphoneStatus {
-				lInfo() << "Sending re-INVITE because device " << *deviceAddress
+				lInfo() << *this << ": Sending re-INVITE because device " << *deviceAddress
 				        << " has changed its stream availability";
 				auto ret = updateMainSession();
 				if (ret != 0) {
-					lInfo() << "re-INVITE due to device " << *deviceAddress
+					lInfo() << *this << ": re-INVITE due to device " << *deviceAddress
 					        << " changing its stream availability cannot be sent right now";
 				}
 				return ret;
@@ -1488,11 +1525,10 @@ void ClientConference::onAvailableMediaChanged(
 	const bool videoEnabled = (session) ? session->getCurrentParams()->videoEnabled() : false;
 	if (!mConfParams->videoEnabled() && videoEnabled && isIn()) {
 		auto updateSession = [this]() -> LinphoneStatus {
-			lInfo() << "Sending re-INVITE because the conference has no longer video capabilities";
+			lInfo() << *this << ": Sending re-INVITE because the conference has no longer video capabilities";
 			auto ret = updateMainSession();
 			if (ret != 0) {
-				lInfo() << "Sending re-INVITE because the conference has no longer video capabilities";
-				lInfo() << "re-INVITE to remove video cannot be sent right now";
+				lInfo() << *this << ": re-INVITE to remove video cannot be sent right now";
 			}
 			return ret;
 		};
@@ -1528,12 +1564,13 @@ void ClientConference::onParticipantsCleared() {
 void ClientConference::onConferenceCreated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
 #ifdef HAVE_ADVANCED_IM
 	const auto &conferenceId = getConferenceId();
-	const ConferenceId newConferenceId(addr, conferenceId.getLocalAddress());
+	const ConferenceId newConferenceId(addr, conferenceId.getLocalAddress(), getCore()->createConferenceIdParams());
 	if (!getCore()->getPrivate()->findExumedChatRoomFromPreviousConferenceId(newConferenceId)) {
 		setConferenceId(newConferenceId);
 	}
 	setConferenceAddress(addr);
-	lInfo() << "Conference [" << conferenceId << "] has been created with address " << *getConferenceAddress();
+	lInfo() << *this << ": Conference [" << conferenceId << "] has been created with address "
+	        << *getConferenceAddress();
 
 	mFocus->setAddress(addr);
 	mFocus->clearDevices();
@@ -1562,13 +1599,13 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 #ifdef HAVE_ADVANCED_IM
 	auto chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
-		if (eventHandler) {
-			eventHandler->unsubscribe();
+		if (mEventHandler) {
+			mEventHandler->unsubscribe();
 		}
 		resetLastNotify();
 		// remove event handler from list event handler if used
 		if (getCore()->getPrivate()->clientListEventHandler) {
-			getCore()->getPrivate()->clientListEventHandler->removeHandler(eventHandler);
+			getCore()->getPrivate()->clientListEventHandler->removeHandler(mEventHandler);
 		}
 
 		// No need to notify such event during the core startup.
@@ -1583,6 +1620,7 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 			_linphone_chat_room_notify_conference_left(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 		}
 	}
+	mClientEktManager = nullptr;
 #endif // HAVE_ADVANCED_IM
 
 	auto session = getMainSession();
@@ -1626,18 +1664,18 @@ AbstractChatRoom::SecurityLevel
 ClientConference::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (!encryptionEngine) {
-		lWarning() << "Asking participant security level but there is no encryption engine enabled";
+		lWarning() << *this << ": Asking participant security level but there is no encryption engine enabled";
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
 
 	if (!getCurrentParams()->getChatParams()->isEncrypted()) {
-		lDebug() << "Chatroom SecurityLevel = ClearText";
+		lDebug() << *this << ": Chatroom SecurityLevel = ClearText";
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
 
 	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
 	if (getParticipants().size() == 0 && getMe()->getDevices().size() == 0) {
-		lDebug() << "Chatroom SecurityLevel = Encrypted";
+		lDebug() << *this << ": Chatroom SecurityLevel = Encrypted";
 		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
 
@@ -1661,7 +1699,7 @@ ClientConference::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice
 		return AbstractChatRoom::SecurityLevel::Safe;
 	}
 	auto level = encryptionEngine->getSecurityLevel(allDevices);
-	lDebug() << "Chatroom SecurityLevel = " << level;
+	lDebug() << *this << ": Chatroom SecurityLevel = " << level;
 	return level;
 }
 
@@ -1673,7 +1711,7 @@ void ClientConference::onFirstNotifyReceived(BCTBX_UNUSED(const std::shared_ptr<
 		// capabilities, this callback might be called when the conference is in the CreationPending state
 		if (!((mState == ConferenceInterface::State::Created) ||
 		      (supportsMedia() && (mState == ConferenceInterface::State::CreationPending)))) {
-			lWarning() << "First notify received in ClientConference that is not in the Created state ["
+			lWarning() << "First notify received in " << *this << " that is not in the Created state ["
 			           << Utils::toString(getState()) << "], ignoring it!";
 			return;
 		}
@@ -1742,12 +1780,14 @@ void ClientConference::onFullStateReceived() {
 
 	if (supportsMedia()) {
 #ifdef HAVE_ADVANCED_IM
-		if ((mConfParams->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) &&
-		    (mClientEktManager == nullptr)) {
-			shared_ptr<ClientConference> clientConference = dynamic_pointer_cast<ClientConference>(getSharedFromThis());
-			mClientEktManager = make_shared<ClientEktManager>(MSEKTCipherType::MS_EKT_CIPHERTYPE_AESKW256,
-			                                                  MSCryptoSuite::MS_AEAD_AES_256_GCM);
-			mClientEktManager->init(clientConference);
+		if (mConfParams->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) {
+			if (mClientEktManager == nullptr) {
+				shared_ptr<ClientConference> clientConference =
+				    dynamic_pointer_cast<ClientConference>(getSharedFromThis());
+				mClientEktManager = make_shared<ClientEktManager>(MSEKTCipherType::MS_EKT_CIPHERTYPE_AESKW256,
+				                                                  MSCryptoSuite::MS_AEAD_AES_256_GCM);
+				mClientEktManager->init(clientConference);
+			}
 			mClientEktManager->subscribe();
 		}
 
@@ -1915,7 +1955,7 @@ bool ClientConference::isSubscriptionUnderWay() const {
 		underWay =
 		    getCore()->getPrivate()->clientListEventHandler->getInitialSubscriptionUnderWayFlag(getConferenceId());
 	} else {
-		underWay = eventHandler ? eventHandler->getInitialSubscriptionUnderWayFlag() : false;
+		underWay = mEventHandler ? mEventHandler->getInitialSubscriptionUnderWayFlag() : false;
 	}
 #endif // HAVE_ADVANCED_IM
 
@@ -1928,19 +1968,21 @@ bool ClientConference::isSubscriptionUnderWay() const {
 #endif // _MSC_VER
 void ClientConference::multipartNotifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content) {
 #ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
-		const auto initialSubscription = eventHandler->getInitialSubscriptionUnderWayFlag();
-		eventHandler->multipartNotifyReceived(notifyLev, content);
+	if (mEventHandler) {
+		const auto initialSubscription = mEventHandler->getInitialSubscriptionUnderWayFlag();
+		mEventHandler->multipartNotifyReceived(notifyLev, content);
 		const auto &chatRoom = getChatRoom();
 		if (mConfParams->chatEnabled() && chatRoom && initialSubscription &&
-		    !eventHandler->getInitialSubscriptionUnderWayFlag()) {
+		    !mEventHandler->getInitialSubscriptionUnderWayFlag()) {
 			chatRoom->sendPendingMessages();
 		}
 		return;
 	}
 #endif // HAVE_ADVANCED_IM
-	lInfo() << "Unable to handle multi part NOTIFY because conference event package (RFC 4575) is disabled or the SDK "
-	           "was not compiled with ENABLE_ADVANCED_IM flag set to on";
+	lInfo()
+	    << *this
+	    << ": Unable to handle multi part NOTIFY because conference event package (RFC 4575) is disabled or the SDK "
+	       "was not compiled with ENABLE_ADVANCED_IM flag set to on";
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -1958,27 +2000,28 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 			return;
 		}
 	} else {
-		if (eventHandler) {
-			const auto initialSubscription = eventHandler->getInitialSubscriptionUnderWayFlag();
-			eventHandler->notifyReceived(notifyLev, content);
+		if (mEventHandler) {
+			const auto initialSubscription = mEventHandler->getInitialSubscriptionUnderWayFlag();
+			mEventHandler->notifyReceived(notifyLev, content);
 			const auto &chatRoom = getChatRoom();
 			if (mConfParams->chatEnabled() && chatRoom && initialSubscription &&
-			    !eventHandler->getInitialSubscriptionUnderWayFlag()) {
+			    !mEventHandler->getInitialSubscriptionUnderWayFlag()) {
 				chatRoom->sendPendingMessages();
 			}
 			return;
 		}
 	}
 #endif // HAVE_ADVANCED_IM
-	lInfo() << "Unable to handle NOTIFY because conference event package (RFC 4575) is disabled or the SDK was not "
+	lInfo() << *this
+	        << ": Unable to handle NOTIFY because conference event package (RFC 4575) is disabled or the SDK was not "
 	           "compiled with ENABLE_ADVANCED_IM flag set to on";
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-int ClientConference::inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
-                                      BCTBX_UNUSED(const LinphoneCallParams *params)) {
+int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
+                                      const LinphoneCallParams *params) {
 	const auto &account = mConfParams->getAccount();
 	const auto organizer = account ? account->getAccountParams()->getIdentityAddress()
 	                               : Address::create(linphone_core_get_identity(getCore()->getCCore()));
@@ -1999,24 +2042,26 @@ int ClientConference::inviteAddresses(const std::list<std::shared_ptr<const Addr
 
 	// The main session for the time being is the one used to create the conference. It will later replaced by the
 	// actual session used to join the conference
-	auto session =
-	    getCore()->createOrUpdateConferenceOnServer(mConfParams, organizer, invitees, getConferenceAddress(), ref);
+	auto session = getCore()->createOrUpdateConferenceOnServer(mConfParams, invitees, getConferenceAddress(), ref);
 	if (!session) {
 		lInfo() << "Aborting creation of conference " << *this << " because the call session cannot be established";
 		setState(ConferenceInterface::State::CreationFailed);
 		return -1;
 	}
 	setMainSession(session);
+	if (params) {
+		mJoiningParams = L_GET_CPP_PTR_FROM_C_OBJECT(params)->clone();
+	}
 	return 0;
 }
 
-bool ClientConference::dialOutAddresses(BCTBX_UNUSED(const std::list<std::shared_ptr<const Address>> &addressList)) {
-	lError() << "ClientConference::dialOutAddresses() not implemented";
+bool ClientConference::dialOutAddresses(BCTBX_UNUSED(const std::list<std::shared_ptr<Address>> &addressList)) {
+	lError() << *this << ": ClientConference::dialOutAddresses() not implemented";
 	return false;
 }
 
 bool ClientConference::finalizeParticipantAddition(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
-	lError() << "ClientConference::finalizeParticipantAddition() not implemented";
+	lError() << *this << ": ClientConference::finalizeParticipantAddition() not implemented";
 	return false;
 }
 
@@ -2028,7 +2073,7 @@ int ClientConference::removeParticipant(const std::shared_ptr<Address> &addr) {
 				case ConferenceInterface::State::Created:
 				case ConferenceInterface::State::TerminationPending: {
 					if (!findParticipant(addr)) {
-						lError() << "Conference: could not remove participant \'" << *addr
+						lError() << *this << ": could not remove participant \'" << *addr
 						         << "\': not in the participants list";
 						return -1;
 					}
@@ -2042,7 +2087,7 @@ int ClientConference::removeParticipant(const std::shared_ptr<Address> &addr) {
 					referOp->unref();
 
 					if (res != 0) {
-						lError() << "Conference: could not remove participant \'" << *addr
+						lError() << *this << ": could not remove participant \'" << *addr
 						         << "\': REFER with BYE has failed";
 						return -1;
 					}
@@ -2072,7 +2117,7 @@ int ClientConference::removeParticipant(const std::shared_ptr<CallSession> &sess
 			return removeParticipant(p) ? 0 : -1;
 		}
 	} else {
-		lError() << "Unable to remove participant " << *(p->getAddress()) << " because focus "
+		lError() << *this << ": Unable to remove participant " << *(p->getAddress()) << " because focus "
 		         << *(getMe()->getAddress()) << " is not admin";
 	}
 	return -1;
@@ -2097,7 +2142,7 @@ bool ClientConference::removeParticipant(const std::shared_ptr<Participant> &par
 			return true;
 		}
 	} else {
-		lError() << "Unable to remove participant " << *participantAddress << " because focus "
+		lError() << *this << ": Unable to remove participant " << *participantAddress << " because focus "
 		         << *(getMe()->getAddress()) << " is not admin";
 	}
 	return false;
@@ -2105,57 +2150,57 @@ bool ClientConference::removeParticipant(const std::shared_ptr<Participant> &par
 
 int ClientConference::participantDeviceMediaCapabilityChanged(
     BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
-	lError() << "ClientConference::participantDeviceMediaCapabilityChanged() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceMediaCapabilityChanged() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceMediaCapabilityChanged(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
-	lError() << "ClientConference::participantDeviceMediaCapabilityChanged() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceMediaCapabilityChanged() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceMediaCapabilityChanged(
     BCTBX_UNUSED(const std::shared_ptr<Participant> &participant),
     BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	lError() << "ClientConference::participantDeviceMediaCapabilityChanged() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceMediaCapabilityChanged() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceSsrcChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
                                                    BCTBX_UNUSED(const LinphoneStreamType type),
                                                    BCTBX_UNUSED(uint32_t ssrc)) {
-	lError() << "ClientConference::participantDeviceSsrcChanged() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceSsrcChanged() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceSsrcChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
                                                    BCTBX_UNUSED(uint32_t audioSsrc),
                                                    BCTBX_UNUSED(uint32_t videoSsrc)) {
-	lError() << "ClientConference::participantDeviceSsrcChanged() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceSsrcChanged() not implemented";
 	return -1;
 }
 
 int ClientConference::participantDeviceAlerting(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
-	lError() << "ClientConference::participantDeviceAlerting() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceAlerting() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceAlerting(BCTBX_UNUSED(const std::shared_ptr<Participant> &participant),
                                                 BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	lError() << "ClientConference::participantDeviceAlerting() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceAlerting() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceJoined(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
-	lError() << "ClientConference::participantDeviceJoined() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceJoined() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceJoined(BCTBX_UNUSED(const std::shared_ptr<Participant> &participant),
                                               BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	lError() << "ClientConference::participantDeviceJoined() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceJoined() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceLeft(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
-	lError() << "ClientConference::participantDeviceLeft() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceLeft() not implemented";
 	return -1;
 }
 int ClientConference::participantDeviceLeft(BCTBX_UNUSED(const std::shared_ptr<Participant> &participant),
                                             BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	lError() << "ClientConference::participantDeviceLeft() not implemented";
+	lError() << *this << ": ClientConference::participantDeviceLeft() not implemented";
 	return -1;
 }
 
@@ -2234,6 +2279,7 @@ int ClientConference::terminate() {
 		} else if (mState != ConferenceInterface::State::Deleted) {
 			setState(ConferenceInterface::State::TerminationPending);
 			if (!sessionCall) {
+				setState(ConferenceInterface::State::Terminated);
 				setState(ConferenceInterface::State::Deleted);
 			}
 		}
@@ -2248,7 +2294,7 @@ int ClientConference::terminate() {
 
 void ClientConference::finalizeCreation() {
 	if (mFinalized) {
-		lDebug() << "Conference " << this << " has already been mFinalized";
+		lDebug() << "Conference " << this << " has already been finalized";
 		return;
 	} else {
 		mFinalized = true;
@@ -2349,19 +2395,21 @@ void ClientConference::leave() {
 		}
 #ifdef HAVE_ADVANCED_IM
 	} else if (mConfParams->chatEnabled()) {
-		if (eventHandler) {
-			eventHandler->unsubscribe();
+		if (mEventHandler) {
+			mEventHandler->unsubscribe();
 		}
 		shared_ptr<CallSession> session = mFocus->getSession();
-		if (session) session->terminate();
-		else {
+		if (session) {
+			session->terminate();
+		} else if (mState != ConferenceInterface::State::CreationFailed) {
+			// No need to create a session if the creation already failed
 			session = createSession();
 			session->startInvite(nullptr, "", nullptr);
 		}
-
-		const auto &chatRoom = getChatRoom();
-		if (chatRoom) {
-			setState(ConferenceInterface::State::TerminationPending);
+		setState(ConferenceInterface::State::TerminationPending);
+		if (!session) {
+			setState(ConferenceInterface::State::Terminated);
+			setState(ConferenceInterface::State::Deleted);
 		}
 #endif // HAVE_ADVANCED_IM
 	}
@@ -2433,7 +2481,7 @@ AudioStream *ClientConference::getAudioStream() {
 }
 
 bool ClientConference::hasBeenLeft() const {
-	return (mState != State::Created);
+	return (mState == State::TerminationPending) || (mState == State::Terminated) || (mState == State::Deleted);
 }
 
 void ClientConference::handleRefer(SalReferOp *op,
@@ -2512,20 +2560,19 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 		auto ref = getSharedFromThis();
 		getCore()->removeConferencePendingCreation(ref);
 		if (remoteAddress == nullptr) {
-			lError() << "[Conference] [" << this
-			         << "] The session to update the conference information did not succesfully establish hence it is "
+			lError() << *this
+			         << " The session to update the conference information did not successfully establish hence it is "
 			            "likely that the request wasn't taken into account by the server";
 			setState(ConferenceInterface::State::CreationFailed);
 		} else if (dynamic_pointer_cast<MediaSession>(session) &&
 		           ((mState == ConferenceInterface::State::Instantiated) ||
 		            (mState == ConferenceInterface::State::CreationPending)) &&
 		           (session->getParams()->getPrivate()->getStartTime() < 0)) {
-			// TODO: same code as in the conference scheduler and core.cpp. Needs refactoring?
 			auto conferenceAddress = remoteAddress;
 
-			lInfo() << "Conference [" << this << "] has been succesfully created: " << *conferenceAddress;
+			lInfo() << *this << " has been successfully created: " << *conferenceAddress;
 			const auto &meAddress = getMe()->getAddress();
-			ConferenceId conferenceId(conferenceAddress, meAddress);
+			ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
 			// Do not change the conference ID yet if exhuming a chatroom
 			if (!isLocalExhume) {
 				setConferenceId(conferenceId);
@@ -2536,14 +2583,23 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			// will be always greater than 1 (the core holds it)
 			getMe()->setConference(getSharedFromThis());
 
-			lInfo() << "Automatically rejoining conference " << *remoteAddress;
-			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-
+			lInfo() << "Automatically rejoining " << *this;
+			MediaSessionParams *dialoutParams = nullptr;
+			if (mJoiningParams) {
+				dialoutParams = mJoiningParams->clone();
+			} else {
+				// No parameters were given to ClientConference::inviteAddresses()
+				dialoutParams = new MediaSessionParams();
+				dialoutParams->initDefault(getCore(), LinphoneCallOutgoing);
+				// Copy conference capabilities as the application didn't specify any parameter to pass on to the call
+				dialoutParams->enableAudio(mConfParams->audioEnabled());
+				dialoutParams->enableVideo(mConfParams->videoEnabled());
+				dialoutParams->enableRealtimeText(false);
+			}
 			// Participant with the focus call is admin
-			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
-			    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
+			dialoutParams->addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
 			if (mConfParams->chatEnabled()) {
-				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("Require", "recipient-list-invite");
+				dialoutParams->addCustomHeader("Require", "recipient-list-invite");
 			}
 
 			std::list<Address> addressesList;
@@ -2572,51 +2628,47 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 				// For audio video conferences it is requires as the client has to initiate a media session. The chat
 				// room code, instead, makes the assumption that the participant list is the body itself
 				if (mediaSupported) {
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
+					dialoutParams->addCustomContent(resourceList);
 				} else {
 					content = resourceList;
 				}
 			}
 
 			if (!mediaSupported) {
-				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter(Conference::TextParameter);
+				dialoutParams->addCustomContactParameter(Conference::TextParameter);
 				if (!mConfParams->isGroup()) {
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("One-To-One-Chat-Room", "true");
+					dialoutParams->addCustomHeader("One-To-One-Chat-Room", "true");
 				}
 				if (mConfParams->getChatParams()->isEncrypted()) {
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("End-To-End-Encrypted", "true");
+					dialoutParams->addCustomHeader("End-To-End-Encrypted", "true");
 				}
 				if (mConfParams->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("Ephemerable", "true");
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
-					    ->addCustomHeader("Ephemeral-Life-Time",
-					                      to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
+					dialoutParams->addCustomHeader("Ephemerable", "true");
+					dialoutParams->addCustomHeader("Ephemeral-Life-Time",
+					                               to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
 				}
 			}
-			linphone_call_params_enable_tone_indications(new_params, mediaSupported);
+			dialoutParams->getPrivate()->disableRinging(!mediaSupported);
+			dialoutParams->getPrivate()->enableToneIndications(mediaSupported);
 
-			const auto cCore = getCore()->getCCore();
-			const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(cCore);
-			bool initiate_video = !!linphone_video_activation_policy_get_automatically_initiate(pol);
 			// If one of the pending calls has the video enabled, then force the activation of the video. Otherwise it
 			// would be weird to be in a video call and once it is merged the participant has no video anymore
 			bool forceVideoEnabled = false;
 			for (const auto &call : mPendingCalls) {
 				forceVideoEnabled |= call->getParams()->videoEnabled();
 			}
-			const auto setupSessionHasVideo =
-			    dynamic_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled();
-			linphone_call_params_enable_video(new_params,
-			                                  forceVideoEnabled || (setupSessionHasVideo && initiate_video));
+			if (forceVideoEnabled) {
+				lInfo() << "Forcing " << *mMe->getAddress() << " to enable video capabilities when joining " << *this
+				        << " because at least one call that was merged had video capabilities on";
+				dialoutParams->enableVideo(true);
+			}
 
-			linphone_call_params_enable_audio(new_params, mConfParams->audioEnabled());
-			linphone_call_params_enable_realtime_text(new_params, FALSE);
-
+			const auto cCore = getCore()->getCCore();
 			const auto &subject = mConfParams->getUtf8Subject();
 			if (mediaSupported) {
-				LinphoneCall *call = linphone_core_invite_address_with_params_2(cCore, remoteAddress->toC(), new_params,
-				                                                                L_STRING_TO_C(subject),
-				                                                                content ? content->toC() : nullptr);
+				LinphoneCall *call = linphone_core_invite_address_with_params_2(
+				    cCore, remoteAddress->toC(), L_GET_C_BACK_PTR(dialoutParams), L_STRING_TO_C(subject),
+				    content ? content->toC() : nullptr);
 				auto session = Call::toCpp(call)->getActiveSession();
 				setMainSession(session);
 				session->addListener(getSharedFromThis());
@@ -2630,10 +2682,10 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					lError() << "Unable to find account used to join " << *this;
 					setState(ConferenceInterface::State::CreationFailed);
 					setMainSession(nullptr);
-					linphone_call_params_unref(new_params);
+					delete dialoutParams;
 					return;
 				}
-				auto session = mMe->createSession(getCore(), L_GET_CPP_PTR_FROM_C_OBJECT(new_params), TRUE);
+				auto session = mMe->createSession(getCore(), dialoutParams, TRUE);
 				setMainSession(session);
 				session->addListener(getSharedFromThis());
 				session->configure(LinphoneCallOutgoing, account, nullptr, from, remoteAddress);
@@ -2642,7 +2694,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 					session->startInvite(nullptr, subject, content);
 				}
 			}
-			linphone_call_params_unref(new_params);
+			delete dialoutParams;
 		}
 	}
 }
@@ -2707,7 +2759,20 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 
 void ClientConference::requestFullState() {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->requestFullState();
+	mEventHandler->requestFullState();
+#endif // HAVE_ADVANCED_IM
+}
+
+void ClientConference::subscribe(BCTBX_UNUSED(bool addToListEventHandler), BCTBX_UNUSED(bool unsubscribeFirst)) {
+#ifdef HAVE_ADVANCED_IM
+	if (mEventHandler) {
+		if (unsubscribeFirst) {
+			mEventHandler->unsubscribe(); // Required for next subscribe to be sent
+		}
+	} else {
+		initializeHandlers(this, addToListEventHandler);
+	}
+	mEventHandler->subscribe(getConferenceId());
 #endif // HAVE_ADVANCED_IM
 }
 

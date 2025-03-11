@@ -134,6 +134,14 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_peer_address(Linph
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *chat_room);
 
 /**
+ * Returns the chat room identifier
+ * @warning This method returns a NULL pointer if the ChatRoom is in the Instantiated state
+ * @param chat_room The #LinphoneChatRoom object. @notnil
+ * @return the conference identifier. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_chat_room_get_identifier(const LinphoneChatRoom *chat_room);
+
+/**
  * Used to receive a chat message when using async mechanism with IM enchat_roomyption engine
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param message #LinphoneChatMessage object @notnil
@@ -317,7 +325,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_near(Linphone
  * @param filters The #LinphoneChatRoomHistoryFilterMask mask to filter the results with #LinphoneChatRoomHistoryFilter
  * @return A list of \bctbx_list{LinphoneEventLog} between the two provided events, if any. @tobefreed
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_between(LinphoneChatRoom *cr,
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_between(LinphoneChatRoom *chat_room,
                                                                            LinphoneEventLog *first_event,
                                                                            LinphoneEventLog *last_event,
                                                                            LinphoneChatRoomHistoryFilterMask filters);
@@ -740,7 +748,6 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range(LinphoneChatR
  * @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
  * @return A list \bctbx_list{LinphoneEventLog} @tobefreed
- * @deprecated 30/07/2024. Use linphone_chat_room_get_history_2() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_message_events(LinphoneChatRoom *chat_room, int nb_events);
 
@@ -751,7 +758,6 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_message_events(Linp
  * @param begin The first event of the range to be retrieved. History most recent event has index 0.
  * @param end The last event of the range to be retrieved. History oldest event has index of history size - 1
  * @return The list of chat message events. \bctbx_list{LinphoneEventLog} @tobefreed
- * @deprecated 30/07/2024. Use linphone_chat_room_get_history_range_2() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *
 linphone_chat_room_get_history_range_message_events(LinphoneChatRoom *chat_room, int begin, int end);
@@ -762,7 +768,6 @@ linphone_chat_room_get_history_range_message_events(LinphoneChatRoom *chat_room,
  * @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
  * @return The list of the most recent events. \bctbx_list{LinphoneEventLog} @tobefreed
- * @deprecated 30/07/2024. Use linphone_chat_room_get_history_2() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_events(LinphoneChatRoom *chat_room, int nb_events);
 
@@ -773,7 +778,6 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_events(LinphoneChat
  * @param begin The first event of the range to be retrieved. History most recent event has index 0.
  * @param end The last event of the range to be retrieved. History oldest event has index of history size - 1
  * @return The list of the found events. \bctbx_list{LinphoneEventLog} @tobefreed
- * @deprecated 30/07/2024. Use linphone_chat_room_get_history_range_2() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *
 linphone_chat_room_get_history_range_events(LinphoneChatRoom *chat_room, int begin, int end);
@@ -783,7 +787,6 @@ linphone_chat_room_get_history_range_events(LinphoneChatRoom *chat_room, int beg
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which size has to be computed
  * @notnil
  * @return the number of events.
- * @deprecated 30/07/2024. Use linphone_chat_room_get_history_size_2() instead.
  */
 LINPHONE_PUBLIC int linphone_chat_room_get_history_events_size(LinphoneChatRoom *chat_room);
 

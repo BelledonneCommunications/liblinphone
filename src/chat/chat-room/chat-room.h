@@ -47,6 +47,7 @@ public:
 
 	const std::shared_ptr<Address> &getPeerAddress() const override;
 	const std::shared_ptr<Address> &getLocalAddress() const override;
+	std::optional<std::reference_wrapper<const std::string>> getIdentifier() const override;
 
 	time_t getCreationTime() const override;
 	time_t getLastUpdateTime() const override;
@@ -136,6 +137,7 @@ public:
 	std::shared_ptr<Address> getConferenceAddress() const override;
 	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const override;
 	std::list<std::shared_ptr<Participant>> getParticipants() const override;
+	std::list<std::shared_ptr<Address>> getParticipantAddresses() const override;
 
 	virtual std::shared_ptr<Conference> getConference() const override;
 
@@ -199,6 +201,7 @@ public:
 
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) override;
 	void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void onImdnReceived(const std::shared_ptr<ChatMessage> &chatMessage);
 	void onIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, const std::string &text);
 	void onIsComposingRefreshNeeded() override;

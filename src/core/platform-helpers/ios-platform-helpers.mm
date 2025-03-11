@@ -33,6 +33,7 @@
 #include <AVFoundation/AVAudioSession.h>
 
 #include "core/core.h"
+#include "core/core-p.h"
 #include "linphone/core.h"
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
@@ -53,10 +54,14 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class IosPlatformHelpers : public MacPlatformHelpers {
+class IosPlatformHelpers : public MacPlatformHelpers, public CoreListener {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 	~IosPlatformHelpers () {
+		try {
+            L_GET_PRIVATE(getCore())->unregisterListener(this);
+	    } catch (...) {
+	    }
 		[mAppDelegate dealloc];
 	}
 
@@ -110,7 +115,8 @@ private:
 	void kickOffConnectivity();
 	void bgTaskTimeout ();
 	static void sBgTaskTimeout (void *data);
-    
+    void onGlobalStateChanged (LinphoneGlobalState state) override;
+
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
 	SCNetworkReachabilityRef reachabilityRef = NULL;
@@ -133,6 +139,7 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	if (mUseAppDelgate) {
 		mAppDelegate = [[IosAppDelegate alloc] initWithCore:core];
 	}
+    L_GET_PRIVATE(core)->registerListener(this);
 	ms_message("IosPlatformHelpers is fully initialised");
 }
 
@@ -150,6 +157,16 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 void IosPlatformHelpers::stop () {
 	mStart = false;
 	ms_message("IosPlatformHelpers is fully stopped");
+}
+
+// Make sure that we register for push notification token after the core is GlobalOn
+// in order to avoid push token being erased by remote provisioning
+void IosPlatformHelpers::onGlobalStateChanged (LinphoneGlobalState state) {
+	if (state == LinphoneGlobalOn) {
+	    if (mUseAppDelgate && linphone_core_is_push_notification_enabled(getCore()->getCCore())) {
+		    [mAppDelegate registerForPush];
+	    }
+	}
 }
 
 void IosPlatformHelpers::didRegisterForRemotePush(void *token) {
@@ -254,9 +271,6 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	mNetworkMonitoringEnabled = monitoringEnabled;
 	if (monitoringEnabled) {
 		startNetworkMonitoring();
-	}
-	if (mUseAppDelgate && linphone_core_is_push_notification_enabled(getCore()->getCCore())) {
-		[mAppDelegate registerForPush];
 	}
 	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
 		enableAutoIterate(TRUE);

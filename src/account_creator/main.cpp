@@ -50,7 +50,7 @@ static void reset_field(char **field) {
 static unsigned int validate_uri(LinphoneCore *lc, const char *username, const char *domain, const char *display_name) {
 	LinphoneAddress *addr;
 	unsigned int status = 0;
-	LinphoneAccountParams *params = linphone_account_params_new(lc);
+	LinphoneAccountParams *params = linphone_account_params_new(lc, TRUE);
 	addr = linphone_address_new("sip:?@domain.com");
 	linphone_account_params_set_identity_address(params, addr);
 	if (addr) linphone_address_unref(addr);
@@ -94,7 +94,7 @@ LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const Linphone
 
 LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator) {
 	LinphoneAuthInfo *info;
-	LinphoneAccountParams *params = linphone_account_params_new(creator->core);
+	LinphoneAccountParams *params = linphone_account_params_new(creator->core, TRUE);
 	char *identity_str = linphone_account_creator_get_identity(creator);
 	LinphoneAddress *identity = linphone_address_new(identity_str);
 	ms_free(identity_str);
@@ -256,7 +256,7 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 			return LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
 
 		if (!creator->account) {
-			LinphoneAccountParams *params = linphone_account_params_new(creator->core);
+			LinphoneAccountParams *params = linphone_account_params_new(creator->core, TRUE);
 			creator->account = linphone_core_create_account(creator->core, params);
 			linphone_account_params_unref(params);
 		}
@@ -272,12 +272,20 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 			return LinphoneAccountCreatorPhoneNumberStatusInvalid;
 		}
 
-		// if phone is valid, we lastly want to check that length is OK in case phone_nunber was normilized
+		// if phone is valid, we lastly want to check that length is OK in case phone_number was normalized
 		if (strcmp(normalized_phone_number, phone_number) != 0 || phone_number[0] != '+') {
 			std::shared_ptr<DialPlan> plan = DialPlan::findByCcc(creator->phone_country_code);
 			int size = (int)strlen(phone_number);
 			if (plan->isGeneric()) {
 				return_status = LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
+				goto end;
+			}
+			if (phone_number[0] == '+') {
+				// + 1 because of the '+' sign
+				size -= (int)(strlen(country_code) + 1);
+			} else if (strncmp("00", phone_number, 2) == 0) {
+				// + 2 because of the starting 00<country_code>
+				size -= (int)(strlen(country_code) + 2);
 			}
 			// DO NOT NOTIFY ABOUT PHONE NUMBER BEING TOO SHORT,
 			// OUR DIAL PLAN IMPLEMENTATION ISNT PRECISE ENOUGH TO GARANTY
@@ -433,7 +441,7 @@ LinphoneTransportType linphone_account_creator_get_transport(const LinphoneAccou
 
 LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route) {
 	if (!creator->account) {
-		LinphoneAccountParams *params = linphone_account_params_new(creator->core);
+		LinphoneAccountParams *params = linphone_account_params_new(creator->core, TRUE);
 		creator->account = linphone_core_create_account(creator->core, params);
 		linphone_account_params_unref(params);
 	}
@@ -542,7 +550,7 @@ LinphoneAccountCreator *linphone_account_creator_new(LinphoneCore *core, const c
 
 	creator->set_as_default = TRUE;
 
-	LinphoneAccountParams *params = linphone_account_params_new(core);
+	LinphoneAccountParams *params = linphone_account_params_new(core, TRUE);
 	creator->account = linphone_core_create_account(core, params);
 	linphone_account_params_unref(params);
 

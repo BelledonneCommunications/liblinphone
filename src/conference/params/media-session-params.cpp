@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -40,6 +40,7 @@ void MediaSessionParamsPrivate::clone(const MediaSessionParamsPrivate *src) {
 	audioBandwidthLimit = src->audioBandwidthLimit;
 	audioDirection = src->audioDirection;
 	audioMulticastEnabled = src->audioMulticastEnabled;
+	mRingingDisabled = src->mRingingDisabled;
 	toneIndications = src->toneIndications;
 	usedAudioCodec = src->usedAudioCodec;
 	cameraEnabled = src->cameraEnabled;
@@ -212,11 +213,19 @@ bool MediaSessionParamsPrivate::getUpdateCallWhenIceCompleted() const {
 	return updateCallWhenIceCompleted;
 }
 
+bool MediaSessionParamsPrivate::ringingDisabled() const {
+	return mRingingDisabled;
+}
+
+void MediaSessionParamsPrivate::disableRinging(bool disable) {
+	mRingingDisabled = disable;
+}
+
 bool MediaSessionParamsPrivate::toneIndicationsEnabled() const {
 	return toneIndications;
 }
 
-void MediaSessionParamsPrivate::enableToneIndications(const bool enable) {
+void MediaSessionParamsPrivate::enableToneIndications(bool enable) {
 	toneIndications = enable;
 }
 
@@ -295,7 +304,8 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 	d->audioDirection = LinphoneMediaDirectionSendRecv;
 	d->earlyMediaSendingEnabled =
 	    !!linphone_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);
-	d->enableToneIndications(linphone_core_call_tone_indications_enabled(cCore));
+	d->disableRinging(!!linphone_core_call_ringing_disabled(cCore));
+	d->enableToneIndications(!!linphone_core_call_tone_indications_enabled(cCore));
 	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(cCore);
 	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
 	d->updateCallWhenIceCompleted =

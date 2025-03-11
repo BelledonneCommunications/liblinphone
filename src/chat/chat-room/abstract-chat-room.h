@@ -116,6 +116,7 @@ public:
 
 	virtual const std::shared_ptr<Address> &getPeerAddress() const = 0;
 	virtual const std::shared_ptr<Address> &getLocalAddress() const = 0;
+	virtual std::optional<std::reference_wrapper<const std::string>> getIdentifier() const = 0;
 
 	virtual time_t getCreationTime() const = 0;
 	virtual time_t getLastUpdateTime() const = 0;
@@ -203,6 +204,7 @@ public:
 	virtual std::shared_ptr<Address> getConferenceAddress() const = 0;
 	virtual std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const = 0;
 	virtual std::list<std::shared_ptr<Participant>> getParticipants() const = 0;
+	virtual std::list<std::shared_ptr<Address>> getParticipantAddresses() const = 0;
 
 	virtual bool canHandleParticipants() const = 0;
 	virtual std::shared_ptr<Conference> getConference() const = 0;
@@ -242,6 +244,7 @@ public:
 
 	virtual LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) = 0;
 	virtual void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 
 	virtual void addTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
 	virtual void removeTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
@@ -281,6 +284,13 @@ std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::Capabilities e);
 std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::SecurityLevel e);
 
 std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::EphemeralMode e);
+
+inline std::ostream &operator<<(std::ostream &str, const AbstractChatRoom &chatRoom) {
+	const auto &conferenceAddress = chatRoom.getConferenceAddress();
+	str << "ChatRoom [" << &chatRoom << "] ("
+	    << (conferenceAddress ? conferenceAddress->toString() : std::string("sip:")) << ")";
+	return str;
+}
 
 LINPHONE_END_NAMESPACE
 

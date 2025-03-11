@@ -109,11 +109,11 @@ void ClientEktManager::EktContext::fillMSParametersSet(MSEKTParametersSet *param
 	params->ekt_cipher_type = mCipherType;
 	params->ekt_srtp_crypto_suite = mCryptoSuite;
 	if (mCipherType == MS_EKT_CIPHERTYPE_AESKW128) {
-		std::copy(mEkt.data(), mEkt.data() + 16, params->ekt_key_value);
+		std::copy_n(mEkt.data(), 16, params->ekt_key_value);
 	} else {
-		std::copy(mEkt.data(), mEkt.data() + 32, params->ekt_key_value);
+		std::copy_n(mEkt.data(), 32, params->ekt_key_value);
 	}
-	std::copy(mCSpi.data(), mCSpi.data() + 14, params->ekt_master_salt);
+	std::copy_n(mCSpi.data(), 14, params->ekt_master_salt);
 	params->ekt_spi = mSSpi;
 	params->ekt_ttl = 0;
 }
@@ -166,9 +166,7 @@ ClientEktManager::~ClientEktManager() {
 }
 
 void ClientEktManager::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
-	if (sipNetworkReachable) {
-		subscribe();
-	} else {
+	if (!sipNetworkReachable) {
 		if (mEventSubscribe) {
 			mEventSubscribe->terminate();
 			mEventSubscribe = nullptr;
@@ -177,14 +175,6 @@ void ClientEktManager::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED
 			mEventPublish->terminate();
 			mEventPublish = nullptr;
 		}
-	}
-}
-
-void ClientEktManager::onAccountRegistrationStateChanged(BCTBX_UNUSED(std::shared_ptr<Account> account),
-                                                         LinphoneRegistrationState state,
-                                                         BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk) {
-		subscribe();
 	}
 }
 
@@ -413,8 +403,16 @@ void ClientEktManager::notifyReceived(const Content &content) {
 }
 
 void ClientEktManager::sendPublish(const shared_ptr<EktInfo> &ei) {
-	auto core = mClientConf.lock()->getCore();
-	string xmlBody = core->createXmlFromEktInfo(ei);
+	auto sharedClientConf = mClientConf.lock();
+	if (!sharedClientConf) {
+		lWarning() << __func__ << " : Ignoring the attempt to send an EKT PUBLISH from a null ClientConference";
+		return;
+	}
+
+	auto core = sharedClientConf->getCore();
+	auto account = sharedClientConf->getAccount();
+
+	string xmlBody = core->createXmlFromEktInfo(ei, account);
 
 	shared_ptr<Content> content = make_shared<Content>();
 	ContentType contentType;
@@ -443,7 +441,7 @@ void ClientEktManager::publishCipheredEkt(const shared_ptr<EktInfo> &ei,
 	}
 	auto ciphers = make_shared<Dictionary>();
 	shared_ptr<Buffer> buffer = nullptr;
-	for (auto cipher : cipherTexts) {
+	for (const auto &cipher : cipherTexts) {
 		buffer = make_shared<Buffer>(cipher.second);
 		ciphers->setProperty(cipher.first, buffer);
 	}

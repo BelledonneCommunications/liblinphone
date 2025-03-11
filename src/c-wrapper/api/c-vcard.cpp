@@ -52,6 +52,11 @@ const char *linphone_vcard_as_vcard4_string(LinphoneVcard *vCard) {
 	return L_STRING_TO_C(Vcard::toCpp(vCard)->asVcard4String());
 }
 
+const char *linphone_vcard_as_vcard4_string_with_base_64_picture(LinphoneVcard *vCard) {
+	if (!vCard) return nullptr;
+	return L_STRING_TO_C(Vcard::toCpp(vCard)->asVcard4StringWithBase64Picture());
+}
+
 void *linphone_vcard_get_belcard(LinphoneVcard *vCard) {
 	return Vcard::toCpp(vCard)->getBelcard();
 }

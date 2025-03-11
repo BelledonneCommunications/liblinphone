@@ -115,6 +115,7 @@ replaceAll(const std::string &source, const std::string &pattern, const std::str
 LINPHONE_PUBLIC std::string stringToLower(const std::string &str);
 LINPHONE_PUBLIC std::vector<std::string> stringToLower(const std::vector<std::string> &strs);
 LINPHONE_PUBLIC bool containsInsensitive(const std::string &haystack, const std::string &needle);
+LINPHONE_PUBLIC bool endsWith(const std::string &haystack, const std::string &needle);
 
 LINPHONE_PUBLIC std::string unicodeToUtf8(uint32_t ic);
 LINPHONE_PUBLIC std::string unicodeToUtf8(const std::vector<uint32_t> &chars);
@@ -270,7 +271,7 @@ private:
 LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
 std::string getSipFragAddress(const Content &content);
 std::string getResourceLists(const std::list<Address> &addresses);
-std::string getXconId(const std::shared_ptr<Address> &address);
+std::string getXconId(const std::shared_ptr<const Address> &address);
 std::shared_ptr<Address> getSipAddress(const std::string &str, const std::string &scheme);
 ConferenceInfo::participant_list_t parseResourceLists(const Content &content);
 ConferenceInfo::participant_list_t parseResourceLists(std::optional<std::reference_wrapper<const Content>> content);
@@ -290,6 +291,10 @@ LINPHONE_PUBLIC void configSetStringList(LpConfig *lpconfig,
 
 LINPHONE_PUBLIC std::list<std::string>
 configGetStringList(LpConfig *lpconfig, const std::string &section, const std::string &key);
+
+LINPHONE_PUBLIC std::string getFileExtension(const std::string &filePath);
+LINPHONE_PUBLIC std::string convertFileToBase64(const std::string &filePath);
+
 } // namespace Utils
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version);

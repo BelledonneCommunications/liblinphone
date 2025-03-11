@@ -760,6 +760,7 @@ static void group_chat_room_with_client_deletes_chatroom_after_restart(void) {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
 
 		stats focus_stat = focus.getStats();
 		marie_stat = marie.getStats();
@@ -1455,7 +1456,6 @@ static void group_chat_room_with_client_removed_while_stopped_base(bool_t use_re
 		}
 
 		setup_mgr_for_conference(michelle.getCMgr(), NULL);
-		coresList = bctbx_list_append(coresList, michelle.getLc());
 		if (use_remote_event_list_handler) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive,
 			                             initialMichelleStats.number_of_LinphoneSubscriptionActive + 1,
@@ -2276,12 +2276,17 @@ static void group_chat_room_with_server_database_corruption(void) {
 	}
 }
 
-static void group_chat_room_bulk_notify_to_participant(void) {
+static void group_chat_room_bulk_notify_to_participant_base(bool_t trigger_full_state) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
 		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+
+		if (trigger_full_state) {
+			linphone_config_set_int(linphone_core_get_config(focus.getLc()), "misc",
+			                        "full_state_trigger_due_to_missing_updates", 1);
+		}
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -2484,28 +2489,37 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 
 		initialPaulineStats = pauline.getStats();
 		// Pauline comes up online
+		ms_message("%s turns network on again", linphone_core_get_identity(pauline.getLc()));
 		linphone_core_set_network_reachable(pauline.getLc(), TRUE);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneRegistrationOk,
 		                             initialPaulineStats.number_of_LinphoneRegistrationOk + 1,
 		                             liblinphone_tester_sip_timeout));
 
-		// Check that Pauline receives the backlog of events occurred while she was offline
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
-		                             initialPaulineStats.number_of_participants_added + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
-		                             initialPaulineStats.number_of_participant_devices_added + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed,
-		                             initialPaulineStats.number_of_subject_changed + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_removed,
-		                             initialPaulineStats.number_of_participant_devices_removed + 1,
-		                             liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
-		                             initialPaulineStats.number_of_participants_removed + 1,
-		                             liblinphone_tester_sip_timeout));
+		if (trigger_full_state) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyFullStateReceived,
+			                             initialPaulineStats.number_of_NotifyFullStateReceived + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomConferenceJoined,
+			                              initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 2000));
+		} else {
+			// Check that Pauline receives the backlog of events occurred while she was offline
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
+			                             initialPaulineStats.number_of_participants_added + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+			                             initialPaulineStats.number_of_participant_devices_added + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed,
+			                             initialPaulineStats.number_of_subject_changed + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_removed,
+			                             initialPaulineStats.number_of_participant_devices_removed + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
+			                             initialPaulineStats.number_of_participants_removed + 1,
+			                             liblinphone_tester_sip_timeout));
+		}
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
 		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject2);
@@ -2537,6 +2551,14 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 
 		bctbx_list_free(coresList);
 	}
+}
+
+static void group_chat_room_bulk_notify_to_participant(void) {
+	group_chat_room_bulk_notify_to_participant_base(FALSE);
+}
+
+static void group_chat_room_bulk_notify_full_state_to_participant(void) {
+	group_chat_room_bulk_notify_to_participant_base(TRUE);
 }
 
 static void one_to_one_chatroom_backward_compatibility_base(const char *groupchat_spec) {
@@ -2951,6 +2973,8 @@ static void multidomain_group_chat_room(void) {
 		initialMichelleStats = michelle.getStats();
 		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
+		ms_message("%s creates chat on conference server %s", linphone_core_get_identity(marie.getLc()),
+		           focusAuth1DotExampleDotOrgFactoryAddress.toString().c_str());
 		LinphoneChatRoom *marieCrfocusAuth1DotExampleDotOrg =
 		    create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses,
 		                                 initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
@@ -3444,6 +3468,7 @@ static void group_chat_room_with_duplications(void) {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
 		linphone_config_set_string(linphone_core_get_config(laure.getLc()), "misc", "uuid", NULL);
 		linphone_core_remove_linphone_spec(laure.getLc(), "groupchat");
 		const char *spec = "groupchat/1.2";
@@ -3560,6 +3585,7 @@ static void group_chat_room_with_duplications(void) {
 		ms_message("%s reinitializes one last time its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
 		// Keep the same uuid
 		linphone_config_set_string(linphone_core_get_config(laure.getLc()), "misc", "uuid", uuid);
 		if (uuid) {
@@ -3644,7 +3670,7 @@ static void group_chat_room_with_duplications(void) {
 		    }));
 
 		for (const auto &conferenceId : oldConferenceIds) {
-			const auto chatRoom = laure.getCore().findChatRoom(conferenceId);
+			const auto chatRoom = laure.getCore().findChatRoom(conferenceId, false);
 			BC_ASSERT_PTR_NOT_NULL(chatRoom);
 			if (chatRoom) {
 				BC_ASSERT_EQUAL(laureMainDb->getConferenceNotifiedEvents(conferenceId, 0).size(),
@@ -3739,8 +3765,9 @@ static test_t local_conference_chat_basic_tests[] = {
     TEST_ONE_TAG("Group chat with client restart",
                  LinphoneTest::group_chat_room_with_client_restart,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
-    TEST_NO_TAG("Group chat room bulk notify to participant",
-                LinphoneTest::group_chat_room_bulk_notify_to_participant), /* because of network up and down*/
+    TEST_NO_TAG("Group chat room bulk notify to participant", LinphoneTest::group_chat_room_bulk_notify_to_participant),
+    TEST_NO_TAG("Group chat room bulk notify full state to participant",
+                LinphoneTest::group_chat_room_bulk_notify_full_state_to_participant),
     TEST_ONE_TAG("One to one chatroom exhumed while participant is offline",
                  LinphoneTest::one_to_one_chatroom_exhumed_while_offline,
                  "LeaksMemory"), /* because of network up and down*/

@@ -1368,7 +1368,7 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 			continue;
 		}
 
-		params = linphone_account_params_new(lc);
+		params = linphone_account_params_new(lc, TRUE);
 		/*create account parameters*/
 		if (linphone_account_params_set_server_addr(params, clean) < 0) {
 			linphonec_out("Invalid sip address (sip:sip.domain.tld).\n");

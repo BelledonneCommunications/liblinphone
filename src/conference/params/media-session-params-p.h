@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -82,7 +82,10 @@ public:
 	}
 	bool getUpdateCallWhenIceCompleted() const;
 
-	void enableToneIndications(const bool enable);
+	void disableRinging(bool disable);
+	bool ringingDisabled() const;
+
+	void enableToneIndications(bool enable);
 	bool toneIndicationsEnabled() const;
 
 	void setUpdateCallWhenIceCompleted(bool value) {
@@ -160,6 +163,7 @@ public:
 	bool recordAware = false;
 	SalMediaRecord recordState = SalMediaRecordNone;
 
+	bool mRingingDisabled = false;
 	bool toneIndications = true;
 
 private:

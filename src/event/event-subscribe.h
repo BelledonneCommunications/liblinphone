@@ -45,17 +45,19 @@ public:
 	               const std::string &name,
 	               bool isOutOfDialog);
 	EventSubscribe(const std::shared_ptr<Core> &core,
-	               const std::shared_ptr<Address> &resource,
+	               const std::shared_ptr<const Address> &resource,
 	               const std::string &event);
 	EventSubscribe(const std::shared_ptr<Core> &core,
-	               const std::shared_ptr<Address> &resource,
+	               const std::shared_ptr<const Address> &resource,
 	               const std::string &event,
 	               int expires);
 	EventSubscribe(const std::shared_ptr<Core> &core,
-	               const std::shared_ptr<Address> &resource,
+	               const std::shared_ptr<const Address> &resource,
 	               const std::shared_ptr<Account> &account,
 	               const std::string &event,
 	               int expires);
+
+	virtual ~EventSubscribe() = default;
 
 	std::string toString() const override;
 

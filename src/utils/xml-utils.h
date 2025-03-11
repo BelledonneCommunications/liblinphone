@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -23,6 +23,7 @@
 
 #include <belle-sip/http-listener.h>
 
+#include "http/http-client.h"
 #include "linphone/types.h"
 #include "xml/conference-info.h"
 
@@ -36,11 +37,12 @@ class Address;
 namespace XmlUtils {
 LinphoneMediaDirection mediaStatusToMediaDirection(Xsd::ConferenceInfo::MediaStatusType status);
 Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
-bool sendCcmpRequest(const std::shared_ptr<Core> core,
-                     const std::string ccmpServerUrl,
-                     const std::shared_ptr<Address> from,
-                     const std::string body,
-                     belle_http_request_listener_t *listener);
+bool sendCcmpRequest(const std::shared_ptr<Core> &core,
+                     const std::string &ccmpServerUrl,
+                     const std::shared_ptr<const Address> &from,
+                     const std::string &body,
+                     const std::function<void(const HttpResponse &)> &listener);
+
 } // namespace XmlUtils
 
 LINPHONE_END_NAMESPACE

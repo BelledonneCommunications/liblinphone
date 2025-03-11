@@ -96,8 +96,6 @@ public:
 	void confirmCreation();
 	void confirmRecreation(SalCallOp *op);
 
-	void subscriptionStateChanged(const std::shared_ptr<EventSubscribe> &event, LinphoneSubscriptionState state);
-
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) override;
 
 	/*These are the two methods called by the registration subscription module*/

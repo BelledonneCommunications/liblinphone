@@ -193,6 +193,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_2(LinphoneCon
                                                                      const LinphoneAddress *uri);
 
 /**
+ * Returns the conference identifier
+ * @warning This method returns a NULL pointer if the Conference is in the Instantiated state
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference identifier. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_get_identifier(const LinphoneConference *conference);
+
+/**
  * Update parameters of the conference.
  * This is typically used enable or disable the video stream in the conference.
  * @param conference The #LinphoneConference object. @notnil
@@ -298,7 +306,7 @@ LINPHONE_PUBLIC LinphoneParticipant *linphone_conference_get_me(const LinphoneCo
 LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *conference);
 
 /**
- * Retrieves the user pointer that was given to linphone_conference_new()
+ * Retrieves the user pointer that was given to linphone_conference_set_user_data()
  * @param conference #LinphoneConference object @notnil
  * @return The user data associated with the #LinphoneConference object. @maybenil
  * @ingroup initializing
@@ -553,6 +561,13 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_conference_get_player(LinphoneConferenc
  * @return A #LinphoneConferenceInfo object. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneConferenceInfo *linphone_conference_get_info(LinphoneConference *conference);
+
+/**
+ * Gets the #LinphoneAccount object associated with the conference
+ * @param conference #LinphoneConference object. @notnil
+ * @return A #LinphoneAccount object. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneAccount *linphone_conference_get_account(LinphoneConference *conference);
 
 /************ */
 /* DEPRECATED */

@@ -472,9 +472,10 @@ int LdapContactProvider::buildContact(LdapContactFields *contact,
 					if (mConfig.count("sip_domain") > 0 && mConfig.at("sip_domain")[0] != "")
 						linphone_address_set_domain(la, mConfig.at("sip_domain")[0].c_str());
 					char *newSip = linphone_address_as_string(la);
-					char *phoneNumber =
-					    linphone_account_normalize_phone_number(linphone_core_get_default_account(mCore->getCCore()),
-					                                            attributes[attributeIndex].second.c_str());
+					const char *username = linphone_address_get_username(la);
+					char *phoneNumber = username ? linphone_account_normalize_phone_number(
+					                                   linphone_core_get_default_account(mCore->getCCore()), username)
+					                             : nullptr;
 					if (contact->mSip.count(newSip) == 0 || contact->mSip[newSip] == "")
 						contact->mSip[newSip] = (phoneNumber ? phoneNumber : "");
 					if (phoneNumber) ms_free(phoneNumber);

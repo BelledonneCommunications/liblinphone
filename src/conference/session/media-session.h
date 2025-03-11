@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -67,6 +67,7 @@ public:
 	void cancelDtmfs();
 	void setNatPolicy(const std::shared_ptr<NatPolicy> &pol);
 	void setSubject(const std::string &subject);
+	bool ringingDisabled() const;
 	bool toneIndicationsEnabled() const;
 	void configure(LinphoneCallDir direction,
 	               const std::shared_ptr<Account> &account,

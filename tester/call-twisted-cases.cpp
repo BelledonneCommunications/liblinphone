@@ -166,7 +166,7 @@ static void call_challenged_after_180_base(bool_t with_account) {
 		identity_address = linphone_address_new(identity);
 		const char *realm = linphone_auth_info_get_realm(ai);
 
-		LinphoneAccountParams *account_params = linphone_account_params_new(marie->lc);
+		LinphoneAccountParams *account_params = linphone_account_params_new(marie->lc, TRUE);
 		char *agent_listening_uri = ms_strdup(agent.getListeningUriAsString().c_str());
 		server_address = linphone_address_new(agent_listening_uri);
 		linphone_account_params_set_server_address(account_params, server_address);

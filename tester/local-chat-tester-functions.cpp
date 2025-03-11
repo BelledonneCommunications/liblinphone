@@ -415,7 +415,29 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			BC_ASSERT_TRUE(
 			    CoreManagerAssert({focus, marie, michelle, michelle2, berthe, laure})
 			        .waitUntil(chrono::seconds(10), [&focus, &core] { return checkChatroom(focus, core, -1); }));
+
+			const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(core.getLc());
+			for (const bctbx_list_t *chat_room_it = chat_rooms; chat_room_it != NULL;
+			     chat_room_it = chat_room_it->next) {
+				const LinphoneChatRoom *chat_room =
+				    static_cast<const LinphoneChatRoom *>(bctbx_list_get_data(chat_room_it));
+				BC_ASSERT_PTR_NOT_NULL(chat_room);
+				if (chat_room) {
+					const char *chat_room_identifier = linphone_chat_room_get_identifier(chat_room);
+					LinphoneChatRoom *found_chat_room =
+					    linphone_core_search_chat_room_by_identifier(core.getLc(), chat_room_identifier);
+					BC_ASSERT_PTR_NOT_NULL(found_chat_room);
+					BC_ASSERT_PTR_EQUAL(chat_room, found_chat_room);
+				}
+			}
 		};
+
+		// Test invalid peer address
+		BC_ASSERT_PTR_NULL(linphone_core_search_chat_room_by_identifier(
+		    marie.getLc(), "==sip:toto@sip.conference.org##sip:me@sip.local.org"));
+		// Test inexistent chat room identifier
+		BC_ASSERT_PTR_NULL(linphone_core_search_chat_room_by_identifier(
+		    marie.getLc(), "sip:toto@sip.conference.org##sip:me@sip.local.org"));
 
 		initialMarieStats = marie.getStats();
 		initialMichelleStats = michelle.getStats();

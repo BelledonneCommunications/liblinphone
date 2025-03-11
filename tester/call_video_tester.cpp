@@ -356,10 +356,10 @@ _request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t 
 }
 
 /*
- * This function requests the addon of a video stream, initiated by "callee" and potentiall accepted by "caller",
+ * This function requests the addon of a video stream, initiated by "callee" and potentially accepted by "caller",
  * and asserts a number of things after this is done.
  * However the video addon may fail due to video policy, so that there is no insurance that video is actually added.
- * This function returns TRUE if video was succesfully added, FALSE otherwise or if video is already there.
+ * This function returns TRUE if video was successfully added, FALSE otherwise or if video is already there.
  **/
 bool_t request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t accept_with_params) {
 	stats initial_caller_stat = caller->stat;

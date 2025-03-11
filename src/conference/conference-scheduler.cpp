@@ -123,8 +123,8 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		mAccount = getCore()->getDefaultAccount();
 	}
 
-	const auto creator = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()
-	                                  : Address::create(linphone_core_get_identity(getCore()->getCCore()));
+	auto creator = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()->clone()->toSharedPtr()
+	                            : Address::create(linphone_core_get_identity(getCore()->getCCore()));
 	if (!creator || !creator->isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this
 		           << "] Unable to determine the address of the user attempting to set the conference information!";
@@ -206,7 +206,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 
 	mConferenceInfo = clone;
 
-	createOrUpdateConference(mConferenceInfo, creator);
+	createOrUpdateConference(mConferenceInfo);
 }
 
 void ConferenceScheduler::onChatMessageStateChanged(const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
@@ -279,25 +279,27 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 
 	if (getState() == State::AllocationPending) {
 		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully created: " << *conferenceAddress;
+		        << "] Conference has been successfully created: " << *conferenceAddress;
 		mConferenceInfo->setUri(conferenceAddress);
 	} else {
 		const auto &uri = mConferenceInfo->getUri();
 		// No need to update the conference address during an update
 		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully updated: " << (uri ? uri->toString() : std::string("sip:"));
+		        << "] Conference has been successfully updated: " << (uri ? uri->toString() : std::string("sip:"));
 	}
 
+	bool error = false;
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		lInfo() << "[Conference Scheduler] [" << this << "] Conference address " << *conferenceAddress
 		        << " is known, inserting conference info in database";
-		mainDb->insertConferenceInfo(mConferenceInfo);
+		error = (mainDb->insertConferenceInfo(mConferenceInfo) < 0);
 	}
 #endif
 
-	setState(State::Ready);
+	auto newState = error ? State::Error : State::Ready;
+	setState(newState);
 }
 
 shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_ptr<AbstractChatRoom> chatRoom,
@@ -468,7 +470,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenc
 
 	// Sending the ICS once for each participant in a separated chat room each time.
 	for (auto participant : mInvitationsToSend) {
-		list<std::shared_ptr<const Address>> chatRoomParticipantList;
+		list<std::shared_ptr<Address>> chatRoomParticipantList;
 		chatRoomParticipantList.push_back(participant);
 		list<std::shared_ptr<Address>> participantList;
 		std::shared_ptr<Address> remoteAddress = nullptr;
@@ -483,7 +485,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenc
 		if (!chatRoom) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Existing chat room between [" << *sender << "] and ["
 			        << *participant << "] wasn't found, creating it.";
-			chatRoom = getCore()->getPrivate()->createChatRoom(conferenceParams, sender, chatRoomParticipantList);
+			chatRoom = getCore()->getPrivate()->createChatRoom(conferenceParams, chatRoomParticipantList);
 		} else {
 			lInfo() << "[Conference Scheduler] [" << this << "] Found existing chat room ["
 			        << *chatRoom->getPeerAddress() << "] between [" << *sender << "] and [" << *participant

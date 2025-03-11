@@ -128,7 +128,7 @@ void NotifyConferenceListener::onStateChanged(ConferenceInterface::State newStat
 }
 
 void NotifyConferenceListener::onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {
-	_linphone_conference_notify_active_speaker_participant_device(conf->toC(), device->toC());
+	_linphone_conference_notify_active_speaker_participant_device(conf->toC(), device ? device->toC() : nullptr);
 }
 
 void NotifyConferenceListener::onFullStateReceived() {

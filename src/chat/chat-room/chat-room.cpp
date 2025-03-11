@@ -329,12 +329,13 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 	if (*peerAddress == chatRoomPeerAddress->getUriWithoutGruu()) {
 		chatRoom = getSharedFromThis();
 	} else {
-		auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
-		chatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), peerAddress, false, false, isEncrypted);
+		chatRoom = getCore()->getPrivate()->searchChatRoom(getCurrentParams(), getLocalAddress(), peerAddress, {});
 		if (!chatRoom) {
 			shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
+			params->setAccount(getCurrentParams()->getAccount());
 			params->setChatDefaults();
 			params->setGroup(false);
+			auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
 			if (isEncrypted) {
 				// Try to infer chat room type based on requested participants number
 				params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
@@ -345,7 +346,7 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 				params->getChatParams()->setBackend(ChatParams::Backend::Basic);
 				params->setSecurityLevel(ConferenceParams::SecurityLevel::None);
 			}
-			chatRoom = getCore()->getPrivate()->createChatRoom(params, getLocalAddress(), peerAddress);
+			chatRoom = getCore()->getPrivate()->createChatRoom(params, peerAddress);
 		}
 	}
 	return chatRoom;
@@ -583,6 +584,9 @@ void ChatRoom::notifyUndecryptableChatMessageReceived(const shared_ptr<ChatMessa
 }
 
 // -----------------------------------------------------------------------------
+void ChatRoom::handleMessageRejected(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
+	lDebug() << __func__ << " not implemented in chatroom [" << this;
+}
 
 std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMessage *message) {
 	shared_ptr<ChatMessage> msg;
@@ -666,10 +670,9 @@ void ChatRoom::onChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage)
 		// No aggregation, notify right away
 		lDebug() << "[Chat Room] [" << getConferenceId() << "] No aggregation, notify right away";
 
-		bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
-		if (chatMessagesAggregationEnabled) { // Need to notify using aggregated callback even if there is only on
-			                                  // message
-			// This can happen when auto download is enabled and auto download takes longer than the aggregation delay
+		// Need to notify using aggregated callback even if there is only on message
+		// This can happen when auto download is enabled and auto download takes longer than the aggregation delay
+		if (core->canAggregateChatMessages()) {
 			aggregatedMessages.push_back(chatMessage);
 			notifyAggregatedChatMessages();
 		} else {
@@ -721,10 +724,12 @@ void ChatRoom::notifyAggregatedChatMessages() {
 	bctbx_list_t *cEvents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(eventsList);
 	_linphone_chat_room_notify_chat_messages_received(cChatRoom, cEvents);
 
-	// Notify delivery
+	// Notify delivery - do the same things as when chat messages are not aggregated: send the delivery notification
+	// when the message is in the Delivered state
 	for (auto &chatMessage : aggregatedMessages) {
-		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::DeliveredToUser,
+		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Delivered,
 		                                               ::ms_time(nullptr));
+		sendDeliveryNotification(chatMessage);
 	}
 
 	bctbx_list_free_with_data(cMessages, (bctbx_list_free_func)linphone_chat_message_unref);
@@ -869,6 +874,14 @@ void ChatRoom::deleteFromDb() {
 	shared_ptr<AbstractChatRoom> ref = this->getSharedFromThis();
 	Core::deleteChatRoom(ref);
 	setState(ConferenceInterface::State::Deleted);
+
+	// Clear all transient events after deleting the chatroom.
+	// The application might still keep a reference to the chatroom, therefore the destructor may not be called
+	// immediately after the chatroom reference is freed by the core
+	remoteIsComposing.clear();
+	transientEvents.clear();
+	transientMessages.clear();
+	aggregatedMessages.clear();
 }
 
 void ChatRoom::deleteHistory() {
@@ -1024,6 +1037,22 @@ std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
 		return std::list<std::shared_ptr<Participant>>();
 	}
 	return conference->getParticipants();
+}
+
+std::list<std::shared_ptr<Address>> ChatRoom::getParticipantAddresses() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return {};
+	}
+	return conference->getParticipantAddresses();
+}
+
+std::optional<std::reference_wrapper<const std::string>> ChatRoom::getIdentifier() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return std::nullopt;
+	}
+	return conference->getIdentifier();
 }
 
 std::shared_ptr<ConferenceParams> ChatRoom::getCurrentParams() const {

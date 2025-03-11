@@ -113,7 +113,7 @@ public:
 	BorrowedMut<LinphoneProxyConfig> getDefaultProxyConfig() {
 		return borrowed_mut(linphone_core_get_default_proxy_config(mMgr->lc));
 	}
-	LinphonePrivate::Address getIdentity() {
+	LinphonePrivate::Address getIdentity() const {
 		return *LinphonePrivate::Address::toCpp(mMgr->identity);
 	}
 	void setUseRfc2833ForDtmf(bool value) {
@@ -184,7 +184,7 @@ public:
 	LinphoneAccount *getDefaultAccount() const {
 		return linphone_core_get_default_account(mMgr->lc);
 	}
-	LinphoneCoreManager *getCMgr() {
+	LinphoneCoreManager *getCMgr() const {
 		return mMgr.get();
 	};
 	LinphoneCore *getLc() const {

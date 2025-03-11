@@ -39,7 +39,7 @@ extern "C" {
  */
 
 /**
- * Increment reference count of #LinphoneParticipantDevice object.
+ * Increments reference count of #LinphoneParticipantDevice object.
  * @param participant_device the #LinphoneParticipantDevice object @notnil
  * @return the same #LinphoneParticipantDevice object @notnil
  **/
@@ -47,20 +47,20 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *
 linphone_participant_device_ref(LinphoneParticipantDevice *participant_device);
 
 /**
- * Decrement reference count of #LinphoneParticipantDevice object.
+ * Decrements reference count of #LinphoneParticipantDevice object.
  * @param participant_device the #LinphoneParticipantDevice object @notnil
  **/
 LINPHONE_PUBLIC void linphone_participant_device_unref(LinphoneParticipantDevice *participant_device);
 
 /**
- * Retrieve the user pointer associated with the participant's device.
+ * Retrieves the user pointer associated with the participant's device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return The user pointer associated with the participant's device. @maybenil
  **/
 LINPHONE_PUBLIC void *linphone_participant_device_get_user_data(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Assign a user pointer to the participant's device.
+ * Assigns a user pointer to the participant's device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param user_data The user pointer to associate with the participant's device. @maybenil
  **/
@@ -68,7 +68,7 @@ LINPHONE_PUBLIC void linphone_participant_device_set_user_data(LinphoneParticipa
                                                                void *user_data);
 
 /**
- * Get the address of a participant's device.
+ * Gets the address of a participant's device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return The #LinphoneAddress of the participant's device @notnil
  */
@@ -76,7 +76,7 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the state of a participant device.
+ * Gets the state of a participant device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return The #LinphoneParticipantDeviceState of the device
  */
@@ -84,7 +84,7 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceState
 linphone_participant_device_get_state(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the security level of a participant's device.
+ * Gets the security level of a participant's device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return The #LinphoneChatRoomSecurityLevel of the device
  */
@@ -92,14 +92,14 @@ LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel
 linphone_participant_device_get_security_level(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Return the name of the device or NULL.
+ * Returns the name of the device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the name of the device or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_participant_device_get_name(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Return whether the participant device is in a conference or not.
+ * Returns whether the participant device is in a conference or not.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return a boolean to state whether the device is in a conference
  */
@@ -107,25 +107,25 @@ LINPHONE_PUBLIC bool_t
 linphone_participant_device_is_in_conference(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the timestamp the device joined a conference.
+ * Gets the timestamp the device joined a conference.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
- * @return time of joining a conference as returned by time(nullptr). For UNIX based systems it is the number of seconds
- * since 00:00hours of the 1st of January 1970
+ * @return time of joining a conference expressed as a number of seconds
+ * since 00:00:00 of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t
 linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the timestamp the device left a conference.
+ * Gets the timestamp the device left a conference.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return time of disconnection a conference as returned by time(nullptr). For UNIX based systems it is the number of
- * seconds since 00:00hours of the 1st of January 1970
+ * seconds since 00:00:00 of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t
 linphone_participant_device_get_time_of_disconnection(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the joining method or it the device is the focus owner
+ * Gets the joining method or it the device is the focus owner
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return joining method or focus owner #LinphoneParticipantDeviceJoiningMethod
  */
@@ -133,7 +133,7 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceJoiningMethod
 linphone_participant_device_get_joining_method(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the disconnection method
+ * Gets the disconnection method
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return disconnection method #LinphoneParticipantDeviceDisconnectionMethod
  */
@@ -141,7 +141,7 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceDisconnectionMethod
 linphone_participant_device_get_disconnection_method(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the disconnection reason
+ * Gets the disconnection reason
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return disconnection reason @maybenil
  */
@@ -149,7 +149,7 @@ LINPHONE_PUBLIC const char *
 linphone_participant_device_get_disconnection_reason(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the stream label of the device.
+ * Gets the stream label of the device.
  * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio,
  * video or text).
  * @param participant_device A #LinphoneParticipantDevice object @notnil
@@ -161,7 +161,7 @@ linphone_participant_device_get_stream_label(const LinphoneParticipantDevice *pa
                                              const LinphoneStreamType stream_type);
 
 /**
- * Get the thumbnail stream label of the device.
+ * Gets the thumbnail stream label of the device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the label of the thumbnail stream of the device @maybenil
  */
@@ -169,7 +169,7 @@ LINPHONE_PUBLIC const char *
 linphone_participant_device_get_thumbnail_stream_label(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the stream capability of the device.
+ * Gets the stream capability of the device.
  * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio,
  * video or text).
  * @param participant_device A #LinphoneParticipantDevice object @notnil
@@ -180,7 +180,7 @@ LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_stream_ca
     const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 
 /**
- * Get the thumbnail stream capability of the device.
+ * Gets the thumbnail stream capability of the device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the capability of the thumbnail stream of the device #LinphoneMediaDirection
  */
@@ -188,7 +188,7 @@ LINPHONE_PUBLIC LinphoneMediaDirection
 linphone_participant_device_get_thumbnail_stream_capability(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get the stream availability of the device.
+ * Gets the stream availability of the device.
  * The availability information represents whether a given stream type is currently available to be presented in the
  * conference for a #LinphoneParticipantDevice
  * @param participant_device A #LinphoneParticipantDevice object @notnil
@@ -199,7 +199,7 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_get_stream_availability(
     const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 
 /**
- * Get the thumbnail stream availability of the device.
+ * Gets the thumbnail stream availability of the device.
  * The availability information represents whether a given stream type is currently available to be presented in the
  * conference for a #LinphoneParticipantDevice
  * @param participant_device A #LinphoneParticipantDevice object @notnil
@@ -252,7 +252,7 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbs *
 linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Set window ID for a device.
+ * Sets the the native window ID where video for this participant device is to be rendered.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param window_id the window ID of the device @maybenil
  */
@@ -260,7 +260,7 @@ LINPHONE_PUBLIC void
 linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void *window_id);
 
 /**
- * Get window ID.
+ * Gets the native window ID where video for this participant device is to be rendered.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the window ID of the device @maybenil
  */
@@ -268,7 +268,7 @@ LINPHONE_PUBLIC void *
 linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Create a window ID and return it.
+ * Creates a window ID and return it.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the window ID of the device @maybenil
  */
@@ -276,26 +276,34 @@ LINPHONE_PUBLIC void *
 linphone_participant_device_create_native_video_window_id(LinphoneParticipantDevice *participant_device);
 
 /**
- * Return whether the participant device is speaking or not.
- * @param participant_device The #LinphoneParticipantDeviceCbs object @notnil
+ * Returns whether the participant device is speaking or not.
+ * @param participant_device The #LinphoneParticipantDevice object @notnil
  * @return TRUE if the participant device is speaking, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_participant_device_get_is_speaking(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Return whether the participant device is muted or not.
- * @param participant_device The #LinphoneParticipantDeviceCbs object @notnil
+ * Returns whether the participant device is muted or not.
+ * @param participant_device The #LinphoneParticipantDevice object @notnil
  * @return TRUE if the participant device is muted, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_participant_device_get_is_muted(const LinphoneParticipantDevice *participant_device);
 
 /**
- * Return whether the participant device is screen sharing or not.
- * @param participant_device The #LinphoneParticipantDeviceCbs object @notnil
+ * Returns whether the participant device is screen sharing or not.
+ * @param participant_device The #LinphoneParticipantDevice object @notnil
  * @return TRUE if the participant device is screen sharing, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t
 linphone_participant_device_screen_sharing_enabled(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Returns the #LinphoneParticipant this #LinphoneParticipantDevice belongs to.
+ * @param participant_device The #LinphoneParticipantDevice object @notnil
+ * @return the #LinphoneParticipant this device belongs to @notnil
+ */
+LINPHONE_PUBLIC LinphoneParticipant *
+linphone_participant_device_get_participant(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}

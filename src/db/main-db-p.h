@@ -56,7 +56,9 @@ private:
 	// ---------------------------------------------------------------------------
 	// Low level API.
 	// ---------------------------------------------------------------------------
+	long long insertSipAddress(const Address &address);
 	long long insertSipAddress(const std::shared_ptr<Address> &address);
+	long long insertSipAddress(const std::string &sipAddress, const std::string &displayName);
 	void insertContent(long long chatMessageId, const Content &content);
 	long long insertContentType(const std::string &contentType);
 	long long
@@ -105,6 +107,7 @@ private:
 	long long insertOrUpdateFriendList(const std::shared_ptr<FriendList> &list);
 	long long insertOrUpdateDevice(const std::shared_ptr<Address> &addressWithGruu, const std::string &displayName);
 
+	long long selectSipAddressId(const Address &address, const bool caseSensitive) const;
 	long long selectSipAddressId(const std::string &sipAddress, const bool caseSensitive) const;
 	long long selectSipAddressId(const std::shared_ptr<Address> &address, const bool caseSensitive) const;
 	std::string selectSipAddressFromId(long long sipAddressId) const;
@@ -257,9 +260,9 @@ private:
 	// ---------------------------------------------------------------------------
 
 #ifdef HAVE_DB_STORAGE
-	void importLegacyFriends(DbSession &inDbSession);
-	void importLegacyHistory(DbSession &inDbSession);
-	void importLegacyCallLogs(DbSession &inDbSession);
+	bool importLegacyFriends(DbSession &inDbSession);
+	bool importLegacyHistory(DbSession &inDbSession);
+	bool importLegacyCallLogs(DbSession &inDbSession);
 #endif
 
 	// ---------------------------------------------------------------------------

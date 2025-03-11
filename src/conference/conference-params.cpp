@@ -70,13 +70,13 @@ ConferenceParams::ConferenceParams(const ConferenceParams &other)
 
 void ConferenceParams::setAudioVideoDefaults() {
 	try {
-		auto core = getCore()->getCCore();
-		if (core) {
+		auto cCore = getCore()->getCCore();
+		if (cCore) {
 			enableAudio(true);
-			const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(core);
+			const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(cCore);
 			enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
 			setParticipantListType(
-			    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
+			    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(cCore)));
 		}
 	} catch (const bad_weak_ptr &) {
 	}
@@ -113,12 +113,6 @@ void ConferenceParams::updateFromAccount(
 	if (account) {
 		auto accountParams = account->getAccountParams();
 		if (accountParams) {
-			auto identity = accountParams->getIdentityAddress();
-			if (identity) {
-				setMe(identity);
-			} else {
-				setMe(nullptr);
-			}
 			if (mUseDefaultFactoryAddress) {
 				const auto &conferenceFactory = (audioEnabled() || videoEnabled())
 				                                    ? accountParams->getAudioVideoConferenceFactoryAddress()
@@ -155,8 +149,14 @@ void ConferenceParams::setUtf8Subject(const std::string &subject) {
 	mUtf8Subject = subject;
 }
 
-void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
-	mConferenceAddress = Address::create(conferenceAddress->getUri());
+void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {
+	auto cCore = getCore()->getCCore();
+	bool keepGruu = !!linphone_core_gruu_in_conference_address_enabled(cCore);
+	if (keepGruu) {
+		mConferenceAddress = Address::create(conferenceAddress->getUri());
+	} else {
+		mConferenceAddress = Address::create(conferenceAddress->getUriWithoutGruu());
+	}
 };
 
 bool ConferenceParams::isGroup() const {
@@ -169,6 +169,13 @@ void ConferenceParams::setGroup(bool group) {
 		mChatParams->setBackend(ChatParams::Backend::FlexisipChat);
 	}
 }
+
+void ConferenceParams::setSecurityLevel(const SecurityLevel &level) {
+	mSecurityLevel = level;
+	if (mChatParams) {
+		mChatParams->updateSecurityParams((mSecurityLevel == SecurityLevel::EndToEnd));
+	}
+};
 
 void ConferenceParams::updateAccordingToCapabilities(AbstractChatRoom::CapabilitiesMask capabilities) {
 	if (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Basic)) {

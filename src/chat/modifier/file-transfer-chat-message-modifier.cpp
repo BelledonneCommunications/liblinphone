@@ -620,6 +620,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode(const shared
 		fileTransferContent->setBody(internalContent.getBody());
 		string xml_body = fileTransferContent->getBodyAsUtf8String();
 		parseFileTransferXmlIntoContent(xml_body.c_str(), fileTransferContent);
+		fileTransferContent->setRelatedChatMessageId(message->getImdnMessageId());
 		message->addContent(fileTransferContent);
 		return ChatMessageModifier::Result::Done;
 	}
@@ -629,6 +630,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode(const shared
 			auto fileTransferContent = static_pointer_cast<FileTransferContent>(content);
 			string xml_body = fileTransferContent->getBodyAsUtf8String();
 			parseFileTransferXmlIntoContent(xml_body.c_str(), fileTransferContent);
+			fileTransferContent->setRelatedChatMessageId(message->getImdnMessageId());
 		}
 	}
 	return ChatMessageModifier::Result::Done;
@@ -881,6 +883,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 		} else {
 			lWarning() << "No file transfer information for message [" << message << "]: creating...";
 			auto content = createFileTransferInformationFromHeaders(response);
+			content->setRelatedChatMessageId(message->getImdnMessageId());
 			message->addContent(content);
 		}
 
@@ -993,6 +996,7 @@ static void createFileContentFromFileTransferContent(std::shared_ptr<FileTransfe
 	fileContent->setFilePath(fileTransferContent->getFilePath());
 	fileContent->setContentType(fileTransferContent->getFileContentType());
 	fileContent->setFileDuration(fileTransferContent->getFileDuration());
+	fileContent->setRelatedChatMessageId(fileTransferContent->getRelatedChatMessageId());
 
 	// Link the FileContent to the FileTransferContent
 	fileTransferContent->setFileContent(fileContent);

@@ -362,7 +362,7 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 	} else {
-		LinphoneAccountParams *accountParams = linphone_account_params_new(NULL);
+		LinphoneAccountParams *accountParams = linphone_account_params_new(nullptr, FALSE);
 		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 		linphone_account_params_unref(accountParams);
@@ -464,6 +464,7 @@ LinphoneAddress *linphone_account_normalize_sip_uri(LinphoneAccount *account, co
 
 	if (!username || *username == '\0') return NULL;
 
+#ifndef _WIN32
 	if (is_enum(username, &enum_domain)) {
 		if (enum_lookup(enum_domain, &enumres) < 0) {
 			ms_free(enum_domain);
@@ -475,6 +476,8 @@ LinphoneAddress *linphone_account_normalize_sip_uri(LinphoneAccount *account, co
 		enum_lookup_res_free(enumres);
 		return _destroy_addr_if_not_sip(uri);
 	}
+#endif
+
 	/* check if we have a "sip:" or a "sips:" */
 	if ((strstr(username, "sip:") == NULL) && (strstr(username, "sips:") == NULL)) {
 		/* this doesn't look like a true sip uri */

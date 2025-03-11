@@ -116,10 +116,10 @@ public:
 	void reloadRemoteContactDirectories();
 
 	// Base
-	std::shared_ptr<AbstractChatRoom> createServerChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
+	std::shared_ptr<AbstractChatRoom> createServerChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
 	                                                       SalCallOp *op,
 	                                                       const std::shared_ptr<ConferenceParams> &params);
-	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::shared_ptr<const Address> &conferenceFactoryUri,
 	                                                       const ConferenceId &conferenceId,
 	                                                       SalCallOp *op,
 	                                                       const std::shared_ptr<ConferenceParams> &params);
@@ -132,17 +132,14 @@ public:
 	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject, bool fallback, bool encrypted);
 
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
-	                                                 const std::shared_ptr<const Address> &localAddr,
-	                                                 const std::list<std::shared_ptr<const Address>> &participants);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
-	                                                 const std::list<std::shared_ptr<const Address>> &participants);
+	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
-	                                                 const std::list<std::shared_ptr<const Address>> &participants);
+	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
-	                                                 const std::shared_ptr<Address> &localAddr,
-	                                                 const std::shared_ptr<const Address> &participant);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<const Address> &participant);
+	                                                 const std::shared_ptr<Address> &participant);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<Address> &participant);
 
+	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::string identifier) const;
 	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	                                                 const std::shared_ptr<const Address> &localAddr,
 	                                                 const std::shared_ptr<const Address> &remoteAddr,

@@ -10,15 +10,13 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## Unreleased
 
-## [5.4.0] 2025-01-14
+## [5.4.0] 2025-03-11
 
 ### Added
 - Forward Error Correction to video stream, based on FlexFEC RFC8627
 - Java wrapper for Linux and Windows (see *java-sdk-linux* and *java-sdk-windows* linphone-sdk cmake presets)
 - Python wrapper for Linux (use -DENABLE_PYTHON_WRAPPER=ON)
 - Screensharing.
-- Support for SFU-based audio and video conferencing
-- End to end encryption for audio/video conferences, using double SRTP encryption RFC8723 and RFC8870 (EKT)
 - Creation of conferences through CCMP protocol (RFC6503) via ConferenceScheduler object.
 - VCARD version 3 compatibility (in addition to version 4).
 - Bearer authentication for SIP and http utilities (remote provisioning, file transfer...).
@@ -33,6 +31,9 @@ This changelog file was started on October 2019. Previous changes were more or l
 - new linphone_video_activation_policy_set_automatically_accept_direction() to help apps handle asymmetric video activation during calls.
 - LinphoneFriendDevice object, to present user's device and associated security levels.
 - Automatic retry of pending outgoing IMs in case of timeout or network disconnection.
+- BETA features:
+  - SFU-based audio and video conferencing
+  - End to end encryption for audio/video conferences, using double SRTP encryption RFC8723 and RFC8870 (EKT)
 
 ### Changed
 - Unifies ChatRoom and Conferences internal classes
@@ -53,6 +54,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - internal refactoring of C code into C++.
 - AccountCreator object is deprecated (use LinphoneAccountManagerServices as a replacement)
 - Allow LinphoneCoreCbs' s authentication_requested() callack to be invoked during remote provisioning.
+- Disable peer to peer presence by default (linphone_friend_subscribes_enabled() is FALSE, and linphone_friend_get_inc_subscribe_policy() returns LinphoneSPDeny).
 
 ### Fixed
 - Added _utf8() getter and setters for subject of conference and chatrooms.
@@ -63,6 +65,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ### Removed
 - Removed old & deprecated VideoPolicy object.
+- ISAC and iLBC audio codecs are deprecated and will be removed in a future release.
 
 
 ## [5.3.55] 2024-05-31

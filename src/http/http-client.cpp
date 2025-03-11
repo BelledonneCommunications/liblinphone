@@ -117,7 +117,7 @@ HttpRequest::HttpRequest(HttpClient &client, const std::string &method, const st
 
 HttpRequest &HttpRequest::addHeader(const std::string &headerName, const std::string &headerValue) {
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(mRequest),
-	                             belle_sip_header_create(headerName.c_str(), L_STRING_TO_C(headerValue)));
+	                             belle_http_header_create(headerName.c_str(), L_STRING_TO_C(headerValue)));
 	return *this;
 }
 
@@ -169,6 +169,11 @@ void HttpRequest::cancel() {
 	delete this;
 }
 
+void HttpRequest::setAuthInfo(const std::string &username, const std::string &domain) {
+	mAuthUsername = username;
+	mAuthDomain = domain;
+}
+
 void HttpRequest::abortAuthentication() {
 	/* notify the previously received response */
 	belle_http_response_t *resp = belle_http_request_get_response(mRequest);
@@ -203,7 +208,24 @@ void HttpRequest::processIOError(BCTBX_UNUSED(const belle_sip_io_error_event_t *
 void HttpRequest::processAuthRequested(belle_sip_auth_event_t *event) {
 	try {
 		auto core = mClient.getCore();
-		auto status = linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, NULL, NULL);
+		// If some auth info where positionned in the request, use them
+		// When the request header did not hold a From header,
+		// the belle_sip_auth_event_t does not set username and domain
+		const char *authUsername = NULL;
+		const char *authDomain = NULL;
+		if (!mAuthUsername.empty()) {
+			authUsername = mAuthUsername.c_str();
+			if (belle_sip_auth_event_get_username(event) == NULL) {
+				belle_sip_auth_event_set_username(event, authUsername);
+			}
+		}
+		if (!mAuthDomain.empty()) {
+			authDomain = mAuthDomain.c_str();
+			if (belle_sip_auth_event_get_domain(event) == NULL) {
+				belle_sip_auth_event_set_domain(event, authDomain);
+			}
+		}
+		auto status = linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, authUsername, authDomain);
 		switch (status) {
 			case AuthStatus::NoAuth:
 			case AuthStatus::Done:
@@ -263,7 +285,7 @@ std::string HttpResponse::getHeaderValue(const std::string &headerName) const {
 }
 
 const Content &HttpResponse::getBody() const {
-	if (mBody.isEmpty()) {
+	if (mBody.isEmpty() && mResponse) {
 		auto bh = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(mResponse));
 		if (bh) {
 			mBody = Content((SalBodyHandler *)bh, false);

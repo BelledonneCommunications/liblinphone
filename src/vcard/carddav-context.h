@@ -107,10 +107,13 @@ private:
 	std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
 	std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
 
+	std::string getUrlSchemeHostAndPort() const;
+
 	std::string mCtag = "";
 	std::string mSyncUri = "";
 	std::string mScheme = "http";
 	std::string mHost = "";
+	int mPort = 0;
 	bool mWellKnownQueried = true;
 	HttpRequest *mHttpRequest = nullptr;
 	std::shared_ptr<CardDAVQuery> mQuery = nullptr;

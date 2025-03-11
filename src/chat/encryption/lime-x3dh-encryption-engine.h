@@ -31,27 +31,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LimeManager : public lime::LimeManager {
-public:
-	LimeManager(const std::string &db_access,
-	            belle_http_provider_t *prov,
-	            std::shared_ptr<Core> core); // LinphoneCore *lc
-
-private:
-	static void processIoError(void *data, const belle_sip_io_error_event_t *event) noexcept;
-	static void processResponse(void *data, const belle_http_response_event_t *event) noexcept;
-	static void processAuthRequested(void *data, belle_sip_auth_event_t *event) noexcept;
-};
-
 class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
 public:
-	LimeX3dhEncryptionEngine(const std::string &db_access,
-	                         belle_http_provider_t *prov,
-	                         const std::shared_ptr<Core> core);
+	LimeX3dhEncryptionEngine(const std::string &db_access, const std::shared_ptr<Core> core);
 
 	~LimeX3dhEncryptionEngine();
-
-	std::shared_ptr<LimeManager> getLimeManager();
 
 	// EncryptionEngine overrides
 
@@ -105,7 +89,6 @@ public:
 	AbstractChatRoom::SecurityLevel getSecurityLevel(const std::list<std::string> &deviceIds) const override;
 	EncryptionEngine::EngineType getEngineType() override;
 	std::list<EncryptionParameter> getEncryptionParameters(const std::shared_ptr<Account> &account) override;
-	void cleanDb() override;
 
 	// CoreListener overrides
 
@@ -144,9 +127,8 @@ private:
 	void update(const std::string localDeviceId);
 	std::vector<lime::CurveId>
 	getAllConfiguredAlgos(); /**< return a vector with all supported algorithm - from all users, in no specific order */
-	std::shared_ptr<LimeManager>
+	std::shared_ptr<lime::LimeManager>
 	    limeManager;         /**< the actual lime manager - only one is intanciated, it will manage all lime users */
-	std::string _dbAccess;   /**< lime DB path */
 	lime::CurveId coreCurve; /**< default base algo setting found in core, this is deprecated so it can store one
 	                            algorithm only */
 	std::unordered_map<std::string, std::vector<lime::CurveId>>

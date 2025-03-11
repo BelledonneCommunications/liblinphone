@@ -355,6 +355,94 @@ static void provisioning_with_http_bearer_expired_token() {
 	linphone_core_manager_destroy(lcm);
 }
 
+static void provisioning_with_http_bearer_expired_token_invalid_refresh_token() {
+	bellesip::HttpServer authorizationServer;
+	HttpServerWithBearerAuth httpServer("sip.example.org", "abcdefgh1");
+	httpServer.addResource("/provisioning", "application/xml", "rcfiles/marie_xml");
+
+	bellesip::AuthenticatedRegistrar registrar({"sip:marie@sip.example.com;access_token=abcdefgh1"}, "sip.example.org",
+	                                           "tcp");
+	registrar.addAuthMode(BELLE_SIP_AUTH_MODE_HTTP_BEARER);
+
+	authorizationServer.Post("/oauth/token", [](BCTBX_UNUSED(const httplib::Request &req), httplib::Response &res) {
+		res.status = 400;
+		constexpr const char *body = R"(
+{
+  "error":"Invalid refresh token",
+}
+						)";
+		res.set_content(body, "application/json");
+	});
+
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
+
+	std::string provisioningUri = httpServer.getUrl() + "/provisioning";
+
+	/* set access token and provisioning uri */
+	LinphoneBearerToken *token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), "expiredtoken", time(NULL) - 30);
+	LinphoneBearerToken *refresh_token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), "xyz", time(NULL) + 3600);
+	LinphoneAuthInfo *ai =
+	    linphone_factory_create_auth_info_3(linphone_factory_get(), "marie", token, "sip.example.org");
+	linphone_auth_info_set_access_token(ai, token);
+	linphone_auth_info_set_refresh_token(ai, refresh_token);
+	linphone_auth_info_set_authorization_server(ai, "auth.example.org");
+	linphone_auth_info_set_token_endpoint_uri(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
+	linphone_bearer_token_unref(token);
+	linphone_bearer_token_unref(refresh_token);
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+
+	/* set provisioning uri and attempt to load it */
+	linphone_core_set_provisioning_uri(lcm->lc, provisioningUri.c_str());
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_authentication_requested(cbs, bearer_auth_info_requested_2);
+	linphone_core_add_callbacks(lcm->lc, cbs);
+
+	/* now restart the provisioning */
+	linphone_core_stop(lcm->lc);
+	linphone_core_start(lcm->lc);
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_authentication_info_requested, 1));
+	/* resubmit new access token */
+	token = linphone_factory_create_bearer_token(linphone_factory_get(), "abcdefgh1", time(NULL) + 30);
+	refresh_token = linphone_factory_create_bearer_token(linphone_factory_get(), "xyz2", time(NULL) + 3600);
+	ai = linphone_factory_create_auth_info_3(linphone_factory_get(), "marie", token, "sip.example.org");
+	linphone_auth_info_set_access_token(ai, token);
+	linphone_auth_info_set_refresh_token(ai, refresh_token);
+	linphone_auth_info_set_token_endpoint_uri(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
+	linphone_bearer_token_unref(token);
+	linphone_bearer_token_unref(refresh_token);
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneConfiguringSuccessful, 1));
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneGlobalOn, 2));
+
+	BC_ASSERT_EQUAL(lcm->stat.number_of_authentication_info_requested, 1, int, "%i");
+	linphone_core_manager_setup_dns(lcm);
+
+	/* modify the registrar uri to setup correct port number */
+	LinphoneAccount *account = linphone_core_get_default_account(lcm->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(account)) {
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		LinphoneAddress *addr = linphone_address_clone(linphone_account_params_get_server_address(params));
+		linphone_address_set_port(addr, belle_sip_uri_get_port(registrar.getAgent().getListeningUri()));
+		linphone_account_params_set_server_address(params, addr);
+		linphone_account_params_enable_register(params, TRUE);
+		linphone_address_unref(addr);
+		linphone_account_set_params(account, params);
+		linphone_account_params_unref(params);
+	}
+	BC_ASSERT_TRUE(wait_for(lcm->lc, nullptr, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
+	BC_ASSERT_EQUAL(lcm->stat.number_of_authentication_info_requested, 1, int, "%i");
+
+	linphone_core_cbs_unref(cbs);
+	linphone_core_manager_destroy(lcm);
+}
+
 static void test_bearer_auth_refresh_token(void) {
 	bellesip::HttpServer authorizationServer;
 	bellesip::AuthenticatedRegistrar registrar({"sip:bob@sip.example.com;access_token=abcdefgh1"}, "sip.example.com",
@@ -420,7 +508,83 @@ static void test_bearer_auth_refresh_token(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
-static void provisioning_with_http_bearer_then_register_with_digest(void) {
+static void test_bearer_auth_refresh_token_non_working() {
+	bellesip::HttpServer authorizationServer;
+	bellesip::AuthenticatedRegistrar registrar({"sip:bob@sip.example.com;access_token=abcdefgh1"}, "sip.example.com",
+	                                           "tcp");
+	registrar.addAuthMode(BELLE_SIP_AUTH_MODE_HTTP_BEARER);
+
+	authorizationServer.Post("/oauth/token", [](BCTBX_UNUSED(const httplib::Request &req), httplib::Response &res) {
+		res.status = 400;
+		constexpr const char *body = R"(
+{
+  "error": "invalid bearer token"
+}
+						)";
+		res.set_content(body, "application/json");
+	});
+
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
+	LinphoneAccountParams *account_params = linphone_core_create_account_params(lcm->lc);
+	LinphoneAddress *identity = linphone_factory_create_address(linphone_factory_get(), "sip:bob@sip.example.com");
+	LinphoneAddress *server_addr =
+	    linphone_factory_create_address(linphone_factory_get(), registrar.getAgent().getListeningUriAsString().c_str());
+	linphone_account_params_set_identity_address(account_params, identity);
+	linphone_account_params_set_server_address(account_params, server_addr);
+	linphone_account_params_enable_register(account_params, TRUE);
+	linphone_address_unref(server_addr);
+
+	LinphoneAccount *account = linphone_core_create_account(lcm->lc, account_params);
+	linphone_core_add_account(lcm->lc, account);
+	linphone_account_params_unref(account_params);
+	linphone_account_unref(account);
+
+	/* create expired access token */
+	LinphoneBearerToken *access_token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), "abcdefgh0", time(NULL) - 20);
+	LinphoneBearerToken *refresh_token =
+	    linphone_factory_create_bearer_token(linphone_factory_get(), "xyz", time(NULL) + 3600);
+
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(
+	    linphone_factory_get(), linphone_address_get_username(identity), access_token, "sip.example.com");
+	linphone_auth_info_set_refresh_token(ai, refresh_token);
+	linphone_auth_info_set_token_endpoint_uri(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
+	linphone_bearer_token_unref(access_token);
+	linphone_bearer_token_unref(refresh_token);
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+	bctbx_message("Added AuthInfo.");
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_authentication_info_requested, 1));
+	access_token = linphone_factory_create_bearer_token(linphone_factory_get(), "abcdefgh1", time(NULL) + 30);
+	refresh_token = linphone_factory_create_bearer_token(linphone_factory_get(), "xyz2", time(NULL) + 3600);
+
+	ai = linphone_factory_create_auth_info_3(linphone_factory_get(), linphone_address_get_username(identity),
+	                                         access_token, "sip.example.com");
+	linphone_auth_info_set_refresh_token(ai, refresh_token);
+	linphone_auth_info_set_token_endpoint_uri(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
+	linphone_auth_info_set_authorization_server(ai, "auth.example.org");
+	linphone_bearer_token_unref(access_token);
+	linphone_bearer_token_unref(refresh_token);
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
+	BC_ASSERT_EQUAL(lcm->stat.number_of_authentication_info_requested, 1, int, "%i");
+	const bctbx_list_t *ai_list = linphone_core_get_auth_info_list(lcm->lc);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(ai_list), 1, int, "%i");
+	if (ai_list) {
+		/* Make sure that the refresh token was updated*/
+		const LinphoneAuthInfo *updated_ai = (const LinphoneAuthInfo *)ai_list->data;
+		const LinphoneBearerToken *new_refresh_token = linphone_auth_info_get_refresh_token(updated_ai);
+		BC_ASSERT_STRING_EQUAL(linphone_bearer_token_get_token(new_refresh_token), "xyz2");
+	}
+
+	linphone_address_unref(identity);
+	linphone_core_manager_destroy(lcm);
+}
+
+static void provisioning_with_http_bearer_then_register_with_digest_base(bool with_username_in_auth_info) {
 	HttpServerWithBearerAuth httpServer("sip.example.org", "abcdefgh");
 	httpServer.addResource("/provisioning", "application/xml", "rcfiles/marie_digest_auth_xml");
 
@@ -448,7 +612,8 @@ static void provisioning_with_http_bearer_then_register_with_digest(void) {
 	/* set access token */
 	LinphoneBearerToken *token =
 	    linphone_factory_create_bearer_token(linphone_factory_get(), "abcdefgh", time(NULL) + 30);
-	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(linphone_factory_get(), NULL, token, "sip.example.org");
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(
+	    linphone_factory_get(), with_username_in_auth_info ? "marie" : NULL, token, "sip.example.org");
 	linphone_auth_info_set_access_token(ai, token);
 	linphone_bearer_token_unref(token);
 	linphone_core_add_auth_info(lcm->lc, ai);
@@ -495,17 +660,29 @@ static void provisioning_with_http_bearer_then_register_with_digest(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
+static void provisioning_with_http_bearer_then_register_with_digest(void) {
+	provisioning_with_http_bearer_then_register_with_digest_base(false);
+}
+
+static void provisioning_with_http_bearer_then_register_with_digest_with_username_in_auth_info(void) {
+	provisioning_with_http_bearer_then_register_with_digest_base(true);
+}
 static test_t bearer_auth_tests[] = {
     {"Bearer auth requested", test_bearer_auth},
     {"Bearer auth set before", test_bearer_auth_set_before},
     {"Provisioning with http bearer auth", provisioning_with_http_bearer_auth},
     {"Provisioning with http bearer auth requested on demand", provisioning_with_http_bearer_auth_requested_on_demand},
     {"Provisioning with http bearer auth but expired access token", provisioning_with_http_bearer_expired_token},
+    {"Provisioning with http bearer auth but expired access token and invalid refresh token",
+     provisioning_with_http_bearer_expired_token_invalid_refresh_token},
     {"Provisioning with http bearer auth requested aborted",
      provisioning_with_http_bearer_auth_requested_on_demand_aborted},
     {"Bearer auth with refresh", test_bearer_auth_refresh_token},
+    {"Bearer auth with refresh non working", test_bearer_auth_refresh_token_non_working},
     {"Provisioning with http bearer providing SIP account using digest auth",
-     provisioning_with_http_bearer_then_register_with_digest}};
+     provisioning_with_http_bearer_then_register_with_digest},
+    {"Provisioning with http bearer providing SIP account using digest auth 2",
+     provisioning_with_http_bearer_then_register_with_digest_with_username_in_auth_info}};
 
 /*
  * TODO: future tests

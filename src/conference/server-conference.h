@@ -47,14 +47,13 @@ public:
 	static constexpr int sConfIdLength = 32;
 
 	ServerConference(const std::shared_ptr<Core> &core,
-	                 const std::shared_ptr<Address> &myAddress,
 	                 std::shared_ptr<CallSessionListener> listener,
 	                 const std::shared_ptr<ConferenceParams> params);
 	virtual ~ServerConference();
 
-	virtual int inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) override;
-	virtual bool dialOutAddresses(const std::list<std::shared_ptr<const Address>> &addressList) override;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) override;
 	void inviteDevice(const std::shared_ptr<ParticipantDevice> &device);
 	void byeDevice(const std::shared_ptr<ParticipantDevice> &device);
 
@@ -64,10 +63,10 @@ public:
 	int getParticipantCount() const override;
 
 	virtual bool addParticipants(const std::list<std::shared_ptr<Call>> &call) override;
-	virtual bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) override;
+	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<Call> call) override;
 	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
-	virtual bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<Call> call) override;
 	virtual std::shared_ptr<ParticipantDevice> createParticipantDevice(std::shared_ptr<Participant> participant,
 	                                                                   std::shared_ptr<Call> call) override;
@@ -199,10 +198,6 @@ public:
 
 	virtual void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	// TODO: move to private once server group chat room class has been deleted
-#ifdef HAVE_ADVANCED_IM
-	std::shared_ptr<ServerConferenceEventHandler> eventHandler;
-#endif // HAVE_ADVANCED_IM
 	void moveDeviceToPresent(const std::shared_ptr<CallSession> &session);
 	void moveDeviceToPresent(const std::shared_ptr<ParticipantDevice> &device);
 	void setParticipantDeviceState(const std::shared_ptr<ParticipantDevice> &device,
@@ -254,14 +249,16 @@ protected:
 private:
 	L_DISABLE_COPY(ServerConference);
 
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<ServerConferenceEventHandler> mEventHandler;
+#endif // HAVE_ADVANCED_IM
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
 
 	bool initializeParticipants(const std::shared_ptr<Participant> &initiator, SalCallOp *op);
 	void addParticipantDevice(const std::shared_ptr<Participant> &participant,
-	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
+	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo) override;
 	bool addParticipantAndDevice(std::shared_ptr<Call> call);
-	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
 	bool validateNewParameters(const ConferenceParams &newConfParams) const;
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device,
 	                                         const MediaSessionParams *csp);

@@ -292,7 +292,7 @@ class JavaTranslator:
             methodDict['enumName'] = methodDict['return'][:-2]
         methodDict['classCast'] = type(_method.returnType) is AbsApi.ClassType
 
-        if self.platform == "android":
+        if self.platform == "android" or self.platform == "bundled-android":
             methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '@NonNull ' if arg.notnil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
         else:
             methodDict['params'] = ', '.join(['{0}'.format(arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
@@ -638,7 +638,8 @@ class JavaEnum:
         self.briefDoc = self._class['briefDoc']
         self.detailedDoc = self._class['detailedDoc']
         self.jniName = _enum.name.translate(JNINameTranslator.get())
-        self.isAndroid = (platform == "android")
+        self.isAndroid = (platform == "android") or (platform == "bundled-android")
+        self.isBundledAndroid = (platform == "bundled-android")
 
 class JniInterface:
     def __init__(self, javaClass, apiClass):
@@ -667,7 +668,8 @@ class JavaInterface:
         self.briefDoc = self._class['briefDoc']
         self.detailedDoc = self._class['detailedDoc']
         self.jniMethods = self._class['jniMethods']
-        self.isAndroid = (platform == "android")
+        self.isAndroid = (platform == "android") or (platform == "bundled-android")
+        self.isBundledAndroid = (platform == "bundled-android")
 
 class JavaInterfaceStub:
     def __init__(self, _interface):
@@ -681,7 +683,8 @@ class JavaInterfaceStub:
 class JavaClass:
     def __init__(self, package, _class, translator, platform):
         self._class = translator.translate_class(_class)
-        self.isAndroid = (platform == "android")
+        self.isAndroid = (platform == "android") or (platform == "bundled-android")
+        self.isBundledAndroid = (platform == "bundled-android")
         self.isLinphoneFactory = self._class['isLinphoneFactory']
         self.isLinphoneCore = self._class['isLinphoneCore']
         self.isNotLinphoneFactory = not self.isLinphoneFactory

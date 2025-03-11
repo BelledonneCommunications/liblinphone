@@ -609,6 +609,128 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 
 	// wait bit more to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
+
+	// ReStart Marie, Laure and Chloe core with c25519mlk512,c25519k512 (drop c25519)
+	laure.set_limeAlgoList({lime::CurveId::c25519mlk512, lime::CurveId::c25519k512});
+	coresList = bctbx_list_remove(coresList, laure.getLc());
+	laure.reStart();
+	coresList = bctbx_list_append(coresList, laure.getLc());
+	laureStats = laure.getStats();
+	BC_ASSERT_TRUE(laure.assertPtrValue(&(laureStats.number_of_X3dhUserCreationSuccess), 1));
+
+	chloe.set_limeAlgoList({lime::CurveId::c25519mlk512, lime::CurveId::c25519k512});
+	coresList = bctbx_list_remove(coresList, chloe.getLc());
+	chloe.reStart();
+	coresList = bctbx_list_append(coresList, chloe.getLc());
+	chloeStats = chloe.getStats();
+	BC_ASSERT_TRUE(chloe.assertPtrValue(&(chloeStats.number_of_X3dhUserCreationSuccess), 1));
+
+	marie.set_limeAlgoList({lime::CurveId::c25519mlk512, lime::CurveId::c25519k512});
+	coresList = bctbx_list_remove(coresList, marie.getLc());
+	marie.reStart();
+	coresList = bctbx_list_append(coresList, marie.getLc());
+	marieStats = marie.getStats();
+	BC_ASSERT_TRUE(marie.assertPtrValue(&(marieStats.number_of_X3dhUserCreationSuccess), 1));
+
+	// get back marieCr
+	marieDeviceAddr = linphone_address_clone(linphone_proxy_config_get_contact(marie.getDefaultProxyConfig()));
+	marieCr = marie.searchChatRoom(marieDeviceAddr, confAddr);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	linphone_address_unref(marieDeviceAddr);
+
+	// Marie send a message to the group
+	msgText = std::string("To infinity and beyond");
+	msg = Linphone::Tester::ConfCoreManager::sendTextMsg(marieCr, msgText);
+
+	// Message is delivered
+	BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([msg] {
+		return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+	}));
+
+	linphone_chat_message_unref(msg);
+	msg = nullptr;
+
+	// everyone get it
+	for (Linphone::Tester::CoreManager &client : recipients) {
+		for (auto chatRoom : client.getCore().getChatRooms()) {
+			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
+				return chatRoom->getUnreadChatMessageCount() == 1;
+			}));
+			LinphoneChatMessage *lastMsg = client.getStats().last_received_chat_message;
+			BC_ASSERT_PTR_NOT_NULL(lastMsg);
+			if (lastMsg) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(lastMsg), msgText.c_str());
+			}
+			chatRoom->markAsRead();
+		}
+	}
+
+	// wait bit more to allow imdn exchanges
+	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
+
+	// ReStart Marie, Laure and Chloe core with c25519mlk512 only (drop c25519k512) -> pauline won't be able to get the
+	// message
+	laure.set_limeAlgoList({lime::CurveId::c25519mlk512});
+	coresList = bctbx_list_remove(coresList, laure.getLc());
+	laure.reStart();
+	coresList = bctbx_list_append(coresList, laure.getLc());
+	laureStats = laure.getStats();
+	BC_ASSERT_TRUE(laure.assertPtrValue(&(laureStats.number_of_X3dhUserCreationSuccess), 1));
+
+	chloe.set_limeAlgoList({lime::CurveId::c25519mlk512});
+	coresList = bctbx_list_remove(coresList, chloe.getLc());
+	chloe.reStart();
+	coresList = bctbx_list_append(coresList, chloe.getLc());
+	chloeStats = chloe.getStats();
+	BC_ASSERT_TRUE(chloe.assertPtrValue(&(chloeStats.number_of_X3dhUserCreationSuccess), 1));
+
+	marie.set_limeAlgoList({lime::CurveId::c25519mlk512});
+	coresList = bctbx_list_remove(coresList, marie.getLc());
+	marie.reStart();
+	coresList = bctbx_list_append(coresList, marie.getLc());
+	marieStats = marie.getStats();
+	BC_ASSERT_TRUE(marie.assertPtrValue(&(marieStats.number_of_X3dhUserCreationSuccess), 1));
+
+	// get back marieCr
+	marieDeviceAddr = linphone_address_clone(linphone_proxy_config_get_contact(marie.getDefaultProxyConfig()));
+	marieCr = marie.searchChatRoom(marieDeviceAddr, confAddr);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	linphone_address_unref(marieDeviceAddr);
+
+	// Marie send a message to the group
+	msgText = std::string("Bye Pauline");
+	msg = Linphone::Tester::ConfCoreManager::sendTextMsg(marieCr, msgText);
+
+	// Message is delivered
+	BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([msg] {
+		return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+	}));
+
+	linphone_chat_message_unref(msg);
+	msg = nullptr;
+
+	// Laure and Chloe get it
+	for (Linphone::Tester::CoreManager &client :
+	     std::list<std::reference_wrapper<Linphone::Tester::CoreManager>>{laure, chloe}) {
+		for (auto chatRoom : client.getCore().getChatRooms()) {
+			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
+				return chatRoom->getUnreadChatMessageCount() == 1;
+			}));
+			LinphoneChatMessage *lastMsg = client.getStats().last_received_chat_message;
+			BC_ASSERT_PTR_NOT_NULL(lastMsg);
+			if (lastMsg) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(lastMsg), msgText.c_str());
+			}
+			chatRoom->markAsRead();
+		}
+	}
+
+	// wait bit more to allow imdn exchanges
+	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
+
+	// Pauline does not
+	BC_ASSERT_EQUAL(pauline.getCore().getChatRooms().front()->getUnreadChatMessageCount(), 0, int, "%d");
+
 	linphone_address_unref(confAddr);
 	bctbx_list_free(coresList);
 }

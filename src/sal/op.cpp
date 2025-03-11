@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,12 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "sal/op.h"
+
 #include <cstring>
 
 #include "bellesip_sal/sal_impl.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "content/header/header-param.h"
-#include "sal/op.h"
 
 using namespace std;
 
@@ -52,6 +53,7 @@ SalOp::~SalOp() {
 	if (mPendingServerTransaction) belle_sip_object_unref(mPendingServerTransaction);
 	if (mPendingUpdateServerTransaction) belle_sip_object_unref(mPendingUpdateServerTransaction);
 	if (mEvent) belle_sip_object_unref(mEvent);
+	if (mSupportedHeader) belle_sip_object_unref(mSupportedHeader);
 
 	sal_error_info_reset(&mErrorInfo);
 	sal_error_info_reset(&mReasonErrorInfo);
@@ -570,7 +572,9 @@ belle_sip_request_t *SalOp::buildRequest(const string &method) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(privacyHeader));
 	}
 
-	if (mRoot->mSupportedHeader) {
+	if (mUseSupportedTags) {
+		if (mSupportedHeader) belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), mSupportedHeader);
+	} else if (mRoot->mSupportedHeader) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), mRoot->mSupportedHeader);
 	}
 	return request;
@@ -1180,6 +1184,17 @@ bool SalOp::runRetryFunc() {
 
 void SalOp::setChannelBankIdentifier(const std::string &identifier) {
 	mChannelBankIdentifier = identifier;
+}
+
+void SalOp::makeSupportedHeader(const std::list<std::string> &supportedTags) {
+	if (mSupportedHeader) {
+		belle_sip_object_unref(mSupportedHeader);
+		mSupportedHeader = nullptr;
+	}
+	mUseSupportedTags = true;
+	if (supportedTags.empty()) return;
+	mSupportedHeader = Sal::createSupportedHeader(supportedTags);
+	if (mSupportedHeader) belle_sip_object_ref(mSupportedHeader);
 }
 
 LINPHONE_END_NAMESPACE

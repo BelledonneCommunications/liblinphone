@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -36,6 +36,7 @@
 #include "conference/encryption/ekt-info.h"
 #endif // HAVE_ADVANCED_IM
 #include "event-log/event-log.h"
+#include "event/event-publish.h"
 #include "friend/friend-list.h"
 #include "linphone/enums/c-enums.h"
 #include "linphone/types.h"
@@ -62,6 +63,7 @@ class CallLog;
 class CallSession;
 class Conference;
 class ConferenceId;
+class ConferenceIdParams;
 class ConferenceInfo;
 class Participant;
 class CallSessionListener;
@@ -123,15 +125,15 @@ public:
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create(LinphoneCore *cCore);
 
-	static std::shared_ptr<Address> getConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                                            const std::shared_ptr<const Address> &localAddress);
-	static std::shared_ptr<Address> getConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                                            const std::shared_ptr<Account> &account);
-	static std::shared_ptr<Address>
+	static std::shared_ptr<const Address>
+	getConferenceFactoryAddress(const std::shared_ptr<Core> &core, const std::shared_ptr<const Address> &localAddress);
+	static std::shared_ptr<const Address> getConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+	                                                                  const std::shared_ptr<Account> &account);
+	static std::shared_ptr<const Address>
 	getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 	                                      const std::shared_ptr<const Address> &localAddress);
-	static std::shared_ptr<Address> getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                                                      const std::shared_ptr<Account> &account);
+	static std::shared_ptr<const Address>
+	getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account);
 
 	// ---------------------------------------------------------------------------
 	// Application lifecycle.
@@ -190,12 +192,6 @@ public:
 	std::shared_ptr<AbstractChatRoom> findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms(const std::shared_ptr<Address> &peerAddress) const;
 
-	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom(const std::shared_ptr<const Address> &localAddress,
-	                                                       const std::shared_ptr<const Address> &participantAddress,
-	                                                       bool basicOnly,
-	                                                       bool conferenceOnly,
-	                                                       bool encrypted) const;
-
 	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject, bool fallback = true);
 	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject,
 	                                                       LinphoneChatRoomCapabilitiesMask capabilities,
@@ -241,6 +237,7 @@ public:
 	// Conference.
 	// ---------------------------------------------------------------------------
 
+	ConferenceIdParams createConferenceIdParams() const;
 	void setConferenceCleanupPeriod(long seconds);
 	long getConferenceCleanupPeriod() const;
 	void setAccountDeletionTimeout(unsigned int seconds);
@@ -257,6 +254,7 @@ public:
 	                                             const std::shared_ptr<const Address> &remoteAddress,
 	                                             const std::list<std::shared_ptr<Address>> &participants) const;
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<const Address> &conferenceAddress) const;
+	std::shared_ptr<Conference> searchConference(const std::string identifier) const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.
@@ -367,7 +365,6 @@ public:
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 
 	std::shared_ptr<CallSession> createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-	                                                              const std::shared_ptr<const Address> &localAddr,
 	                                                              const std::list<Address> &participants,
 	                                                              const std::shared_ptr<Address> &confAddr,
 	                                                              std::shared_ptr<CallSessionListener> listener);
@@ -378,7 +375,8 @@ public:
 	void removeConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler);
 	void addConferenceScheduler(const std::shared_ptr<ConferenceScheduler> &scheduler);
 
-	bool isCurrentlyAggregatingChatMessages();
+	bool canAggregateChatMessages() const;
+	bool isCurrentlyAggregatingChatMessages() const;
 	// ---------------------------------------------------------------------------
 	// Signal informations
 	// ---------------------------------------------------------------------------
@@ -409,7 +407,8 @@ public:
 	// ---------------------------------------------------------------------------
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<EktInfo> createEktInfoFromXml(const std::string &xmlBody) const;
-	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei) const;
+	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei,
+	                                 const std::shared_ptr<const Account> &account) const;
 #endif // HAVE_ADVANCED_IM
 
 	// ---------------------------------------------------------------------------

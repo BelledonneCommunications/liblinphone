@@ -21,6 +21,7 @@
 #include "nat-policy.h"
 
 #include <cstring>
+#include <regex>
 
 #include "core/core.h"
 #include "private.h"
@@ -368,17 +369,16 @@ bool NatPolicy::processJsonConfigurationResponse(const std::shared_ptr<NatPolicy
 		if (root.isMember(urisKey) && root[urisKey].isArray() && !root[urisKey].empty()) {
 			auto firstUri = root[urisKey].begin();
 			if (firstUri->isString()) {
-				if (belle_generic_uri_t *uri = belle_generic_uri_parse(firstUri->asString().c_str())) {
-					std::string hostname = belle_generic_uri_get_host(uri);
-					int port = belle_generic_uri_get_port(uri);
-					belle_sip_object_unref(uri);
-					if (!hostname.empty()) {
-						if (port == 0) {
-							sharedNatPolicy->mStunServer = hostname;
-						} else {
-							sharedNatPolicy->mStunServer = hostname + ":" + std::to_string(port);
-						}
-					}
+				auto uri = firstUri->asString();
+				/* This regex pattern extracts the part after "turn:" and before "?" in a TURN URI.
+				 * ^turn:      -> Matches the literal "turn:" at the beginning of the string.
+				 * ([^?]+)     -> Captures everything after "turn:" up to (but not including) the first "?".
+				 * The captured group (match[1]) contains the desired hostname and port.
+				 * */
+				std::regex pattern(R"(^turn:([^?]+))");
+				std::smatch match;
+				if (std::regex_search(uri, match, pattern)) {
+					sharedNatPolicy->mStunServer = match[1].str();
 				}
 			}
 		}
@@ -395,18 +395,23 @@ bool NatPolicy::processJsonConfigurationResponse(const std::shared_ptr<NatPolicy
 }
 
 void NatPolicy::updateTurnConfiguration(const std::function<void(bool)> &completionRoutine) {
-	mCompletionRoutine = completionRoutine;
-	auto &httpClient = getCore()->getHttpClient();
-	auto &httpRequest = httpClient.createRequest("GET", mTurnConfigurationEndpoint);
+	try {
+		mCompletionRoutine = completionRoutine;
+		auto &httpClient = getCore()->getHttpClient();
+		auto &httpRequest = httpClient.createRequest("GET", mTurnConfigurationEndpoint);
 
-	std::weak_ptr<NatPolicy> natPolicyRef = shared_from_this();
-	httpRequest.execute([natPolicyRef, completionRoutine](const HttpResponse &response) -> void {
-		auto sharedNatPolicy = natPolicyRef.lock();
-		if (sharedNatPolicy) {
-			bool ret = sharedNatPolicy->processJsonConfigurationResponse(sharedNatPolicy, response);
-			if (sharedNatPolicy->mCompletionRoutine) sharedNatPolicy->mCompletionRoutine(ret);
-		}
-	});
+		std::weak_ptr<NatPolicy> natPolicyRef = shared_from_this();
+		httpRequest.execute([natPolicyRef](const HttpResponse &response) -> void {
+			auto sharedNatPolicy = natPolicyRef.lock();
+			if (sharedNatPolicy) {
+				bool ret = sharedNatPolicy->processJsonConfigurationResponse(sharedNatPolicy, response);
+				if (sharedNatPolicy->mCompletionRoutine) sharedNatPolicy->mCompletionRoutine(ret);
+			}
+		});
+	} catch (const std::exception &e) {
+		lError() << __func__
+		         << ": Error while creating or sending HTTP request to update TURN configuration : " << e.what();
+	}
 }
 
 bool NatPolicy::needToUpdateTurnConfiguration() {

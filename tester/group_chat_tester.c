@@ -322,7 +322,15 @@ void setup_chat_room_callbacks(LinphoneChatRoomCbs *cbs) {
 }
 
 void core_chat_room_state_changed(BCTBX_UNUSED(LinphoneCore *core), LinphoneChatRoom *cr, LinphoneChatRoomState state) {
-	if (state == LinphoneChatRoomStateInstantiated) {
+	const LinphoneConferenceParams *chat_params = linphone_chat_room_get_current_params(cr);
+	bool hasAudio = !!linphone_conference_params_audio_enabled(chat_params) ||
+	                !!linphone_conference_params_video_enabled(chat_params);
+	// When a chatroom is instantied as part of a conference, the first state it will be notifed is the Created state as
+	// the core waits for the full state to arrive before creating it. In fact, it may happen that a core wishes to
+	// create a conference with chat capabilities but the server doesn't supports it. The client would end up having a
+	// dangling tchat and needs to destroy it
+	if ((!hasAudio && (state == LinphoneChatRoomStateInstantiated)) ||
+	    (hasAudio && (state == LinphoneChatRoomStateCreated))) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
 		setup_chat_room_callbacks(cbs);
 		linphone_chat_room_add_callbacks(cr, cbs);
@@ -449,6 +457,7 @@ void _send_file_plus_text(
 
 	msg = linphone_chat_room_create_empty_message(cr);
 	linphone_chat_message_add_file_content(msg, content);
+	BC_ASSERT_PTR_NULL(linphone_content_get_related_chat_message_id(content));
 	linphone_content_unref(content);
 
 	if (text) linphone_chat_message_add_utf8_text_content(msg, text);
@@ -465,6 +474,7 @@ void _send_file_plus_text(
 			linphone_content_set_file_path(content2, sendFilepath2);
 		}
 		linphone_chat_message_add_file_content(msg, content2);
+		BC_ASSERT_PTR_NULL(linphone_content_get_related_chat_message_id(content2));
 		linphone_content_unref(content2);
 	}
 
@@ -524,6 +534,10 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 		if (!use_buffer) {
 			linphone_content_set_file_path(fileTransferContent, downloaded_file);
 		}
+
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(fileTransferContent),
+		                       linphone_chat_message_get_message_id(msg));
+
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 		                "%d");
@@ -558,6 +572,8 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 			if (!use_buffer) {
 				linphone_content_set_file_path(fileTransferContent2, downloaded_file);
 			}
+			BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(fileTransferContent2),
+			                       linphone_chat_message_get_message_id(msg));
 			linphone_chat_message_download_content(msg, fileTransferContent2);
 			BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 			                "%d");
@@ -1013,7 +1029,7 @@ static void group_chat_room_creation_core_restart(void) {
 		uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "uuid", NULL));
 	}
 
-	ms_message("Restart %s'c core", linphone_core_get_identity(marie->lc));
+	ms_message("Restart %s's core", linphone_core_get_identity(marie->lc));
 	initialMarieStats = marie->stat;
 	coresList = bctbx_list_remove(coresList, marie->lc);
 	linphone_core_manager_reinit(marie);
@@ -4301,11 +4317,15 @@ static void group_chat_room_send_multipart_custom_content_types(void) {
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content1), "application");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content1), "vnd.3gpp.mcptt-info+xml");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content1), data1);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(content1),
+		                       linphone_chat_message_get_message_id(pauline->stat.last_received_chat_message));
 
 		LinphoneContent *content2 = bctbx_list_nth_data(contents, 1);
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content2), "application");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content2), "vnd.3gpp.mcptt-location-info+xml");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content2), data2);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(content2),
+		                       linphone_chat_message_get_message_id(pauline->stat.last_received_chat_message));
 	}
 
 	// Clean db from chat room
@@ -6177,6 +6197,195 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(chloe);
+}
+
+static void basic_chat_room_with_cpim_base(bool_t use_gruu, bool_t enable_imdn) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	if (!use_gruu) {
+		linphone_core_remove_supported_tag(marie->lc, "gruu");
+	}
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	if (enable_imdn) {
+		// Enable IMDN
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+	}
+
+	linphone_core_set_chat_messages_aggregation_enabled(marie->lc, TRUE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "chat_messages_aggregation_delay", 10);
+
+	// Enable CPIM
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *marie_account_params = linphone_account_get_params(marie_account);
+	LinphoneAccountParams *cloned_marie_account_params = linphone_account_params_clone(marie_account_params);
+	linphone_account_params_enable_cpim_in_basic_chat_room(cloned_marie_account_params, TRUE);
+	linphone_account_set_params(marie_account, cloned_marie_account_params);
+	linphone_account_params_unref(cloned_marie_account_params);
+
+	LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
+	const LinphoneAccountParams *pauline_account_params = linphone_account_get_params(pauline_account);
+	LinphoneAccountParams *cloned_pauline_account_params = linphone_account_params_clone(pauline_account_params);
+	linphone_account_params_enable_cpim_in_basic_chat_room(cloned_pauline_account_params, TRUE);
+	linphone_account_set_params(pauline_account, cloned_pauline_account_params);
+	linphone_account_params_unref(cloned_pauline_account_params);
+
+	LinphoneAddress *pauline_contact_address = linphone_account_get_contact_address(pauline_account);
+
+	bctbx_list_t *participantsAddresses = NULL;
+	participantsAddresses = bctbx_list_append(participantsAddresses, pauline_contact_address);
+	LinphoneConferenceParams *marie_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_enable_chat(marie_params, TRUE);
+	linphone_conference_params_enable_group(marie_params, FALSE);
+	LinphoneChatParams *marie_chat_params = linphone_conference_params_get_chat_params(marie_params);
+	linphone_chat_params_set_backend(marie_chat_params, LinphoneChatRoomBackendBasic);
+	LinphoneChatRoom *marieCr = linphone_core_create_chat_room_7(marie->lc, marie_params, participantsAddresses);
+	bctbx_list_free(participantsAddresses);
+	participantsAddresses = NULL;
+	linphone_chat_room_params_unref(marie_params);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreated, 1,
+	                             liblinphone_tester_sip_timeout));
+
+	// Marie sends a message in a basic chatroom
+	const char *marie_text = "This is a basic chat room";
+	LinphoneChatMessage *marie_msg = NULL;
+	if (marieCr) {
+		const LinphoneAddress *peer_address = linphone_chat_room_get_peer_address(marieCr);
+		BC_ASSERT_TRUE(linphone_address_has_uri_param(peer_address, "gr"));
+		linphone_chat_room_compose(marieCr);
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 1));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, 2000));
+		marie_msg = _send_message(marieCr, marie_text);
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateCreated, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1,
+		                             liblinphone_tester_sip_timeout));
+		if (enable_imdn) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser, 1,
+			                             liblinphone_tester_sip_timeout));
+		} else {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, 1,
+			                             liblinphone_tester_sip_timeout));
+		}
+	}
+
+	LinphoneConferenceParams *pauline_params = linphone_core_create_conference_params(pauline->lc);
+	linphone_conference_params_enable_chat(pauline_params, TRUE);
+	linphone_conference_params_enable_group(pauline_params, FALSE);
+	LinphoneChatParams *pauline_chat_params = linphone_conference_params_get_chat_params(pauline_params);
+	linphone_chat_params_set_backend(pauline_chat_params, LinphoneChatRoomBackendBasic);
+	const LinphoneAddress *pauline_identity_address =
+	    linphone_account_params_get_identity_address(linphone_account_get_params(pauline_account));
+	LinphoneChatRoom *paulineCr =
+	    linphone_core_search_chat_room_2(pauline->lc, pauline_params, pauline_identity_address, NULL, NULL);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
+	linphone_chat_room_params_unref(pauline_params);
+
+	const char *pauline_text = "Yes Madam";
+	LinphoneChatMessage *pauline_msg = NULL;
+	if (paulineCr) {
+		linphone_chat_room_compose(paulineCr);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 2, 2000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 2000));
+		if (enable_imdn) {
+			linphone_chat_room_mark_as_read(paulineCr);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDisplayed, 1,
+			                             liblinphone_tester_sip_timeout));
+		}
+		if (marie_msg) {
+			linphone_chat_message_unref(marie_msg);
+		}
+		LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(paulineCr);
+		if (BC_ASSERT_PTR_NOT_NULL(msg)) {
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), marie_text);
+			linphone_chat_message_unref(msg);
+		}
+		const LinphoneAddress *local_address = linphone_chat_room_get_local_address(paulineCr);
+		BC_ASSERT_TRUE(linphone_address_has_uri_param(local_address, "gr"));
+		pauline_msg = _send_message(paulineCr, pauline_text);
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreated, 2, 2000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1,
+		                             liblinphone_tester_sip_timeout));
+		if (enable_imdn) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDeliveredToUser, 1,
+			                             liblinphone_tester_sip_timeout));
+		} else {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, 1,
+			                             liblinphone_tester_sip_timeout));
+		}
+	}
+
+	LinphoneChatMessageState expected_msg_state =
+	    (enable_imdn) ? LinphoneChatMessageStateDisplayed : LinphoneChatMessageStateDelivered;
+	if (marieCr) {
+		if (enable_imdn) {
+			linphone_chat_room_mark_as_read(marieCr);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDisplayed, 2,
+			                             liblinphone_tester_sip_timeout));
+			// As Marie enables chat message aggregation, the message state changed is not called
+			BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed, 2, 1000));
+		}
+		if (pauline_msg) {
+			linphone_chat_message_unref(pauline_msg);
+		}
+
+		LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(marieCr);
+		if (BC_ASSERT_PTR_NOT_NULL(msg)) {
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), pauline_text);
+			linphone_chat_message_unref(msg);
+		}
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 2, int, "%d");
+		bctbx_list_t *marie_history = linphone_chat_room_get_history(marieCr, 3);
+		for (bctbx_list_t *item = marie_history; item; item = bctbx_list_next(item)) {
+			LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
+			BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), expected_msg_state, int, "%d");
+		}
+		bctbx_list_free_with_data(marie_history, (bctbx_list_free_func)linphone_chat_message_unref);
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+		linphone_chat_room_unref(marieCr);
+	}
+	if (paulineCr) {
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int, "%d");
+		bctbx_list_t *pauline_history = linphone_chat_room_get_history(paulineCr, 3);
+		for (bctbx_list_t *item = pauline_history; item; item = bctbx_list_next(item)) {
+			LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
+			BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), expected_msg_state, int, "%d");
+		}
+		bctbx_list_free_with_data(pauline_history, (bctbx_list_free_func)linphone_chat_message_unref);
+		linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	}
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void basic_chat_room_with_cpim_gruu(void) {
+	basic_chat_room_with_cpim_base(TRUE, FALSE);
+}
+
+static void basic_chat_room_with_cpim_gruu_imdn(void) {
+	basic_chat_room_with_cpim_base(TRUE, TRUE);
+}
+
+static void basic_chat_room_with_cpim_without_gruu(void) {
+	basic_chat_room_with_cpim_base(FALSE, FALSE);
 }
 
 static void find_one_to_one_chat_room(void) {
@@ -9240,6 +9449,26 @@ static void group_chat_forward_file_transfer_message_url(const char *file_transf
 	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
+	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	LinphoneConferenceParams *conference_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_enable_chat(conference_params, TRUE);
+	linphone_conference_params_enable_group(conference_params, FALSE);
+	linphone_conference_params_set_subject(conference_params, initialSubject);
+	linphone_conference_params_set_security_level(conference_params, LinphoneConferenceSecurityLevelNone);
+	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(conference_params);
+	linphone_chat_params_set_backend(chat_params, LinphoneChatRoomBackendFlexisipChat);
+	linphone_chat_params_set_ephemeral_mode(chat_params, LinphoneChatRoomEphemeralModeDeviceManaged);
+	// Try search with the actual chat room subject
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room_2(marie->lc, conference_params, marie->identity, confAddr,
+	                                                        participantsAddresses));
+
+	linphone_conference_params_set_subject(conference_params, "Default one to one subject");
+	// Try search with a different chat room subject. As it is a one-to-one, the subject comparison should be ignored
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room_2(marie->lc, conference_params, marie->identity, confAddr,
+	                                                        participantsAddresses));
+	linphone_conference_params_unref(conference_params);
+	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
+
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
 	                                                                   confAddr, initialSubject, 1, FALSE);
@@ -9467,6 +9696,9 @@ test_t group_chat2_tests[] = {
     TEST_ONE_TAG("IMDN sent from DB state", imdn_sent_from_db_state, "LeaksMemory"),
     TEST_NO_TAG("IMDN updated for group chat room with one participant offline",
                 imdn_updated_for_group_chat_room_with_one_participant_offline),
+    TEST_NO_TAG("Basic chat room with CPIM and GRUU", basic_chat_room_with_cpim_gruu),
+    TEST_NO_TAG("Basic chat room with CPIM, GRUU and IMDN", basic_chat_room_with_cpim_gruu_imdn),
+    TEST_NO_TAG("Basic chat room with CPIM and without GRUU", basic_chat_room_with_cpim_without_gruu),
     TEST_NO_TAG("Find one-to-one chat room", find_one_to_one_chat_room),
     TEST_NO_TAG("Exhumed one-to-one chat room 1", exhume_one_to_one_chat_room_1),
     TEST_NO_TAG("Exhumed one-to-one chat room 2", exhume_one_to_one_chat_room_2),

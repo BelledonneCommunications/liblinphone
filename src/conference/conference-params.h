@@ -108,7 +108,7 @@ public:
 		return mAllowOneParticipantConference;
 	}
 
-	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) override;
+	virtual void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) override;
 	std::shared_ptr<Address> getConferenceAddress() const {
 		return mConferenceAddress;
 	};
@@ -128,14 +128,6 @@ public:
 		return mUtf8Subject;
 	}
 	const std::string &getSubject() const;
-
-	virtual void setMe(const std::shared_ptr<Address> &participantAddress) override {
-		mMe = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
-	};
-	std::shared_ptr<Address> getMe() const {
-		return mMe;
-	};
-
 	void setAccount(const std::shared_ptr<Account> &a);
 	std::shared_ptr<Account> getAccount() const;
 
@@ -173,12 +165,7 @@ public:
 		return mJoinMode;
 	};
 
-	virtual void setSecurityLevel(const SecurityLevel &level) override {
-		mSecurityLevel = level;
-		if (mChatParams) {
-			mChatParams->updateSecurityParams((mSecurityLevel != SecurityLevel::None));
-		}
-	};
+	virtual void setSecurityLevel(const SecurityLevel &level) override;
 	const SecurityLevel &getSecurityLevel() const {
 		return mSecurityLevel;
 	};

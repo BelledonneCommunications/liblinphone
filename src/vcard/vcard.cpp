@@ -18,7 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
+
+#include "linphone/utils/utils.h"
 
 #include "friend/friend-phone-number.h"
 #include "sal/sal.h"
@@ -380,7 +382,31 @@ void Vcard::addSipAddress(const string &sipAddress) {
 }
 
 const string &Vcard::asVcard4String() const {
-	return mBelCard->toFoldedString();
+	vcard4String = mBelCard->toFoldedString();
+	return vcard4String;
+}
+
+const string &Vcard::asVcard4StringWithBase64Picture() const {
+	const string &photo = getPhoto();
+	if (photo.empty()) {
+		return asVcard4String();
+	}
+
+	if (photo.rfind("file:", 0) == 0) {
+		string photoPath = photo.substr(5);
+		lInfo() << "[vCard] PHOTO with local file [" << photo << "] found, converting it to base64";
+
+		string base64PhotoAsString = Utils::convertFileToBase64(photoPath);
+		shared_ptr<belcard::BelCard> clone = shared_ptr<belcard::BelCard>(
+		    belcard::BelCardParser::getInstance(mUseVCard3Grammar)->parseOne(mBelCard->toFoldedString()));
+		const shared_ptr<belcard::BelCardPhoto> clonePhoto = clone->getPhotos().front();
+		clonePhoto->setValue(base64PhotoAsString);
+
+		vcard4String = clone->toFoldedString();
+		return vcard4String;
+	}
+
+	return asVcard4String();
 }
 
 void Vcard::editMainSipAddress(const string &sipAddress) {
@@ -624,6 +650,10 @@ void Vcard::addSipAddress(BCTBX_UNUSED(const string &sipAddress)) {
 }
 
 const string &Vcard::asVcard4String() const {
+	return emptyString;
+}
+
+const string &Vcard::asVcard4StringWithBase64Picture() const {
 	return emptyString;
 }
 

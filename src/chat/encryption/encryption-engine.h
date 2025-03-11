@@ -125,8 +125,6 @@ public:
 		return nullptr;
 	}
 
-	virtual void cleanDb() {
-	}
 	virtual EngineType getEngineType() {
 		return EngineType::Undefined;
 	}

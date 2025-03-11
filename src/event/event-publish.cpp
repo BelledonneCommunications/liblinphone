@@ -43,6 +43,7 @@ LinphoneStatus EventPublish::sendPublish(const std::shared_ptr<const Content> &b
 		mSendCustomHeaders = nullptr;
 	} else mOp->setSentCustomHeaders(nullptr);
 
+	fillOpFields();
 	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr);
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->publish(mName, mExpires, body_handler);
@@ -73,7 +74,7 @@ EventPublish::EventPublish(const shared_ptr<Core> &core, LinphonePrivate::SalPub
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,
                            const shared_ptr<Account> &account,
-                           const std::shared_ptr<Address> resourceAddr,
+                           const std::shared_ptr<const Address> &resourceAddr,
                            const string &event,
                            int expires)
     : EventPublish(core, new SalPublishOp(core->getCCore()->sal.get()), event) {
@@ -98,13 +99,15 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
 }
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,
-                           const std::shared_ptr<Address> resource,
+                           const std::shared_ptr<const Address> &resource,
                            const string &event,
                            int expires)
     : EventPublish(core, nullptr, resource, event, expires) {
 }
 
-EventPublish::EventPublish(const shared_ptr<Core> &core, const std::shared_ptr<Address> resource, const string &event)
+EventPublish::EventPublish(const shared_ptr<Core> &core,
+                           const std::shared_ptr<const Address> &resource,
+                           const string &event)
     : EventPublish(core, resource, event, -1) {
 	setOneshot(true);
 	setUnrefWhenTerminated(true);
@@ -138,6 +141,7 @@ LinphoneStatus EventPublish::accept() {
 		ms_error("EventPublish::accept(): cannot accept publish if subscription wasn't just received.");
 		return -1;
 	}
+	fillOpFields();
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->accept();
 	if (err == 0) {

@@ -79,8 +79,7 @@ protected:
 	                                                         bool cancel);
 	void fillCancelList(const ConferenceInfo::participant_list_t &oldList,
 	                    const ConferenceInfo::participant_list_t &newList);
-	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-	                                      const std::shared_ptr<Address> &creator) = 0;
+	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo) = 0;
 	virtual void processResponse(const LinphoneErrorInfo *errorCode,
 	                             const std::shared_ptr<Address> conferenceAddress) = 0;
 

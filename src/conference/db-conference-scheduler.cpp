@@ -38,13 +38,15 @@ DBConferenceScheduler::DBConferenceScheduler(const shared_ptr<Core> &core, const
 }
 
 void DBConferenceScheduler::createOrUpdateConference(
-    BCTBX_UNUSED(const std::shared_ptr<ConferenceInfo> &conferenceInfo), const std::shared_ptr<Address> &creator) {
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceInfo> &conferenceInfo)) {
 	std::shared_ptr<Address> conferenceAddress = nullptr;
 	if (getState() == State::AllocationPending) {
 		if (mConferenceInfo->getDateTime() <= 0) {
 			// Set start time only if a conference is going to be created
 			mConferenceInfo->setDateTime(ms_time(NULL));
 		}
+		const auto &account = getAccount() ? getAccount() : getCore()->getDefaultAccount();
+		const auto &creator = account->getAccountParams()->getIdentityAddress();
 		conferenceAddress = creator->clone()->toSharedPtr();
 		char confId[LinphonePrivate::ServerConference::sConfIdLength];
 		belle_sip_random_token(confId, sizeof(confId));

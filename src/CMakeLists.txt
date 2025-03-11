@@ -98,6 +98,16 @@ endif()
 if(TurboJpeg_FOUND)
 	list(APPEND LINK_LIBS ${TurboJpeg_TARGET})
 endif()
+if(MsAaudio_FOUND)
+	list(APPEND LINK_LIBS ${MsAaudio_TARGET})
+endif()
+if(MsAndroidCamera2_FOUND)
+	list(APPEND LINK_LIBS ${MsAndroidCamera2_TARGET})
+endif()
+if(MsWebRtc_FOUND)
+	list(APPEND LINK_LIBS ${MsWebRtc_TARGET})
+endif()
+
 
 #define log domain for this part of code
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
@@ -165,6 +175,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-params-interface.h
 	conference/conference-enums.h
 	conference/conference-id.h
+	conference/conference-id-params.h
 	conference/conference-info.h
 	conference/conference-scheduler.h
 	conference/sip-conference-scheduler.h
@@ -172,6 +183,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
+	conference/conference-context.h
 	conference/server-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
@@ -483,9 +495,11 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-params-interface.cpp
 	conference/conference-enums.cpp
 	conference/conference-id.cpp
+	conference/conference-id-params.cpp
 	conference/conference-info.cpp
 	conference/conference-scheduler.cpp
 	conference/conference.cpp
+	conference/conference-context.cpp
 	conference/conference-interface.cpp
 	conference/sip-conference-scheduler.cpp
 	conference/ccmp-conference-scheduler.cpp
@@ -746,6 +760,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
 		AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12
 		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
 	set_source_files_properties(sal/potential_config_graph.cpp
+			nat/nat-policy.cpp
 			utils/version.cpp
 			search/magic-search.cpp
 			PROPERTIES COMPILE_OPTIONS "-Wno-error=maybe-uninitialized")

@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 	/*sip proxy might be requested*/
 	if (identity != NULL) {
 		/*create account parameters*/
-		LinphoneAccountParams *params = linphone_account_params_new(NULL);
+		LinphoneAccountParams *params = linphone_account_params_new(nullptr, FALSE);
 		/*parse identity*/
 		LinphoneAddress *from = linphone_address_new(identity);
 		LinphoneAuthInfo *info;

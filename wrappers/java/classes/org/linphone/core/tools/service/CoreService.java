@@ -209,7 +209,7 @@ public class CoreService extends Service {
                         Log.i("[Core Service] Core Manager found, adding our listener");
                         core.addListener(mListener);
                         mIsListenerAdded = true;
-                        Log.i("[Core Service] CoreListener succesfully added to the Core");
+                        Log.i("[Core Service] CoreListener successfully added to the Core");
 
                         if (core.getCallsNb() > 0) {
                             Log.w("[Core Service] Core listener added while at least one call active !");

@@ -1652,7 +1652,7 @@ public class AndroidPlatformHelper {
         if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
     }
 
-    public synchronized boolean isRingingAllowed() {
+    public synchronized boolean isPlayingSoundAllowed() {
         AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         int ringerMode = audioManager.getRingerMode();
         if (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -36,9 +36,10 @@ extern "C" {
 /**
  * Create a new #LinphoneAccountParams object.
  * @param lc The #LinphoneCore object. @maybenil
+ * @param use_default_values If TRUE, use proxy default values
  * @return The newly created #LinphoneAccountParams object. @notnil
  */
-LINPHONE_PUBLIC LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc);
+LINPHONE_PUBLIC LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc, bool_t use_default_values);
 
 /**
  * Create a new #LinphoneAccountParams object from a configuration.
@@ -95,7 +96,7 @@ LINPHONE_PUBLIC void *linphone_account_params_get_user_data(const LinphoneAccoun
  * @return 0 if successful, -1 otherwise.
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
-                                                                          LinphoneAddress *server_address);
+                                                                          const LinphoneAddress *server_address);
 
 /**
  * Sets the proxy address
@@ -125,7 +126,7 @@ linphone_account_params_set_server_addr(LinphoneAccountParams *params, const cha
  * @return 0 if successful, -1 otherwise.
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
-                                                                            LinphoneAddress *identity);
+                                                                            const LinphoneAddress *identity);
 
 /**
  * Sets a list of SIP route.
@@ -989,6 +990,22 @@ linphone_account_params_get_instant_messaging_encryption_mandatory(const Linphon
  */
 LINPHONE_PUBLIC void linphone_account_params_set_instant_messaging_encryption_mandatory(LinphoneAccountParams *params,
                                                                                         bool_t mandatory);
+
+/**
+ * Gets the list of supported tags.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The list of supported tags \bctbx_list{char *}. @maybenil
+ **/
+LINPHONE_PUBLIC const bctbx_list_t *
+linphone_account_params_get_supported_tags_list(const LinphoneAccountParams *params);
+
+/**
+ * Sets the list of supported tags.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param supported_tags The list of supported tags \bctbx_list{char *}. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_supported_tags_list(LinphoneAccountParams *params,
+                                                                     const bctbx_list_t *supported_tags);
 
 /**
  * @}

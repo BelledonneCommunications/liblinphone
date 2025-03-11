@@ -436,7 +436,7 @@ static void relayed_ice_turn_to_ice_with_dtls_srtp(void) {
 }
 
 /* specific test that checks that in the case of a call with DTLS-SRTP, ICE, and TURN
- * the handshake is started immediately after ICE has succesfully verified the relay pair.
+ * the handshake is started immediately after ICE has successfully verified the relay pair.
  */
 static void _ice_turn_dtls_call(const CallConfig *config) {
 	LinphoneCoreManager *marie;

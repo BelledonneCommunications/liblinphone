@@ -153,7 +153,7 @@ void create_transfer_conference_base(time_t start_time,
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, video_transfer, FALSE);
+		                                description, TRUE, security_level, video_transfer, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -331,10 +331,7 @@ void create_transfer_conference_base(time_t start_time,
 				}
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pconference), no_participants, int, "%0d");
 				BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), initialSubject);
-				LinphoneParticipant *me = linphone_conference_get_me(pconference);
-				BC_ASSERT_TRUE(linphone_participant_is_admin(me) ==
-				               ((mgr == marie.getCMgr()) || (mgr == focus.getCMgr())));
-				BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_participant_get_address(me), mgr->identity));
+				check_conference_me(pconference, ((mgr == marie.getCMgr()) || (mgr == focus.getCMgr())));
 				bctbx_list_t *participants = linphone_conference_get_participant_list(pconference);
 				for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
 					LinphoneParticipant *p = (LinphoneParticipant *)bctbx_list_get_data(itp);

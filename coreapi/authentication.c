@@ -78,11 +78,11 @@ static bool_t check_algorithm_compatibility(const LinphoneAuthInfo *ai, const ch
 		/* We have the clear text password, so if the user didn't requested a specific algorithm, we can satisfy all
 		 * algorithms.*/
 		if (ai_algorithm == NULL) return TRUE;
-	} else {
+	} else if (linphone_auth_info_get_ha1(ai)) {
 		/* If we don't have the clear text password but the ha1, and if algorithm is empty in LinphoneAuthInfo
 		 * for backward compatibility, we assume it is MD5. */
 		if (ai_algorithm == NULL && strcasecmp(algorithm, "MD5") == 0) return TRUE;
-	}
+	} /*else*/
 	/* In all other cases, algorithm must match. */
 	if (ai_algorithm && strcasecmp(algorithm, ai_algorithm) == 0) return TRUE; /* algorithm do match */
 	return FALSE;
@@ -215,7 +215,8 @@ const LinphoneAuthInfo *linphone_core_find_auth_info_to_be_replaced(LinphoneCore
 		if (cppOther->getUsername() != pinfo->getUsername()) continue;
 		if (cppOther->getRealm() != pinfo->getRealm()) continue;
 		if (cppOther->getDomain() != pinfo->getDomain()) continue;
-		if (cppOther->getAccessToken() && !pinfo->getAccessToken()) continue; /* not of the same type */
+		if ((cppOther->getAccessToken() != nullptr) ^ (pinfo->getAccessToken() != nullptr))
+			continue; /* not of the same type */
 		return pinfo->toC();
 	}
 	return nullptr;
@@ -548,6 +549,8 @@ AuthStatus linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				//  - call again _linphone_core_find_indexed_tls_auth_info to retrieve the auth_info set by the
 				//  callback. Not done as we assume that authentication on flexisip server was performed before so the
 				//  application layer already got a chance to set the correct auth_info in the core
+				//  THIS IS NOT TRUE ANYMORE: Flexisip auth is performed after the access to the lime server as the
+				//  register is performed after the lime user creation.
 			}
 			status =
 			    AuthStatus::Done; // since we can't know if server requested a client certificate, assume all is good.

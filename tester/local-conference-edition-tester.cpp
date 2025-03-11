@@ -305,6 +305,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		focus.registerAsParticipantDevice(michelle);
 		focus.registerAsParticipantDevice(lise);
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+
 		setup_conference_info_cbs(marie.getCMgr());
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 
@@ -353,7 +355,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, TRUE, enable_chat);
+		                                description, TRUE, security_level, TRUE, enable_chat, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -781,10 +783,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 					BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pconference), no_participants, int,
 					                "%0d");
 					BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), initialSubject);
-					LinphoneParticipant *me = linphone_conference_get_me(pconference);
-					BC_ASSERT_TRUE(linphone_participant_is_admin(me) ==
-					               ((mgr == marie.getCMgr()) || (mgr == focus.getCMgr())));
-					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_participant_get_address(me), mgr->identity));
+					check_conference_me(pconference, ((mgr == marie.getCMgr()) || (mgr == focus.getCMgr())));
 					bctbx_list_t *participants = linphone_conference_get_participant_list(pconference);
 					for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
 						LinphoneParticipant *p = (LinphoneParticipant *)bctbx_list_get_data(itp);
@@ -879,9 +878,9 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			if (conf_info) {
 				linphone_conference_info_set_subject(conf_info, subject);
 				linphone_conference_info_set_description(conf_info, description2);
-				// If the edition is not succesfull, the conference information is not updated
-				// It bring about that if Marie joined the conference, the old conference information information stays
-				// in the database and it has Marie as a participant
+				// If the edition is not successfull, the conference information is not updated
+				// It bring about that if Marie joined the conference, the old conference information stays in the
+				// database and it has Marie as a participant
 				size_t ics_participant_number = 0;
 				if (add) {
 					linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);
@@ -1380,7 +1379,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -1788,7 +1787,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
@@ -2312,7 +2311,7 @@ static void conference_cancelled_through_edit_while_active(void) {
 		}
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, security_level, FALSE, FALSE);
+		                                description, TRUE, security_level, FALSE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 

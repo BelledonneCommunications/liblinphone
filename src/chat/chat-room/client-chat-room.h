@@ -98,6 +98,7 @@ public:
 	void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	virtual void handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	void onExhumedConference(const ConferenceId &oldConfId, const ConferenceId &newConfId);
 	void onLocallyExhumedConference(const std::shared_ptr<Address> &remoteContact);
@@ -116,9 +117,6 @@ public:
 
 private:
 	ClientChatRoom(const std::shared_ptr<Core> &core, const std::shared_ptr<Conference> &conf);
-
-	// Create a chat room from the main database.
-	ClientChatRoom(const std::shared_ptr<Core> &core, bool hasBeenLeft = false);
 
 	virtual void sendPendingMessages() override;
 

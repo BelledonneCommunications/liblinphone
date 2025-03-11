@@ -195,7 +195,7 @@ shared_ptr<CardDAVQuery> CardDAVQuery::createAddressBookCtagPropfindQuery(CardDA
 shared_ptr<CardDAVQuery> CardDAVQuery::createPutQuery(CardDAVContext *context, const shared_ptr<Vcard> &vcard) {
 	shared_ptr<CardDAVQuery> query = make_shared<CardDAVQuery>(context);
 	query->mIfmatch = vcard->getEtag();
-	query->mBody = vcard->asVcard4String();
+	query->mBody = vcard->asVcard4StringWithBase64Picture();
 	query->mMethod = "PUT";
 	query->mUrl = vcard->getUrl();
 	query->mType = Type::Put;

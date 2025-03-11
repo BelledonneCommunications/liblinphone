@@ -108,7 +108,7 @@ const char *flexisip_tester_dns_server = "fs-test-9.linphone.org";
 // const char *flexisip_tester_dns_server = "fs-test-sandbox-2.linphone.org";
 
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
-const char *ccmp_server_url = "http://fs-test-9.linphone.org:3333/xml/";
+const char *ccmp_server_url = "http://sip.example.org:3333/xml/";
 const char *test_domain = "sipopen.example.org";
 const char *auth_domain = "sip.example.org";
 const char *test_username = "liblinphone_tester";
@@ -161,7 +161,7 @@ const int x3dhServer_creationTimeout = 20000;     // in ms, use this value for d
                                                   //
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with
             our Freebox v6 when connecting to Ipv6 addresses. It was found that the freebox sometimes block SYN-ACK
-            packets, which prevents connection to be succesful. Thanks to the timeout, it will fallback to IPv4*/
+            packets, which prevents connection to be successful. Thanks to the timeout, it will fallback to IPv4*/
 char *message_external_body_url = NULL;
 static const char *notify_content = "<somexml2>blabla</somexml2>";
 
@@ -686,7 +686,7 @@ static void conference_state_changed(LinphoneConference *conference, LinphoneCon
 	ms_free(newStateStr);
 
 	if ((newState != LinphoneConferenceStateNone) && (newState != LinphoneConferenceStateInstantiated) &&
-	    (newState != LinphoneConferenceStateCreationPending)) {
+	    (newState != LinphoneConferenceStateCreationPending) && !linphone_core_conference_server_enabled(core)) {
 		LinphoneParticipant *me = linphone_conference_get_me(conference);
 		BC_ASSERT_PTR_NOT_NULL(me);
 	}
@@ -797,11 +797,21 @@ static void conference_subject_changed(LinphoneConference *conference, BCTBX_UNU
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_subject_changed++;
 }
+
+static void
+conference_active_speaker_participant_device_changed(LinphoneConference *conference,
+                                                     BCTBX_UNUSED(const LinphoneParticipantDevice *device)) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_active_speaker_participant_device_changed++;
+}
+
 static void conference_allowed_participant_list_changed(LinphoneConference *conference) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_allowed_participant_list_changed++;
 }
+
 static void conference_participant_added(LinphoneConference *conference,
                                          BCTBX_UNUSED(LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
@@ -905,6 +915,8 @@ void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
 		    cbs, conference_participant_device_screen_sharing_changed);
 		linphone_conference_cbs_set_full_state_received(cbs, conference_full_state_received);
 		linphone_conference_cbs_set_allowed_participant_list_changed(cbs, conference_allowed_participant_list_changed);
+		linphone_conference_cbs_set_active_speaker_participant_device(
+		    cbs, conference_active_speaker_participant_device_changed);
 		linphone_conference_add_callbacks(conference, cbs);
 		linphone_conference_cbs_unref(cbs);
 	}
@@ -2026,10 +2038,9 @@ static LinphoneStatus check_participant_removal(bctbx_list_t *lcs,
 		                             (conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),
 		                             liblinphone_tester_sip_timeout));
 
-		LinphoneAddress *conf_uri = linphone_address_new(linphone_core_get_identity(conf_mgr->lc));
-		conference = linphone_core_search_conference(conf_mgr->lc, NULL, conf_uri, local_conference_address, NULL);
+		conference = linphone_core_search_conference(conf_mgr->lc, NULL, local_conference_address,
+		                                             local_conference_address, NULL);
 		BC_ASSERT_PTR_NULL(conference);
-		linphone_address_unref(conf_uri);
 	} else {
 		expected_no_participants = (participant_size - 1);
 
@@ -3008,6 +3019,7 @@ void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 		if (linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL))
 			uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL));
 		linphone_core_set_network_reachable(mgr->lc, FALSE); // to avoid unregister
+		linphone_core_stop(mgr->lc);
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
 	}
@@ -3449,6 +3461,7 @@ void messages_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), c
 	counters = get_stats(lc);
 	int count = (int)bctbx_list_size(messages);
 	counters->number_of_LinphoneAggregatedMessagesReceived += count;
+	ms_message("Received %0d aggregated messages", count);
 }
 
 void message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {
@@ -3565,7 +3578,7 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 		ms_message("Disabling subscription because friend has numeric host.");
 		linphone_friend_enable_subscribes(lf, FALSE);
 		bctbx_freeaddrinfo(ai);
-	}
+	} else linphone_friend_enable_subscribes(lf, TRUE);
 
 	linphone_core_add_friend(lc, lf); /*accept subscription*/
 }

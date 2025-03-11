@@ -118,7 +118,7 @@ public:
 
 	virtual void onRecordingStarted() const = 0;
 	virtual void onRecordingPaused() const = 0;
-	virtual bool isRingingAllowed() const = 0;
+	virtual bool isPlayingSoundAllowed() const = 0;
 	virtual void stopRinging() const = 0;
 
 	virtual void setDeviceRotation(int orientation) const = 0;
@@ -191,19 +191,19 @@ public:
 	void restorePreviousAudioRoute() override;
 
 	void start(BCTBX_UNUSED(std::shared_ptr<LinphonePrivate::Core> core)) override{};
-	void stop(void) override{};
+	void stop(void) override {};
 
 	void didRegisterForRemotePush(BCTBX_UNUSED(void *token)) override{};
 	void didRegisterForRemotePushWithStringifiedToken(BCTBX_UNUSED(const char *tokenStr)) override{};
 	void setPushAndAppDelegateDispatchQueue(BCTBX_UNUSED(void *dispatch_queue)) override{};
 	void enableAutoIterate(BCTBX_UNUSED(bool autoIterateEnabled)) override{};
 
-	void onRecordingStarted() const override{};
-	void onRecordingPaused() const override{};
-	bool isRingingAllowed() const override {
+	void onRecordingStarted() const override {};
+	void onRecordingPaused() const override {};
+	bool isPlayingSoundAllowed() const override {
 		return true;
 	};
-	void stopRinging() const override{};
+	void stopRinging() const override {};
 	void setDeviceRotation(BCTBX_UNUSED(int orientation)) const override{};
 
 protected:

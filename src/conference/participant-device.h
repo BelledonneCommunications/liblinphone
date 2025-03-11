@@ -217,6 +217,9 @@ public:
 
 	static bool isLeavingState(const ParticipantDevice::State &state);
 
+	void setSendAddedNotify(bool sendNotify);
+	bool addedNotifySent() const;
+
 protected:
 	std::shared_ptr<Conference> getConference() const;
 
@@ -241,6 +244,7 @@ private:
 	bool mIsMuted = false;
 	bool mIsSpeaking = false;
 	bool mIsScreenSharing = false;
+	bool mSendAddedNotify = true;
 
 	// The following boolean tells if the device is changing the SUBSCRIBE event. In fact, it may happen that the client
 	// and server get out of sychronization and the recovery process kicks in. The client unsubscribes and send a new
@@ -268,6 +272,14 @@ private:
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
+
+inline std::ostream &operator<<(std::ostream &os, const ParticipantDevice &device) {
+	auto address = device.getAddress();
+	auto addressStr = address ? address->toString() : std::string("sip:");
+	return os << "ParticipantDevice [" << &device << "] (" << addressStr << ")";
+	;
+	return os;
+}
 
 std::ostream &operator<<(std::ostream &stream, ParticipantDevice::State state);
 

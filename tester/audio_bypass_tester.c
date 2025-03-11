@@ -428,7 +428,7 @@ static void only_enable_payload(LinphoneCore *lc, const char *mime, int rate, in
 
 /*
  * set some conservative jitter buffer params to be more robust to late ticks.
- * This is important so that the audio comparison is succesful*/
+ * This is important so that the audio comparison is successful*/
 static void set_jitter_buffer_params(LinphoneCore *lc) {
 	int jitter_buffer_ms = 300;
 	linphone_config_set_int(linphone_core_get_config(lc), "rtp", "jitter_buffer_min_size", jitter_buffer_ms);
@@ -514,4 +514,4 @@ test_suite_t audio_bypass_suite = {"Audio Bypass",
                                    liblinphone_tester_after_each,
                                    sizeof(audio_bypass_tests) / sizeof(audio_bypass_tests[0]),
                                    audio_bypass_tests,
-                                   0};
+                                   2};

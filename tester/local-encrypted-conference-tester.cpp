@@ -30,9 +30,10 @@
 using namespace std;
 
 using namespace LinphonePrivate;
-using namespace LinphoneTest;
 
 // -----------------------------------------------------------------------------
+
+namespace LinphoneTest {
 
 enum class EktXmlContent {
 	FirstNotify,    // sSPI
@@ -73,7 +74,8 @@ static void ekt_xml_composing_parsing_test(EktXmlContent exc) {
 		}
 	}
 
-	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->createXmlFromEktInfo(ei);
+	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->createXmlFromEktInfo(
+	    ei, Account::toCpp(marieAccount)->getSharedFromThis());
 	lInfo() << "Generated XML body : " << endl << xmlBody;
 	auto outputEi = L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->createEktInfoFromXml(xmlBody);
 
@@ -116,86 +118,96 @@ static void create_simple_end_to_end_encrypted_conference() {
 	create_conference_base(ms_time(nullptr), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_simple_end_to_end_encrypted_conference_with_server_restart() {
 	create_conference_base(ms_time(nullptr), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionDTLS, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_simple_end_to_end_encrypted_conference_with_client_restart() {
 	create_conference_base(ms_time(nullptr), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionZRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       TRUE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_with_uninvited_participant() {
 	create_conference_base(ms_time(nullptr), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_with_uninvited_participant_not_allowed() {
-	create_conference_base(ms_time(nullptr), -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE,
-	                       LinphoneMediaEncryptionDTLS, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
-	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
-	                       LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	create_conference_base(
+	    ms_time(nullptr), -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionDTLS,
+	    FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+	    LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
+	    {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_starting_immediately() {
 	create_conference_base(ms_time(nullptr), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE,
 	                       LinphoneMediaEncryptionZRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_starting_in_the_past() {
-	create_conference_base(ms_time(nullptr) - 640, 11, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE,
-	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE,
-	                       FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE,
-	                       LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	create_conference_base(
+	    ms_time(nullptr) - 640, 11, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE,
+	    LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE,
+	    FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
+	    {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void create_simple_end_to_end_encrypted_conference_with_audio_only_participant() {
 	create_conference_base(ms_time(nullptr), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionDTLS, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_with_audio_only_and_uninvited_participant() {
 	create_conference_base(ms_time(nullptr), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionZRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_simple_end_to_end_encrypted_conference_with_audio_only_participant_enabling_video() {
 	create_conference_base(ms_time(nullptr), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_simple_end_to_end_encrypted_ice_conference() {
 	create_conference_base(ms_time(nullptr), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionDTLS, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
+	                       FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_terminate_call_on_version_mismatch() {
 	create_conference_base(ms_time(nullptr), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, TRUE, FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, TRUE, FALSE,
+	                       FALSE);
 }
 
 static void create_end_to_end_encrypted_conference_with_late_participant_addition() {
@@ -214,9 +226,19 @@ static void create_simple_end_to_end_encrypted_conference_dial_out() {
 	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
-	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
+	create_conference_dial_out_base(LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelEndToEnd, FALSE);
+	                                LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE);
+	linphone_video_activation_policy_unref(pol);
+}
+
+static void create_simple_end_to_end_encrypted_conference_dial_out_with_chat() {
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	create_conference_dial_out_base(LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
+	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
+	                                LinphoneConferenceSecurityLevelEndToEnd, FALSE, TRUE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -224,9 +246,9 @@ static void create_end_to_end_encrypted_conference_dial_out_terminate_call_on_ve
 	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
-	create_conference_dial_out_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
+	create_conference_dial_out_base(LinphoneConferenceLayoutActiveSpeaker, pol, FALSE, FALSE,
 	                                LinphoneConferenceParticipantListTypeClosed, TRUE, FALSE,
-	                                LinphoneConferenceSecurityLevelEndToEnd, TRUE);
+	                                LinphoneConferenceSecurityLevelEndToEnd, TRUE, FALSE);
 	linphone_video_activation_policy_unref(pol);
 }
 
@@ -252,7 +274,7 @@ static void create_simple_end_to_end_encrypted_conference_with_screen_sharing() 
 
 static void connection_method_check(LinphoneConference *conference, LinphoneParticipantDevice *participant_device) {
 	LinphoneConferenceCbs *cbs = linphone_conference_get_current_callbacks(conference);
-	auto berthe = (LinphoneCoreManager *)linphone_conference_cbs_get_user_data(cbs);
+	auto berthe = static_cast<LinphoneCoreManager *>(linphone_conference_cbs_get_user_data(cbs));
 	LinphoneParticipantDeviceJoiningMethod expected_joining_method = LinphoneParticipantDeviceJoiningMethodDialedIn;
 	if (linphone_address_weak_equal(berthe->identity, linphone_participant_device_get_address(participant_device))) {
 		expected_joining_method = LinphoneParticipantDeviceJoiningMethodDialedOut;
@@ -307,11 +329,11 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool enable_lime = true;
-		LinphoneTest::ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		LinphoneTest::ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		LinphoneTest::ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		LinphoneTest::ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		LinphoneTest::ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -392,7 +414,7 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 
 		LinphoneAddress *confAddr =
 		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
-		                                description, TRUE, LinphoneConferenceSecurityLevelEndToEnd, TRUE, FALSE);
+		                                description, TRUE, LinphoneConferenceSecurityLevelEndToEnd, TRUE, FALSE, NULL);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
 
@@ -872,16 +894,27 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 	}
 }
 
-static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted(void) {
+static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted() {
 	create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin(true);
 }
 
-static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined(void) {
+static void create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined() {
 	create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin(false);
 }
 
-static void create_encrypted_conference_with_chat(void) {
-	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE, FALSE);
+static void create_encrypted_conference_with_chat() {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, TRUE, 1, FALSE, TRUE, FALSE,
+	                                 ms_time(NULL), FALSE);
+}
+
+static void create_encrypted_conference_with_chat_and_cores_restart(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, TRUE, TRUE, 1, FALSE, TRUE, FALSE,
+	                                 (ms_time(NULL) - 45), FALSE);
+}
+
+static void create_encrypted_conference_with_chat_network_drops_and_participant_rejoining(void) {
+	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
+	                                 (ms_time(NULL) - 45), TRUE);
 }
 
 static void scheduling_failure_check(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state) {
@@ -900,8 +933,8 @@ static void scheduling_failure_check(LinphoneConferenceScheduler *scheduler, Lin
 static void failure_in_creating_end_to_end_encrypted_conference_bad_server_config() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		LinphoneTest::ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), TRUE);
-		LinphoneTest::ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), TRUE);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), TRUE);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), TRUE);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -999,87 +1032,255 @@ static void failure_in_creating_end_to_end_encrypted_conference_bad_server_confi
 	}
 }
 
+static void create_simple_end_to_end_encrypted_conference_terminated_early() {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		bool enable_lime = true;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+
+		setup_conference_info_cbs(marie.getCMgr());
+		LinphoneMediaEncryption encryption = LinphoneMediaEncryptionZRTP;
+
+		bctbx_list_t *coresList = nullptr;
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()}) {
+			LinphoneVideoActivationPolicy *pol =
+			    linphone_factory_create_video_activation_policy(linphone_factory_get());
+			linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+			linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+			linphone_core_set_video_activation_policy(mgr->lc, pol);
+			linphone_video_activation_policy_unref(pol);
+
+			linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(mgr->lc, TRUE);
+			linphone_core_enable_video_display(mgr->lc, TRUE);
+
+			if (mgr != focus.getCMgr()) {
+				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
+				linphone_core_set_media_encryption(mgr->lc, encryption);
+			}
+
+			// Enable ICE at the account level but not at the core level
+			enable_stun_in_mgr(mgr, TRUE, TRUE, FALSE, FALSE);
+
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip",
+			                        "update_call_when_ice_completed_with_dtls", FALSE);
+
+			coresList = bctbx_list_append(coresList, mgr->lc);
+		}
+
+		configure_end_to_end_encrypted_conference_server(focus);
+
+		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
+
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
+
+		stats focus_stat = focus.getStats();
+
+		std::list<LinphoneCoreManager *> participants{pauline.getCMgr()};
+		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()};
+		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr()};
+
+		time_t start_time = ms_time(nullptr);
+		time_t end_time = -1;
+		const char *initialSubject = "E2E conference - short duration";
+		const char *description = "Quick end";
+
+		bctbx_list_t *participants_info = nullptr;
+		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList;
+		participantList.insert(std::make_pair(
+		    pauline.getCMgr(), add_participant_info_to_list(&participants_info, pauline.getCMgr()->identity,
+		                                                    LinphoneParticipantRoleSpeaker, -1)));
+
+		LinphoneAddress *confAddr =
+		    create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject,
+		                                description, TRUE, LinphoneConferenceSecurityLevelEndToEnd, TRUE, TRUE, NULL);
+		BC_ASSERT_PTR_NOT_NULL(confAddr);
+		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("sip:");
+
+		// Chat room creation to send ICS
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		LinphoneCallParams *new_params = linphone_core_create_call_params(pauline.getLc(), nullptr);
+		linphone_call_params_set_media_encryption(new_params, encryption);
+		linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
+		ms_message("%s is entering conference %s", linphone_core_get_identity(pauline.getLc()), conference_address_str);
+		linphone_core_invite_address_with_params_2(pauline.getLc(), confAddr, new_params, nullptr, nullptr);
+		linphone_call_params_unref(new_params);
+		LinphoneCall *pauline_call = linphone_core_get_call_by_remote_address2(pauline.getLc(), confAddr);
+		BC_ASSERT_PTR_NOT_NULL(pauline_call);
+		if (pauline_call) {
+			LinphoneCallLog *call_log = linphone_call_get_call_log(pauline_call);
+			BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallOutgoingProgress, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &pauline.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneSubscriptionActive, 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyFullStateReceived, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		ms_message("%s terminates the call to conference %s", linphone_core_get_identity(pauline.getLc()),
+		           conference_address_str);
+		LinphoneConference *pauline_conference = linphone_core_search_conference_2(pauline.getLc(), confAddr);
+		BC_ASSERT_PTR_NOT_NULL(pauline_conference);
+		linphone_conference_terminate(pauline_conference);
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallReleased, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
+		                             focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
+		                             focus_stat.number_of_LinphoneCallReleased + 1, liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneSubscriptionTerminated, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateTerminationPending,
+		                             1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateTerminated, 1,
+		                             liblinphone_tester_sip_timeout));
+		// The conference doesn't go through the Deleted state as it has chat capabilities
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_search_conference_2(pauline.getLc(), confAddr));
+
+		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
+		ms_free(conference_address_str);
+		linphone_address_unref(confAddr);
+		bctbx_list_free(coresList);
+	}
+}
+
+static void create_simple_end_to_end_encrypted_conference_merging_calls() {
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE,
+	                                            LinphoneConferenceSecurityLevelEndToEnd, FALSE);
+}
+
+static void encrypted_conference_joined_multiple_times(void) {
+	conference_joined_multiple_times(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1);
+}
+
+} // namespace LinphoneTest
+
 static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
-    TEST_ONE_TAG("First notify", first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
-    TEST_ONE_TAG("SPI info", spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
-    TEST_ONE_TAG("Cipher transport", cipher_transport_ekt_xml_composing_parsing_test, "End2EndConf"),
-    TEST_ONE_TAG(
-        "Create simple end-to-end encrypted conference", create_simple_end_to_end_encrypted_conference, "End2EndConf"),
+    TEST_ONE_TAG("First notify", LinphoneTest::first_notify_ekt_xml_composing_parsing_test, "End2EndConf"),
+    TEST_ONE_TAG("SPI info", LinphoneTest::spi_info_ekt_xml_composing_parsing_test, "End2EndConf"),
+    TEST_ONE_TAG("Cipher transport", LinphoneTest::cipher_transport_ekt_xml_composing_parsing_test, "End2EndConf"),
+    TEST_ONE_TAG("End-to-End Conference joined multiple times",
+                 LinphoneTest::encrypted_conference_joined_multiple_times,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple end-to-end encrypted conference",
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference,
+                 "End2EndConf"),
     TEST_TWO_TAGS("Create simple end-to-end encrypted conference with server restart",
-                  create_simple_end_to_end_encrypted_conference_with_server_restart,
+                  LinphoneTest::create_simple_end_to_end_encrypted_conference_with_server_restart,
                   "LeaksMemory",
                   "End2EndConf"),
     TEST_TWO_TAGS("Create simple end-to-end encrypted conference with client restart",
-                  create_simple_end_to_end_encrypted_conference_with_client_restart,
+                  LinphoneTest::create_simple_end_to_end_encrypted_conference_with_client_restart,
                   "LeaksMemory",
                   "End2EndConf"),
     TEST_TWO_TAGS("Create simple end-to-end encrypted ICE conference",
-                  create_simple_end_to_end_encrypted_ice_conference,
+                  LinphoneTest::create_simple_end_to_end_encrypted_ice_conference,
                   "ICE",
                   "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted conference with screen sharing override",
-                 create_simple_end_to_end_encrypted_conference_with_screen_sharing,
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_with_screen_sharing,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with uninvited participant",
-                 create_end_to_end_encrypted_conference_with_uninvited_participant,
+                 LinphoneTest::create_end_to_end_encrypted_conference_with_uninvited_participant,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with uninvited participant not allowed",
-                 create_end_to_end_encrypted_conference_with_uninvited_participant_not_allowed,
+                 LinphoneTest::create_end_to_end_encrypted_conference_with_uninvited_participant_not_allowed,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with late participant addition declined",
-                 create_end_to_end_encrypted_conference_with_late_participant_addition_declined,
+                 LinphoneTest::create_end_to_end_encrypted_conference_with_late_participant_addition_declined,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference starting immediately",
-                 create_end_to_end_encrypted_conference_starting_immediately,
+                 LinphoneTest::create_end_to_end_encrypted_conference_starting_immediately,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference starting in the past",
-                 create_end_to_end_encrypted_conference_starting_in_the_past,
+                 LinphoneTest::create_end_to_end_encrypted_conference_starting_in_the_past,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with late participant addition",
-                 create_end_to_end_encrypted_conference_with_late_participant_addition,
+                 LinphoneTest::create_end_to_end_encrypted_conference_with_late_participant_addition,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference terminate call on version mismatch",
-                 create_end_to_end_encrypted_conference_terminate_call_on_version_mismatch,
+                 LinphoneTest::create_end_to_end_encrypted_conference_terminate_call_on_version_mismatch,
                  "End2EndConf"),
-    TEST_ONE_TAG("Create simple end-to-end encrypted conference with participant added by admin call accepted",
-                 create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted,
-                 "End2EndConf"),
-    TEST_ONE_TAG("Create simple end-to-end encrypted conference with participant added by admin call declined",
-                 create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined,
-                 "End2EndConf"),
-    TEST_ONE_TAG("Create encrypted conference with chat", create_encrypted_conference_with_chat, "End2EndConf"),
+    TEST_ONE_TAG(
+        "Create simple end-to-end encrypted conference with participant added by admin call accepted",
+        LinphoneTest::create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_accepted,
+        "End2EndConf"),
+    TEST_ONE_TAG(
+        "Create simple end-to-end encrypted conference with participant added by admin call declined",
+        LinphoneTest::create_simple_end_to_end_encrypted_conference_with_participant_added_by_admin_call_declined,
+        "End2EndConf"),
     TEST_ONE_TAG("Failure in creating end-to-end encrypted conference bad server config",
-                 failure_in_creating_end_to_end_encrypted_conference_bad_server_config,
+                 LinphoneTest::failure_in_creating_end_to_end_encrypted_conference_bad_server_config,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple encrypted conference terminated early",
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_terminated_early,
+                 "End2EndConf"),
+};
+
+static test_t local_conference_end_to_end_encryption_scheduled_conference_with_chat_tests[] = {
+    TEST_ONE_TAG(
+        "Create encrypted conference with chat", LinphoneTest::create_encrypted_conference_with_chat, "End2EndConf"),
+    TEST_TWO_TAGS("Create encrypted conference with chat and cores restart",
+                  LinphoneTest::create_encrypted_conference_with_chat_and_cores_restart,
+                  "LeaksMemory",
+                  "End2EndConf"),
+    TEST_ONE_TAG("Create encrypted conference with chat network drops and participant rejoining",
+                 LinphoneTest::create_encrypted_conference_with_chat_network_drops_and_participant_rejoining,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple end-to-end encrypted dial out conference with chat",
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out_with_chat,
                  "End2EndConf"),
 };
 
 static test_t local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests[] = {
     TEST_ONE_TAG("Create simple end-to-end encrypted conference with audio only participant",
-                 create_simple_end_to_end_encrypted_conference_with_audio_only_participant,
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_with_audio_only_participant,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with audio only and uninvited participant",
-                 create_end_to_end_encrypted_conference_with_audio_only_and_uninvited_participant,
+                 LinphoneTest::create_end_to_end_encrypted_conference_with_audio_only_and_uninvited_participant,
                  "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted conference with audio only participant enabling video",
-                 create_simple_end_to_end_encrypted_conference_with_audio_only_participant_enabling_video,
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_with_audio_only_participant_enabling_video,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted conference with audio only participants",
-                 create_end_to_end_encryption_conference_with_audio_only_participants,
+                 LinphoneTest::create_end_to_end_encryption_conference_with_audio_only_participants,
                  "End2EndConf"),
 };
 
 static test_t local_conference_end_to_end_encryption_impromptu_conference_tests[] = {
     TEST_ONE_TAG("Create simple end-to-end encrypted dial out conference",
-                 create_simple_end_to_end_encrypted_conference_dial_out,
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out,
                  "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted conference dial out with some calls declined",
-                 create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_declined,
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_declined,
                  "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted conference dial out with some calls busy",
-                 create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_busy,
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_busy,
                  "End2EndConf"),
     TEST_ONE_TAG("Create end-to-end encrypted dial out conference terminate call on version mismatch",
-                 create_end_to_end_encrypted_conference_dial_out_terminate_call_on_version_mismatch,
+                 LinphoneTest::create_end_to_end_encrypted_conference_dial_out_terminate_call_on_version_mismatch,
+                 "End2EndConf"),
+    TEST_ONE_TAG("Create simple end-to-end encrypted conference by merging calls",
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_merging_calls,
                  "End2EndConf"),
 };
 
@@ -1106,6 +1307,19 @@ test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_confere
     local_conference_end_to_end_encryption_scheduled_conference_audio_only_participant_tests,
     0,
     4};
+
+test_suite_t local_conference_test_suite_end_to_end_encryption_scheduled_conference_with_chat = {
+    "Local conference tester (End to end encryption Conference with chat)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_end_to_end_encryption_scheduled_conference_with_chat_tests) /
+        sizeof(local_conference_end_to_end_encryption_scheduled_conference_with_chat_tests[0]),
+    local_conference_end_to_end_encryption_scheduled_conference_with_chat_tests,
+    0,
+    4 /*cpu_weight : video conference uses more resources */
+};
 
 test_suite_t local_conference_test_suite_end_to_end_encryption_impromptu_conference = {
     "Local conference tester (Impromptu Conference End to end encryption)",

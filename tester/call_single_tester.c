@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -3331,9 +3331,11 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	linphone_call_ref(call_pauline);
 
 	const LinphoneCallParams *marie_call_lparams = linphone_call_get_params(call_marie);
+	BC_ASSERT_FALSE(linphone_call_params_ringing_disabled(marie_call_lparams));
 	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(marie_call_lparams));
 
 	const LinphoneCallParams *pauline_call_lparams = linphone_call_get_params(call_pauline);
+	BC_ASSERT_FALSE(linphone_call_params_ringing_disabled(pauline_call_lparams));
 	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(pauline_call_lparams));
 
 	/*check if video stream is not offered*/
@@ -5860,7 +5862,7 @@ static void call_state_changed_3(BCTBX_UNUSED(LinphoneCore *lc),
 	ms_free(from);
 }
 
-static void call_with_transport_change_base(bool_t succesfull_call) {
+static void call_with_transport_change_base(bool_t successfull_call) {
 	LinphoneSipTransports sip_tr;
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
@@ -5894,14 +5896,14 @@ static void call_with_transport_change_base(bool_t succesfull_call) {
 		}
 	}
 
-	if (succesfull_call) {
+	if (successfull_call) {
 		BC_ASSERT_TRUE(call(marie, pauline));
 		end_call(marie, pauline);
 	} else linphone_core_invite(marie->lc, "nexiste_pas");
 
-	if (succesfull_call) BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+	if (successfull_call) BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
-	if (succesfull_call) {
+	if (successfull_call) {
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
 	}
@@ -6990,6 +6992,7 @@ static void simple_call_with_gruu(void) {
 	BC_ASSERT_TRUE(linphone_address_has_uri_param(pauline_addr, "gr"));
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(pauline_addr), "sip.example.org");
 
+	linphone_core_disable_call_ringing(marie->lc, TRUE);
 	linphone_core_enable_call_tone_indications(marie->lc, FALSE);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline_addr);
@@ -7019,9 +7022,11 @@ static void simple_call_with_gruu(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 
 	const LinphoneCallParams *marie_call_lparams = linphone_call_get_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_ringing_disabled(marie_call_lparams));
 	BC_ASSERT_FALSE(linphone_call_params_tone_indications_enabled(marie_call_lparams));
 
 	const LinphoneCallParams *pauline_call_lparams = linphone_call_get_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_ringing_disabled(pauline_call_lparams));
 	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(pauline_call_lparams));
 
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(marie_call));
@@ -7954,6 +7959,15 @@ void call_with_core_without_media(void) {
 	linphone_core_set_nortp_timeout(pauline->lc, 3);
 
 	disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
+	// disable_all_video_codecs_except_one(pauline->lc, "vp8");
+
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_core_set_video_activation_policy(pauline->lc, pol);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_video_activation_policy_unref(pol);
 
 	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
 	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
@@ -8139,8 +8153,9 @@ void call_with_core_without_media(void) {
 	    "a=ssrc:1592583860 cname:mPaUVqJCMZayFJgz\r\n"
 	    "a=ssrc:1592583860 msid:dee12576-f30b-4893-83d3-eac27ee10d8d e879805a-7d32-4872-9781-3b0a5ae539ff\r\n");
 
-	BC_ASSERT_PTR_NOT_NULL(
-	    linphone_core_invite_address_with_params_2(marie->lc, pauline->identity, params, "Coucou", content));
+	linphone_call_params_add_custom_content(params, content);
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params_2(marie->lc, pauline->identity, params, "", NULL));
 	linphone_content_unref(content);
 	linphone_call_params_unref(params);
 

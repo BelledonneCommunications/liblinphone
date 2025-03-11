@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,10 +19,9 @@
  */
 
 #include "linphone/api/c-account-params.h"
+
 #include "account/account-params.h"
-#include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
-#include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "linphone/utils/utils.h"
@@ -33,16 +32,16 @@
 
 using namespace LinphonePrivate;
 
-LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc) {
-	return AccountParams::createCObject(lc);
+LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc, bool_t use_default_values) {
+	return AccountParams::createCObject(lc, !!use_default_values);
 }
 
 LinphoneAccountParams *linphone_account_params_new_with_config(LinphoneCore *lc, int index) {
 	char key[50];
-	sprintf(key, "proxy_%i", index); // TODO: change to account
+	snprintf(key, sizeof(key), "proxy_%i", index); // TODO: change to account
 
 	if (!linphone_config_has_section(linphone_core_get_config(lc), key)) {
-		return NULL;
+		return nullptr;
 	}
 
 	return AccountParams::createCObject(lc, index);
@@ -70,16 +69,17 @@ void *linphone_account_params_get_user_data(const LinphoneAccountParams *params)
 }
 
 LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
-                                                          LinphoneAddress *server_address) {
-	return AccountParams::toCpp(params)->setServerAddress(Address::toCpp(server_address)->getSharedFromThis());
+                                                          const LinphoneAddress *server_address) {
+	return AccountParams::toCpp(params)->setServerAddress(bellesip::getSharedPtr<Address>(server_address));
 }
 
 LinphoneStatus linphone_account_params_set_server_addr(LinphoneAccountParams *params, const char *server_address) {
 	return AccountParams::toCpp(params)->setServerAddressAsString(L_C_TO_STRING(server_address));
 }
 
-LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params, LinphoneAddress *identity) {
-	return AccountParams::toCpp(params)->setIdentityAddress(Address::toCpp(identity)->getSharedFromThis());
+LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
+                                                            const LinphoneAddress *identity) {
+	return AccountParams::toCpp(params)->setIdentityAddress(bellesip::getSharedPtr<Address>(identity));
 }
 
 LinphoneStatus linphone_account_params_set_routes_addresses(LinphoneAccountParams *params, const bctbx_list_t *routes) {
@@ -183,7 +183,7 @@ void linphone_account_params_set_realm(LinphoneAccountParams *params, const char
 }
 
 bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params) {
-	bctbx_list_t *route_list = NULL;
+	bctbx_list_t *route_list = nullptr;
 	for (const auto &route : AccountParams::toCpp(params)->getRoutes()) {
 		route_list = bctbx_list_append(route_list, route->toC());
 	}
@@ -191,7 +191,7 @@ bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccount
 }
 
 const LinphoneAddress *linphone_account_params_get_identity_address(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getIdentityAddress()->toC();
+	return toC(AccountParams::toCpp(params)->getIdentityAddress());
 }
 
 const char *linphone_account_params_get_identity(const LinphoneAccountParams *params) {
@@ -271,7 +271,7 @@ LinphonePrivacyMask linphone_account_params_get_privacy(const LinphoneAccountPar
 }
 
 void linphone_account_params_set_file_transfer_server(LinphoneAccountParams *params, const char *server_url) {
-	AccountParams::toCpp(params)->setFileTranferServer(std::string(server_url));
+	AccountParams::toCpp(params)->setFileTransferServer(std::string(server_url));
 }
 
 const char *linphone_account_params_get_file_transfer_server(const LinphoneAccountParams *params) {
@@ -491,7 +491,7 @@ void linphone_account_params_set_mwi_server_address(LinphoneAccountParams *param
 }
 
 const LinphoneAddress *linphone_account_params_get_mwi_server_address(const LinphoneAccountParams *params) {
-	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getMwiServerAddress();
+	const std::shared_ptr<const Address> addr = AccountParams::toCpp(params)->getMwiServerAddress();
 	return addr ? addr->toC() : nullptr;
 }
 
@@ -500,7 +500,7 @@ void linphone_account_params_set_voicemail_address(LinphoneAccountParams *params
 }
 
 const LinphoneAddress *linphone_account_params_get_voicemail_address(const LinphoneAccountParams *params) {
-	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getVoicemailAddress();
+	const std::shared_ptr<const Address> addr = AccountParams::toCpp(params)->getVoicemailAddress();
 	return addr ? addr->toC() : nullptr;
 }
 
@@ -511,4 +511,17 @@ bool_t linphone_account_params_get_instant_messaging_encryption_mandatory(const 
 void linphone_account_params_set_instant_messaging_encryption_mandatory(LinphoneAccountParams *params,
                                                                         bool_t mandatory) {
 	AccountParams::toCpp(params)->setInstantMessagingEncryptionMandatory(mandatory);
+}
+
+const bctbx_list_t *linphone_account_params_get_supported_tags_list(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getSupportedTagsCList();
+}
+
+void linphone_account_params_set_supported_tags_list(LinphoneAccountParams *params,
+                                                     const bctbx_list_t *supported_tags) {
+	list<string> supportedTagsList = {};
+	for (auto tag = supported_tags; tag != nullptr; tag = tag->next) {
+		supportedTagsList.push_back(string((char *)tag->data));
+	}
+	AccountParams::toCpp(params)->setSupportedTagsList(supportedTagsList);
 }

@@ -719,7 +719,7 @@ typedef enum _LinphoneLogCollectionState {
 } LinphoneLogCollectionState;
 
 /**
- * @brief Used to notify if log collection upload have been succesfully delivered or not.
+ * @brief Used to notify if log collection upload have been successfully delivered or not.
  * @ingroup initializing
  */
 typedef enum _LinphoneCoreLogCollectionUploadState {
@@ -1353,7 +1353,7 @@ typedef struct _LinphoneRange LinphoneRange;
 
 /**
  * @brief Status code returned by some functions to
- * notify whether the execution has been succesfully
+ * notify whether the execution has been successfully
  * done or not.
  * @ingroup misc
  */

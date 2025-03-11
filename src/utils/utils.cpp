@@ -24,8 +24,10 @@
 #include <list>
 #include <sstream>
 
-#include <bctoolbox/charconv.h>
-#include <bctoolbox/port.h>
+#include "bctoolbox/charconv.h"
+#include "bctoolbox/defs.h"
+#include "bctoolbox/port.h"
+#include "bctoolbox/vfs_encrypted.hh"
 
 #include "c-wrapper/internal/c-tools.h"
 #include "conference/conference-info.h"
@@ -162,6 +164,11 @@ bool Utils::containsInsensitive(const string &haystack, const string &needle) {
 	string lowercaseHaystack = stringToLower(haystack);
 	string lowercaseNeedle = stringToLower(needle);
 	return lowercaseHaystack.find(lowercaseNeedle) != std::string::npos;
+}
+
+bool Utils::endsWith(const string &haystack, const string &needle) {
+	if (needle.size() > haystack.size()) return false;
+	return std::equal(needle.rbegin(), needle.rend(), haystack.rbegin());
 }
 
 std::vector<string> Utils::stringToLower(const std::vector<string> &strs) {
@@ -467,7 +474,7 @@ std::shared_ptr<Address> Utils::getSipAddress(const std::string &str, const std:
 	return address;
 }
 
-std::string Utils::getXconId(const std::shared_ptr<Address> &address) {
+std::string Utils::getXconId(const std::shared_ptr<const Address> &address) {
 	// CCMP user ID can only be made up by only 40 different characters
 	// (https://www.rfc-editor.org/rfc/rfc6501#section-4.6.5) We are therefore taking the identity and transform invalid
 	// characters into valid ones in a way that the resulting string is unique for any given mIdentity string
@@ -633,6 +640,40 @@ Utils::configGetStringList(LpConfig *lpconfig, const std::string &section, const
 		bctbx_list_free_with_data(c_list, (bctbx_list_free_func)bctbx_free);
 	}
 	return cppList;
+}
+
+string Utils::getFileExtension(const string &filePath) {
+	size_t pos = filePath.rfind('.', filePath.length());
+	if (pos != string::npos) {
+		return (filePath.substr(pos + 1, filePath.length() - pos));
+	}
+
+	return "";
+}
+
+string Utils::convertFileToBase64(const string &filePath) {
+	auto file = bctbx_file_open(bctbx_vfs_get_standard(), filePath.c_str(), "r");
+	size_t file_size = (size_t)bctbx_file_size(file);
+	unsigned char *buffer = (unsigned char *)bctbx_malloc(file_size);
+	bctbx_file_read(file, buffer, file_size, 0);
+	bctbx_file_close(file);
+
+	size_t b64Size = 0;
+	bctbx_base64_encode(nullptr, &b64Size, buffer, file_size);
+	unsigned char *base64Buffer = (unsigned char *)bctbx_malloc(b64Size + 1);
+	bctbx_base64_encode(base64Buffer, &b64Size, buffer, file_size);
+	base64Buffer[b64Size] = '\0';
+
+	string base64AsString = "data:image/";
+	string fileExtension = Utils::getFileExtension(filePath);
+	base64AsString.append(fileExtension);
+	base64AsString.append(";base64,");
+	base64AsString.append(std::string((char *)base64Buffer));
+
+	bctbx_free(buffer);
+	bctbx_free(base64Buffer);
+
+	return base64AsString;
 }
 
 LINPHONE_END_NAMESPACE

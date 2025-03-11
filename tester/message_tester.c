@@ -1416,6 +1416,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 	BC_ASSERT_PTR_NOT_NULL(content);
 	file_transfer_size = (int)linphone_content_get_file_size(content);
 	BC_ASSERT_NOT_EQUAL(0, file_transfer_size, int, "%d");
+	BC_ASSERT_PTR_NULL(linphone_content_get_related_chat_message_id(content));
 
 	if (two_files) {
 		FILE *file_to_send = NULL;
@@ -1433,6 +1434,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 		linphone_content_set_size(content, file_size); /*total size to be transferred*/
 		linphone_content_set_name(content, "ahbahouaismaisbon.wav");
 		linphone_content_set_user_data(content, file_to_send);
+		BC_ASSERT_PTR_NULL(linphone_content_get_related_chat_message_id(content));
 
 		linphone_chat_message_add_file_content(msg, content);
 		BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
@@ -1641,6 +1643,8 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 				BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), expected_filename);
 				compare_files(send_filepath, linphone_content_get_file_path(content));
 				BC_ASSERT_STRING_NOT_EQUAL(linphone_content_get_subtype(content), "vnd.gsma.rcs-ft-http+xml");
+				BC_ASSERT_STRING_EQUAL(linphone_content_get_related_chat_message_id(content),
+				                       linphone_chat_message_get_message_id(msg));
 
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
@@ -4610,7 +4614,7 @@ static int message_tester_before_suite(void) {
 	command = bctbx_strdup_printf("mkdir -p %s/.local/share/linphone", home);
 	err = system(command);
 	if (err != -1 && WIFEXITED(err) && WEXITSTATUS(err) == 0) {
-		bctbx_message("%s done succesfully.", command);
+		bctbx_message("%s done successfully.", command);
 	} else {
 		bctbx_error("%s failed. Some tests may fail.", command);
 	}

@@ -61,7 +61,7 @@ LinphoneChatRoom *linphone_core_create_client_group_chat_room(LinphoneCore *lc, 
 	return linphone_core_create_client_group_chat_room_2(lc, subject, fallback, FALSE);
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc,
                                                                 const char *subject,
                                                                 bool_t fallback,
@@ -71,7 +71,7 @@ LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc
 	    ->toC();
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc,
                                                  const LinphoneChatRoomParams *params,
                                                  const LinphoneAddress *localAddr,
@@ -84,7 +84,7 @@ LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc,
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const char *subject,
@@ -96,7 +96,7 @@ LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc,
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *
 linphone_core_create_chat_room_3(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants) {
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
@@ -106,7 +106,7 @@ linphone_core_create_chat_room_3(LinphoneCore *lc, const char *subject, const bc
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const LinphoneAddress *localAddr,
@@ -117,7 +117,7 @@ LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc,
 	return result;
 }
 
-// Deprecated see linphone_core_create_chat_room_6
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const LinphoneAddress *participant) {
 	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)participant);
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
@@ -127,33 +127,37 @@ LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const Linph
 	return result;
 }
 
+// Deprecated see linphone_core_create_chat_room_7
 LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const LinphoneAddress *localAddr,
                                                    const bctbx_list_t *participants) {
-	return linphone_core_create_chat_room_7(lc, params, localAddr, participants);
+	LinphoneConferenceParams *cloned_params = NULL;
+	if (params) {
+		cloned_params = linphone_conference_params_clone(params);
+	} else {
+		cloned_params = linphone_core_create_conference_params_2(lc, NULL);
+	}
+	if (!linphone_conference_params_get_account(cloned_params) && localAddr) {
+		linphone_conference_params_set_account(cloned_params, linphone_core_lookup_account_by_identity(lc, localAddr));
+	}
+	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_7(lc, cloned_params, participants);
+	if (cloned_params) {
+		linphone_conference_params_unref(cloned_params);
+	}
+	return chat_room;
 }
 
 LinphoneChatRoom *linphone_core_create_chat_room_7(LinphoneCore *lc,
                                                    const LinphoneConferenceParams *params,
-                                                   const LinphoneAddress *localAddr,
                                                    const bctbx_list_t *participants) {
 	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	// If a participant has an invalid address, the pointer to its address is NULL.
-	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
-	std::list<std::shared_ptr<const LinphonePrivate::Address>> participantsList;
-	for (const bctbx_list_t *elem = participants; elem != NULL; elem = elem->next) {
-		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
-		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
-	}
-
-	shared_ptr<const LinphonePrivate::Address> identityAddress =
-	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
-	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
+	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, Address>(participants);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
-	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(conferenceParams, identityAddress, participantsList);
+	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(conferenceParams, participantsList);
 	if (room) {
 		auto cRoom = room->toC();
 		linphone_chat_room_ref(cRoom);
@@ -180,14 +184,20 @@ LinphoneChatRoom *linphone_core_search_chat_room_2(const LinphoneCore *lc,
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
-	    LinphonePrivate::Address::getCppListFromCList(participants);
-	shared_ptr<const LinphonePrivate::Address> identityAddress =
-	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
-	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, Address>(participants);
+	shared_ptr<const LinphonePrivate::Address> localAddress =
+	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =
 	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(
-	    conferenceParams, identityAddress, remoteAddress, participantsList);
+	    conferenceParams, localAddress, remoteAddress, participantsList);
+	if (room) return room->toC();
+	return NULL;
+}
+
+LinphoneChatRoom *linphone_core_search_chat_room_by_identifier(const LinphoneCore *lc, const char *identifier) {
+	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
+	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(L_C_TO_STRING(identifier));
 	if (room) return room->toC();
 	return NULL;
 }
@@ -207,15 +217,15 @@ void linphone_core_delete_chat_room(LinphoneCore *lc, LinphoneChatRoom *cr) {
 	LinphonePrivate::AbstractChatRoom::toCpp(cr)->deleteFromDb();
 }
 
-// Deprecated see linphone_core_search_chat_room
+// Deprecated see linphone_core_search_chat_room_2
 LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *lc, const LinphoneAddress *peerAddr) {
 	return linphone_core_get_chat_room_2(lc, peerAddr, NULL);
 }
 
-// Deprecated see linphone_core_search_chat_room
+// Deprecated see linphone_core_search_chat_room_2
 LinphoneChatRoom *
 linphone_core_get_chat_room_2(LinphoneCore *lc, const LinphoneAddress *peer_addr, const LinphoneAddress *local_addr) {
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
+	LinphoneChatRoom *result = linphone_core_search_chat_room_2(lc, NULL, local_addr, peer_addr, NULL);
 	if (result == NULL) {
 		bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
 		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
@@ -229,7 +239,7 @@ linphone_core_get_chat_room_2(LinphoneCore *lc, const LinphoneAddress *peer_addr
 	return result;
 }
 
-// Deprecated see linphone_core_search_chat_room
+// Deprecated see linphone_core_search_chat_room_2
 LinphoneChatRoom *linphone_core_get_chat_room_from_uri(LinphoneCore *lc, const char *to) {
 	LinphoneAddress *addr = linphone_core_interpret_url(lc, to);
 	LinphoneChatRoom *room = linphone_core_get_chat_room(lc, addr);
@@ -237,15 +247,15 @@ LinphoneChatRoom *linphone_core_get_chat_room_from_uri(LinphoneCore *lc, const c
 	return room;
 }
 
-// Deprecated see linphone_core_search_chat_room
+// Deprecated see linphone_core_search_chat_room_2
 LinphoneChatRoom *linphone_core_find_chat_room(const LinphoneCore *lc,
                                                const LinphoneAddress *peer_addr,
                                                const LinphoneAddress *local_addr) {
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
+	LinphoneChatRoom *result = linphone_core_search_chat_room_2(lc, NULL, local_addr, peer_addr, NULL);
 	return result;
 }
 
-// Deprecated see linphone_core_search_chat_room
+// Deprecated see linphone_core_search_chat_room_2
 LinphoneChatRoom *linphone_core_find_one_to_one_chat_room(const LinphoneCore *lc,
                                                           const LinphoneAddress *local_addr,
                                                           const LinphoneAddress *participant_addr) {
@@ -263,7 +273,7 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room(const LinphoneCore *lc
 	return result;
 }
 
-// Deprecated see linphone_core_search_chat_room
+// Deprecated see linphone_core_search_chat_room_2
 LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2(const LinphoneCore *lc,
                                                             const LinphoneAddress *local_addr,
                                                             const LinphoneAddress *participant_addr,

@@ -898,9 +898,14 @@ void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path)
 			lc->friends_db_file = ms_strdup(path);
 		}
 
-		if (L_GET_PRIVATE(lc->cppPtr)->mainDb) {
-			L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
-			linphone_core_friends_storage_resync_friends_lists(lc);
+		auto &mainDb = L_GET_PRIVATE(lc->cppPtr)->mainDb;
+		if (mainDb && mainDb->isInitialized()) {
+			if (mainDb->import(LinphonePrivate::MainDb::Sqlite3, path))
+				linphone_core_friends_storage_resync_friends_lists(lc);
+		} else {
+			ms_warning(
+			    "Database has not been initialized, therefore it is not possible to import friends database at path %s",
+			    path);
 		}
 	}
 }

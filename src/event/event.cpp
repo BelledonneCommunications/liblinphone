@@ -42,8 +42,9 @@ Event::~Event() {
 
 	if (mEi) linphone_error_info_unref(mEi);
 	try {
-		if (getCore()) {
-			LinphoneCore *lc = this->getCore()->getCCore();
+		auto core = getCore();
+		if (core) {
+			LinphoneCore *lc = core->getCCore();
 			if (lc != NULL && linphone_core_get_global_state(lc) != LinphoneGlobalOff) {
 				if (mOp) mOp->release();
 			}
@@ -52,6 +53,29 @@ Event::~Event() {
 	}
 
 	if (mSendCustomHeaders) sal_custom_header_free(mSendCustomHeaders);
+}
+
+void Event::fillOpFields() {
+	if (!mOp) return;
+	auto dir = mOp->getDir();
+	auto resourceSalAddress = (dir == SalOp::Dir::Incoming) ? mOp->getToAddress() : mOp->getFromAddress();
+	auto accountIdentity = Address::create(resourceSalAddress);
+	auto account = getCore()->findAccountByIdentityAddress(accountIdentity);
+	if (account) {
+		// Set the contact address to avoid putting down a local address
+		auto state = account->getState();
+		auto contactAddress = account->getContactAddress();
+		if (contactAddress && contactAddress->isValid() && (state == LinphoneRegistrationOk)) {
+			// setContactAddress clones the SalAddress
+			Address contactUri(contactAddress->getUri());
+			contactUri.merge(*accountIdentity);
+			mOp->setContactAddress(contactUri.getImpl());
+		}
+		auto realm = account->getAccountParams()->getRealm();
+		if (!realm.empty()) {
+			mOp->setRealm(L_STRING_TO_C(realm));
+		}
+	}
 }
 
 LinphoneReason Event::getReason() const {
@@ -111,19 +135,19 @@ const std::string &Event::getCallId() const {
 	return mOp->getCallId();
 }
 
-const std::shared_ptr<Address> Event::getResource() const {
+std::shared_ptr<Address> Event::getResource() const {
 	return cacheTo();
 }
 
-const std::shared_ptr<Address> Event::getRequestAddress() const {
+std::shared_ptr<Address> Event::getRequestAddress() const {
 	return cacheRequestAddress();
 }
 
-void Event::setRequestAddress(const std::shared_ptr<Address> &requestAddress) {
+void Event::setRequestAddress(const std::shared_ptr<const Address> &requestAddress) {
 	mRequestAddress = requestAddress->clone()->toSharedPtr();
 }
 
-const std::shared_ptr<Address> Event::getRemoteContact() const {
+std::shared_ptr<Address> Event::getRemoteContact() const {
 	if (!mRemoteContactAddress) {
 		mRemoteContactAddress = Address::create();
 	}
@@ -131,7 +155,7 @@ const std::shared_ptr<Address> Event::getRemoteContact() const {
 	return mRemoteContactAddress;
 }
 
-const std::shared_ptr<Address> Event::cacheFrom() const {
+std::shared_ptr<Address> Event::cacheFrom() const {
 	if (!mFromAddress) {
 		mFromAddress = Address::create();
 	}
@@ -139,7 +163,7 @@ const std::shared_ptr<Address> Event::cacheFrom() const {
 	return mFromAddress;
 }
 
-const std::shared_ptr<Address> Event::cacheTo() const {
+std::shared_ptr<Address> Event::cacheTo() const {
 	if (!mToAddress) {
 		mToAddress = Address::create();
 	}
@@ -147,7 +171,7 @@ const std::shared_ptr<Address> Event::cacheTo() const {
 	return mToAddress;
 }
 
-const std::shared_ptr<Address> Event::cacheRequestAddress() const {
+std::shared_ptr<Address> Event::cacheRequestAddress() const {
 	if (!mRequestAddress) {
 		mRequestAddress = Address::create();
 	}

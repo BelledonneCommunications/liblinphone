@@ -40,7 +40,7 @@ public:
 
 	bool isActive() const;
 
-	/* Returns true if ICE has completed succesfully. */
+	/* Returns true if ICE has completed successfully. */
 	bool hasCompleted() const;
 
 	/* Returns true if ICE is running. */

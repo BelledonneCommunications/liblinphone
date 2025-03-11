@@ -58,7 +58,7 @@ public:
 	 *conferencing server
 	 * @param[in]  The Address of the conference focus.
 	 **/
-	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) = 0;
+	virtual void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) = 0;
 
 	/*
 	 * Set the subject of this conference in UTF8. If not focus,  this operation is only available if the local
@@ -66,13 +66,6 @@ public:
 	 * @param[in] subject The new subject to set for the chat room
 	 */
 	virtual void setUtf8Subject(const std::string &subject) = 0;
-
-	/*
-	 *Set participant representing myself in this Conference.
-	 *If set this participant is added to the conference
-	 * @param[in]  participantAddress of the conference focus.
-	 */
-	virtual void setMe(const std::shared_ptr<Address> &participantAddress) = 0;
 
 	/*
 	 * Enable audio media type for a conference

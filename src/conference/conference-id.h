@@ -22,6 +22,7 @@
 #define _L_CONFERENCE_ID_H_
 
 #include "address/address.h"
+#include "conference-id-params.h"
 
 // =============================================================================
 
@@ -29,12 +30,16 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceId {
 public:
+	static const std::string IdentifierDelimiter;
+	static std::pair<std::shared_ptr<Address>, std::shared_ptr<Address>> parseIdentifier(const std::string &identifier);
+
 	ConferenceId();
 	// Caution: this optimized constructor does not care about extracting the URI part only. Use it for URI only
 	// Address.
-	ConferenceId(Address &&peerAddress, Address &&localAddress);
-	ConferenceId(const std::shared_ptr<const Address> &peerAddress, const std::shared_ptr<const Address> &localAddress);
-	ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<Address> &localAddress);
+	ConferenceId(Address &&peerAddress, Address &&localAddress, const ConferenceIdParams &params);
+	ConferenceId(const std::shared_ptr<const Address> &peerAddress,
+	             const std::shared_ptr<const Address> &localAddress,
+	             const ConferenceIdParams &params);
 	ConferenceId(const ConferenceId &other);
 	ConferenceId(ConferenceId &&other) = default;
 
@@ -57,6 +62,8 @@ public:
 	void setPeerAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate = false);
 	void setLocalAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate = false);
 
+	const std::string &getIdentifier() const;
+
 	bool isValid() const;
 	size_t getHash() const;
 	size_t getWeakHash() const;
@@ -78,8 +85,11 @@ private:
 	std::shared_ptr<Address> mLocalAddress;
 	mutable size_t mHash = 0;
 	mutable size_t mWeakHash = 0;
+	ConferenceIdParams mParams;
+	mutable std::string mIdentifier;
 
 	bool canUpdateAddress(const std::shared_ptr<const Address> &addr, bool useLocal) const;
+	std::shared_ptr<Address> processAddress(const Address &addr) const;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {

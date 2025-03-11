@@ -80,9 +80,9 @@ public:
 
 	virtual ~Conference();
 
-	virtual int inviteAddresses(const std::list<std::shared_ptr<const Address>> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) = 0;
-	virtual bool dialOutAddresses(const std::list<std::shared_ptr<const Address>> &addressList) = 0;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) = 0;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<Call> call) = 0;
 
 	std::shared_ptr<Participant> getActiveParticipant() const;
@@ -114,12 +114,15 @@ public:
 	void addInvitedParticipant(const std::shared_ptr<Participant> &participant);
 	bool addParticipant(std::shared_ptr<Call> call) override;
 	bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
-	bool addParticipant(const std::shared_ptr<const Address> &participantAddress) override;
-	bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipantDevice(std::shared_ptr<Call> call);
+	virtual void addParticipantDevice(const std::shared_ptr<Participant> &participant,
+	                                  const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
+	std::list<std::shared_ptr<Address>> getParticipantAddresses() const;
 	std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices(bool includeMe = true) const override;
 	std::shared_ptr<Participant> getScreenSharingParticipant() const;
 	std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;
@@ -180,6 +183,7 @@ public:
 	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
 
 	const ConferenceId &getConferenceId() const override;
+	std::optional<std::reference_wrapper<const std::string>> getIdentifier() const;
 	inline unsigned int getLastNotify() const {
 		return mLastNotify;
 	};
@@ -349,9 +353,10 @@ public:
 	                         const std::shared_ptr<LinphonePrivate::Address> &referAddr,
 	                         const std::string method) = 0;
 
+	void resetLastNotify();
+
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
-	                    const std::shared_ptr<Address> &myAddress,
 	                    std::shared_ptr<CallSessionListener> callSessionListener,
 	                    const std::shared_ptr<const ConferenceParams> params);
 
@@ -420,11 +425,13 @@ protected:
 	std::list<std::shared_ptr<Participant>> getFullParticipantList() const;
 	void fillParticipantAttributes(std::shared_ptr<Participant> &p) const;
 
+	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
+
 	virtual void configure(SalCallOp *op) = 0;
+	void inititializeMe();
 
 	void incrementLastNotify();
 	void setLastNotify(unsigned int lastNotify);
-	void resetLastNotify();
 
 	void setConferenceId(const ConferenceId &conferenceId);
 

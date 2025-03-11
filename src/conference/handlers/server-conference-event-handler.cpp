@@ -136,7 +136,7 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 	}
 
 	std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress, conf->getCore()->createConferenceIdParams());
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	const bool oneToOne = chatRoom ? !!!chatRoom->getCurrentParams()->isGroup() : false;
@@ -210,7 +210,7 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 	}
 
 	ConferenceParamsInterface::SecurityLevel securityLevel = conferenceParams->getSecurityLevel();
-	if (chatRoom) {
+	if (conf->isChatOnly()) {
 		securityLevel = (chatRoom->getCurrentParams()->getChatParams()->isEncrypted()
 		                     ? ConferenceParamsInterface::SecurityLevel::EndToEnd
 		                     : ConferenceParamsInterface::SecurityLevel::None);
@@ -502,8 +502,10 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyMultipart(int
 		return nullptr;
 	}
 
-	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
-	    ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()), static_cast<unsigned int>(notifyId));
+	auto core = conf->getCore();
+	list<shared_ptr<EventLog>> events = core->getPrivate()->mainDb->getConferenceNotifiedEvents(
+	    ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress(), core->createConferenceIdParams()),
+	    static_cast<unsigned int>(notifyId));
 
 	list<shared_ptr<Content>> contents;
 	for (const auto &eventLog : events) {
@@ -615,7 +617,6 @@ string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::sha
 	confInfo.setUsers(users);
 	UserType user = UserType();
 	UserRolesType roles;
-	UserType::EndpointSequence endpoints;
 
 	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
@@ -711,7 +712,6 @@ string ServerConferenceEventHandler::createNotifyParticipantDeviceAdded(const st
 	confInfo.setUsers(users);
 
 	UserType user = UserType();
-	UserType::EndpointSequence endpoints;
 	user.setEntity(pAddress->asStringUriOnly());
 	user.setState(StateType::partial);
 
@@ -971,7 +971,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralMode(const EventLog::T
 		confDescr.setKeywords(keywords);
 	}
 
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress, conf->getCore()->createConferenceIdParams());
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	const ModeType mode =
@@ -1016,7 +1016,7 @@ string ServerConferenceEventHandler::createNotifyEphemeralLifetime(const long &l
 		}
 	}
 
-	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress, conf->getCore()->createConferenceIdParams());
 	// Enquire whether this conference belongs to a server group chat room
 	std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();
 	shared_ptr<Core> core = conf->getCore();
@@ -1131,14 +1131,10 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 	const auto &participantAddress = ev->getFrom();
 	unsigned int lastNotify = conf->getLastNotify();
 
-	const auto &conferenceAddress = conf->getConferenceAddress();
-	const std::string conferenceAddressString =
-	    conferenceAddress ? conferenceAddress->asStringUriOnly() : std::string("sip:");
-
 	shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 	if (!participant) {
-		lError() << "Declining SUBSCRIBE because participant " << *participantAddress
-		         << " cannot be found in conference [" << conferenceAddressString << "]";
+		lError() << "Declining SUBSCRIBE because participant " << *participantAddress << " cannot be found in "
+		         << *conf;
 		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
@@ -1148,8 +1144,8 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 	const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 	if (!device ||
 	    ((deviceState != ParticipantDevice::State::Present) && (deviceState != ParticipantDevice::State::Joining))) {
-		lError() << "Received SUBSCRIBE for conference [" << conferenceAddressString << "], device sending subscribe ["
-		         << *contactAddr << "] is not known, no NOTIFY sent";
+		lError() << "Received SUBSCRIBE for " << *conf << ", device sending subscribe [" << *contactAddr
+		         << "] is not known, no NOTIFY sent";
 		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
@@ -1167,27 +1163,16 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			const auto &needToSyncDevice = device->isChangingSubscribeEvent();
 			if (needToSyncDevice) {
-				lInfo() << "Participant " << *dAddress << " is already part of " << *getConference()
+				lInfo() << "Participant " << *dAddress << " is already part of " << *conf
 				        << " hence send full state to be sure the client and the server are on the same page";
-			} else {
-				// conf->setLastNotify(lastNotify + 1);
 			}
-			lInfo() << "Sending initial notify of conference [" << conferenceAddressString << "] to: " << *dAddress
+			lInfo() << "Sending initial notify of " << *conf << " to: " << *dAddress
 			        << " with last notify version set to " << conf->getLastNotify();
 			notifyFullState(createNotifyFullState(ev), device);
-			// Do not notify everybody that a particiant has been added if it was already part of the conference. It may
-			// mean that the client and the server wanted to synchronize to each other
-			if (!needToSyncDevice) {
-				// Notify everybody that a participant device has been added and its capabilities after receiving the
-				// SUBSCRIBE
-				// const auto notify = createNotifyParticipantDeviceDataChanged(pAddress, dAddress);
-				// notifyAllExceptDevice(makeContent(notify), device);
-			}
-			// As a SUBSCRIBE has been received, clear the flag in case the device unsubscribes again
 			device->clearChangingSubscribeEvent();
 		} else if (evLastNotify < lastNotify) {
-			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for conference ["
-			        << conferenceAddressString << "] to: " << *pAddress;
+			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for " << *conf
+			        << " to: " << *pAddress;
 			const int fullStateTrigger =
 			    linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
 			                            "full_state_trigger_due_to_missing_updates", 10);
@@ -1195,16 +1180,16 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 			// FIXME: Temporary workaround until chatrooms and conference will be one single class with different
 			// capabilities. Every subscribe sent for a conference will be answered by a notify full state as events are
 			// not stored in the database
-			const auto &conference = conf->getCore()->findConference(conf->getConferenceId());
-			if ((conference && !conference->getCurrentParams()->chatEnabled()) || forceFullState) {
+			const auto &conference = conf->getCore()->findConference(conf->getConferenceId(), false);
+			if ((conference && !conference->isChatOnly()) || forceFullState) {
 				notifyFullState(createNotifyFullState(ev), device);
 			} else {
 				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
 			}
 		} else if (evLastNotify > lastNotify) {
-			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference ["
-			           << conferenceAddressString << "] should not be higher than last notify sent by server ["
-			           << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
+			lWarning() << "Last notify received by client [" << evLastNotify << "] for " << *conf
+			           << " should not be higher than last notify sent by server [" << lastNotify
+			           << "] - sending a notify full state in an attempt to recover from this situation";
 			notifyFullState(createNotifyFullState(ev), device);
 		} else {
 			notifyParticipantDevice(Content::create(), device);
@@ -1225,8 +1210,7 @@ void ServerConferenceEventHandler::subscriptionStateChanged(const shared_ptr<Eve
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device) return;
 		if (ev == device->getConferenceSubscribeEvent()) {
-			lInfo() << "End of subscription for device [" << *device->getAddress() << "] of conference ["
-			        << *conf->getConferenceAddress() << "]";
+			lInfo() << "End of subscription for device [" << *device->getAddress() << "] of " << *conf;
 			device->setConferenceSubscribeEvent(nullptr);
 		}
 	}
@@ -1407,11 +1391,13 @@ void ServerConferenceEventHandler::onParticipantDeviceAdded(
 	if (conf) {
 		auto participant = device->getParticipant();
 		const auto &pAddress = participant->getAddress();
-		// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
-		if ((device->getSsrc(LinphoneStreamTypeAudio) != 0) || (device->getSsrc(LinphoneStreamTypeVideo) != 0)) {
-			notifyAll(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)));
-		} else {
-			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
+		if (device->addedNotifySent()) {
+			// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
+			if ((device->getSsrc(LinphoneStreamTypeAudio) != 0) || (device->getSsrc(LinphoneStreamTypeVideo) != 0)) {
+				notifyAll(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)));
+			} else {
+				notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(pAddress, dAddress)), device);
+			}
 		}
 		// Enquire whether this conference belongs to a server group chat room
 		std::shared_ptr<AbstractChatRoom> chatRoom = conf->getChatRoom();

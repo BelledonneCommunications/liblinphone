@@ -1,0 +1,15 @@
+
+[sip]
+# Request no port to be bound.
+# By default, liblinphone binds on port 5060. This is a problem as multiple bindings for UDP is allowed and liblinphone_tester suite usually runs on parallel
+# which cause port conflicts that are undetected.
+sip_port=-2
+sip_tcp_port=-2
+sip_tls_port=-2
+
+[storage]
+# Disable main database only
+uri=null
+
+[tester]
+test_env=1

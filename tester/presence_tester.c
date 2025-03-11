@@ -53,6 +53,7 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager *caller_mgr, Linp
 	LinphoneFriend *friend = linphone_core_create_friend_with_address(caller_mgr->lc, identity);
 	linphone_friend_edit(friend);
 	linphone_friend_enable_subscribes(friend, TRUE);
+	linphone_friend_set_inc_subscribe_policy(friend, LinphoneSPAccept);
 	linphone_friend_done(friend);
 
 	LinphoneFriendCbs *cbs = linphone_factory_create_friend_cbs(linphone_factory_get());
@@ -159,6 +160,7 @@ static void simple_subscribe_with_early_notify(void) {
 
 	linphone_friend_edit(marie_s_friend);
 	linphone_friend_enable_subscribes(marie_s_friend, TRUE);
+	linphone_friend_set_inc_subscribe_policy(marie_s_friend, LinphoneSPAccept);
 	linphone_friend_done(marie_s_friend);
 	linphone_core_add_friend(marie->lc, marie_s_friend);
 	ms_free(pauline_identity);
@@ -170,6 +172,7 @@ static void simple_subscribe_with_early_notify(void) {
 	marie_identity = linphone_address_as_string_uri_only(marie_identity_addr);
 	pauline_s_friend = linphone_core_create_friend_with_address(pauline->lc, marie_identity);
 	linphone_friend_enable_subscribes(pauline_s_friend, FALSE);
+	linphone_friend_set_inc_subscribe_policy(pauline_s_friend, LinphoneSPWait);
 	linphone_core_add_friend(pauline->lc, pauline_s_friend);
 
 	ms_free(marie_identity);
@@ -354,6 +357,7 @@ static void subscribe_presence_forked(void) {
 	lf = linphone_core_create_friend(marie->lc);
 	linphone_friend_set_address(lf, pauline1->identity);
 	linphone_friend_enable_subscribes(lf, TRUE);
+	linphone_friend_set_inc_subscribe_policy(lf, LinphoneSPAccept);
 
 	linphone_core_add_friend(marie->lc, lf);
 	linphone_friend_unref(lf);
@@ -393,6 +397,7 @@ static void subscribe_presence_expired(void) {
 
 	lf = linphone_core_create_friend(marie->lc);
 	linphone_friend_set_address(lf, pauline1->identity);
+	linphone_friend_set_inc_subscribe_policy(lf, LinphoneSPAccept);
 	linphone_friend_enable_subscribes(lf, TRUE);
 
 	linphone_core_add_friend(marie->lc, lf);
@@ -450,7 +455,7 @@ static void simple_subscribe_with_friend_from_rc(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-test_t presence_tests[] = {
+static test_t presence_tests[] = {
     TEST_ONE_TAG("Simple Subscribe", simple_subscribe, "presence"),
     TEST_ONE_TAG("Simple Subscribe with early NOTIFY", simple_subscribe_with_early_notify, "presence"),
     TEST_NO_TAG("Simple Subscribe with friend from rc", simple_subscribe_with_friend_from_rc),

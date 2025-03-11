@@ -116,6 +116,13 @@ const ConferenceId &BasicChatRoom::getConferenceId() const {
 	return mConferenceId;
 }
 
+std::optional<std::reference_wrapper<const std::string>> BasicChatRoom::getIdentifier() const {
+	if (mState == ConferenceInterface::State::Instantiated) {
+		return std::nullopt;
+	}
+	return mConferenceId.getIdentifier();
+}
+
 ConferenceInterface::State BasicChatRoom::getState() const {
 	return mState;
 }
@@ -145,6 +152,14 @@ std::shared_ptr<Participant> BasicChatRoom::getMe() const {
 
 std::list<std::shared_ptr<Participant>> BasicChatRoom::getParticipants() const {
 	return mParticipants;
+}
+
+std::list<std::shared_ptr<Address>> BasicChatRoom::getParticipantAddresses() const {
+	list<std::shared_ptr<Address>> addresses;
+	for (auto &participant : mParticipants) {
+		addresses.push_back(participant->getAddress());
+	}
+	return addresses;
 }
 
 LINPHONE_END_NAMESPACE

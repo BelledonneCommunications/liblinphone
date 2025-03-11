@@ -91,7 +91,8 @@ std::shared_ptr<Address> ParticipantDevice::getAddress() const {
 
 void ParticipantDevice::setAddress(const std::shared_ptr<Address> &address) {
 	if (mGruu) {
-		lInfo() << "Changing address of device [" << this << "] from " << *mGruu << " to " << *address;
+		auto conference = getConference();
+		lInfo() << "Changing address of " << *this << " in " << *conference << " from " << *mGruu << " to " << *address;
 	}
 	mGruu = Address::create(address->getUri());
 	if (address->hasParam("+org.linphone.specs")) {
@@ -102,12 +103,11 @@ void ParticipantDevice::setAddress(const std::shared_ptr<Address> &address) {
 
 std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
 	if (mParticipant.expired()) {
-		lWarning() << "The participant owning device " << this << " (address " << *mGruu
-		           << ") has already been deleted";
+		lWarning() << "The participant owning " << *this << " has already been deleted";
 	}
 	shared_ptr<Participant> participant = mParticipant.lock();
 	if (!participant) {
-		lWarning() << "Unable to get the participant owning the device " << this << " (address " << *mGruu << ")";
+		lWarning() << "Unable to get the participant owning the " << *this;
 		return nullptr;
 	}
 	return participant;
@@ -134,7 +134,8 @@ void ParticipantDevice::setConferenceSubscribeEvent(const shared_ptr<EventSubscr
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel() const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine) return encryptionEngine->getSecurityLevel(mGruu->asStringUriOnly());
-	lWarning() << "Asking device security level but there is no encryption engine enabled";
+	lWarning() << "Asking security level of " << *this << " in " << *getConference()
+	           << " but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }
 
@@ -185,14 +186,11 @@ bool ParticipantDevice::setSsrc(const LinphoneStreamType type, uint32_t newSsrc)
 
 	if (changed) {
 		if (conference) {
-			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
-			        << this << " (address " << *mGruu << ") in conference "
-			        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-			                                               : std::string("sip:"))
-			        << " to " << newSsrc;
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of " << *this << " in "
+			        << *conference << " to " << newSsrc;
 		} else {
-			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
-			        << this << " (address " << *mGruu << ") to " << newSsrc;
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of " << *this << " to "
+			        << newSsrc;
 		}
 	}
 
@@ -217,14 +215,9 @@ bool ParticipantDevice::setThumbnailStreamSsrc(uint32_t newSsrc) {
 	auto conference = getConference();
 	if (changed) {
 		if (conference) {
-			lInfo() << "Setting thumbnail stream ssrc of participant device " << this << " (address " << *mGruu
-			        << ") in conference "
-			        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-			                                               : std::string("sip:"))
-			        << " to " << newSsrc;
+			lInfo() << "Setting thumbnail stream ssrc of " << *this << " in " << *conference << " to " << newSsrc;
 		} else {
-			lInfo() << "Setting thumbnail stream ssrc of participant device " << this << " (address " << *mGruu
-			        << ") to " << newSsrc;
+			lInfo() << "Setting thumbnail stream ssrc of " << *this << " to " << newSsrc;
 		}
 	}
 
@@ -310,8 +303,7 @@ void ParticipantDevice::setState(State newState, bool notify) {
 		}
 		if (getCore() != nullptr && linphone_core_get_global_state(getCore()->getCCore()) !=
 		                                LinphoneGlobalStartup) { // When creating participant device from database
-			lInfo() << "Moving participant device " << this << " (address " << *mGruu << ") from state " << mState
-			        << " to " << newState;
+			lInfo() << "Moving " << *this << " from state " << mState << " to " << newState;
 		}
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
@@ -326,8 +318,7 @@ void ParticipantDevice::setState(State newState, bool notify) {
 bool ParticipantDevice::enableScreenSharing(bool enabled) {
 	bool changed = (screenSharingEnabled() != enabled);
 	if (changed) {
-		lInfo() << "Participant device " << this << " (address " << *mGruu << ") "
-		        << std::string(enabled ? "starts" : "stops") << " sharing its screen";
+		lInfo() << *this << " " << std::string(enabled ? "starts" : "stops") << " sharing its screen";
 		mIsScreenSharing = enabled;
 		if (mSession && mSession->getPrivate()->isInConference()) {
 			if (enabled) {
@@ -378,6 +369,7 @@ void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities)
 }
 
 void ParticipantDevice::setSession(std::shared_ptr<CallSession> session) {
+	lInfo() << "Assigning session " << session << " to " << *this << " in " << *getConference();
 	mSession = session;
 }
 
@@ -393,12 +385,8 @@ bool ParticipantDevice::setStreamLabel(const std::string &streamLabel, const Lin
 	const bool idxFound = (streams.find(type) != streams.cend());
 	if (!idxFound || (streams[type].label != streamLabel)) {
 		auto conference = getConference();
-		const auto conferenceAddress =
-		    ((conference && conference->getConferenceAddress()) ? conference->getConferenceAddress()->toString()
-		                                                        : std::string("sip:"));
-		lInfo() << "Setting label of " << std::string(linphone_stream_type_to_string(type))
-		        << " stream of participant device " << this << " (address " << *mGruu << ") in conference "
-		        << conferenceAddress << " to " << streamLabel;
+		lInfo() << "Setting label of " << std::string(linphone_stream_type_to_string(type)) << " stream of " << *this
+		        << " in " << *conference << " to " << streamLabel;
 		streams[type].label = streamLabel;
 		return true;
 	}
@@ -412,11 +400,8 @@ const std::string &ParticipantDevice::getThumbnailStreamLabel() const {
 bool ParticipantDevice::setThumbnailStreamLabel(const std::string &streamLabel) {
 	if (thumbnailStream.label != streamLabel) {
 		auto conference = getConference();
-		lInfo() << "Setting label of the thumbnail stream of participant device " << this << " (address " << *mGruu
-		        << ") in conference "
-		        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-		                                               : std::string("sip:"))
-		        << " to " << streamLabel;
+		lInfo() << "Setting label of the thumbnail stream of " << *this << " in " << *conference << " to "
+		        << streamLabel;
 		thumbnailStream.label = streamLabel;
 		return true;
 	}
@@ -813,15 +798,13 @@ void *ParticipantDevice::createWindowId() {
 		                                                               : getStreamLabel(LinphoneStreamTypeVideo);
 		// Empty label is used only for main stream which is handled by the call.
 		if (label.empty() || !mGruu) {
-			lError() << "Unable to create a window ID for device [" << this << " - address "
-			         << (mGruu ? mGruu->toString() : std::string("sip:")) << " because no label is associated to it";
+			lError() << "Unable to create a window ID for " << *this << " because no label is associated to it";
 		} else {
 			windowId = static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(
 			    label, conference->isMe(mGruu), true);
 		}
 	} else {
-		lError() << "Unable to create a window ID for device [" << this << " - address "
-		         << (mGruu ? mGruu->toString() : std::string("sip:")) << " because no session is linked to this device";
+		lError() << "Unable to create a window ID for " << *this << " because no session is linked to this device";
 	}
 #endif
 	return windowId;
@@ -842,8 +825,7 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 		                                                               : getStreamLabel(LinphoneStreamTypeVideo);
 		// Empty label is used only for main stream which is handled by the call.
 		if (label.empty() || !mGruu) {
-			lError() << "Unable to set a window ID for device [" << this << " - address "
-			         << (mGruu ? mGruu->toString() : std::string("sip:")) << " because no label is associated to it";
+			lError() << "Unable to set a window ID for device " << *this << " because no label is associated to it";
 		} else {
 			const auto isMe = conference->isMe(mGruu);
 			if (isMe) {
@@ -853,8 +835,7 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 			}
 		}
 	} else {
-		lError() << "Unable to set a window ID for device [" << this << " - address "
-		         << (mGruu ? mGruu->toString() : std::string("sip:")) << " because no session is linked to this device";
+		lError() << "Unable to set a window ID for device " << *this << " because no session is linked to this device";
 	}
 #endif
 }
@@ -864,6 +845,14 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 
 void *ParticipantDevice::getWindowId() const {
 	return mWindowId;
+}
+
+void ParticipantDevice::setSendAddedNotify(bool sendNotify) {
+	mSendAddedNotify = sendNotify;
+}
+
+bool ParticipantDevice::addedNotifySent() const {
+	return mSendAddedNotify;
 }
 
 void ParticipantDevice::setIsSpeaking(bool isSpeaking) {

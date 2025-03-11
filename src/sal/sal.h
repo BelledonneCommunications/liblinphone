@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -460,6 +460,7 @@ private:
 
 	void setTlsProperties();
 	int addListenPort(SalAddress *addr, bool isTunneled);
+	static belle_sip_header_t *createSupportedHeader(const std::list<std::string> &tags);
 	void makeSupportedHeader();
 	void addPendingAuth(SalOp *op);
 	void removePendingAuth(SalOp *op);

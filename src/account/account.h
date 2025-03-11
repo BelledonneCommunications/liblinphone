@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -28,6 +28,7 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "call/call-log.h"
 #include "conference/conference-info.h"
+#include "http/http-client.h"
 #include "linphone/api/c-callbacks.h"
 #include "linphone/api/c-types.h"
 #include "sal/register-op.h"
@@ -55,6 +56,7 @@ class Address;
 class Event;
 class AbstractChatRoom;
 class EventPublish;
+class HttpResponse;
 
 class LINPHONE_PUBLIC Account : public bellesip::HybridObject<LinphoneAccount, Account>,
                                 public UserDataAccessor,
@@ -151,7 +153,7 @@ public:
 	const std::string &getCustomParam(const std::string &key) const;
 	void writeToConfigFile(int index);
 	const LinphoneAuthInfo *findAuthInfo() const;
-	std::shared_ptr<EventPublish> createPublish(const std::string event, int expires);
+	std::shared_ptr<EventPublish> createPublish(const std::string &event, int expires);
 	LinphoneReason getError();
 	LinphoneTransportType getTransport();
 	std::shared_ptr<Event> getMwiEvent() const;
@@ -171,12 +173,14 @@ public:
 	LinphoneAccountAddressComparisonResult isServerConfigChanged();
 
 	void updateConferenceInfoListWithCcmp() const;
+
+	void handleCCMPResponseConferenceList(const HttpResponse &response);
+	void handleCCMPResponseConferenceInformation(const HttpResponse &response);
 	// CCMP request callback (conference list)
-	static void handleResponseConferenceList(void *ctx, const belle_http_response_event_t *event);
-	static void handleResponseConferenceInformation(void *ctx, const belle_http_response_event_t *event);
-	static void handleAuthRequested(void *ctx, belle_sip_auth_event_t *event);
-	static void handleTimeout(void *ctx, const belle_sip_timeout_event_t *event);
-	static void handleIoError(void *ctx, const belle_sip_io_error_event_t *event);
+	static void handleResponseConferenceList(void *ctx, const HttpResponse &event);
+	static void handleResponseConferenceInformation(void *ctx, const HttpResponse &event);
+	static void handleTimeout(void *ctx, const HttpResponse &event);
+	static void handleIoError(void *ctx, const HttpResponse &event);
 
 private:
 	LinphoneCore *getCCore() const;

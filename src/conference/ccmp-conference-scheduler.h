@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -22,6 +22,7 @@
 #define _L_CCMP_CONFERENCE_SCHEDULER_H_
 
 #include "conference/conference-scheduler.h"
+#include "http/http-client.h"
 
 // =============================================================================
 
@@ -32,18 +33,18 @@ public:
 	CCMPConferenceScheduler(const std::shared_ptr<Core> &core, const std::shared_ptr<Account> &account = nullptr);
 	virtual ~CCMPConferenceScheduler() = default;
 
-	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
-	                                      const std::shared_ptr<Address> &creator) override;
+	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo) override;
 
 	virtual void processResponse(const LinphoneErrorInfo *errorInfo,
 	                             const std::shared_ptr<Address> conferenceAddress) override;
 
 	void setCcmpUri(const std::string &ccmpUri);
 
-	static void handleResponse(void *ctx, const belle_http_response_event_t *event);
-	static void handleAuthRequested(void *ctx, belle_sip_auth_event_t *event);
-	static void handleTimeout(void *ctx, const belle_sip_timeout_event_t *event);
-	static void handleIoError(void *ctx, const belle_sip_io_error_event_t *event);
+	void handleCCMPResponse(const HttpResponse &response);
+
+	static void handleResponse(void *ctx, const HttpResponse &event);
+	static void handleTimeout(void *ctx, const HttpResponse &event);
+	static void handleIoError(void *ctx, const HttpResponse &event);
 
 private:
 };

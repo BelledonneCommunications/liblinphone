@@ -20,6 +20,7 @@
 
 #include "conference-id.h"
 #include "conference.h"
+
 #include "logger/logger.h"
 
 // =============================================================================
@@ -28,26 +29,27 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const std::string ConferenceId::IdentifierDelimiter = "##";
+
 ConferenceId::ConferenceId() {
 }
 
-ConferenceId::ConferenceId(Address &&pAddress, Address &&lAddress) {
-	setPeerAddress(Address::create(pAddress));
-	setLocalAddress(Address::create(lAddress));
+ConferenceId::ConferenceId(Address &&pAddress, Address &&lAddress, const ConferenceIdParams &params) {
+	mParams = params;
+	mPeerAddress = processAddress(std::move(pAddress));
+	mLocalAddress = processAddress(std::move(lAddress));
 }
 
 ConferenceId::ConferenceId(const std::shared_ptr<const Address> &pAddress,
-                           const std::shared_ptr<const Address> &lAddress) {
-	setPeerAddress(pAddress);
-	setLocalAddress(lAddress);
-}
-
-ConferenceId::ConferenceId(const std::shared_ptr<Address> &pAddress, const std::shared_ptr<Address> &lAddress) {
+                           const std::shared_ptr<const Address> &lAddress,
+                           const ConferenceIdParams &params) {
+	mParams = params;
 	setPeerAddress(pAddress);
 	setLocalAddress(lAddress);
 }
 
 ConferenceId::ConferenceId(const ConferenceId &other) {
+	mParams = other.mParams;
 	setPeerAddress(other.mPeerAddress, true);
 	setLocalAddress(other.mLocalAddress, true);
 	mHash = other.mHash;
@@ -55,6 +57,7 @@ ConferenceId::ConferenceId(const ConferenceId &other) {
 }
 
 ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
+	mParams = other.mParams;
 	setPeerAddress(other.mPeerAddress, true);
 	setLocalAddress(other.mLocalAddress, true);
 	mHash = other.mHash;
@@ -76,6 +79,25 @@ bool ConferenceId::operator<(const ConferenceId &other) const {
 	       (*mPeerAddress == *(other.mPeerAddress) && *mLocalAddress < *(other.mLocalAddress));
 }
 
+std::shared_ptr<Address> ConferenceId::processAddress(const Address &addr) const {
+	if (addr.isValid()) {
+		if (mParams.extractUriEnabled()) {
+			if (mParams.getKeepGruu()) {
+				return Address::create(addr.getUri());
+			} else {
+				return Address::create(addr.getUriWithoutGruu());
+			}
+		} else {
+			auto processedAddress = Address::create(addr);
+			if (!mParams.getKeepGruu()) {
+				processedAddress->removeUriParam("gr");
+			}
+			return processedAddress;
+		}
+	}
+	return Address::create();
+}
+
 bool ConferenceId::canUpdateAddress(const std::shared_ptr<const Address> &addr, bool useLocal) const {
 	// Local and peer addresses cannot be modified if the hash or weak hash have already been computed
 	const auto newUri = (addr) ? addr->getUri() : Address();
@@ -85,19 +107,21 @@ bool ConferenceId::canUpdateAddress(const std::shared_ptr<const Address> &addr, 
 }
 
 void ConferenceId::setPeerAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate) {
+	if (!addr) return;
 	if (!forceUpdate && !canUpdateAddress(addr, false)) {
-		lError() << "Cannot modify peer address if either its hash or its weak hash is defined";
+		lError() << *this << ": Cannot modify peer address if either its hash or its weak hash is defined";
 		abort();
 	}
-	mPeerAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
+	mPeerAddress = processAddress(*addr);
 }
 
 void ConferenceId::setLocalAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate) {
+	if (!addr) return;
 	if (!forceUpdate && !canUpdateAddress(addr, true)) {
-		lInfo() << "Cannot modify local address if either its hash or its weak hash is defined";
+		lInfo() << *this << ": Cannot modify local address if either its hash or its weak hash is defined";
 		abort();
 	}
-	mLocalAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
+	mLocalAddress = processAddress(*addr);
 }
 
 const std::shared_ptr<Address> &ConferenceId::getPeerAddress() const {
@@ -121,6 +145,15 @@ size_t ConferenceId::getHash() const {
 	return mHash;
 }
 
+const std::string &ConferenceId::getIdentifier() const {
+	if (mIdentifier.empty()) {
+		const auto &pAddress = mPeerAddress ? reducedAddress(*mPeerAddress).toStringUriOnlyOrdered(false) : "sip:";
+		const auto &lAddress = mLocalAddress ? reducedAddress(*mLocalAddress).toStringUriOnlyOrdered(false) : "sip:";
+		mIdentifier += pAddress + ConferenceId::IdentifierDelimiter + lAddress;
+	}
+	return mIdentifier;
+}
+
 Address ConferenceId::reducedAddress(const Address &addr) {
 	Address ret = addr.getUriWithoutGruu();
 	ret.removeUriParam(Conference::SecurityModeParameter);
@@ -140,6 +173,17 @@ bool ConferenceId::weakEqual(const ConferenceId &other) const {
 	return mPeerAddress && other.mPeerAddress && reducedAddress(*mPeerAddress) == reducedAddress(*other.mPeerAddress) &&
 	       mLocalAddress && other.mLocalAddress &&
 	       reducedAddress(*mLocalAddress) == reducedAddress(*other.mLocalAddress);
+}
+
+std::pair<std::shared_ptr<Address>, std::shared_ptr<Address>>
+ConferenceId::parseIdentifier(const std::string &identifier) {
+	std::string peerAddressString = identifier.substr(0, identifier.find(ConferenceId::IdentifierDelimiter));
+	std::string localAddressString =
+	    identifier.substr(identifier.find(ConferenceId::IdentifierDelimiter) + ConferenceId::IdentifierDelimiter.size(),
+	                      identifier.size() - 1);
+	auto localAddress = Address::create(localAddressString);
+	auto peerAddress = Address::create(peerAddressString);
+	return std::make_pair(localAddress, peerAddress);
 }
 
 LINPHONE_END_NAMESPACE

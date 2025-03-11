@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,14 +19,15 @@
  */
 
 #include "account-params.h"
+
+#include <set>
+
 #include "c-wrapper/internal/c-tools.h"
 #include "core/core.h"
-#include "linphone/api/c-address.h"
 #include "linphone/types.h"
 #include "nat/nat-policy.h"
 #include "private.h"
 #include "push-notification/push-notification-config.h"
-#include <set>
 
 // =============================================================================
 
@@ -40,47 +41,65 @@ static string generate_account_id() {
 	return string("proxy_config_").append(id); // TODO: change to account
 }
 
-AccountParams::AccountParams(LinphoneCore *lc) {
-	mExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "reg_expires", 3600) : 3600;
-	mRegisterEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "reg_sendregister", 1) : 1;
-	mInternationalPrefix = lc ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix", "") : "";
+AccountParams::AccountParams(LinphoneCore *lc, bool useDefaultValues) {
+	if (!lc && useDefaultValues) {
+		lWarning() << "Unable to apply proxy default values: LinphoneCore is null.";
+		useDefaultValues = false;
+	}
+
+	mExpires = useDefaultValues ? linphone_config_get_default_int(lc->config, "proxy", "reg_expires", 3600) : 3600;
+	mRegisterEnabled =
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "reg_sendregister", 1) : 1;
+	mInternationalPrefix =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix", "") : "";
 	mInternationalPrefixIsoCountryCode =
-	    lc ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix_iso_country_code", "") : "";
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix_iso_country_code", "")
+	                     : "";
 	mUseInternationalPrefixForCallsAndChats =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "use_dial_prefix_for_calls_and_chats", true) : true;
+	    useDefaultValues
+	        ? !!linphone_config_get_default_int(lc->config, "proxy", "use_dial_prefix_for_calls_and_chats", true)
+	        : true;
 	mDialEscapePlusEnabled =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "dial_escape_plus", false) : false;
-	mPrivacy = lc ? (LinphonePrivacyMask)linphone_config_get_default_int(lc->config, "proxy", "privacy",
-	                                                                     LinphonePrivacyDefault)
-	              : (LinphonePrivacyMask)LinphonePrivacyDefault;
-	mIdentity = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_identity", "") : "";
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "dial_escape_plus", false) : false;
+	mPrivacy = useDefaultValues ? (LinphonePrivacyMask)linphone_config_get_default_int(lc->config, "proxy", "privacy",
+	                                                                                   LinphonePrivacyDefault)
+	                            : (LinphonePrivacyMask)LinphonePrivacyDefault;
+	mIdentity = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "reg_identity", "") : "";
 	mIdentityAddress = Address::create(mIdentity);
-	mProxy = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_proxy", "") : "";
+	mProxy = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "reg_proxy", "") : "";
 	mProxyAddress = Address::create(mProxy);
-	string route = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_route", "") : "";
+	string route = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "reg_route", "") : "";
 	if (!route.empty()) {
 		const std::list<std::shared_ptr<Address>> routes{Address::create(route)};
 		setRoutes(routes);
 	}
-	mRealm = lc ? linphone_config_get_default_string(lc->config, "proxy", "realm", "") : "";
+	mRealm = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "realm", "") : "";
 	mQualityReportingEnabled =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_enabled", false) : false;
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_enabled", false)
+	                     : false;
 	mQualityReportingCollector =
-	    lc ? linphone_config_get_default_string(lc->config, "proxy", "quality_reporting_collector", "") : "";
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "quality_reporting_collector", "")
+	                     : "";
 	mQualityReportingInterval =
-	    lc ? linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_interval", 0) : 0;
-	mContactParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_parameters", "") : "";
+	    useDefaultValues ? linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_interval", 0) : 0;
+	mContactParameters =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "contact_parameters", "") : "";
 	mContactUriParameters =
-	    lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", "") : "";
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", "") : "";
 	mAllowCpimMessagesInBasicChatRooms =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "cpim_in_basic_chat_rooms_enabled", false) : false;
+	    useDefaultValues
+	        ? !!linphone_config_get_default_int(lc->config, "proxy", "cpim_in_basic_chat_rooms_enabled", false)
+	        : false;
 
-	mAvpfMode = lc ? static_cast<LinphoneAVPFMode>(
-	                     linphone_config_get_default_int(lc->config, "proxy", "avpf", LinphoneAVPFDefault))
-	               : LinphoneAVPFDefault;
-	mAvpfRrInterval = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
-	mPublishExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "publish_expires", 600) : 600;
-	mPublishEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", false) : false;
+	mAvpfMode = useDefaultValues ? static_cast<LinphoneAVPFMode>(linphone_config_get_default_int(
+	                                   lc->config, "proxy", "avpf", LinphoneAVPFDefault))
+	                             : LinphoneAVPFDefault;
+	mAvpfRrInterval =
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
+	mPublishExpires =
+	    useDefaultValues ? linphone_config_get_default_int(lc->config, "proxy", "publish_expires", 600) : 600;
+	mPublishEnabled =
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", false) : false;
 
 	bool pushAllowedDefault = false;
 	bool remotePushAllowedDefault = false;
@@ -88,26 +107,30 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	pushAllowedDefault = true;
 #endif
 	mPushNotificationAllowed =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault)
-	       : pushAllowedDefault;
+	    useDefaultValues
+	        ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault)
+	        : pushAllowedDefault;
 	mRemotePushNotificationAllowed =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed",
-	                                           remotePushAllowedDefault)
-	       : remotePushAllowedDefault;
-	mForceRegisterOnPush =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "force_register_on_push", false) : false;
-	mUnregisterAtStop = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "unregister_at_stop", true) : true;
-	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed",
+	                                                         remotePushAllowedDefault)
+	                     : remotePushAllowedDefault;
+	mForceRegisterOnPush = useDefaultValues
+	                           ? !!linphone_config_get_default_int(lc->config, "proxy", "force_register_on_push", false)
+	                           : false;
+	mUnregisterAtStop =
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "unregister_at_stop", true) : true;
+	mRefKey = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
 
 	/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
 	 * This is not consistent and error-prone.
 	 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
 	 */
 
-	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
+	string natPolicyRef =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
 		std::shared_ptr<NatPolicy> policy = nullptr;
-		if (linphone_config_has_section(lc->config, natPolicyRef.c_str())) {
+		if (lc && linphone_config_has_section(lc->config, natPolicyRef.c_str())) {
 			/* Odd method - to be deprecated, inconsistent */
 			policy = NatPolicy::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName,
 			                           natPolicyRef);
@@ -123,73 +146,98 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 			         << "]";
 		}
 	}
-	mDependsOn = lc ? linphone_config_get_default_string(lc->config, "proxy", "depends_on", "") : "";
-	string idkey = lc ? linphone_config_get_default_string(lc->config, "proxy", "idkey", "") : "";
+	mDependsOn = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "depends_on", "") : "";
+	string idkey = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "idkey", "") : "";
 	if (!idkey.empty()) {
 		mIdKey = idkey;
 	} else {
 		mIdKey = generate_account_id();
 	}
 	string conferenceFactoryUri =
-	    lc ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
 	setConferenceFactoryUri(conferenceFactoryUri);
 
 	string audioVideoConferenceFactoryUri =
-	    lc ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "") : "";
+	    useDefaultValues
+	        ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "")
+	        : "";
 	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
 		mAudioVideoConferenceFactoryAddress = Address::create(audioVideoConferenceFactoryUri);
 	}
 
-	mCcmpServerUrl = lc ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_server_url", "") : "";
-	mCcmpUserId = lc ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_user_id", "") : "";
+	mCcmpServerUrl =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_server_url", "") : "";
+	mCcmpUserId = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "ccmp_user_id", "") : "";
 
 	if (lc && lc->push_config) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	} else {
 		mPushNotificationConfig = new PushNotificationConfig();
-		mPushNotificationConfig->readPushParamsFromString(
-		    string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
+		mPushNotificationConfig->readPushParamsFromString(string(
+		    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
 	}
-	mRtpBundleEnabled =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle", linphone_core_rtp_bundle_enabled(lc))
-	       : false;
-	mRtpBundleAssumption =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle_assumption", false) : false;
+	mRtpBundleEnabled = useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle",
+	                                                                         linphone_core_rtp_bundle_enabled(lc))
+	                                     : false;
+	mRtpBundleAssumption = useDefaultValues
+	                           ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle_assumption", false)
+	                           : false;
 
-	string customContact = lc ? linphone_config_get_default_string(lc->config, "proxy", "custom_contact", "") : "";
+	string customContact =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "custom_contact", "") : "";
 	setCustomContact(customContact);
 
-	string limeServerUrl = lc ? linphone_config_get_default_string(lc->config, "proxy", "lime_server_url", "") : "";
+	string limeServerUrl =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "lime_server_url", "") : "";
 	setLimeServerUrl(limeServerUrl);
 
-	string limeAlgo = lc ? linphone_config_get_default_string(lc->config, "proxy", "lime_algo", "") : "";
+	string limeAlgo = useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "lime_algo", "") : "";
 	setLimeAlgo(limeAlgo);
 
-	string pictureUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "picture_uri", "") : "";
+	string pictureUri =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "picture_uri", "") : "";
 	setPictureUri(pictureUri);
 
-	string mwiServerUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "mwi_server_uri", "") : "";
+	string mwiServerUri =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "mwi_server_uri", "") : "";
 	mMwiServerAddress = nullptr;
 	if (!mwiServerUri.empty()) {
 		setMwiServerAddress(Address::create(mwiServerUri));
 	}
 
-	string voicemailUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "voicemail_uri", "") : "";
+	string voicemailUri =
+	    useDefaultValues ? linphone_config_get_default_string(lc->config, "proxy", "voicemail_uri", "") : "";
 	mVoicemailAddress = nullptr;
 	if (!voicemailUri.empty()) {
 		setVoicemailAddress(Address::create(voicemailUri));
 	}
 
 	mInstantMessagingEncryptionMandatory =
-	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "im_encryption_mandatory", 0) : 0;
+	    useDefaultValues ? !!linphone_config_get_default_int(lc->config, "proxy", "im_encryption_mandatory", 0) : 0;
+
+	string supportedTags = lc ? linphone_config_get_default_string(lc->config, "proxy", "supported", "empty") : "empty";
+	if (useDefaultValues && supportedTags != "empty") {
+		vector<string> splitTags = bctoolbox::Utils::split(supportedTags, ",");
+		list<string> supportedTagsList;
+		for (const auto &tag : splitTags)
+			supportedTagsList.push_back(Utils::trim(tag));
+		mSupportedTagsList.mList = supportedTagsList;
+		mUseSupportedTags = true;
+	} else if (lc) {
+		vector<string> splitTags = bctoolbox::Utils::split(lc->sal->getSupportedTags(), ",");
+		list<string> supportedTagsList;
+		for (const auto &tag : splitTags)
+			supportedTagsList.push_back(Utils::trim(tag));
+		mSupportedTagsList.mList = supportedTagsList;
+	}
 }
 
-AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullptr) {
+AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc, false) {
 	LpConfig *config = lc->config;
 
 	char key[50];
-	sprintf(key, "proxy_%i", index); // TODO: change to account
+	snprintf(key, sizeof(key), "proxy_%i", index); // TODO: change to account
 
 	mIdentity = linphone_config_get_string(config, key, "reg_identity", mIdentity.c_str());
 	std::shared_ptr<Address> identity_address = Address::create(mIdentity);
@@ -261,8 +309,8 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 
 	mPublishExpires = linphone_config_get_int(config, key, "publish_expires", mPublishExpires);
 
-	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", NULL);
-	if (nat_policy_ref != NULL) {
+	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", nullptr);
+	if (nat_policy_ref != nullptr) {
 		/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
 		 * This is not consistent and error-prone.
 		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
@@ -312,6 +360,16 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	}
 
 	mInstantMessagingEncryptionMandatory = !!linphone_config_get_bool(config, key, "im_encryption_mandatory", false);
+
+	string supported_tags = linphone_config_get_string(config, key, "supported", "empty");
+	if (supported_tags != "empty") {
+		vector<string> splitTags = bctoolbox::Utils::split(supported_tags, ",");
+		list<string> supportedTagsList;
+		for (const auto &tag : splitTags)
+			supportedTagsList.push_back(Utils::trim(tag));
+		mSupportedTagsList.mList = supportedTagsList;
+		mUseSupportedTags = true;
+	}
 
 	readCustomParamsFromConfigFile(config, key);
 }
@@ -404,6 +462,9 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	}
 
 	mInstantMessagingEncryptionMandatory = other.mInstantMessagingEncryptionMandatory;
+
+	mSupportedTagsList = other.mSupportedTagsList;
+	mUseSupportedTags = other.mUseSupportedTags;
 }
 
 AccountParams::~AccountParams() {
@@ -568,7 +629,7 @@ void AccountParams::setConferenceFactoryUri(const std::string &conferenceFactory
 	setConferenceFactoryAddress(conferenceFactoryUri.empty() ? nullptr : Address::create(conferenceFactoryUri));
 }
 
-void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Address> conferenceFactoryAddress) {
+void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Address> &conferenceFactoryAddress) {
 	if (mConferenceFactoryAddress != nullptr) {
 		mConferenceFactoryAddress = nullptr;
 	}
@@ -578,7 +639,7 @@ void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Addr
 }
 
 void AccountParams::setAudioVideoConferenceFactoryAddress(
-    const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress) {
+    const std::shared_ptr<const Address> &audioVideoConferenceFactoryAddress) {
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
 		mAudioVideoConferenceFactoryAddress = nullptr;
 	}
@@ -587,11 +648,11 @@ void AccountParams::setAudioVideoConferenceFactoryAddress(
 	}
 }
 
-void AccountParams::setCcmpServerUrl(const std::string ccmpServerUrl) {
+void AccountParams::setCcmpServerUrl(const std::string &ccmpServerUrl) {
 	mCcmpServerUrl = ccmpServerUrl;
 }
 
-void AccountParams::setFileTranferServer(const std::string &fileTransferServer) {
+void AccountParams::setFileTransferServer(const std::string &fileTransferServer) {
 	mFileTransferServer = fileTransferServer;
 }
 
@@ -607,7 +668,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 	bool error = false;
 	while (iterator != nullptr) {
 		char *route = (char *)bctbx_list_get_data(iterator);
-		if (route != NULL && route[0] != '\0') {
+		if (route != nullptr && route[0] != '\0') {
 			string tmp;
 			/*try to prepend 'sip:' */
 			if (strstr(route, "sip:") == nullptr && strstr(route, "sips:") == nullptr) {
@@ -616,7 +677,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 			tmp.append(route);
 
 			SalAddress *addr = sal_address_new(tmp.c_str());
-			if (addr != NULL) {
+			if (addr != nullptr) {
 				mRoutes.emplace_back(Address::create(addr, true));
 			} else {
 				error = true;
@@ -632,7 +693,7 @@ void AccountParams::setPrivacy(LinphonePrivacyMask privacy) {
 	mPrivacy = privacy;
 }
 
-LinphoneStatus AccountParams::setIdentityAddress(const std::shared_ptr<Address> identityAddress) {
+LinphoneStatus AccountParams::setIdentityAddress(const std::shared_ptr<const Address> &identityAddress) {
 	if (!identityAddress || identityAddress->getUsername().empty()) {
 		lWarning() << "Invalid sip identity: " << identityAddress->toString();
 		return -1;
@@ -667,7 +728,7 @@ void AccountParams::enableRtpBundleAssumption(bool value) {
 	mRtpBundleAssumption = value;
 }
 
-void AccountParams::setCustomContact(const std::shared_ptr<Address> contact) {
+void AccountParams::setCustomContact(const std::shared_ptr<const Address> &contact) {
 	mCustomContact = contact ? contact->clone()->toSharedPtr() : nullptr;
 }
 
@@ -819,11 +880,11 @@ const char *AccountParams::getConferenceFactoryCstr() const {
 	return mConferenceFactoryAddressCstr;
 }
 
-std::shared_ptr<Address> AccountParams::getConferenceFactoryAddress() const {
+std::shared_ptr<const Address> AccountParams::getConferenceFactoryAddress() const {
 	return mConferenceFactoryAddress;
 }
 
-std::shared_ptr<Address> AccountParams::getAudioVideoConferenceFactoryAddress() const {
+std::shared_ptr<const Address> AccountParams::getAudioVideoConferenceFactoryAddress() const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 
@@ -888,7 +949,7 @@ LinphonePrivacyMask AccountParams::getPrivacy() const {
 	return mPrivacy;
 }
 
-const std::shared_ptr<Address> &AccountParams::getIdentityAddress() const {
+std::shared_ptr<Address> AccountParams::getIdentityAddress() const {
 	return mIdentityAddress;
 }
 
@@ -912,7 +973,7 @@ bool AccountParams::rtpBundleAssumptionEnabled() const {
 	return mRtpBundleAssumption;
 }
 
-const std::shared_ptr<Address> &AccountParams::getCustomContact() const {
+std::shared_ptr<const Address> AccountParams::getCustomContact() const {
 	return mCustomContact;
 }
 
@@ -944,7 +1005,7 @@ void AccountParams::setMwiServerAddress(const std::shared_ptr<Address> &address)
 	mMwiServerAddress = address;
 }
 
-const std::shared_ptr<Address> &AccountParams::getMwiServerAddress() const {
+std::shared_ptr<const Address> AccountParams::getMwiServerAddress() const {
 	return mMwiServerAddress;
 }
 
@@ -952,13 +1013,18 @@ void AccountParams::setVoicemailAddress(const std::shared_ptr<Address> &address)
 	mVoicemailAddress = address;
 }
 
-const std::shared_ptr<Address> &AccountParams::getVoicemailAddress() const {
+std::shared_ptr<const Address> AccountParams::getVoicemailAddress() const {
 	return mVoicemailAddress;
 }
 
 // -----------------------------------------------------------------------------
 
-LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> serverAddr) {
+LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<const Address> &serverAddr) {
+	if (serverAddr == nullptr) {
+		mProxyAddress.reset();
+		mProxy = "";
+		return 0;
+	}
 	bool outboundProxyEnabled = getOutboundProxyEnabled();
 
 	mProxyAddress = serverAddr->clone()->toSharedPtr();
@@ -973,7 +1039,7 @@ LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> se
 	return 0;
 }
 
-const std::shared_ptr<Address> &AccountParams::getServerAddress() const {
+std::shared_ptr<const Address> AccountParams::getServerAddress() const {
 	return mProxyAddress;
 }
 
@@ -1056,10 +1122,27 @@ void AccountParams::setInstantMessagingEncryptionMandatory(bool mandatory) {
 	mInstantMessagingEncryptionMandatory = mandatory;
 }
 
+const std::list<std::string> &AccountParams::getSupportedTagsList() const {
+	return mSupportedTagsList.mList;
+}
+
+const bctbx_list_t *AccountParams::getSupportedTagsCList() const {
+	return mSupportedTagsList.getCList();
+}
+
+void AccountParams::setSupportedTagsList(const std::list<std::string> &supportedTagsList) {
+	mSupportedTagsList.mList = supportedTagsList;
+	mUseSupportedTags = true;
+}
+
+bool AccountParams::useSupportedTags() const {
+	return mUseSupportedTags;
+}
+
 void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	char key[50];
 
-	sprintf(key, "proxy_%i", index);
+	snprintf(key, sizeof(key), "proxy_%i", index);
 	linphone_config_clean_section(config, key);
 
 	if (!mProxy.empty()) {
@@ -1115,7 +1198,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	if (!mIdKey.empty()) linphone_config_set_string(config, key, "idkey", mIdKey.c_str());
 	linphone_config_set_int(config, key, "publish_expires", mPublishExpires);
 
-	if (mNatPolicy != NULL) {
+	if (mNatPolicy != nullptr) {
 		linphone_config_set_string(config, key, "nat_policy_ref", mNatPolicy->getRef().c_str());
 	}
 
@@ -1152,6 +1235,18 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	}
 
 	linphone_config_set_bool(config, key, "im_encryption_mandatory", mInstantMessagingEncryptionMandatory);
+
+	if (mUseSupportedTags) {
+		std::ostringstream result;
+		auto cppList = mSupportedTagsList.mList;
+		for (auto &tag : cppList) {
+			if (tag != cppList.front()) {
+				result << ", ";
+			}
+			result << tag;
+		}
+		linphone_config_set_string(config, key, "supported", result.str().c_str());
+	}
 }
 
 LINPHONE_END_NAMESPACE

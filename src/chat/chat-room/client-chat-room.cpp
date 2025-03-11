@@ -61,29 +61,6 @@ ClientChatRoom::ClientChatRoom(const shared_ptr<Core> &core, const std::shared_p
 		getCurrentParams()->setSecurityLevel(ConferenceParams::SecurityLevel::EndToEnd);
 }
 
-ClientChatRoom::ClientChatRoom(const shared_ptr<Core> &core, bool hasBeenLeft) : ChatRoom(core) {
-	auto chatParams = getCurrentParams()->getChatParams();
-	chatParams->setBackend(ChatParams::Backend::FlexisipChat);
-	if (chatParams->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
-		chatParams->enableEphemeral(chatParams->getEphemeralLifetime() > 0);
-	}
-
-	if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
-		lDebug() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
-	} else {
-		lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
-	}
-
-	if (!hasBeenLeft) {
-		getCore()->getPrivate()->clientListEventHandler->addHandler(
-		    static_pointer_cast<ClientConference>(getConference())->eventHandler);
-		mListHandlerUsed = getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId()) != nullptr;
-		if (!mListHandlerUsed) {
-			static_pointer_cast<ClientConference>(getConference())->eventHandler->subscribe(getConferenceId());
-		}
-	}
-}
-
 // -----------------------------------------------------------------------------
 void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
 	auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
@@ -91,18 +68,27 @@ void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatM
 }
 
 void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteContact) {
-	getConference()->onConferenceCreated(remoteContact);
-	if (remoteContact->hasParam(Conference::IsFocusParameter)) {
-		if (!getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
-			mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
-			auto conference = dynamic_pointer_cast<ClientConference>(getConference());
-			auto eventHandler = conference->eventHandler;
-			if (!eventHandler) {
-				conference->initializeHandlers(conference.get(), true);
-				eventHandler = conference->eventHandler;
-			}
-			eventHandler->subscribe(getConferenceId());
-		}
+	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
+	conference->onConferenceCreated(remoteContact);
+	if (remoteContact->hasParam(Conference::IsFocusParameter) &&
+	    !getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
+		mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
+		conference->subscribe(true, false);
+	}
+}
+
+void ClientChatRoom::handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) {
+	// Only the one-to-one chatroom case is dealt as it has a particular behaviour.
+	// In fact, when a client deletes a one-to-one chatroom, the server is meant to destroy it on the other side as
+	// well. If, for watever reason, the BYE is not answered, the chatroom is not destroyed and therefore future message
+	// may be replied with a 403 Forbidden response. A way to recover it is to initiate the destruction of the chatroom
+	// and then exhume it
+	if (!getCurrentParams()->isGroup()) {
+		lInfo() << "ChatMessage [" << chatMessage << "] could not be sent. Terminating chatroom [" << getConferenceId()
+		        << "] and retrying";
+		getConference()->leave();
+		setState(ConferenceInterface::State::Terminated);
+		sendChatMessage(chatMessage);
 	}
 }
 
@@ -197,21 +183,23 @@ int ClientChatRoom::getHistorySize(HistoryFilterMask filters) const {
 }
 
 void ClientChatRoom::exhume() {
+	auto conference = getConference();
+	auto confId = getConferenceId();
 	if (getState() != Conference::State::Terminated) {
-		lError() << "Cannot exhume a non terminated chat room";
+		lError() << *conference << ": Cannot exhume non terminated chat room [" << confId << "]";
 		return;
 	}
 	if (getCurrentParams()->isGroup()) {
-		lError() << "Cannot exhume a non one-to-one chat room";
+		lError() << *conference << ": Cannot exhume non one-to-one chat room [" << confId << "]";
 		return;
 	}
 	if (getParticipants().size() == 0) {
-		lError() << "Cannot exhume a chat room without any participant";
+		lError() << *conference << ": Cannot exhume chat room [" << confId << "] without any participant";
 		return;
 	}
 
 	const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
-	lInfo() << "Exhuming chat room [" << getConferenceId() << "] with participant [" << *remoteParticipant << "]";
+	lInfo() << *conference << ": Exhuming chat room [" << confId << "] with participant [" << *remoteParticipant << "]";
 	mLocalExhumePending = true;
 
 	auto content = Content::create();
@@ -224,10 +212,9 @@ void ClientChatRoom::exhume() {
 		content->setContentEncoding("deflate");
 	}
 
-	const auto &conferenceFactoryAddress =
-	    Core::getConferenceFactoryAddress(getCore(), getConferenceId().getLocalAddress());
-	auto session = static_pointer_cast<ClientConference>(getConference())->createSessionTo(conferenceFactoryAddress);
-	session->startInvite(nullptr, getConference()->getUtf8Subject(), content);
+	const auto &conferenceFactoryAddress = Core::getConferenceFactoryAddress(getCore(), confId.getLocalAddress());
+	auto session = static_pointer_cast<ClientConference>(conference)->createSessionTo(conferenceFactoryAddress);
+	session->startInvite(nullptr, conference->getUtf8Subject(), content);
 	setState(ConferenceInterface::State::CreationPending);
 }
 
@@ -236,7 +223,7 @@ void ClientChatRoom::onExhumedConference(const ConferenceId &oldConfId, const Co
 	auto chatRoom = getCore()->findChatRoom(oldConfId, false);
 	auto conference = getConference();
 	getCurrentParams()->setConferenceAddress(addr);
-	auto focus = static_pointer_cast<ClientConference>(getConference())->mFocus;
+	auto focus = static_pointer_cast<ClientConference>(conference)->mFocus;
 	focus->setAddress(addr);
 	focus->clearDevices();
 	focus->addDevice(addr);
@@ -244,29 +231,23 @@ void ClientChatRoom::onExhumedConference(const ConferenceId &oldConfId, const Co
 	conference->setConferenceId(newConfId);
 	getCore()->getPrivate()->updateChatRoomConferenceId(chatRoom, oldConfId);
 
-	getConference()->setLastNotify(0);
+	conference->resetLastNotify();
 }
 
 // Will be called on A when A is sending a message into a chat room with B previously terminated by B
 void ClientChatRoom::onLocallyExhumedConference(const std::shared_ptr<Address> &remoteContact) {
+	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
 	ConferenceId oldConfId = getConferenceId();
-	ConferenceId newConfId = ConferenceId(remoteContact, oldConfId.getLocalAddress());
+	ConferenceId newConfId =
+	    ConferenceId(remoteContact, oldConfId.getLocalAddress(), getCore()->createConferenceIdParams());
 
-	lInfo() << "Conference [" << oldConfId << "] has been locally exhumed into [" << newConfId << "]";
+	lInfo() << *conference << ": old conference ID [" << oldConfId << "] has been locally exhumed into [" << newConfId
+	        << "]";
 
 	onExhumedConference(oldConfId, newConfId);
 
 	setState(ConferenceInterface::State::Created);
-	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
-	auto eventHandler = conference->eventHandler;
-	if (eventHandler) {
-		eventHandler->unsubscribe(); // Required for next subscribe to be sent
-	} else {
-		conference->initializeHandlers(conference.get(), true);
-		eventHandler = conference->eventHandler;
-	}
-	getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
-	eventHandler->subscribe(getConferenceId());
+	conference->subscribe(true);
 
 	lInfo() << "Found " << mPendingExhumeMessages.size() << " messages waiting for exhume";
 	for (auto &chatMessage : mPendingExhumeMessages) {
@@ -280,20 +261,23 @@ void ClientChatRoom::onLocallyExhumedConference(const std::shared_ptr<Address> &
 
 // Will be called on A when B exhumes a chat room previously terminated by B
 void ClientChatRoom::onRemotelyExhumedConference(SalCallOp *op) {
+	const auto &conference = static_pointer_cast<ClientConference>(getConference());
 	ConferenceId oldConfId = getConferenceId();
-	ConferenceId newConfId = ConferenceId(Address::create(op->getRemoteContact()), oldConfId.getLocalAddress());
+	ConferenceId newConfId = ConferenceId(Address::create(op->getRemoteContact()), oldConfId.getLocalAddress(),
+	                                      getCore()->createConferenceIdParams());
 
 	if (getState() != Conference::State::Terminated) {
-		lWarning() << "Conference is being exhumed but wasn't terminated first!";
+		lWarning() << *conference << " is being exhumed but wasn't terminated first!";
 
 		if (oldConfId == newConfId) {
-			lWarning() << "Conference is being exhumed but with the same conference id " << oldConfId << " !";
+			lWarning() << *conference << " is being exhumed but with the same conference id " << oldConfId << " !";
 		} else {
 			addConferenceIdToPreviousList(oldConfId);
 		}
 	}
 
-	lInfo() << "Conference [" << oldConfId << "] is being remotely exhumed into [" << newConfId << "]";
+	lInfo() << *conference << ": old conference ID [" << oldConfId << "] is being remotely exhumed into [" << newConfId
+	        << "]";
 
 	onExhumedConference(oldConfId, newConfId);
 
@@ -304,15 +288,10 @@ void ClientChatRoom::onRemotelyExhumedConference(SalCallOp *op) {
 		}
 	}
 
-	const auto &conference = static_pointer_cast<ClientConference>(getConference());
 	conference->confirmJoining(op);
 
 	setState(ConferenceInterface::State::Created);
-
-	auto eventHandler = conference->eventHandler;
-	eventHandler->unsubscribe(); // Required for next subscribe to be sent
-	getCore()->getPrivate()->clientListEventHandler->addHandler(eventHandler);
-	eventHandler->subscribe(getConferenceId());
+	conference->subscribe(true);
 }
 
 void ClientChatRoom::removeConferenceIdFromPreviousList(const ConferenceId &confId) {
@@ -327,16 +306,15 @@ void ClientChatRoom::addExhumeMessage(const std::shared_ptr<ChatMessage> msg) {
 
 void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage) {
 	const auto &conference = getConference();
-	const auto &conferenceId = conference->getConferenceId();
 	const auto &state = getState();
 
 	if ((state == ConferenceInterface::State::Terminated) && !getCurrentParams()->isGroup()) {
-		lInfo() << "Trying to send message into a terminated 1-1 chat room [" << conferenceId << "], exhuming it first";
+		lInfo() << *conference << ": Trying to send message into a terminated 1-1 chat room, exhuming it first";
 		exhume();
 		addExhumeMessage(chatMessage);
 	} else if (state == ConferenceInterface::State::Instantiated ||
 	           state == ConferenceInterface::State::CreationPending) {
-		lInfo() << "Trying to send a message [" << chatMessage << "] in chat room " << this << " [" << conferenceId
+		lInfo() << *conference << ": Trying to send a message [" << chatMessage
 		        << "] in a chat room that's not created yet, queuing the message and it will be sent later";
 		auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
 		if (it == mPendingCreationMessages.end()) addPendingMessage(chatMessage);
@@ -344,9 +322,9 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 		auto encryptionEngine = getCore()->getEncryptionEngine();
 		if (getCurrentParams()->getChatParams()->isEncrypted() && encryptionEngine &&
 		    encryptionEngine->participantListRequired() && conference->getParticipantDevices().empty()) {
-			lInfo() << "Delaying sending of message [" << chatMessage << "] in the encrypted chat room " << this << " ["
-			        << conferenceId
-			        << "] because the list of participant devices has not been received yet and the encryption engine "
+			lInfo() << *conference << ": Delaying sending of message [" << chatMessage
+			        << "] in an encrypted chat room because the list of participant devices has not been received yet "
+			           "and the encryption engine "
 			        << encryptionEngine << " requires it";
 			auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
 			if (it == mPendingCreationMessages.end()) mPendingCreationMessages.push_back(chatMessage);
@@ -354,7 +332,8 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 			ChatRoom::sendChatMessage(chatMessage);
 		}
 	} else {
-		lError() << "Can't send a chat message in a chat room that is in state " << Utils::toString(state);
+		lError() << *conference << ": Can't send a chat message in a chat room that is in state "
+		         << Utils::toString(state);
 		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::NotDelivered,
 		                                               ::ms_time(nullptr));
 	}
@@ -362,11 +341,11 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 
 // -----------------------------------------------------------------------------
 void ClientChatRoom::sendPendingMessages() {
-	const auto &conferenceId = getConferenceId();
+	const auto &conference = getConference();
 	// Now that chat room has been inserted in database, we can send any pending message
 	for (const auto &message : mPendingCreationMessages) {
-		lInfo() << "Found message [" << message << "] waiting for chat room " << this << " [" << conferenceId
-		        << "] to be created, sending it now";
+		lInfo() << "Found message [" << message << "] waiting for chat room " << *conference
+		        << " to be created, sending it now";
 		// First we need to update from & to address of the message,
 		// as it was created at a time where the remote address of the chat room may not have been known
 		message->getPrivate()->setChatRoom(getSharedFromThis());
@@ -381,8 +360,8 @@ void ClientChatRoom::sendEphemeralUpdate() {
 	auto focus = conference->mFocus;
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(focus->getSession());
 	const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
-	lInfo() << "Re-INVITing " << *remoteParticipant << " because ephemeral settings of chat room [" << getConferenceId()
-	        << "] have changed";
+	lInfo() << "Re-INVITing " << *remoteParticipant << " because ephemeral settings of chat room " << *conference
+	        << " have changed";
 	if (session) {
 		auto csp = session->getMediaParams()->clone();
 		csp->removeCustomHeader("Ephemeral-Life-Time");
@@ -396,20 +375,21 @@ void ClientChatRoom::sendEphemeralUpdate() {
 }
 
 void ClientChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
-	if (!getConference()->getMe()->isAdmin()) {
-		lError() << "Only admins can choose who can manage ephemeral messages on chatroom "
-		         << *getConference()->getConferenceAddress();
+	auto conference = static_pointer_cast<ClientConference>(getConference());
+	if (!conference->getMe()->isAdmin()) {
+		lError() << *conference << ": Only admins can choose who can manage ephemeral messages";
 		return;
 	}
 
 	if (getEphemeralMode() == mode) {
-		lWarning() << "Ephemeral messages are already managed by "
+		lWarning() << *conference << ": Ephemeral messages are already managed by "
 		           << ((mode == AbstractChatRoom::EphemeralMode::AdminManaged) ? "the admins" : "each participant");
 		return;
 	}
 
 	if (!getCurrentParams()->getChatParams()->ephemeralAllowed()) {
-		lWarning() << "Ephemeral message mode cannot be changed if chatroom has capability Ephemeral disabled";
+		lWarning() << *conference
+		           << ": Ephemeral message mode cannot be changed if chatroom has capability Ephemeral disabled";
 		return;
 	}
 
@@ -418,7 +398,6 @@ void ClientChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool
 	const auto &lifetime = getEphemeralLifetime();
 
 	if (getState() == ConferenceInterface::State::Created) {
-		auto conference = static_pointer_cast<ClientConference>(getConference());
 		auto utf8Subject = conference->getUtf8Subject();
 		auto focus = conference->mFocus;
 		shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(focus->getSession());
@@ -427,11 +406,12 @@ void ClientChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool
 		if (mode == AbstractChatRoom::EphemeralMode::AdminManaged) {
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 		}
-		lInfo() << "Changing ephemeral mode to " << Utils::toString(mode);
+		lInfo() << *conference << ": Changing ephemeral mode to " << Utils::toString(mode);
 		session->update(csp, CallSession::UpdateMethod::Default, false, utf8Subject);
 		delete csp;
 	} else {
-		lError() << "Cannot change the ClientConference ephemeral lifetime in a state other than Created";
+		lError() << *conference
+		         << ": Cannot change the ClientConference ephemeral lifetime in a state other than Created";
 	}
 
 	if (updateDb) {
@@ -454,28 +434,27 @@ AbstractChatRoom::EphemeralMode ClientChatRoom::getEphemeralMode() const {
 }
 
 void ClientChatRoom::enableEphemeral(bool ephem, bool updateDb) {
+	auto conference = getConference();
 	if (ephemeralEnabled() == ephem) {
 		if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup) {
-			lWarning() << "Ephemeral messages of chat room " << getConferenceId() << " are already "
-			           << (ephem ? "enabled" : "disabled");
+			lWarning() << *conference << ": Ephemeral messages are already " << (ephem ? "enabled" : "disabled");
 		}
 		return;
 	}
 
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(getCore()->getCCore());
 	if (!linphone_im_notif_policy_get_send_imdn_displayed(policy) && ephem) {
-		lWarning() << "Ephemeral messages may not work correctly because IMDN messages are disabled";
+		lWarning() << *conference << ": Ephemeral messages may not work correctly because IMDN messages are disabled";
 	}
 
 	getCurrentParams()->getChatParams()->enableEphemeral(ephem);
 	const string active = ephem ? "enabled" : "disabled";
-	lDebug() << "Ephemeral message is " << active << " in chat room [" << getConferenceId() << "]";
+	lDebug() << *conference << ": Ephemeral message is " << active;
 
 	auto lifetime = getEphemeralLifetime();
 	if (getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
-		if (!getConference()->getMe()->isAdmin()) {
-			lError() << "Only admins can enable or disable ephemeral messages on chatroom "
-			         << *getConference()->getConferenceAddress();
+		if (!conference->getMe()->isAdmin()) {
+			lError() << *conference << ": Only admins can enable or disable ephemeral messages";
 			return;
 		}
 
@@ -484,9 +463,8 @@ void ClientChatRoom::enableEphemeral(bool ephem, bool updateDb) {
 				lifetime = linphone_core_get_default_ephemeral_lifetime(getCore()->getCCore());
 				getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
 				if (updateDb) {
-					lInfo() << "Reset ephemeral lifetime of chat room " << getConferenceId()
-					        << " to the default value of " << lifetime
-					        << " because ephemeral messages were enabled with a time equal to 0.";
+					lInfo() << "Reset ephemeral lifetime of chat room " << *conference << " to the default value of "
+					        << lifetime << " because ephemeral messages were enabled with a time equal to 0.";
 					getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(getConferenceId(), lifetime);
 
 					shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(
@@ -497,7 +475,8 @@ void ClientChatRoom::enableEphemeral(bool ephem, bool updateDb) {
 			}
 			sendEphemeralUpdate();
 		} else {
-			lError() << "Cannot change the ClientConference ephemeral lifetime in a state other than Created";
+			lError() << *conference
+			         << ": Cannot change the ClientConference ephemeral lifetime in a state other than Created";
 		}
 	}
 
@@ -520,10 +499,13 @@ bool ClientChatRoom::ephemeralEnabled() const {
 }
 
 void ClientChatRoom::setEphemeralLifetime(long lifetime, bool updateDb) {
+	auto conference = getConference();
 	if (lifetime == getEphemeralLifetime()) {
 		if (updateDb)
-			lWarning() << "Ephemeral lifetime of chat room " << getConferenceId()
-			           << " will not be changed! Trying to set the same ephemaral lifetime as before : " << lifetime;
+			lWarning()
+			    << *conference
+			    << ": Ephemeral lifetime will not be changed! Trying to set the same ephemaral lifetime as before : "
+			    << lifetime;
 		return;
 	}
 
@@ -531,23 +513,23 @@ void ClientChatRoom::setEphemeralLifetime(long lifetime, bool updateDb) {
 	    (getState() == ConferenceInterface::State::CreationPending)) {
 		// Do not print this log when creating chat room from DB
 		if (updateDb)
-			lInfo() << "Set new ephemeral lifetime of chat room " << getConferenceId() << " to " << lifetime
+			lInfo() << *conference << ": Set new ephemeral lifetime to " << lifetime
 			        << " while creating the chat room, used to be " << getEphemeralLifetime() << ".";
 		getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
 		return;
 	}
 
 	if (getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
-		if (!getConference()->getMe()->isAdmin()) {
-			lError() << "Cannot change the ClientConference ephemeral lifetime because I am not admin";
+		if (!conference->getMe()->isAdmin()) {
+			lError() << *conference << ": Cannot change the ClientConference ephemeral lifetime because I am not admin";
 			return;
 		}
 
 		const auto &state = getState();
 		if (state == ConferenceInterface::State::Created) {
 			if (updateDb)
-				lInfo() << "Set new ephemeral lifetime of chat room " << getConferenceId() << " to " << lifetime
-				        << ", used to be " << getEphemeralLifetime() << ".";
+				lInfo() << *conference << ": Set new ephemeral lifetime to " << lifetime << ", used to be "
+				        << getEphemeralLifetime() << ".";
 			getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
 			const bool enable = (lifetime != 0);
 			// If only changing the value of the message lifetime
@@ -557,12 +539,13 @@ void ClientChatRoom::setEphemeralLifetime(long lifetime, bool updateDb) {
 				enableEphemeral(enable, updateDb);
 			}
 		} else {
-			lError() << "Cannot change the ephemeral lifetime of chat room " << getConferenceId() << " to " << lifetime
+			lError() << *conference << ": Cannot change the ephemeral lifetime to " << lifetime
 			         << " in a state other than Created - currently it is in state " << Utils::toString(state);
 		}
 	} else {
 		if (updateDb)
-			lInfo() << "Set new ephemeral lifetime to " << lifetime << ", used to be " << getEphemeralLifetime() << ".";
+			lInfo() << *conference << ": Set new ephemeral lifetime to " << lifetime << ", used to be "
+			        << getEphemeralLifetime() << ".";
 		getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
 	}
 

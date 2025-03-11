@@ -221,7 +221,7 @@ void FriendList::exportFriendsAsVcard4File(const std::string &vcardFile) const {
 	for (const auto &f : friends) {
 		std::shared_ptr<Vcard> vcard = f->getVcard();
 		if (vcard) {
-			ostrm << vcard->asVcard4String();
+			ostrm << vcard->asVcard4StringWithBase64Picture();
 		}
 	}
 	ostrm.close();

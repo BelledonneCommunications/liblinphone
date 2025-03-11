@@ -91,6 +91,7 @@ public:
 	void addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumber> &phoneNumber);
 	void addSipAddress(const std::string &sipAddress);
 	const std::string &asVcard4String() const;
+	const std::string &asVcard4StringWithBase64Picture() const;
 	void editMainSipAddress(const std::string &sipAddress);
 	bool generateUniqueId();
 	void removeExtentedPropertiesByName(const std::string &name);
@@ -114,6 +115,7 @@ private:
 	std::array<unsigned char, VCARD_MD5_HASH_SIZE> mMd5;
 #endif /* VCARD_ENABLED */
 	mutable ListHolder<Address> mSipAddresses;
+	mutable std::string vcard4String;
 
 	bool mUseVCard3Grammar = false;
 };

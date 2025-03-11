@@ -177,19 +177,25 @@ static void linphone_version_update_test(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
-static void core_init_test(void) {
+static void core_init_test_base(bool_t use_database, bool_t disable_main_db_only) {
 	LinphoneCore *lc;
 	FILE *in;
-	lc =
-	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
+	char *empty_with_some_db_rc_path = bc_tester_res("rcfiles/empty_with_some_db_rc");
+	lc = linphone_factory_create_core_3(
+	    linphone_factory_get(), NULL,
+	    (disable_main_db_only) ? empty_with_some_db_rc_path : liblinphone_tester_get_empty_rc(), system_context);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+		linphone_core_enable_database(lc, use_database);
 		linphone_core_start(lc);
-		const char *uri = linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", NULL);
-		BC_ASSERT_STRING_EQUAL(uri, "null");
-		in = fopen(uri, "rb");
-		if (!BC_ASSERT_PTR_NULL(in)) // "null" file should not exists
-			fclose(in);
+		if (use_database) {
+			const char *uri = linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", NULL);
+			BC_ASSERT_STRING_EQUAL(uri, "null");
+			in = fopen(uri, "rb");
+			if (!BC_ASSERT_PTR_NULL(in)) // "null" file should not exists
+				fclose(in);
+		}
+		BC_ASSERT_TRUE(linphone_core_database_enabled(lc) == use_database);
 		/* until we have good certificates on our test server... */
 		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
@@ -237,6 +243,19 @@ static void core_init_test(void) {
 		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
+	ms_free(empty_with_some_db_rc_path);
+}
+
+static void core_init_test(void) {
+	core_init_test_base(TRUE, FALSE);
+}
+
+static void core_init_test_some_database(void) {
+	core_init_test_base(TRUE, TRUE);
+}
+
+static void core_init_test_no_database(void) {
+	core_init_test_base(FALSE, FALSE);
 }
 
 static void core_init_test_2(void) {
@@ -265,6 +284,7 @@ static void core_init_test_2(void) {
 		BC_ASSERT_PTR_NULL(tmp);
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_proxy_config(lc));
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 
@@ -289,7 +309,7 @@ static void core_init_test_3(void) {
 		BC_ASSERT_PTR_NULL(filename);
 		BC_ASSERT_PTR_NULL(factory);
 		BC_ASSERT_PTR_NULL(tmp);
-
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -318,7 +338,7 @@ static void core_init_test_4(void) {
 		char test_tmp_name[1024] = {0};
 		snprintf(test_tmp_name, sizeof(test_tmp_name), "%s.tmp", filename);
 		BC_ASSERT_STRING_EQUAL(tmp, test_tmp_name);
-
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 
@@ -358,6 +378,7 @@ static void core_init_unref_test(void) {
 		/* until we have good certificates on our test server... */
 		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -383,7 +404,7 @@ static void core_init_stop_start_test(void) {
 		const char *uuid2 = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
 		BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
 		BC_ASSERT_STRING_EQUAL(uuid, uuid2);
-
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -401,6 +422,7 @@ static void core_set_user_agent(void) {
 		linphone_core_set_user_agent(lc, "part1b", "part2b");
 		linphone_core_start(lc);
 		BC_ASSERT_EQUAL(strcmp(linphone_core_get_user_agent(lc), "part1b/part2b"), 0, int, "%d");
+		linphone_core_stop(lc);
 		linphone_core_unref(lc);
 	}
 }
@@ -455,7 +477,7 @@ static void core_sip_transport_test(void) {
 	                LC_SIP_TRANSPORT_RANDOM, int, "%d");
 	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc), "sip", "sip_tls_port", -2),
 	                LC_SIP_TRANSPORT_RANDOM, int, "%d");
-
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -527,6 +549,7 @@ static void linphone_interpret_url_test(void) {
 	linphone_address_unref(address);
 	ms_free(tmp);
 
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -807,6 +830,7 @@ static void chat_room_test(void) {
 	linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
 	linphone_core_start(lc);
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room_from_uri(lc, "sip:toto@titi.com"));
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -961,6 +985,7 @@ static void custom_tones_setup_before_start(void) {
 	if (tone) {
 		BC_ASSERT_STRING_EQUAL(tone, "callonhold2.wav");
 	}
+	linphone_core_stop(lc);
 	linphone_core_unref(lc);
 }
 
@@ -3854,6 +3879,8 @@ test_t setup_tests[] = {
     TEST_NO_TAG("Linphone proxy config server address change (internal api)",
                 linphone_proxy_config_is_server_config_changed_test),
     TEST_NO_TAG("Linphone core init/uninit", core_init_test),
+    TEST_NO_TAG("Linphone core init/uninit with some database", core_init_test_some_database),
+    TEST_NO_TAG("Linphone core init/uninit without database", core_init_test_no_database),
     TEST_NO_TAG("Linphone core init/uninit from existing factory rc", core_init_test_2),
     TEST_NO_TAG("Linphone core init/uninit withtout any rc", core_init_test_3),
     TEST_NO_TAG("Linphone core init/uninit from existing default rc", core_init_test_4),

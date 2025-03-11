@@ -75,7 +75,7 @@ linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig *cfg) {
 }
 
 static void linphone_proxy_config_init(LinphoneCore *lc, LinphoneProxyConfig *cfg) {
-	LinphoneAccountParams *params = linphone_account_params_new(lc);
+	LinphoneAccountParams *params = linphone_account_params_new(lc, TRUE);
 	cfg->account = linphone_account_new_with_config(lc, params, cfg);
 	linphone_account_params_unref(params);
 	cfg->edit = NULL;
@@ -553,7 +553,7 @@ const bctbx_list_t *linphone_core_get_proxy_config_list(const LinphoneCore *lc) 
 }
 
 LinphoneAccountParams *linphone_core_create_account_params(LinphoneCore *core) {
-	return linphone_account_params_new(core);
+	return linphone_account_params_new(core, TRUE);
 }
 
 LinphoneAccount *linphone_core_create_account(LinphoneCore *core, LinphoneAccountParams *params) {

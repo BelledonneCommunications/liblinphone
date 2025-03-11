@@ -110,6 +110,9 @@ public:
 	std::list<Header>::const_iterator findHeader(const std::string &headerName) const;
 	const std::string &getCustomHeader(const std::string &headerName) const;
 
+	void setRelatedChatMessageId(const std::string &messageId);
+	const std::string &getRelatedChatMessageId() const;
+
 	void setUserData(const Variant &userData);
 	Variant getUserData() const;
 
@@ -142,6 +145,7 @@ private:
 	void *mCryptoContext = nullptr; // Used to encrypt file for RCS file transfer.
 	bool mIsDirty = false;
 	SalBodyHandler *mBodyHandler = nullptr;
+	std::string mMessageId;
 
 	struct Cache {
 		std::string name;
