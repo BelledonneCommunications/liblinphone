@@ -1767,11 +1767,11 @@ void Account::handleCCMPResponseConferenceList(const HttpResponse &response) {
 			handleResponseConferenceList(this, response);
 			break;
 		case HttpResponse::Status::Timeout:
-			handleTimeout(this, response);
+			handleTimeoutConferenceList(this, response);
 			break;
 		case HttpResponse::Status::IOError:
 		case HttpResponse::Status::InvalidRequest:
-			handleIoError(this, response);
+			handleIoErrorConferenceList(this, response);
 			break;
 	}
 }
@@ -1782,11 +1782,11 @@ void Account::handleCCMPResponseConferenceInformation(const HttpResponse &respon
 			handleResponseConferenceInformation(this, response);
 			break;
 		case HttpResponse::Status::Timeout:
-			handleTimeout(this, response);
+			handleTimeoutConferenceInformation(this, response);
 			break;
 		case HttpResponse::Status::IOError:
 		case HttpResponse::Status::InvalidRequest:
-			handleIoError(this, response);
+			handleIoErrorConferenceInformation(this, response);
 			break;
 	}
 }
@@ -1904,6 +1904,24 @@ void Account::handleResponseConferenceList(void *ctx, const HttpResponse &event)
 			}
 		}
 	}
+}
+
+void Account::handleIoErrorConferenceList(void *ctx, const HttpResponse &event) {
+	auto account = static_cast<Account *>(ctx);
+	const auto ccmpServerUrl = account->getAccountParams()->getCcmpServerUrl();
+	const auto &body = event.getBody();
+	auto content = body.getBodyAsString();
+	lInfo() << "I/O error on retrieving the conference list " << *account << " belongs to from the CCMP server "
+	        << ccmpServerUrl << ": " << content;
+}
+
+void Account::handleTimeoutConferenceList(void *ctx, const HttpResponse &event) {
+	auto account = static_cast<Account *>(ctx);
+	const auto ccmpServerUrl = account->getAccountParams()->getCcmpServerUrl();
+	const auto &body = event.getBody();
+	auto content = body.getBodyAsString();
+	lInfo() << "Timeout error on retrieving the conference list " << *account << " belongs to from the CCMP server "
+	        << ccmpServerUrl << ": " << content;
 }
 
 void Account::handleResponseConferenceInformation(void *ctx, const HttpResponse &event) {
@@ -2066,19 +2084,23 @@ void Account::handleResponseConferenceInformation(void *ctx, const HttpResponse 
 	account->ccmpConferenceInformationResponseReceived();
 }
 
-void Account::handleIoError(void *ctx, const HttpResponse &event) {
+void Account::handleIoErrorConferenceInformation(void *ctx, const HttpResponse &event) {
 	auto account = static_cast<Account *>(ctx);
+	const auto ccmpServerUrl = account->getAccountParams()->getCcmpServerUrl();
 	const auto &body = event.getBody();
 	auto content = body.getBodyAsString();
-	lInfo() << "Account [" << account << "] I/O error : " << content;
+	lInfo() << *account << ": I/O error on retrieving the information of a conference from the CCMP server "
+	        << ccmpServerUrl << ": " << content;
 	account->ccmpConferenceInformationResponseReceived();
 }
 
-void Account::handleTimeout(void *ctx, const HttpResponse &event) {
+void Account::handleTimeoutConferenceInformation(void *ctx, const HttpResponse &event) {
 	auto account = static_cast<Account *>(ctx);
+	const auto ccmpServerUrl = account->getAccountParams()->getCcmpServerUrl();
 	const auto &body = event.getBody();
 	auto content = body.getBodyAsString();
-	lInfo() << "Account [" << account << "] Timeout error : " << content;
+	lInfo() << *account << ": Timeout error on retrieving the information of a conference from the CCMP server "
+	        << ccmpServerUrl << ": " << content;
 	account->ccmpConferenceInformationResponseReceived();
 }
 
