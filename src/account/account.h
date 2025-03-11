@@ -178,9 +178,11 @@ public:
 	void handleCCMPResponseConferenceInformation(const HttpResponse &response);
 	// CCMP request callback (conference list)
 	static void handleResponseConferenceList(void *ctx, const HttpResponse &event);
+	static void handleTimeoutConferenceList(void *ctx, const HttpResponse &event);
+	static void handleIoErrorConferenceList(void *ctx, const HttpResponse &event);
 	static void handleResponseConferenceInformation(void *ctx, const HttpResponse &event);
-	static void handleTimeout(void *ctx, const HttpResponse &event);
-	static void handleIoError(void *ctx, const HttpResponse &event);
+	static void handleTimeoutConferenceInformation(void *ctx, const HttpResponse &event);
+	static void handleIoErrorConferenceInformation(void *ctx, const HttpResponse &event);
 
 private:
 	LinphoneCore *getCCore() const;
