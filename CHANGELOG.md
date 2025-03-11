@@ -10,7 +10,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## Unreleased
 
-## [5.4.0] 2025-01-14
+## [5.4.0] 2025-03-11
 
 ### Added
 - Forward Error Correction to video stream, based on FlexFEC RFC8627
