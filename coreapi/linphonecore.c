@@ -8741,6 +8741,14 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
+bool_t linphone_core_security_alert_enabled(const LinphoneCore *core) {
+	return !!linphone_config_get_int(core->config, "misc", "security_alert", 1);
+}
+
+void linphone_core_enable_security_alert(LinphoneCore *core, bool_t enable) {
+	linphone_config_get_int(core->config, "misc", "security_alert", enable);
+}
+
 bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
 	return (bool_t) !!linphone_config_get_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", 0);
 }

@@ -753,6 +753,7 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 }
 
 void ToneManager::notifySecurityAlert(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
+	if (!linphone_core_security_alert_enabled(getCore().getCCore())) return;
 	notifyToneIndication(LinphoneReasonSasCheckRequired);
 	if (mSecurityAlertTimer) stopSecurityAlert();
 	mSecurityAlertTimer = getCore().createTimer(
@@ -764,6 +765,7 @@ void ToneManager::notifySecurityAlert(BCTBX_UNUSED(const std::shared_ptr<CallSes
 }
 
 void ToneManager::stopSecurityAlert() {
+	if (!linphone_core_security_alert_enabled(getCore().getCCore())) return;
 	stopTone();
 	if (mSecurityAlertTimer) {
 		getCore().destroyTimer(mSecurityAlertTimer);
