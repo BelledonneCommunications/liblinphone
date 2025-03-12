@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -792,6 +792,21 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_auth_suites(LinphoneCore *lc,
                                                           MSZrtpAuthTag authTags[MS_MAX_ZRTP_CRYPTO_TYPES]);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc,
                                                          MSZrtpSasType sasTypes[MS_MAX_ZRTP_CRYPTO_TYPES]);
+
+/**
+ * Tells whether the security alert feature is enabled for this #LinphoneCore object.
+ * By default, the security alert is enabled.
+ * @param core The #LinphoneCore object. @notnil
+ * @return TRUE if the security alert feature is enabled.
+ */
+bool_t linphone_core_security_alert_enabled(const LinphoneCore *core);
+
+/**
+ * Enables the security alert feature.
+ * @param core The #LinphoneCore object @notnil
+ * @param enable A boolean value telling whether to enable or disable the security alert feature.
+ */
+void linphone_core_enable_security_alert(LinphoneCore *core, bool_t enable);
 
 LinphoneImEncryptionEngineCbs *linphone_im_encryption_engine_cbs_new(void);
 
