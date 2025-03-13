@@ -117,6 +117,11 @@ void CCMPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Con
 		confDescr.setSubject(subject);
 	}
 
+	const std::string &description = conferenceInfo->getUtf8Description();
+	if (!description.empty()) {
+		confDescr.setFreeText(description);
+	}
+
 	// Media
 	ConferenceMediaType mediaType;
 	ConferenceMediumType audio("audio", "AUTO_GENERATE_2");
