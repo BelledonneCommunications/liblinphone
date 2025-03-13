@@ -1946,18 +1946,22 @@ void Account::handleResponseConferenceInformation(void *ctx, const HttpResponse 
 					info->setCcmpUri(confInfo->getEntity());
 					auto &confDescription = confInfo->getConferenceDescription();
 					if (confDescription.present()) {
-						auto &subject = confDescription.get().getSubject();
+						auto &description = confDescription->getFreeText();
+						if (description.present() && !description.get().empty()) {
+							info->setDescription(description.get());
+						}
+						auto &subject = confDescription->getSubject();
 						if (subject.present() && !subject.get().empty()) {
 							info->setSubject(subject.get());
 						}
-						auto &confUris = confDescription.get().getConfUris();
+						auto &confUris = confDescription->getConfUris();
 						auto &uris = confUris->getEntry();
 						for (auto &uri : uris) {
 							info->setUri(Address::create(uri.getUri()));
 						}
-						const auto &availableMedia = confDescription.get().getAvailableMedia();
+						const auto &availableMedia = confDescription->getAvailableMedia();
 						if (availableMedia.present()) {
-							for (auto &mediaEntry : availableMedia.get().getEntry()) {
+							for (auto &mediaEntry : availableMedia->getEntry()) {
 								const std::string &mediaType = mediaEntry.getType();
 								const LinphoneMediaDirection mediaDirection =
 								    XmlUtils::mediaStatusToMediaDirection(mediaEntry.getStatus().get());
@@ -1974,7 +1978,7 @@ void Account::handleResponseConferenceInformation(void *ctx, const HttpResponse 
 								info->setCapability(streamType, (mediaDirection == LinphoneMediaDirectionSendRecv));
 							}
 						}
-						auto &anySequence(confDescription.get().getAny());
+						auto &anySequence(confDescription->getAny());
 						for (const auto &anyElement : anySequence) {
 							auto name = xsd::cxx::xml::transcode<char>(anyElement.getLocalName());
 							auto nodeName = xsd::cxx::xml::transcode<char>(anyElement.getNodeName());

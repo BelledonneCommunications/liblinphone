@@ -5954,8 +5954,21 @@ void check_conference_info_in_db(LinphoneCoreManager *mgr,
                                  bool_t chat_enabled) {
 	LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
 	if (BC_ASSERT_PTR_NOT_NULL(info)) {
+		bool_t is_conference_server = linphone_core_conference_server_enabled(mgr->lc);
+		// DB conference scheduler sets the description on the server as well whereas CCMP and SIP conference scheduler
+		// do not set it. Hence copy the description from the retrieved info and verifiy that it is the same as the one
+		// passed as argument should not be NULL
+		const char *actual_description = NULL;
+		if (!!is_conference_server) {
+			actual_description = linphone_conference_info_get_description(info);
+			if (actual_description) {
+				BC_ASSERT_STRING_EQUAL(description, actual_description);
+			}
+		} else {
+			actual_description = description;
+		}
 		check_conference_info_members(info, uid, confAddr, organizer, participantList, start_time, duration, subject,
-		                              description, sequence, state, security_level, skip_participant_info,
+		                              actual_description, sequence, state, security_level, skip_participant_info,
 		                              audio_enabled, video_enabled, chat_enabled);
 		linphone_conference_info_unref(info);
 	}
@@ -6076,8 +6089,15 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 
 		const char *description1 = linphone_conference_info_get_description(info1);
 		const char *description2 = linphone_conference_info_get_description(info2);
-		if (description1 && description2) {
-			BC_ASSERT_STRING_EQUAL(description1, description2);
+		// Dial out conferences do not have a description set. It may happen that the reference conference information
+		// has one as it is built by the tester
+		if (duration1_m > 0) {
+			if (description1 && description2) {
+				BC_ASSERT_STRING_EQUAL(description1, description2);
+			} else {
+				BC_ASSERT_PTR_NULL(description1);
+				BC_ASSERT_PTR_NULL(description2);
+			}
 		}
 
 		const unsigned int ics_sequence1 = linphone_conference_info_get_ics_sequence(info1);

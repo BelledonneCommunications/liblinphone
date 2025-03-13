@@ -815,9 +815,9 @@ void ServerConference::confirmCreation() {
 				         << " has no groupchat capability set: " << linphoneSpecs;
 				setState(ConferenceInterface::State::CreationFailed);
 				auto errorInfo = linphone_error_info_new();
-				linphone_error_info_set(errorInfo, nullptr, LinphoneReasonNotAcceptable, 488,
-				                        "\"groupchat\" capability has not been found in remote contact address",
-				                        "\"groupchat\" capability has not been found in remote contact address");
+				std::string reason = "\"groupchat\" capability has not been found in remote contact address ";
+				reason += remoteContactAddress->toString();
+				linphone_error_info_set(errorInfo, NULL, LinphoneReasonForbidden, 403, reason.c_str(), reason.c_str());
 				session->decline(errorInfo);
 				linphone_error_info_unref(errorInfo);
 			}
@@ -1799,8 +1799,9 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			lError() << "Unable to add " << *call << " because " << *this << " will start at " << startTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, "Conference not started yet",
-			                        "Conference not started yet");
+			std::string reason = "Conference will start on ";
+			reason += startTime;
+			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, reason.c_str(), reason.c_str());
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
 			return false;
@@ -1810,8 +1811,9 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 			lError() << "Unable to add " << *call << " because " << *this << " is already terminated at " << endTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, "Conference already terminated",
-			                        "Conference already terminated");
+			std::string reason = "Conference already ended on ";
+			reason += endTime;
+			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, reason.c_str(), reason.c_str());
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
 			return false;
