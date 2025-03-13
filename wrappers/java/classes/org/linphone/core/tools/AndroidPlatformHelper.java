@@ -841,18 +841,16 @@ public class AndroidPlatformHelper {
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
                 Log.i("[Platform Helper] Preview surface texture [" + surface + "] destroyed");
 
-                if (mNativePtr != 0 && mPreviewTextureView != null) {
-                    if (surface.equals(mPreviewTextureView.getSurfaceTexture())) {
-                        Log.i("[Platform Helper] Current preview surface texture is no longer available");
-                        Runnable runnable = new Runnable() {
-                            @Override
-                            public void run() {
-                                mPreviewTextureView = null;
-                                setNativePreviewWindowId(mNativePtr, null);
-                            }
-                        };
-                        mHandler.post(runnable);
-                    }
+                if (mNativePtr != 0 && surface != null && mPreviewTextureView != null && surface.equals(mPreviewTextureView.getSurfaceTexture())) {
+                    Log.i("[Platform Helper] Current preview surface texture is no longer available");
+                    Runnable runnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            mPreviewTextureView = null;
+                            setNativePreviewWindowId(mNativePtr, null);
+                        }
+                    };
+                    mHandler.post(runnable);
                 }
 
                 if (!DeviceUtils.isSurfaceTextureReleased(surface)) {
