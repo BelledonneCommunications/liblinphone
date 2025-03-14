@@ -528,7 +528,7 @@ void linphone_chat_room_set_conference_address(LinphoneChatRoom *cr, LinphoneAdd
 	    dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr) {
 		std::shared_ptr<LinphonePrivate::Address> idAddr =
-		    LinphonePrivate::Address::toCpp(confAddr)->getSharedFromThis();
+		    confAddr ? LinphonePrivate::Address::toCpp(confAddr)->getSharedFromThis() : NULL;
 		sgcr->setConferenceAddress(idAddr);
 	}
 #else
