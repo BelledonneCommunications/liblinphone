@@ -221,11 +221,60 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_cancel_accept_simultaneously(bool_t through_proxy) {
+	LinphoneCall *pauline_call;
+	LinphoneCall *marie_call;
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneAddress *pauline_dest;
+	LinphoneSipTransports pauline_transports;
+
+	if (!through_proxy) {
+		pauline_dest = linphone_address_new("sip:[::1];transport=tcp");
+		linphone_core_get_sip_transports_used(pauline->lc, &pauline_transports);
+		linphone_address_set_port(pauline_dest, pauline_transports.tcp_port);
+		linphone_core_set_default_proxy_config(marie->lc, NULL);
+	} else {
+		pauline_dest = linphone_address_clone(pauline->identity);
+	}
+	/* We do not unset the default account for pauline (the callee): it shall be able to handle the call
+	 * even if it does not come from the server */
+	marie_call = linphone_core_invite_address(marie->lc, pauline_dest);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(pauline_call)) {
+		linphone_call_terminate(marie_call);
+		linphone_call_accept(pauline_call);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+	}
+	linphone_address_unref(pauline_dest);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_cancel_accept_simultaneously_direct(void) {
+	call_cancel_accept_simultaneously(FALSE);
+}
+
+static void call_cancel_accept_simultaneously_through_proxy(void) {
+	call_cancel_accept_simultaneously(TRUE);
+}
+
 static test_t call_race_conditions_tests[] = {
     TEST_NO_TAG("Call with video added by both parties", call_with_video_added_by_both_parties),
     TEST_NO_TAG("Call with INFO sent by both parties", call_with_info_sent_by_both_parties),
     TEST_NO_TAG("Call paused by both parties", call_paused_by_both_parties),
-    TEST_NO_TAG("Call ended and re-invited at the same time", call_end_and_reinvite)};
+    TEST_NO_TAG("Call ended and re-invited at the same time", call_end_and_reinvite),
+    TEST_NO_TAG("Call cancelled and accepted at the same time (direct)", call_cancel_accept_simultaneously_direct),
+    TEST_NO_TAG("Call cancelled and accepted at the same time (through proxy)",
+                call_cancel_accept_simultaneously_through_proxy)};
 
 test_suite_t call_race_conditions_suite = {"Call race conditions",
                                            NULL,

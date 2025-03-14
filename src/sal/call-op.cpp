@@ -466,6 +466,22 @@ bool SalCallOp::checkForOrphanDialogOn2xx(belle_sip_dialog_t *dialog) {
 	return false;
 }
 
+void SalCallOp::sendAckBye(const belle_sip_response_event_t *event) {
+	auto dialog = belle_sip_response_event_get_dialog(event);
+	auto clientTransaction = belle_sip_response_event_get_client_transaction(event);
+	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(clientTransaction));
+	belle_sip_header_cseq_t *invite_cseq = belle_sip_message_get_header_by_type(request, belle_sip_header_cseq_t);
+	auto ack = belle_sip_dialog_create_ack(dialog, belle_sip_header_cseq_get_seq_number(invite_cseq));
+	if (ack) {
+		mRoot->mCallbacks.call_ack_being_sent(this, reinterpret_cast<SalCustomHeader *>(ack));
+		belle_sip_dialog_send_ack(dialog, ack);
+		;
+	} else {
+		lError() << "Failed to generate ACK.";
+	}
+	sendRequest(belle_sip_dialog_create_request(dialog, "BYE"));
+}
+
 void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_t *event) {
 	auto op = static_cast<SalCallOp *>(userCtx);
 	auto response = belle_sip_response_event_get_response(event);
@@ -630,7 +646,13 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 					}
 					break;
 				case State::Terminating:
-					op->sendRequest(belle_sip_dialog_create_request(op->mDialog, "BYE"));
+					/*
+					 * Race condition: receiving a 200 Ok while we tried to CANCEL the call. Send the ACK, then BYE.
+					 */
+					if (op->mIsCancelled) {
+						lInfo() << "Receiving 200 Ok while the call was cancelled, sending ACK/BYE.";
+						op->sendAckBye(event);
+					}
 					break;
 				case State::Terminated:
 				default:
@@ -640,7 +662,10 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 			}
 			break;
 		case BELLE_SIP_DIALOG_TERMINATED:
-			if ((code >= 300) && (code != 491) && ((method == "INVITE") || (method == "BYE")))
+			if (op->mIsCancelled && method == "INVITE" && code == 200) {
+				lInfo() << "Receiving a 200 Ok for a cancelled dialog, sending ACK/BYE.";
+				op->sendAckBye(event);
+			} else if ((code >= 300) && (code != 491) && ((method == "INVITE") || (method == "BYE")))
 				op->setError(response, true);
 			break;
 		default:
@@ -1489,7 +1514,7 @@ int SalCallOp::cancelInvite(const SalErrorInfo *info) {
 		lWarning() << "There is no transaction to cancel";
 		return -1;
 	}
-
+	mIsCancelled = true;
 	auto cancel = belle_sip_client_transaction_create_cancel(mPendingClientTransaction);
 	if (cancel) {
 		if (info && (info->reason != SalReasonNone)) {
