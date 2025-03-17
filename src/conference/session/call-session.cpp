@@ -217,7 +217,12 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 void CallSessionPrivate::onCallStateChanged(BCTBX_UNUSED(LinphoneCall *call),
                                             BCTBX_UNUSED(LinphoneCallState state),
                                             BCTBX_UNUSED(const std::string &message)) {
-	this->executePendingActions();
+	L_Q();
+	auto zis = q->getSharedFromThis();
+	q->getCore()->doLater([zis, this] {
+		(void)zis;
+		this->executePendingActions();
+	});
 }
 
 void CallSessionPrivate::executePendingActions() {
@@ -226,19 +231,23 @@ void CallSessionPrivate::executePendingActions() {
 	if (networkReachable && (state != CallSession::State::End) && (state != CallSession::State::Released) &&
 	    (state != CallSession::State::Error)) {
 		std::queue<std::function<LinphoneStatus()>> unsuccessfulActions;
-		auto copyPendingActions = pendingActions;
+		std::queue<std::function<LinphoneStatus()>> copyPendingActions;
+		copyPendingActions.swap(pendingActions);
+
 		while (copyPendingActions.empty() == false) {
 			// Store std::function in a temporary variable in order to take it out of the queue before executing it
 			const auto f = copyPendingActions.front();
 			copyPendingActions.pop();
-			pendingActions.pop();
 			// Execute method
 			const auto result = f();
 			if (result != 0) {
 				unsuccessfulActions.push(f);
 			}
 		}
-		pendingActions = unsuccessfulActions;
+		while (!unsuccessfulActions.empty()) {
+			pendingActions.push(unsuccessfulActions.front());
+			unsuccessfulActions.pop();
+		}
 	}
 }
 
