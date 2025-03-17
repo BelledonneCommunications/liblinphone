@@ -72,7 +72,8 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 	mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, invitees, conferenceAddress,
 	                                                       dynamic_pointer_cast<SIPConferenceScheduler>(ref));
 	if (mSession == nullptr) {
-		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
+		lError() << "[Conference Scheduler] [" << this
+		         << "]: Unable to create the conference because the SIP session is null!";
 		setState(State::Error);
 		return;
 	}

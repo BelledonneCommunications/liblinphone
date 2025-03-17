@@ -2057,7 +2057,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
                                                                const std::shared_ptr<Address> &confAddr,
                                                                std::shared_ptr<CallSessionListener> listener) {
 	if (!confParams) {
-		lWarning() << "Trying to create conference with null parameters";
+		lWarning() << "Trying to create or update conference with null parameters";
 		return nullptr;
 	}
 
@@ -2067,6 +2067,10 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	auto account = confParams->getAccount();
 	if (!account) {
 		account = getDefaultAccount();
+	}
+	if (!account) {
+		lWarning() << "Unable to create or update a conference without an account associated";
+		return nullptr;
 	}
 	params.setAccount(account);
 
@@ -2082,8 +2086,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 			conferenceFactoryUriRef = account->getAccountParams()->getConferenceFactoryAddress();
 		}
 		if (!conferenceFactoryUriRef || !conferenceFactoryUriRef->isValid()) {
-			lWarning() << "Not creating conference: no conference factory uri for local address ["
-			           << *account->getAccountParams()->getIdentityAddress() << "]";
+			lWarning() << "Not creating or updating conference: no conference factory uri for account " << *account;
 			return nullptr;
 		}
 		conferenceFactoryUri = conferenceFactoryUriRef->clone()->toSharedPtr();
@@ -2186,7 +2189,18 @@ Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 
 std::shared_ptr<const Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
                                                                            const std::shared_ptr<Account> &account) {
-	auto address = account->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+	if (!account) {
+		lError() << "Unable to retrieve the audio video conference factory address from a null account";
+		return nullptr;
+	}
+	const auto &params = account->getAccountParams();
+	if (!params) {
+		lError() << *account
+		         << " doesn't have a valid set of parameters, hence it is not possible to retrieve the audio video "
+		            "conference factory address";
+		return nullptr;
+	}
+	auto address = params->getAudioVideoConferenceFactoryAddress();
 	if (address == nullptr) {
 		const auto &conferenceFactoryUri = getConferenceFactoryAddress(core, account);
 		lWarning() << "Audio/video conference factory is null, fallback to default conference factory URI ["
