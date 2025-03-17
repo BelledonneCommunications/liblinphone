@@ -1229,20 +1229,23 @@ const string &Call::getReferTo() const {
 	return getActiveSession()->getReferTo();
 }
 
-const std::shared_ptr<Address> Call::getReferToAddress() const {
-	return getActiveSession()->getReferToAddress();
+std::shared_ptr<Address> Call::getReferToAddress() const {
+	auto session = getActiveSession();
+	return session ? session->getReferToAddress() : nullptr;
 }
 
 std::shared_ptr<const Address> Call::getReferredBy() const {
 	return getActiveSession()->getReferredBy();
 }
 
-const std::shared_ptr<Address> Call::getRemoteAddress() const {
-	return getActiveSession()->getRemoteAddress();
+std::shared_ptr<Address> Call::getRemoteAddress() const {
+	auto session = getActiveSession();
+	return session ? session->getRemoteAddress() : nullptr;
 }
 
-const std::shared_ptr<Address> Call::getRemoteContactAddress() const {
-	return getActiveSession()->getRemoteContactAddress();
+std::shared_ptr<Address> Call::getRemoteContactAddress() const {
+	auto session = getActiveSession();
+	return session ? session->getRemoteContactAddress() : nullptr;
 }
 
 const string &Call::getRemoteContact() const {

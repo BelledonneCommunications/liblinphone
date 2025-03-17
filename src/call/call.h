@@ -170,10 +170,10 @@ public:
 	float getRecordVolume() const;
 	std::shared_ptr<Call> getReferer() const;
 	const std::string &getReferTo() const;
-	const std::shared_ptr<Address> getReferToAddress() const;
+	std::shared_ptr<Address> getReferToAddress() const;
 	std::shared_ptr<const Address> getReferredBy() const;
-	const std::shared_ptr<Address> getRemoteAddress() const;
-	const std::shared_ptr<Address> getRemoteContactAddress() const;
+	std::shared_ptr<Address> getRemoteAddress() const;
+	std::shared_ptr<Address> getRemoteContactAddress() const;
 	const std::string &getRemoteContact() const;
 	const MediaSessionParams *getRemoteParams() const;
 	const std::string &getRemoteUserAgent();

@@ -4610,9 +4610,12 @@ bool MediaSession::initiateOutgoing(const string &subject, const std::shared_ptr
 				        << " because ICE candidates must be gathered first";
 				d->queueIceGatheringTask([this, subject, content]() {
 					L_D();
-					if (d->state != CallSession::State::End) // Call has been terminated while gathering: avoid to
-					                                         // update descriptions.
-						d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					if (d->state != CallSession::State::OutgoingInit) {
+						lInfo() << "Ice gathering done but call is now in [" << Utils::toString(d->state)
+						        << "], nothing to do.";
+						return 0;
+					}
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 					startInvite(nullptr, subject, content);
 					return 0;
 				});

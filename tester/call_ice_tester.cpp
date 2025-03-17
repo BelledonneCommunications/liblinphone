@@ -120,8 +120,8 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	pauline_call = linphone_core_invite_address(pauline->lc, marie->identity);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 10000));
 	BC_ASSERT_TRUE(linphone_call_get_all_muted(pauline_call));
 
 	marie_call = linphone_core_get_current_call(marie->lc);

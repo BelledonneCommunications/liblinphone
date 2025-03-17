@@ -4157,6 +4157,10 @@ void linphone_core_set_user_agent(LinphoneCore *lc, const char *name, const char
 	}
 }
 const char *linphone_core_get_user_agent(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
+	if (!lc->sal) {
+		return linphone_config_get_string(lc->config, "sip", "user_agent", "");
+	}
 	return lc->sal->getUserAgent().c_str();
 }
 
