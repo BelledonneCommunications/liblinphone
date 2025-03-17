@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.AndroidPlatformHelper;
 
 /*
  * Purpose of this receiver is to disable keep alives when screen is off
@@ -38,6 +39,7 @@ public class InteractivityReceiver extends BroadcastReceiver {
             Log.i("[Platform Helper] [Interactivity Receiver] Device screen is ON");
         } else if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_OFF)) {
             Log.i("[Platform Helper] [Interactivity Receiver] Device screen is OFF");
+            if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().stopRinging();
         }
     }
 }
