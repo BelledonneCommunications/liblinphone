@@ -329,23 +329,6 @@ bool_t linphone_account_is_phone_number(const LinphoneAccount *account, const ch
 	return TRUE;
 }
 
-static char *linphone_account_flatten_phone_number(const char *number) {
-	char *unescaped_phone_number = belle_sip_username_unescape_unnecessary_characters(number);
-	char *result = reinterpret_cast<char *>(ms_malloc0(strlen(unescaped_phone_number) + 1));
-	char *w = result;
-	const char *r;
-
-	for (r = unescaped_phone_number; *r != '\0'; ++r) {
-		if (*r == '+' || isdigit(*r)) {
-			*w++ = *r;
-		}
-	}
-
-	*w++ = '\0';
-	belle_sip_free(unescaped_phone_number);
-	return result;
-}
-
 char *linphone_account_normalize_phone_number(const LinphoneAccount *account, const char *username) {
 	AccountLogContextualizer logContextualizer(account);
 
@@ -368,7 +351,7 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		linphone_account_params_unref(accountParams);
 	}
 
-	char *flatten = linphone_account_flatten_phone_number(username);
+	char *flatten = ms_strdup(Utils::flattenPhoneNumber(username).c_str());
 	lDebug() << "Flattened number is [" << flatten << "] for [" << username << "]";
 
 	// if local short number, do not add international prefix
