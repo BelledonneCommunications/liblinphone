@@ -548,9 +548,10 @@ void Friend::addAddress(const std::shared_ptr<const Address> &address) {
 
 void Friend::addPhoneNumber(const std::string &phoneNumber) {
 	if (phoneNumber.empty()) return;
+	auto flattenedPhoneNumber = Utils::flattenPhoneNumber(phoneNumber);
 
 	for (auto existing : getPhoneNumbers()) {
-		if (existing == phoneNumber) {
+		if (flattenedPhoneNumber == Utils::flattenPhoneNumber(existing)) {
 			lInfo() << "Trying to add an already existing phone number to friend, skipping";
 			return;
 		}
@@ -570,10 +571,12 @@ void Friend::addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumb
 	if (!phoneNumber) return;
 	const std::string &phone = phoneNumber->getPhoneNumber();
 	if (phone.empty()) return;
+	auto flattenedPhoneNumber = Utils::flattenPhoneNumber(phone);
 
 	const std::string &label = phoneNumber->getLabel();
 	for (auto &existing : getPhoneNumbersWithLabel()) {
-		if (existing->getPhoneNumber() == phone && existing->getLabel() == label) {
+		if (existing->getLabel() == label &&
+		    flattenedPhoneNumber == Utils::flattenPhoneNumber(existing->getPhoneNumber())) {
 			lInfo() << "Trying to add an already existing phone number / label to friend, skipping";
 			return;
 		}

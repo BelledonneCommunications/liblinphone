@@ -140,6 +140,7 @@ inline std::string join(const std::vector<T> &elems, const S &delim) {
 }
 LINPHONE_PUBLIC std::string trim(const std::string &str);
 LINPHONE_PUBLIC std::string normalizeFilename(const std::string &str);
+LINPHONE_PUBLIC std::string flattenPhoneNumber(const std::string &str);
 
 template <typename T>
 inline const T &getEmptyConstRefObject() {

@@ -171,6 +171,18 @@ const char *linphone_friend_get_name(const LinphoneFriend *lf) {
 	return L_STRING_TO_C(Friend::toCpp(lf)->getName());
 }
 
+const char *linphone_friend_get_last_name(const LinphoneFriend *lf) {
+	if (!lf) return NULL;
+	const std::shared_ptr<Vcard> vcard = Friend::toCpp(lf)->getVcard();
+	return vcard ? L_STRING_TO_C(vcard->getFamilyName()) : NULL;
+}
+
+const char *linphone_friend_get_first_name(const LinphoneFriend *lf) {
+	if (!lf) return NULL;
+	const std::shared_ptr<Vcard> vcard = Friend::toCpp(lf)->getVcard();
+	return vcard ? L_STRING_TO_C(vcard->getGivenName()) : NULL;
+}
+
 const char *linphone_friend_get_native_uri(const LinphoneFriend *lf) {
 	if (!lf) return NULL;
 	return L_STRING_TO_C(Friend::toCpp(lf)->getNativeUri());
@@ -239,6 +251,12 @@ LinphoneVcard *linphone_friend_get_vcard(const LinphoneFriend *lf) {
 	if (!lf) return NULL;
 	const std::shared_ptr<Vcard> vcard = Friend::toCpp(lf)->getVcard();
 	return vcard ? vcard->toC() : nullptr;
+}
+
+const char *linphone_friend_dump_vcard(const LinphoneFriend *lf) {
+	if (!lf) return NULL;
+	const std::shared_ptr<Vcard> vcard = Friend::toCpp(lf)->getVcard();
+	return vcard ? L_STRING_TO_C(vcard->asVcard4String()) : NULL;
 }
 
 bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability) {
@@ -326,6 +344,24 @@ void linphone_friend_set_job_title(LinphoneFriend *lf, const char *job_title) {
 
 LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name) {
 	return Friend::toCpp(lf)->setName(L_C_TO_STRING(name));
+}
+
+LinphoneStatus linphone_friend_set_last_name(LinphoneFriend *lf, const char *last_name) {
+	const std::shared_ptr<Vcard> vcard = Friend::toCpp(lf)->getVcard();
+	if (vcard) {
+		vcard->setFamilyName(L_C_TO_STRING(last_name));
+		return 0;
+	}
+	return -1;
+}
+
+LinphoneStatus linphone_friend_set_first_name(LinphoneFriend *lf, const char *first_name) {
+	const std::shared_ptr<Vcard> vcard = Friend::toCpp(lf)->getVcard();
+	if (vcard) {
+		vcard->setGivenName(L_C_TO_STRING(first_name));
+		return 0;
+	}
+	return -1;
 }
 
 void linphone_friend_set_native_uri(LinphoneFriend *lf, const char *native_uri) {

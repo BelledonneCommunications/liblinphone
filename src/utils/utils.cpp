@@ -228,6 +228,22 @@ string Utils::trim(const string &str) {
 	return (itBack <= itFront ? string() : string(itFront, itBack));
 }
 
+std::string Utils::flattenPhoneNumber(const std::string &str) {
+	std::string result;
+	const char *number = str.c_str();
+	char *unescaped_phone_number = belle_sip_username_unescape_unnecessary_characters(number);
+	const char *r;
+
+	for (r = unescaped_phone_number; *r != '\0'; ++r) {
+		if (*r == '+' || isdigit(*r)) {
+			result += *r;
+		}
+	}
+
+	belle_sip_free(unescaped_phone_number);
+	return result;
+}
+
 std::string Utils::normalizeFilename(const std::string &str) {
 	std::string result(str);
 #ifdef _WIN32
