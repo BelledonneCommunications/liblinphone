@@ -58,10 +58,6 @@ class IosPlatformHelpers : public MacPlatformHelpers, public CoreListener {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 	~IosPlatformHelpers () {
-		try {
-            L_GET_PRIVATE(getCore())->unregisterListener(this);
-	    } catch (...) {
-	    }
 		[mAppDelegate dealloc];
 	}
 
@@ -139,7 +135,6 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	if (mUseAppDelgate) {
 		mAppDelegate = [[IosAppDelegate alloc] initWithCore:core];
 	}
-    L_GET_PRIVATE(core)->registerListener(this);
 	ms_message("IosPlatformHelpers is fully initialised");
 }
 
@@ -277,6 +272,9 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	} else {
 		ms_warning("[IosPlatformHelpers] Auto core.iterate() isn't enabled, ensure you do it in your application!");
 	}
+    
+    ms_message("[IosPlatformHelpers] Register onGlobalStateChanged listener to request push notification when finished starting");
+    L_GET_PRIVATE(getCore())->registerListener(this);
 }
 
 void IosPlatformHelpers::onLinphoneCoreStop() {
@@ -289,7 +287,12 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
 		enableAutoIterate(FALSE);
 	}
-
+    
+    try {
+        L_GET_PRIVATE(getCore())->unregisterListener(this);
+    } catch (...) {
+        
+    }
 	// To avoid trigger callbacks of mHandler after linphone core stop
 	[mAppDelegate onStopAsyncEnd:true];
 	getSharedCoreHelpers()->onLinphoneCoreStop();
