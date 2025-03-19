@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "call.h"
@@ -1001,11 +1001,41 @@ LinphoneStatus Call::transfer(const shared_ptr<Call> &dest) {
 }
 
 LinphoneStatus Call::transfer(const string &dest) {
-	return getActiveSession()->transfer(dest);
+	auto address = getCore()->interpretUrl(dest, true);
+	return transfer(*address);
 }
 
 LinphoneStatus Call::transfer(const Address &dest) {
-	return getActiveSession()->transfer(dest);
+	LinphoneStatus ret = 0;
+	int pauseBeforeTransfer =
+	    linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip", "pause_before_transfer", 0);
+	if (pauseBeforeTransfer && getState() != CallSession::State::Paused) {
+		lInfo() << *this << " must be paused before transfer.";
+		ret = pause();
+		if (ret == 0) {
+			/* request a future action to be executed when reaching the Paused state */
+			getActiveSession()->addPendingAction([this, dest]() {
+				switch (getState()) {
+					case CallSession::State::Paused:
+						lInfo() << "Call is now paused, requesting the transfer.";
+						getActiveSession()->transfer(dest);
+						break;
+					case CallSession::State::Pausing:
+						return -1; // try again
+						break;
+					default:
+						// unexpected
+						lWarning() << "The call could not be paused, transfer request aborted.";
+						break;
+				}
+				/* Even in failure case we return 0 because we don't want the action to be re-tried. */
+				return 0;
+			});
+		}
+	} else {
+		ret = getActiveSession()->transfer(dest);
+	}
+	return ret;
 }
 
 LinphoneStatus Call::updateFromConference(const MediaSessionParams *msp) {
