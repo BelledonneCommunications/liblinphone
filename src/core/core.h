@@ -474,6 +474,9 @@ private:
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
 	void clearProxyConfigList() const;
 
+	std::shared_ptr<Account> guessLocalAccountFromMalformedMessage(const std::shared_ptr<Address> &localAddress,
+	                                                               const std::shared_ptr<Address> &peerAddress);
+
 	std::list<std::string> plugins;
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 	std::list<HINSTANCE> loadedPlugins;

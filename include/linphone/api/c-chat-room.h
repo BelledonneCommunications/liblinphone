@@ -142,6 +142,13 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_local_address(Linp
 LINPHONE_PUBLIC const char *linphone_chat_room_get_identifier(const LinphoneChatRoom *chat_room);
 
 /**
+ * Returns the local account to which this chat room is related.
+ * @param chat_room The #LinphoneChatRoom object. @notnil
+ * @return the related #LinphoneAccount object if any, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneAccount *linphone_chat_room_get_account(LinphoneChatRoom *chat_room);
+
+/**
  * Used to receive a chat message when using async mechanism with IM enchat_roomyption engine
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param message #LinphoneChatMessage object @notnil

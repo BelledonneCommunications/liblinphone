@@ -929,6 +929,30 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	ConferenceId conferenceId(std::move(peerAddress), std::move(localAddress), createConferenceIdParams());
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId, false);
 	if (chatRoom) {
+		bool isBasic = (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+		if (isBasic) {
+			auto localAccount =
+			    guessLocalAccountFromMalformedMessage(conferenceId.getLocalAddress(), conferenceId.getPeerAddress());
+			if (localAccount) {
+				// We have a match for the from domain and the to username.
+				// We may face an IPBPX that sets the To domain to our IP address, which is
+				// a terribly stupid idea.
+				lWarning() << "Applying workaround to have this existing chat room assigned to a known account.";
+				auto oldConfId = chatRoom->getConferenceId();
+				conferenceId.setLocalAddress(localAccount->getAccountParams()->getIdentityAddress(), true);
+
+				d->mainDb->updateChatRoomConferenceId(oldConfId, conferenceId);
+
+				auto basicChatRoom = dynamic_pointer_cast<BasicChatRoom>(chatRoom);
+				basicChatRoom->setConferenceId(conferenceId);
+
+				d->mChatRoomsById.erase(oldConfId);
+				d->mChatRoomsById[conferenceId] = chatRoom;
+
+				updateChatRoomList();
+			}
+		}
+
 		reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
 	} else if (!linphone_core_conference_server_enabled(cCore)) {
 		const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
@@ -937,6 +961,16 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 			lError() << "Message is received in the context of a client chatroom for which we have no context.";
 			reason = LinphoneReasonNotAcceptable;
 		} else {
+			auto localAccount =
+			    guessLocalAccountFromMalformedMessage(conferenceId.getLocalAddress(), conferenceId.getPeerAddress());
+			if (localAccount) {
+				// We have a match for the from domain and the to username.
+				// We may face an IPBPX that sets the To domain to our IP address, which is
+				// a terribly stupid idea.
+				lWarning() << "Applying workaround to have this chat room assigned to a known account.";
+				conferenceId.setLocalAddress(localAccount->getAccountParams()->getIdentityAddress(), true);
+			}
+
 			chatRoom = getOrCreateBasicChatRoom(conferenceId);
 			if (chatRoom) {
 				reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
@@ -1028,6 +1062,32 @@ void Core::decrementRemainingDownloadFileCount() {
 	if ((mRemainingDownloadFileCount == 0) && (mRemainingUploadFileCount == 0)) {
 		static_cast<PlatformHelpers *>(cCore->platform_helper)->stopFileTransferService();
 	}
+}
+
+std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::shared_ptr<Address> &localAddress,
+                                                                     const std::shared_ptr<Address> &peerAddress) {
+	if (!localAddress) return nullptr;
+
+	auto account = findAccountByIdentityAddress(localAddress);
+	if (!account) {
+		string toUser = localAddress->getUsername();
+		if (!toUser.empty() && peerAddress) {
+			auto localAddressWithPeerDomain = make_shared<Address>(*localAddress);
+			localAddressWithPeerDomain->setDomain(peerAddress->getDomain());
+			account = lookupKnownAccount(localAddressWithPeerDomain, false);
+			if (account) {
+				// We have a match for the from domain and the to username.
+				// We may face an IPBPX that sets the To domain to our IP address, which is
+				// a terribly stupid idea.
+				lWarning() << "Detecting TO header probably ill-choosen.";
+				return account;
+			} else {
+				lWarning() << "Failed to find an account matching TO header";
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 LINPHONE_END_NAMESPACE

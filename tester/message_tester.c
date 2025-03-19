@@ -4445,6 +4445,102 @@ static void baudot_text_message_voice_switch_voice_carryover_europe(void) {
 
 #endif /* HAVE_BAUDOT */
 
+static void crappy_to_header(bool_t existing_chat_room) {
+	const char *template = "MESSAGE sip:%s@192.168.0.24:9597 SIP/2.0\r\n"
+	                       "Via: SIP/2.0/TCP 10.0.0.1;rport;branch=z9hG4bKSg92gr72NvDUp\r\n"
+	                       "Route: <sip:%s@192.168.0.24:9597>;transport=tcp\r\n"
+	                       "Max-Forwards: 70\r\n"
+	                       "From: <sip:marcel@sip.example.org>;tag=yPe~pl-Rg\r\n"
+	                       "To: <sip:%s@192.168.0.24:9597>;transport=tcp\r\n"
+	                       "Call-ID: e1431428-4229-4744-9479-e432618ba7f9\r\n"
+	                       "CSeq: 95887387 MESSAGE\r\n"
+	                       "User-Agent: FreeSWITCH\r\n"
+	                       "Allow: INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, INFO, UPDATE, REGISTER, REFER, NOTIFY, "
+	                       "PUBLISH, SUBSCRIBE\r\n"
+	                       "Supported: path, replaces\r\n"
+	                       "Content-Type: text/plain\r\n"
+	                       "Content-Length: 2\r\n"
+	                       "\r\n"
+	                       "Hi\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+	const char *laure_username = linphone_address_get_username(laure->identity);
+
+	if (existing_chat_room) {
+		char *localSipUri = bctbx_strdup_printf("sip:%s@192.168.0.24", laure_username);
+		LinphoneChatRoom *existing_cr =
+		    linphone_core_create_basic_chat_room(laure->lc, localSipUri, "sip:marcel@sip.example.org");
+		BC_ASSERT_PTR_NOT_NULL(existing_cr);
+		if (existing_cr) {
+			const LinphoneAddress *local_address = linphone_chat_room_get_local_address(existing_cr);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(local_address), laure_username);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(local_address), "192.168.0.24");
+
+			const LinphoneAddress *peer_address = linphone_chat_room_get_peer_address(existing_cr);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(peer_address), "marcel");
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(peer_address), "sip.example.org");
+		}
+		bctbx_free(localSipUri);
+	}
+
+	char *message = bctbx_strdup_printf(template, laure_username, laure_username, laure_username);
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(message, strlen(message), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+	bctbx_free(message);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneMessageReceived, 1));
+	LinphoneChatMessage *received_message = laure->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(received_message);
+	if (received_message != NULL) {
+		LinphoneChatRoom *chat_room = linphone_chat_message_get_chat_room(received_message);
+		BC_ASSERT_PTR_NOT_NULL(chat_room);
+		if (chat_room) {
+			const LinphoneAddress *local_address = linphone_chat_room_get_local_address(chat_room);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(local_address), laure_username);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(local_address), "sip.example.org");
+
+			const LinphoneAddress *peer_address = linphone_chat_room_get_peer_address(chat_room);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(peer_address), "marcel");
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(peer_address), "sip.example.org");
+
+			LinphoneAccount *account = linphone_chat_room_get_account(chat_room);
+			BC_ASSERT_PTR_NOT_NULL(account);
+			if (account) {
+				const LinphoneAddress *identity_address =
+				    linphone_account_params_get_identity_address(linphone_account_get_params(account));
+				BC_ASSERT_STRING_EQUAL(linphone_address_get_username(identity_address), laure_username);
+				BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(identity_address), "sip.example.org");
+
+				const bctbx_list_t *chat_rooms = linphone_account_get_chat_rooms(account);
+				BC_ASSERT_PTR_NOT_NULL(chat_rooms);
+				if (chat_rooms) {
+					BC_ASSERT_EQUAL((int)bctbx_list_size(chat_rooms), 1, int, "%d");
+					LinphoneChatRoom *first_chat_room = (LinphoneChatRoom *)bctbx_list_get_data(chat_rooms);
+					LinphoneChatMessage *last_message = linphone_chat_room_get_last_message_in_history(first_chat_room);
+					BC_ASSERT_PTR_NOT_NULL(last_message);
+					if (last_message) {
+						BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(last_message),
+						                       linphone_chat_message_get_text_content(received_message));
+						linphone_chat_message_unref(last_message);
+					}
+				}
+			}
+		}
+	}
+
+	linphone_core_manager_destroy(laure);
+}
+
+void text_message_crappy_to_header_existing_chat_room(void) {
+	crappy_to_header(TRUE);
+}
+
+void text_message_crappy_to_header(void) {
+	crappy_to_header(FALSE);
+}
+
 test_t message_tests[] = {
     TEST_NO_TAG("File transfer content", file_transfer_content),
     TEST_NO_TAG("Message with 2 attachments", message_with_two_attachments),
@@ -4479,6 +4575,9 @@ test_t message_tests[] = {
                 text_message_in_call_chat_room_from_denied_text_offer_when_room_exists),
     TEST_NO_TAG("Text message duplication", text_message_duplication),
     TEST_NO_TAG("Text message auto resent after failure", text_message_auto_resent_after_failure),
+    TEST_NO_TAG("Text message with crappy TO header", text_message_crappy_to_header),
+    TEST_NO_TAG("Text message with crappy TO header from existing chat room",
+                text_message_crappy_to_header_existing_chat_room),
     TEST_NO_TAG("Transfer message", transfer_message),
     TEST_NO_TAG("Transfer message 2", transfer_message_2),
     TEST_NO_TAG("Transfer message 3", transfer_message_3),
