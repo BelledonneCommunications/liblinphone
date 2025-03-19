@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/mseventqueue.h"

@@ -1842,11 +1842,6 @@ LinphoneStatus CallSession::transfer(const Address &address) {
 	return 0;
 }
 
-LinphoneStatus CallSession::transfer(const string &dest) {
-	auto address = getCore()->interpretUrl(dest, true);
-	return transfer(*address);
-}
-
 LinphoneStatus CallSession::update(const CallSessionParams *csp,
                                    const UpdateMethod method,
                                    const string &subject,

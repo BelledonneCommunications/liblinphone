@@ -253,7 +253,7 @@ static void incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_
 	incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallOutgoingEarlyMedia);
 }
 
-static void _simple_call_transfer(bool_t transferee_is_default_account) {
+static void _simple_call_transfer(bool_t transferee_is_default_account, bool_t pause_before_transfer) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dual_proxy_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
@@ -268,6 +268,10 @@ static void _simple_call_transfer(bool_t transferee_is_default_account) {
 	lcs = bctbx_list_append(lcs, laure->lc);
 
 	char *marie_identity = linphone_address_as_string(marie->identity);
+
+	if (pause_before_transfer) {
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "pause_before_transfer", 1);
+	}
 
 	// Marie calls Pauline
 	BC_ASSERT_TRUE(call(marie, pauline));
@@ -293,10 +297,26 @@ static void _simple_call_transfer(bool_t transferee_is_default_account) {
 	// Pauline transfers call from Marie to Laure
 	linphone_call_transfer(pauline_called_by_marie, laure_identity);
 	bctbx_free(laure_identity);
+	if (pause_before_transfer) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausing, 1, 2000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPaused, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausedByRemote, 1, 10000));
+	}
+
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallRefered, 1, 2000));
+	if (!pause_before_transfer) {
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallPausing, 0, int, "%i");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallPaused, 0, int, "%i");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausedByRemote, 0, int, "%i");
+	}
+
 	// marie pausing pauline
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, 1, 2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 2000));
+	if (!pause_before_transfer) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 2000));
+	} else {
+		// Pauline's call is already in Paused state, it won't transition to PausedByRemote.
+	}
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, 1, 2000));
 	// marie calling laure
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1, 2000));
@@ -343,11 +363,15 @@ end:
 }
 
 static void simple_call_transfer(void) {
-	_simple_call_transfer(TRUE);
+	_simple_call_transfer(TRUE, FALSE);
 }
 
 static void simple_call_transfer_from_non_default_account(void) {
-	_simple_call_transfer(FALSE);
+	_simple_call_transfer(FALSE, FALSE);
+}
+
+static void simple_call_transfer_with_pause_before(void) {
+	_simple_call_transfer(TRUE, TRUE);
 }
 
 static void unattended_call_transfer(void) {
@@ -1535,7 +1559,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-test_t multi_call_tests[] = {
+static test_t multi_call_tests[] = {
     TEST_NO_TAG("Call waiting indication", call_waiting_indication),
     TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
     TEST_NO_TAG("Second call rejected if first one in progress", second_call_rejected_if_first_one_in_progress),
@@ -1555,6 +1579,7 @@ test_t multi_call_tests[] = {
     // call_with_ice_negotiations_ending_while_accepting_call_back_to_back, "ICE"),
     TEST_NO_TAG("Simple call transfer", simple_call_transfer),
     TEST_NO_TAG("Simple call transfer from non default account", simple_call_transfer_from_non_default_account),
+    TEST_NO_TAG("Simple call transfer with pause before", simple_call_transfer_with_pause_before),
     TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
     TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
     TEST_NO_TAG("Call transfer existing outgoing call", call_transfer_existing_call_outgoing_call),

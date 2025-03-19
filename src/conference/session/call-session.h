@@ -144,7 +144,6 @@ public:
 	LinphoneStatus terminate(const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer(const std::shared_ptr<CallSession> &dest);
 	LinphoneStatus transfer(const Address &dest);
-	LinphoneStatus transfer(const std::string &dest);
 	LinphoneStatus update(const CallSessionParams *csp,
 	                      const UpdateMethod method = UpdateMethod::Default,
 	                      const std::string &subject = "",
