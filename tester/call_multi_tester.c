@@ -367,7 +367,12 @@ static void simple_call_transfer(void) {
 }
 
 static void simple_call_transfer_from_non_default_account(void) {
+	/* this test is run in force_name_addr mode (ie enclose all URIs within < > within SIP headers)
+	 * to make sure it has no incidence on the good execution of call transfers.
+	 */
+	belle_sip_stack_force_name_addr(TRUE);
 	_simple_call_transfer(FALSE, FALSE);
+	belle_sip_stack_force_name_addr(FALSE);
 }
 
 static void simple_call_transfer_with_pause_before(void) {

@@ -337,6 +337,7 @@ public:
 	void useTcpTlsKeepAlive(bool value) {
 		mUseTcpTlsKeepAlive = value;
 	}
+	void forceNameAddr(bool value);
 	void sendKeepAlive();
 
 	void setDscp(int dscp) {

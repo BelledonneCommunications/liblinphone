@@ -956,6 +956,10 @@ void Sal::setRefreshWindow(const int min_value, const int max_value) {
 	}
 }
 
+void Sal::forceNameAddr(bool value) {
+	belle_sip_stack_force_name_addr(value);
+}
+
 void Sal::disableMedia(bool enable) {
 	mDisableMedia = enable;
 }
