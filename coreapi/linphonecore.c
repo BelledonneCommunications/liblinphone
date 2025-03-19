@@ -3498,6 +3498,62 @@ static void linphone_core_init(LinphoneCore *lc,
 	}
 }
 
+/* The management of settings needs to be revisited.
+ * The reading and application of settings is not consistent between the case where
+ * the Core is started for the first time, or is being restarted.
+ * Currently, the following is done when a core is created:
+ * 1) create the Core object
+ * 2) read user settings from config file
+ * 3) apply the settings to Sal or other sub-entities
+ *
+ * When the core is started following creation (case A):
+ * 4) fetch the remote provisioning if any
+ * 5) if remote provisioning was done, re-apply the settings to Sal or other sub-entities.
+ *
+ * When the core is being stopped:
+ * 6) the Sal is destroyed
+ *
+ * When the core is now restarted (case B):
+ * 7) re-instanciate the Sal and apply settings
+ * 8) fetch the remote provisioning if any
+ * 9) if remote provisioning was done, re-apply the settings to Sal or other sub-entities.
+ *
+ * As a result the Core does not perform the same things in case A and B, despite the same
+ * action is requested.
+ *
+ * This tyically leads to the following situation where an app does settings modification
+ * through LinphoneConfig API before calling linphone_core_start():
+ * - at first start, the settings won't have any effect.
+ * - at second start, the settings will take effect.
+ * This is extremely error-prone, a big refactoring is required here.
+ * Meanwhile, in order to circumvent this problem the below function
+ * linphone_core_before_start_apply_settings() re-applies a few settings
+ * that are frequently modified before linphone_core_start(), and need specific
+ * code in order to be applied.
+ * Note that not all settings are subject to this problem (mainly the Sal related ones).
+ * Most settings are just read and use on demand.
+ */
+
+static void linphone_core_before_start_apply_settings(LinphoneCore *lc) {
+	lc->conference_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->conferenceVersionAsString()));
+	lc->groupchat_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->groupChatVersionAsString()));
+	lc->ephemeral_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->ephemeralVersionAsString()));
+
+	// to give a chance to change uuid before starting
+	const char *uuid = linphone_config_get_string(lc->config, "misc", "uuid", NULL);
+	if (!uuid) {
+		string uuid = lc->sal->createUuid();
+		linphone_config_set_string(lc->config, "misc", "uuid", uuid.c_str());
+	} else if (strcmp(uuid, "0") != 0) /*to allow to disable sip.instance*/
+		lc->sal->setUuid(uuid);
+
+	if (!lc->sal->getRootCa().empty()) {
+		auto &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient();
+		belle_tls_crypto_config_set_root_ca(httpClient.getCryptoConfig(), lc->sal->getRootCa().c_str());
+	}
+	lc->sal->forceNameAddr(linphone_config_get_int(lc->config, "sip", "force_name_addr", 0));
+}
+
 LinphoneStatus linphone_core_start(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
 	try {
@@ -3543,22 +3599,7 @@ LinphoneStatus linphone_core_start(LinphoneCore *lc) {
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
-		lc->conference_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->conferenceVersionAsString()));
-		lc->groupchat_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->groupChatVersionAsString()));
-		lc->ephemeral_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->ephemeralVersionAsString()));
-
-		// to give a chance to change uuid before starting
-		const char *uuid = linphone_config_get_string(lc->config, "misc", "uuid", NULL);
-		if (!uuid) {
-			string uuid = lc->sal->createUuid();
-			linphone_config_set_string(lc->config, "misc", "uuid", uuid.c_str());
-		} else if (strcmp(uuid, "0") != 0) /*to allow to disable sip.instance*/
-			lc->sal->setUuid(uuid);
-
-		if (!lc->sal->getRootCa().empty()) {
-			auto &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient();
-			belle_tls_crypto_config_set_root_ca(httpClient.getCryptoConfig(), lc->sal->getRootCa().c_str());
-		}
+		linphone_core_before_start_apply_settings(lc);
 
 		bool autoNetworkStateMonitoringEnabled = !!lc->auto_net_state_mon;
 		if (!autoNetworkStateMonitoringEnabled) {

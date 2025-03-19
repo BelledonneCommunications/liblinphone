@@ -429,6 +429,7 @@ static void core_set_user_agent(void) {
 
 static void linphone_address_test(void) {
 	LinphoneAddress *address;
+	char *str;
 
 	linphone_address_unref(create_linphone_address(NULL));
 	BC_ASSERT_PTR_NULL(linphone_address_new("sip:@sip.linphone.org"));
@@ -447,6 +448,30 @@ static void linphone_address_test(void) {
 	address = linphone_address_new("sip:[::ffff:90.110.127.31]");
 	if (!BC_ASSERT_PTR_NOT_NULL(address)) return;
 	linphone_address_unref(address);
+
+	/* Verifies that the [sip]/force_name_addr works as expected. */
+	LinphoneCoreManager *lcm = linphone_core_manager_create("empty_rc");
+	linphone_config_set_int(linphone_core_get_config(lcm->lc), "sip", "force_name_addr", 1);
+	bctbx_message("force_name_addr enabled");
+	linphone_core_start(lcm->lc);
+	address = linphone_address_new("sip:bob@example.com");
+	if (BC_ASSERT_PTR_NOT_NULL(address)) {
+		str = linphone_address_as_string(address);
+		BC_ASSERT_STRING_EQUAL(str, "<sip:bob@example.com>");
+		bctbx_free(str);
+		linphone_address_unref(address);
+	}
+	linphone_core_stop(lcm->lc);
+	linphone_config_set_int(linphone_core_get_config(lcm->lc), "sip", "force_name_addr", 0);
+	linphone_core_start(lcm->lc);
+	address = linphone_address_new("sip:bob@example.com");
+	if (BC_ASSERT_PTR_NOT_NULL(address)) {
+		str = linphone_address_as_string(address);
+		BC_ASSERT_STRING_EQUAL(str, "sip:bob@example.com");
+		bctbx_free(str);
+		linphone_address_unref(address);
+	}
+	linphone_core_manager_destroy(lcm);
 }
 
 static void core_sip_transport_test(void) {
