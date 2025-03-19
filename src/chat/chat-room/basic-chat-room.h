@@ -44,6 +44,7 @@ public:
 	bool isReadOnly() const override;
 
 	const ConferenceId &getConferenceId() const override;
+	void setConferenceId(const ConferenceId &conferenceId);
 	std::optional<std::reference_wrapper<const std::string>> getIdentifier() const override;
 
 	void invalidateAccount() override;

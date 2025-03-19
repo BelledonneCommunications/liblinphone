@@ -113,6 +113,11 @@ const char *linphone_chat_room_get_identifier(const LinphoneChatRoom *chat_room)
 	return NULL;
 }
 
+LinphoneAccount *linphone_chat_room_get_account(LinphoneChatRoom *chat_room) {
+	shared_ptr<Account> account = AbstractChatRoom::toCpp(chat_room)->getAccount();
+	return (account) ? account->toC() : nullptr;
+}
+
 LinphoneChatMessage *linphone_chat_room_create_empty_message(LinphoneChatRoom *chat_room) {
 	ChatRoomLogContextualizer logContextualizer(chat_room);
 	shared_ptr<ChatMessage> cppPtr = AbstractChatRoom::toCpp(chat_room)->createChatMessage();

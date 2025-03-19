@@ -6541,12 +6541,14 @@ void MainDb::updateChatRoomConferenceId(const ConferenceId oldConferenceId, cons
 		L_D();
 
 		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress());
+		const long long &localSipAddressId = d->insertSipAddress(newConferenceId.getLocalAddress());
 		const long long &dbChatRoomId = d->selectChatRoomId(oldConferenceId);
 
 		*d->dbSession.getBackendSession() << "UPDATE chat_room"
-		                                     " SET peer_sip_address_id = :peerSipAddressId"
+		                                     " SET peer_sip_address_id = :peerSipAddressId,"
+		                                     " local_sip_address_id = :localSipAddressId"
 		                                     " WHERE id = :chatRoomId",
-		    soci::use(peerSipAddressId), soci::use(dbChatRoomId);
+		    soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(dbChatRoomId);
 
 		tr.commit();
 

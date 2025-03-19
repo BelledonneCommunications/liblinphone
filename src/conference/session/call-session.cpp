@@ -1477,23 +1477,21 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 				cAccount = linphone_core_lookup_account_by_conference_factory_strict(core, toAddr);
 			}
 			if (!cAccount) {
-				cAccount = linphone_core_lookup_account_by_identity_strict(core, toAddr);
-				if (!cAccount) {
-					string toUser = d->log->getToAddress()->getUsername();
-					if (!toUser.empty()) {
-						cAccount = linphone_core_lookup_known_account_2(core, fromAddr, FALSE);
-						if (cAccount &&
-						    Account::toCpp(cAccount)->getAccountParams()->getIdentityAddress()->getUsername() ==
-						        toUser) {
-							// We have a match for the from domain and the to username.
-							// We may face an IPBPX that sets the To domain to our IP address, which is
-							// a terribly stupid idea.
-							lWarning() << "Detecting to header probably ill-choosen. Applying workaround to have this "
-							              "call assigned to a known account.";
-							// We must "hack" the call-log so it is correctly reported for this Account.
-							d->log->setToAddress(Account::toCpp(cAccount)->getAccountParams()->getIdentityAddress());
-						}
+				auto account = getCore()->findAccountByIdentityAddress(d->log->getToAddress());
+				if (!account) {
+					account = getCore()->guessLocalAccountFromMalformedMessage(d->log->getToAddress(),
+					                                                           d->log->getFromAddress());
+					if (account) {
+						// We have a match for the from domain and the to username.
+						// We may face an IPBPX that sets the To domain to our IP address, which is
+						// a terribly stupid idea.
+						lWarning() << "Applying workaround to have this call assigned to a known account.";
+						// We must "hack" the call-log so it is correctly reported for this Account.
+						d->log->setToAddress(account->getAccountParams()->getIdentityAddress());
 					}
+				}
+				if (account) {
+					cAccount = account->toC();
 				}
 			}
 		} else {

@@ -2867,7 +2867,7 @@ std::shared_ptr<Account> Core::findAccountByIdentityAddress(const std::shared_pt
 	for (const auto &account : accounts) {
 		const auto &params = account->getAccountParams();
 		const auto &address = params->getIdentityAddress();
-		if (identity->weakEqual(*address)) {
+		if (address && identity->weakEqual(address)) {
 			found = account;
 			break;
 		}

@@ -450,6 +450,9 @@ LINPHONE_PUBLIC void linphone_core_enable_gruu_in_conference_address(LinphoneCor
  **/
 LINPHONE_PUBLIC bool_t linphone_core_gruu_in_conference_address_enabled(const LinphoneCore *core);
 
+LINPHONE_PUBLIC LinphoneChatRoom *
+linphone_core_create_basic_chat_room(LinphoneCore *core, const char *localSipUri, const char *remoteSipUri);
+
 #ifdef __cplusplus
 }
 #endif

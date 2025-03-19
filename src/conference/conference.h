@@ -355,6 +355,8 @@ public:
 
 	void resetLastNotify();
 
+	void setConferenceId(const ConferenceId &conferenceId);
+
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
 	                    std::shared_ptr<CallSessionListener> callSessionListener,
@@ -432,8 +434,6 @@ protected:
 
 	void incrementLastNotify();
 	void setLastNotify(unsigned int lastNotify);
-
-	void setConferenceId(const ConferenceId &conferenceId);
 
 	void setChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom);
 
