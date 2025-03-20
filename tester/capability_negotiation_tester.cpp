@@ -3336,6 +3336,10 @@ void call_with_toggling_encryption_base(const LinphoneMediaEncryption encryption
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning,
 		                (marie_stat.number_of_LinphoneCallStreamsRunning + expectedStreamsRunning), int, "%d");
 
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallEncryptedOff,
+		                        marie_stat.number_of_LinphoneCallEncryptedOff + 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallEncryptedOff,
+		                        pauline_stat.number_of_LinphoneCallEncryptedOff + 1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallSecurityLevelDowngraded,
 		                        marie_stat.number_of_LinphoneCallSecurityLevelDowngraded + 1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallSecurityLevelDowngraded,

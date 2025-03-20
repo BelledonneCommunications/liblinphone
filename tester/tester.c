@@ -4727,7 +4727,7 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 
 	BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(
 	    caller_call)); /*assert that remote params are NULL when no response is received yet*/
-	// test ios simulator needs more time, 3s plus for connectng the network
+	// test ios simulator needs more time, 3s plus for connecting the network
 	did_receive_call =
 	    wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallIncomingReceived,
 	                   initial_callee.number_of_LinphoneCallIncomingReceived + 1, 12000);
