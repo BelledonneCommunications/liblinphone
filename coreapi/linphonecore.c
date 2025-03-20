@@ -1669,20 +1669,26 @@ static void sound_config_read(LinphoneCore *lc) {
 	*/
 
 	bool_t default_native_ringing_value = FALSE;
+	bool_t check_if_ringing_file_exists = TRUE;
 #ifdef __ANDROID__
 	default_native_ringing_value = TRUE;
+	check_if_ringing_file_exists = FALSE;
 #endif
 	lc->native_ringing_enabled =
 	    !!linphone_config_get_int(lc->config, "sound", "use_native_ringing", default_native_ringing_value);
 
 	tmpbuf = linphone_config_get_string(lc->config, "sound", "local_ring", NULL);
 	if (tmpbuf) {
-		if (bctbx_file_exist(tmpbuf) == 0) {
-			linphone_core_set_ring(lc, tmpbuf);
+		if (check_if_ringing_file_exists) {
+			if (bctbx_file_exist(tmpbuf) == 0) {
+				linphone_core_set_ring(lc, tmpbuf);
+			} else {
+				string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+				if (bctbx_file_exist(soundResource.c_str()) == 0) linphone_core_set_ring(lc, soundResource.c_str());
+				else ms_warning("'%s' ring file does not exist", tmpbuf);
+			}
 		} else {
-			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
-			if (bctbx_file_exist(soundResource.c_str()) == 0) linphone_core_set_ring(lc, soundResource.c_str());
-			else ms_warning("'%s' ring file does not exist", tmpbuf);
+			linphone_core_set_ring(lc, tmpbuf);
 		}
 	} else {
 #ifdef __ANDROID__
