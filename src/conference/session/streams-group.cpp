@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -380,7 +380,7 @@ void StreamsGroup::propagateEncryptionChanged() {
 	// The task `mEncryptionChangedNotificationTask` ensures that the function
 	// `propagateEncryptionChanged()` is called only once to update the encryption
 	// status of all streams.
-	if (mEncryptionChangedNotificationTask == nullptr)
+	if (mEncryptionChangedNotificationTask == nullptr) {
 		mEncryptionChangedNotificationTask = getCore().createTimer(
 		    [this]() {
 			    getMediaSessionPrivate().propagateEncryptionChanged();
@@ -389,6 +389,7 @@ void StreamsGroup::propagateEncryptionChanged() {
 			    return true;
 		    },
 		    0, "Encryption changed notification task");
+	}
 }
 
 void StreamsGroup::authTokensReady(const list<string> &&incorrectAuthTokens,
@@ -406,9 +407,9 @@ void StreamsGroup::authTokensReady(const list<string> &&incorrectAuthTokens,
 	mAuthTokenVerified = verified;
 	mZrtpCacheMismatch = cacheMismatch;
 	mAuthTokenCheckDone = verified;
-	lInfo() << *this << ": Authentication token is " << mAuthToken << "("
-	        << (mAuthTokenVerified ? "verified" : "unverified") << " "
-	        << (mZrtpCacheMismatch ? "and cache mismatch" : "") << ")";
+	lInfo() << *this << ": Authentication token is " << mAuthToken << " ("
+	        << (mAuthTokenVerified ? "verified" : "unverified") << (mZrtpCacheMismatch ? " and cache mismatch" : "")
+	        << ")";
 }
 
 void StreamsGroup::setAuthTokenVerified(bool value) {

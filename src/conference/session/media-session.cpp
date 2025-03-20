@@ -18,20 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "conference/session/media-session.h"
+#include "conference/session/media-session-p.h"
+
 #include <algorithm>
 
 #include <bctoolbox/defs.h>
 
-#include <mediastreamer2/mediastream.h>
-#include <mediastreamer2/msequalizer.h>
-#include <mediastreamer2/mseventqueue.h>
-#include <mediastreamer2/msfileplayer.h>
-#include <mediastreamer2/msrtt4103.h>
-#include <mediastreamer2/msvolume.h>
+#include "mediastreamer2/mediastream.h"
+#include "mediastreamer2/mseventqueue.h"
 
 #include "account/account.h"
 #include "address/address.h"
-#include "c-wrapper/c-wrapper.h"
 #include "call/call-stats.h"
 #include "call/call.h"
 #include "chat/chat-room/client-chat-room.h"
@@ -39,8 +37,6 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
 #include "conference/server-conference.h"
-#include "conference/session/media-session-p.h"
-#include "conference/session/media-session.h"
 #include "conference/session/streams.h"
 #include "core/core-p.h"
 #include "linphone/api/c-auth-info.h"
@@ -3479,29 +3475,32 @@ bool MediaSessionPrivate::isEncryptionMandatory() const {
 
 void MediaSessionPrivate::propagateEncryptionChanged() {
 	L_Q();
+	const auto oldEncryptionStatus = mEncryptionStatus;
 
-	auto oldEncryptionStatus = mEncryptionStatus;
-
-	string authToken = getStreamsGroup().getAuthenticationToken();
+	const string authToken = getStreamsGroup().getAuthenticationToken();
 	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	bool isInRemoteConference = conference && !isInLocalConference;
 	bool isInConference = (isInLocalConference || isInRemoteConference);
 	// If the media session is part of a conference, the client has no way to check the token, hence do not pass it on
 	// to the application
-	string callbackAuthToken = (conference) ? std::string() : authToken;
+	const string callbackAuthToken = (conference) ? std::string() : authToken;
 
 	if (callbackAuthToken.empty() && !authToken.empty()) {
 		getStreamsGroup().setAuthTokenVerified(true);
 	}
-	bool authTokenVerified = getStreamsGroup().getAuthenticationTokenVerified();
-	bool cacheMismatch = getStreamsGroup().getZrtpCacheMismatch();
-	bool zrtpCheckDone = getStreamsGroup().getAuthenticationTokenCheckDone();
+
 	if (!getStreamsGroup().allStreamsEncrypted()) {
 		lInfo() << "Some streams are not encrypted";
 		getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-		q->notifyEncryptionChanged(false, callbackAuthToken);
+		// If the encryption status change from encrypted (SRTP/DTLS/ZRTP) to unencrypted, triggers a notification.
+		if (oldEncryptionStatus.getMediaEncryption() != LinphoneMediaEncryptionNone) {
+			q->notifyEncryptionChanged(false, callbackAuthToken);
+		}
 	} else {
+		const bool authTokenVerified = getStreamsGroup().getAuthenticationTokenVerified();
+		const bool cacheMismatch = getStreamsGroup().getZrtpCacheMismatch();
+		const bool zrtpCheckDone = getStreamsGroup().getAuthenticationTokenCheckDone();
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
@@ -3510,13 +3509,10 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 			}
 			auto encryptionEngine = q->getCore()->getEncryptionEngine();
 			if (encryptionEngine && authTokenVerified && !cacheMismatch) {
-				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
-				if (remoteAddress) {
+				if (const SalAddress *remoteAddress = getOp()->getRemoteContactAddress()) {
 					char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-					Stream *stream = getStreamsGroup().lookupMainStream(SalAudio);
-					if (stream) {
-						MS2Stream *ms2s = dynamic_cast<MS2Stream *>(stream);
-						if (ms2s) {
+					if (Stream *stream = getStreamsGroup().lookupMainStream(SalAudio)) {
+						if (const auto ms2s = dynamic_cast<MS2Stream *>(stream)) {
 							encryptionEngine->authenticationVerified(ms2s->getZrtpContext(),
 							                                         op->getRemoteMediaDescription(), peerDeviceId);
 						} else {
@@ -3526,7 +3522,8 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 					ms_free(peerDeviceId);
 				} else {
 					/* This typically happens if the ZRTP session starts during early-media when receiving a 183
-					 * response. Indeed the Contact header is not mandatory in 183 (and liblinphone does not set it). */
+					 * response. Indeed, the Contact header is not mandatory in 183 (and liblinphone does not set it).
+					 */
 					lError() << "EncryptionEngine cannot be notified of verified status because remote contact address "
 					            "is unknown.";
 				}
@@ -3541,15 +3538,23 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 				}
 			}
 		} else {
-			/* Otherwise it must be DTLS as SDES doesn't go through this function */
-			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
+			const int srtpRecvSource = getStreamsGroup().getEncryptionStatus().getSrtpRecvSource();
+			const int srtpSendSource = getStreamsGroup().getEncryptionStatus().getSrtpSendSource();
+			if (srtpRecvSource == srtpSendSource) {
+				if (srtpRecvSource == MSSrtpKeySourceDTLS) {
+					getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
+				} else if (srtpRecvSource == MSSrtpKeySourceSDES) {
+					getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
+				}
+			}
 		}
 
+		const auto mediaEncryption = q->getCurrentParams()->getMediaEncryption();
 		lInfo() << "All streams are encrypted, key exchanged using "
-		        << ((q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) ? "ZRTP"
-		            : (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS)
-		                ? "DTLS"
-		                : "Unknown mechanism");
+		        << (mediaEncryption == LinphoneMediaEncryptionZRTP   ? "ZRTP"
+		            : mediaEncryption == LinphoneMediaEncryptionDTLS ? "DTLS"
+		            : mediaEncryption == LinphoneMediaEncryptionSRTP ? "SRTP"
+		                                                             : "Unknown mechanism");
 		if (q->getCurrentParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
 			q->notifyEncryptionChanged(true, callbackAuthToken);
 		}
@@ -3557,8 +3562,7 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 		Stream *videoStream = getStreamsGroup().lookupMainStream(SalVideo);
 		if (isEncryptionMandatory() && videoStream && videoStream->getState() == Stream::Running) {
 			/* Nothing could have been sent yet so generating key frame */
-			VideoControlInterface *vc = dynamic_cast<VideoControlInterface *>(videoStream);
-			if (vc) vc->sendVfu();
+			if (const auto vc = dynamic_cast<VideoControlInterface *>(videoStream)) vc->sendVfu();
 		}
 	}
 
@@ -5688,7 +5692,7 @@ void MediaSession::setAuthenticationTokenCheckDone(bool value) {
 
 void MediaSession::checkAuthenticationTokenSelected(const string &selectedValue, const string &halfAuthToken) {
 	L_D();
-	bool value = (selectedValue.compare(halfAuthToken) == 0) ? true : false;
+	const bool value = (selectedValue == halfAuthToken);
 	notifyAuthenticationTokenVerified(value);
 	setAuthenticationTokenCheckDone(true);
 	setAuthenticationTokenVerified(value);
