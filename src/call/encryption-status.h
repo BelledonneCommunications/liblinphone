@@ -28,7 +28,7 @@ struct _ZrtpAlgo {
 	int cipher_algo;        /**< Id of the cipher algorithms */
 	int key_agreement_algo; /**< Id of the key agreement algorithm */
 	int hash_algo;          /**< Id of the hash algorithm */
-	int auth_tag_algo;      /**< Id of the authencation tag algorithm */
+	int auth_tag_algo;      /**< Id of the authentication tag algorithm */
 	int sas_algo;           /**< Id of the SAS algorithm */
 };
 
@@ -74,7 +74,7 @@ public:
 	const char *getZrtpAuthTagAlgo() const;
 	const char *getZrtpSasAlgo() const;
 
-	/* SRTP informations */
+	/* SRTP information */
 	void setSrtpSendSuite(int sendSuite);
 	void setSrtpSendSource(int sendSource);
 	void setSrtpRecvSuite(int recvSuite);
@@ -84,7 +84,7 @@ public:
 	int getSrtpRecvSuite() const;
 	int getSrtpRecvSource() const;
 
-	/* Inner SRTP informations */
+	/* Inner SRTP information */
 	void setInnerSrtpSendSuite(int sendSuite);
 	void setInnerSrtpSendSource(int sendSource);
 	void setInnerSrtpRecvSuite(int recvSuite);
@@ -108,10 +108,10 @@ private:
 	bool compareInnerSrtpSendSource(const EncryptionStatus &other) const;
 	bool compareInnerSrtpRecvSource(const EncryptionStatus &other) const;
 
-	ZrtpAlgo mZrtpAlgo{};      /**< informations on the ZRTP exchange updated once it is performed(when the SAS is
+	ZrtpAlgo mZrtpAlgo{};      /**< information on the ZRTP exchange updated once it is performed(when the SAS is
 	                            available), this is valid only on the audio stream */
-	SrtpInfo mInnerSrtpInfo{}; /**< informations on the SRTP crypto suite and and source of key material used
+	SrtpInfo mInnerSrtpInfo{}; /**< information on the SRTP crypto suite and source of key material used
 	                            on this stream for inner encryption when double encryption is on */
-	SrtpInfo mSrtpInfo{};      /**< informations on the SRTP crypto suite and and source of key material used on
+	SrtpInfo mSrtpInfo{};      /**< information on the SRTP crypto suite and source of key material used on
 	                            this stream */
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of mediastreamer2
  * (see https://gitlab.linphone.org/BC/public/mediastreamer2).
@@ -20,6 +20,7 @@
 
 #include "encryption-status.h"
 
+#include "linphone/misc.h"
 #include "logger/logger.h"
 
 bool EncryptionStatus::isDowngradedComparedTo(const EncryptionStatus &other) const {
@@ -38,15 +39,15 @@ LinphoneMediaEncryption EncryptionStatus::getMediaEncryption() const {
 		return LinphoneMediaEncryptionNone;
 	}
 	switch (sendSource) {
-		case (MSSrtpKeySourceSDES):
+		case MSSrtpKeySourceSDES:
 			return LinphoneMediaEncryptionSRTP;
-		case (MSSrtpKeySourceZRTP):
+		case MSSrtpKeySourceZRTP:
 			return LinphoneMediaEncryptionZRTP;
-		case (MSSrtpKeySourceDTLS):
+		case MSSrtpKeySourceDTLS:
 			return LinphoneMediaEncryptionDTLS;
-		case (MSSrtpKeySourceUnknown):
-		case (MSSrtpKeySourceUnavailable):
-		case (MSSrtpKeySourceEKT):
+		case MSSrtpKeySourceUnknown:
+		case MSSrtpKeySourceUnavailable:
+		case MSSrtpKeySourceEKT:
 		default:
 			return LinphoneMediaEncryptionNone;
 	}
@@ -86,19 +87,19 @@ void EncryptionStatus::setZrtpSasAlgo(int sasAlgo) {
 
 const char *EncryptionStatus::getZrtpCipherAlgo() const {
 	switch (mZrtpAlgo.cipher_algo) {
-		case (MS_ZRTP_CIPHER_INVALID):
+		case MS_ZRTP_CIPHER_INVALID:
 			return "invalid";
-		case (MS_ZRTP_CIPHER_AES1):
+		case MS_ZRTP_CIPHER_AES1:
 			return "AES-128";
-		case (MS_ZRTP_CIPHER_AES2):
+		case MS_ZRTP_CIPHER_AES2:
 			return "AES-192";
-		case (MS_ZRTP_CIPHER_AES3):
+		case MS_ZRTP_CIPHER_AES3:
 			return "AES-256";
-		case (MS_ZRTP_CIPHER_2FS1):
+		case MS_ZRTP_CIPHER_2FS1:
 			return "TwoFish-128";
-		case (MS_ZRTP_CIPHER_2FS2):
+		case MS_ZRTP_CIPHER_2FS2:
 			return "TwoFish-192";
-		case (MS_ZRTP_CIPHER_2FS3):
+		case MS_ZRTP_CIPHER_2FS3:
 			return "TwoFish-256";
 		default:
 			return "Unknown Algo";
@@ -107,59 +108,59 @@ const char *EncryptionStatus::getZrtpCipherAlgo() const {
 
 const char *EncryptionStatus::getZrtpKeyAgreementAlgo() const {
 	switch (mZrtpAlgo.key_agreement_algo) {
-		case (MS_ZRTP_KEY_AGREEMENT_INVALID):
+		case MS_ZRTP_KEY_AGREEMENT_INVALID:
 			return "invalid";
-		case (MS_ZRTP_KEY_AGREEMENT_DH2K):
+		case MS_ZRTP_KEY_AGREEMENT_DH2K:
 			return "DHM-2048";
-		case (MS_ZRTP_KEY_AGREEMENT_EC25):
+		case MS_ZRTP_KEY_AGREEMENT_EC25:
 			return "ECDH-256";
-		case (MS_ZRTP_KEY_AGREEMENT_DH3K):
+		case MS_ZRTP_KEY_AGREEMENT_DH3K:
 			return "DHM-3072";
-		case (MS_ZRTP_KEY_AGREEMENT_EC38):
+		case MS_ZRTP_KEY_AGREEMENT_EC38:
 			return "ECDH-384";
-		case (MS_ZRTP_KEY_AGREEMENT_EC52):
+		case MS_ZRTP_KEY_AGREEMENT_EC52:
 			return "ECDH-521";
-		case (MS_ZRTP_KEY_AGREEMENT_X255):
+		case MS_ZRTP_KEY_AGREEMENT_X255:
 			return "X25519";
-		case (MS_ZRTP_KEY_AGREEMENT_X448):
+		case MS_ZRTP_KEY_AGREEMENT_X448:
 			return "X448";
-		case (MS_ZRTP_KEY_AGREEMENT_K255):
+		case MS_ZRTP_KEY_AGREEMENT_K255:
 			return "KEM-X25519";
-		case (MS_ZRTP_KEY_AGREEMENT_K448):
+		case MS_ZRTP_KEY_AGREEMENT_K448:
 			return "KEM-X448";
-		case (MS_ZRTP_KEY_AGREEMENT_MLK1):
+		case MS_ZRTP_KEY_AGREEMENT_MLK1:
 			return "MLKEM-512";
-		case (MS_ZRTP_KEY_AGREEMENT_MLK2):
+		case MS_ZRTP_KEY_AGREEMENT_MLK2:
 			return "MLKEM-768";
-		case (MS_ZRTP_KEY_AGREEMENT_MLK3):
+		case MS_ZRTP_KEY_AGREEMENT_MLK3:
 			return "MLKEM-1024";
-		case (MS_ZRTP_KEY_AGREEMENT_KYB1):
+		case MS_ZRTP_KEY_AGREEMENT_KYB1:
 			return "KYBER-512";
-		case (MS_ZRTP_KEY_AGREEMENT_KYB2):
+		case MS_ZRTP_KEY_AGREEMENT_KYB2:
 			return "KYBER-768";
-		case (MS_ZRTP_KEY_AGREEMENT_KYB3):
+		case MS_ZRTP_KEY_AGREEMENT_KYB3:
 			return "KYBER-1024";
-		case (MS_ZRTP_KEY_AGREEMENT_HQC1):
+		case MS_ZRTP_KEY_AGREEMENT_HQC1:
 			return "HQC-128";
-		case (MS_ZRTP_KEY_AGREEMENT_HQC2):
+		case MS_ZRTP_KEY_AGREEMENT_HQC2:
 			return "HQC-192";
-		case (MS_ZRTP_KEY_AGREEMENT_HQC3):
+		case MS_ZRTP_KEY_AGREEMENT_HQC3:
 			return "HQC-256";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_MLK512):
+		case MS_ZRTP_KEY_AGREEMENT_K255_MLK512:
 			return "X25519/MLKem512";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512:
 			return "X25519/Kyber512";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
+		case MS_ZRTP_KEY_AGREEMENT_K255_HQC128:
 			return "X25519/HQC128";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_MLK1024):
+		case MS_ZRTP_KEY_AGREEMENT_K448_MLK1024:
 			return "X448/MLKem1024";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024:
 			return "X448/Kyber1024";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
+		case MS_ZRTP_KEY_AGREEMENT_K448_HQC256:
 			return "X448/HQC256";
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128:
 			return "X25519/Kyber512/HQC128";
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256):
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256:
 			return "X448/Kyber1024/HQC256";
 		default:
 			return "Unknown Algo";
@@ -168,23 +169,23 @@ const char *EncryptionStatus::getZrtpKeyAgreementAlgo() const {
 
 bool EncryptionStatus::isZrtpKeyAgreementAlgoPostQuantum() const {
 	switch (mZrtpAlgo.key_agreement_algo) {
-		case (MS_ZRTP_KEY_AGREEMENT_MLK1):
-		case (MS_ZRTP_KEY_AGREEMENT_MLK2):
-		case (MS_ZRTP_KEY_AGREEMENT_MLK3):
-		case (MS_ZRTP_KEY_AGREEMENT_KYB1):
-		case (MS_ZRTP_KEY_AGREEMENT_KYB2):
-		case (MS_ZRTP_KEY_AGREEMENT_KYB3):
-		case (MS_ZRTP_KEY_AGREEMENT_HQC1):
-		case (MS_ZRTP_KEY_AGREEMENT_HQC2):
-		case (MS_ZRTP_KEY_AGREEMENT_HQC3):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_MLK512):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_MLK1024):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256):
+		case MS_ZRTP_KEY_AGREEMENT_MLK1:
+		case MS_ZRTP_KEY_AGREEMENT_MLK2:
+		case MS_ZRTP_KEY_AGREEMENT_MLK3:
+		case MS_ZRTP_KEY_AGREEMENT_KYB1:
+		case MS_ZRTP_KEY_AGREEMENT_KYB2:
+		case MS_ZRTP_KEY_AGREEMENT_KYB3:
+		case MS_ZRTP_KEY_AGREEMENT_HQC1:
+		case MS_ZRTP_KEY_AGREEMENT_HQC2:
+		case MS_ZRTP_KEY_AGREEMENT_HQC3:
+		case MS_ZRTP_KEY_AGREEMENT_K255_MLK512:
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512:
+		case MS_ZRTP_KEY_AGREEMENT_K255_HQC128:
+		case MS_ZRTP_KEY_AGREEMENT_K448_MLK1024:
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024:
+		case MS_ZRTP_KEY_AGREEMENT_K448_HQC256:
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128:
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256:
 			return true;
 		default:
 			return false;
@@ -193,17 +194,17 @@ bool EncryptionStatus::isZrtpKeyAgreementAlgoPostQuantum() const {
 
 const char *EncryptionStatus::getZrtpHashAlgo() const {
 	switch (mZrtpAlgo.hash_algo) {
-		case (MS_ZRTP_HASH_INVALID):
+		case MS_ZRTP_HASH_INVALID:
 			return "invalid";
-		case (MS_ZRTP_HASH_S256):
+		case MS_ZRTP_HASH_S256:
 			return "SHA-256";
-		case (MS_ZRTP_HASH_S384):
+		case MS_ZRTP_HASH_S384:
 			return "SHA-384";
-		case (MS_ZRTP_HASH_N256):
+		case MS_ZRTP_HASH_N256:
 			return "SHA3-256";
-		case (MS_ZRTP_HASH_N384):
+		case MS_ZRTP_HASH_N384:
 			return "SHA3-384";
-		case (MS_ZRTP_HASH_S512):
+		case MS_ZRTP_HASH_S512:
 			return "SHA-512";
 		default:
 			return "Unknown Algo";
@@ -212,17 +213,17 @@ const char *EncryptionStatus::getZrtpHashAlgo() const {
 
 const char *EncryptionStatus::getZrtpAuthTagAlgo() const {
 	switch (mZrtpAlgo.auth_tag_algo) {
-		case (MS_ZRTP_AUTHTAG_INVALID):
+		case MS_ZRTP_AUTHTAG_INVALID:
 			return "invalid";
-		case (MS_ZRTP_AUTHTAG_HS32):
+		case MS_ZRTP_AUTHTAG_HS32:
 			return "HMAC-SHA1-32";
-		case (MS_ZRTP_AUTHTAG_HS80):
+		case MS_ZRTP_AUTHTAG_HS80:
 			return "HMAC-SHA1-80";
-		case (MS_ZRTP_AUTHTAG_SK32):
+		case MS_ZRTP_AUTHTAG_SK32:
 			return "Skein-32";
-		case (MS_ZRTP_AUTHTAG_SK64):
+		case MS_ZRTP_AUTHTAG_SK64:
 			return "Skein-64";
-		case (MS_ZRTP_AUTHTAG_GCM):
+		case MS_ZRTP_AUTHTAG_GCM:
 			return "GCM";
 		default:
 			return "Unknown Algo";
@@ -231,11 +232,11 @@ const char *EncryptionStatus::getZrtpAuthTagAlgo() const {
 
 const char *EncryptionStatus::getZrtpSasAlgo() const {
 	switch (mZrtpAlgo.sas_algo) {
-		case (MS_ZRTP_SAS_INVALID):
+		case MS_ZRTP_SAS_INVALID:
 			return "invalid";
-		case (MS_ZRTP_SAS_B32):
+		case MS_ZRTP_SAS_B32:
 			return "Base32";
-		case (MS_ZRTP_SAS_B256):
+		case MS_ZRTP_SAS_B256:
 			return "PGP-WordList";
 		default:
 			return "Unknown Algo";
@@ -333,8 +334,8 @@ void EncryptionStatus::setWorstSecurityAlgo(const EncryptionStatus &other) {
 }
 
 bool EncryptionStatus::compareMediaEncryption(const EncryptionStatus &other) const {
-	int otherMediaEncryption = other.getMediaEncryption();
-	int thisMediaEncryption = getMediaEncryption();
+	const auto otherMediaEncryption = other.getMediaEncryption();
+	const auto thisMediaEncryption = getMediaEncryption();
 	bool ret = false;
 	switch (otherMediaEncryption) {
 		case LinphoneMediaEncryptionNone:
@@ -342,15 +343,16 @@ bool EncryptionStatus::compareMediaEncryption(const EncryptionStatus &other) con
 			break;
 		case LinphoneMediaEncryptionSRTP:
 		case LinphoneMediaEncryptionDTLS:
-			ret = (thisMediaEncryption == LinphoneMediaEncryptionNone);
+			ret = thisMediaEncryption == LinphoneMediaEncryptionNone;
 			break;
 		case LinphoneMediaEncryptionZRTP:
 			ret = thisMediaEncryption != LinphoneMediaEncryptionZRTP;
 			break;
 	}
 	if (ret) {
-		lInfo() << __func__ << " : Media encryption changed - [this] " << thisMediaEncryption << " < [other] "
-		        << otherMediaEncryption;
+		lInfo() << __func__ << " : Media encryption changed - [Actual] "
+		        << linphone_media_encryption_to_string(thisMediaEncryption) << " < [Before] "
+		        << linphone_media_encryption_to_string(otherMediaEncryption);
 	}
 	return ret;
 }
@@ -358,19 +360,19 @@ bool EncryptionStatus::compareMediaEncryption(const EncryptionStatus &other) con
 bool EncryptionStatus::compareZrtpCipherAlgo(const EncryptionStatus &other) const {
 	bool ret = false;
 	switch (other.mZrtpAlgo.cipher_algo) {
-		case (MS_ZRTP_CIPHER_INVALID):
+		case MS_ZRTP_CIPHER_INVALID:
 			ret = mZrtpAlgo.cipher_algo < other.mZrtpAlgo.cipher_algo;
 			break;
-		case (MS_ZRTP_CIPHER_AES1):
-		case (MS_ZRTP_CIPHER_2FS1):
+		case MS_ZRTP_CIPHER_AES1:
+		case MS_ZRTP_CIPHER_2FS1:
 			ret = mZrtpAlgo.cipher_algo < MS_ZRTP_CIPHER_AES1;
 			break;
-		case (MS_ZRTP_CIPHER_AES2):
-		case (MS_ZRTP_CIPHER_2FS2):
+		case MS_ZRTP_CIPHER_AES2:
+		case MS_ZRTP_CIPHER_2FS2:
 			ret = mZrtpAlgo.cipher_algo < MS_ZRTP_CIPHER_AES2;
 			break;
-		case (MS_ZRTP_CIPHER_AES3):
-		case (MS_ZRTP_CIPHER_2FS3):
+		case MS_ZRTP_CIPHER_AES3:
+		case MS_ZRTP_CIPHER_2FS3:
 			ret = mZrtpAlgo.cipher_algo < MS_ZRTP_CIPHER_AES3;
 			break;
 		default:
@@ -378,7 +380,7 @@ bool EncryptionStatus::compareZrtpCipherAlgo(const EncryptionStatus &other) cons
 			break;
 	}
 	if (ret)
-		lInfo() << __func__ << " : ZRTP cipher algo changed - [this] " << mZrtpAlgo.cipher_algo << " < [other] "
+		lInfo() << __func__ << " : ZRTP cipher algo changed - [Actual] " << mZrtpAlgo.cipher_algo << " < [Before] "
 		        << other.mZrtpAlgo.cipher_algo;
 	return ret;
 }
@@ -386,125 +388,125 @@ bool EncryptionStatus::compareZrtpCipherAlgo(const EncryptionStatus &other) cons
 bool EncryptionStatus::compareZrtpKeyAgreementAlgo(const EncryptionStatus &other) const {
 	bool ret = false;
 	switch (other.mZrtpAlgo.key_agreement_algo) {
-		case (MS_ZRTP_KEY_AGREEMENT_INVALID):
-		case (MS_ZRTP_KEY_AGREEMENT_DH2K):
-		case (MS_ZRTP_KEY_AGREEMENT_DH3K):
-			ret = (mZrtpAlgo.key_agreement_algo < other.mZrtpAlgo.key_agreement_algo);
+		case MS_ZRTP_KEY_AGREEMENT_INVALID:
+		case MS_ZRTP_KEY_AGREEMENT_DH2K:
+		case MS_ZRTP_KEY_AGREEMENT_DH3K:
+			ret = mZrtpAlgo.key_agreement_algo < other.mZrtpAlgo.key_agreement_algo;
 			break;
-		case (MS_ZRTP_KEY_AGREEMENT_X255):
-		case (MS_ZRTP_KEY_AGREEMENT_K255):
-			ret = (mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_X255);
+		case MS_ZRTP_KEY_AGREEMENT_X255:
+		case MS_ZRTP_KEY_AGREEMENT_K255:
+			ret = mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_X255;
 			break;
-		case (MS_ZRTP_KEY_AGREEMENT_X448):
-		case (MS_ZRTP_KEY_AGREEMENT_K448):
-			ret = (mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_X448);
+		case MS_ZRTP_KEY_AGREEMENT_X448:
+		case MS_ZRTP_KEY_AGREEMENT_K448:
+			ret = mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_X448;
 			break;
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
-		case (MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
-			ret = (mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_K255_KYB512);
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512:
+		case MS_ZRTP_KEY_AGREEMENT_K255_HQC128:
+			ret = mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_K255_KYB512;
 			break;
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
-			ret = (mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_K448_KYB1024);
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024:
+		case MS_ZRTP_KEY_AGREEMENT_K448_HQC256:
+			ret = mZrtpAlgo.key_agreement_algo < MS_ZRTP_KEY_AGREEMENT_K448_KYB1024;
 			break;
-		case (MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
-		case (MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256):
-			ret = (mZrtpAlgo.key_agreement_algo < other.mZrtpAlgo.key_agreement_algo);
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128:
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256:
+			ret = mZrtpAlgo.key_agreement_algo < other.mZrtpAlgo.key_agreement_algo;
 			break;
 		default:
 			ret = true;
 			break;
 	}
 	if (ret)
-		lInfo() << __func__ << " : ZRTP key agreement algo changed - [this] " << mZrtpAlgo.key_agreement_algo
-		        << " < [other] " << other.mZrtpAlgo.key_agreement_algo;
+		lInfo() << __func__ << " : ZRTP key agreement algo changed - [Actual] " << mZrtpAlgo.key_agreement_algo
+		        << " < [Before] " << other.mZrtpAlgo.key_agreement_algo;
 	return ret;
 }
 
 bool EncryptionStatus::compareZrtpHashAlgo(const EncryptionStatus &other) const {
-	bool ret = mZrtpAlgo.hash_algo < other.mZrtpAlgo.hash_algo;
+	const bool ret = mZrtpAlgo.hash_algo < other.mZrtpAlgo.hash_algo;
 	if (ret)
-		lInfo() << __func__ << " : ZRTP hash algo changed - [this] " << mZrtpAlgo.hash_algo << " < [other] "
+		lInfo() << __func__ << " : ZRTP hash algo changed - [Actual] " << mZrtpAlgo.hash_algo << " < [Before] "
 		        << other.mZrtpAlgo.hash_algo;
 	return ret;
 }
 
 bool EncryptionStatus::compareZrtpAuthTagAlgo(const EncryptionStatus &other) const {
-	bool ret = mZrtpAlgo.auth_tag_algo < other.mZrtpAlgo.auth_tag_algo;
+	const bool ret = mZrtpAlgo.auth_tag_algo < other.mZrtpAlgo.auth_tag_algo;
 	if (ret)
-		lInfo() << __func__ << " : ZRTP auth tag changed - [this] " << mZrtpAlgo.auth_tag_algo << " < [other] "
+		lInfo() << __func__ << " : ZRTP auth tag changed - [Actual] " << mZrtpAlgo.auth_tag_algo << " < [Before] "
 		        << other.mZrtpAlgo.auth_tag_algo;
 	return ret;
 }
 
 bool EncryptionStatus::compareZrtpSasAlgo(const EncryptionStatus &other) const {
-	bool ret = mZrtpAlgo.sas_algo < other.mZrtpAlgo.sas_algo;
+	const bool ret = mZrtpAlgo.sas_algo < other.mZrtpAlgo.sas_algo;
 	if (ret)
-		lInfo() << __func__ << " : ZRTP SAS algo changed - [this] " << mZrtpAlgo.sas_algo << " < [other] "
+		lInfo() << __func__ << " : ZRTP SAS algo changed - [Actual] " << mZrtpAlgo.sas_algo << " < [Before] "
 		        << other.mZrtpAlgo.sas_algo;
 	return ret;
 }
 
 bool EncryptionStatus::compareSrtpSendSuite(const EncryptionStatus &other) const {
-	bool ret = mSrtpInfo.send_suite < other.mSrtpInfo.send_suite;
+	const bool ret = mSrtpInfo.send_suite < other.mSrtpInfo.send_suite;
 	if (ret)
-		lInfo() << __func__ << " : SRTP send suite changed - [this] " << mSrtpInfo.send_suite << " < [other] "
+		lInfo() << __func__ << " : SRTP send suite changed - [Actual] " << mSrtpInfo.send_suite << " < [Before] "
 		        << other.mSrtpInfo.send_suite;
 	return ret;
 }
 
 bool EncryptionStatus::compareSrtpRecvSuite(const EncryptionStatus &other) const {
-	bool ret = mSrtpInfo.recv_suite < other.mSrtpInfo.recv_suite;
+	const bool ret = mSrtpInfo.recv_suite < other.mSrtpInfo.recv_suite;
 	if (ret)
-		lInfo() << __func__ << " : SRTP recv suite changed - [this] " << mSrtpInfo.recv_suite << " < [other] "
+		lInfo() << __func__ << " : SRTP recv suite changed - [Actual] " << mSrtpInfo.recv_suite << " < [Before] "
 		        << other.mSrtpInfo.recv_suite;
 	return ret;
 }
 
 bool EncryptionStatus::compareSrtpSendSource(const EncryptionStatus &other) const {
-	bool ret = mSrtpInfo.send_source < other.mSrtpInfo.send_source;
+	const bool ret = mSrtpInfo.send_source < other.mSrtpInfo.send_source;
 	if (ret)
-		lInfo() << __func__ << " : SRTP send source changed - [this] " << mSrtpInfo.send_source << " < [other] "
+		lInfo() << __func__ << " : SRTP send source changed - [Actual] " << mSrtpInfo.send_source << " < [Before] "
 		        << other.mSrtpInfo.send_source;
 	return ret;
 }
 
 bool EncryptionStatus::compareSrtpRecvSource(const EncryptionStatus &other) const {
-	bool ret = mSrtpInfo.recv_source < other.mSrtpInfo.recv_source;
+	const bool ret = mSrtpInfo.recv_source < other.mSrtpInfo.recv_source;
 	if (ret)
-		lInfo() << __func__ << " : SRTP recv source changed - [this] " << mSrtpInfo.recv_source << " < [other] "
+		lInfo() << __func__ << " : SRTP recv source changed - [Actual] " << mSrtpInfo.recv_source << " < [Before] "
 		        << other.mSrtpInfo.recv_source;
 	return ret;
 }
 
 bool EncryptionStatus::compareInnerSrtpSendSuite(const EncryptionStatus &other) const {
-	bool ret = mInnerSrtpInfo.send_suite < other.mInnerSrtpInfo.send_suite;
+	const bool ret = mInnerSrtpInfo.send_suite < other.mInnerSrtpInfo.send_suite;
 	if (ret)
-		lInfo() << __func__ << " : Inner SRTP send suite changed - [this] " << mInnerSrtpInfo.send_suite
-		        << " < [other] " << other.mInnerSrtpInfo.send_suite;
+		lInfo() << __func__ << " : Inner SRTP send suite changed - [Actual] " << mInnerSrtpInfo.send_suite
+		        << " < [Before] " << other.mInnerSrtpInfo.send_suite;
 	return ret;
 }
 
 bool EncryptionStatus::compareInnerSrtpRecvSuite(const EncryptionStatus &other) const {
-	bool ret = mSrtpInfo.recv_suite < other.mInnerSrtpInfo.recv_suite;
+	const bool ret = mSrtpInfo.recv_suite < other.mInnerSrtpInfo.recv_suite;
 	if (ret)
-		lInfo() << __func__ << " : Inner SRTP recv suite changed - [this] " << mSrtpInfo.recv_suite << " < [other] "
+		lInfo() << __func__ << " : Inner SRTP recv suite changed - [Actual] " << mSrtpInfo.recv_suite << " < [Before] "
 		        << other.mInnerSrtpInfo.recv_suite;
 	return ret;
 }
 
 bool EncryptionStatus::compareInnerSrtpSendSource(const EncryptionStatus &other) const {
-	bool ret = mInnerSrtpInfo.send_source < other.mInnerSrtpInfo.send_source;
+	const bool ret = mInnerSrtpInfo.send_source < other.mInnerSrtpInfo.send_source;
 	if (ret)
-		lInfo() << __func__ << " : Inner SRTP send source changed - [this] " << mInnerSrtpInfo.send_source
-		        << " < [other] " << other.mInnerSrtpInfo.send_source;
+		lInfo() << __func__ << " : Inner SRTP send source changed - [Actual] " << mInnerSrtpInfo.send_source
+		        << " < [Before] " << other.mInnerSrtpInfo.send_source;
 	return ret;
 }
 
 bool EncryptionStatus::compareInnerSrtpRecvSource(const EncryptionStatus &other) const {
-	bool ret = mInnerSrtpInfo.recv_source < other.mInnerSrtpInfo.recv_source;
+	const bool ret = mInnerSrtpInfo.recv_source < other.mInnerSrtpInfo.recv_source;
 	if (ret)
-		lInfo() << __func__ << " : Inner SRTP recv source changed - [this] " << mInnerSrtpInfo.recv_source
-		        << " < [other] " << other.mInnerSrtpInfo.recv_source;
+		lInfo() << __func__ << " : Inner SRTP recv source changed - [Actual] " << mInnerSrtpInfo.recv_source
+		        << " < [Before] " << other.mInnerSrtpInfo.recv_source;
 	return ret;
 }
