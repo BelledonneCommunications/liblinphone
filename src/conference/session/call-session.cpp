@@ -443,7 +443,6 @@ bool CallSessionPrivate::failure() {
 					        << Utils::toString(lastStableState);
 					setState(lastStableState, "Restore stable state because no retry function has been set");
 				}
-
 				return true;
 			}
 			if (ei->reason != SalReasonNoMatch) {
@@ -801,6 +800,15 @@ bool CallSessionPrivate::isReadyForInvite() const {
 }
 
 bool CallSessionPrivate::isUpdateAllowed(CallSession::State &nextState) const {
+	L_Q();
+	if (op->hasRetryFunction()) {
+		lWarning() << "Unable to send reINVITE or UPDATE request right now because " << *q << " (local address "
+		           << *q->getLocalAddress() << " remote address "
+		           << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "sip:")
+		           << ") needs to execute the request which was replied by a 491 Request Pending first.";
+		return false;
+	}
+
 	switch (state) {
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::PushIncomingReceived:
@@ -826,7 +834,9 @@ bool CallSessionPrivate::isUpdateAllowed(CallSession::State &nextState) const {
 			nextState = state;
 			break;
 		default:
-			lError() << "Update is not allowed in [" << Utils::toString(state) << "] state";
+			lError() << *q << " (local address " << *q->getLocalAddress() << " remote address "
+			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "sip:")
+			         << "): Update is not allowed in [" << Utils::toString(state) << "] state";
 			return false;
 	}
 	return true;
@@ -1146,7 +1156,7 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 		} else {
 			lError() << "Unable to retrieve contact address from account for call session " << q << " (local address "
 			         << *q->getLocalAddress() << " remote address "
-			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "Unknown") << ").";
+			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "sip:") << ").";
 		}
 		if (addr && (account->getOp() || (account->getDependency() != nullptr) ||
 		             linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
@@ -1170,15 +1180,21 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 
 void CallSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 	L_Q();
-	lInfo() << "CallSession [" << q << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
+	lInfo() << *q << " is going to be updated (reINVITE) in order to recover from lost connectivity";
+	if (op) {
+		// Reset retry function as we need to recover from a network loss
+		op->resetRetryFunction();
+	}
 	q->update(params, CallSession::UpdateMethod::Invite);
 }
 
 void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	L_Q();
-	lInfo() << "CallSession [" << q
-	        << "] is going to have a new INVITE one in order to recover from lost connectivity; with Replaces header:"
-	        << (withReplaces ? "yes" : "no");
+	lInfo() << *q << " is going to have a new INVITE one in order to recover from lost connectivity; "
+	        << (withReplaces ? "with" : "without") << " Replaces header";
+
+	// Reset retry function as we need to repair the INVITE session
+	op->resetRetryFunction();
 
 	// FIXME: startInvite shall() accept a list of bodies.
 	// Since it is not the case, we can only re-use the first one.
@@ -1676,7 +1692,7 @@ void CallSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 	const auto &connectedTime = d->log->getConnectedTime();
 	if ((callTimeout > 0) && (connectedTime != 0) && ((currentRealTime - connectedTime) > callTimeout)) {
 		lInfo() << "Terminating call session " << this << " (local address " << *getLocalAddress() << " remote address "
-		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ") because the call timeout ("
+		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ") because the call timeout ("
 		        << callTimeout << "s) has been reached";
 		terminate();
 	}
@@ -1700,12 +1716,12 @@ LinphoneStatus CallSession::redirect(const Address &redirectAddr) {
 	}
 	if (!redirectAddr.isValid()) {
 		lError() << "Call session " << this << " (local address " << *getLocalAddress() << " remote address "
-		         << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown")
+		         << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:")
 		         << ") is being redirected to an invalid address - aborting the operation";
 		return -1;
 	}
 	lInfo() << "Call session " << this << " (local address " << *getLocalAddress() << " remote address "
-	        << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ") is being redirected to address "
+	        << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ") is being redirected to address "
 	        << redirectAddr;
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
@@ -1939,7 +1955,7 @@ const std::shared_ptr<Address> CallSession::getContactAddress() const {
 	} else {
 		lInfo() << "No contact address from op or account for at this time call session " << this << " (local address "
 		        << *getLocalAddress() << " remote address "
-		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ").";
+		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ").";
 	}
 	return contactAddress;
 }

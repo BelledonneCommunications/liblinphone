@@ -486,6 +486,9 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 	lInfo() << "Op [" << op << "] receiving call response [" << code << "], dialog is [" << dialog << "] in state ["
 	        << belle_sip_dialog_state_to_string(dialogState) << "]";
 	op->ref(); // To make sure no cb will destroy op
+	if (code != 491) {
+		op->resetRetryFunction(); // Retry function has been either executed or not needed anymore
+	}
 
 	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(clientTransaction));
 	string method = belle_sip_request_get_method(request);

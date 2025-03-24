@@ -4222,6 +4222,10 @@ void MediaSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 	lInfo() << "MediaSession [" << q
 	        << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
 	getStreamsGroup().getIceService().resetSession();
+	if (op) {
+		// Reset retry function as we need to recover from a network loss
+		op->resetRetryFunction();
+	}
 	MediaSessionParams newParams(*getParams());
 	q->update(&newParams, CallSession::UpdateMethod::Invite, q->isCapabilityNegotiationEnabled());
 }
