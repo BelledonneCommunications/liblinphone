@@ -896,13 +896,12 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					if (requestStreams() != 0) {
 						lInfo() << "Delaying re-INVITE in order to get streams after joining " << *this
 						        << " because the dialog is not available yet to accept this transaction";
-						mScheduleUpdate = true;
-					} else {
-						// An update has been successfully sent therefore clear the flag mScheduleUpdate to avoid
-						// sending it twice.
-						mScheduleUpdate = false;
-						mFullStateUpdate = false;
+						session->addPendingAction(requestStreams);
 					}
+					// An update has been successfully sent therefore clear the flag mScheduleUpdate to avoid sending it
+					// twice.
+					mScheduleUpdate = false;
+					mFullStateUpdate = false;
 				}
 			}
 				BCTBX_NO_BREAK; /* Intentional no break */
@@ -1796,13 +1795,6 @@ void ClientConference::onFullStateReceived() {
 		}
 #endif // HAVE_ADVANCED_IM
 
-		auto requestStreams = [this]() -> LinphoneStatus {
-			lInfo() << "Sending re-INVITE in order to get streams after receiving a NOTIFY full state for " << *this;
-			setState(ConferenceInterface::State::Created);
-			auto ret = updateMainSession(false);
-			return ret;
-		};
-
 		auto session = mFocus ? dynamic_pointer_cast<MediaSession>(mFocus->getSession()) : nullptr;
 		// Notify local participant that the microphone is muted when receiving the full state as participants are added
 		// as soon as possible
@@ -1812,12 +1804,22 @@ void ClientConference::onFullStateReceived() {
 
 		if (!getCore()->getCCore()->sal->mediaDisabled()) {
 			if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
+
+				auto requestStreams = [this]() -> LinphoneStatus {
+					lInfo() << "Sending re-INVITE in order to get streams after receiving a NOTIFY full state for "
+					        << *this;
+					setState(ConferenceInterface::State::Created);
+					auto ret = updateMainSession(false);
+					return ret;
+				};
+
 				if (requestStreams() != 0) {
 					lInfo() << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for "
 					        << *this << " because it cannot be sent right now";
-					mScheduleUpdate = true;
-					mFullStateUpdate = true;
+					session->addPendingAction(requestStreams);
 				}
+				mScheduleUpdate = false;
+				mFullStateUpdate = false;
 			} else {
 				lInfo() << "Delaying re-INVITE in order to get streams after receiving a NOTIFY full state for "
 				        << *this << " because ICE negotiations didn't end yet";
