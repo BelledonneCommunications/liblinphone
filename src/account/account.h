@@ -206,6 +206,7 @@ private:
 	void onMwiServerAddressChanged();
 	bool customContactChanged();
 	std::list<SalAddress *> getOtherContacts();
+	void unsubscribeFromChatRooms();
 	void updateChatRoomList() const;
 
 	void triggerUpdate();

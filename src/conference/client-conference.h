@@ -187,7 +187,9 @@ public:
 	                               CallSession::State state,
 	                               const std::string &message) override;
 	void setUtf8Subject(const std::string &subject) override;
+
 	void subscribe(bool addToListEventHandler, bool unsubscribeFirst = true);
+	void unsubscribe();
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LinphonePrivate::ClientEktManager> getClientEktManager() const;
