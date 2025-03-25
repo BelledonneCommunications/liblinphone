@@ -74,7 +74,8 @@ private:
 	static bool isPayloadTypeUsableForBandwidth(const OrtpPayloadType *pt, int bandwidthLimit);
 	static int lookupTypicalVbrBitrate(int maxBandwidth, int clockRate);
 
-	void assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs);
+	void assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs,
+	                              const std::list<OrtpPayloadType *> &previousList);
 	std::list<OrtpPayloadType *> createSpecialPayloadTypes(const std::list<OrtpPayloadType *> &codecs);
 	std::list<OrtpPayloadType *> createTelephoneEventPayloadTypes(const std::list<OrtpPayloadType *> &codecs);
 	OrtpPayloadType *createFecPayloadType();

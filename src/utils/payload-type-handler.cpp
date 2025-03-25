@@ -94,12 +94,20 @@ int PayloadTypeHandler::lookupTypicalVbrBitrate(int maxBandwidth, int clockRate)
 
 // -----------------------------------------------------------------------------
 
-void PayloadTypeHandler::assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs) {
+void PayloadTypeHandler::assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs,
+                                                  const std::list<OrtpPayloadType *> &previousList) {
 	OrtpPayloadType *red = nullptr;
 	OrtpPayloadType *t140 = nullptr;
 
 	for (const auto &pt : codecs) {
-		int number = payload_type_get_number(pt);
+		/* Look for a previously assigned number for this codec */
+		int number = findPayloadTypeNumber(previousList, pt);
+		if (number != -1) {
+			payload_type_set_number(pt, number);
+			payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
+		} else {
+			number = payload_type_get_number(pt);
+		}
 
 		// Check if number is duplicated: it could be the case if the remote forced us to use a mapping with a previous
 		// offer.
@@ -312,13 +320,6 @@ std::list<OrtpPayloadType *> PayloadTypeHandler::makeCodecsList(SalStreamType ty
 		}
 
 		auto clonedPt = payload_type_clone(pt);
-
-		/* Look for a previously assigned number for this codec */
-		int num = findPayloadTypeNumber(previousList, clonedPt);
-		if (num != -1) {
-			payload_type_set_number(clonedPt, num);
-			payload_type_set_flag(clonedPt, PAYLOAD_TYPE_FROZEN_NUMBER);
-		}
 		result.push_back(clonedPt);
 		nb++;
 		if ((maxCodecs > 0) && (nb >= maxCodecs)) break;
@@ -330,9 +331,10 @@ std::list<OrtpPayloadType *> PayloadTypeHandler::makeCodecsList(SalStreamType ty
 	if (type == SalVideo && bundle_enabled && linphone_core_fec_enabled(getCore()->getCCore())) {
 
 		auto fec_pt = createFecPayloadType();
+		lInfo() << "payload created for fec is " << payload_type_get_number(fec_pt) << " ***";
 		result.push_back(fec_pt);
 	}
-	assignPayloadTypeNumbers(result);
+	assignPayloadTypeNumbers(result, previousList);
 	return result;
 }
 
