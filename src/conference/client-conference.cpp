@@ -2761,7 +2761,17 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 
 void ClientConference::requestFullState() {
 #ifdef HAVE_ADVANCED_IM
-	mEventHandler->requestFullState();
+	if (mEventHandler) {
+		mEventHandler->requestFullState();
+	}
+#endif // HAVE_ADVANCED_IM
+}
+
+void ClientConference::unsubscribe() {
+#ifdef HAVE_ADVANCED_IM
+	if (mEventHandler) {
+		mEventHandler->unsubscribe(); // Required for next subscribe to be sent
+	}
 #endif // HAVE_ADVANCED_IM
 }
 

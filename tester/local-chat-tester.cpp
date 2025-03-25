@@ -622,6 +622,22 @@ static void group_chat_room_with_client_removed_added(void) {
 			return false;
 		});
 
+		LinphoneAccount *michelle_account = linphone_core_get_default_account(michelle.getLc());
+		BC_ASSERT_PTR_NOT_NULL(michelle_account);
+		if (michelle_account) {
+			initialMichelleStats = michelle.getStats();
+			LinphoneAccountParams *michelle_account_params =
+			    linphone_account_params_clone(linphone_account_get_params(michelle_account));
+			linphone_account_params_enable_register(michelle_account_params, FALSE);
+			linphone_account_set_params(michelle_account, michelle_account_params);
+			linphone_account_params_unref(michelle_account_params);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneRegistrationCleared,
+			                             initialMichelleStats.number_of_LinphoneRegistrationCleared + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionTerminated,
+			                             initialMichelleStats.number_of_LinphoneSubscriptionTerminated + 1,
+			                             liblinphone_tester_sip_timeout));
+		}
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices

@@ -23,6 +23,7 @@
 #include "account.h"
 
 #include "chat/ics/ics.h"
+#include "conference/client-conference.h"
 #include "content/content.h"
 #include "core/core.h"
 #include "linphone/api/c-account-params.h"
@@ -62,17 +63,17 @@ Account::Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params)
 	mParams = params;
 	mMissedCalls = 0;
 	applyParamsChanges();
-	lInfo() << "Account [" << this << "] created with params";
+	lInfo() << *this << " created with params";
 }
 
 Account::Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config)
     : Account(lc, params) {
 	setConfig(config, false);
-	lInfo() << "Account [" << this << "] created with params and proxy config";
+	lInfo() << *this << " created with params and proxy config";
 }
 
 Account::~Account() {
-	lInfo() << "Account [" << this << "] destroyed";
+	lInfo() << *this << " destroyed";
 	cancelDeletion();
 	if (mSentHeaders) sal_custom_header_free(mSentHeaders);
 	setDependency(nullptr);
@@ -793,6 +794,7 @@ void Account::pauseRegister() {
 void Account::unregister() {
 	if (mOp) {
 		if (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationFailed) {
+			unsubscribeFromChatRooms();
 			unsubscribeFromMessageWaitingIndication();
 			lInfo() << *this << " unregistering.";
 			mOp->unregister();
@@ -938,6 +940,21 @@ int Account::getUnreadChatMessageCount() const {
 	}
 
 	return getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
+}
+
+void Account::unsubscribeFromChatRooms() {
+	// Unsubscribe from chatrooms
+	lInfo() << "Unsubscribing from a chatrooms linked to account " << *this;
+	for (const auto &chatRoom : getChatRooms()) {
+		const auto &conference = chatRoom->getConference();
+		if (conference) {
+			const auto &clientConference = dynamic_pointer_cast<LinphonePrivate::ClientConference>(conference);
+			if (clientConference) {
+				clientConference->unsubscribe();
+			}
+		}
+	}
+	mChatRoomList.mList.clear();
 }
 
 void Account::updateChatRoomList() const {
@@ -1749,7 +1766,7 @@ void Account::ccmpConferenceInformationRequestSent() {
 
 void Account::ccmpConferenceInformationResponseReceived() {
 	if (mCcmpConferenceInformationRequestsCounter == 0) {
-		lFatal() << "Account [" << this << "] Receiving more responses than HTTP requests sent";
+		lFatal() << *this << " Receiving more responses than HTTP requests sent";
 	}
 	mCcmpConferenceInformationRequestsCounter--;
 	if (mCcmpConferenceInformationRequestsCounter == 0) {
