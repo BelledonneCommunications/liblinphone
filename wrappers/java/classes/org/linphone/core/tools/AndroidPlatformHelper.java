@@ -54,6 +54,7 @@ import android.hardware.display.DisplayManager;
 import android.media.AudioManager;
 import android.view.Display;
 
+import org.linphone.core.Address;
 import org.linphone.core.SignalType;
 import org.linphone.core.SignalStrengthUnit;
 import org.linphone.core.tools.compatibility.DeviceUtils;
@@ -400,7 +401,7 @@ public class AndroidPlatformHelper {
                             Log.w("[Platform Helper] Ringing was disabled in configuration (disable_ringing item in [sound] section is set to 1)");
                         } else {
                             Log.i("[Platform Helper] Incoming call received, no other call, start ringing");
-                            mAudioHelper.startRinging(mContext, core.getRing(), call.getRemoteAddress());
+                            startRinging(call.getRemoteAddress());
                         }
                     } else {
                         Log.i("[Platform Helper] Incoming call received, no other call, acquire ringing audio focus");
@@ -1672,6 +1673,18 @@ public class AndroidPlatformHelper {
         }
         Log.i("[Platform Helper] Ringer mode is set to normal (", ringerMode, ")");
         return true;
+    }
+
+    public void startRinging(Address remoteAddress) {
+        Runnable ringingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mAudioHelper != null && mCore != null) {
+                    mAudioHelper.startRinging(mContext, mCore.getRing(), remoteAddress);
+                }
+            }
+        };
+        dispatchOnCoreThread(ringingRunnable);
     }
 
     public void stopRinging() {

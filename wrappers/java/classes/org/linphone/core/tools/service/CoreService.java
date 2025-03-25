@@ -155,6 +155,12 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
+        
+        if (mIsVibrating) {
+            Log.i("[Core Service] Stopping vibrator");
+            mVibrator.cancel();
+            mIsVibrating = false;
+        }
 
         if (AndroidPlatformHelper.isReady()) {
             AndroidPlatformHelper.instance().setServiceRunning(false);
