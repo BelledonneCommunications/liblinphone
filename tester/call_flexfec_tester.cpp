@@ -23,11 +23,10 @@
 #include <vector>
 
 #include "bctoolbox/list.h"
+#include "call/call.h"
 #include "liblinphone_tester.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
-#include "linphone/core.h"
-
 #include "tester_utils.h"
 
 #ifdef VIDEO_ENABLED
@@ -282,6 +281,7 @@ static void video_call_with_flexfec_and_zrtp(void) {
 	flexfec_tests_params params{LinphoneMediaEncryptionZRTP, FALSE, TRUE, FALSE};
 	video_call_with_flexfec_base(params);
 }
+
 // Iterate during max_iteration*delay_ms until the participant received at least tmmbr_min_count TMMBR
 static void wait_for_tmmbr_count(const int max_iteration,
                                  const int delay_ms,
