@@ -1476,7 +1476,7 @@ void create_conference_base(time_t start_time,
 				}
 			}
 
-			if (!!use_relay_ice_candidates) {
+			if ((mgr == laure.getCMgr()) && (!!use_relay_ice_candidates)) {
 				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
 				linphone_core_enable_forced_ice_relay(mgr->lc, TRUE);
 			}
@@ -1485,7 +1485,10 @@ void create_conference_base(time_t start_time,
 				linphone_core_set_conference_max_thumbnails(mgr->lc, 2);
 			}
 
-			if (mgr != focus.getCMgr()) {
+			if (mgr == focus.getCMgr()) {
+				// ICE relay candidates will only be tester with Laure
+				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
+			} else {
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
 				linphone_core_set_media_encryption(mgr->lc, encryption);
 			}
@@ -7219,7 +7222,10 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			linphone_core_enable_video_capture(mgr->lc, TRUE);
 			linphone_core_enable_video_display(mgr->lc, TRUE);
 
-			if (mgr != focus.getCMgr()) {
+			if (mgr == focus.getCMgr()) {
+				// ICE relay candidates will only be tester with Michelle
+				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
+			} else {
 				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
 				linphone_core_set_media_encryption(mgr->lc, enable_lime ? LinphoneMediaEncryptionZRTP
 				                                                        : LinphoneMediaEncryptionNone);
@@ -7238,7 +7244,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				linphone_account_params_unref(new_account_params);
 			}
 
-			if (!!use_relay_ice_candidates) {
+			if ((mgr == michelle.getCMgr()) && (!!use_relay_ice_candidates)) {
 				linphone_core_set_user_agent(mgr->lc, "Natted Linphone", NULL);
 				linphone_core_enable_forced_ice_relay(mgr->lc, TRUE);
 			}
