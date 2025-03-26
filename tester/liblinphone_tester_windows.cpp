@@ -130,7 +130,7 @@ void NativeTester::initialize(const Platform::Array<Platform::String ^> ^ pParam
 
 	Platform::String ^ dataPath =
 	    Platform::String::Concat(Windows::ApplicationModel::Package::Current->InstalledLocation->Path,
-	                             ref new Platform::String(L"\\share\\liblinphone_tester"));
+	                             ref new Platform::String(L"\\share\\liblinphone-tester"));
 
 	wwritable_dir = dataPath->Data();
 	wcstombs(writable_dir, wwritable_dir, sizeof(writable_dir));
