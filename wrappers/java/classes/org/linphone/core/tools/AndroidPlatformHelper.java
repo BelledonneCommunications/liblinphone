@@ -375,7 +375,7 @@ public class AndroidPlatformHelper {
                 Log.i("[Platform Helper] Last call ended");
                 if (mAudioHelper == null) return;
                 if (core.isNativeRingingEnabled()) {
-                    mAudioHelper.stopRinging();
+                    stopRinging();
                 } else {
                     mAudioHelper.releaseRingingAudioFocus();
                 }
@@ -413,7 +413,7 @@ public class AndroidPlatformHelper {
                     } else {
                         if (core.isNativeRingingEnabled()) {
                             Log.w("[Platform Helper] Incoming call is early media and ringing is disabled, stop ringing");
-                            mAudioHelper.stopRinging();
+                            stopRinging();
                         } else {
                             Log.i("[Platform Helper] Incoming call is early media and ringing is disabled, keep ringing audio focus as sound card will be using RING stream");
                         }
@@ -421,7 +421,7 @@ public class AndroidPlatformHelper {
                 } else if (state == Call.State.Connected) {
                     if (call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
                         Log.i("[Platform Helper] Stop incoming call ringing");
-                        mAudioHelper.stopRinging();
+                        stopRinging();
                     } else {
                         Log.i("[Platform Helper] Stop incoming call ringing audio focus");
                         mAudioHelper.releaseRingingAudioFocus();
