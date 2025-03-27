@@ -93,3 +93,8 @@ install(TARGETS pylinphone
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	FRAMEWORK DESTINATION Frameworks
 )
+
+if(ENABLE_PYTHON_WRAPPER_TESTER)
+    # Install the tests project into the install data dir
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/wrapper-tests" DESTINATION "${CMAKE_INSTALL_DATADIR}/pylinphone/")
+endif()
