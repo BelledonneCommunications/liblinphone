@@ -64,3 +64,8 @@ unsigned int linphone_search_result_get_weight(const LinphoneSearchResult *searc
 int linphone_search_result_get_source_flags(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getSourceFlags();
 }
+
+bool_t linphone_search_result_has_source_flag(const LinphoneSearchResult *searchResult,
+                                              const LinphoneMagicSearchSource source) {
+	return SearchResult::toCpp(searchResult)->hasSourceFlag(source);
+}

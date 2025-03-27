@@ -1490,7 +1490,7 @@ static void search_friend_with_phone_number(void) {
 		BC_ASSERT_TRUE(linphone_friend_get_starred(found_friend));
 
 		int source_flags = linphone_search_result_get_source_flags(search_result);
-		BC_ASSERT_EQUAL(source_flags, LinphoneMagicSearchSourceFriends & LinphoneMagicSearchSourceFavoriteFriends, int,
+		BC_ASSERT_EQUAL(source_flags, LinphoneMagicSearchSourceFriends | LinphoneMagicSearchSourceFavoriteFriends, int,
 		                "%d");
 
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);

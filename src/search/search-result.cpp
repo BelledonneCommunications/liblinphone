@@ -169,6 +169,10 @@ int SearchResult::getSourceFlags() const {
 	return mSourceFlags;
 }
 
+bool SearchResult::hasSourceFlag(const LinphoneMagicSearchSource source) const {
+	return static_cast<bool>(mSourceFlags & source);
+}
+
 void SearchResult::merge(const shared_ptr<SearchResult> &other) {
 	bool updateSourceFlags = false;
 
