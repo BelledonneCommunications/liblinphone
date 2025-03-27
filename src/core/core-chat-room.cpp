@@ -1064,30 +1064,4 @@ void Core::decrementRemainingDownloadFileCount() {
 	}
 }
 
-std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::shared_ptr<Address> &localAddress,
-                                                                     const std::shared_ptr<Address> &peerAddress) {
-	if (!localAddress) return nullptr;
-
-	auto account = findAccountByIdentityAddress(localAddress);
-	if (!account) {
-		string toUser = localAddress->getUsername();
-		if (!toUser.empty() && peerAddress) {
-			auto localAddressWithPeerDomain = make_shared<Address>(*localAddress);
-			localAddressWithPeerDomain->setDomain(peerAddress->getDomain());
-			account = lookupKnownAccount(localAddressWithPeerDomain, false);
-			if (account) {
-				// We have a match for the from domain and the to username.
-				// We may face an IPBPX that sets the To domain to our IP address, which is
-				// a terribly stupid idea.
-				lWarning() << "Detecting TO header probably ill-choosen.";
-				return account;
-			} else {
-				lWarning() << "Failed to find an account matching TO header";
-			}
-		}
-	}
-
-	return nullptr;
-}
-
 LINPHONE_END_NAMESPACE

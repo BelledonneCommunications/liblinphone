@@ -2790,6 +2790,13 @@ const bctbx_list_t *Core::getAccountsCList() const {
 
 std::shared_ptr<Account> Core::lookupKnownAccount(const std::shared_ptr<const Address> uri,
                                                   bool fallbackToDefault) const {
+	if (uri) {
+		return lookupKnownAccount(*uri, fallbackToDefault);
+	}
+	return nullptr;
+}
+
+std::shared_ptr<Account> Core::lookupKnownAccount(const Address &uri, bool fallbackToDefault) const {
 	std::shared_ptr<Account> foundAccount = NULL;
 	std::shared_ptr<Account> foundRegAccount = NULL;
 	std::shared_ptr<Account> foundNoRegAccount = NULL;
@@ -2798,13 +2805,13 @@ std::shared_ptr<Account> Core::lookupKnownAccount(const std::shared_ptr<const Ad
 	std::shared_ptr<Account> foundNoRegAccountDomainMatch = NULL;
 	std::shared_ptr<Account> defaultAccount = getDefaultAccount();
 
-	if (!uri || !uri->isValid()) {
+	if (!uri.isValid()) {
 		lError() << "Cannot look for account for NULL uri, returning default";
 		return defaultAccount;
 	}
-	const std::string uriDomain = uri->getDomain();
+	const std::string uriDomain = uri.getDomain();
 	if (uriDomain.empty()) {
-		lInfo() << "Cannot look for account for uri [" << *uri << "] that has no domain set, returning default";
+		lInfo() << "Cannot look for account for uri [" << uri << "] that has no domain set, returning default";
 		return defaultAccount;
 	}
 
@@ -2812,7 +2819,7 @@ std::shared_ptr<Account> Core::lookupKnownAccount(const std::shared_ptr<const Ad
 	if (defaultAccount) {
 		const auto &defaultAccountParams = defaultAccount->getAccountParams();
 		const auto &identityAddress = defaultAccountParams->getIdentityAddress();
-		if (uri->weakEqual(*identityAddress)) {
+		if (uri.weakEqual(*identityAddress)) {
 			foundAccount = defaultAccount;
 			goto end;
 		}
@@ -2828,7 +2835,7 @@ std::shared_ptr<Account> Core::lookupKnownAccount(const std::shared_ptr<const Ad
 		const auto &identityAddress = accountParams->getIdentityAddress();
 		const auto registered = (account->getState() == LinphoneRegistrationOk);
 		const auto canRegister = accountParams->getRegisterEnabled();
-		if (uri->weakEqual(*identityAddress)) {
+		if (uri.weakEqual(*identityAddress)) {
 			if (registered) {
 				foundAccount = account;
 				break;
@@ -2882,6 +2889,22 @@ std::shared_ptr<Account> Core::findAccountByIdentityAddress(const std::shared_pt
 		const auto &params = account->getAccountParams();
 		const auto &address = params->getIdentityAddress();
 		if (address && identity->weakEqual(address)) {
+			found = account;
+			break;
+		}
+	}
+	return found;
+}
+
+std::shared_ptr<Account> Core::findAccountByUsername(const std::string &username) const {
+	std::shared_ptr<Account> found = nullptr;
+	if (username.empty()) return found;
+
+	auto &accounts = mAccounts.mList;
+	for (const auto &account : accounts) {
+		const auto &params = account->getAccountParams();
+		const auto &address = params->getIdentityAddress();
+		if (address && address->getUsername() == username) {
 			found = account;
 			break;
 		}
@@ -3089,6 +3112,40 @@ bool Core::isEktPluginLoaded() const {
 
 void Core::setEktPluginLoaded(bool ektPluginLoaded) {
 	mEktPluginLoaded = ektPluginLoaded;
+}
+
+std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::shared_ptr<Address> &localAddress,
+                                                                     const std::shared_ptr<Address> &peerAddress) {
+	if (!localAddress) return nullptr;
+
+	auto account = findAccountByIdentityAddress(localAddress);
+	if (!account) {
+		string toUser = localAddress->getUsername();
+		if (!toUser.empty() && peerAddress) {
+			Address localAddressWithPeerDomain(*localAddress);
+			localAddressWithPeerDomain.setDomain(peerAddress->getDomain());
+			account = lookupKnownAccount(localAddressWithPeerDomain, false);
+			if (account) {
+				// We have a match for the FROM domain and the TO username.
+				// We may face an IPBPX that sets the TO domain to our IP address, which is
+				// a terribly stupid idea.
+				lWarning() << "Detecting TO header probably ill-choosen, but an account that matches the username on "
+				              "the FROM domain was found";
+				return account;
+			} else {
+				account = findAccountByUsername(toUser);
+				if (account) {
+					lWarning() << "Detecting TO header probably ill-choosen, but an account that matches the username "
+					              "was found";
+					return account;
+				} else {
+					lWarning() << "Failed to find an account matching TO header";
+				}
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 LINPHONE_END_NAMESPACE
