@@ -108,6 +108,11 @@ public:
 	int getSourceFlags() const;
 
 	/**
+	 * @return whether or not the search results has a source flag
+	 **/
+	bool hasSourceFlag(const LinphoneMagicSearchSource source) const;
+
+	/**
 	 * @brief Merge the results with withResult : add sourceFlags, complete missing field (no override if weight is
 	 *lesser than current weight)
 	 **/

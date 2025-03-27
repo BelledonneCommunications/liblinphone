@@ -430,7 +430,7 @@ list<shared_ptr<SearchResult>> MagicSearch::getResultsFromFriends(bool onlyStarr
 			if (!onlyStarred || isStarred) {
 				int flags = LinphoneMagicSearchSourceFriends;
 				if (isStarred) {
-					flags &= LinphoneMagicSearchSourceFavoriteFriends;
+					flags |= LinphoneMagicSearchSourceFavoriteFriends;
 				}
 				list<shared_ptr<SearchResult>> found = searchInFriend(lFriend, withDomain, flags);
 				if (resultList.empty()) {

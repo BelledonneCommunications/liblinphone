@@ -97,6 +97,15 @@ LINPHONE_PUBLIC unsigned int linphone_search_result_get_weight(const LinphoneSea
 LINPHONE_PUBLIC int linphone_search_result_get_source_flags(const LinphoneSearchResult *search_result);
 
 /**
+ * Returns whether or not the search result has the given source flag
+ * @param search_result the #LinphoneSearchResult object @notnil
+ * @param source the #LinphoneMagicSearchSource to check
+ * @return TRUE if it has the source flag, FALSE otherwise.
+ **/
+LINPHONE_PUBLIC bool_t linphone_search_result_has_source_flag(const LinphoneSearchResult *search_result,
+                                                              const LinphoneMagicSearchSource source);
+
+/**
  * @}
  */
 
