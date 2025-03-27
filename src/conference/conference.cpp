@@ -653,6 +653,8 @@ int Conference::terminate() {
 }
 
 LinphoneStatus Conference::updateMainSession(bool modifyParams) {
+	if (getCore()->getCCore()->sal->mediaDisabled()) return -1;
+
 	LinphoneStatus ret = -1;
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	if (session) {
