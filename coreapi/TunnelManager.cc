@@ -425,6 +425,7 @@ void TunnelManager::unlinkLinphoneCore() {
 		}
 		linphone_core_remove_callbacks(mCore, mCoreCbs);
 		linphone_core_cbs_unref(mCoreCbs);
+		linphone_core_set_rtp_transport_factories(mCore, NULL);
 		mCore = nullptr;
 		mCoreCbs = nullptr;
 	} else {
