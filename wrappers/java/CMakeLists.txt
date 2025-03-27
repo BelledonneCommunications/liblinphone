@@ -61,3 +61,8 @@ install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/java" DESTINATION "${CMAKE_INSTAL
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/proguard.txt" DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonej/")
 
 #install(DIRECTORY classes/ DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonej/java/org/linphone/core/")
+
+if(ENABLE_JAVA_WRAPPER_TESTER)
+	# Install the tests project into the install data dir
+	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/WrapperTests" DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonej/")
+endif()
