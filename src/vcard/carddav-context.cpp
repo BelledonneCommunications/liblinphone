@@ -360,6 +360,10 @@ void CardDAVContext::sendQuery(const shared_ptr<CardDAVQuery> &query, bool cance
 					context->processRedirect(query, location);
 				}
 				return;
+			} else if (code == 401) {
+				lError() << "[CardDAV] 401 status code wasn't handled by HttpClient, aborting!";
+				context->clientToServerSyncDone(false, "Failed to find matching AuthInfo");
+				return;
 			}
 
 			context->processQueryResponse(query, response);
