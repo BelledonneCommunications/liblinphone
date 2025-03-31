@@ -81,6 +81,20 @@ public:
 		time_t timestamp = 0;
 	};
 
+	struct ChatRoomContext {
+		ChatRoomContext(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		                long long dbId,
+		                bool conferenceIdChanged,
+		                bool updateFlags)
+		    : sChatRoom(chatRoom), sDbId(dbId), sConferenceIdChanged(conferenceIdChanged), sUpdateFlags(updateFlags) {
+		}
+
+		std::shared_ptr<AbstractChatRoom> sChatRoom;
+		long long sDbId = -1;
+		bool sConferenceIdChanged = false;
+		bool sUpdateFlags = false;
+	};
+
 	MainDb(const std::shared_ptr<Core> &core);
 
 	// ---------------------------------------------------------------------------
@@ -303,8 +317,8 @@ protected:
 private:
 	L_DECLARE_PRIVATE(MainDb);
 	L_DISABLE_COPY(MainDb);
-	using ChatRoomWeakCompareMap = std::
-	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
+	using ChatRoomWeakCompareMap =
+	    std::unordered_map<ConferenceId, ChatRoomContext, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
 	void initCleanup();
 	bool addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
 	                       const std::shared_ptr<AbstractChatRoom> &chatRoom,
@@ -312,7 +326,8 @@ private:
 	                       int unreadMessageCount) const;
 	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> &chatRoom1,
 	                                                 const std::shared_ptr<AbstractChatRoom> &chatRoom2,
-	                                                 long long id,
+	                                                 long long id1,
+	                                                 long long id2,
 	                                                 int unreadMessageCount) const;
 
 	std::string getConferenceInfoTypeQuery(const std::list<LinphoneStreamType> &capabilities) const;

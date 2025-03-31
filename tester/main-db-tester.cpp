@@ -48,7 +48,10 @@ public:
 	MainDbProvider() : MainDbProvider("db/linphone.db") {
 	}
 
-	MainDbProvider(const char *db_file, bool_t keep_gruu = TRUE, bool_t unify_chatroom_address = FALSE) {
+	MainDbProvider(const char *db_file,
+	               bool_t keep_gruu = TRUE,
+	               bool_t unify_chatroom_address = FALSE,
+	               bool_t is_conference_server = FALSE) {
 		mCoreManager = linphone_core_manager_create("empty_rc");
 		char *roDbPath = bc_tester_res(db_file);
 		char *rwDbPath = bc_tester_file(core_db);
@@ -61,6 +64,7 @@ public:
 		                           chatroom_domain);
 		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "misc", "force_chatroom_gr",
 		                           chatroom_gr);
+		linphone_core_enable_conference_server(mCoreManager->lc, is_conference_server);
 		bc_free(roDbPath);
 		bc_free(rwDbPath);
 		linphone_core_manager_start(mCoreManager, false);
@@ -498,9 +502,11 @@ static void load_chatroom_conference_cleaning_gruu(void) {
 	load_chatroom_conference_base(FALSE);
 }
 
-static void database_with_chatroom_duplicates_base(bool_t keep_gruu) {
-	MainDbProvider provider("db/chatroom_duplicates.db", keep_gruu);
+static void database_with_chatroom_duplicates_base(bool_t keep_gruu, bool_t is_conference_server) {
+	MainDbProvider provider(is_conference_server ? "db/server_chatroom_duplicates.db" : "db/chatroom_duplicates.db",
+	                        keep_gruu, FALSE, is_conference_server);
 	BC_ASSERT_TRUE(linphone_core_gruu_in_conference_address_enabled(provider.getCoreManager()->lc) == keep_gruu);
+	BC_ASSERT_TRUE(linphone_core_conference_server_enabled(provider.getCoreManager()->lc) == is_conference_server);
 	MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
@@ -518,27 +524,37 @@ static void database_with_chatroom_duplicates_base(bool_t keep_gruu) {
 				                int, "%0d");
 				BC_ASSERT_EQUAL(chatRoom->getConference()->getLastNotify(), 25, size_t, "%zu");
 			}
-			int messageCount = 0;
-			if (backend == ChatParams::Backend::Basic) {
-				messageCount = 0;
-			} else {
-				if (subject == "new test subject for chatroom idx 0") {
-					messageCount = 2;
+			if (!is_conference_server) {
+				int messageCount = 0;
+				if (backend == ChatParams::Backend::Basic) {
+					messageCount = 0;
 				} else {
-					messageCount = 3;
+					if (subject == "new test subject for chatroom idx 0") {
+						messageCount = 2;
+					} else {
+						messageCount = 3;
+					}
 				}
+				BC_ASSERT_EQUAL(mainDb.getChatMessageCount(chatRoom->getConferenceId()), messageCount, size_t, "%zu");
 			}
-			BC_ASSERT_EQUAL(mainDb.getChatMessageCount(chatRoom->getConferenceId()), messageCount, size_t, "%zu");
 		}
 	}
 }
 
 static void database_with_chatroom_duplicates(void) {
-	database_with_chatroom_duplicates_base(TRUE);
+	database_with_chatroom_duplicates_base(TRUE, FALSE);
+}
+
+static void database_with_chatroom_duplicates_conference_server(void) {
+	database_with_chatroom_duplicates_base(TRUE, TRUE);
 }
 
 static void database_with_chatroom_duplicates_gruu_pruned(void) {
-	database_with_chatroom_duplicates_base(FALSE);
+	database_with_chatroom_duplicates_base(FALSE, FALSE);
+}
+
+static void database_with_chatroom_duplicates_gruu_pruned_conference_server(void) {
+	database_with_chatroom_duplicates_base(FALSE, TRUE);
 }
 
 static void search_messages_in_chat_room(void) {
@@ -639,7 +655,11 @@ test_t main_db_tests[] = {
     TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference),
     TEST_NO_TAG("Load chatroom and conference cleaning gruu", load_chatroom_conference_cleaning_gruu),
     TEST_NO_TAG("Database with chatroom duplicates", database_with_chatroom_duplicates),
+    TEST_NO_TAG("Database with chatroom duplicates in conference server",
+                database_with_chatroom_duplicates_conference_server),
     TEST_NO_TAG("Database with chatroom duplicates and GRUU pruned", database_with_chatroom_duplicates_gruu_pruned),
+    TEST_NO_TAG("Database with chatroom duplicates and GRUU pruned in conference server",
+                database_with_chatroom_duplicates_gruu_pruned_conference_server),
     TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
     TEST_NO_TAG("Load a lot of chatrooms cleaning GRUU", load_a_lot_of_chatrooms_cleaning_gruu),
     TEST_NO_TAG("Search messages in chatroom", search_messages_in_chat_room)};

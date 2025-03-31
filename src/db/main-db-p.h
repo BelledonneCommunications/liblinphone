@@ -111,6 +111,7 @@ private:
 	long long selectSipAddressId(const std::string &sipAddress, const bool caseSensitive) const;
 	long long selectSipAddressId(const std::shared_ptr<Address> &address, const bool caseSensitive) const;
 	std::string selectSipAddressFromId(long long sipAddressId) const;
+	void deleteChatRoom(const long long &dbId) const;
 	void deleteChatRoom(const ConferenceId &conferenceId);
 	long long selectChatRoomId(long long peerSipAddressId) const;
 	long long selectChatRoomId(long long peerSipAddressId, long long localSipAddressId) const;
@@ -245,7 +246,7 @@ private:
 	std::shared_ptr<CallLog> getCallLogFromCache(long long storageId) const;
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromCache(long long storageId) const;
 
-	void invalidConferenceEventsFromQuery(const std::string &query, long long chatRoomId);
+	void invalidConferenceEventsFromQuery(const std::string &query, long long chatRoomId) const;
 
 	// ---------------------------------------------------------------------------
 	// Versions.

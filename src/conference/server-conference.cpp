@@ -81,7 +81,7 @@ void ServerConference::initFromDb(const std::shared_ptr<Participant> &me,
                                   const unsigned int lastNotifyId,
                                   BCTBX_UNUSED(bool hasBeenLeft)) {
 	if (me) {
-		mMe = me->clone()->toSharedPtr();
+		lError() << "Unexpected me participant " << *me->getAddress() << " in server conference";
 	}
 	setLastNotify(lastNotifyId);
 	mConferenceId = conferenceId;
