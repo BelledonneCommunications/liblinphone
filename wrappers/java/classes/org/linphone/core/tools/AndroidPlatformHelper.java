@@ -44,6 +44,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Surface;
 import android.view.TextureView;
+import android.Manifest;
 
 import android.app.Application;
 import android.app.ActivityManager;
@@ -52,6 +53,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.hardware.display.DisplayManager;
 import android.media.AudioManager;
+import android.os.Vibrator;
 import android.view.Display;
 
 import org.linphone.core.Address;
@@ -170,6 +172,9 @@ public class AndroidPlatformHelper {
 
     private DisplayManager mDisplayManager;
     private DisplayManager.DisplayListener mDisplayListener;
+    
+    private Vibrator mVibrator;
+    private boolean mIsVibrating;
 
     // These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
@@ -234,6 +239,8 @@ public class AndroidPlatformHelper {
             Log.i("[Platform Helper] Linphone SDK Android classes won't use main thread: [", thread.getName(), "], id=", thread.getId());
         }
         sInstance = this;
+        
+        mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
 
         Log.i("[Platform Helper] Created, wifi only mode is " + (mWifiOnly ? "enabled" : "disabled"));
     }
@@ -1695,6 +1702,56 @@ public class AndroidPlatformHelper {
             }
         };
         dispatchOnCoreThread(ringingRunnable);
+    }
+
+    public void startVibrating(Address remoteAddress) {
+        Runnable vibratingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mContext.checkSelfPermission(Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED) {
+                    Log.e("[Platform Helper] VIBRATE permission wasn't granted yet, do not attempt accessing the vibrator");
+                    return;
+                }
+                if (mVibrator != null && mVibrator.hasVibrator()) {
+                    AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+                    if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
+                        if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(mContext)) {
+                            boolean isContactFavorite = DeviceUtils.checkIfIsFavoriteContact(mContext, remoteAddress);
+                            if (isContactFavorite) {
+                                Log.i("[Platform Helper] Ringer mode is set to silent unless for favorite contact, which seems to be the case here, so starting vibrator");
+                                DeviceUtils.vibrate(mVibrator);
+                                mIsVibrating = true;
+                            } else {
+                                Log.i("[Platform Helper] Do not vibrate as ringer mode is set to silent and calling username / SIP address isn't part of a favorite contact");
+                            }
+                        } else {
+                            Log.i("[Platform Helper] Do not vibrate as ringer mode is set to silent");
+                        }
+                    } else {
+                        Log.i("[Platform Helper] Starting vibrator");
+                        DeviceUtils.vibrate(mVibrator);
+                        mIsVibrating = true;
+                    }
+                } else {
+                    Log.e("[Platform Helper] Device doesn't have a vibrator");
+                }
+            }
+        };
+        dispatchOnCoreThread(vibratingRunnable);
+    }
+
+    public void stopVibrating() {
+        Runnable vibratingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mIsVibrating) {
+                    Log.i("[Platform Helper] Stopping vibrator");
+                    mVibrator.cancel();
+                    mIsVibrating = false;
+                }
+            }
+        };
+        dispatchOnCoreThread(vibratingRunnable);
     }
 
     private synchronized Class getServiceClass() {

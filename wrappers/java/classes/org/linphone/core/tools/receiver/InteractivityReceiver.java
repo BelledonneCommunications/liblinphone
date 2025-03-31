@@ -39,7 +39,10 @@ public class InteractivityReceiver extends BroadcastReceiver {
             Log.i("[Platform Helper] [Interactivity Receiver] Device screen is ON");
         } else if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_OFF)) {
             Log.i("[Platform Helper] [Interactivity Receiver] Device screen is OFF");
-            if (AndroidPlatformHelper.isReady()) AndroidPlatformHelper.instance().stopRinging();
+            if (AndroidPlatformHelper.isReady()) {
+                AndroidPlatformHelper.instance().stopRinging();
+                AndroidPlatformHelper.instance().stopVibrating();
+            }
         }
     }
 }

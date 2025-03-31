@@ -103,7 +103,9 @@ public class DeviceUtils {
 	}
 
 	public static void vibrate(Vibrator vibrator) {
-		if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+		if (Version.sdkAboveOrEqual(Version.API33_ANDROID_13_TIRAMISU)) {
+			DeviceUtils33.vibrate(vibrator);
+		} else if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
 			DeviceUtils26.vibrate(vibrator);
 		} else {
 			DeviceUtils23.vibrate(vibrator);
