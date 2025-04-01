@@ -83,6 +83,15 @@ bool SalCallOp::isContentInRemote(const ContentType &contentType) const {
 }
 
 std::optional<std::reference_wrapper<const Content>>
+SalCallOp::getContentInLocal(const ContentType &contentType) const {
+	auto it = std::find_if(mLocalBodies.begin(), mLocalBodies.end(), [&contentType](const Content &content) {
+		return (content.getContentType() == contentType);
+	});
+	if (it != mLocalBodies.end()) return *it;
+	return nullopt;
+}
+
+std::optional<std::reference_wrapper<const Content>>
 SalCallOp::getContentInRemote(const ContentType &contentType) const {
 	auto it = std::find_if(mRemoteBodies.begin(), mRemoteBodies.end(), [&contentType](const Content &content) {
 		return (content.getContentType() == contentType);
@@ -324,6 +333,17 @@ int SalCallOp::parseSdpBody(const Content &body, belle_sdp_session_description_t
 	}
 
 	return 0;
+}
+
+std::shared_ptr<SalMediaDescription> SalCallOp::getSalMediaDescriptionFromContent(const Content &content) {
+	belle_sdp_session_description_t *sdp = nullptr;
+	SalReason reason;
+	if (parseSdpBody(content, &sdp, &reason) == 0) {
+		auto mediaDescription = std::make_shared<SalMediaDescription>(sdp);
+		belle_sip_object_unref(sdp);
+		return mediaDescription;
+	}
+	return nullptr;
 }
 
 std::string SalCallOp::setAddrTo0000(const std::string &value) {
