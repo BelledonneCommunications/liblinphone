@@ -202,6 +202,43 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 			infoState = ConferenceInfo::State::Updated;
 		}
 	}
+
+	if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+		const auto &startTime = clone->getDateTime();
+		time_t earlierJoiningTime = ms_time(NULL);
+		if (startTime >= 0) {
+			long availability = getCore()->getConferenceAvailabilityBeforeStart();
+			earlierJoiningTime = startTime;
+			if (availability >= 0) {
+				earlierJoiningTime += availability;
+			}
+		}
+		clone->setEarlierJoiningTime(earlierJoiningTime);
+
+		const auto duration = clone->getDuration();
+		time_t endTime = -1;
+		if ((startTime >= 0) && (duration > 0)) {
+			// The duration of the conference is stored in minutes in the conference information
+			endTime = startTime + duration * 60;
+		}
+
+		time_t expiryTime = -1;
+		long expiry = getCore()->getConferenceExpirePeriod();
+		if (endTime >= 0) {
+			// Conference has a defined end time
+			expiryTime = endTime;
+		} else if (startTime >= 0) {
+			// Conference can run indefinitely
+			expiryTime = -1;
+		} else {
+			// Dial out conference
+			expiryTime = ms_time(NULL);
+		}
+		if (expiry > 0) {
+			expiryTime += expiry;
+		}
+		clone->setExpiryTime(expiryTime);
+	}
 	clone->setState(infoState);
 
 	mConferenceInfo = clone;

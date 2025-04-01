@@ -256,7 +256,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		                             initialMichelle2Stats.number_of_LinphoneConferenceStateTerminated + 1,
 		                             liblinphone_tester_sip_timeout));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(5), [] {
 			return false;
 		});
@@ -267,7 +267,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		focus.reStart();
 		coresList = bctbx_list_append(coresList, focus.getLc());
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(5), [] {
 			return false;
 		});
@@ -340,7 +340,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});
@@ -534,7 +534,7 @@ static void secure_group_chat_room_with_client_with_uppercase_username(void) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, michelle}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -749,7 +749,7 @@ static void secure_group_chat_room_with_multi_account_client(void) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, multi_account, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});
@@ -858,7 +858,7 @@ static void secure_one_to_one_chat_room_with_client_removed_from_database(void) 
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom

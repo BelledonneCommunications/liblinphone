@@ -134,6 +134,8 @@ public:
 	    : ConfCoreManager(rc, [this](bool) {
 		      linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
 		      linphone_core_enable_conference_server(getLc(), TRUE);
+		      linphone_core_set_conference_availability_before_start(getLc(), 0);
+		      linphone_core_set_conference_expire_period(getLc(), 0);
 	      }) {
 
 		configureFocus();

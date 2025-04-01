@@ -328,6 +328,22 @@ void ConferenceInfo::setUri(const std::shared_ptr<const Address> uri) {
 	mUri = Address::create(uri->getUriWithoutGruu());
 }
 
+void ConferenceInfo::setExpiryTime(time_t expiryTime) {
+	mExpiryTime = expiryTime;
+};
+
+time_t ConferenceInfo::getExpiryTime() const {
+	return mExpiryTime;
+};
+
+void ConferenceInfo::setEarlierJoiningTime(time_t joinTime) {
+	mEarlierJoiningTime = joinTime;
+};
+
+time_t ConferenceInfo::getEarlierJoiningTime() const {
+	return mEarlierJoiningTime;
+};
+
 time_t ConferenceInfo::getDateTime() const {
 	return mDateTime;
 }

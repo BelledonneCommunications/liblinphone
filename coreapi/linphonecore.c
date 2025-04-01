@@ -9051,6 +9051,24 @@ long linphone_core_get_conference_cleanup_period(const LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getConferenceCleanupPeriod();
 }
 
+void linphone_core_set_conference_availability_before_start(LinphoneCore *lc, long seconds) {
+	CoreLogContextualizer logContextualizer(lc);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setConferenceAvailabilityBeforeStart(seconds);
+}
+
+long linphone_core_get_conference_availability_before_start(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getConferenceAvailabilityBeforeStart();
+}
+
+void linphone_core_set_conference_expire_period(LinphoneCore *lc, long seconds) {
+	CoreLogContextualizer logContextualizer(lc);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setConferenceExpirePeriod(seconds);
+}
+
+long linphone_core_get_conference_expire_period(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getConferenceExpirePeriod();
+}
+
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 	return lc->sip_conf.sdp_200_ack != 0;
 }
@@ -9909,13 +9927,11 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	const auto uri_addr = uri ? LinphonePrivate::Address::getSharedFromThis(uri) : nullptr;
 	auto confInfo = mainDb->getConferenceInfoFromURI(uri_addr);
-
 	if (confInfo != nullptr) {
 		// Clone the conference information so that the application can freely change it without modifying the
 		// object stored in the cached of the DB
 		return linphone_conference_info_clone(confInfo->toC());
 	}
-
 	return NULL;
 #else
 	return NULL;
@@ -9933,7 +9949,6 @@ static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t 
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	if (mainDb == NULL) return NULL;
-
 	std::list<LinphoneStreamType> capabilityList;
 	if (capabilities) {
 		for (bctbx_list_t *capability = capabilities; capability != NULL; capability = capability->next) {
@@ -9942,12 +9957,10 @@ static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t 
 		}
 	}
 	auto list = mainDb->getConferenceInfos(t, capabilityList);
-
 	bctbx_list_t *results = NULL;
-	for (auto &conf : list) {
-		results = bctbx_list_append(results, linphone_conference_info_ref(conf->toC()));
+	for (auto &info : list) {
+		results = bctbx_list_append(results, linphone_conference_info_ref(info->toC()));
 	}
-
 	return results;
 #else
 	return NULL;

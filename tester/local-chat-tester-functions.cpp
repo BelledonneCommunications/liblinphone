@@ -125,7 +125,7 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
 	bctbx_list_free_with_data(recipientHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 	bctbx_list_free_with_data(senderHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 
-	// wait bit more to detect side effect if any
+	// wait a bit longer to detect side effect if any
 	CoreManagerAssert({focus, sender, recipient}).waitUntil(chrono::seconds(2), [] { return false; });
 
 	recipientHistory = linphone_chat_room_get_history(recipientCr, 0);
@@ -277,7 +277,7 @@ void group_chat_room_server_admin_managed_messages_base(bool_t encrypted) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -529,14 +529,14 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			}
 		};
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).waitUntil(chrono::seconds(1), [] {
 			return false;
 		});
 
 		time_t participantAddedTime = ms_time(nullptr);
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).waitUntil(chrono::seconds(10), [] {
 			return false;
 		});
@@ -632,7 +632,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});
@@ -825,7 +825,7 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participant_devices_added,
 		                             initialFocusStats.number_of_chat_room_participant_devices_added + 5, 5000));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, michelle, michelle2, laure, berthe})
 		    .waitUntil(chrono::seconds(60), [] { return false; });
 
@@ -1278,7 +1278,7 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, michelle, michelle2, laure, berthe})
 		    .waitUntil(chrono::seconds(2), [] { return false; });
 
@@ -1421,7 +1421,7 @@ void group_chat_room_lime_server_message(bool encrypted) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom

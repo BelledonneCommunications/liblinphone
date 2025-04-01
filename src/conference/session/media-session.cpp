@@ -3282,7 +3282,7 @@ void MediaSessionPrivate::performMutualAuthentication() {
 
 /*
  * Frees the media resources of the call.
- * This has to be done at the earliest, unlike signaling resources that sometimes need to be kept a bit more longer.
+ * This has to be done at the earliest, unlike signaling resources that sometimes need to be kept a bit longer.
  * It is called by setTerminated() (for termination of calls signaled to the application), or directly by the destructor
  * of the session if it was never notified to the application.
  */

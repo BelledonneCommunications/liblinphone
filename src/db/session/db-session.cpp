@@ -292,7 +292,7 @@ time_t DbSession::getTime(const soci::row &row, int col) const {
 	L_D();
 
 	if (row.get_indicator(size_t(col)) == soci::i_null) {
-		return 0;
+		return -1;
 	}
 	tm t = row.get<tm>((size_t)col);
 	switch (d->backend) {
@@ -316,14 +316,15 @@ pair<tm, soci::indicator> DbSession::getTimeWithSociIndicator(time_t t) const {
 	auto indicator = soci::i_ok;
 	switch (d->backend) {
 		case DbSessionPrivate::Backend::Mysql:
-			// The backend MySql uses the TIMESTAMP datatype that needs the time information in the current timezone: https://dev.mysql.com/doc/refman/8.4/en/datetime.html
-			// MySQL converts TIMESTAMP values from the current time zone to UTC for storage, and back from UTC to the current time zone for retrieval.
+			// The backend MySql uses the TIMESTAMP datatype that needs the time information in the current timezone:
+			// https://dev.mysql.com/doc/refman/8.4/en/datetime.html MySQL converts TIMESTAMP values from the current
+			// time zone to UTC for storage, and back from UTC to the current time zone for retrieval.
 			dateTime = *std::localtime(&time);
-			indicator = (t <= 0) ? soci::i_null : soci::i_ok;
+			indicator = (t < 0) ? soci::i_null : soci::i_ok;
 			break;
 		case DbSessionPrivate::Backend::Sqlite3:
 			dateTime = Utils::getTimeTAsTm(time);
-			indicator = (t == 0) ? soci::i_null : soci::i_ok;
+			indicator = (t < 0) ? soci::i_null : soci::i_ok;
 			break;
 		case DbSessionPrivate::Backend::None:
 			dateTime = Utils::getTimeTAsTm(time);

@@ -131,6 +131,20 @@ public:
 	void setAccount(const std::shared_ptr<Account> &a);
 	std::shared_ptr<Account> getAccount() const;
 
+	void setExpiryTime(const time_t &expiryTime) {
+		mExpiryTime = expiryTime;
+	};
+	time_t getExpiryTime() const {
+		return mExpiryTime;
+	};
+
+	void setEarlierJoiningTime(const time_t &joinTime) {
+		mEarlierJoiningTime = joinTime;
+	};
+	time_t getEarlierJoiningTime() const {
+		return mEarlierJoiningTime;
+	};
+
 	virtual void setStartTime(const time_t &start) override {
 		mStartTime = start;
 	};
@@ -202,8 +216,10 @@ private:
 	mutable std::string mDescription = "";
 	std::string mUtf8Description = "";
 	std::shared_ptr<Address> mMe = nullptr;
-	time_t mStartTime = (time_t)-1;
-	time_t mEndTime = (time_t)-1;
+	time_t mEarlierJoiningTime = -1;
+	time_t mExpiryTime = -1;
+	time_t mStartTime = -1;
+	time_t mEndTime = -1;
 	bool mGroup = true; // group chat
 	std::weak_ptr<Account> mAccount;
 	bool mHidden = false;

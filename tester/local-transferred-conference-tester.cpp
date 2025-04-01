@@ -353,7 +353,7 @@ void create_transfer_conference_base(time_t start_time,
 		// Restart marie audiostream
 		LinphoneCall *marie_call = linphone_core_get_call_by_remote_address2(marie.getLc(), focus.getCMgr()->identity);
 		linphone_call_restart_main_audio_stream(marie_call);
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(5), [] { return false; });
 
 		for (auto mgr : conferenceMgrs) {
@@ -455,7 +455,7 @@ void create_transfer_conference_base(time_t start_time,
 			}
 		}
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		ms_free(conference_address_str);

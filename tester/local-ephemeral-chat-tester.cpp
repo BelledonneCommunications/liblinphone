@@ -168,7 +168,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -303,7 +303,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 		                             marie_stat.number_of_LinphoneMessageDisplayed + noMsg,
 		                             liblinphone_tester_sip_timeout));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
@@ -380,7 +380,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -500,7 +500,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -644,7 +644,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		                             marie_stat.number_of_LinphoneMessageDisplayed + 1,
 		                             liblinphone_tester_sip_timeout));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
@@ -676,7 +676,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 
 		linphone_chat_message_unref(non_ephemeral_message);
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
@@ -692,7 +692,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -877,7 +877,7 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom

@@ -137,6 +137,14 @@ void linphone_conference_info_set_date_time(LinphoneConferenceInfo *conference_i
 	ConferenceInfo::toCpp(conference_info)->setDateTime(datetime);
 }
 
+time_t linphone_conference_info_get_earlier_joining_time(const LinphoneConferenceInfo *info) {
+	return ConferenceInfo::toCpp(info)->getEarlierJoiningTime();
+}
+
+time_t linphone_conference_info_get_expiry_time(const LinphoneConferenceInfo *info) {
+	return ConferenceInfo::toCpp(info)->getExpiryTime();
+}
+
 unsigned int linphone_conference_info_get_duration(const LinphoneConferenceInfo *conference_info) {
 	return ConferenceInfo::toCpp(conference_info)->getDuration();
 }

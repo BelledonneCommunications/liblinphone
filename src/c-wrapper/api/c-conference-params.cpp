@@ -182,12 +182,20 @@ time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams 
 	return ConferenceParams::toCpp(params)->getStartTime();
 }
 
+time_t linphone_conference_params_get_earlier_joining_time(const LinphoneConferenceParams *params) {
+	return ConferenceParams::toCpp(params)->getEarlierJoiningTime();
+}
+
 void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t start) {
 	ConferenceParams::toCpp(params)->setEndTime(start);
 }
 
 time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->getEndTime();
+}
+
+time_t linphone_conference_params_get_expiry_time(const LinphoneConferenceParams *params) {
+	return ConferenceParams::toCpp(params)->getExpiryTime();
 }
 
 LinphoneConferenceSecurityLevel linphone_conference_params_get_security_level(const LinphoneConferenceParams *params) {
