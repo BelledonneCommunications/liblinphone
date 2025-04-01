@@ -172,7 +172,7 @@ static void group_chat_room_with_imdn_base(bool_t core_goes_offline) {
 		}
 
 		if (!!core_goes_offline) {
-			// wait bit more to detect side effect if any
+			// wait a bit longer to detect side effect if any
 			CoreManagerAssert({focus, marie, marie2, michelle, michelle2, pauline, pauline2})
 			    .waitUntil(chrono::seconds(2), [] { return false; });
 
@@ -206,7 +206,7 @@ static void group_chat_room_with_imdn_base(bool_t core_goes_offline) {
 			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		}
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, marie2, michelle, michelle2, pauline, pauline2})
 		    .waitUntil(chrono::seconds(2), [] { return false; });
 
@@ -259,7 +259,7 @@ static void group_chat_room_with_imdn_base(bool_t core_goes_offline) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, marie2, michelle, michelle2, pauline, pauline2})
 		    .waitUntil(chrono::seconds(2), [] { return false; });
 
@@ -388,7 +388,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 		                             pauline_stat.number_of_LinphoneConferenceStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, michelle, michelle2, laure}).waitUntil(chrono::seconds(5), [] {
 			return false;
 		});
@@ -622,7 +622,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 				    return linphone_chat_room_get_unread_messages_count(laureCr) == 1;
 			    }));
 			linphone_chat_room_mark_as_read(laureCr);
-			// wait bit more to make sure that the IMDN of the display state has been sent out
+			// wait a bit longer to make sure that the IMDN of the display state has been sent out
 			CoreManagerAssert({focus, marie, pauline, michelle, michelle2, laure}).waitUntil(chrono::seconds(1), [] {
 				return false;
 			});
@@ -696,7 +696,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, michelle, michelle2, berthe, laure})
 		    .waitUntil(chrono::seconds(2), [] { return false; });
 
@@ -886,7 +886,7 @@ static void group_chat_room_lime_session_corrupted(void) {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		// to avoid creation attempt of a new chatroom
@@ -1567,7 +1567,7 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 				chatRoom->markAsRead();
 			}
 
-			// wait bit more to detect side effect if any
+			// wait a bit longer to detect side effect if any
 			CoreManagerAssert({focus, marie, pauline, pauline2, laure, michelle}).waitUntil(chrono::seconds(5), [] {
 				return false;
 			});
@@ -1655,7 +1655,7 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, pauline2, laure, michelle}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});

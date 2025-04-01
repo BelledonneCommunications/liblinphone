@@ -283,7 +283,7 @@ static void set_get_conference_info() {
 		std::shared_ptr<ConferenceInfo> retrievedInfo4 = mainDb2.getConferenceInfoFromURI(confAddr4);
 		BC_ASSERT_PTR_NOT_NULL(retrievedInfo4);
 		if (retrievedInfo4) {
-			BC_ASSERT_EQUAL(0, (long long)retrievedInfo4->getDateTime(), long long, "%lld");
+			BC_ASSERT_EQUAL(-1, (long long)retrievedInfo4->getDateTime(), long long, "%lld");
 		}
 	} else {
 		BC_FAIL("Database not initialized");

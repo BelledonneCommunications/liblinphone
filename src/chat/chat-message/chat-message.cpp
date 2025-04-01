@@ -809,7 +809,7 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 	// If an account is attached to a chatroom, use its contact or the identity address otherwise use the local address
 	// of the conference ID. For Flexisip based chatrooms, it is paramount to use a contact address as the From header.
 	// RFC3428 forbids adding a Contact header to MESSAGE requests, therefore the From header is the only way a
-	// conference server knows which device sent the request and can be forwarded to the other tchat members as well as
+	// conference server knows which device sent the request and can be forwarded to the other chat members as well as
 	// other devices of the same participant.
 	std::shared_ptr<Address> localAddress = nullptr;
 	if (account) {
@@ -2233,6 +2233,9 @@ int ChatMessage::resendTimerExpired(void *data, BCTBX_UNUSED(unsigned int revent
 
 int ChatMessage::handleAutomaticResend() {
 	L_D();
+	// Keep a reference to this message as it may be freed when trying to send a message on a chat that is about to be
+	// terminated (state TerminationPending, Terminated, Deleted)
+	auto ref = getSharedFromThis();
 	lInfo() << "Message [" << this << "] is automatically resent right now";
 	d->setAutomaticallyResent(true);
 	send();

@@ -854,7 +854,7 @@ static void create_simple_end_to_end_encrypted_conference_with_participant_added
 			}
 		}
 
-		// wait a bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});

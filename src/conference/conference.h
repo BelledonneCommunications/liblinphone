@@ -321,7 +321,9 @@ public:
 	virtual void setOrganizer(const std::shared_ptr<Address> &organizer) const;
 
 	bool isConferenceEnded() const;
+	bool isConferenceExpired() const;
 	bool isConferenceStarted() const;
+	bool isConferenceAvailable() const;
 
 	virtual AudioControlInterface *getAudioControlInterface() const = 0;
 	virtual VideoControlInterface *getVideoControlInterface() const = 0;

@@ -264,6 +264,9 @@ public:
 	void migrateConferenceInfos();
 	void cleanupConferenceInfo(time_t expiredBeforeThisTime);
 
+	long long findExpiredConferenceId(const std::shared_ptr<Address> &uri);
+	void insertExpiredConference(const std::shared_ptr<Address> &uri);
+
 	// ---------------------------------------------------------------------------
 	// Call log.
 	// ---------------------------------------------------------------------------

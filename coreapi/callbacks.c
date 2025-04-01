@@ -333,10 +333,22 @@ static void call_received(SalCallOp *h) {
 				{
 					if (hasStreams) {
 						if (sal_address_has_uri_param(h->getToAddress(), Conference::ConfIdParameter.c_str())) {
+							long long expiredConferenceId =
+							    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
+							        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findExpiredConferenceId(to)
+							        : -1;
 							SalErrorInfo sei;
 							memset(&sei, 0, sizeof(sei));
-							const char *msg = "Conference not found";
-							sal_error_info_set(&sei, SalReasonNotFound, "SIP", 0, nullptr, msg);
+							std::string msg = "Conference " + to->toString();
+							SalReason reason = SalReasonNone;
+							if (expiredConferenceId == -1) {
+								msg += " has not been found";
+								reason = SalReasonNotFound;
+							} else {
+								msg += " has already expired";
+								reason = SalReasonGone;
+							}
+							sal_error_info_set(&sei, reason, "SIP", 0, nullptr, msg.c_str());
 							h->replyWithErrorInfo(&sei);
 							sal_error_info_reset(&sei);
 							h->release();

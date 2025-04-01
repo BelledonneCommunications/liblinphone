@@ -360,8 +360,7 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 				const auto times = remoteMd->times;
 				if (times.size() > 0) {
 					const auto [startTime, endTime] = times.front();
-					mConfParams->setStartTime(startTime);
-					mConfParams->setEndTime(endTime);
+					setConferenceTimes(startTime, endTime);
 				}
 			}
 
@@ -511,8 +510,7 @@ void ServerConference::configure(SalCallOp *op) {
 	mConfParams->enableLocalParticipant(false);
 	mConfParams->enableOneParticipantConference(true);
 
-	mConfParams->setStartTime(startTime);
-	mConfParams->setEndTime(endTime);
+	setConferenceTimes(startTime, endTime);
 
 	if (!isUpdate && !info) {
 		// Set joining mode only when creating a conference
@@ -553,6 +551,25 @@ void ServerConference::configure(SalCallOp *op) {
 	if (isUpdate) {
 		updateConferenceInformation(op);
 	}
+}
+
+void ServerConference::setConferenceTimes(time_t startTime, time_t endTime) {
+	mConfParams->setStartTime(startTime);
+	mConfParams->setEndTime(endTime);
+
+	long availability = getCore()->getConferenceAvailabilityBeforeStart();
+	time_t earlierJoiningTime = -1;
+	if ((startTime >= 0) && (availability >= 0)) {
+		earlierJoiningTime = startTime - availability;
+	}
+	mConfParams->setEarlierJoiningTime(earlierJoiningTime);
+
+	time_t expiryTime = -1;
+	long expiry = getCore()->getConferenceExpirePeriod();
+	if ((endTime >= 0) && (expiry >= 0)) {
+		expiryTime = endTime + expiry;
+	}
+	mConfParams->setExpiryTime(expiryTime);
 }
 
 std::list<std::shared_ptr<const Address>> ServerConference::getAllowedAddresses() const {
@@ -979,6 +996,7 @@ void ServerConference::finalizeCreation() {
 			if (session) {
 				if (mConfParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut) {
 					mConfParams->setStartTime(ms_time(NULL));
+					mConfParams->setEarlierJoiningTime(mConfParams->getStartTime());
 				}
 
 				auto addr = *conferenceAddress;
@@ -1215,9 +1233,35 @@ ServerConference::notifyParticipantDeviceStateChanged(time_t creationTime,
 	// This method is called by participant devices whenever they change state
 	auto event =
 	    Conference::notifyParticipantDeviceStateChanged(creationTime, isFullState, participant, participantDevice);
-	if (mConfParams->chatEnabled()) {
-		getCore()->getPrivate()->mainDb->addEvent(event);
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+#endif // HAVE_DB_STORAGE
+	if (supportsMedia()) {
+		long expiry = getCore()->getConferenceExpirePeriod();
+		auto deviceTimeOfJoining = participantDevice->getTimeOfJoining();
+		const auto dialout = (mConfParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+		// Try to update the expiry time if the end time went by or the conference is dialing out participants
+		// Dialout conferences expiry time will be only defined by participants'joining times
+		if ((deviceTimeOfJoining >= 0) && (dialout || isConferenceEnded()) && (expiry >= 0)) {
+			time_t actualExpiryTime = mConfParams->getExpiryTime();
+			time_t newExpiryTime = deviceTimeOfJoining + expiry;
+			if (newExpiryTime > actualExpiryTime) {
+				mConfParams->setExpiryTime(newExpiryTime);
+#ifdef HAVE_DB_STORAGE
+				if (mainDb) {
+					auto conferenceInfo = createOrGetConferenceInfo();
+					conferenceInfo->setExpiryTime(newExpiryTime);
+					mainDb->insertConferenceInfo(conferenceInfo);
+				}
+#endif // HAVE_DB_STORAGE
+			}
+		}
 	}
+#ifdef HAVE_DB_STORAGE
+	if (mConfParams->chatEnabled() && mainDb) {
+		mainDb->addEvent(event);
+	}
+#endif // HAVE_DB_STORAGE
 	return event;
 }
 
@@ -1230,9 +1274,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> ServerConference::notifyParticipant
 	incrementLastNotify();
 	auto event = Conference::notifyParticipantDeviceMediaCapabilityChanged(creationTime, isFullState, participant,
 	                                                                       participantDevice);
+#ifdef HAVE_DB_STORAGE
 	if (mConfParams->chatEnabled()) {
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
+#endif // HAVE_DB_STORAGE
 	return event;
 }
 
@@ -1795,24 +1841,26 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 
 	// Add participants event after the conference ends if it is active (i.e in the Created state)
 	if (initialState != ConferenceInterface::State::Created) {
-		if (!isConferenceStarted()) {
-			lError() << "Unable to add " << *call << " because " << *this << " will start at " << startTime
-			         << " and now it is " << now;
+		if (!isConferenceAvailable()) {
+			const auto earlierJoiningTime = Utils::timeToIso8601(mConfParams->getEarlierJoiningTime());
+			lError() << "Unable to add " << *call << " because " << *this << " will be available from "
+			         << earlierJoiningTime << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			std::string reason = "Conference will start on ";
-			reason += startTime;
+			std::string reason = "Conference can be joined from ";
+			reason += earlierJoiningTime;
 			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, reason.c_str(), reason.c_str());
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
 			return false;
 		}
 
-		if (isConferenceEnded()) {
-			lError() << "Unable to add " << *call << " because " << *this << " is already terminated at " << endTime
+		if (isConferenceExpired()) {
+			const auto expiryTime = Utils::timeToIso8601(mConfParams->getExpiryTime());
+			lError() << "Unable to add " << *call << " because " << *this << " is already expired at " << expiryTime
 			         << " and now it is " << now;
 			LinphoneErrorInfo *ei = linphone_error_info_new();
-			std::string reason = "Conference already ended on ";
-			reason += endTime;
+			std::string reason = "Conference already expired on ";
+			reason += expiryTime;
 			linphone_error_info_set(ei, NULL, LinphoneReasonForbidden, 403, reason.c_str(), reason.c_str());
 			call->terminate(ei);
 			linphone_error_info_unref(ei);
@@ -1850,8 +1898,8 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 					lWarning() << "Try to add again a participant device with session " << session;
 					return false;
 				} else {
-					lInfo() << "Already found a participant device with address " << *remoteContactAddress
-					        << ". Recreating it";
+					lInfo() << "Already found " << *participantDevice << " that should be associated to " << *session
+					        << " but it is already to " << *deviceSession << ". Terminating the latter.";
 					deviceSession->terminate();
 				}
 			}
@@ -2049,7 +2097,11 @@ bool ServerConference::addParticipant(const std::shared_ptr<Address> &participan
 
 bool ServerConference::addParticipant(const std::shared_ptr<ParticipantInfo> &info) {
 	const auto &participantAddress = info->getAddress();
-	if (!isConferenceEnded() && isConferenceStarted()) {
+	const auto devices = getParticipantDevices(false);
+	bool hasActiveDevices = (devices.size() > 0);
+	// Allow to add participant if the conference has at least one active device or the addition occurs within the
+	// active window
+	if (hasActiveDevices || (!isConferenceExpired() && isConferenceAvailable())) {
 		if (supportsMedia()) {
 			const auto initialState = getState();
 			if ((initialState == ConferenceInterface::State::CreationPending) ||
@@ -2111,23 +2163,35 @@ bool ServerConference::addParticipant(const std::shared_ptr<ParticipantInfo> &in
 			}
 #endif // HAVE_ADVANCED_IM
 		}
-
 	} else {
-		const auto &endTime = mConfParams->getEndTime();
+		lError() << "Could not add participant " << *participantAddress << " to the conference because the " << *this
+		         << " is not active right now and it has no active devices.";
 		const auto &startTime = mConfParams->getStartTime();
-		const auto now = time(NULL);
-		lError() << "Could not add participant " << *participantAddress << " to the conference because the conference "
-		         << *getConferenceAddress() << " is not active right now.";
 		if (startTime >= 0) {
 			lError() << "Expected start time (" << startTime << "): " << mConfParams->getStartTimeString();
 		} else {
 			lError() << "Expected start time: none";
 		}
+		const auto &earlierJoiningTime = mConfParams->getEarlierJoiningTime();
+		if (earlierJoiningTime >= 0) {
+			lError() << "Expected earlier joining time (" << earlierJoiningTime
+			         << "): " << Utils::timeToIso8601(earlierJoiningTime);
+		} else {
+			lError() << "Expected earlier joining time: none";
+		}
+		const auto &endTime = mConfParams->getEndTime();
 		if (endTime >= 0) {
 			lError() << "Expected end time (" << endTime << "): " << mConfParams->getEndTimeString();
 		} else {
 			lError() << "Expected end time: none";
 		}
+		const auto &expiryTime = mConfParams->getExpiryTime();
+		if (expiryTime >= 0) {
+			lError() << "Expected expiry time (" << expiryTime << "): " << Utils::timeToIso8601(expiryTime);
+		} else {
+			lError() << "Expected expiry time: none";
+		}
+		const auto now = time(NULL);
 		lError() << "Now: " << Utils::timeToIso8601(now);
 		return false;
 	}
@@ -2884,8 +2948,8 @@ int ServerConference::terminate() {
 		try {
 			// The server deletes the conference info once the conference is terminated.
 			// It avoids having a growing database on the server side
-			if (conferenceAddress &&
-			    (isConferenceEnded() || (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn))) {
+			if (conferenceAddress && (isConferenceExpired() ||
+			                          (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn))) {
 				getCore()->getPrivate()->deleteConferenceInfo(conferenceAddress);
 			}
 		} catch (const bad_weak_ptr &) {

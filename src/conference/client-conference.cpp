@@ -267,6 +267,10 @@ void ClientConference::updateAndSaveConferenceInformations() {
 		conferenceInfo->setCapability(LinphoneStreamTypeVideo, mConfParams->videoEnabled());
 		conferenceInfo->setCapability(LinphoneStreamTypeText, mConfParams->chatEnabled());
 	}
+
+	conferenceInfo->setEarlierJoiningTime(mConfParams->getEarlierJoiningTime());
+	conferenceInfo->setExpiryTime(mConfParams->getExpiryTime());
+
 	// Update the organizer if it is not the same as the one guessed earlier on
 	const auto organizer = getOrganizer();
 	const auto infoOrganizer = conferenceInfo->getOrganizerAddress();

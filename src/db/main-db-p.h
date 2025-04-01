@@ -218,6 +218,7 @@ private:
 
 #ifdef HAVE_DB_STORAGE
 	std::shared_ptr<ConferenceInfo> selectConferenceInfo(const soci::row &row);
+	long long findExpiredConferenceId(const std::shared_ptr<Address> &uri);
 #endif
 
 	// ---------------------------------------------------------------------------

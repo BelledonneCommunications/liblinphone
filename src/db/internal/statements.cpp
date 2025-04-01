@@ -140,7 +140,7 @@ constexpr const char *select[SelectCount] = {
 		)",
 
     /* SelectConferenceInfoFromId */
-    R"(SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value, start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id AND conference_info.id = :1)",
+    R"(SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value, start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, chat, ccmp_uri, earlier_joining_time, expiry_time FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id AND conference_info.id = :1)",
 
     /* SelectConferenceCall */ R"(
 			SELECT id

@@ -689,7 +689,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 			BC_ASSERT_PTR_NOT_NULL(fconference);
 
-			// wait bit more to detect side effect if any
+			// wait a bit longer to detect side effect if any
 			CoreManagerAssert({focus, marie, pauline, laure, michelle, lise}).waitUntil(chrono::seconds(2), [] {
 				return false;
 			});
@@ -2417,7 +2417,7 @@ static void conference_cancelled_through_edit_while_active(void) {
 		                              focus_stat.number_of_LinphoneConferenceStateDeleted + 1, 1000));
 		linphone_conference_scheduler_unref(conference_scheduler);
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure, michelle}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		for (auto mgr : members) {
@@ -2478,7 +2478,7 @@ static void conference_cancelled_through_edit_while_active(void) {
 			}
 		}
 
-		// wait bit more to detect side effect if any
+		// wait a bit longer to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure, michelle}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);

@@ -632,6 +632,10 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const long long &uriSipAddressId = insertSipAddress(conferenceUri);
 	const auto &dateTime = conferenceInfo->getDateTime();
 	auto startTime = dbSession.getTimeWithSociIndicator(dateTime);
+	const auto &earlierJoiningTime = conferenceInfo->getEarlierJoiningTime();
+	auto joiningTime = dbSession.getTimeWithSociIndicator(earlierJoiningTime);
+	const auto &expiryTime = conferenceInfo->getExpiryTime();
+	auto expiryTimeSoci = dbSession.getTimeWithSociIndicator(expiryTime);
 	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getUtf8Subject();
 	const string &description = conferenceInfo->getUtf8Description();
@@ -654,6 +658,8 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		       "  ccmp_uri = :ccmpUri,"
 		       "  organizer_sip_address_id = :organizerSipAddressId,"
 		       "  start_time = :startTime,"
+		       "  earlier_joining_time = :earlierJoiningTime,"
+		       "  expiry_time = :expiryTime,"
 		       "  duration = :duration,"
 		       "  subject = :subject,"
 		       "  description = :description,"
@@ -663,18 +669,22 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		       "  security_level = :security_level"
 		       " WHERE id = :conferenceInfoId",
 		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(ccmpUri),
-		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
-		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
-		    soci::use(security_level), soci::use(conferenceInfoId);
+		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second),
+		    soci::use(joiningTime.first, joiningTime.second), soci::use(expiryTimeSoci.first, expiryTimeSoci.second),
+		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
+		    soci::use(uid), soci::use(security_level), soci::use(conferenceInfoId);
 	} else {
 		*dbSession.getBackendSession()
 		    << "INSERT INTO conference_info (audio, video, chat, ccmp_uri, organizer_sip_address_id, "
-		       "uri_sip_address_id, start_time, duration, subject, description, state, ics_sequence, ics_uid, "
+		       "uri_sip_address_id, start_time, earlier_joining_time, expiry_time, duration, subject, description, "
+		       "state, ics_sequence, ics_uid, "
 		       "security_level) VALUES (:audioEnabled, :videoEnabled, :chatEnabled, :ccmpUri, :organizerSipAddressId, "
-		       ":uriSipAddressId, :startTime, :duration, :subject, :description, :state, :sequence, :uid, "
+		       ":uriSipAddressId, :startTime, :earlierJoiningTime, :expiryTime, :duration, :subject, :description, "
+		       ":state, :sequence, :uid, "
 		       ":security_level)",
 		    soci::use(audioEnabled), soci::use(videoEnabled), soci::use(chatEnabled), soci::use(ccmpUri),
 		    soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second),
+		    soci::use(joiningTime.first, joiningTime.second), soci::use(expiryTimeSoci.first, expiryTimeSoci.second),
 		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
 		    soci::use(uid), soci::use(security_level);
 
@@ -1241,6 +1251,18 @@ MainDbPrivate::selectOneToOneChatRoomId(long long sipAddressIdA, long long sipAd
 	return -1;
 #endif
 }
+
+#ifdef HAVE_DB_STORAGE
+long long MainDbPrivate::findExpiredConferenceId(const std::shared_ptr<Address> &uri) {
+	soci::session *session = dbSession.getBackendSession();
+	const long long &uriSipAddressId = insertSipAddress(uri);
+	long long id;
+	*session << "SELECT id FROM expired_conferences WHERE (expired_conferences.uri_sip_address_id == "
+	            ":uriSipAddressId)",
+	    soci::use(uriSipAddressId), soci::into(id);
+	return session->got_data() ? id : -1;
+}
+#endif
 
 long long MainDbPrivate::selectConferenceInfoId(long long uriSipAddressId) {
 #ifdef HAVE_DB_STORAGE
@@ -2217,6 +2239,7 @@ ParticipantInfo::participant_params_t MainDbPrivate::migrateConferenceInfoPartic
 
 #ifdef HAVE_DB_STORAGE
 shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &row) {
+	L_Q();
 	const long long &dbConferenceInfoId = dbSession.resolveId(row, 0);
 
 	auto conferenceInfo = getConferenceInfoFromCache(dbConferenceInfoId);
@@ -2224,6 +2247,9 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 		return conferenceInfo;
 	}
 
+	bool serverMode = linphone_core_conference_server_enabled(q->getCore()->getCCore());
+	bool updateConferenceAddress = false;
+	bool updateJoiningWindow = false;
 	conferenceInfo = ConferenceInfo::create();
 	const std::string uriString = row.get<string>(2);
 	std::shared_ptr<Address> uri = Address::create(uriString);
@@ -2232,17 +2258,13 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	if (conferenceUri && conferenceUri->isValid()) {
 		const auto &uri = conferenceUri->getUriWithoutGruu();
 		const auto &uriStringOrdered = uri.toStringUriOnlyOrdered();
-		if (uriStringOrdered != uriString) {
-			// Update conference address to ensure that a conference info can be successfully searched by its address
-			const long long &uriSipAddressId = insertSipAddress(uri);
-			*dbSession.getBackendSession()
-			    << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId WHERE id = :conferenceInfoId",
-			    soci::use(uriSipAddressId), soci::use(dbConferenceInfoId);
-		}
+		updateConferenceAddress = (uriStringOrdered != uriString);
 	}
 
-	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
-	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
+	const auto startTime = dbSession.getTime(row, 3);
+	conferenceInfo->setDateTime(startTime);
+	const auto duration = dbSession.getUnsignedInt(row, 4, 0);
+	conferenceInfo->setDuration(duration);
 	conferenceInfo->setUtf8Subject(row.get<string>(5));
 	conferenceInfo->setUtf8Description(row.get<string>(6));
 	conferenceInfo->setState(
@@ -2258,6 +2280,36 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	conferenceInfo->setCapability(LinphoneStreamTypeVideo, (row.get<int>(12) == 0) ? false : true);
 	conferenceInfo->setCapability(LinphoneStreamTypeText, (row.get<int>(13) == 0) ? false : true);
 	conferenceInfo->setCcmpUri(row.get<string>(14));
+	const auto dbEarlierJoiningTime = dbSession.getTime(row, 15);
+	auto earlierJoiningTime = dbEarlierJoiningTime;
+	if (serverMode && (earlierJoiningTime == 0)) {
+		updateJoiningWindow = true;
+		earlierJoiningTime = startTime;
+	}
+	conferenceInfo->setEarlierJoiningTime(earlierJoiningTime);
+	const auto dbExpiryTime = dbSession.getTime(row, 16);
+	auto expiryTime = dbExpiryTime;
+	if (serverMode && (expiryTime == 0) && (duration > 0) && (startTime > 0)) {
+		updateJoiningWindow = true;
+		expiryTime = startTime + 60 * duration;
+	}
+	conferenceInfo->setExpiryTime(expiryTime);
+
+	if (updateJoiningWindow || updateConferenceAddress) {
+		// Update conference address to ensure that a conference info can be successfully searched by its address as
+		// well as the joining window. In fact earlier version of the SDK didn't have such a capability therefore we
+		// default the window as the time between the start and the end time of the conference
+		const long long &uriSipAddressId = insertSipAddress(uri);
+		auto joiningTime = dbSession.getTimeWithSociIndicator(earlierJoiningTime);
+		auto expiryTimeSoci = dbSession.getTimeWithSociIndicator(expiryTime);
+		lInfo() << "Updating conference information with address " << *uri << ": earlier joining time "
+		        << Utils::timeToIso8601(earlierJoiningTime) << " expiry time " << Utils::timeToIso8601(expiryTime);
+		*dbSession.getBackendSession()
+		    << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId, earlier_joining_time = "
+		       ":earlierJoiningTime, expiry_time = :expiryTime WHERE id = :conferenceInfoId",
+		    soci::use(uriSipAddressId), soci::use(joiningTime.first, joiningTime.second),
+		    soci::use(expiryTimeSoci.first, expiryTimeSoci.second), soci::use(dbConferenceInfoId);
+	}
 
 	// For backward compability purposes, get the organizer from conference_info table and set the sequence number
 	// to that of the conference info stored in the db It may be overridden if the conference organizer has been
@@ -3123,7 +3175,24 @@ void MainDbPrivate::updateSchema() {
 		*session << "ALTER TABLE chat_room ADD COLUMN conference_info_id " +
 		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL DEFAULT 0";
 	} catch (const soci::soci_error &e) {
-		lDebug() << "Caught exception " << e.what() << ": Column 'chat' already exists in table 'conference_info'";
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'conference_info_id' already exists in table 'chat_room'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN earlier_joining_time " + dbSession.timestampType() +
+		                " NULL DEFAULT NULL";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'earlier_joining_time' already exists in table 'conference_info'";
+	}
+
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN expiry_time " + dbSession.timestampType() +
+		                " NULL DEFAULT NULL";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'expiry_time' already exists in table 'conference_info'";
 	}
 
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
@@ -4076,6 +4145,17 @@ void MainDb::init() {
 		                "  FOREIGN KEY (chat_room_id)"
 		                "    REFERENCES chat_room(id)"
 		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+
+		*session << "CREATE TABLE IF NOT EXISTS expired_conferences ("
+		            "  id" +
+		                primaryKeyStr("BIGINT UNSIGNED") +
+		                ","
+
+		                "  uri_sip_address_id" +
+		                primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL"
 		                ") " +
 		                charset;
 
@@ -6323,6 +6403,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						// The duration of the conference is stored in minutes in the conference information
 						params->setEndTime(startTime + duration * 60);
 					}
+					params->setEarlierJoiningTime(confInfo->getEarlierJoiningTime());
+					params->setExpiryTime(confInfo->getExpiryTime());
 				}
 
 				std::shared_ptr<Conference> conference = nullptr;
@@ -6949,7 +7031,8 @@ MainDb::getConferenceInfos(time_t afterThisTime, const std::list<LinphoneStreamT
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 	               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, "
-	               "video, chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS "
+	               "video, chat, ccmp_uri, earlier_joining_time, expiry_time FROM conference_info, sip_address AS "
+	               "organizer_sip_address, sip_address AS "
 	               "uri_sip_address WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 	               "conference_info.uri_sip_address_id = uri_sip_address.id";
 	if (afterThisTime > -1) query += " AND start_time >= :startTime";
@@ -6973,14 +7056,12 @@ MainDb::getConferenceInfos(time_t afterThisTime, const std::list<LinphoneStreamT
 		if (afterThisTime > -1) {
 			auto startTime = d->dbSession.getTimeWithSociIndicator(afterThisTime);
 			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(startTime.first, startTime.second));
-
 			for (const auto &row : rows) {
 				auto confInfo = d->selectConferenceInfo(row);
 				conferenceInfos.push_back(confInfo);
 			}
 		} else {
 			soci::rowset<soci::row> rows = (session->prepare << query);
-
 			for (const auto &row : rows) {
 				auto confInfo = d->selectConferenceInfo(row);
 				conferenceInfos.push_back(confInfo);
@@ -7033,7 +7114,8 @@ MainDb::getConferenceInfosWithParticipant(BCTBX_UNUSED(const std::shared_ptr<Add
 	// complain when the twi variables have the sale name (e.g. sipAddressId), SQLite3 does
 	string query =
 	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value, start_time, duration, subject, "
-	    "description, state, ics_sequence, ics_uid, security_level, audio, video, chat, ccmp_uri FROM conference_info, "
+	    "description, state, ics_sequence, ics_uid, security_level, audio, video, chat, ccmp_uri, "
+	    "earlier_joining_time, expiry_time FROM conference_info, "
 	    "sip_address AS organizer_sip_address, sip_address AS uri_sip_address WHERE "
 	    "conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = "
 	    "uri_sip_address.id AND (conference_info.organizer_sip_address_id = :sipAddressId OR :sipAddressId2 IN (SELECT "
@@ -7102,7 +7184,8 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromCcmpUri(const std::
 		string query =
 		    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 		    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, audio, video, "
-		    "chat, ccmp_uri FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address "
+		    "chat, ccmp_uri, earlier_joining_time, expiry_time FROM conference_info, sip_address AS "
+		    "organizer_sip_address, sip_address AS uri_sip_address "
 		    "WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		    "conference_info.uri_sip_address_id = uri_sip_address.id AND conference_info.ccmp_uri = '" +
 		    uri + "'";
@@ -7131,7 +7214,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 	if (isInitialized() && uri) {
 		string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 		               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level, "
-		               "audio, video, chat, ccmp_uri"
+		               "audio, video, chat, ccmp_uri, earlier_joining_time, expiry_time"
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"
@@ -7182,26 +7265,20 @@ void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
 			lError() << "Unable to delete conference informations whose expire time is negative";
 			return;
 		}
-
 		auto timestampType = d->dbSession.timestampType();
 		// Compute the time difference in minutes.
 		// MySQL provides a dedicated function: TIMESTAMPDIFF
 		// https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html#function_timestampdiff In the case of an
-		// Sqlite3 database, we have to compute the difference in days between two juliandays and then convert it to
-		// minutes by multiplying the result (that is a floating point number) by 24*60
+		// Sqlite3 database, we have to compute the difference in days between two juliandays then convert it to
+		// seconds by multiplying the result (that is a floating point number) by 24*60*60
 		const std::string timediffExpression =
 		    (getBackend() == MainDb::Backend::Sqlite3)
-		        ? "(julianday(:maxExpireTime) - julianday(conference_info.start_time)) * 24 * 60"
-		        : "TIMESTAMPDIFF(MINUTES, :maxExpireTime, conference_info.start_time)";
-		// The logic to find conference that may be deleted because their end time is in the past is the following:
-		// - compute how much time has elapsed since the start of the conference and verify that this value is larger or
-		// equal to the duration.
-		// - verify that the duration is larger than 0
+		        ? "(julianday(:maxExpireTime) - julianday(conference_info.expiry_time)) * 24 * 60 * 60"
+		        : "TIMESTAMPDIFF(SECOND, :maxExpireTime, conference_info.expiry_time)";
 		std::string findQuery = "SELECT conference_info.id, uri_sip_address.value FROM conference_info, sip_address AS "
 		                        "uri_sip_address WHERE CAST(" +
 		                        timediffExpression +
-		                        " As Integer) >= conference_info.duration AND conference_info.duration > 0 AND "
-		                        "conference_info.uri_sip_address_id = uri_sip_address.id";
+		                        " As Integer) >= 0 AND conference_info.uri_sip_address_id = uri_sip_address.id";
 		L_DB_TRANSACTION {
 			L_D();
 			soci::session *session = d->dbSession.getBackendSession();
@@ -7211,17 +7288,49 @@ void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
 			for (const auto &row : rows) {
 				long long dbConferenceId = d->dbSession.resolveId(row, 0);
 				const std::string uriString = row.get<string>(1);
-				const auto &conference = getCore()->searchConference(Address::create(uriString));
+				const auto uri = Address::create(uriString);
+				const auto &conference = getCore()->searchConference(uri);
 				// Delete conference only if it is not in the core's cache or it has no participants (i.e. it was
 				// terminated before its end time)
 				if (!conference || (conference->getParticipantDevices(false).size() == 0)) {
 					lInfo() << "Deleting conference information linked to conference " << uriString
 					        << " because it has no participants or it is not found in the core cache";
 					deleteConferenceInfo(dbConferenceId);
+					insertExpiredConference(uri);
 				}
 			}
 			tr.commit();
 		};
+	}
+#endif
+}
+
+long long MainDb::findExpiredConferenceId(const std::shared_ptr<Address> &uri) {
+#ifdef HAVE_DB_STORAGE
+	if (isInitialized()) {
+		return L_DB_TRANSACTION {
+			L_D();
+			long long expiredConferenceId = d->findExpiredConferenceId(uri);
+			tr.commit();
+			return expiredConferenceId;
+		};
+	}
+#endif
+	return -1;
+}
+
+void MainDb::insertExpiredConference(const std::shared_ptr<Address> &uri) {
+#ifdef HAVE_DB_STORAGE
+	if (isInitialized()) {
+		L_D();
+		soci::session *session = d->dbSession.getBackendSession();
+		long long expiredConferenceId = d->findExpiredConferenceId(uri);
+		if (expiredConferenceId != -1) {
+			return;
+		}
+		const long long &uriSipAddressId = d->insertSipAddress(uri);
+		*session << "INSERT INTO expired_conferences (uri_sip_address_id) VALUES (:uriSipAddressId)",
+		    soci::use(uriSipAddressId);
 	}
 #endif
 }

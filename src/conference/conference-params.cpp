@@ -62,6 +62,8 @@ ConferenceParams::ConferenceParams(const ConferenceParams &other)
 	mMe = other.mMe ? other.mMe->clone()->toSharedPtr() : nullptr;
 	mStartTime = other.mStartTime;
 	mEndTime = other.mEndTime;
+	mEarlierJoiningTime = other.mEarlierJoiningTime;
+	mExpiryTime = other.mExpiryTime;
 	mGroup = other.mGroup;
 	mAccount = other.mAccount;
 	mHidden = other.mHidden;

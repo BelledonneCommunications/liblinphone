@@ -299,6 +299,7 @@ private:
 	                         const std::shared_ptr<LinphonePrivate::Address> &referAddr,
 	                         const std::string method) override;
 	virtual bool sessionParamsAllowThumbnails() const override;
+	void setConferenceTimes(time_t startTime, time_t endTime);
 };
 
 LINPHONE_END_NAMESPACE

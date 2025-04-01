@@ -322,9 +322,14 @@ LINPHONE_PUBLIC int linphone_participant_info_get_sequence_number(const Linphone
 LINPHONE_PUBLIC void linphone_conference_info_set_ics_sequence(LinphoneConferenceInfo *conference_info,
                                                                unsigned int sequence);
 LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC time_t linphone_conference_info_get_earlier_joining_time(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC time_t linphone_conference_info_get_expiry_time(const LinphoneConferenceInfo *conference_info);
 LINPHONE_PUBLIC void linphone_participant_info_set_sequence_number(LinphoneParticipantInfo *participant_info,
                                                                    int sequence);
 LINPHONE_PUBLIC bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant);
+
+LINPHONE_PUBLIC time_t linphone_conference_params_get_earlier_joining_time(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC time_t linphone_conference_params_get_expiry_time(const LinphoneConferenceParams *params);
 
 LINPHONE_PUBLIC char *sal_get_random_token_lowercase(int size);
 

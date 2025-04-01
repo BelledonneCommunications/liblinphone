@@ -227,7 +227,7 @@ void Conference::notifyNewDevice(const std::shared_ptr<ParticipantDevice> &devic
 	if (device) {
 		const auto &p = device->getParticipant();
 		if (p) {
-			time_t creationTime = time(nullptr);
+			time_t creationTime = ms_time(nullptr);
 			if (device->getState() == ParticipantDevice::State::Joining) {
 				notifyParticipantDeviceAdded(creationTime, false, p, device);
 			} else {
@@ -356,7 +356,7 @@ bool Conference::addParticipant(std::shared_ptr<Call> call) {
 	if (participant == nullptr) {
 		auto participant = createParticipant(call);
 		mParticipants.push_back(participant);
-		time_t creationTime = time(nullptr);
+		time_t creationTime = ms_time(nullptr);
 		notifyParticipantAdded(creationTime, false, participant);
 		success = true;
 	} else {
@@ -378,7 +378,7 @@ bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddre
 	if (!mActiveParticipant) mActiveParticipant = participant;
 
 	lInfo() << "Participant with address " << *participantAddress << " has been added to " << *this;
-	time_t creationTime = time(nullptr);
+	time_t creationTime = ms_time(nullptr);
 	notifyParticipantAdded(creationTime, false, participant);
 	return true;
 }
@@ -448,7 +448,7 @@ int Conference::removeParticipantDevice(const std::shared_ptr<CallSession> &sess
 			device->setDisconnectionData(initiatingRemoval, linphone_error_info_get_protocol_code(ei),
 			                             linphone_error_info_get_reason(ei));
 			device->setState(ParticipantDevice::State::Left);
-			time_t creationTime = time(nullptr);
+			time_t creationTime = ms_time(nullptr);
 			notifyParticipantDeviceRemoved(creationTime, false, p, device);
 
 			lInfo() << "Removing device with session " << session << " from participant " << *p->getAddress()
@@ -491,7 +491,7 @@ int Conference::removeParticipant(const std::shared_ptr<CallSession> &session,
 	if (p->getDevices().empty()) {
 		lInfo() << "Remove participant with address " << *pAddress << " from conference " << *conferenceAddress;
 		mParticipants.remove(p);
-		time_t creationTime = time(nullptr);
+		time_t creationTime = ms_time(nullptr);
 		notifyParticipantRemoved(creationTime, false, p);
 		return 0;
 	}
@@ -529,7 +529,7 @@ bool Conference::removeParticipant(const std::shared_ptr<Participant> &participa
 				ev->terminate();
 			}
 
-			time_t creationTime = time(nullptr);
+			time_t creationTime = ms_time(nullptr);
 			notifyParticipantDeviceRemoved(creationTime, false, conferenceParticipant, device);
 		}
 
@@ -1586,6 +1586,9 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomPartic
 	info->setCapability(LinphoneStreamTypeVideo, mConfParams->videoEnabled());
 	info->setCapability(LinphoneStreamTypeText, mConfParams->chatEnabled());
 
+	info->setEarlierJoiningTime(mConfParams->getEarlierJoiningTime());
+	info->setExpiryTime(mConfParams->getExpiryTime());
+
 	return info;
 }
 
@@ -1953,16 +1956,31 @@ float Conference::getRecordVolume() const {
 	return 0.0;
 }
 
+bool Conference::isConferenceExpired() const {
+	const auto &expiryTime = mConfParams->getExpiryTime();
+	const auto now = ms_time(NULL);
+	const auto conferenceExpired = ((expiryTime >= 0) && (expiryTime < now));
+	return conferenceExpired;
+}
+
 bool Conference::isConferenceEnded() const {
 	const auto &endTime = mConfParams->getEndTime();
-	const auto now = time(NULL);
+	const auto now = ms_time(NULL);
 	const auto conferenceEnded = (endTime >= 0) && (endTime < now);
 	return conferenceEnded;
 }
 
+bool Conference::isConferenceAvailable() const {
+	const auto &earlierJoiningTime = mConfParams->getEarlierJoiningTime();
+	const auto now = ms_time(NULL);
+	// negative joining time means immediate start
+	const auto conferenceAvailable = (earlierJoiningTime < 0) || (earlierJoiningTime <= now);
+	return conferenceAvailable;
+}
+
 bool Conference::isConferenceStarted() const {
 	const auto &startTime = mConfParams->getStartTime();
-	const auto now = time(NULL);
+	const auto now = ms_time(NULL);
 	// negative start time means immediate start
 	const auto conferenceStarted = (startTime < 0) || (startTime <= now);
 	return conferenceStarted;

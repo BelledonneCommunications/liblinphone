@@ -98,6 +98,12 @@ public:
 	const std::shared_ptr<Address> &getUri() const;
 	void setUri(const std::shared_ptr<const Address> uri);
 
+	time_t getEarlierJoiningTime() const;
+	void setEarlierJoiningTime(time_t joiningTime);
+
+	time_t getExpiryTime() const;
+	void setExpiryTime(time_t expiryTime);
+
 	time_t getDateTime() const;
 	void setDateTime(time_t dateTime);
 
@@ -157,7 +163,9 @@ private:
 	mutable ListHolder<Address> mParticipantAddresses;
 	mutable ListHolder<ParticipantInfo> mParticipantList;
 	std::shared_ptr<Address> mUri;
-	time_t mDateTime = (time_t)-1;
+	time_t mEarlierJoiningTime = -1;
+	time_t mExpiryTime = -1;
+	time_t mDateTime = -1;
 	unsigned int mDuration = 0;
 	mutable std::string mSubject;
 	mutable std::string mDescription;

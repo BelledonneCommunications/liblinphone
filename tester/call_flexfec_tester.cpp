@@ -502,7 +502,7 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	wait_for_list(lcs, &dummy, 1, 1000);
 
 	// sometimes the loss rate is locally low, then the FEC paremeters are low
-	// if the current FEC level is low, wait a bit more before the test
+	// if the current FEC level is low, wait a bit longer before the test
 	rtp_packets = (float)(stats_rtp_session_pauline->packet_sent - prev_rtp_sent_number);
 	fec_packets = (float)(stats_fec_session_pauline->packet_sent - prev_fec_sent_number);
 	current_overhead = fec_stream_get_overhead(pauline_vstream->ms.fec_stream);

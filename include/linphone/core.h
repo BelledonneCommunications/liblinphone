@@ -3796,7 +3796,7 @@ LINPHONE_PUBLIC void linphone_core_remove_call_log(LinphoneCore *core, LinphoneC
 /**
  * Migrates the call logs from the linphonerc to the database if not done yet
  * @ingroup initializing
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  **/
 LINPHONE_PUBLIC void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *core);
 
@@ -4087,7 +4087,7 @@ LINPHONE_PUBLIC void linphone_core_set_preferred_framerate(LinphoneCore *core, f
 
 /**
  * Returns the preferred video framerate, previously set by linphone_core_set_preferred_framerate().
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @return frame rate in number of frames per seconds.
  * @ingroup media_parameters
  **/
@@ -4152,7 +4152,7 @@ LINPHONE_PUBLIC bool_t linphone_core_qrcode_video_preview_enabled(const Linphone
  * Note that the snapshot is asynchronous, an application shall not assume that the file is created when the function
  *returns.
  * @ingroup misc
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param file a path where to write the jpeg content. @notnil
  * @return 0 if successful, -1 otherwise (typically if jpeg format is not supported).
  **/
@@ -5003,7 +5003,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_add_all_to_conf
 
 /**
  * Removes a call from the conference.
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param call a call that has been previously merged into the conference. @notnil
  *
  * After removing the remote participant belonging to the supplied call, the call becomes a normal call in paused state.
@@ -5025,7 +5025,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus linphone_core_remove_from_con
  * @warning That function automatically fails in the case of conferences using a
  * conferencet server (focus). If you use such a conference, you should use
  * linphone_conference_remove_participant() instead.
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @return TRUE if the local participant is in a conference, FALSE otherwise.
  * @deprecated 09/03/2021 Use linphone_conference_is_in() instead.
  */
@@ -6530,7 +6530,7 @@ LINPHONE_PUBLIC LinphoneFriend *linphone_core_get_friend_by_ref_key(const Linpho
  * Sets the database filename where friends will be stored.
  * If the file does not exist, it will be created.
  * @ingroup initializing
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param path filesystem path. @maybenil
  * @deprecated 27/10/2023 Friends are now stored in the main db
  **/
@@ -7254,7 +7254,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice *linphone_core_get_default_output_audi
 
 /**
  * Sets the default ephemeral message mode
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @param mode default ephemeral message mode #LinphoneChatRoomEphemeralMode
  * @ingroup chatroom
  */
@@ -7263,7 +7263,7 @@ LINPHONE_PUBLIC void linphone_core_chat_room_set_default_ephemeral_mode(Linphone
 
 /**
  * Gets the default ephemeral message mode
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @return the default ephemeral message mode #LinphoneChatRoomEphemeralMode
  * @ingroup chatroom
  **/
@@ -7272,7 +7272,7 @@ linphone_core_chat_room_get_default_ephemeral_mode(const LinphoneCore *core);
 
 /**
  * Set the default ephemeral lifetime in seconds
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @param value lifetime of ephemeral messages in seconds
  * @ingroup chatroom
  */
@@ -7280,7 +7280,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *
 
 /**
  * Gets the default lifetime of ephemeral messages in seconds
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @return lifetime of ephemeral messages in seconds
  * @ingroup chatroom
  **/
@@ -7321,7 +7321,7 @@ LINPHONE_PUBLIC int linphone_core_get_conference_max_thumbnails(const LinphoneCo
 
 /**
  * Set the default conference layout
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @param value layout
  * @ingroup conference
  */
@@ -7329,7 +7329,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_conference_layout(LinphoneCore *c
 
 /**
  * Gets the default conference layout
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @return conference layout
  * @ingroup conference
  **/
@@ -7341,7 +7341,7 @@ LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_la
  * after its end time. Nonetheless a side effect is that there may be a conference that never became active or it was
  * terminate before its due date and time. This timer, if setup, therefore periodically looks for expired conference and
  * cleans then up
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @param seconds period of the timer. A 0 or negative value stops the timer
  * @ingroup conference
  */
@@ -7349,11 +7349,49 @@ LINPHONE_PUBLIC void linphone_core_set_conference_cleanup_period(LinphoneCore *c
 
 /**
  * Gets the conference cleanup timer period
- * @param core the linphone core
- * @return the period of the conference cleanup timer period
+ * @param core the #LinphoneCore. @notnil
+ * @return the period of the conference cleanup timer
  * @ingroup conference
  **/
 LINPHONE_PUBLIC long linphone_core_get_conference_cleanup_period(const LinphoneCore *core);
+
+/**
+ * Set the conference availability before start. It is the number of seconds clients can join the conference before its
+ * actual start time.
+ * @param core the #LinphoneCore. @notnil
+ * @param seconds number of seconds the conference can be joined early. A negative value means always
+ * @ingroup conference
+ * @warning This setting is only applicable to conference servers
+ */
+LINPHONE_PUBLIC void linphone_core_set_conference_availability_before_start(LinphoneCore *core, long seconds);
+
+/**
+ * Gets the conference availability before start
+ * @param core the #LinphoneCore. @notnil
+ * @return the number of seconds the conference can be joined early
+ * @ingroup conference
+ * @warning This setting is only applicable to conference servers
+ **/
+LINPHONE_PUBLIC long linphone_core_get_conference_availability_before_start(const LinphoneCore *core);
+
+/**
+ * Set the conference expire period. It is the number of seconds after the end time or the last participant joined -
+ * whichever is later - the conference cannot be joined anymore
+ * @param core the #LinphoneCore. @notnil
+ * @param seconds number of seconds before the conference expires. A 0 or negative value means immediately after the end
+ * @ingroup conference
+ * @warning This setting is only applicable to conference servers
+ */
+LINPHONE_PUBLIC void linphone_core_set_conference_expire_period(LinphoneCore *core, long seconds);
+
+/**
+ * Gets the conference expire period
+ * @param core the #LinphoneCore. @notnil
+ * @return the number of second after which the conference cannot be joined
+ * @ingroup conference
+ * @warning This setting is only applicable to conference servers
+ **/
+LINPHONE_PUBLIC long linphone_core_get_conference_expire_period(const LinphoneCore *core);
 
 /**
  * Retrieve the conference information linked to the provided URI if any.
@@ -7896,7 +7934,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_user_agent_ver
 /**
  * Gets the database filename where friends will be stored.
  * @ingroup initializing
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @return filesystem path. @maybenil
  * @deprecated 27/10/2023 Friends are now stored in the main db
  **/
@@ -8801,7 +8839,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_preferred_video_size(
  *constraint the sent video size is small. Using this feature increases the CPU consumption, since a rescaling will be
  *done internally.
  * @ingroup media_parameters
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @param vsize the video resolution choosed for capuring and previewing. It can be (0,0) to not request any specific
  *preview size and let the core optimize the processing.
  * @deprecated 28/03/2017 Use #linphone_core_set_preview_video_definition() instead.
@@ -8949,7 +8987,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_linphone_specs(Linpho
 
 /**
  * Set the chat database path.
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @param path the database path
  * @deprecated 10/01/2018: Use only for migration purposes
  * @donotwrap
@@ -8958,7 +8996,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_set_chat_database_path(Li
 
 /**
  * Get path to the database file used for storing chat messages.
- * @param core the linphone core
+ * @param core the #LinphoneCore. @notnil
  * @return file path or NULL if not exist
  * @deprecated 10/01/2018
  * @donotwrap
@@ -9116,7 +9154,7 @@ linphone_core_create_chat_room_6(LinphoneCore *core,
  * Get a chat room whose peer is the supplied address. If it does not exist yet, it will be created as a basic chat
  *room. No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
  * @deprecated 02/07/2020, use linphone_core_search_chat_room() instead
@@ -9129,7 +9167,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_roo
  * Get a chat room. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
  * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param peer_addr a linphone address. @notnil
  * @param local_addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
@@ -9156,7 +9194,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_roo
 /**
  * Find a chat room.
  * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param peer_addr a linphone address. @notnil
  * @param local_addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
@@ -9170,7 +9208,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_find_chat_ro
 /**
  * Find a one to one chat room.
  * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param local_addr a linphone address. @notnil
  * @param participant_addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
@@ -9184,7 +9222,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_find_one_to_
 /**
  * Find a one to one chat room.
  * No reference is transferred to the application. The #LinphoneCore keeps a reference on the chat room.
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param local_addr a linphone address. @notnil
  * @param participant_addr a linphone address. @notnil
  * @param encrypted whether to look for an encrypted chat room or not
@@ -9200,7 +9238,7 @@ linphone_core_find_one_to_one_chat_room_2(const LinphoneCore *core,
 
 /**
  * Returns how many attachments are yet to be downloaded
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @return how many attachments are yet to be downloaded.
  * @ingroup chatroom
  **/
@@ -9208,7 +9246,7 @@ LINPHONE_PUBLIC unsigned int linphone_core_get_remaining_download_file_count(Lin
 
 /**
  * Returns how many attachments are yet to be uploaded
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @return how many attachments are yet to be uploaded.
  * @ingroup chatroom
  **/
@@ -9287,7 +9325,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneOnlineStatus linphone_core_get_prese
  * Sets the database filename where call logs will be stored.
  * If the file does not exist, it will be created.
  * @ingroup initializing
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @param path filesystem path @maybenil
  * @deprecated 07/12/2021: Use only for migration purposes
  **/
@@ -9297,7 +9335,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
 /**
  * Gets the database filename where call logs will be stored.
  * @ingroup initializing
- * @param core the linphone core @notnil
+ * @param core the #LinphoneCore. @notnil
  * @return filesystem path. @maybenil
  * @deprecated 07/12/2021: Use only for migration purposes
  **/

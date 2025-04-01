@@ -365,11 +365,12 @@ void CorePrivate::createConferenceCleanupTimer() {
 			while (it != mConferenceById.end()) {
 				auto [id, conference] = (*it);
 				it++;
-				const auto conferenceIsEnded = conference->isConferenceEnded();
+				const auto conferenceIsExpired = conference->isConferenceExpired();
 				const auto conferenceHasNoParticipantDevices = (conference->getParticipantDevices(false).size() == 0);
-				if (conferenceIsEnded && conferenceHasNoParticipantDevices) {
+				if (conferenceIsExpired && conferenceHasNoParticipantDevices) {
 					lInfo() << "Automatically terminating " << *conference
 					        << " because it is ended and no devices are left";
+					const auto conferenceAddress = conference->getConferenceAddress();
 					conference->terminate();
 				}
 			};
@@ -1861,14 +1862,38 @@ void Core::setConferenceCleanupPeriod(long seconds) {
 		// Stop time if the new period is 0 or lower
 		d->stopConferenceCleanupTimer();
 	} else {
-		// Only update timeout
-		belle_sip_source_set_timeout_int64(d->mConferenceCleanupTimer, seconds);
+		// Update timer
+		d->stopConferenceCleanupTimer();
+		d->createConferenceCleanupTimer();
 	}
 }
 
 long Core::getConferenceCleanupPeriod() const {
 	return (long)linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc", "conference_cleanup_period",
 	                                       -1);
+}
+
+void Core::setConferenceAvailabilityBeforeStart(long seconds) {
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	linphone_config_set_int64(config, "misc", "conference_available_before_period", seconds);
+	lInfo() << "Set conference avaibility before start to " << seconds << " seconds";
+}
+
+long Core::getConferenceAvailabilityBeforeStart() const {
+	return (long)linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc",
+	                                       "conference_available_before_period", -1);
+}
+
+void Core::setConferenceExpirePeriod(long seconds) {
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	linphone_config_set_int64(config, "misc", "conference_expire_period", seconds);
+	lInfo() << "Set conference expire period to " << seconds << " seconds";
+}
+
+long Core::getConferenceExpirePeriod() const {
+	// Default to 30 minutes
+	return (long)linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc", "conference_expire_period",
+	                                       1800);
 }
 
 void Core::setAccountDeletionTimeout(unsigned int seconds) {

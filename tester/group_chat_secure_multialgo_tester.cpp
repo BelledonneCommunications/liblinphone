@@ -483,7 +483,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 			chatRoom->markAsRead();
 		}
 	}
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// ReStart Pauline core with c25519k512,c25519
@@ -520,7 +520,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 			chatRoom->markAsRead();
 		}
 	}
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// ReStart Laure and Chloe core with c25519k512,c25519
@@ -564,7 +564,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 			chatRoom->markAsRead();
 		}
 	}
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// ReStart Marie core with c25519k512,c25519
@@ -607,7 +607,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 		}
 	}
 
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// ReStart Marie, Laure and Chloe core with c25519mlk512,c25519k512 (drop c25519)
@@ -665,7 +665,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 		}
 	}
 
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// ReStart Marie, Laure and Chloe core with c25519mlk512 only (drop c25519k512) -> pauline won't be able to get the
@@ -725,7 +725,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 		}
 	}
 
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// Pauline does not
@@ -837,7 +837,7 @@ static void group_chat_lime_x3dh_multialgo(void) {
 			chatRoom->markAsRead();
 		}
 	}
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// Check chatroom status
@@ -889,7 +889,7 @@ static void group_chat_lime_x3dh_multialgo(void) {
 		}
 	}
 
-	// wait bit more to allow imdn exchanges
+	// wait a bit longer to allow imdn exchanges
 	Linphone::Tester::CoreManagerAssert(allCoreMgrs).waitUntil(std::chrono::seconds(3), [] { return false; });
 
 	// Check chatroom status -> now marie has the new chloe device as active -> chatroom is back to encrypted
