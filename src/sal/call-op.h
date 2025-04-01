@@ -49,7 +49,10 @@ public:
 	}
 	const std::list<Content> &getRemoteBodies() const;
 	bool isContentInRemote(const ContentType &contentType) const;
+	std::optional<std::reference_wrapper<const Content>> getContentInLocal(const ContentType &contentType) const;
 	std::optional<std::reference_wrapper<const Content>> getContentInRemote(const ContentType &contentType) const;
+
+	std::shared_ptr<SalMediaDescription> getSalMediaDescriptionFromContent(const Content &content);
 
 	const std::shared_ptr<SalMediaDescription> &getRemoteMediaDescription() {
 		return mRemoteMedia;

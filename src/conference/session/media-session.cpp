@@ -6004,47 +6004,62 @@ int MediaSession::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescriptio
 	const auto conference = getCore()->findConference(getSharedFromThis(), false);
 	if (conference && d->op) {
 		const bool isInLocalConference = d->getParams()->getPrivate()->getInConference();
-		const auto &refMd =
-		    isInLocalConference ? d->op->getRemoteMediaDescription() : d->op->getLocalMediaDescription();
-		const auto &confLayout = computeConferenceLayout(refMd);
-		const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-		const auto isConferenceLayoutGrid = (confLayout == ConferenceLayout::Grid);
-		const auto &participantDevice = (isInLocalConference) ? conference->findParticipantDevice(getSharedFromThis())
-		                                                      : conference->getMe()->findDevice(getSharedFromThis());
-
-		// Try to find a stream with the screen sharing content attribute as it will be for sure the main video
-		// stream. Indeed, screen sharing can be enabled regardless of the conference layout, it is needed to always
-		// make this try.
-		std::string mainStreamAttrValue = MediaSessionPrivate::ScreenSharingContentAttribute;
-		streamIdx = refMd->findIdxStreamWithContent(mainStreamAttrValue);
-		if (streamIdx == -1) {
-			// If no stream with the screen sharing content is found, then try with regular attributes for each of
-			// the different layouts
-			if (isConferenceLayoutActiveSpeaker) {
-				mainStreamAttrValue = MediaSessionPrivate::ActiveSpeakerVideoContentAttribute;
-			} else if (isConferenceLayoutGrid) {
-				mainStreamAttrValue = MediaSessionPrivate::GridVideoContentAttribute;
-			} else {
-				lError() << "Unable to determine attribute of main video stream of " << *this << " (local address "
-				         << *getLocalAddress() << " remote address " << *getRemoteAddress() << ") in " << *conference
-				         << ":";
-				lError() << " - grid layout: " << isConferenceLayoutGrid;
-				lError() << " - active speaker layout: " << isConferenceLayoutActiveSpeaker;
-				lError() << " - device is screen sharing: "
-				         << (participantDevice && participantDevice->screenSharingEnabled());
+		std::shared_ptr<SalMediaDescription> refMd;
+		if (isInLocalConference) {
+			refMd = d->op->getRemoteMediaDescription();
+		} else if (d->op->getSal()->mediaDisabled()) {
+			auto localSdp = d->op->getContentInLocal(ContentType::Sdp);
+			if (localSdp) {
+				refMd = d->op->getSalMediaDescriptionFromContent(localSdp.value());
 			}
-			streamIdx = refMd->findIdxStreamWithContent(mainStreamAttrValue);
+		} else {
+			refMd = d->op->getLocalMediaDescription();
 		}
-		if (streamIdx == -1) {
-			// The stream index was not found despite all efforts
-			lDebug() << "Unable to find main video stream of " << *this << " (local address " << *getLocalAddress()
-			         << " remote address " << *getRemoteAddress() << ") in " << *conference << ":";
-			lDebug() << " - no stream with content \"" << MediaSessionPrivate::ScreenSharingContentAttribute
-			         << "\" is found";
-			lDebug() << " - grid layout: " << isConferenceLayoutGrid;
-			lDebug() << " - active speaker layout: " << isConferenceLayoutActiveSpeaker;
-			lDebug() << " - device is screen sharing: "
-			         << (participantDevice && participantDevice->screenSharingEnabled());
+
+		if (refMd) {
+			const auto &confLayout = computeConferenceLayout(refMd);
+			const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+			const auto isConferenceLayoutGrid = (confLayout == ConferenceLayout::Grid);
+			const auto &participantDevice = (isInLocalConference) ? conference->findParticipantDevice(getSharedFromThis())
+									      : conference->getMe()->findDevice(getSharedFromThis());
+
+			// Try to find a stream with the screen sharing content attribute as it will be for sure the main video
+			// stream. Indeed, screen sharing can be enabled regardless of the conference layout, it is needed to always
+			// make this try.
+			std::string mainStreamAttrValue = MediaSessionPrivate::ScreenSharingContentAttribute;
+			streamIdx = refMd->findIdxStreamWithContent(mainStreamAttrValue);
+			if (streamIdx == -1) {
+				// If no stream with the screen sharing content is found, then try with regular attributes for each of
+				// the different layouts
+				if (isConferenceLayoutActiveSpeaker) {
+					mainStreamAttrValue = MediaSessionPrivate::ActiveSpeakerVideoContentAttribute;
+				} else if (isConferenceLayoutGrid) {
+					mainStreamAttrValue = MediaSessionPrivate::GridVideoContentAttribute;
+				} else {
+					lError() << "Unable to determine attribute of main video stream of " << *this << " (local address "
+						 << *getLocalAddress() << " remote address " << *getRemoteAddress() << ") in " << *conference
+						 << ":";
+					lError() << " - grid layout: " << isConferenceLayoutGrid;
+					lError() << " - active speaker layout: " << isConferenceLayoutActiveSpeaker;
+					lError() << " - device is screen sharing: "
+						 << (participantDevice && participantDevice->screenSharingEnabled());
+				}
+				streamIdx = refMd->findIdxStreamWithContent(mainStreamAttrValue);
+			}
+			if (streamIdx == -1) {
+				// The stream index was not found despite all efforts
+				lDebug() << "Unable to find main video stream of " << *this << " (local address " << *getLocalAddress()
+					 << " remote address " << *getRemoteAddress() << ") in " << *conference << ":";
+				lDebug() << " - no stream with content \"" << MediaSessionPrivate::ScreenSharingContentAttribute
+					 << "\" is found";
+				lDebug() << " - grid layout: " << isConferenceLayoutGrid;
+				lDebug() << " - active speaker layout: " << isConferenceLayoutActiveSpeaker;
+				lDebug() << " - device is screen sharing: "
+					 << (participantDevice && participantDevice->screenSharingEnabled());
+			}
+		} else {
+			lError() << "Unable to find local media description for " << *this << " (local address "
+			         << *getLocalAddress() << " remote address " << *getRemoteAddress() << ") in " << *conference;
 		}
 	} else if (md) {
 		streamIdx = md->findIdxBestStream(SalVideo);

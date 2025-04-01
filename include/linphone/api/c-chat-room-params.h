@@ -63,7 +63,7 @@ LINPHONE_PUBLIC void linphone_chat_room_params_unref(LinphoneChatRoomParams *par
  * Returns whether the given parameters are valid or not.
  * @param params The #LinphoneChatRoomParams object. @notnil
  * @return TRUE if the given parameters are valid, FALSE otherwise
- * @deprecated 20/05/2024. Use linphone_chat_params_is_valid() instead.
+ * @deprecated 20/05/2024. Use linphone_conference_params_is_valid() instead.
  **/
 LINPHONE_PUBLIC bool_t linphone_chat_room_params_is_valid(const LinphoneChatRoomParams *params);
 
