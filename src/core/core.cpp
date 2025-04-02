@@ -3121,7 +3121,7 @@ std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::
 	auto account = findAccountByIdentityAddress(localAddress);
 	if (!account) {
 		string toUser = localAddress->getUsername();
-		if (!toUser.empty() && peerAddress) {
+		if (!toUser.empty() && peerAddress && Utils::isIp(localAddress->getDomain())) {
 			Address localAddressWithPeerDomain(*localAddress);
 			localAddressWithPeerDomain.setDomain(peerAddress->getDomain());
 			account = lookupKnownAccount(localAddressWithPeerDomain, false);
