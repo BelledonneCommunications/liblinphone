@@ -4281,13 +4281,13 @@ LINPHONE_PUBLIC void *linphone_core_get_native_video_window_id(const LinphoneCor
  * @ingroup media_parameters
  * For MacOS, Linux, Windows: core will create its own window
  */
-#define LINPHONE_VIDEO_DISPLAY_AUTO (void *)((unsigned long)0)
+#define LINPHONE_VIDEO_DISPLAY_AUTO (void *)(0)
 
 /**
  * @ingroup media_parameters
  * For MacOS, Linux, Windows: do nothing
  */
-#define LINPHONE_VIDEO_DISPLAY_NONE (void *)((unsigned long)-1)
+#define LINPHONE_VIDEO_DISPLAY_NONE (void *)(-1)
 
 /**
  * @ingroup media_parameters
