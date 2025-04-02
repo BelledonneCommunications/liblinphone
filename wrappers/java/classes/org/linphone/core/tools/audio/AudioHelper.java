@@ -114,16 +114,26 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         
         int ringerMode = mAudioManager.getRingerMode();
         if (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
-            if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(context)) {
+            if (DeviceUtils.checkIfDoNotDisturbAllowsAllCalls(context)) {
+                Log.i("[Audio Helper] Ringer mode is set to silent or vibrate (", ringerMode, ") unless for calls, so ringing");
+            } else if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(context)) {
                 boolean isContactFavorite = DeviceUtils.checkIfIsFavoriteContact(context, caller);
                 if (isContactFavorite) {
-                    Log.w("[Audio Helper] Ringer mode is set to silent or vibrate (", ringerMode, ") unless for favorite contact, which seems to be the case here, so ringing");
+                    Log.i("[Audio Helper] Ringer mode is set to silent or vibrate (", ringerMode, ") unless for favorite contact, which seems to be the case here, so ringing");
                 } else {
-                    Log.w("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ") and calling username / SIP address isn't part of a favorite contact");
+                    Log.i("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ") and calling username / SIP address isn't part of a favorite contact");
+                    return;
+                }
+            } else if (DeviceUtils.checkIfDoNotDisturbAllowsKnownContacts(context)) {
+                boolean isKnownContact = DeviceUtils.checkIfIsKnownContact(context, caller);
+                if (isKnownContact) {
+                    Log.i("[Audio Helper] Ringer mode is set to silent or vibrate (", ringerMode, ") unless for known contact, which seems to be the case here, so ringing");
+                } else {
+                    Log.i("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ") and calling username / SIP address isn't part of a known contact");
                     return;
                 }
             } else {
-                Log.w("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ")");
+                Log.i("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ")");
                 return;
             }
         }
@@ -147,6 +157,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 try {
                     mRingtone = RingtoneManager.getRingtone(context, defaultRingtoneUri);
                     if (mRingtone != null) {
+                        Log.i("[Audio Helper] Start playing ringone [" + mRingtone.getTitle(context) + "]");
                         DeviceUtils.playRingtone(mRingtone, audioAttrs);
                     } else {
                         Log.e("[Audio Helper] Couldn't retrieve Ringtone object from manager!");

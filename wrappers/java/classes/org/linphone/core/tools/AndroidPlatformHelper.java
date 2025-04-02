@@ -1715,23 +1715,33 @@ public class AndroidPlatformHelper {
                 if (mVibrator != null && mVibrator.hasVibrator()) {
                     AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
                     if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
-                        if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(mContext)) {
+                        if (DeviceUtils.checkIfDoNotDisturbAllowsAllCalls(mContext)) {
+                            Log.i("[Platform Helper] Ringer mode is set to silent unless for calls, so starting vibrator");
+                        } else if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(mContext)) {
                             boolean isContactFavorite = DeviceUtils.checkIfIsFavoriteContact(mContext, remoteAddress);
                             if (isContactFavorite) {
                                 Log.i("[Platform Helper] Ringer mode is set to silent unless for favorite contact, which seems to be the case here, so starting vibrator");
-                                DeviceUtils.vibrate(mVibrator);
-                                mIsVibrating = true;
                             } else {
                                 Log.i("[Platform Helper] Do not vibrate as ringer mode is set to silent and calling username / SIP address isn't part of a favorite contact");
+                                return;
+                            }
+                        } else if (DeviceUtils.checkIfDoNotDisturbAllowsKnownContacts(mContext)) {
+                            boolean isKnownContact = DeviceUtils.checkIfIsKnownContact(mContext, remoteAddress);
+                            if (isKnownContact) {
+                                Log.i("[Platform Helper] Ringer mode is set to silent unless for known contact, which seems to be the case here, so starting vibrator");
+                            } else {
+                                Log.i("[Platform Helper] Do not vibrate as ringer mode is set to silent and calling username / SIP address isn't part of a known contact");
+                                return;
                             }
                         } else {
                             Log.i("[Platform Helper] Do not vibrate as ringer mode is set to silent");
+                            return;
                         }
-                    } else {
-                        Log.i("[Platform Helper] Starting vibrator");
-                        DeviceUtils.vibrate(mVibrator);
-                        mIsVibrating = true;
                     }
+
+                    Log.i("[Platform Helper] Starting vibrator");
+                    DeviceUtils.vibrate(mVibrator);
+                    mIsVibrating = true;
                 } else {
                     Log.e("[Platform Helper] Device doesn't have a vibrator");
                 }
