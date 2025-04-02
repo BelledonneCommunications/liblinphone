@@ -3891,6 +3891,73 @@ static void call_with_video_requested_and_terminate(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void video_call_memory() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+
+	bool_t call_ok = TRUE;
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_use_preview_window(marie->lc, TRUE);
+
+	BC_ASSERT_TRUE((call_ok = call(pauline, marie)));
+
+	uint64_t memory_ref = 0;
+	int excessCount = 0;
+	for (int count = 0; call_ok && count < 50; ++count) {
+		if (count == 3) { // Ignore first allocations to ignore preallocations/caches
+			memory_ref = bc_tester_get_memory_consumption();
+			ms_message("Memory consumption first reference: %lld KB", (long long)memory_ref / 1024);
+		} else if (count > 3) { // Bad if more than 10% of memory
+			auto current_memory = bc_tester_get_memory_consumption();
+			call_ok = current_memory <= 1.1 * memory_ref;
+			if (!call_ok) {
+				ms_warning("Excess memory consumption : %lld KB / %lld KB [count=%d]", (long long)current_memory / 1024,
+				           (long long)memory_ref / 1024, count);
+				if (++excessCount <= 3) { // Let 3 attempts on growing memory.
+					memory_ref = current_memory;
+					call_ok = TRUE;
+				} else {
+					BC_ASSERT_TRUE(current_memory <= 1.1 * memory_ref); // Make assert
+				}
+			}
+		}
+		// Switch on
+		BC_ASSERT_TRUE(request_video(marie, pauline, TRUE));
+		linphone_core_enable_video_preview(marie->lc, TRUE);
+		linphone_core_enable_video_display(marie->lc, TRUE);
+		linphone_core_enable_video_capture(marie->lc, TRUE);
+		linphone_core_enable_video_display(pauline->lc, TRUE);
+		linphone_core_enable_video_capture(pauline->lc, TRUE);
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 50);
+
+		linphone_core_set_native_preview_window_id(marie->lc, LINPHONE_VIDEO_DISPLAY_AUTO);
+		linphone_core_set_native_video_window_id(marie->lc, LINPHONE_VIDEO_DISPLAY_AUTO);
+		linphone_core_set_native_preview_window_id(pauline->lc, LINPHONE_VIDEO_DISPLAY_AUTO);
+		linphone_core_set_native_video_window_id(pauline->lc, LINPHONE_VIDEO_DISPLAY_AUTO);
+
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 5000); // Let some time to open and to print something.
+
+		// Switch off
+		linphone_core_enable_video_preview(marie->lc, FALSE);
+		BC_ASSERT_TRUE(remove_video(marie, pauline));
+		linphone_core_set_native_preview_window_id(marie->lc, LINPHONE_VIDEO_DISPLAY_NONE);
+		linphone_core_set_native_video_window_id(marie->lc, LINPHONE_VIDEO_DISPLAY_NONE);
+		linphone_core_set_native_preview_window_id(pauline->lc, LINPHONE_VIDEO_DISPLAY_NONE);
+		linphone_core_set_native_video_window_id(pauline->lc, LINPHONE_VIDEO_DISPLAY_NONE);
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 50); // Closing windows
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
@@ -3973,6 +4040,13 @@ static test_t call_video_tests[] = {
 
     TEST_NO_TAG("Video call recv-only", call_with_video_recvonly),
     TEST_NO_TAG("Video call without audio, disable video", video_call_without_audio_disable_video),
+#ifndef __APPLE__
+    TEST_NO_TAG("Video call memory", video_call_memory)
+#else
+    // TODO: Check video_tester to fix memory leak on preview only
+    TEST_ONE_TAG("Video call memory", video_call_memory, "skip")
+#endif
+
 };
 
 static test_t call_video_advanced_scenarios_tests[] = {

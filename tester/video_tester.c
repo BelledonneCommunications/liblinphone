@@ -312,6 +312,54 @@ end:
 
 #endif
 
+static void preview_memory(const char *display_filter) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	bool_t ok = TRUE;
+	linphone_core_set_video_display_filter(marie->lc, display_filter);
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_set_native_preview_window_id(marie->lc, LINPHONE_VIDEO_DISPLAY_AUTO);
+	linphone_core_set_native_video_window_id(marie->lc, LINPHONE_VIDEO_DISPLAY_AUTO);
+	uint64_t memory_ref = 0;
+	int excessCount = 0;
+	for (int count = 0; ok && count < 50; ++count) {
+		if (count == 3) { // Ignore first allocations to ignore preallocations/caches
+			memory_ref = bc_tester_get_memory_consumption();
+			ms_message("Memory consumption first reference: %lld KB", (long long)memory_ref / 1024);
+		} else if (count > 3) { // Bad if more than 10% of memory
+			// end = !BC_ASSERT_TRUE(bc_tester_get_memory_consumption() <= 1.1 * memory_ref);
+			uint64_t current_memory = bc_tester_get_memory_consumption();
+			ok = (current_memory <= 1.1 * memory_ref);
+			if (!ok) {
+				ms_warning("Excess memory consumption : %lld KB / %lld KB [count=%d]", (long long)current_memory / 1024,
+				           (long long)memory_ref / 1024, count);
+				if (++excessCount <= 3) { // Let 3 attempts on growing memory.
+					memory_ref = current_memory;
+					ok = TRUE;
+				} else {
+					BC_ASSERT_TRUE(current_memory <= 1.1 * memory_ref); // Make assert
+				}
+			}
+		}
+		linphone_core_enable_video_preview(marie->lc, TRUE);
+		wait_for_until(marie->lc, NULL, NULL, 0, 200); // Let some time to open and to print something.
+		linphone_core_enable_video_preview(marie->lc, FALSE);
+		wait_for_until(marie->lc, NULL, NULL, 0, 50); // Closing window
+	}
+	linphone_core_manager_destroy(marie);
+}
+
+static void preview_memory_default(void) {
+	preview_memory(ms_factory_get_default_video_renderer(NULL));
+}
+
+static void preview_memory_msogl(void) {
+#if !defined(__ANDROID__) && !defined(__APPLE__)
+	if (strcmp(ms_factory_get_default_video_renderer(NULL), "MSOGL") != 0) preview_memory("MSOGL");
+#endif
+}
+
 test_t video_tests[] = {
     TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
     TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
@@ -320,7 +368,15 @@ test_t video_tests[] = {
 #if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
     TEST_ONE_TAG("Encode QRCode", encode_qrcode, "QRCode"),
 #endif
-    TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview)};
+    TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview),
+#ifndef __APPLE__
+    TEST_NO_TAG("Preview memory default", preview_memory_default),
+    TEST_NO_TAG("Preview memory MSOGL", preview_memory_msogl)
+#else
+    // TODO: On Mac, memory growth without clear reason and it doesn't seems to be related to the display filter.
+    TEST_ONE_TAG("Preview memory default", preview_memory_default, "skip")
+#endif
+};
 
 test_suite_t video_test_suite = {"Video",
                                  NULL,
