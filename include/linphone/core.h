@@ -7521,6 +7521,14 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_remote_contact_directories(Linph
 LINPHONE_PUBLIC LinphoneCardDavParams *linphone_core_create_card_dav_params(LinphoneCore *core);
 
 /**
+ * Creates a vCard from a text, if possible
+ * @param core #LinphoneCore object. @notnil
+ * @param input the vCard raw text to parse. @notnil
+ * @return a new #LinphoneVcard object if the parsing of the input succeeded, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneVcard *linphone_core_create_vcard_from_text(const LinphoneCore *core, const char *input);
+
+/**
  * @}
  * End of group contacts
  */
