@@ -296,6 +296,8 @@ configGetStringList(LpConfig *lpconfig, const std::string &section, const std::s
 LINPHONE_PUBLIC std::string getFileExtension(const std::string &filePath);
 LINPHONE_PUBLIC std::string convertFileToBase64(const std::string &filePath);
 
+LINPHONE_PUBLIC bool isIp(const std::string &remote);
+
 } // namespace Utils
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version);

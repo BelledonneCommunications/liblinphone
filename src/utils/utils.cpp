@@ -692,4 +692,22 @@ string Utils::convertFileToBase64(const string &filePath) {
 	return base64AsString;
 }
 
+bool Utils::isIp(const string &remote) {
+	bool ret = false;
+	int err;
+
+	struct addrinfo hints {};
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+	struct addrinfo *res0 = nullptr;
+	err = bctbx_getaddrinfo(remote.c_str(), "8000", &hints, &res0);
+	if (err != 0) {
+		return FALSE;
+	}
+	auto sa_family = res0->ai_addr->sa_family;
+	ret = (sa_family == AF_INET6) || (sa_family == AF_INET);
+	bctbx_freeaddrinfo(res0);
+	return ret;
+}
 LINPHONE_END_NAMESPACE

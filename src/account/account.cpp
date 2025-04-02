@@ -343,7 +343,9 @@ void Account::setErrorInfo(LinphoneErrorInfo *errorInfo) {
 
 void Account::setContactAddress(const std::shared_ptr<const Address> &contact) {
 	mContactAddress = nullptr;
-	if (contact) mContactAddress = contact->clone()->toSharedPtr();
+	if (contact) {
+		mContactAddress = contact->clone()->toSharedPtr();
+	}
 	setContactAddressWithoutParams(contact);
 }
 
