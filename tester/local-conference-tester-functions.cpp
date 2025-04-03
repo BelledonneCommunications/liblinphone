@@ -913,8 +913,36 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 			if (mgr != focus) {
 				for (auto call : calls) {
 					if (call) {
+
 						size_t nb_audio_streams = compute_no_audio_streams(call, conference);
-						size_t nb_video_streams = compute_no_video_streams(enable_video, call, conference);
+						size_t nb_video_streams = 0;
+						if (!!linphone_config_get_int(linphone_core_get_config(mgr->lc), "misc",
+						                              "add_participant_label_to_sdp", 1)) {
+							nb_video_streams = compute_no_video_streams(enable_video, call, conference);
+						} else {
+							const LinphoneCallParams *call_params = linphone_call_get_params(call);
+							LinphoneConferenceLayout call_video_layout =
+							    linphone_call_params_get_conference_video_layout(call_params);
+							bool_t is_active_speaker = (call_video_layout == LinphoneConferenceLayoutActiveSpeaker);
+							LinphoneMediaDirection call_video_dir =
+							    linphone_call_params_get_video_direction(call_params);
+							if (is_active_speaker) {
+								if (call_video_dir == LinphoneMediaDirectionInactive) {
+									nb_video_streams = 0;
+								} else if (call_video_dir == LinphoneMediaDirectionRecvOnly) {
+									nb_video_streams = 1;
+								} else {
+									nb_video_streams = 2;
+								}
+							} else {
+								if ((call_video_dir == LinphoneMediaDirectionRecvOnly) ||
+								    (call_video_dir == LinphoneMediaDirectionInactive)) {
+									nb_video_streams = 0;
+								} else {
+									nb_video_streams = 1;
+								}
+							}
+						}
 
 						LinphoneCall *fcall = linphone_core_get_call_by_remote_address2(focus->lc, mgr->identity);
 						call_check &= (fcall != nullptr);

@@ -1738,7 +1738,10 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 
 		std::list<OrtpPayloadType *> l = pth.makeCodecsList(type, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 		if (!l.empty()) {
-			newStream.setLabel(label);
+			if (!!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "misc",
+			                              "add_participant_label_to_sdp", 1)) {
+				newStream.setLabel(label);
+			}
 			newStream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			newStream.name = std::string(sal_stream_type_to_string(type)) + " " + dev->getAddress()->toString();
 			const auto &content = newStream.getContent();
@@ -2336,35 +2339,42 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 					if ((s.getType() == type) && (s.getDirection() == thumbnailDirection) &&
 					    !MediaSessionPrivate::isMainStreamContent(contentAttrValue)) {
 						const auto idx = std::distance(refMd->streams.cbegin(), sIt);
-						const std::string participantsAttrValue = s.getLabel();
+						const std::string participantLabel = s.getLabel();
 
 						std::shared_ptr<ParticipantDevice> dev;
-						if (!participantsAttrValue.empty()) {
+						if (participantLabel.empty()) {
+							lError() << "Reference stream at index " << idx << " of type "
+							         << sal_stream_type_to_string(type) << " has no label";
+							if (md->streams.size() <= static_cast<size_t>(idx)) {
+								SalStreamDescription stream;
+								md->streams.push_back(stream);
+							}
+						} else {
 							dev = conference->findParticipantDeviceByLabel(sal_stream_type_to_linphone(type),
-							                                               participantsAttrValue);
+							                                               participantLabel);
 							if (!dev && conference->getMe()) {
 								// It might be me
 								dev = conference->getMe()->findDevice(sal_stream_type_to_linphone(type),
-								                                      participantsAttrValue, false);
+								                                      participantLabel, false);
 							}
 						}
 
-						SalStreamDescription &newStream = addStreamToMd(md, static_cast<int>(idx), oldMd);
+						auto &newStream = participantLabel.empty() ? md->streams[static_cast<size_t>(idx)]
+						                                           : addStreamToMd(md, static_cast<int>(idx), oldMd);
 						if (dev) {
 							newStream.setContent(contentAttrValue);
 							fillConferenceParticipantStream(newStream, oldMd, md, dev, pth, encs, type, s.getMid());
 						} else {
-							const auto &s = refMd->streams[static_cast<size_t>(idx)];
 							SalStreamConfiguration cfg;
 							cfg.dir = SalStreamInactive;
-							newStream.disable();
-							newStream.type = s.type;
+							newStream.addActualConfiguration(cfg);
+							newStream.type = type;
 							newStream.rtp_port = 0;
 							newStream.rtcp_port = 0;
-							newStream.addActualConfiguration(cfg);
+							newStream.disable();
 							lWarning() << *q << ": New stream added at index " << idx
 							           << " as disabled and inactive because no device has been found with label "
-							           << participantsAttrValue << " in " << *conference;
+							           << participantLabel << " in " << *conference;
 						}
 					}
 				}
@@ -2790,10 +2800,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	                                                  "conference_event_log_enabled", TRUE);
 	if (conferenceCreated && eventLogEnabled && participantDevice &&
 	    ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) ||
-	     (deviceState == ParticipantDevice::State::OnHold))) {
-		if (addVideoStream) {
-			addConferenceParticipantStreams(md, oldMd, pth, encList, SalVideo);
-		}
+	     (deviceState == ParticipantDevice::State::OnHold)) &&
+	    addVideoStream) {
+		addConferenceParticipantStreams(md, oldMd, pth, encList, SalVideo);
 	}
 #endif // HAVE_ADVANCED_IM
 	copyOldStreams(md, oldMd, refMd, encList);
@@ -6020,8 +6029,9 @@ int MediaSession::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescriptio
 			const auto &confLayout = computeConferenceLayout(refMd);
 			const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 			const auto isConferenceLayoutGrid = (confLayout == ConferenceLayout::Grid);
-			const auto &participantDevice = (isInLocalConference) ? conference->findParticipantDevice(getSharedFromThis())
-									      : conference->getMe()->findDevice(getSharedFromThis());
+			const auto &participantDevice = (isInLocalConference)
+			                                    ? conference->findParticipantDevice(getSharedFromThis())
+			                                    : conference->getMe()->findDevice(getSharedFromThis());
 
 			// Try to find a stream with the screen sharing content attribute as it will be for sure the main video
 			// stream. Indeed, screen sharing can be enabled regardless of the conference layout, it is needed to always
@@ -6037,25 +6047,25 @@ int MediaSession::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescriptio
 					mainStreamAttrValue = MediaSessionPrivate::GridVideoContentAttribute;
 				} else {
 					lError() << "Unable to determine attribute of main video stream of " << *this << " (local address "
-						 << *getLocalAddress() << " remote address " << *getRemoteAddress() << ") in " << *conference
-						 << ":";
+					         << *getLocalAddress() << " remote address " << *getRemoteAddress() << ") in "
+					         << *conference << ":";
 					lError() << " - grid layout: " << isConferenceLayoutGrid;
 					lError() << " - active speaker layout: " << isConferenceLayoutActiveSpeaker;
 					lError() << " - device is screen sharing: "
-						 << (participantDevice && participantDevice->screenSharingEnabled());
+					         << (participantDevice && participantDevice->screenSharingEnabled());
 				}
 				streamIdx = refMd->findIdxStreamWithContent(mainStreamAttrValue);
 			}
 			if (streamIdx == -1) {
 				// The stream index was not found despite all efforts
 				lDebug() << "Unable to find main video stream of " << *this << " (local address " << *getLocalAddress()
-					 << " remote address " << *getRemoteAddress() << ") in " << *conference << ":";
+				         << " remote address " << *getRemoteAddress() << ") in " << *conference << ":";
 				lDebug() << " - no stream with content \"" << MediaSessionPrivate::ScreenSharingContentAttribute
-					 << "\" is found";
+				         << "\" is found";
 				lDebug() << " - grid layout: " << isConferenceLayoutGrid;
 				lDebug() << " - active speaker layout: " << isConferenceLayoutActiveSpeaker;
 				lDebug() << " - device is screen sharing: "
-					 << (participantDevice && participantDevice->screenSharingEnabled());
+				         << (participantDevice && participantDevice->screenSharingEnabled());
 			}
 		} else {
 			lError() << "Unable to find local media description for " << *this << " (local address "
