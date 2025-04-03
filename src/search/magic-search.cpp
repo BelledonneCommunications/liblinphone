@@ -425,6 +425,12 @@ list<shared_ptr<SearchResult>> MagicSearch::getResultsFromFriends(bool onlyStarr
 	for (const auto &friendList : getCore()->getFriendLists()) {
 		// For all friends or when we reach the search limit
 		const auto &friends = friendList->getFriends();
+
+		if (friendList->getType() == LinphoneFriendListTypeApplicationCache) {
+			lInfo() << "[Magic Search] Ignoring [" << friends.size() << "] friends in friend list ["
+			        << friendList->getDisplayName() << "] because it's type is set to Application Cache";
+			continue;
+		}
 		for (const auto &lFriend : friends) {
 			bool isStarred = lFriend->getStarred();
 			if (!onlyStarred || isStarred) {
