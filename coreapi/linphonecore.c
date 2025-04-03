@@ -19,7 +19,7 @@
  */
 
 #include "linphone/types.h"
-#include <math.h>
+#include <cmath>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -122,7 +122,6 @@
 #include "vcard/vcard-context.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "gitversion.h"
 #endif
 
 // For migration purpose.
@@ -1729,6 +1728,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	} else {
 		linphone_core_set_play_file(lc, get_default_onhold_music(lc).c_str());
 	}
+	linphone_core_set_call_on_hold_music_file(lc, get_default_onhold_music(lc).c_str());
 
 	lc->sound_conf.latency = 0;
 #if !TARGET_OS_IPHONE
@@ -7793,6 +7793,20 @@ void linphone_core_set_record_file(LinphoneCore *lc, const char *file) {
 	}
 }
 
+const char *linphone_core_get_call_on_hold_music_file(const LinphoneCore *core) {
+	return core->on_hold_music_file;
+}
+
+void linphone_core_set_call_on_hold_music_file(LinphoneCore *core, const char *file) {
+	if (core->on_hold_music_file != NULL) {
+		ms_free(core->on_hold_music_file);
+		core->on_hold_music_file = NULL;
+	}
+	if (file != NULL) {
+		core->on_hold_music_file = ms_strdup(file);
+	}
+}
+
 void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms) {
 	CoreLogContextualizer logContextualizer(lc);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playDtmf(dtmf, duration_ms);
@@ -8044,6 +8058,10 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	if (lc->rec_file != NULL) {
 		ms_free(lc->rec_file);
 		lc->rec_file = NULL;
+	}
+	if (lc->on_hold_music_file != NULL) {
+		ms_free(lc->on_hold_music_file);
+		lc->on_hold_music_file = NULL;
 	}
 	if (lc->friends_db_file != NULL) {
 		ms_free(lc->friends_db_file);

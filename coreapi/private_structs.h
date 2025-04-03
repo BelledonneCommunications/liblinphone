@@ -468,6 +468,7 @@ class Core;
 	void *data;                                                                                                        \
 	char *play_file;                                                                                                   \
 	char *rec_file;                                                                                                    \
+	char *on_hold_music_file;                                                                                          \
 	uint64_t prevtime_ms;                                                                                              \
 	int audio_bw;                                                                                                      \
 	void *video_window_id;                                                                                             \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -466,6 +466,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (!captcard) lWarning() << "No card defined for capture!";
 	string playfile = L_C_TO_STRING(getCCore()->play_file);
 	string recfile = L_C_TO_STRING(getCCore()->rec_file);
+	string onHoldMusicFile = L_C_TO_STRING(getCCore()->on_hold_music_file);
 	/* Don't use file or soundcard capture when placed in recv-only mode */
 	if ((stream.rtp_port == 0) || (stream.getDirection() == SalStreamRecvOnly) ||
 	    (stream.multicast_role == SalMulticastReceiver)) {
@@ -493,7 +494,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	bool useRtpIo = !!linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io", false);
 	bool useRtpIoEnableLocalOutput =
 	    !!linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io_enable_local_output", false);
-	if (getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
+	bool useFiles = getCCore()->use_files;
+	if (useFiles || (useRtpIo && !useRtpIoEnableLocalOutput)) {
 		captcard = playcard = nullptr;
 	}
 	if (audioMixer) {
@@ -504,7 +506,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
 		captcard = playcard = nullptr;
 		if (targetState == CallSession::State::OutgoingEarlyMedia) {
-			// Restart will be required upon transitionning to StreamsRunning state to take into account that sound
+			// Restart will be required upon transitioning to StreamsRunning state to take into account that sound
 			// resources may have been released meanwhile.
 			mRestartStreamRequired = true;
 			lInfo() << "Soundcard usage will be checked again when moving to StreamsRunning.";
@@ -543,7 +545,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 				io.output.soundcard = playcard;
 			} else {
 				io.output.type = MSResourceFile;
-				io.output.file = recfile.empty() ? nullptr : recfile.c_str();
+				io.output.file = recfile.empty() || !useFiles ? nullptr : recfile.c_str();
 			}
 		} else {
 			io.input.type = io.output.type = MSResourceRtp;
@@ -556,7 +558,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			io.output.soundcard = playcard;
 		} else {
 			io.output.type = MSResourceFile;
-			io.output.file = recfile.empty() ? nullptr : recfile.c_str();
+			io.output.file = recfile.empty() || !useFiles ? nullptr : recfile.c_str();
 		}
 		if (captcard) {
 			io.input.type = MSResourceSoundcard;
@@ -565,9 +567,9 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			io.input.type = MSResourceFile;
 
 			// We need to use onHoldFile when paused
-			onHoldFile = pause ? playfile : "";
+			onHoldFile = pause ? onHoldMusicFile : "";
 			io.input.file =
-			    pause
+			    pause || !useFiles
 			        ? nullptr
 			        : playfile.c_str(); /* We prefer to use the remote_play api, that allows to play multimedia files */
 		}

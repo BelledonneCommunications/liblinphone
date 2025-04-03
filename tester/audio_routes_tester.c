@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -1484,6 +1484,55 @@ static void simple_call_with_audio_device_change_during_call_pause_caller_callee
 	simple_call_with_audio_device_change_during_call_pause_base(TRUE, TRUE);
 }
 
+static void simple_call_without_sound_card(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	// Disable Marie's sound card and disallow the use of audio files
+	unregister_all_devices(marie);
+	linphone_core_set_use_files(marie->lc, FALSE);
+
+	LinphoneCall *marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, liblinphone_tester_sip_timeout));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	linphone_call_ref(pauline_call);
+
+	linphone_call_accept(pauline_call);
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+
+	const AudioStream *marie_audio_stream =
+	    (AudioStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeAudio);
+	const AudioStream *pauline_audio_stream =
+	    (AudioStream *)linphone_call_get_stream(pauline_call, LinphoneStreamTypeAudio);
+	BC_ASSERT_PTR_NOT_NULL(marie_audio_stream);
+	BC_ASSERT_PTR_NOT_NULL(pauline_audio_stream);
+
+	// Verify that Marie transmits no audio
+	BC_ASSERT_EQUAL(marie_audio_stream->soundread->desc->id, MS_FILE_PLAYER_ID, int, "%d");
+	MSPlayerState state;
+	ms_filter_call_method(marie_audio_stream->soundread, MS_PLAYER_GET_STATE, &state);
+	BC_ASSERT_EQUAL(state, MSPlayerClosed, int, "%d");
+
+	linphone_call_unref(pauline_call);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
+
 static void simple_call_with_audio_devices_reload(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
@@ -2666,6 +2715,7 @@ test_t audio_routes_tests[] = {
                 simple_call_with_audio_device_change_during_call_pause_caller),
     TEST_NO_TAG("Simple call with audio device change during call pause both parties",
                 simple_call_with_audio_device_change_during_call_pause_caller_callee),
+    TEST_NO_TAG("Simple call with a device without sound card", simple_call_without_sound_card),
     TEST_NO_TAG("Conference with simple audio device change", conference_with_simple_audio_device_change),
     TEST_NO_TAG("Simple conference with audio device change using public API",
                 simple_conference_with_audio_device_change_using_public_api),

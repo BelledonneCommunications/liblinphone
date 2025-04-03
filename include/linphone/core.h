@@ -4445,23 +4445,21 @@ LINPHONE_PUBLIC void linphone_core_set_use_files(LinphoneCore *core, bool_t yesn
 LINPHONE_PUBLIC bool_t linphone_core_get_use_files(LinphoneCore *core);
 
 /**
- * Get the wav file that is played when putting somebody on hold,
- * or when files are used instead of soundcards (see linphone_core_set_use_files()).
+ * Get the wav file that is played when files are used instead of soundcards (see linphone_core_set_use_files()).
  *
  * The file is a 16 bit linear wav file.
  * @param core #LinphoneCore object @notnil
- * @return The path to the file that is played when putting somebody on hold. @maybenil
+ * @return The path to the file that is played when files are used instead of soundcards. @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC const char *linphone_core_get_play_file(const LinphoneCore *core);
 
 /**
- * Sets a wav file to be played when putting somebody on hold,
- * or when files are used instead of soundcards (see linphone_core_set_use_files()).
+ * Sets a wav file to be played when files are used instead of soundcards (see linphone_core_set_use_files()).
  *
  * The file must be a 16 bit linear wav file.
  * @param core #LinphoneCore object @notnil
- * @param file The path to the file to be played when putting somebody on hold. @maybenil
+ * @param file The path to the file to be played when files are used instead of soundcards. @maybenil
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_set_play_file(LinphoneCore *core, const char *file);
@@ -4489,6 +4487,26 @@ LINPHONE_PUBLIC const char *linphone_core_get_record_file(const LinphoneCore *co
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_set_record_file(LinphoneCore *core, const char *file);
+
+/**
+ * Get the wav file played when putting a call on hold with linphone_call_pause()
+ *
+ * The file is a 16 bit linear file.
+ * @param core #LinphoneCore object @notnil
+ * @return The path to the file that is played when putting a call on hold. @maybenil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC const char *linphone_core_get_call_on_hold_music_file(const LinphoneCore *core);
+
+/**
+ * Sets a wav file to be played when putting somebody on hold (see linphone_core_set_use_files()).
+ *
+ * The file must be a 16 bit linear wav file.
+ * @param core #LinphoneCore object @notnil
+ * @param file The path to the file to be played when putting somebody on hold. @maybenil
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC void linphone_core_set_call_on_hold_music_file(LinphoneCore *core, const char *file);
 
 /**
  * Plays a dtmf sound to the local user.

@@ -146,7 +146,9 @@ static void liblinphone_tester_check_rtcp_base(LinphoneCoreManager *caller,
 	if (linphone_core_rtcp_enabled(caller->lc) && linphone_core_rtcp_enabled(callee->lc)) {
 		BC_ASSERT_GREATER(caller->stat.number_of_rtcp_received, 1, int, "%i");
 		BC_ASSERT_GREATER(callee->stat.number_of_rtcp_received, 1, int, "%i");
-		BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_round_trip_delay(audio_stats1), 0.0, float, "%f");
+		if (linphone_call_stats_get_rtp_packet_sent(audio_stats1) > 0) {
+			BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_round_trip_delay(audio_stats1), 0.0, float, "%f");
+		}
 		BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_round_trip_delay(audio_stats2), 0.0, float, "%f");
 		if (linphone_call_log_video_enabled(linphone_call_get_call_log(c1))) {
 			BC_ASSERT_GREATER_STRICT(linphone_call_stats_get_round_trip_delay(video_stats1), 0.0, float, "%f");
