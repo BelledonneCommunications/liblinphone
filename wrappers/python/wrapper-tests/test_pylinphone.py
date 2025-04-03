@@ -150,7 +150,7 @@ class SingleCallTestCase(unittest.TestCase):
         while self.running and time.time() < (start_time + 10):
             self.caller_core.iterate()
             self.callee_core.iterate()
-            time.sleep(0.2)
+            time.sleep(0.02)
 
         self.assertGreaterEqual(self.caller_nb_call_streams_running, 1)
         self.assertGreaterEqual(self.callee_nb_call_streams_running, 1)
