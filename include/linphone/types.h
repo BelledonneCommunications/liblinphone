@@ -346,9 +346,11 @@ typedef struct _LinphoneFriendList LinphoneFriendList;
  * @ingroup buddy_list
  */
 typedef enum _LinphoneFriendListType {
-	LinphoneFriendListTypeDefault = -1,
-	LinphoneFriendListTypeCardDAV = 0,
-	LinphoneFriendListTypeVCard4 = 1
+	LinphoneFriendListTypeDefault = -1,        /**< Default value, used when no other type applies */
+	LinphoneFriendListTypeCardDAV = 0,         /**< Used when list is synchronized with a remote CardDAV server */
+	LinphoneFriendListTypeVCard4 = 1,          /**< Used for simple vCards list remotely provisionned by a server */
+	LinphoneFriendListTypeApplicationCache = 2 /**< Friend list used by app for cache purposes, friends added in
+	                                              this list will be ignored by #LinphoneMagicSearch  */
 } LinphoneFriendListType;
 
 /**

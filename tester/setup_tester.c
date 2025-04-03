@@ -2019,6 +2019,55 @@ static void search_friend_with_name(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void search_friend_in_app_cache(void) {
+	LinphoneMagicSearch *magicSearch = NULL;
+	bctbx_list_t *resultList = NULL;
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
+
+	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
+	linphone_friend_list_set_display_name(lfl, "App Cache");
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeApplicationCache);
+	linphone_core_add_friend_list(manager->lc, lfl);
+
+	const char *stephanie1SipUri = {"sip:toto@sip.example.org"};
+	const char *stephanie2SipUri = {"sip:stephanie@sip.example.org"};
+	LinphoneFriend *stephanie1Friend = linphone_core_create_friend(manager->lc);
+	LinphoneFriend *stephanie2Friend = linphone_core_create_friend(manager->lc);
+	LinphoneVcard *stephanie1Vcard = linphone_factory_create_vcard(linphone_factory_get());
+	LinphoneVcard *stephanie2Vcard = linphone_factory_create_vcard(linphone_factory_get());
+	const char *stephanie1Name = {"stephanie delarue"};
+	const char *stephanie2Name = {"alias delarue"};
+
+	linphone_vcard_set_full_name(stephanie1Vcard, stephanie1Name); // stephanie delarue
+	linphone_vcard_set_url(stephanie1Vcard, stephanie1SipUri);     // sip:toto@sip.example.org
+	linphone_vcard_add_sip_address(stephanie1Vcard, stephanie1SipUri);
+	linphone_friend_set_vcard(stephanie1Friend, stephanie1Vcard);
+	linphone_friend_list_add_friend(lfl, stephanie1Friend);
+
+	linphone_vcard_set_full_name(stephanie2Vcard, stephanie2Name); // alias delarue
+	linphone_vcard_set_url(stephanie2Vcard, stephanie2SipUri);     // sip:stephanie@sip.example.org
+	linphone_vcard_add_sip_address(stephanie2Vcard, stephanie2SipUri);
+	linphone_friend_set_vcard(stephanie2Friend, stephanie2Vcard);
+	linphone_friend_list_add_friend(lfl, stephanie2Friend);
+	linphone_friend_list_unref(lfl);
+
+	magicSearch = linphone_magic_search_new(manager->lc);
+
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceAll,
+	                                                     LinphoneMagicSearchAggregationNone);
+	BC_ASSERT_PTR_NULL(resultList);
+
+	linphone_friend_list_remove_friend(lfl, stephanie1Friend);
+	linphone_friend_list_remove_friend(lfl, stephanie2Friend);
+	if (stephanie1Friend) linphone_friend_unref(stephanie1Friend);
+	if (stephanie2Friend) linphone_friend_unref(stephanie2Friend);
+	if (stephanie1Vcard) linphone_vcard_unref(stephanie1Vcard);
+	if (stephanie2Vcard) linphone_vcard_unref(stephanie2Vcard);
+
+	linphone_magic_search_unref(magicSearch);
+	linphone_core_manager_destroy(manager);
+}
+
 static void search_friend_with_aggregation(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -3150,6 +3199,79 @@ static void ldap_search(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void ldap_search_with_local_cache(void) {
+	// Prepare datas : Friends, Call logs, Chat rooms, ldap
+	LinphoneCoreManager *manager = linphone_core_manager_new("marie_rc");
+	// Marie has a Pauline friend in it's RC!
+	LinphoneLdap *ldap;
+
+	prepare_friends(manager, &ldap);
+	bool ldap_available = !!linphone_core_ldap_available(manager->lc);
+
+	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
+	linphone_friend_list_set_display_name(lfl, "App Cache");
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeApplicationCache);
+	linphone_core_add_friend_list(manager->lc, lfl);
+
+	const char *paulineSipUri = {"sip:pauline_2@sip.example.org"};
+	LinphoneFriend *paulineFriend = linphone_core_create_friend(manager->lc);
+	LinphoneVcard *paulineVcard = linphone_factory_create_vcard(linphone_factory_get());
+
+	linphone_vcard_set_full_name(paulineVcard, "Pauline Cache");
+	linphone_vcard_set_url(paulineVcard, paulineSipUri);
+	linphone_vcard_add_sip_address(paulineVcard, paulineSipUri);
+	linphone_friend_set_vcard(paulineFriend, paulineVcard);
+	linphone_friend_list_add_friend(lfl, paulineFriend);
+	linphone_friend_list_unref(lfl);
+
+	// Init Magic search
+	LinphoneMagicSearch *magicSearch = NULL;
+	LinphoneMagicSearchCbs *searchHandler = linphone_factory_create_magic_search_cbs(linphone_factory_get());
+	linphone_magic_search_cbs_set_search_results_received(searchHandler, _onMagicSearchResultsReceived);
+	magicSearch = linphone_magic_search_new(manager->lc);
+	linphone_config_set_bool(linphone_core_get_config(manager->lc), "magic_search", "filter_plugins_results",
+	                         TRUE); // Test wasn't made for not filtering
+	linphone_magic_search_add_callbacks(magicSearch, searchHandler);
+
+	bctbx_list_t *resultList = NULL;
+	stats *stat = get_stats(manager->lc);
+	linphone_magic_search_cbs_set_user_data(searchHandler, stat);
+
+	linphone_magic_search_get_contacts_list_async(
+	    magicSearch, "pauline", "", LinphoneMagicSearchSourceFriends | LinphoneMagicSearchSourceLdapServers,
+	    LinphoneMagicSearchAggregationFriend);
+	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	if (ldap_available) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		// Pauline from LDAP
+		_check_friend_result_list(manager->lc, resultList, 0, "sip:pauline@ldap.example.org", NULL);
+		// Pauline from Marie RC
+		_check_friend_result_list(manager->lc, resultList, 1, "sip:pauline@sip.example.org", NULL);
+	} else {
+		// Pauline from Marie RC
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, "sip:pauline@sip.example.org", NULL);
+	}
+	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+
+	linphone_magic_search_cbs_unref(searchHandler);
+	linphone_magic_search_unref(magicSearch);
+
+	linphone_friend_list_remove_friend(lfl, paulineFriend);
+	if (paulineFriend) linphone_friend_unref(paulineFriend);
+	if (paulineVcard) linphone_vcard_unref(paulineVcard);
+
+	if (ldap) {
+		linphone_core_clear_ldaps(manager->lc);
+		BC_ASSERT_PTR_NULL(linphone_core_get_ldap_list(manager->lc));
+		linphone_ldap_unref(ldap);
+	}
+
+	linphone_core_manager_destroy(manager);
+}
+
 static void ldap_params_edition_with_check(void) {
 	LinphoneCoreManager *manager = linphone_core_manager_new(NULL);
 	if (linphone_core_ldap_available(manager->lc)) {
@@ -3947,6 +4069,7 @@ test_t setup_tests[] = {
                  "MagicSearch"),
     TEST_ONE_TAG("Search friend last item is the filter", search_friend_last_item_is_filter, "MagicSearch"),
     TEST_ONE_TAG("Search friend with name", search_friend_with_name, "MagicSearch"),
+    TEST_ONE_TAG("Search friend in excluded cache friend list", search_friend_in_app_cache, "MagicSearch"),
     TEST_ONE_TAG("Search friend with aggregation", search_friend_with_aggregation, "MagicSearch"),
     TEST_ONE_TAG("Search friend with uppercase name", search_friend_with_name_with_uppercase, "MagicSearch"),
     TEST_ONE_TAG("Search friend with multiple sip address", search_friend_with_multiple_sip_address, "MagicSearch"),
@@ -3969,6 +4092,7 @@ test_t setup_tests[] = {
     TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
     TEST_ONE_TAG("Async search friend in sources", async_search_friend_in_sources, "MagicSearch"),
     TEST_TWO_TAGS("Ldap search", ldap_search, "MagicSearch", "LDAP"),
+    TEST_TWO_TAGS("Ldap search with local cache", ldap_search_with_local_cache, "MagicSearch", "LDAP"),
     TEST_TWO_TAGS("Ldap features delay", ldap_features_delay, "MagicSearch", "LDAP"),
     TEST_TWO_TAGS("Ldap features min characters", ldap_features_min_characters, "MagicSearch", "LDAP"),
     TEST_TWO_TAGS("Ldap features more results", ldap_features_more_results, "MagicSearch", "LDAP"),
