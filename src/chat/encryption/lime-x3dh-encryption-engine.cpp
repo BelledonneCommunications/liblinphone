@@ -1172,14 +1172,14 @@ void LimeX3dhEncryptionEngine::onAccountRegistrationStateChanged(std::shared_ptr
 
 	if (usersAlgos.find(localDeviceId) != usersAlgos.end()) {
 		try {
-			lInfo() << "[LIME] device [" << localDeviceId << "] registered. Check it exists with algos ["
-			        << lime::CurveId2String(usersAlgos.at(localDeviceId)) << "]";
 			if (limeManager->is_user(localDeviceId, usersAlgos[localDeviceId])) {
 				update(localDeviceId);
 			} else {
 				lError() << "[LIME] Lime user isn't created for device" << localDeviceId << " and algos ["
 				         << lime::CurveId2String(usersAlgos[localDeviceId]) << "]";
+				createLimeUser(account, localDeviceId);
 			}
+
 		} catch (const exception &e) {
 			lError() << "[LIME] user for id [" << localDeviceId << "] cannot be updated " << e.what();
 		}

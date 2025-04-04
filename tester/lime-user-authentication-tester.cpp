@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -28,7 +28,6 @@
 #include "linphone/api/c-address.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/core.h"
-#include "linphone/wrapper_utils.h"
 #include "tester_utils.h"
 
 // enum the different methods for the client to retrieve the certificate
@@ -488,15 +487,15 @@ static void invalid_lime_server_in_account_curve(const LinphoneTesterLimeAlgo cu
 	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
 	                              initialStats.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationFailure,
-	                             initialStats.number_of_X3dhUserCreationFailure + 1, x3dhServer_creationTimeout));
-	BC_ASSERT_EQUAL(marie->stat.number_of_X3dhUserCreationFailure, 1, int, "%d");
+	                             initialStats.number_of_X3dhUserCreationFailure + 2, x3dhServer_creationTimeout));
+	BC_ASSERT_EQUAL(marie->stat.number_of_X3dhUserCreationFailure, 2, int, "%d");
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
 }
 
-static void invalid_lime_server_in_account(void) {
+static void invalid_lime_server_in_account() {
 	// Server does not exists - unreachable
 	const std::string wrongLimeServer = "https://lime.wildcard8.linphone.org:8443/lime-server/lime-server.php";
 	// URL is not valid

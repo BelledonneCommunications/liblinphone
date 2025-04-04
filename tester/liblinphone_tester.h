@@ -647,6 +647,7 @@ typedef struct _LinphoneCoreManager {
 	bool_t main_core;
 	bool_t skip_lime_user_creation_asserts;
 	bool_t lime_failure;
+	bool_t registration_failure;
 	LinphoneCoreManagerSubscribePolicy subscribe_policy;
 	LinphoneCoreManagerPublishPolicy publish_policy;
 	int subscription_received;
