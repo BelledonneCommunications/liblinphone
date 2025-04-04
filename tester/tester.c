@@ -2794,6 +2794,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	}
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
+	int old_registration_failed = mgr->stat.number_of_LinphoneRegistrationFailed;
 	int old_registration_ok = mgr->stat.number_of_LinphoneRegistrationOk;
 	if (check_for_proxies) { /**/
 		proxy_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(mgr->lc));
@@ -2834,13 +2835,24 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 			}
 		}
 #define REGISTER_TIMEOUT 20 /* seconds */
-		int success = wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk,
-		                             old_registration_ok + proxy_count, (REGISTER_TIMEOUT * 1000 * proxy_count));
+		int success = 0;
+		if (mgr->registration_failure) {
+			wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationFailed,
+			               old_registration_failed + proxy_count, (REGISTER_TIMEOUT * 1000 * proxy_count));
+		} else {
+			success = wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk,
+			                         old_registration_ok + proxy_count, (REGISTER_TIMEOUT * 1000 * proxy_count));
+		}
 		if (!success) {
 			ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
 		}
 	}
-	BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk, old_registration_ok + proxy_count, int, "%d");
+	if (mgr->registration_failure) {
+		BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationFailed, old_registration_failed + proxy_count, int,
+		                "%d");
+	} else {
+		BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk, old_registration_ok + proxy_count, int, "%d");
+	}
 	enable_codec(mgr->lc, "PCMU", 8000);
 
 	if (proxy) {
