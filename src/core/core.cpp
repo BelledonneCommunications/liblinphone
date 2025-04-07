@@ -490,16 +490,10 @@ void CorePrivate::uninit() {
 
 	mChatRoomsById.clear();
 
-	// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
-#if __GNUC__ == 7
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif //  __GNUC__ == 7
 	for (const auto &[id, conference] : mConferenceById) {
-#if __GNUC__ == 7
-#pragma GCC diagnostic pop
-#endif //  __GNUC__ == 7
-       // Terminate audio video conferences just before core is stopped
+		// Terminate audio video conferences just before core is stopped
+		lInfo() << "Terminating conference " << *conference << " with id " << id
+		        << " because the core is shutting down";
 		conference->terminate();
 	}
 	mConferenceById.clear();

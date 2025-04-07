@@ -892,33 +892,36 @@ static void conference_participant_device_screen_sharing_changed(
 	}
 }
 
+static void create_conference_cb(LinphoneConference *conference) {
+	LinphoneConferenceCbs *cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
+	linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
+	linphone_conference_cbs_set_available_media_changed(cbs, conference_available_media_changed);
+	linphone_conference_cbs_set_subject_changed(cbs, conference_subject_changed);
+	linphone_conference_cbs_set_participant_role_changed(cbs, conference_participant_role_changed);
+	linphone_conference_cbs_set_participant_admin_status_changed(cbs, conference_participant_admin_status_changed);
+	linphone_conference_cbs_set_participant_device_media_capability_changed(
+	    cbs, conference_participant_device_media_capability_changed);
+	linphone_conference_cbs_set_participant_device_state_changed(cbs, conference_participant_device_state_changed);
+	linphone_conference_cbs_set_participant_added(cbs, conference_participant_added);
+	linphone_conference_cbs_set_participant_device_added(cbs, conference_participant_device_added);
+	linphone_conference_cbs_set_participant_removed(cbs, conference_participant_removed);
+	linphone_conference_cbs_set_participant_device_removed(cbs, conference_participant_device_removed);
+	linphone_conference_cbs_set_participant_device_joining_request(cbs, conference_participant_device_joining_request);
+	linphone_conference_cbs_set_participant_device_screen_sharing_changed(
+	    cbs, conference_participant_device_screen_sharing_changed);
+	linphone_conference_cbs_set_full_state_received(cbs, conference_full_state_received);
+	linphone_conference_cbs_set_allowed_participant_list_changed(cbs, conference_allowed_participant_list_changed);
+	linphone_conference_cbs_set_active_speaker_participant_device(cbs,
+	                                                              conference_active_speaker_participant_device_changed);
+	linphone_conference_add_callbacks(conference, cbs);
+	linphone_conference_cbs_unref(cbs);
+}
+
 void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
                                    LinphoneConference *conference,
                                    LinphoneConferenceState state) {
 	if (state == LinphoneConferenceStateInstantiated) {
-		LinphoneConferenceCbs *cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
-		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
-		linphone_conference_cbs_set_available_media_changed(cbs, conference_available_media_changed);
-		linphone_conference_cbs_set_subject_changed(cbs, conference_subject_changed);
-		linphone_conference_cbs_set_participant_role_changed(cbs, conference_participant_role_changed);
-		linphone_conference_cbs_set_participant_admin_status_changed(cbs, conference_participant_admin_status_changed);
-		linphone_conference_cbs_set_participant_device_media_capability_changed(
-		    cbs, conference_participant_device_media_capability_changed);
-		linphone_conference_cbs_set_participant_device_state_changed(cbs, conference_participant_device_state_changed);
-		linphone_conference_cbs_set_participant_added(cbs, conference_participant_added);
-		linphone_conference_cbs_set_participant_device_added(cbs, conference_participant_device_added);
-		linphone_conference_cbs_set_participant_removed(cbs, conference_participant_removed);
-		linphone_conference_cbs_set_participant_device_removed(cbs, conference_participant_device_removed);
-		linphone_conference_cbs_set_participant_device_joining_request(cbs,
-		                                                               conference_participant_device_joining_request);
-		linphone_conference_cbs_set_participant_device_screen_sharing_changed(
-		    cbs, conference_participant_device_screen_sharing_changed);
-		linphone_conference_cbs_set_full_state_received(cbs, conference_full_state_received);
-		linphone_conference_cbs_set_allowed_participant_list_changed(cbs, conference_allowed_participant_list_changed);
-		linphone_conference_cbs_set_active_speaker_participant_device(
-		    cbs, conference_active_speaker_participant_device_changed);
-		linphone_conference_add_callbacks(conference, cbs);
-		linphone_conference_cbs_unref(cbs);
+		create_conference_cb(conference);
 	}
 }
 
@@ -4584,9 +4587,30 @@ void liblinphone_tester_chat_message_reaction_received(LinphoneChatMessage *msg,
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, BCTBX_UNUSED(const char *message)) {
 	stats *counters = get_stats(lc);
 	switch (gstate) {
-		case LinphoneGlobalOn:
+		case LinphoneGlobalOn: {
 			counters->number_of_LinphoneGlobalOn++;
-			break;
+			bctbx_list_t *infos = linphone_core_get_conference_information_list(lc);
+			for (bctbx_list_t *it = infos; it; it = bctbx_list_next(it)) {
+				LinphoneConferenceInfo *info = (LinphoneConferenceInfo *)it->data;
+				const LinphoneAddress *uri = linphone_conference_info_get_uri(info);
+				BC_ASSERT_PTR_NOT_NULL(uri);
+				LinphoneConference *conference = linphone_core_search_conference_2(lc, uri);
+				if (conference) {
+					create_conference_cb(conference);
+				}
+			}
+			if (infos) {
+				bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+			}
+			const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(lc);
+			for (const bctbx_list_t *it = chat_rooms; it; it = bctbx_list_next(it)) {
+				LinphoneChatRoom *chat_room = (LinphoneChatRoom *)it->data;
+				LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+				setup_chat_room_callbacks(cbs);
+				linphone_chat_room_add_callbacks(chat_room, cbs);
+				linphone_chat_room_cbs_unref(cbs);
+			}
+		} break;
 		case LinphoneGlobalReady:
 			counters->number_of_LinphoneGlobalReady++;
 			break;

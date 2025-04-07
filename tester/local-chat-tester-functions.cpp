@@ -142,6 +142,28 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
 	bctbx_list_free(coresList);
 }
 
+bool checkChatroomCreation(const ConfCoreManager &core,
+                           const int nbChatRooms,
+                           const int participantNumber,
+                           const std::string subject) {
+	auto &chatRooms = core.getCore().getChatRooms();
+	if (chatRooms.size() != static_cast<size_t>(nbChatRooms)) {
+		return false;
+	}
+	for (auto chatRoom : chatRooms) {
+		if (chatRoom->getState() != ConferenceInterface::State::Created) {
+			return false;
+		}
+		if ((participantNumber >= 0) && (chatRoom->getConference()->getParticipantCount() != participantNumber)) {
+			return false;
+		}
+		if (!subject.empty() && (chatRoom->getSubject().compare(subject) != 0)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 bool checkChatroom(Focus &focus, const ConfCoreManager &core, const time_t baseJoiningTime) {
 	const auto &chatRooms = core.getCore().getChatRooms();
 	if (chatRooms.size() < 1) {
@@ -541,8 +563,10 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		michelle2.reStart();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated, 1,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, laure, berthe, michelle, michelle2}).wait([&michelle2] {
+			return checkChatroomCreation(michelle2, 1);
+		}));
+
 		LinphoneAddress *michelleDeviceAddr =
 		    linphone_address_clone(linphone_proxy_config_get_contact(michelle2.getDefaultProxyConfig()));
 		michelle2Cr = michelle2.searchChatRoom(michelleDeviceAddr, confAddr);
@@ -1521,9 +1545,15 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 			                             liblinphone_tester_sip_timeout));
 
 			linphone_core_delete_chat_room(pauline.getLc(), paulineCr);
-			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateDeleted,
-			                             pauline_stat.number_of_LinphoneConferenceStateDeleted + 1,
-			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&pauline] {
+				auto &chatRooms = pauline.getCore().getChatRooms();
+				for (auto chatRoom : chatRooms) {
+					if (chatRoom->getState() != ConferenceInterface::State::Deleted) {
+						return false;
+					}
+				}
+				return true;
+			}));
 		}
 	}
 }

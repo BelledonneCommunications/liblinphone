@@ -130,10 +130,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		    linphone_address_clone(linphone_proxy_config_get_contact(marie.getDefaultProxyConfig()));
 		marieCr = marie.searchChatRoom(marieDeviceAddr, confAddr);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
-
 		// Wait for chat rooms to be recovered from the main DB
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    CoreManagerAssert({focus, marie, pauline}).wait([&marie] { return checkChatroomCreation(marie, 1); }));
 
 		if (marieCr) {
 			BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
@@ -331,10 +330,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 		    linphone_address_clone(linphone_proxy_config_get_contact(marie.getDefaultProxyConfig()));
 		marieCr = marie.searchChatRoom(marieDeviceAddr, confAddr);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
-
 		// Wait for chat rooms to be recovered from the main DB
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    CoreManagerAssert({focus, marie, pauline}).wait([&marie] { return checkChatroomCreation(marie, 1); }));
 
 		if (marieCr) {
 			BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(marieCr));
@@ -462,10 +460,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 		    linphone_address_clone(linphone_proxy_config_get_contact(marie.getDefaultProxyConfig()));
 		marieCr = marie.searchChatRoom(marieDeviceAddr, confAddr);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
-
-		// Wait for chat rooms to be recovered from the main DB
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    CoreManagerAssert({focus, marie, pauline}).wait([&marie] { return checkChatroomCreation(marie, 1); }));
 
 		if (marieCr) {
 			BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));

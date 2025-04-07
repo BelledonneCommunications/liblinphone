@@ -297,6 +297,10 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
                                      const std::string basicText,
                                      const int noMsg);
 
+bool checkChatroomCreation(const ConfCoreManager &core,
+                           const int nbChatRooms,
+                           const int participantNumber = -1,
+                           const std::string subject = "");
 bool checkChatroom(Focus &focus, const ConfCoreManager &core, const time_t baseJoiningTime);
 
 // Conference
