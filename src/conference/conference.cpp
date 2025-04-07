@@ -1401,6 +1401,7 @@ void Conference::setState(ConferenceInterface::State state) {
 	try {
 		ConferenceInterface::State previousState = getState();
 		shared_ptr<Conference> ref = getSharedFromThis();
+		LinphoneGlobalState coreState = linphone_core_get_global_state(getCore()->getCCore());
 		// Change state if:
 		// - current state is not Deleted
 		// - current state is Deleted and trying to move to Instantiated state
@@ -1408,13 +1409,18 @@ void Conference::setState(ConferenceInterface::State state) {
 		    ((previousState == ConferenceInterface::State::Deleted) &&
 		     (state == ConferenceInterface::State::Instantiated))) {
 			if (mState != state) {
-				if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+				if (coreState == LinphoneGlobalStartup) {
 					lDebug() << "Switching " << *this << " from state " << mState << " to " << state;
 				} else {
 					lInfo() << "Switching " << *this << " from state " << mState << " to " << state;
 				}
 				mState = state;
-				notifyStateChanged(mState);
+				// Do not notify conference state changes when the core is starting up to avoid the application from
+				// being overwhelmed by the notifications The core must be notified of state changes when shutting down
+				// to free the last reference to the conference it holds
+				if ((coreState == LinphoneGlobalOn) || (coreState == LinphoneGlobalShutdown)) {
+					notifyStateChanged(mState);
+				}
 			}
 		}
 
@@ -1423,7 +1429,7 @@ void Conference::setState(ConferenceInterface::State state) {
 		} else if (mState == ConferenceInterface::State::Deleted) {
 			// If core is in Global Shutdown state, then do not remove it from the map as it will be freed by
 			// Core::uninit()
-			if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalShutdown) {
+			if (coreState != LinphoneGlobalShutdown) {
 				getCore()->deleteConference(ref);
 			}
 #ifdef HAVE_ADVANCED_IM

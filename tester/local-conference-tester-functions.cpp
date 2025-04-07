@@ -7442,10 +7442,23 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning,
 		                             focus_stat.number_of_LinphoneCallStreamsRunning + focus_no_streams_running,
 		                             liblinphone_tester_sip_timeout));
-		// If ICE is enabled, the addition to a conference may go through a resume of the call
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateCreated,
-		                             focus_stat.number_of_LinphoneConferenceStateCreated + 1,
-		                             liblinphone_tester_sip_timeout));
+		bctbx_list_t *infos = linphone_core_get_conference_information_list(focus.getLc());
+		for (bctbx_list_t *it = infos; it; it = bctbx_list_next(it)) {
+			LinphoneConferenceInfo *info = (LinphoneConferenceInfo *)it->data;
+			const LinphoneAddress *uri = linphone_conference_info_get_uri(info);
+			BC_ASSERT_PTR_NOT_NULL(uri);
+			LinphoneConference *conference = linphone_core_search_conference_2(focus.getLc(), uri);
+			BC_ASSERT_PTR_NOT_NULL(conference);
+			if (conference) {
+				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, laure, berthe}).wait([&conference] {
+					return (linphone_conference_get_state(conference) == LinphoneConferenceStateCreated);
+				}));
+			}
+		}
+		if (infos) {
+			BC_ASSERT_EQUAL((int)bctbx_list_size(infos), 1, int, "%d");
+			bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
+		}
 		BC_ASSERT_TRUE(
 		    wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
 		                  focus_stat.number_of_LinphoneSubscriptionIncomingReceived + 5 * nb_client_subscribes, 5000));

@@ -483,8 +483,10 @@ static void secure_group_chat_room_with_client_with_uppercase_username(void) {
 		michelle.reStart();
 		coresList = bctbx_list_append(coresList, michelle.getLc());
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneChatRoomStateCreated, 1,
-		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle}).wait([&michelle] {
+			return checkChatroomCreation(michelle, 1);
+		}));
+
 		LinphoneAddress *michelleDeviceAddr =
 		    linphone_address_clone(linphone_account_get_contact_address(michelle.getDefaultAccount()));
 		michelleCr = michelle.searchChatRoom(michelleDeviceAddr, confAddr);
