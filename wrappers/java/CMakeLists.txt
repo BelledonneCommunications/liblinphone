@@ -36,7 +36,7 @@ endif()
 
 add_custom_command(OUTPUT "${jni_sources}"
 	COMMAND ${CMAKE_COMMAND} -E remove -f java/org/linphone/core/* src/*
-	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml" "-o" "${CMAKE_CURRENT_BINARY_DIR}" "-v" "${STRIPPED_LINPHONE_VERSION}" "-d" "${LINPHONESDK_STATE}" "-P" "${_wrapper_platform}"
+	COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml" "-o" "${CMAKE_CURRENT_BINARY_DIR}" "-v" "${STRIPPED_LINPHONE_VERSION}" "-d" "${LINPHONESDK_STATE}" "-P" "${_wrapper_platform}"
 	DEPENDS ${PROJECT_SOURCE_DIR}/tools/genapixml.py ${LINPHONE_HEADER_FILES}
 	${PROJECT_SOURCE_DIR}/tools/metaname.py
 	${PROJECT_SOURCE_DIR}/tools/metadoc.py
