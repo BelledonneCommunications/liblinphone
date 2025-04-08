@@ -205,7 +205,7 @@ if(ENABLE_LIME_X3DH)
 endif()
 
 if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_SWIFT_WRAPPER OR ENABLE_DOC OR ENABLE_PYTHON_WRAPPER)
-	find_package(PythonInterp 3 REQUIRED)
+	find_package(Python3 REQUIRED)
 	check_python_module(pystache)
 	check_python_module(six)
 	if(ENABLE_DOC)
