@@ -323,11 +323,17 @@ void linphone_content_set_file_path(LinphoneContent *content, const char *file_p
 	Content::toCpp(content)->setFilePath(L_C_TO_STRING(file_path));
 }
 
-int linphone_content_get_file_duration(LinphoneContent *content) {
-	auto c = Content::toCpp(content);
-	if (c->isFile()) return dynamic_cast<FileContent *>(c)->getFileDuration();
-	else if (c->isFileTransfer()) return dynamic_cast<FileTransferContent *>(c)->getFileDuration();
+int linphone_content_get_file_duration(const LinphoneContent *content) {
+	const auto c = Content::toCpp(content);
+	if (c->isFile()) return dynamic_cast<const FileContent *>(c)->getFileDuration();
+	else if (c->isFileTransfer()) return dynamic_cast<const FileTransferContent *>(c)->getFileDuration();
 	return -1;
+}
+
+void linphone_content_set_file_duration(LinphoneContent *content, int duration) {
+	auto c = Content::toCpp(content);
+	if (c->isFile()) dynamic_cast<FileContent *>(c)->setFileDuration(duration);
+	else if (c->isFileTransfer()) dynamic_cast<FileTransferContent *>(c)->setFileDuration(duration);
 }
 
 bool_t linphone_content_is_text(const LinphoneContent *content) {

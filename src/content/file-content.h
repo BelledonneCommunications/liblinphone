@@ -57,8 +57,8 @@ public:
 	void setFilePathUtf8(const std::string &path); // UTF8
 	std::string getFilePathUtf8() const;
 
-	void setFileDuration(int durationInSeconds);
-	int getFileDuration() const;
+	void setFileDuration(int duration); // In milliseconds
+	int getFileDuration() const;        // In milliseconds
 
 	void setCreationTimestamp(time_t timestamp);
 	time_t getCreationTimestamp() const;

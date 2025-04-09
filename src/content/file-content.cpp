@@ -118,8 +118,8 @@ string FileContent::getFilePathUtf8() const {
 	return Utils::localeToUtf8(getFilePath());
 }
 
-void FileContent::setFileDuration(int durationInSeconds) {
-	mFileDuration = durationInSeconds;
+void FileContent::setFileDuration(int duration) {
+	mFileDuration = duration;
 }
 
 int FileContent::getFileDuration() const {

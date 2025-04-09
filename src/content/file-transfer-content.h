@@ -70,8 +70,8 @@ public:
 	void setFileSize(size_t size);
 	size_t getFileSize() const;
 
-	void setFileDuration(int durationInSeconds);
-	int getFileDuration() const;
+	void setFileDuration(int duration); // In milliseconds
+	int getFileDuration() const;        // In milliseconds
 
 	void setFileKey(const char *key, size_t size);
 	const std::vector<char> &getFileKey() const;

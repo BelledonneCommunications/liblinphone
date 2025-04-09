@@ -158,8 +158,8 @@ size_t FileTransferContent::getFileSize() const {
 	return mFileSize;
 }
 
-void FileTransferContent::setFileDuration(int durationInSeconds) {
-	mFileDuration = durationInSeconds;
+void FileTransferContent::setFileDuration(int duration) {
+	mFileDuration = duration;
 }
 
 int FileTransferContent::getFileDuration() const {
