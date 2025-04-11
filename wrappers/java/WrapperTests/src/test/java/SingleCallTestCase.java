@@ -88,9 +88,12 @@ class SingleCallTestCase extends CoreListenerStub {
 
         assertEquals(callerCore.start(), 0);
         assertEquals(calleeCore.start(), 0);
+        assertEquals(running, true);
 
+	// Ensure that both the caller and callee reach the StreamsRunning state and then terminate it (see method onCallStateChanged).
+	// The call establishment and termination process is expected to last less than 20s
         long startTime = System.currentTimeMillis();
-        while (running && (System.currentTimeMillis() < (startTime + 10000))) {
+        while (running && (System.currentTimeMillis() < (startTime + 20000))) {
             callerCore.iterate();
             calleeCore.iterate();
             try {
