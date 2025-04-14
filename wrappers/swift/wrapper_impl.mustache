@@ -2,7 +2,7 @@
 LinphoneWrapper.swift
 Copyright (c) 2010-2022 Belledonne Communications SARL.
 
-This file is part of Liblinphone 
+This file is part of Liblinphone
 (see https://gitlab.linphone.org/BC/public/liblinphone).
 
 This program is free software: you can redistribute it and/or modify
@@ -527,7 +527,7 @@ public class {{className}} : LinphoneObject
 		}{{/exception}}{{/has_setter}}
 	}{{/has_property}}{{#has_setter}}{{#exception}}{{#setter_deprecated}}
 	@available(*, deprecated){{/setter_deprecated}}
-	public func {{func_name}}(newValue: {{{return}}}) throws
+	public func {{func_name}}(newValue: {{{return}}}{{#maybenil}}?{{/maybenil}}) throws
 	{
 		{{#is_string}}
 		let exception_result = {{setter_c_name}}(cPtr, newValue)
@@ -536,7 +536,7 @@ public class {{className}} : LinphoneObject
 		let exception_result = {{setter_c_name}}(cPtr, newValue==true ? 1:0)
 		{{/is_bool}}
 		{{#is_class}}
-		let exception_result = {{setter_c_name}}(cPtr, newValue.cPtr)
+		let exception_result = {{setter_c_name}}(cPtr, newValue{{#maybenil}}?{{/maybenil}}.cPtr)
 		{{/is_class}}
 		{{#is_enum}}
 		let exception_result = {{setter_c_name}}(cPtr, {{returnCType}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))

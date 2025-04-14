@@ -468,7 +468,8 @@ class SwiftTranslator:
         methodDict['is_enum'] = type(prop.args[0].type) is AbsApi.EnumType
         methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"
         methodDict['is_generic'] = self.is_generic(methodDict)
-
+        methodDict['maybenil'] = prop.maybenil
+        
         if methodDict['is_class'] or methodDict['is_void'] or methodDict['is_bool'] or methodDict['is_enum']:
             methodDict['return_default'] = "?"
         elif methodDict['is_generic'] or methodDict['is_int']:
