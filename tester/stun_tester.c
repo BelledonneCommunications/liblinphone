@@ -44,6 +44,11 @@ typedef struct _CallConfig {
 	LinphoneMediaEncryption mode;
 } CallConfig;
 
+static void call_config_init(CallConfig *config) {
+	memset(config, 0, sizeof(CallConfig));
+	config->ipv6 = liblinphone_tester_ipv6_available();
+}
+
 static size_t test_stun_encode(char **buffer) {
 	MSStunMessage *req = ms_stun_binding_request_create();
 	UInt96 tr_id = ms_stun_message_get_tr_id(req);
@@ -292,7 +297,8 @@ static void ice_turn_call_base(const CallConfig *config) {
 }
 
 static void basic_ice_turn_call(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
 	ice_turn_call_base(&cfg);
@@ -301,7 +307,8 @@ static void basic_ice_turn_call(void) {
 /* In this test, TURN won't finally be used because of wrong password. This checks that in this case
  * all goes well with ICE and things terminate properly.*/
 static void basic_ice_turn_call_wrong_password(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.caller_turn_enabled = TRUE;
 	cfg.wrong_password = TRUE;
 	cfg.callee_turn_enabled = FALSE;
@@ -310,7 +317,8 @@ static void basic_ice_turn_call_wrong_password(void) {
 
 static void basic_ipv6_ice_turn_call(void) {
 	if (liblinphone_tester_ipv6_available()) {
-		CallConfig cfg = {0};
+		CallConfig cfg;
+		call_config_init(&cfg);
 		cfg.caller_turn_enabled = TRUE;
 		cfg.callee_turn_enabled = TRUE;
 		cfg.ipv6 = TRUE;
@@ -321,7 +329,8 @@ static void basic_ipv6_ice_turn_call(void) {
 }
 
 static void basic_ice_turn_call_tcp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
 	cfg.turn_tcp = TRUE;
@@ -329,7 +338,8 @@ static void basic_ice_turn_call_tcp(void) {
 }
 
 static void basic_ice_turn_call_tls(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
 	cfg.turn_tls = TRUE;
@@ -338,7 +348,8 @@ static void basic_ice_turn_call_tls(void) {
 
 #ifdef VIDEO_ENABLED
 static void video_ice_turn_call(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.video_enabled = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
@@ -347,7 +358,8 @@ static void video_ice_turn_call(void) {
 #endif
 
 static void relayed_ice_turn_call(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
@@ -355,7 +367,8 @@ static void relayed_ice_turn_call(void) {
 }
 
 static void relayed_ice_turn_call_with_tcp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
@@ -364,7 +377,8 @@ static void relayed_ice_turn_call_with_tcp(void) {
 }
 
 static void relayed_ice_turn_call_with_tls(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
@@ -374,7 +388,8 @@ static void relayed_ice_turn_call_with_tls(void) {
 
 #ifdef VIDEO_ENABLED
 static void relayed_video_ice_turn_call(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.video_enabled = TRUE;
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
@@ -384,7 +399,8 @@ static void relayed_video_ice_turn_call(void) {
 #endif
 
 static void relayed_ice_turn_call_with_rtcp_mux(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.rtcp_mux_enabled = TRUE;
@@ -392,14 +408,16 @@ static void relayed_ice_turn_call_with_rtcp_mux(void) {
 }
 
 static void relayed_ice_turn_to_ice_stun_call(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_call_with_srtp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.mode = LinphoneMediaEncryptionSRTP;
@@ -407,7 +425,8 @@ static void relayed_ice_turn_call_with_srtp(void) {
 }
 
 static void relayed_ice_turn_tls_with_srtp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
@@ -417,7 +436,8 @@ static void relayed_ice_turn_tls_with_srtp(void) {
 }
 
 static void relayed_ice_turn_tls_to_ice_with_srtp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.rtcp_mux_enabled = TRUE;
@@ -427,7 +447,8 @@ static void relayed_ice_turn_tls_to_ice_with_srtp(void) {
 }
 
 static void relayed_ice_turn_to_ice_with_dtls_srtp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.rtcp_mux_enabled = TRUE;
@@ -552,7 +573,8 @@ end:
 }
 
 static void relayed_ice_turn_to_turn_with_dtls_srtp(void) {
-	CallConfig cfg = {0};
+	CallConfig cfg;
+	call_config_init(&cfg);
 	cfg.forced_relay = TRUE;
 	cfg.caller_turn_enabled = TRUE;
 	cfg.callee_turn_enabled = TRUE;
@@ -561,7 +583,7 @@ static void relayed_ice_turn_to_turn_with_dtls_srtp(void) {
 	_ice_turn_dtls_call(&cfg);
 }
 
-test_t stun_tests[] = {
+static test_t stun_tests[] = {
     TEST_ONE_TAG("Basic Stun test (Ping/public IP)", linphone_stun_test_grab_ip, "STUN"),
     TEST_ONE_TAG("STUN encode", linphone_stun_test_encode, "STUN"),
     TEST_TWO_TAGS("Basic ICE+TURN call", basic_ice_turn_call, "ICE", "TURN"),

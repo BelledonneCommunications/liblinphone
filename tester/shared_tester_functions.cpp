@@ -787,7 +787,11 @@ static void check_expected_candidate_type(LinphoneCoreManager *m,
 	// bctbx_message("default-candidate=%s", ip.c_str());
 	if (ai) {
 		char rawip[64] = {0};
-		bctbx_addrinfo_to_ip_address(ai, rawip, sizeof(rawip), NULL);
+		struct sockaddr_storage ss;
+		socklen_t slen = (socklen_t)ai->ai_addrlen;
+		memcpy(&ss, ai->ai_addr, ai->ai_addrlen);
+		bctbx_sockaddr_remove_v4_mapping((struct sockaddr *)&ss, (struct sockaddr *)&ss, &slen);
+		bctbx_sockaddr_to_ip_address((struct sockaddr *)&ss, slen, rawip, sizeof(rawip), NULL);
 		relayIP = rawip;
 	}
 	switch (expected_type) {
@@ -796,10 +800,11 @@ static void check_expected_candidate_type(LinphoneCoreManager *m,
 			break;
 		case TesterIceCandidateSflrx:
 			BC_ASSERT_FALSE(address_in_list(ip, local_addresses));
+			BC_ASSERT_STRING_NOT_EQUAL(ip.c_str(), relayIP.c_str());
 			BC_ASSERT_TRUE(ip != relayIP);
 			break;
 		case TesterIceCandidateRelay:
-			BC_ASSERT_TRUE(ip == relayIP);
+			BC_ASSERT_STRING_EQUAL(ip.c_str(), relayIP.c_str());
 			break;
 	}
 }
