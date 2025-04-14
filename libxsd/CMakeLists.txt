@@ -21,11 +21,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.22)
 
 project(libxsd VERSION 4.0.0 LANGUAGES NONE)
 
 install(DIRECTORY xsd
 	DESTINATION include
 )
-
