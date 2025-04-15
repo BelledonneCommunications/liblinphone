@@ -134,7 +134,12 @@ public:
 			mwi->setMessageWaiting(mMessageStatus->mMsgStatus);
 		}
 		if (mAccount) {
-			mwi->setAccountAddress(mAccount->mAddress);
+			if (mAccount->mAddress && mAccount->mAddress->isValid()) {
+				mwi->setAccountAddress(mAccount->mAddress);
+			} else {
+				lWarning() << "Cannot set account address to mwi because the address is null or invalid.";
+				return nullptr;
+			}
 		}
 		for (auto line : mSummaryLines) {
 			mwi->addSummary(MessageWaitingIndicationSummary::create(
