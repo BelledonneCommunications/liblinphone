@@ -8010,6 +8010,66 @@ static void call_with_from_and_to_without_domain(void) {
 	linphone_core_manager_destroy(laure);
 }
 
+static void call_with_correct_local_account_in_request_uri(void) {
+	const char *invite_template =
+	    "INVITE sip:%s@10.0.0.210:35932;transport=tls SIP/2.0\r\n"
+	    "Via: SIP/2.0/TLS 10.0.0.60:5061;branch=z9hG4bK79920c86;rport\r\n"
+	    "Max-Forwards: 70\r\n"
+	    "From: <sip:lise@sip.example.org>;tag=as5d5122vb\r\n"
+	    "To: <sip:ghost@sip.doesntexists.com:35932;transport=tls>\r\n"
+	    "Contact: <sip:lise@10.0.0.60:5061;transport=TLS>\r\n"
+	    "CSeq: 102 INVITE\r\n"
+	    "Call-ID: 12bc634d4dee9a6a1829a7e07ff4b02d@10.0.0.60:5061\r\n"
+	    "Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO, PUBLISH, MESSAGE\r\n"
+	    "Supported: replaces, timer\r\n"
+	    "Content-Type: application/sdp\r\n"
+	    "\r\n"
+	    "v=0\r\n"
+	    "o=root 1242761950 1242761950 IN IP4 10.0.0.60\r\n"
+	    "s=voip.ms\r\n"
+	    "c=IN IP4 10.0.0.60\r\n"
+	    "t=0 0\r\n"
+	    "m=audio 18368 RTP/AVP 0 18 9 101\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:18 G729/8000\r\n"
+	    "a=fmtp:18 annexb=no\r\n"
+	    "a=rtpmap:9 G722/8000\r\n"
+	    "a=rtpmap:101 telephone-event/8000\r\n"
+	    "a=fmtp:101 0-16\r\n"
+	    "a=ptime:20\r\n"
+	    "a=sendrecv\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	const char *laure_username = linphone_address_get_username(laure->identity);
+	char *invite = bctbx_strdup_printf(invite_template, laure_username);
+	bctbx_list_t *call_logs;
+
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(invite, strlen(invite), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	linphone_call_terminate(laure_call);
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+
+	/* Make sure that the call-log was reported as belonging to laure's SIP account, despite the To address that does
+	 * not mention sip.example.org. */
+	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(laure->lc));
+	if (BC_ASSERT_PTR_NOT_NULL(call_logs)) {
+		BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 1);
+		LinphoneCallLog *clog = (LinphoneCallLog *)call_logs->data;
+		BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(linphone_call_log_get_to_address(clog)), "sip.example.org");
+	}
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
+	bctbx_free(invite);
+	linphone_core_manager_destroy(laure);
+}
+
 void call_with_core_without_media(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc_without_media");
 	LinphoneCoreManager *pauline =
@@ -8354,6 +8414,8 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
     TEST_NO_TAG("Call with custom m line and crappy to header", call_with_custom_m_line),
     TEST_NO_TAG("Call with crappy from and to headers", call_with_from_and_to_without_domain),
+    TEST_NO_TAG("Call with local account identity in request URI and not in to header",
+                call_with_correct_local_account_in_request_uri),
     TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri),
     TEST_NO_TAG("Two accounts not sharing same connection", two_accounts_use_different_connections)};
 
