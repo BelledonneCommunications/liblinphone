@@ -1513,6 +1513,17 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 						lWarning() << "Applying workaround to have this call assigned to a known account.";
 						// We must "hack" the call-log so it is correctly reported for this Account.
 						d->log->setToAddress(account->getAccountParams()->getIdentityAddress());
+					} else {
+						account = getCore()->guessLocalAccountFromMalformedMessage(getRequestAddress(),
+						                                                           d->log->getFromAddress());
+						if (account) {
+							// We failed to find matching local account using From & To headers but we did using the
+							// request URI.
+							lWarning() << "Applying workaround to have this call assigned to a known account using the "
+							              "request URI";
+							// We must "hack" the call-log so it is correctly reported for this Account.
+							d->log->setToAddress(account->getAccountParams()->getIdentityAddress());
+						}
 					}
 				}
 				if (account) {
