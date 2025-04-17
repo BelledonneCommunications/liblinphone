@@ -1621,7 +1621,10 @@ void Core::healNetworkConnections() {
 
 int Core::getUnreadChatMessageCount() const {
 	L_D();
-	return d->mainDb->getUnreadChatMessageCount();
+	if (d->mainDb && d->mainDb->isInitialized()) {
+		return d->mainDb->getUnreadChatMessageCount();
+	}
+	return -1;
 }
 
 int Core::getUnreadChatMessageCount(const std::shared_ptr<const Address> &localAddress) const {

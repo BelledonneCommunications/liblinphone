@@ -441,13 +441,15 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             ringtoneManager.setType(RingtoneManager.TYPE_RINGTONE);
 
             Cursor cursor = ringtoneManager.getCursor();
-            if (cursor.moveToFirst()) {
-                String idString = cursor.getString(RingtoneManager.ID_COLUMN_INDEX);
-                String uriString = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    String idString = cursor.getString(RingtoneManager.ID_COLUMN_INDEX);
+                    String uriString = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
 
-                uri = Uri.parse(uriString + '/' + idString);
+                    uri = Uri.parse(uriString + '/' + idString);
+                }
+                cursor.close();
             }
-            cursor.close();
         }
 
         return uri;
