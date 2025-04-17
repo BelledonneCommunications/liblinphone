@@ -22,6 +22,7 @@
 
 #include <bctoolbox/defs.h>
 #include <bctoolbox/list.h>
+#include <bctoolbox/regex.h>
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
@@ -170,7 +171,7 @@ bool MagicSearch::iterate(void) {
 		} else mState = STATE_END;
 	}
 	if (mState == STATE_END && mIteration) {
-		belle_sip_object_unref(mIteration);
+		getCore()->destroyTimer(mIteration);
 		mIteration = NULL;
 		continueLoop = false;
 	}
@@ -951,7 +952,7 @@ void MagicSearch::setupRegex(const string &filter) {
 
 	// Replace any regex special character by escaped version of it, such as '+' for example
 	lDebug() << "[Magic Search] Building regex [" << lowercaseFilter << "]";
-	mFilterRegex = regex(lowercaseFilter);
+	mFilterRegex = lowercaseFilter;
 	mFilterApplyFullSipUri =
 	    (filter.rfind("sip:", 0) == 0 || filter.rfind("sips:", 0) == 0 || filter.rfind("@") != string::npos);
 }
@@ -962,7 +963,13 @@ unsigned int MagicSearch::getWeight(const string &haystack) const {
 	transform(lowercaseHaystack.begin(), lowercaseHaystack.end(), lowercaseHaystack.begin(),
 	          [](unsigned char c) { return tolower(c); });
 
-	if (regex_match(lowercaseHaystack, mFilterRegex)) {
+	if (bctbx_is_matching_regex_log_context(lowercaseHaystack.c_str(), mFilterRegex.c_str(), TRUE,
+#ifdef _MSC_VER
+	                                        __FUNCSIG__
+#else
+	                                        __PRETTY_FUNCTION__
+#endif
+	                                        )) {
 		return getMaxWeight();
 	}
 	return getMinWeight();
