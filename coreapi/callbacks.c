@@ -181,7 +181,17 @@ static void call_received(SalCallOp *h) {
 #endif
 
 	auto params = ConferenceParams::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	// Search an account whose identity matches the to address.
+	// For clients, it means associating an account to a chatroom or conference
+	// For servers, it is looking an account whose identity is the conference focus
 	LinphoneAccount *account = linphone_core_lookup_account_by_identity(lc, to->toC());
+	// If the core is used as conference server, search for an account that matches the to address as the client will
+	// call the conference factory to create one
+	LinphoneAccount *conferenceAccount =
+	    isServer ? linphone_core_lookup_account_by_conference_factory_strict(lc, to->toC()) : NULL;
+	if (!account && isServer) {
+		account = conferenceAccount;
+	}
 	if (account) {
 		params->setAccount(Account::toCpp(account)->getSharedFromThis());
 	}
@@ -258,161 +268,159 @@ static void call_received(SalCallOp *h) {
 		h->release();
 #endif
 		return;
-	} else if (chatCapabilities || to->hasUriParam(Conference::ConfIdParameter) ||
-	           sal_address_has_uri_param(h->getToAddress(), Conference::ConfIdParameter.c_str()) ||
-	           ((sal_address_has_param(remoteContactAddress, "admin") &&
-	             (strcmp(sal_address_get_param(remoteContactAddress, "admin"), "1") == 0)))) {
+	} else if (isServer && (chatCapabilities || to->hasUriParam(Conference::ConfIdParameter) || conferenceAccount)) {
+		// Check if an account can be associated to a conference or the conference has chat capabilities. In fact, the
+		// latter check is required to be backward compatible as older versions of the flexisip conference server did
+		// not create chatroom addresses from a single conference focus but using the following pattern
+		// sip:chatroom-<random_string>@domain.com
 		const auto conferenceIdParams = core->createConferenceIdParams();
-		// Create a conference if remote is trying to schedule one or it is calling a conference focus
-		if (isServer) {
-			conference = core->findConference(ConferenceId(to, to, conferenceIdParams), false);
-			if (conference) {
-				auto serverConference = dynamic_pointer_cast<ServerConference>(conference);
-				if (serverConference) {
-					if (remoteMd) {
-						const auto times = remoteMd->times;
-						time_t startTime = -1;
-						time_t endTime = -1;
-						if (times.size() > 0) {
-							startTime = times.front().first;
-							endTime = times.front().second;
-						}
+		conference = core->findConference(ConferenceId(to, to, conferenceIdParams), false);
+		if (conference) {
+			auto serverConference = dynamic_pointer_cast<ServerConference>(conference);
+			if (serverConference) {
+				if (remoteMd) {
+					const auto times = remoteMd->times;
+					time_t startTime = -1;
+					time_t endTime = -1;
+					if (times.size() > 0) {
+						startTime = times.front().first;
+						endTime = times.front().second;
+					}
 
-						if ((startTime != -1) || (endTime != -1)) {
-							// If start time or end time is not -1, then the client wants to update the conference
-							if (!serverConference->updateConferenceInformation(h)) {
-								SalErrorInfo sei;
-								memset(&sei, 0, sizeof(sei));
-								const char *msg = "Conference information cannot be updated right now";
-								sal_error_info_set(&sei, SalReasonTemporarilyUnavailable, "SIP", 0, nullptr, msg);
-								h->replyWithErrorInfo(&sei);
-								sal_error_info_reset(&sei);
-								h->release();
-								return;
-							}
-						}
-					} else if (chatCapabilities) {
-#ifdef HAVE_ADVANCED_IM
-						serverConference->confirmJoining(h);
-#else
-						lWarning() << "Unable to join chat room [" << conference
-						           << "] because advanced IM such as group chat is disabled!";
-						h->decline(SalReasonNotAcceptable);
-						h->release();
-#endif
-						return;
-					}
-				} else {
-					lError() << "Conference [" << conference << "] is not of type ServerConference - rejecting session";
-					h->decline(SalReasonNotAcceptable);
-					h->release();
-					return;
-				}
-			} else {
-#ifdef HAVE_DB_STORAGE
-				std::shared_ptr<ConferenceInfo> confInfo =
-				    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
-				        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(to)
-				        : nullptr;
-				if (confInfo) {
-					params->enableAudio(confInfo->getCapability(LinphoneStreamTypeAudio));
-					params->enableVideo(confInfo->getCapability(LinphoneStreamTypeVideo));
-					params->enableChat(confInfo->getCapability(LinphoneStreamTypeText));
-					params->setSubject(confInfo->getSubject());
-					const auto startTime = confInfo->getDateTime();
-					params->setStartTime(startTime);
-					const auto duration = confInfo->getDuration();
-					if (duration > 0) {
-						// The duration is stored in minutes whereas the start time in seconds
-						params->setEndTime(startTime + duration * 60);
-					}
-					conference = (new ServerConference(core, nullptr, params))->toSharedPtr();
-					conference->init(h);
-				} else
-#endif // HAVE_DB_STORAGE
-				{
-					if (hasStreams) {
-						if (sal_address_has_uri_param(h->getToAddress(), Conference::ConfIdParameter.c_str())) {
-							long long expiredConferenceId =
-							    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
-							        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findExpiredConferenceId(to)
-							        : -1;
+					if ((startTime != -1) || (endTime != -1)) {
+						// If start time or end time is not -1, then the client wants to update the conference
+						if (!serverConference->updateConferenceInformation(h)) {
 							SalErrorInfo sei;
 							memset(&sei, 0, sizeof(sei));
-							std::string msg = "Conference " + to->toString();
-							SalReason reason = SalReasonNone;
-							if (expiredConferenceId == -1) {
-								msg += " has not been found";
-								reason = SalReasonNotFound;
-							} else {
-								msg += " has already expired";
-								reason = SalReasonGone;
-							}
-							sal_error_info_set(&sei, reason, "SIP", 0, nullptr, msg.c_str());
+							const char *msg = "Conference information cannot be updated right now";
+							sal_error_info_set(&sei, SalReasonTemporarilyUnavailable, "SIP", 0, nullptr, msg);
 							h->replyWithErrorInfo(&sei);
 							sal_error_info_reset(&sei);
 							h->release();
 							return;
-						} else {
-							auto serverConference = (new ServerConference(core, nullptr, params))->toSharedPtr();
-							serverConference->init(h);
-							static_pointer_cast<ServerConference>(serverConference)->confirmCreation();
-							return;
 						}
-					} else {
+					}
+				} else if (chatCapabilities) {
 #ifdef HAVE_ADVANCED_IM
-						if (_linphone_core_is_conference_creation(lc, to->toC())) {
-							if (isOneToOne) {
-								bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(
-								    linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
-								if (!oneToOneChatRoomEnabled) {
-									h->decline(SalReasonNotAcceptable);
-									h->release();
-									return;
-								}
-								std::shared_ptr<Address> fromOp = Address::create(h->getFrom());
-								const auto participantList =
-								    Utils::parseResourceLists(h->getContentInRemote(ContentType::ResourceLists));
-								if (participantList.size() != 1) {
-									lInfo() << *fromOp << " is trying to create a one-to-one chatroom with "
-									        << participantList.size() << " participants on server " << *to;
-									SalErrorInfo sei;
-									memset(&sei, 0, sizeof(sei));
-									const char *msg =
-									    "Trying to create a one-to-one chatroom with more than one participant";
-									sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, msg, msg);
-									h->replyWithErrorInfo(&sei, nullptr);
-									sal_error_info_reset(&sei);
-									h->release();
-									return;
-								}
-								const auto &participant = (*participantList.begin())->getAddress();
-								std::shared_ptr<Address> confAddr =
-								    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(
-								        fromOp, participant, encrypted);
-								if (confAddr && confAddr->isValid()) {
-									shared_ptr<AbstractChatRoom> chatRoom =
-									    core->findChatRoom(ConferenceId(confAddr, confAddr, conferenceIdParams));
-									static_pointer_cast<ServerChatRoom>(chatRoom)->confirmRecreation(h);
-									return;
-								}
-							}
-							auto chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createServerChatRoom(to, h, params);
-							if (chatRoom) {
-								static_pointer_cast<ServerChatRoom>(chatRoom)->confirmCreation();
-							}
-						} else {
-							// invite is for an unknown chatroom
-							h->decline(SalReasonNotFound);
-							h->release();
-						}
+					serverConference->confirmJoining(h);
 #else
-						lWarning() << "Unable to create chat room because advanced IM such as group chat is disabled!";
-						h->decline(SalReasonNotAcceptable);
-						h->release();
+					lWarning() << "Unable to join chat room [" << conference
+					           << "] because advanced IM such as group chat is disabled!";
+					h->decline(SalReasonNotAcceptable);
+					h->release();
 #endif
+					return;
+				}
+			} else {
+				lError() << "Conference [" << conference << "] is not of type ServerConference - rejecting session";
+				h->decline(SalReasonNotAcceptable);
+				h->release();
+				return;
+			}
+		} else {
+#ifdef HAVE_DB_STORAGE
+			std::shared_ptr<ConferenceInfo> confInfo =
+			    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
+			        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(to)
+			        : nullptr;
+			if (confInfo) {
+				params->enableAudio(confInfo->getCapability(LinphoneStreamTypeAudio));
+				params->enableVideo(confInfo->getCapability(LinphoneStreamTypeVideo));
+				params->enableChat(confInfo->getCapability(LinphoneStreamTypeText));
+				params->setSubject(confInfo->getSubject());
+				const auto startTime = confInfo->getDateTime();
+				params->setStartTime(startTime);
+				const auto duration = confInfo->getDuration();
+				if (duration > 0) {
+					// The duration is stored in minutes whereas the start time in seconds
+					params->setEndTime(startTime + duration * 60);
+				}
+				conference = (new ServerConference(core, nullptr, params))->toSharedPtr();
+				conference->init(h);
+			} else
+#endif // HAVE_DB_STORAGE
+			{
+				if (hasStreams) {
+					if (sal_address_has_uri_param(h->getToAddress(), Conference::ConfIdParameter.c_str())) {
+						long long expiredConferenceId =
+						    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
+						        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findExpiredConferenceId(to)
+						        : -1;
+						SalErrorInfo sei;
+						memset(&sei, 0, sizeof(sei));
+						std::string msg = "Conference " + to->toString();
+						SalReason reason = SalReasonNone;
+						if (expiredConferenceId == -1) {
+							msg += " has not been found";
+							reason = SalReasonNotFound;
+						} else {
+							msg += " has already expired";
+							reason = SalReasonGone;
+						}
+						sal_error_info_set(&sei, reason, "SIP", 0, nullptr, msg.c_str());
+						h->replyWithErrorInfo(&sei);
+						sal_error_info_reset(&sei);
+						h->release();
+						return;
+					} else {
+						auto serverConference = (new ServerConference(core, nullptr, params))->toSharedPtr();
+						serverConference->init(h);
+						static_pointer_cast<ServerConference>(serverConference)->confirmCreation();
 						return;
 					}
+				} else {
+#ifdef HAVE_ADVANCED_IM
+					if (_linphone_core_is_conference_creation(lc, to->toC())) {
+						if (isOneToOne) {
+							bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(
+							    linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
+							if (!oneToOneChatRoomEnabled) {
+								h->decline(SalReasonNotAcceptable);
+								h->release();
+								return;
+							}
+							std::shared_ptr<Address> fromOp = Address::create(h->getFrom());
+							const auto participantList =
+							    Utils::parseResourceLists(h->getContentInRemote(ContentType::ResourceLists));
+							if (participantList.size() != 1) {
+								lInfo() << *fromOp << " is trying to create a one-to-one chatroom with "
+								        << participantList.size() << " participants on server " << *to;
+								SalErrorInfo sei;
+								memset(&sei, 0, sizeof(sei));
+								const char *msg =
+								    "Trying to create a one-to-one chatroom with more than one participant";
+								sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, msg, msg);
+								h->replyWithErrorInfo(&sei, nullptr);
+								sal_error_info_reset(&sei);
+								h->release();
+								return;
+							}
+							const auto &participant = (*participantList.begin())->getAddress();
+							std::shared_ptr<Address> confAddr =
+							    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(
+							        fromOp, participant, encrypted);
+							if (confAddr && confAddr->isValid()) {
+								shared_ptr<AbstractChatRoom> chatRoom =
+								    core->findChatRoom(ConferenceId(confAddr, confAddr, conferenceIdParams));
+								static_pointer_cast<ServerChatRoom>(chatRoom)->confirmRecreation(h);
+								return;
+							}
+						}
+						auto chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createServerChatRoom(to, h, params);
+						if (chatRoom) {
+							static_pointer_cast<ServerChatRoom>(chatRoom)->confirmCreation();
+						}
+					} else {
+						// invite is for an unknown chatroom
+						h->decline(SalReasonNotFound);
+						h->release();
+					}
+#else
+					lWarning() << "Unable to create chat room because advanced IM such as group chat is disabled!";
+					h->decline(SalReasonNotAcceptable);
+					h->release();
+#endif
+					return;
 				}
 			}
 		}

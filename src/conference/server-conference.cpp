@@ -164,17 +164,16 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		if (conferenceInfo) {
 			auto &mainDb = core->getPrivate()->mainDb;
 			if (mainDb) {
-				lInfo() << "Inserting new conference information to database in order to be able to recreate the "
-				           "conference "
-				        << *getConferenceAddress() << " in case of restart";
+				lInfo() << "Inserting new conference information to database in order to be able to recreate " << *this
+				        << " in case of restart";
 				mainDb->insertConferenceInfo(conferenceInfo);
 			}
 		}
 #endif // HAVE_DB_STORAGE
 	}
-	if (mConfParams->videoEnabled() && !linphone_core_conference_server_enabled(lc)) {
-		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting "
-		              "a conference.";
+	if (mConfParams->videoEnabled() && !supportsVideoCapabilities()) {
+		lWarning() << *this
+		           << ": Video capability is not supported when the device hosting a conference is not a server";
 		mConfParams->enableVideo(false);
 	}
 }
@@ -235,6 +234,10 @@ bool ServerConference::validateNewParameters(const ConferenceParams &newConfPara
 	return true;
 }
 
+bool ServerConference::supportsVideoCapabilities() const {
+	return !!linphone_core_conference_server_enabled(getCore()->getCCore());
+}
+
 bool ServerConference::update(const ConferenceParamsInterface &newParameters) {
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = mConfParams->videoEnabled();
@@ -246,7 +249,7 @@ bool ServerConference::update(const ConferenceParamsInterface &newParameters) {
 	}
 	mConfParams = ConferenceParams::create(newConfParams);
 
-	if (!linphone_core_conference_server_enabled(getCore()->getCCore()) && mConfParams->videoEnabled()) {
+	if (!supportsVideoCapabilities() && mConfParams->videoEnabled()) {
 		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting "
 		              "a conference.";
 		mConfParams->enableVideo(false);
@@ -322,10 +325,9 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 			//    - if the SDP has at least one active video stream, video is enabled
 			// - Subject is got from the "Subject" header in the INVITE
 			const auto audioEnabled = (remoteMd && (remoteMd->nbActiveStreamsOfType(SalAudio) > 0));
-			const auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore()))
-			                              ? (remoteMd && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0))
-			                              : false;
-			if (!linphone_core_conference_server_enabled(getCore()->getCCore())) {
+			const auto videoEnabled =
+			    (supportsVideoCapabilities()) ? (remoteMd && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0)) : false;
+			if (!supportsVideoCapabilities()) {
 				lWarning() << "Video capability in a conference is not supported when a device that is not a server is "
 				              "hosting a conference.";
 			}
@@ -403,10 +405,6 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 
 void ServerConference::configure(SalCallOp *op) {
 	LinphoneCore *lc = getCore()->getCCore();
-	bool admin = ((
-	    sal_address_has_param(op->getRemoteContactAddress(), Conference::AdminParameter.c_str()) &&
-	    (strcmp(sal_address_get_param(op->getRemoteContactAddress(), Conference::AdminParameter.c_str()), "1") == 0)));
-
 	std::shared_ptr<ConferenceInfo> info = nullptr;
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -414,6 +412,42 @@ void ServerConference::configure(SalCallOp *op) {
 		info = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(Address::create(op->getTo()));
 	}
 #endif // HAVE_DB_STORAGE
+
+	// The participant is admin if:
+	// - the conference is in the Instantiated state as it means that such device is willing to create a new conference
+	// - the participant is admin of the conference
+	// - it is the initiator of the chatroom
+	// - it is the organizer of the conference
+	bool isAdmin = false;
+	auto from = Address::create(op->getFrom());
+	if (from) {
+#ifdef HAVE_ADVANCED_IM
+		auto chatRoom = getChatRoom();
+		if (chatRoom) {
+			auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(getChatRoom());
+			if (serverGroupChatRoom) {
+				auto initiatorDevice = serverGroupChatRoom->getInitiatorDevice();
+				if (initiatorDevice) {
+					isAdmin = from->weakEqual(initiatorDevice->getAddress());
+				}
+			}
+		}
+#endif // HAVE_ADVANCED_IM
+
+		if (!isAdmin && info) {
+			isAdmin = from->weakEqual(info->getOrganizerAddress());
+		}
+
+		if (!isAdmin) {
+			std::shared_ptr<Participant> participant = findParticipant(from);
+			if (participant) {
+				isAdmin = participant->isAdmin();
+			}
+		}
+	}
+	if (!isAdmin) {
+		isAdmin = (mState == ConferenceInterface::State::Instantiated);
+	}
 
 	bool audioEnabled = false;
 	bool videoEnabled = false;
@@ -436,7 +470,7 @@ void ServerConference::configure(SalCallOp *op) {
 
 	const bool createdConference = (info && info->isValidUri());
 	// If start time or end time is not -1, then the client wants to update the conference
-	const auto isUpdate = (admin && ((startTimeSdp != -1) || (endTimeSdp != -1)) && info);
+	const auto isUpdate = (isAdmin && ((startTimeSdp != -1) || (endTimeSdp != -1)) && info);
 
 	ConferenceParams::SecurityLevel securityLevel = ConferenceParams::SecurityLevel::None;
 	if (createdConference && info) {
@@ -462,7 +496,7 @@ void ServerConference::configure(SalCallOp *op) {
 		mMixerSession->setSecurityLevel(mConfParams->getSecurityLevel());
 	}
 
-	if (isUpdate || (admin && !createdConference)) {
+	if (isUpdate || (isAdmin && !createdConference)) {
 		// The following informations are retrieved from the received INVITE:
 		// - start and end time from the SDP active time attribute
 		// - conference active media:
@@ -474,7 +508,7 @@ void ServerConference::configure(SalCallOp *op) {
 		if (!op->getSubject().empty()) {
 			subject = op->getSubject();
 		}
-		setOrganizer(Address::create(op->getFrom()));
+		setOrganizer(from);
 
 		startTime = startTimeSdp;
 		if (startTime <= 0) {
@@ -520,7 +554,7 @@ void ServerConference::configure(SalCallOp *op) {
 		mConfParams->setJoiningMode(joiningMode);
 	}
 
-	if (isChatOnly() || (admin && !createdConference)) {
+	if (isAdmin && !createdConference) {
 		std::shared_ptr<Address> conferenceAddress = Address::create(op->getTo());
 		MediaSessionParams *msp = new MediaSessionParams();
 		msp->initDefault(getCore(), LinphoneCallIncoming);
@@ -542,7 +576,7 @@ void ServerConference::configure(SalCallOp *op) {
 	mMe->setAdmin(true);
 	mMe->setFocus(true);
 
-	if (createdConference) {
+	if (createdConference && info) {
 		const auto &conferenceAddress = info->getUri();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
 		setConferenceAddress(conferenceAddress);
@@ -1781,7 +1815,7 @@ shared_ptr<Participant> ServerConference::addParticipantToList(BCTBX_UNUSED(cons
 		}
 		/* Case of participant that is still referenced in the chatroom, but no longer authorized because it has been
 		 * removed previously OR a totally new participant. */
-		if (findParticipant(addr) == nullptr) {
+		if (!findParticipant(addr)) {
 			mParticipants.push_back(participant);
 			shared_ptr<ConferenceParticipantEvent> event = notifyParticipantAdded(time(nullptr), false, participant);
 			getCore()->getPrivate()->mainDb->addEvent(event);
@@ -3860,10 +3894,10 @@ void ServerConference::handleRefer(SalReferOp *op,
 				notifyAllowedParticipantListChanged(ms_time(NULL), false);
 			}
 		}
-		if (referAddr->hasParam("admin")) {
+		if (referAddr->hasParam(Conference::AdminParameter)) {
 			referParticipant = findParticipant(referAddr);
 			if (referParticipant) {
-				bool value = Utils::stob(referAddr->getParamValue("admin"));
+				bool value = Utils::stob(referAddr->getParamValue(Conference::AdminParameter));
 				setParticipantAdminStatus(referParticipant, value);
 			}
 		}

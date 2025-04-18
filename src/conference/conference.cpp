@@ -335,13 +335,6 @@ std::shared_ptr<Participant> Conference::createParticipant(std::shared_ptr<Call>
 		participant->setPreserveSession(true);
 	}
 
-	// Pass admin information on if it is available in the contact address
-	std::shared_ptr<Address> remoteContactAddress = Address::create(call->getRemoteContact());
-	if (remoteContactAddress->hasParam(Conference::AdminParameter)) {
-		bool value = Utils::stob(remoteContactAddress->getParamValue(Conference::AdminParameter));
-		participant->setAdmin(value);
-	}
-
 	auto device = createParticipantDevice(participant, call);
 	device->setSendAddedNotify(false);
 

@@ -303,6 +303,9 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		focus.registerAsParticipantDevice(laure);
 		focus.registerAsParticipantDevice(berthe);
 
+		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
+		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
+
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());

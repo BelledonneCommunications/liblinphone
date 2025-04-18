@@ -575,9 +575,11 @@ void ClientConference::callFocus() {
 		lInfo() << *this << ": Calling the conference focus (" << *focusAddress
 		        << ") as there is no session towards the focus yet";
 		LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-		// Participant with the focus call is admin
-		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter(Conference::AdminParameter,
-		                                                               Utils::toString(true));
+		if (!!linphone_core_get_add_admin_information_to_contact(getCore()->getCCore())) {
+			// Participant with the focus call is admin
+			L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter(Conference::AdminParameter,
+			                                                               Utils::toString(true));
+		}
 		linphone_call_params_enable_video(params, mConfParams->videoEnabled());
 		Conference::setUtf8Subject(mPendingSubject);
 		inviteAddresses({}, params);
@@ -591,10 +593,12 @@ std::shared_ptr<ParticipantDevice> ClientConference::createParticipantDevice(std
 	if (device) {
 		// In a client conference, the participant has no session attached ot it.
 		device->setSession(nullptr);
-		const auto &p = device->getParticipant();
-		if (p) {
-			const_cast<MediaSessionParams *>(call->getParams())
-			    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(p->isAdmin()));
+		if (!!linphone_core_get_add_admin_information_to_contact(getCore()->getCCore())) {
+			const auto &p = device->getParticipant();
+			if (p) {
+				const_cast<MediaSessionParams *>(call->getParams())
+				    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(p->isAdmin()));
+			}
 		}
 	}
 	return device;
@@ -2336,8 +2340,10 @@ int ClientConference::enter() {
 		LinphoneCallParams *new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 		linphone_call_params_enable_video(new_params, mConfParams->videoEnabled());
 		linphone_call_params_set_in_conference(new_params, FALSE);
-		L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
-		    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(getMe()->isAdmin()));
+		if (!!linphone_core_get_add_admin_information_to_contact(getCore()->getCCore())) {
+			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)
+			    ->addCustomContactParameter(Conference::AdminParameter, Utils::toString(getMe()->isAdmin()));
+		}
 
 		const std::shared_ptr<Address> &address = getConferenceAddress();
 		const string &confId = address->getUriParamValue(Conference::ConfIdParameter);
@@ -2602,8 +2608,10 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 				dialoutParams->enableVideo(mConfParams->videoEnabled());
 				dialoutParams->enableRealtimeText(false);
 			}
-			// Participant with the focus call is admin
-			dialoutParams->addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
+			if (!!linphone_core_get_add_admin_information_to_contact(getCore()->getCCore())) {
+				// Participant with the focus call is admin
+				dialoutParams->addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
+			}
 			if (mConfParams->chatEnabled()) {
 				dialoutParams->addCustomHeader("Require", "recipient-list-invite");
 			}

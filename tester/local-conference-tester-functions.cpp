@@ -1449,6 +1449,9 @@ void create_conference_base(time_t start_time,
 		focus.registerAsParticipantDevice(michelle);
 		focus.registerAsParticipantDevice(berthe);
 
+		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
+		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
+
 		setup_conference_info_cbs(marie.getCMgr());
 
 		bctbx_list_t *coresList = NULL;

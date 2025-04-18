@@ -2116,6 +2116,10 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 		                                  ConferenceParams::getSecurityLevelAttribute(confParams->getSecurityLevel()));
 	}
 
+	if (!!linphone_core_get_add_admin_information_to_contact(getCCore())) {
+		params.addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
+	}
+
 	if (confParams->chatEnabled()) {
 		if (!mediaEnabled) {
 			params.addCustomContactParameter(Conference::TextParameter);
@@ -2127,7 +2131,6 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 		                                                  AbstractChatRoom::EphemeralMode::AdminManaged));
 		params.addCustomHeader("Ephemeral-Life-Time", to_string(confParams->getChatParams()->getEphemeralLifetime()));
 	}
-	params.addCustomContactParameter("admin", Utils::toString(true));
 
 	if (!participants.empty()) {
 		auto addresses = participants;

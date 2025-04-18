@@ -354,13 +354,6 @@ static void group_chat_room_with_client_removed_added(void) {
 		Address paulineAddr = pauline.getIdentity();
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddr.toC()));
 
-		bctbx_list_t *participants_info = NULL;
-		add_participant_info_to_list(&participants_info, michelle.getCMgr()->identity, LinphoneParticipantRoleSpeaker,
-		                             -1);
-		add_participant_info_to_list(&participants_info, pauline.getCMgr()->identity, LinphoneParticipantRoleSpeaker,
-		                             -1);
-		add_participant_info_to_list(&participants_info, marie.getCMgr()->identity, LinphoneParticipantRoleSpeaker, -1);
-
 		stats initialMarieStats = marie.getStats();
 		stats initialMichelleStats = michelle.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -685,7 +678,6 @@ static void group_chat_room_with_client_removed_added(void) {
 		linphone_account_set_params(focus_account, params);
 		linphone_account_params_unref(params);
 
-		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
 		linphone_address_unref(confAddr);
 		linphone_address_unref(michelleDeviceAddr);
 		bctbx_list_free(coresList);
@@ -2141,13 +2133,6 @@ static void group_chat_room_with_server_database_corruption(void) {
 		Address paulineAddr = pauline.getIdentity();
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddr.toC()));
 
-		bctbx_list_t *participants_info = NULL;
-		add_participant_info_to_list(&participants_info, michelle.getCMgr()->identity, LinphoneParticipantRoleSpeaker,
-		                             -1);
-		add_participant_info_to_list(&participants_info, pauline.getCMgr()->identity, LinphoneParticipantRoleSpeaker,
-		                             -1);
-		add_participant_info_to_list(&participants_info, marie.getCMgr()->identity, LinphoneParticipantRoleSpeaker, -1);
-
 		stats initialMarieStats = marie.getStats();
 		stats initialMichelleStats = michelle.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -2261,7 +2246,6 @@ static void group_chat_room_with_server_database_corruption(void) {
 		linphone_proxy_config_set_conference_factory_uri(config, NULL);
 		linphone_proxy_config_done(config);
 
-		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
 		linphone_address_unref(confAddr);
 		bctbx_list_free(coresList);
 	}
