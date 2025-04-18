@@ -61,7 +61,9 @@ static bool_t wait_for_chat_room_participants(bctbx_list_t *lcs, LinphoneChatRoo
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -1264,7 +1266,9 @@ static void group_chat_room_creation_server(void) {
 
 	// Chloe begins composing a message
 	BC_ASSERT_PTR_NOT_NULL(chloeCr);
-	linphone_chat_room_compose(chloeCr);
+	if (chloeCr) {
+		linphone_chat_room_compose(chloeCr);
+	}
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
 	                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1,
 	                             liblinphone_tester_sip_timeout));

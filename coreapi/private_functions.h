@@ -985,6 +985,9 @@ int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_default_account_index(LinphoneCore *core, int index);
 int linphone_core_get_default_account_index(LinphoneCore *lc);
 
+LINPHONE_PUBLIC bool_t linphone_core_get_add_admin_information_to_contact(const LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_core_set_add_admin_information_to_contact(LinphoneCore *lc, bool_t enabled);
+
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model);
 
 LinphoneVideoDefinition *linphone_video_definition_new(unsigned int width, unsigned int height, const char *name);

@@ -378,7 +378,9 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -404,7 +406,9 @@ bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -5251,7 +5255,6 @@ void on_player_eof(LinphonePlayer *player) {
 LinphoneConferenceServer *linphone_conference_server_new(const char *rc_file, bool_t do_registration) {
 	LinphoneConferenceServer *conf_srv = (LinphoneConferenceServer *)ms_new0(LinphoneConferenceServer, 1);
 	LinphoneCoreManager *lm = (LinphoneCoreManager *)conf_srv;
-	LinphoneProxyConfig *proxy;
 	conf_srv->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_subscription_state_changed(conf_srv->cbs, linphone_subscription_state_change);
 	linphone_core_cbs_set_subscribe_received(conf_srv->cbs, linphone_subscribe_received_internal);
@@ -5263,12 +5266,13 @@ LinphoneConferenceServer *linphone_conference_server_new(const char *rc_file, bo
 	linphone_core_cbs_set_user_data(conf_srv->cbs, conf_srv);
 	conf_srv->reg_state = LinphoneRegistrationNone;
 	linphone_core_manager_init(lm, rc_file, NULL);
-	if (!do_registration) {
-		proxy = linphone_core_get_default_proxy_config(lm->lc);
-		linphone_proxy_config_edit(proxy);
-		linphone_proxy_config_enable_register(proxy, FALSE);
-		linphone_proxy_config_done(proxy);
-	}
+	LinphoneAccount *account = linphone_core_get_default_account(lm->lc);
+	LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(account));
+	linphone_account_params_enable_register(account_params, do_registration);
+	linphone_account_params_set_conference_factory_address(
+	    account_params, linphone_account_params_get_identity_address(account_params));
+	linphone_account_set_params(account, account_params);
+	linphone_account_params_unref(account_params);
 	linphone_core_add_callbacks(lm->lc, conf_srv->cbs);
 	setup_mgr_for_conference(lm, NULL);
 	linphone_core_manager_start(lm, do_registration);

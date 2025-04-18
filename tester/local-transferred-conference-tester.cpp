@@ -521,6 +521,13 @@ static void conference_joined_in_early_media(void) {
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), FALSE);
 		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), FALSE);
 
+		// A B2BUA doesn't have a factory address
+		LinphoneAccount *account = linphone_core_get_default_account(focus.getLc());
+		LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_set_conference_factory_address(account_params, NULL);
+		linphone_account_set_params(account, account_params);
+		linphone_account_params_unref(account_params);
+
 		char *marie_filename = liblinphone_tester_make_unique_file_path("marie_record", "wav");
 		char *marie_recordpath = bc_tester_file(marie_filename);
 		bc_free(marie_filename);

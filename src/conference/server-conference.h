@@ -286,6 +286,7 @@ private:
 	                                bool addToListEventHandler = false) override;
 
 	bool hasAdminLeft() const;
+	bool supportsVideoCapabilities() const;
 
 	void cleanup();
 
