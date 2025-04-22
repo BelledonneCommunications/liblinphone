@@ -64,7 +64,8 @@ extern int apple_main(int argc, char **argv);
 	}
 }
 
-static void *launch_tests(MyApplicationDelegate *obj) {
+static void *launch_tests(void *ptr) {
+	MyApplicationDelegate *obj = (MyApplicationDelegate *)ptr;
 	[obj runLoop];
 	return NULL;
 }
