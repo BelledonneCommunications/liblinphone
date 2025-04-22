@@ -109,6 +109,7 @@ public:
 	void onMsgWrittenInUserDefaults() override;
 
 	SharedCoreState getSharedCoreState() override;
+	bool mWaitingForFileDownload = false;
 
 private:
 	// shared core
@@ -219,6 +220,19 @@ static void on_push_notification_messages_received(LinphoneCore *lc, LinphoneCha
 	}
 }
 
+static void on_push_notification_number_of_file_transfer_changed(LinphoneCore *lc, unsigned int nb_file_download, unsigned int nb_file_upload) {
+	lInfo() << "[push] msg with nb_file_transfer remaining[" << nb_file_download << "]";
+	PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
+	IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
+	if (nb_file_download == 0) {
+		lInfo() << "[push] file transfer ending detected";
+		shared_core_helper->mWaitingForFileDownload = false;
+	} else if (!shared_core_helper->mWaitingForFileDownload) {
+		lInfo() << "[push] file transfer beginning detected";
+		shared_core_helper->mWaitingForFileDownload = true;
+	}
+}
+
 static void on_push_notification_reaction_to_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message, const LinphoneChatMessageReaction *reaction) {
 	const LinphoneAddress *from = NULL;
 	LinphoneAccount *account = NULL;
@@ -270,6 +284,7 @@ void IosSharedCoreHelpers::registerSharedCoreMsgCallback() {
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 		linphone_core_cbs_set_messages_received(cbs, on_push_notification_messages_received);
+		linphone_core_cbs_set_remaining_number_of_file_transfer_changed(cbs, on_push_notification_number_of_file_transfer_changed);
 		linphone_core_cbs_set_new_message_reaction(cbs, on_push_notification_reaction_to_message_received);
 		linphone_core_cbs_set_reaction_removed_private(cbs, on_push_notification_reaction_to_message_removed);
 		linphone_core_add_callbacks(getCore()->getCCore(), cbs);
@@ -660,6 +675,23 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromExecutorCore
 
 	if (!chatMessage) chatMessage = getChatMsgAndUpdateList(callId);
 	lInfo() << "[push] message received? " << (chatMessage ? "yes" : "no");
+
+	bool hasFilesToDownload = mWaitingForFileDownload;
+	if (hasFilesToDownload) {
+		lInfo() << "[push] We still have files to download, wait a bit longer";
+	}
+	while (mWaitingForFileDownload) {
+		linphone_core_iterate(getCore()->getCCore());
+		if (ms_get_cur_time_ms() - mTimer >= 25000) {
+			lWarning() << "[push] timeout waiting for files download, returning before we exceed app extension lifetime";
+			break;
+		}
+		ms_usleep(50000);
+		lInfo() << "[push] waiting for files download...";
+	}
+	if (hasFilesToDownload && !mWaitingForFileDownload) {
+		lInfo() << "[push] files download finished, no need to wait any longer";
+	}
 
 	return chatMessage;
 }
