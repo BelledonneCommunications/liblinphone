@@ -3312,7 +3312,7 @@ LINPHONE_PUBLIC bool_t linphone_core_get_disable_record_on_mute(LinphoneCore *co
 LINPHONE_PUBLIC void linphone_core_set_playback_gain_db(LinphoneCore *core, float level);
 
 /**
- * Get playback gain in db before entering  sound card.
+ * Gets playback gain in db (before entering sound card).
  * @param core #LinphoneCore object @notnil
  * @return The current playback gain
  * @ingroup media_parameters

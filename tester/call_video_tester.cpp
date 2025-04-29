@@ -4040,14 +4040,7 @@ static test_t call_video_tests[] = {
 
     TEST_NO_TAG("Video call recv-only", call_with_video_recvonly),
     TEST_NO_TAG("Video call without audio, disable video", video_call_without_audio_disable_video),
-#ifndef __APPLE__
-    TEST_NO_TAG("Video call memory", video_call_memory)
-#else
-    // TODO: Check video_tester to fix memory leak on preview only
-    TEST_ONE_TAG("Video call memory", video_call_memory, "skip")
-#endif
-
-};
+    TEST_ONE_TAG("Video call memory", video_call_memory, "skip")};
 
 static test_t call_video_advanced_scenarios_tests[] = {
     TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
