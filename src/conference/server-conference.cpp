@@ -836,8 +836,10 @@ int ServerConference::checkServerConfiguration(const shared_ptr<Address> &remote
 
 void ServerConference::confirmCreation() {
 	if ((mState != ConferenceInterface::State::Instantiated) &&
-	    (mState != ConferenceInterface::State::CreationPending)) {
+	    (mState != ConferenceInterface::State::CreationPending) &&
+	    (mState != ConferenceInterface::State::CreationFailed)) {
 		lError() << "Unable to confirm the creation of the conference in state " << mState;
+		return;
 	}
 
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(getMe()->getSession());
@@ -903,6 +905,7 @@ void ServerConference::confirmCreation() {
 		if (!actualConferenceAddress) {
 			lError() << "Something went wrong while creating " << *this
 			         << " because the conference address is not yet known";
+			return;
 		}
 		session->getPrivate()->setConferenceId(actualConferenceAddress->getUriParamValue(Conference::ConfIdParameter));
 

@@ -611,7 +611,6 @@ static void group_chat_room_with_client_removed_added(void) {
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([paulineCr] {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
 		}));
-		linphone_chat_message_unref(msg);
 
 		CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).waitUntil(std::chrono::seconds(3), [] {
 			return false;
@@ -633,6 +632,22 @@ static void group_chat_room_with_client_removed_added(void) {
 			                             initialMichelleStats.number_of_LinphoneSubscriptionTerminated + 1,
 			                             liblinphone_tester_sip_timeout));
 		}
+
+		int marieMsgs = linphone_chat_room_get_history_size(marieCr);
+		linphone_chat_room_delete_message(marieCr, msg);
+		CoreManagerAssert({focus, marie, pauline, michelle, michelle2})
+		    .waitUntil(std::chrono::seconds(10), [&marieCr, &marieMsgs] {
+			    return linphone_chat_room_get_history_size(marieCr) == (marieMsgs - 1);
+		    });
+
+		coresList = bctbx_list_remove(coresList, marie.getLc());
+		// Restart Marie
+		marie.reStart();
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneRegistrationOk, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		linphone_chat_message_unref(msg);
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
@@ -1419,10 +1434,10 @@ static void group_chat_room_with_client_removed_while_stopped_base(bool_t use_re
 		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(michelle.getLc())));
 
 		// Restart Michelle
-		char *uuid = NULL;
-		if (linphone_config_get_string(linphone_core_get_config(michelle.getLc()), "misc", "uuid", NULL)) {
-			uuid = bctbx_strdup(
-			    linphone_config_get_string(linphone_core_get_config(michelle.getLc()), "misc", "uuid", NULL));
+		const char *uuid = linphone_config_get_string(linphone_core_get_config(michelle.getLc()), "misc", "uuid", NULL);
+		char *uuid_copy = NULL;
+		if (uuid) {
+			uuid_copy = bctbx_strdup(uuid);
 		}
 
 		ms_message("%s stops its core", linphone_core_get_identity(michelle.getLc()));
@@ -1509,12 +1524,12 @@ static void group_chat_room_with_client_removed_while_stopped_base(bool_t use_re
 		}
 
 		// Make sure gruu is preserved
-		linphone_config_set_string(linphone_core_get_config(michelle.getLc()), "misc", "uuid", uuid);
+		linphone_config_set_string(linphone_core_get_config(michelle.getLc()), "misc", "uuid", uuid_copy);
 		linphone_core_manager_start(michelle.getCMgr(), TRUE);
 		coresList = bctbx_list_append(coresList, michelle.getLc());
 
-		if (uuid) {
-			bctbx_free(uuid);
+		if (uuid_copy) {
+			bctbx_free(uuid_copy);
 		}
 
 		setup_mgr_for_conference(michelle.getCMgr(), NULL);

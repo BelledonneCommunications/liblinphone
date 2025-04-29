@@ -9083,6 +9083,15 @@ long linphone_core_get_conference_availability_before_start(const LinphoneCore *
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getConferenceAvailabilityBeforeStart();
 }
 
+void linphone_core_set_imdn_resend_period(LinphoneCore *lc, long seconds) {
+	CoreLogContextualizer logContextualizer(lc);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setImdnResendPeriod(seconds);
+}
+
+long linphone_core_get_imdn_resend_period(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getImdnResendPeriod();
+}
+
 void linphone_core_set_conference_expire_period(LinphoneCore *lc, long seconds) {
 	CoreLogContextualizer logContextualizer(lc);
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setConferenceExpirePeriod(seconds);

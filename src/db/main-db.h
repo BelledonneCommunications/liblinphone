@@ -201,6 +201,7 @@ public:
 	void removeConferenceChatMessageReactionEvent(const std::string &messageId,
 	                                              const std::shared_ptr<const Address> &fromAddress);
 
+	void enableAllDeliveryNotificationRequired();
 	void disableDeliveryNotificationRequired(const std::shared_ptr<const EventLog> &eventLog);
 	void disableDisplayNotificationRequired(const std::shared_ptr<const EventLog> &eventLog);
 

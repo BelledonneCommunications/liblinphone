@@ -58,6 +58,7 @@ public:
 		char *roDbPath = bc_tester_res(db_file);
 		char *rwDbPath = bc_tester_file(core_db);
 		BC_ASSERT_FALSE(liblinphone_tester_copy_file(roDbPath, rwDbPath));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(mCoreManager->lc));
 		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", rwDbPath);
 		linphone_core_enable_gruu_in_conference_address(mCoreManager->lc, keep_gruu);
 		linphone_config_set_bool(linphone_core_get_config(mCoreManager->lc), "misc", "unify_chatroom_address",

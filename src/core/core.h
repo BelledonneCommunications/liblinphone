@@ -233,6 +233,9 @@ public:
 	void incrementRemainingDownloadFileCount();
 	void decrementRemainingDownloadFileCount();
 
+	void setImdnResendPeriod(long seconds);
+	long getImdnResendPeriod() const;
+
 	// ---------------------------------------------------------------------------
 	// Conference.
 	// ---------------------------------------------------------------------------

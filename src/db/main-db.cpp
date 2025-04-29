@@ -5561,6 +5561,10 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromCallId(const std::stri
 list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered() const {
 #ifdef HAVE_DB_STORAGE
 	// Keep chat_room_id at the end of the query !!!
+	const std::string timediffExpression = (getBackend() == MainDb::Backend::Sqlite3)
+	                                           ? "(julianday(time) - julianday(:maxExpireTime)) * 24 * 60 * 60"
+	                                           : "TIMESTAMPDIFF(SECOND, time, :maxExpireTime)";
+
 	static const string query =
 	    "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, "
 	    "to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, "
@@ -5576,7 +5580,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered() 
 	    "participant_sip_address_id"
 	    " LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
 	    " WHERE conference_event_view.id IN (SELECT event_id FROM conference_chat_message_event WHERE "
-	    "delivery_notification_required <> 0 AND direction = :direction)";
+	    "delivery_notification_required <> 0 AND direction = :direction AND CAST(" +
+	    timediffExpression + " As Integer) >= 0)";
 
 	/*
 	DurationLogger durationLogger(
@@ -5591,7 +5596,12 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered() 
 
 		list<shared_ptr<ChatMessage>> chatMessages;
 		const int &direction = int(ChatMessage::Direction::Incoming);
-		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(direction));
+		// Default to 10 days
+		long imdnResendPeriod = getCore()->getImdnResendPeriod();
+		time_t minImdnTime = (imdnResendPeriod < 0) ? 0 : (ms_time(NULL) - imdnResendPeriod);
+		auto expiryTime = d->dbSession.getTimeWithSociIndicator(minImdnTime);
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(direction),
+		                                soci::use(expiryTime.first, expiryTime.second));
 
 		for (const auto &row : rows) {
 			// chat_room_id is the last element of row
@@ -6037,6 +6047,34 @@ void MainDb::removeConferenceChatMessageReactionEvent(const string &messageId,
 }
 
 // -----------------------------------------------------------------------------
+
+void MainDb::enableAllDeliveryNotificationRequired() {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+		soci::session *session = d->dbSession.getBackendSession();
+		soci::rowset<soci::row> eventRows = (session->prepare << "SELECT event_id FROM conference_chat_message_event");
+		const int &state = int(ChatMessage::State::Delivered);
+		for (const auto &eventRow : eventRows) {
+			const long long eventId = d->dbSession.resolveId(eventRow, 0);
+			*session << "UPDATE conference_chat_message_event SET delivery_notification_required = 1, state = "
+			            ":messageState WHERE event_id = :eventId",
+			    soci::use(state), soci::use(eventId);
+			soci::rowset<soci::row> participantRows =
+			    (session->prepare << "SELECT participant_sip_address_id FROM conference_chat_message_event WHERE "
+			                         "event_id = :eventId",
+			     soci::use(eventId));
+			for (const auto &participantRow : participantRows) {
+				const long long participantId = d->dbSession.resolveId(participantRow, 0);
+				*session << "UPDATE chat_message_participant SET state = :messageState WHERE (event_id = :eventId) AND "
+				            "(participant_sip_address_id = :participantId)",
+				    soci::use(state), soci::use(eventId), soci::use(participantId);
+			}
+		}
+		tr.commit();
+	};
+#endif
+}
 
 void MainDb::disableDeliveryNotificationRequired(const std::shared_ptr<const EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE

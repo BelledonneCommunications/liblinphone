@@ -825,7 +825,7 @@ void ChatMessagePrivate::setChatRoom(const shared_ptr<AbstractChatRoom> &chatRoo
 			if (localAddress) {
 				lInfo() << *chatRoom << " with ID " << conferenceId
 				        << " is not a basic chatroom therefore set the local address of message [" << q
-				        << "] to the account contact address " << *localAddress;
+				        << "] to the contact address " << *localAddress << " of " << *account;
 			}
 		}
 	}
@@ -1496,7 +1496,9 @@ void ChatMessagePrivate::send() {
 		if (!encryptionPrevented) {
 			EncryptionChatMessageModifier ecmm;
 			ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
-			if (result == ChatMessageModifier::Result::Error) return;
+			if (result == ChatMessageModifier::Result::Error) {
+				return;
+			}
 		} else {
 			lInfo() << "[server] Encryption has been prevented, skipping this modifier";
 		}

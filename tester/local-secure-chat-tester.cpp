@@ -1051,6 +1051,133 @@ static void secure_one_to_one_chat_room_with_client_removed_from_database(void) 
 	}
 }
 
+static void secure_one_to_one_chat_room_with_client_sending_imdn_on_restart(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		bool_t encrypted = TRUE;
+		linphone_core_enable_lime_x3dh(focus.getLc(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
+
+		stats initialMarieStats = marie.getStats();
+		stats initialPaulineStats = pauline.getStats();
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+
+		if (encrypted) {
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
+		}
+
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+
+		// Marie creates a new group chat room
+		const char *initialSubject = "Colleagues";
+		LinphoneChatRoom *marieCr =
+		    create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses,
+		                                 initialSubject, encrypted, LinphoneChatRoomEphemeralModeDeviceManaged);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(
+		    coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+		int nbMessages = 10;
+		std::string messageTextBase = "Hello everybody - attempt #";
+		for (int idx = 0; idx < nbMessages; idx++) {
+			std::string messageText(messageTextBase + std::to_string(idx));
+			LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(paulineCr, "Hello everybody");
+			linphone_chat_message_send(msg);
+
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([msg] {
+				return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDeliveredToUser);
+			}));
+			linphone_chat_message_unref(msg);
+			LinphoneChatMessage *marieLastMsg = marie.getStats().last_received_chat_message;
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([marieLastMsg] {
+				return (linphone_chat_message_get_state(marieLastMsg) == LinphoneChatMessageStateDeliveredToUser);
+			}));
+		}
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), nbMessages, int, " %i");
+
+		CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(2), [] { return false; });
+
+		ms_message("Restart %s's core after setting all messages to the Delivered state and ensuring that the delivery "
+		           "IMDN will be sent upon restart",
+		           linphone_core_get_identity(marie.getLc()));
+		// Simulate that chat message are still in state Delivered when restarting the core and the Delivery IMDN has
+		// not been sent yet
+		auto &paulineMainDb = L_GET_PRIVATE_FROM_C_OBJECT(pauline.getLc())->mainDb;
+		paulineMainDb->enableAllDeliveryNotificationRequired();
+		auto &marieMainDb = L_GET_PRIVATE_FROM_C_OBJECT(marie.getLc())->mainDb;
+		marieMainDb->enableAllDeliveryNotificationRequired();
+
+		// Restart Marie
+		marie.reStart();
+
+		const std::initializer_list<std::reference_wrapper<ClientConference>> clients{marie, pauline};
+		for (const ClientConference &client : clients) {
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&client, &nbMessages] {
+				const auto &chatRooms = client.getCore().getChatRooms();
+				if (chatRooms.size() != 1) {
+					return false;
+				}
+				for (const auto &chatRoom : chatRooms) {
+					const auto &events = chatRoom->getHistoryRange(0, 0, MainDb::Filter::ConferenceChatMessageFilter);
+					if (events.size() != static_cast<size_t>(nbMessages)) {
+						return false;
+					}
+					for (const auto &event : events) {
+						const auto &chatMessage =
+						    static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
+						if (!chatMessage) {
+							return false;
+						}
+						if (chatMessage->getState() != ChatMessage::State::DeliveredToUser) {
+							return false;
+						}
+					}
+				}
+				return true;
+			}));
+		}
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			for (auto participant : chatRoom->getParticipants()) {
+				//  force deletion by removing devices
+				auto participantAddress = participant->getAddress();
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
+			}
+		}
+
+		// wait until chatroom is deleted server side
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
+			return focus.getCore().getChatRooms().size() == 0;
+		}));
+
+		// wait a bit longer to detect side effect if any
+		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
+
+		// to avoid creation attempt of a new chatroom
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
+		bctbx_list_free(coresList);
+	}
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_secure_chat_tests[] = {
@@ -1077,6 +1204,9 @@ static test_t local_conference_secure_chat_tests[] = {
     TEST_ONE_TAG("Secure one-to-one chat created twice",
                  LinphoneTest::secure_one_to_one_chat_room_created_twice,
                  "LeaksMemory"), /* because of network up and down */
+    TEST_ONE_TAG("Secure one-to-one chat with client sending IMDN on restart",
+                 LinphoneTest::secure_one_to_one_chat_room_with_client_sending_imdn_on_restart,
+                 "LeaksMemory"),
     TEST_ONE_TAG("Secure one-to-one chat with client removed from database",
                  LinphoneTest::secure_one_to_one_chat_room_with_client_removed_from_database,
                  "LeaksMemory")};

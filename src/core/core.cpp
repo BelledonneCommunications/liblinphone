@@ -1899,6 +1899,18 @@ long Core::getConferenceAvailabilityBeforeStart() const {
 	                                       "conference_available_before_period", -1);
 }
 
+void Core::setImdnResendPeriod(long seconds) {
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	linphone_config_set_int64(config, "chat", "imdn_resend_period", seconds);
+	lInfo() << "Set IMDN resend period to " << seconds << " seconds";
+}
+
+long Core::getImdnResendPeriod() const {
+	// Default to 10 days
+	return (long)linphone_config_get_int64(linphone_core_get_config(getCCore()), "chat", "imdn_resend_period",
+	                                       10 * 24 * 60 * 60);
+}
+
 void Core::setConferenceExpirePeriod(long seconds) {
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	linphone_config_set_int64(config, "misc", "conference_expire_period", seconds);

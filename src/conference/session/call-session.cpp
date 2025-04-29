@@ -1973,9 +1973,8 @@ const std::shared_ptr<Address> CallSession::getContactAddress() const {
 	} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && account && accountContactAddress) {
 		contactAddress = accountContactAddress->clone()->toSharedPtr();
 	} else {
-		lInfo() << "No contact address from op or account for at this time call session " << this << " (local address "
-		        << *getLocalAddress() << " remote address "
-		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ").";
+		lInfo() << "No contact address from op or account for " << *this << " (local address " << *getLocalAddress()
+		        << " remote address " << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ").";
 	}
 	return contactAddress;
 }
@@ -2192,6 +2191,9 @@ void CallSession::fillParametersIntoContactAddress(Address &contactAddress) cons
 
 void CallSession::updateContactAddressInOp() {
 	L_D();
+	if (!d->op) {
+		return;
+	}
 	Address contactAddress;
 	const auto &account = d->getDestAccount();
 	if (account) {
@@ -2212,9 +2214,7 @@ void CallSession::updateContactAddressInOp() {
 
 	fillParametersIntoContactAddress(contactAddress);
 	lInfo() << "Updating contact address for session " << this << " to " << contactAddress;
-	if (d->op) {
-		d->op->setContactAddress(contactAddress.getImpl());
-	}
+	d->op->setContactAddress(contactAddress.getImpl());
 }
 
 void CallSession::addPendingAction(std::function<LinphoneStatus()> f) {

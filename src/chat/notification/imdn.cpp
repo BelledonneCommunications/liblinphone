@@ -114,8 +114,8 @@ bool Imdn::isCurrentlySendingImdnMessages() {
 	// This check is here ensure that we avoid blocking the stopping of the core due to IMDNs from previous accounts
 	// that are still in the message data base
 	if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
-		LinphoneProxyConfig *cfg = getRelatedProxyConfig();
-		if (!cfg || linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
+		const auto account = getRelatedAccount();
+		if (!account || account->getState() != LinphoneRegistrationOk) {
 			return false;
 		}
 	}
@@ -134,10 +134,10 @@ void Imdn::onLinphoneCoreStop() {
 	sentImdnMessages.clear();
 }
 
-void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
-                                      LinphoneRegistrationState state,
-                                      BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk && cfg == getRelatedProxyConfig()) {
+void Imdn::onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+                                             LinphoneRegistrationState state,
+                                             BCTBX_UNUSED(const std::string &message)) {
+	if (state == LinphoneRegistrationOk && account == getRelatedAccount()) {
 		// When we are registered to the proxy, then send pending notification if any.
 		sentImdnMessages.clear();
 		send();
@@ -145,7 +145,7 @@ void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
 }
 
 void Imdn::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
-	if (sipNetworkReachable && getRelatedProxyConfig() == nullptr) {
+	if (sipNetworkReachable && !getRelatedAccount()) {
 		// When the SIP network gets up and this chatroom isn't related to any proxy configuration, retry notification
 		sentImdnMessages.clear();
 		send();
@@ -367,14 +367,12 @@ bool Imdn::aggregationEnabled() const {
 	return chatRoom->canHandleCpim() && chatRoom->canHandleMultipart() && aggregationAllowed;
 }
 
-LinphoneProxyConfig *Imdn::getRelatedProxyConfig() {
+const std::shared_ptr<Account> Imdn::getRelatedAccount() {
 	const auto &addr = chatRoom->getLocalAddress();
 	if (!addr) {
 		return NULL;
 	}
-	LinphoneProxyConfig *cfg =
-	    linphone_core_lookup_proxy_by_identity_strict(chatRoom->getCore()->getCCore(), addr->toC());
-	return cfg;
+	return chatRoom->getCore()->findAccountByIdentityAddress(addr);
 }
 
 void Imdn::send() {
@@ -385,12 +383,12 @@ void Imdn::send() {
 
 	try {
 		if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
-			LinphoneProxyConfig *cfg = getRelatedProxyConfig();
-			if (!cfg) {
+			const auto account = getRelatedAccount();
+			if (!account) {
 				lInfo() << "No matching proxy config found, will wait to send pending IMDNs";
 				return;
-			} else if (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
-				lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
+			} else if (account->getState() != LinphoneRegistrationOk) {
+				lInfo() << *account << " is not registered, will wait to send pending IMDNs";
 				return;
 			}
 
@@ -412,7 +410,7 @@ void Imdn::send() {
 	}
 	for (const auto &message : imdnMessages) {
 		if (message->getPrivate()->getContents().empty()) {
-			lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
+			lWarning() << "Not sending IMDN delivery/displayed message [" << message << "] as it contains no content";
 		} else {
 			sentImdnMessages.push_back(message);
 			message->getChatRoom()->sendChatMessage(message);

@@ -7381,6 +7381,24 @@ LINPHONE_PUBLIC void linphone_core_set_conference_availability_before_start(Linp
 LINPHONE_PUBLIC long linphone_core_get_conference_availability_before_start(const LinphoneCore *core);
 
 /**
+ * Set the IMDN resend period. It is the number of seconds after the first attempt to send, an IMDN message is sent
+ * again on startup if failed earlier on
+ * @param core the #LinphoneCore. @notnil
+ * @param seconds number of seconds after the first attempt to send an IMDN, it is retried at startup. A negative
+ * value means all IMDNs are resent at startup.
+ * @ingroup chatroom
+ */
+LINPHONE_PUBLIC void linphone_core_set_imdn_resend_period(LinphoneCore *core, long seconds);
+
+/**
+ * Gets the IMDN resend period
+ * @param core the #LinphoneCore. @notnil
+ * @return the number of second to resend an failed IMDN message
+ * @ingroup chatroom
+ **/
+LINPHONE_PUBLIC long linphone_core_get_imdn_resend_period(const LinphoneCore *core);
+
+/**
  * Set the conference expire period. It is the number of seconds after the end time or the last participant joined -
  * whichever is later - the conference cannot be joined anymore
  * @param core the #LinphoneCore. @notnil

@@ -64,9 +64,9 @@ public:
 
 	// CoreListener
 	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged(LinphoneProxyConfig *cfg,
-	                                LinphoneRegistrationState state,
-	                                const std::string &message) override;
+	void onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+	                                       LinphoneRegistrationState state,
+	                                       const std::string &message) override;
 	void onGlobalStateChanged(LinphoneGlobalState state) override;
 	bool aggregationEnabled() const;
 	void onLinphoneCoreStop();
@@ -76,7 +76,7 @@ public:
 	static bool isError(const std::shared_ptr<ChatMessage> &chatMessage);
 
 private:
-	LinphoneProxyConfig *getRelatedProxyConfig();
+	const std::shared_ptr<Account> getRelatedAccount();
 	static int timerExpired(void *data, unsigned int revents);
 
 	void send();

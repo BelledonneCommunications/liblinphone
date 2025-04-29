@@ -72,7 +72,7 @@ void lime_delete_DRSessions(const char *limedb, const char *requestOption) {
 	} catch (std::exception &e) { // swallow any error on DB
 		lWarning() << "Cannot delete DRSessions in database " << limedb << ". Error is " << e.what();
 	}
-#endif
+#endif // HAVE_SOCI
 }
 
 void lime_setback_usersUpdateTs(const char *limedb, int days) {
@@ -85,7 +85,7 @@ void lime_setback_usersUpdateTs(const char *limedb, int days) {
 		lWarning() << "Cannot setback in time the lime users update ts on database " << limedb << ". Error is "
 		           << e.what();
 	}
-#endif
+#endif // HAVE_SOCI
 }
 uint64_t lime_get_userUpdateTs(const char *limedb) {
 	uint64_t ret = 0;
@@ -97,7 +97,7 @@ uint64_t lime_get_userUpdateTs(const char *limedb) {
 	} catch (std::exception &e) { // swallow any error on DB
 		lWarning() << "Cannot fetch the lime users update ts on database " << limedb << ". Error is " << e.what();
 	}
-#endif
+#endif // HAVE_SOCI
 	return ret;
 }
 
@@ -127,7 +127,7 @@ char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu, uint8_t curveId) {
 		           << ". Error is " << e.what();
 	}
 #endif // HAVE_LIME_X3DH
-#endif
+#endif // HAVE_SOCI
 	return ret;
 }
 
@@ -140,7 +140,7 @@ void delete_all_in_zrtp_table(const char *zrtpdb) {
 	} catch (std::exception &e) { // swallow any error on DB
 		lWarning() << "Cannot delete zrtp in database " << zrtpdb << ". Error is " << e.what();
 	}
-#endif
+#endif // HAVE_SOCI
 }
 
 #ifndef _MSC_VER
