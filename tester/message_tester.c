@@ -2053,6 +2053,67 @@ static void transfer_message_auto_download_3(void) {
 	transfer_message_base(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, 1, FALSE, FALSE);
 }
 
+static void transfer_message_auto_download_failure(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	char *filename = random_filename("sintel_trailer_opus_h264", "mkv");
+	const char *filepath = "sounds/sintel_trailer_opus_h264.mkv";
+	bctbx_list_t *participants = NULL;
+	LinphoneChatRoom *chat_room;
+	LinphoneConferenceParams *params;
+	LinphoneChatParams *chat_params;
+	LinphoneChatMessage *recv_msg, *sent_msg;
+
+	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
+	linphone_core_set_max_size_for_auto_download_incoming_files(pauline->lc, 0);
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+	participants = bctbx_list_append(participants, pauline->identity);
+
+	/* create a chatroom on Marie's side */
+	params = linphone_core_create_conference_params_2(marie->lc, NULL);
+	linphone_conference_params_enable_chat(params, TRUE);
+	chat_params = linphone_conference_params_get_chat_params(params);
+	linphone_conference_params_enable_group(params, FALSE);
+	linphone_chat_params_set_backend(chat_params, LinphoneChatRoomBackendBasic);
+	chat_room = linphone_core_create_chat_room_7(marie->lc, params, participants);
+	bctbx_list_free(participants);
+	linphone_conference_params_unref(params);
+	BC_ASSERT_PTR_NOT_NULL(chat_room);
+
+	/* create a file transfer msg */
+	sent_msg = create_file_transfer_message_from_file(chat_room, filepath, filename);
+	ms_free(filename);
+	LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_add_callbacks(sent_msg, cbs);
+	linphone_chat_message_send(sent_msg);
+	linphone_chat_message_cbs_unref(cbs);
+
+	belle_http_provider_set_recv_error(linphone_core_get_http_provider(pauline->lc), -1);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1, 10000));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%i");
+	recv_msg = pauline->stat.last_received_chat_message;
+	if (BC_ASSERT_PTR_NOT_NULL(recv_msg)) {
+	}
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 0, int, "%i");
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
+	                              &pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, 10000));
+	// as file transfer is going to fail, the message shall return to Delivered state.
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1, 10000));
+	BC_ASSERT_TRUE(
+	    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDeliveredToUser, 1, 10000));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(recv_msg), LinphoneChatMessageStateDelivered, int, "%i");
+	linphone_chat_room_unref(chat_room);
+	linphone_chat_message_unref(sent_msg);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void transfer_message_auto_download_existing_file(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -2062,11 +2123,6 @@ static void transfer_message_auto_download_existing_file(void) {
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
-
-	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
-		ms_warning("Test skipped, database storage is not available");
-		return;
-	}
 
 	LinphoneChatRoom *chat_room;
 	LinphoneChatMessage *msg;
@@ -4541,7 +4597,7 @@ void text_message_crappy_to_header(void) {
 	crappy_to_header(FALSE);
 }
 
-test_t message_tests[] = {
+static test_t message_tests[] = {
     TEST_NO_TAG("File transfer content", file_transfer_content),
     TEST_NO_TAG("Message with 2 attachments", message_with_two_attachments),
     TEST_NO_TAG("Create two basic chat rooms with same remote", create_two_basic_chat_room_with_same_remote),
@@ -4589,6 +4645,7 @@ test_t message_tests[] = {
     TEST_NO_TAG("Transfer message with 2 files", transfer_message_2_files),
     TEST_NO_TAG("Transfer message auto download", transfer_message_auto_download),
     TEST_NO_TAG("Transfer message auto download 2", transfer_message_auto_download_2),
+    TEST_NO_TAG("Transfer message auto download failure", transfer_message_auto_download_failure),
     TEST_NO_TAG("Transfer message auto download enabled but file too large", transfer_message_auto_download_3),
     TEST_NO_TAG("Transfer message auto download existing file", transfer_message_auto_download_existing_file),
     TEST_NO_TAG("Transfer messages same file auto download",
@@ -4654,7 +4711,7 @@ test_t message_tests[] = {
     TEST_NO_TAG("Transfer success after destroying chatroom", file_transfer_success_after_destroying_chatroom),
     TEST_NO_TAG("Migration from messages db", migration_from_messages_db)};
 
-test_t rtt_message_tests[] = {
+static test_t rtt_message_tests[] = {
     TEST_ONE_TAG("Real Time Text message", real_time_text_message, "RTT"),
     TEST_ONE_TAG("Real Time Text message with existing basic chat room",
                  real_time_text_message_with_existing_basic_chat_room,
@@ -4680,7 +4737,8 @@ test_t rtt_message_tests[] = {
     TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT")};
 
 #ifdef HAVE_BAUDOT
-test_t baudot_message_tests[] = {
+
+static test_t baudot_message_tests[] = {
     TEST_ONE_TAG("Baudot text message US", baudot_text_message_us, "Baudot"),
     TEST_ONE_TAG("Baudot text message Europe", baudot_text_message_europe, "Baudot"),
     TEST_ONE_TAG("Baudot text message voice switch to US TTY", baudot_text_message_voice_switch_tty_us, "Baudot"),

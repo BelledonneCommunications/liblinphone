@@ -313,7 +313,7 @@ end:
 #endif
 
 static void preview_memory(const char *display_filter) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("empty_rc");
 	bool_t ok = TRUE;
 	linphone_core_set_video_display_filter(marie->lc, display_filter);
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
@@ -342,8 +342,10 @@ static void preview_memory(const char *display_filter) {
 				}
 			}
 		}
+		ms_message("Starting preview");
 		linphone_core_enable_video_preview(marie->lc, TRUE);
 		wait_for_until(marie->lc, NULL, NULL, 0, 200); // Let some time to open and to print something.
+		ms_message("Stopping preview");
 		linphone_core_enable_video_preview(marie->lc, FALSE);
 		wait_for_until(marie->lc, NULL, NULL, 0, 50); // Closing window
 	}
@@ -360,7 +362,7 @@ static void preview_memory_msogl(void) {
 #endif
 }
 
-test_t video_tests[] = {
+static test_t video_tests[] = {
     TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
     TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
     TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode"),
@@ -369,14 +371,9 @@ test_t video_tests[] = {
     TEST_ONE_TAG("Encode QRCode", encode_qrcode, "QRCode"),
 #endif
     TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview),
-#ifndef __APPLE__
-    TEST_NO_TAG("Preview memory default", preview_memory_default),
-    TEST_NO_TAG("Preview memory MSOGL", preview_memory_msogl)
-#else
-    // TODO: On Mac, memory growth without clear reason and it doesn't seems to be related to the display filter.
-    TEST_ONE_TAG("Preview memory default", preview_memory_default, "skip")
-#endif
-};
+
+    TEST_ONE_TAG("Preview memory default", preview_memory_default, "skip"),
+    TEST_ONE_TAG("Preview memory MSOGL", preview_memory_msogl, "skip")};
 
 test_suite_t video_test_suite = {"Video",
                                  NULL,

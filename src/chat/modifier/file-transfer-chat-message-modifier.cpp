@@ -926,6 +926,7 @@ void FileTransferChatMessageModifier::onDownloadFailed() {
 		lError() << "Auto download failed for message [" << message << "]";
 		message->getPrivate()->doNotRetryAutoDownload();
 		releaseHttpRequest();
+		message->getPrivate()->setAutoFileTransferDownloadInProgress(false);
 		message->getPrivate()->handleAutoDownload();
 	} else {
 		const auto &meAddress = message->getMeAddress();
