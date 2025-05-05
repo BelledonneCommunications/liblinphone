@@ -5698,10 +5698,9 @@ end:
 		for (const bctbx_list_t *chatRoomIt = chatRooms; chatRoomIt != NULL; chatRoomIt = bctbx_list_next(chatRoomIt)) {
 			LinphoneChatRoom *chatRoom = (LinphoneChatRoom *)bctbx_list_get_data(chatRoomIt);
 			LinphoneChatRoomSecurityLevel security_level = LinphoneChatRoomSecurityLevelClearText;
-			LinphoneChatRoomBackend backend = LinphoneChatRoomBackendBasic;
+			LinphoneChatRoomBackend backend = LinphoneChatRoomBackendFlexisipChat;
 			LinphoneChatRoomEncryptionBackend encryption_backend = LinphoneChatRoomEncryptionBackendNone;
 			if (!!enable_lime) {
-				backend = LinphoneChatRoomBackendFlexisipChat;
 				encryption_backend = LinphoneChatRoomEncryptionBackendLime;
 				security_level = LinphoneChatRoomSecurityLevelEncrypted;
 			}
@@ -5710,12 +5709,7 @@ end:
 			const LinphoneChatRoomParams *params = linphone_chat_room_get_current_params(chatRoom);
 			BC_ASSERT_PTR_NOT_NULL(params);
 			if (params) {
-				LinphoneChatRoomBackend actual_backend = backend;
-				if (!!linphone_chat_room_params_group_enabled(params)) {
-					actual_backend = LinphoneChatRoomBackendFlexisipChat;
-				}
-				BC_ASSERT_EQUAL(linphone_chat_room_params_get_backend(params), actual_backend, LinphoneChatRoomBackend,
-				                "%i");
+				BC_ASSERT_EQUAL(linphone_chat_room_params_get_backend(params), backend, LinphoneChatRoomBackend, "%i");
 				BC_ASSERT_EQUAL(!!linphone_chat_room_params_encryption_enabled(params), !!enable_lime, int, "%0d");
 				BC_ASSERT_EQUAL(linphone_chat_room_params_get_encryption_backend(params), encryption_backend,
 				                LinphoneChatRoomEncryptionBackend, "%i");

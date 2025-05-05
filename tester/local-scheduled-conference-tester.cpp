@@ -837,6 +837,7 @@ static void conference_with_participants_late_except_one(void) {
 		CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
 		    .waitUntil(chrono::seconds(nortp_timeout + 1), [] { return false; });
 
+		stats pauline_stat = pauline.getStats();
 		for (auto mgr : members) {
 			if (mgr != pauline.getCMgr()) {
 				LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
@@ -854,7 +855,6 @@ static void conference_with_participants_late_except_one(void) {
 			}
 		}
 
-		stats pauline_stat = pauline.getStats();
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));

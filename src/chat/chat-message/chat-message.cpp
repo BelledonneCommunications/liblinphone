@@ -1284,16 +1284,20 @@ void ChatMessagePrivate::send() {
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	shared_ptr<Core> core = q->getCore();
 	// Postpone the sending of a message through an encrypted chatroom when we don't know yet the full list of
-	// participants. However, ff the core is shutting down, the message should be sent anyway even though we are
+	// participants. However, if the core is shutting down, the message should be sent anyway even though we are
 	// potentially send it to an incomplete list of devices
 	LinphoneGlobalState coreGlobalState = linphone_core_get_global_state(core->getCCore());
+	const auto &chatBackend = chatRoomParams->getChatParams()->getBackend();
+	const auto conference = chatRoom->getConference();
+	const auto subscriptionUnderway = conference ? conference->isSubscriptionUnderWay() : false;
 	if ((coreGlobalState != LinphoneGlobalOff) && (coreGlobalState != LinphoneGlobalShutdown) &&
-	    chatRoomParams->getChatParams()->isEncrypted() &&
-	    (chatRoom->getConference()->isSubscriptionUnderWay() ||
-	     (chatRoomState == ConferenceInterface::State::Instantiated) ||
-	     (chatRoomState == ConferenceInterface::State::CreationPending))) {
-		lInfo() << "Message " << q << " in chat room " << chatRoom->getConferenceId()
-		        << " is being sent while the subscription is underway or the conference is not yet full created";
+	    (chatBackend == ChatParams::Backend::FlexisipChat) &&
+	    (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
+		lInfo() << "Message " << q << " in chat room [" << chatRoom << "] " << chatRoom->getConferenceId()
+		        << " is being sent while the subscription is underway (actually subscription is"
+		        << std::string(subscriptionUnderway ? " " : " not ")
+		        << "underway) or the chat room is not in the created state (actual state "
+		        << Utils::toString(chatRoomState) << ")";
 		chatRoom->addPendingMessage(q->getSharedFromThis());
 		return;
 	}

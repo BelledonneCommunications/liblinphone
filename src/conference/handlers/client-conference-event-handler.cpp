@@ -817,8 +817,22 @@ bool ClientConferenceEventHandler::notAlreadySubscribed() const {
 
 bool ClientConferenceEventHandler::needToSubscribe() const {
 	auto conference = getConference();
-	return notAlreadySubscribed() && !managedByListEventhandler &&
-	       (conference && (conference->getState() != ConferenceInterface::State::CreationFailed));
+	auto conferenceStateOk = false;
+	if (conference) {
+		auto conferenceState = conference->getState();
+		conferenceStateOk = (conferenceState == ConferenceInterface::State::CreationPending) ||
+		                    (conferenceState == ConferenceInterface::State::Created);
+	}
+	return notAlreadySubscribed() && !managedByListEventhandler && conferenceStateOk;
+}
+
+void ClientConferenceEventHandler::subscribeStateChangedCb(LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	if (state == LinphoneSubscriptionError) {
+		auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+		auto cbs = ev->getCurrentCallbacks();
+		ClientConferenceEventHandler *handler = static_cast<ClientConferenceEventHandler *>(cbs->getUserData());
+		handler->setInitialSubscriptionUnderWayFlag(false);
+	}
 }
 
 bool ClientConferenceEventHandler::subscribe() {
@@ -830,7 +844,8 @@ bool ClientConferenceEventHandler::subscribe() {
 	auto conference = getConference();
 	if (!conference) return false; // Conference has not been set
 	auto account = conference->getAccount();
-	if (!account || (account->getState() != LinphoneRegistrationOk)) {
+	if (!account ||
+	    ((account->getState() != LinphoneRegistrationRefreshing) && (account->getState() != LinphoneRegistrationOk))) {
 		return false;
 	}
 
@@ -839,6 +854,10 @@ bool ClientConferenceEventHandler::subscribe() {
 	try {
 		ev = dynamic_pointer_cast<EventSubscribe>(
 		    (new EventSubscribe(getCore(), subscribeToHeader, account, "conference", 600))->toSharedPtr());
+		shared_ptr<EventCbs> cbs = EventCbs::create();
+		cbs->setUserData(this);
+		cbs->subscribeStateChangedCb = subscribeStateChangedCb;
+		ev->addCallbacks(cbs);
 		ev->getOp()->setFromAddress(localAddress->getImpl());
 		setInitialSubscriptionUnderWayFlag(true);
 		const string &lastNotifyStr = Utils::toString(getLastNotify());

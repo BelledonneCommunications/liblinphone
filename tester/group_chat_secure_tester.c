@@ -2431,6 +2431,14 @@ static void group_chat_lime_x3dh_verify_sas_before_message(void) {
 	}
 }
 
+static void aggregated_imdns_in_secure_group_chat(void) {
+	if (liblinphone_tester_is_lime_PQ_available()) {
+		aggregated_imdns_in_group_chat_base(C25519K512);
+	} else {
+		aggregated_imdns_in_group_chat_base(C25519);
+	}
+}
+
 static void group_chat_lime_x3dh_reject_sas_before_message_curve(const LinphoneTesterLimeAlgo curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -6004,6 +6012,7 @@ test_t secure_message_tests[] = {
     TEST_ONE_TAG("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH"),
     TEST_ONE_TAG(
         "LIME X3DH message with composing", group_chat_lime_x3dh_send_encrypted_message_with_composing, "LimeX3DH"),
+    TEST_ONE_TAG("LIME X3DH aggregated IMDNs in group chat", aggregated_imdns_in_secure_group_chat, "LimeX3DH"),
     TEST_ONE_TAG(
         "LIME X3DH message with response", group_chat_lime_x3dh_send_encrypted_message_with_response, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH message with response and composing",

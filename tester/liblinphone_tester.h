@@ -1214,6 +1214,8 @@ void set_lime_server_and_curve_list_tls(const LinphoneTesterLimeAlgo curveId,
                                         bool_t tls_auth_server,
                                         bool_t required);
 
+void aggregated_imdns_in_group_chat_base(const LinphoneTesterLimeAlgo curveId);
+
 bool is_filepath_encrypted(const char *filepath);
 typedef struct _LinphoneAccountCreatorStats {
 	int cb_done;

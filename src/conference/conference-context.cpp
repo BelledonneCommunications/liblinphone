@@ -51,29 +51,32 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 		if (mParams->chatEnabled() != otherParams->chatEnabled()) return false;
 		if (mParams->getSecurityLevel() != otherParams->getSecurityLevel()) return false;
 
+		const auto &thisSubject = mParams->getUtf8Subject();
+		const auto &otherSubject = otherParams->getUtf8Subject();
+
+		bool checkSubject = false;
+
 		if (mParams->audioEnabled() || mParams->videoEnabled()) {
-			if (!mParams->getUtf8Subject().empty() &&
-			    (mParams->getUtf8Subject().compare(otherParams->getUtf8Subject()) != 0))
-				return false;
+			checkSubject = true;
 			if (mParams->localParticipantEnabled() != otherParams->localParticipantEnabled()) return false;
 		}
 
 		if (mParams->chatEnabled()) {
-			if (mParams->getChatParams()->getBackend() != otherParams->getChatParams()->getBackend()) return false;
+			const auto &thisBackend = mParams->getChatParams()->getBackend();
+			if (thisBackend != otherParams->getChatParams()->getBackend()) return false;
 
 			if (mParams->isGroup() != otherParams->isGroup()) return false;
 
-			if (mParams->isGroup() &&
-			    (otherParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::Basic))
-				return false;
+			if (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::Basic)) return false;
 
 			if (mParams->getChatParams()->isEncrypted() != otherParams->getChatParams()->isEncrypted()) return false;
 
 			// Subject doesn't make any sense for basic chat room and one to one chats
-			if (mParams->isGroup() &&
-			    (mParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
-			    (!mParams->getUtf8Subject().empty() && mParams->getUtf8Subject() != otherParams->getUtf8Subject()))
-				return false;
+			checkSubject = (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::FlexisipChat));
+		}
+
+		if (checkSubject && !thisSubject.empty() && (thisSubject.compare(otherSubject) != 0)) {
+			return false;
 		}
 	}
 

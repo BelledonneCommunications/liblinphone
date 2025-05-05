@@ -874,7 +874,7 @@ string ServerConferenceEventHandler::createNotifySubjectChanged() {
 // -----------------------------------------------------------------------------
 
 void ServerConferenceEventHandler::notifyResponseCb(LinphoneEvent *lev) {
-	auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
+	auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
 	auto cbs = ev->getCurrentCallbacks();
 	ServerConferenceEventHandler *handler = static_cast<ServerConferenceEventHandler *>(cbs->getUserData());
 	cbs->setUserData(nullptr);

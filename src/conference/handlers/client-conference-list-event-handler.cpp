@@ -411,7 +411,7 @@ void ClientConferenceListEventHandler::onNetworkReachable(bool sipNetworkReachab
 void ClientConferenceListEventHandler::onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
                                                                          LinphoneRegistrationState state,
                                                                          BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk && (account->getPreviousState() != LinphoneRegistrationRefreshing))
+	if ((state == LinphoneRegistrationOk) && (account->getPreviousState() != LinphoneRegistrationRefreshing))
 		subscribe(account);
 	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
 		                                             // the current subscription
