@@ -312,7 +312,6 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage(ChatMessage::Direction direc
 Address ChatRoom::getImdnChatRoomPeerAddress(const shared_ptr<ChatMessage> &message) const {
 	const auto messageParticipants = static_cast<int>(message->getParticipantsState().size());
 	const auto imdnParticipantThreshold = getCore()->getImdnToEverybodyThreshold();
-
 	std::shared_ptr<Address> peerAddress;
 	if (!getCurrentParams()->isGroup() || (messageParticipants <= imdnParticipantThreshold)) {
 		peerAddress = getPeerAddress();
@@ -329,23 +328,27 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 	if (*peerAddress == chatRoomPeerAddress->getUriWithoutGruu()) {
 		chatRoom = getSharedFromThis();
 	} else {
-		chatRoom = getCore()->getPrivate()->searchChatRoom(getCurrentParams(), getLocalAddress(), peerAddress, {});
+		shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
+		params->setAccount(getCurrentParams()->getAccount());
+		params->setChatDefaults();
+		params->setGroup(false);
+		const auto &backend = getCurrentParams()->getChatParams()->getBackend();
+		params->getChatParams()->setBackend(backend);
+		if (backend == ChatParams::Backend::FlexisipChat) {
+			std::string subject(peerAddress->toString() + "'s IMDNs");
+			params->setUtf8Subject(subject);
+		}
+		ConferenceParams::SecurityLevel securityLevel = ConferenceParams::SecurityLevel::None;
+		auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
+		if (isEncrypted) {
+			// Try to infer chat room type based on requested participants number
+			securityLevel = ConferenceParams::SecurityLevel::EndToEnd;
+		} else {
+			securityLevel = ConferenceParams::SecurityLevel::None;
+		}
+		params->setSecurityLevel(securityLevel);
+		chatRoom = getCore()->getPrivate()->searchChatRoom(params, getLocalAddress(), nullptr, {peerAddress});
 		if (!chatRoom) {
-			shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
-			params->setAccount(getCurrentParams()->getAccount());
-			params->setChatDefaults();
-			params->setGroup(false);
-			auto isEncrypted = getCurrentParams()->getChatParams()->isEncrypted();
-			if (isEncrypted) {
-				// Try to infer chat room type based on requested participants number
-				params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
-				params->setSecurityLevel(ConferenceParams::SecurityLevel::EndToEnd);
-				std::string subject(peerAddress->toString() + "'s IMDNs");
-				params->setUtf8Subject(subject);
-			} else {
-				params->getChatParams()->setBackend(ChatParams::Backend::Basic);
-				params->setSecurityLevel(ConferenceParams::SecurityLevel::None);
-			}
 			chatRoom = getCore()->getPrivate()->createChatRoom(params, peerAddress);
 		}
 	}

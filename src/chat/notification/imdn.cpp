@@ -415,7 +415,7 @@ void Imdn::send() {
 			lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
 		} else {
 			sentImdnMessages.push_back(message);
-			message->getPrivate()->send();
+			message->getChatRoom()->sendChatMessage(message);
 		}
 	}
 }

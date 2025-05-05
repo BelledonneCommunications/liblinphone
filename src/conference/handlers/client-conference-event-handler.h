@@ -73,6 +73,8 @@ public:
 
 	void setManagedByListEventhandler(bool managed);
 
+	static void subscribeStateChangedCb(LinphoneEvent *lev, LinphoneSubscriptionState state);
+
 protected:
 	void conferenceInfoNotifyReceived(const std::string &xmlBody);
 	void conferenceInfoLinphoneExtensionNotifyReceived(const std::string &xmlBody);

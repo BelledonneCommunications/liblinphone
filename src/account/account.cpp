@@ -428,17 +428,15 @@ void Account::handleDeletion() {
 }
 
 void Account::setState(LinphoneRegistrationState state, const std::string &message) {
-	auto core = getCCore();
-	if ((mState != state) ||
-	    (state == LinphoneRegistrationOk)) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
+	/*allow multiple notification of LinphoneRegistrationOk for refreshing*/
+	if ((mState != state) || (state == LinphoneRegistrationOk)) {
+		auto core = getCCore();
 		const auto identity = (mParams) ? mParams->getIdentityAddress()->toString() : std::string("sip:");
 		if (!mParams) lWarning() << "AccountParams not set for " << *this;
-		lInfo() << *this << " for identity [" << identity << "] moving from state ["
-		        << linphone_registration_state_to_string(mState) << "] to ["
+		lInfo() << *this << " moving from state [" << linphone_registration_state_to_string(mState) << "] to ["
 		        << linphone_registration_state_to_string(state) << "] on core [" << core << "]";
 		mIsUnregistering = false;
 		if (state == LinphoneRegistrationOk) {
-
 			const auto salAddr = mOp->getContactAddress();
 			if (salAddr) {
 				if (!mContactAddress) {
@@ -449,7 +447,7 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		}
 
-		LinphoneRegistrationState previousState = mState;
+		mPreviousState = mState;
 		mState = state;
 		if (!mDependency) {
 			updateDependentAccount(state, message);
@@ -463,10 +461,10 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 		}
 
 		if (linphone_core_should_subscribe_friends_only_when_registered(core) && state == LinphoneRegistrationOk &&
-		    previousState != state) {
+		    mPreviousState != state) {
 			linphone_core_update_friends_subscriptions(core);
 		}
-		if (state == LinphoneRegistrationOk && previousState != state) {
+		if (state == LinphoneRegistrationOk && mPreviousState != state) {
 			subscribeToMessageWaitingIndication();
 		}
 
