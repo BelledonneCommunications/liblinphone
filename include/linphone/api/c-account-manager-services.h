@@ -81,6 +81,22 @@ linphone_account_manager_services_create_send_account_creation_token_by_push_req
     LinphoneAccountManagerServices *ams, const char *pn_provider, const char *pn_param, const char *pn_prid);
 
 /**
+ * Requests a push notification to be sent to device, containing a valid account recovery token.
+ * Provider, param & prid can be obtained from linphone_core_get_push_notification_config(),
+ * but on iOS may need some modifications (depending on debug mode for example).
+ * Once the token is obtained, you can use it to open the recovery webpage on the flexisip account manager
+ * at https://account_manager.domain.tld/recovery/phone/<recovery token>?phone=<phone number>
+ * @param ams The #LinphoneAccountManagerServices object. @notnil
+ * @param pn_provider The provider, for example "apns.dev". @notnil
+ * @param pn_param The parameters, for example "ABCD1234.org.linphone.phone.remote". @notnil
+ * @param pn_prid The prid, also known as push token. @notnil
+ * @return the #LinphoneAccountManagerServicesRequest request object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneAccountManagerServicesRequest *
+linphone_account_manager_services_create_send_account_recovery_token_by_push_request(
+    LinphoneAccountManagerServices *ams, const char *pn_provider, const char *pn_param, const char *pn_prid);
+
+/**
  * Requests a an account creation request token that once validated using the URL returned by this method upon success,
  * will allow you to call
  * linphone_account_manager_services_create_get_account_creation_token_from_request_token_request() to obtain a valid

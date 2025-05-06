@@ -130,6 +130,8 @@ string AccountManagerServicesRequest::requestTypeToString(LinphoneAccountManager
 	switch (type) {
 		case LinphoneAccountManagerServicesRequestTypeSendAccountCreationTokenByPush:
 			return "SendAccountCreationTokenByPush";
+		case LinphoneAccountManagerServicesRequestTypeSendAccountRecoveryTokenByPush:
+			return "SendAccountRecoveryTokenByPush";
 		case LinphoneAccountManagerServicesRequestTypeAccountCreationRequestToken:
 			return "RequestAccountCreationRequestToken";
 		case LinphoneAccountManagerServicesRequestTypeAccountCreationTokenFromAccountCreationRequestToken:

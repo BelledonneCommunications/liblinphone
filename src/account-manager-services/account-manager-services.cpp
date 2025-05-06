@@ -61,6 +61,9 @@ shared_ptr<AccountManagerServicesRequest> AccountManagerServices::createRequest(
 		case LinphoneAccountManagerServicesRequestTypeSendAccountCreationTokenByPush:
 			path = "account_creation_tokens/send-by-push";
 			break;
+		case LinphoneAccountManagerServicesRequestTypeSendAccountRecoveryTokenByPush:
+			path = "account_recovery_tokens/send-by-push";
+			break;
 		case LinphoneAccountManagerServicesRequestTypeAccountCreationRequestToken:
 			path = "account_creation_request_tokens";
 			break;
@@ -121,6 +124,20 @@ shared_ptr<AccountManagerServicesRequest> AccountManagerServices::createSendAcco
     const string &provider, const string &param, const string &prid) {
 	LinphoneAccountManagerServicesRequestType type =
 	    LinphoneAccountManagerServicesRequestTypeSendAccountCreationTokenByPush;
+	lDebug() << "[Account Manager Services] Calling [" << __func__ << "](" << provider << ", " << param << ", " << prid
+	         << ")";
+	Json::Value params;
+	params["pn_provider"] = provider;
+	params["pn_param"] = param;
+	params["pn_prid"] = prid;
+
+	return createRequest(type, params);
+}
+
+shared_ptr<AccountManagerServicesRequest> AccountManagerServices::createSendAccountRecoveryTokenByPushRequest(
+    const string &provider, const string &param, const string &prid) {
+	LinphoneAccountManagerServicesRequestType type =
+	    LinphoneAccountManagerServicesRequestTypeSendAccountRecoveryTokenByPush;
 	lDebug() << "[Account Manager Services] Calling [" << __func__ << "](" << provider << ", " << param << ", " << prid
 	         << ")";
 	Json::Value params;

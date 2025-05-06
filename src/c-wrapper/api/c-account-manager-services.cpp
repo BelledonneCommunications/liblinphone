@@ -68,6 +68,15 @@ linphone_account_manager_services_create_send_account_creation_token_by_push_req
 }
 
 LinphoneAccountManagerServicesRequest *
+linphone_account_manager_services_create_send_account_recovery_token_by_push_request(
+    LinphoneAccountManagerServices *ams, const char *pn_provider, const char *pn_param, const char *pn_prid) {
+	auto request = AccountManagerServices::toCpp(ams)->createSendAccountRecoveryTokenByPushRequest(
+	    L_C_TO_STRING(pn_provider), L_C_TO_STRING(pn_param), L_C_TO_STRING(pn_prid));
+	request->ref();
+	return request->toC();
+}
+
+LinphoneAccountManagerServicesRequest *
 linphone_account_manager_services_create_get_account_creation_request_token_request(
     LinphoneAccountManagerServices *ams) {
 	auto request = AccountManagerServices::toCpp(ams)->createGetAccountCreationRequestTokenRequest();

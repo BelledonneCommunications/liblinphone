@@ -47,6 +47,8 @@ public:
 
 	std::shared_ptr<AccountManagerServicesRequest> createSendAccountCreationTokenByPushRequest(
 	    const std::string &provider, const std::string &param, const std::string &prid);
+	std::shared_ptr<AccountManagerServicesRequest> createSendAccountRecoveryTokenByPushRequest(
+	    const std::string &provider, const std::string &param, const std::string &prid);
 	std::shared_ptr<AccountManagerServicesRequest> createGetAccountCreationRequestTokenRequest();
 	std::shared_ptr<AccountManagerServicesRequest>
 	createGetAccountCreationTokenFromRequestTokenRequest(const std::string &requestToken);

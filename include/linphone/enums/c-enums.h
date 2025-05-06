@@ -177,6 +177,8 @@ typedef enum _LinphoneAccountManagerServicesRequestType {
 	    7, /**< Uses the code received by email to confirm the link between an account and an email address */
 	LinphoneAccountManagerServicesRequestTypeGetDevicesList = 8, /**< Gets the list of devices for account */
 	LinphoneAccountManagerServicesRequestTypeDeleteDevice = 9,   /**< Removes an account device */
+	LinphoneAccountManagerServicesRequestTypeSendAccountRecoveryTokenByPush =
+	    10, /**< Asks the account manager to send us an account recovery token by push notification */
 
 	LinphoneAccountManagerServicesRequestTypeGetCreationTokenAsAdmin = 100,
 	LinphoneAccountManagerServicesRequestTypeGetAccountInfoAsAdmin = 101,
