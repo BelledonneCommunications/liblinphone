@@ -6716,9 +6716,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
 			if (display_filter) {
 				video_preview_set_display_filter_name(lc->previewstream, display_filter);
 			}
-			if (lc->preview_window_id != NULL) {
-				video_preview_set_native_window_id(lc->previewstream, lc->preview_window_id);
-			}
+			video_preview_set_native_window_id(lc->previewstream, lc->preview_window_id);
 			video_preview_set_fps(lc->previewstream, linphone_core_get_preferred_framerate(lc));
 			if (linphone_core_qrcode_video_preview_enabled(lc)) {
 				video_preview_enable_qrcode(lc->previewstream, TRUE);
@@ -7127,17 +7125,23 @@ float linphone_core_get_static_picture_fps(LinphoneCore *lc) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
+
+void *linphone_core_create_native_video_window_id_2(const LinphoneCore *lc, void *context) {
 	CoreLogContextualizer logContextualizer(lc);
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call) {
 		auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
-		if (ms) return ms->createNativeVideoWindowId();
+		if (ms) return ms->createNativeVideoWindowId("", false, false, context);
 	}
 #endif
 	return 0;
 }
+
+void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
+	return linphone_core_create_native_video_window_id_2(lc, NULL);
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
@@ -7179,7 +7183,7 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
+void *linphone_core_create_native_preview_window_id_2(LinphoneCore *lc, void *context) {
 	CoreLogContextualizer logContextualizer(lc);
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -7190,9 +7194,13 @@ void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
 	if (lc->previewstream == NULL && linphone_core_video_preview_enabled(lc) &&
 	    !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls())
 		toggle_video_preview(lc, TRUE);
-	if (lc->previewstream) return video_preview_create_native_window_id(lc->previewstream);
+	if (lc->previewstream) return video_preview_create_native_window_id(lc->previewstream, context);
 #endif
 	return 0;
+}
+
+void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
+	return linphone_core_create_native_preview_window_id_2(lc, NULL);
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop

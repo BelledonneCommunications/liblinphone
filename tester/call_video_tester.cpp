@@ -29,10 +29,11 @@
 
 #include "call/call.h"
 #include "liblinphone_tester.h"
-#include "linphone/api//c-address.h"
-#include "linphone/api//c-call-log.h"
-#include "linphone/api//c-video-source-descriptor.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-video-source-descriptor.h"
 #include "linphone/core.h"
+#include "mediastreamer2/msogl.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
 #include "shared_tester_functions.h"
@@ -4014,12 +4015,217 @@ static void video_call_memory() {
 	linphone_core_manager_destroy(pauline);
 }
 
+static int check_window_id(const void *window_id, const void *expected_id, const bool is_exact) {
+	int result;
+	if (is_exact) {
+		result = BC_ASSERT_TRUE(window_id == expected_id);
+	} else
+		result = BC_ASSERT_TRUE(window_id != LINPHONE_VIDEO_DISPLAY_NONE && window_id != LINPHONE_VIDEO_DISPLAY_AUTO);
+	if (!result) {
+		ms_message("[VCWI] But was %p", window_id);
+	}
+	return result;
+}
+
+// AUTO and NONE are used because of their values (-1 and 0/NULL)
+// Id => call => Id => InterId => Id => endCall => Id
+static void video_call_window_id(const char *video_device_type, bool test_native) {
+	const bool manual_test = false; // Set it to true to let more time to see something
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+
+	bool_t call_ok = TRUE;
+	void *window_id = LINPHONE_VIDEO_DISPLAY_AUTO;
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+	const auto display_c = linphone_core_get_video_display_filter(marie->lc);
+	std::string current_display = display_c ? display_c : "";
+	if (current_display.empty()) current_display = ms_factory_get_default_video_renderer(marie->lc->factory);
+	if (current_display != "MSOGL") {
+		ms_warning("[VCWI] Testing with display filter %s but not supported", current_display.c_str());
+		linphone_core_manager_destroy(marie);
+		linphone_core_manager_destroy(pauline);
+		return;
+	}
+	ms_message("[VCWI] Testing with display filter %s", current_display.c_str());
+
+	auto video_devices = linphone_core_get_video_devices_list(marie->lc);
+	auto video_devices_it = video_devices;
+	while (video_devices_it) {
+		std::string device = (const char *)bctbx_list_get_data(video_devices_it);
+		if (device.find(video_device_type) != std::string::npos) {
+			break;
+		} else video_devices_it = bctbx_list_next(video_devices_it);
+	}
+	if (!video_devices_it) ms_warning("[VCWI] %s not found", video_device_type);
+	else ms_message("[VCWI] Using %s ", (const char *)bctbx_list_get_data(video_devices_it));
+	linphone_core_set_video_device(marie->lc, video_devices_it ? (const char *)bctbx_list_get_data(video_devices_it)
+	                                                           : liblinphone_tester_mire_id);
+
+	bctbx_list_free_with_data(video_devices, bctbx_free);
+
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_use_preview_window(marie->lc, TRUE);
+	linphone_core_enable_video(marie->lc, TRUE, TRUE);
+	linphone_core_enable_video(pauline->lc, TRUE, FALSE);
+
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, FALSE);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	// Create window. It can only be done while being in call.
+	BC_ASSERT_TRUE((call_ok = call(pauline, marie)));
+	// Switch on
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 100);
+	MSOglContextInfo context;
+	context.getProcAddress = NULL;
+	window_id = linphone_core_create_native_video_window_id_2(marie->lc, &context);
+	if (current_display == "MSOGL") BC_ASSERT_TRUE(window_id != NULL);
+	end_call(marie, pauline);
+
+	// Window ID with a persistent window
+	ms_message("[VCWI] Start with persistent Native ID before call ID=%p", window_id);
+	linphone_core_set_native_video_window_id(marie->lc, window_id);
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 100);
+	ms_message("[VCWI] Checking ID is still the same before call");
+	BC_ASSERT_TRUE(linphone_core_get_native_video_window_id(marie->lc) == window_id);
+	//------------------------------------------------------------------------------------
+	std::vector<std::pair<void *, std::string>> loopData;
+	loopData.reserve(3); // Avoid reallocation
+	loopData.push_back({window_id, "WINDOW"});
+	loopData.push_back({LINPHONE_VIDEO_DISPLAY_NONE, "NONE"});
+	loopData.push_back({LINPHONE_VIDEO_DISPLAY_AUTO, "AUTO"});
+
+	for (size_t loop = 0; loop < loopData.size(); ++loop) {
+		for (size_t subLoop = 0; subLoop < loopData.size() - 1; ++subLoop) {
+			void *id = loopData[loop].first;
+			std::string mode = loopData[loop].second;
+			size_t interIndex = subLoop == loop ? subLoop + 1 : subLoop;
+			void *interId = loopData[interIndex].first;
+			std::string interMode = loopData[interIndex].second;
+
+			ms_message("[VCWI] Start IDs from %s before call", mode.c_str());
+			if (test_native) linphone_core_set_native_video_window_id(marie->lc, id);
+			else linphone_core_set_native_preview_window_id(marie->lc, id);
+
+			linphone_core_enable_video_preview(marie->lc, TRUE);
+			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+
+			ms_message("[VCWI] Checking IDs are still %s before call", mode.c_str());
+			// On preview, we are using a persistent window. So AUTO will return an ID.
+			check_window_id(test_native ? linphone_core_get_native_video_window_id(marie->lc)
+			                            : linphone_core_get_native_preview_window_id(marie->lc),
+			                id, test_native || loop != 2);
+
+			// Early media
+			const auto old_stat = marie->stat;
+			LinphoneCallParams *p = linphone_core_create_call_params(pauline->lc, NULL);
+			linphone_call_params_enable_video(p, TRUE);
+			linphone_call_params_enable_audio(p, TRUE);
+			linphone_call_params_enable_early_media_sending(p, TRUE);
+			linphone_core_invite_address_with_params(pauline->lc, marie->identity, p);
+			sal_default_set_sdp_handling(linphone_core_get_sal(marie->lc), SalOpSDPNormal);
+			sal_default_set_sdp_handling(linphone_core_get_sal(pauline->lc), SalOpSDPNormal);
+			linphone_call_params_unref(p);
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived,
+			                        old_stat.number_of_LinphoneCallIncomingReceived + 1));
+			auto c1 = linphone_core_get_current_call(marie->lc);
+			auto params = linphone_core_create_call_params(marie->lc, c1);
+			linphone_call_params_enable_audio(params, FALSE);
+			linphone_call_accept_early_media_with_params(c1, params);
+			linphone_call_params_unref(params);
+			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 200);
+			ms_message("[VCWI] Checking ID is still %s while being in early media", mode.c_str());
+			// if AUTO, we get a window ID
+			check_window_id(test_native ? linphone_core_get_native_video_window_id(marie->lc)
+			                            : linphone_core_get_native_preview_window_id(marie->lc),
+			                id, loop != 2);
+
+			auto marie_call = linphone_core_get_current_call(marie->lc);
+			linphone_call_accept(marie_call);
+
+			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+
+			ms_message("[VCWI] Checking IDs are still %s while being in call", mode.c_str());
+			check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
+			                            : linphone_core_get_native_preview_window_id(marie->lc),
+			                id, loop != 2);
+
+			ms_message("[VCWI] Setting IDs to %s from %s while being in call", interMode.c_str(), mode.c_str());
+
+			if (test_native) linphone_core_set_native_video_window_id(marie->lc, interId);
+			else linphone_core_set_native_preview_window_id(marie->lc, interId);
+
+			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+
+			ms_message("[VCWI] Checking IDs are %s while being in call after setting", interMode.c_str());
+			// if AUTO, we get a window ID.
+			if (!check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
+			                                 : linphone_core_get_native_preview_window_id(marie->lc),
+			                     interId, interIndex != 2)) {
+				linphone_core_set_native_preview_window_id(marie->lc, interId);
+			}
+
+			ms_message("[VCWI] Resetting IDs to %s from %s while being in call", mode.c_str(), interMode.c_str());
+			if (test_native) linphone_core_set_native_video_window_id(marie->lc, id);
+			else linphone_core_set_native_preview_window_id(marie->lc, id);
+			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+			ms_message("[VCWI] Checking IDs are %s while being in call after reset", mode.c_str());
+			// if AUTO, we get a window ID
+			check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
+			                            : linphone_core_get_native_preview_window_id(marie->lc),
+			                id, loop != 2);
+
+			end_call(marie, pauline);
+
+			ms_message("[VCWI] Checking IDs are still %s after call", mode.c_str());
+			// On preview, we are using a persistent window. So AUTO will return an ID.
+			check_window_id(test_native ? linphone_core_get_native_video_window_id(marie->lc)
+			                            : linphone_core_get_native_preview_window_id(marie->lc),
+			                id, test_native || loop != 2);
+		}
+	}
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_window_id(bool test_native) {
+#ifdef _WIN32
+	video_call_window_id("StaticImage", test_native);
+	// Manual tests:
+	// video_call_window_id("MSMFoundationCamera", test_native);
+	// video_call_window_id("Directshow", test_native);
+#else
+	video_call_window_id("StaticImage", test_native);
+#endif
+}
+
+static void video_call_native_window_id(void) {
+	video_call_window_id(TRUE);
+}
+
+static void video_call_preview_window_id(void) {
+	video_call_window_id(FALSE);
+}
+
 static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
     TEST_NO_TAG("Call paused resumed with video send-only", call_paused_resumed_with_video_send_only),
     TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
-    TEST_NO_TAG("ZRTP video call", zrtp_video_call), TEST_NO_TAG("Simple video call AVPF", video_call_avpf),
+    TEST_NO_TAG("ZRTP video call", zrtp_video_call),
+    TEST_NO_TAG("Simple video call AVPF", video_call_avpf),
     TEST_NO_TAG("Simple video call implicit AVPF both", video_call_using_policy_AVPF_implicit_caller_and_callee),
     TEST_NO_TAG("Simple video call disable implicit AVPF on callee", video_call_disable_implicit_AVPF_on_callee),
     TEST_NO_TAG("Simple video call disable implicit AVPF on caller", video_call_disable_implicit_AVPF_on_caller),
@@ -4064,7 +4270,8 @@ static test_t call_video_tests[] = {
                  "ICE"),
     TEST_ONE_TAG("Video call recording (H264)", video_call_recording_h264_test, "H264"),
     TEST_NO_TAG("Video call recording (VP8)", video_call_recording_vp8_test),
-    TEST_NO_TAG("Snapshot", video_call_snapshot), TEST_NO_TAG("Snapshots", video_call_snapshots),
+    TEST_NO_TAG("Snapshot", video_call_snapshot),
+    TEST_NO_TAG("Snapshots", video_call_snapshots),
     TEST_NO_TAG("Video call with early media and no matching audio codecs",
                 video_call_with_early_media_no_matching_audio_codecs),
     TEST_ONE_TAG("DTLS SRTP video call", dtls_srtp_video_call, "DTLS"),
@@ -4100,7 +4307,11 @@ static test_t call_video_tests[] = {
 
     TEST_NO_TAG("Video call recv-only", call_with_video_recvonly),
     TEST_NO_TAG("Video call without audio, disable video", video_call_without_audio_disable_video),
-    TEST_ONE_TAG("Video call memory", video_call_memory, "skip")};
+    TEST_ONE_TAG("Video call memory", video_call_memory, "skip"),
+    TEST_NO_TAG("Video call native window id", video_call_native_window_id),
+    TEST_NO_TAG("Video call preview window id", video_call_preview_window_id),
+
+};
 
 static test_t call_video_advanced_scenarios_tests[] = {
     TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),

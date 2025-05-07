@@ -269,10 +269,10 @@ public:
 	virtual void sendVfuRequest() = 0;
 	virtual void enableCamera(bool value) = 0;
 	virtual bool cameraEnabled() const = 0;
-	virtual void *createNativeWindowId() const = 0;
+	virtual void *createNativeWindowId(void *context) const = 0;
 	virtual void setNativeWindowId(void *w) = 0;
 	virtual void *getNativeWindowId() const = 0;
-	virtual void *createNativePreviewWindowId() const = 0;
+	virtual void *createNativePreviewWindowId(void *context) const = 0;
 	virtual void setNativePreviewWindowId(void *w) = 0;
 	virtual void *getNativePreviewWindowId() const = 0;
 	virtual void parametersChanged() = 0;

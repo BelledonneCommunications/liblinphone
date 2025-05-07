@@ -406,7 +406,9 @@ LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscr
 LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,
                                                            LinphoneParticipantDeviceState state);
 LINPHONE_PUBLIC LinphoneCore *linphone_participant_device_get_core(const LinphoneParticipantDevice *participant_device);
-
+#else
+	LINPHONE_PUBLIC LinphonePrivate::Sal *linphone_core_get_sal(const LinphoneCore *lc);
+	LINPHONE_PUBLIC void sal_default_set_sdp_handling(LinphonePrivate::Sal *h, SalOpSDPHandling handling_method);
 #endif // !defined(__cplusplus)
 
 LINPHONE_PUBLIC bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTunnel *tunnel, const RtpTransport *tp);

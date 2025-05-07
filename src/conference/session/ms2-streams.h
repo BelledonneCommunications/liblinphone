@@ -307,10 +307,10 @@ public:
 	virtual void sendVfuRequest() override;
 	virtual void enableCamera(bool value) override;
 	virtual bool cameraEnabled() const override;
-	virtual void *createNativeWindowId() const override;
+	virtual void *createNativeWindowId(void *context) const override;
 	virtual void setNativeWindowId(void *w) override;
 	virtual void *getNativeWindowId() const override;
-	virtual void *createNativePreviewWindowId() const override;
+	virtual void *createNativePreviewWindowId(void *context) const override;
 	virtual void setNativePreviewWindowId(void *w) override;
 	virtual void *getNativePreviewWindowId() const override;
 	virtual void requestNotifyNextVideoFrameDecoded() override;

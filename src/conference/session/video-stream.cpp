@@ -56,6 +56,7 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 	string bindIp = getBindIp();
 
 	const auto &localDesc = params.getLocalStreamDescription();
+	mNativePreviewWindowId = getCCore()->preview_window_id;
 
 	if ((localDesc.getRtpPort() > 0) && (localDesc.getRtcpPort() > 0)) {
 		// port already set in SDP
@@ -344,7 +345,7 @@ void MS2VideoStream::updateWindowId(const std::shared_ptr<ParticipantDevice> &pa
 		setNativePreviewWindowId(windowId);
 	} else {
 		setNativeWindowId(windowId);
-		if (mNativePreviewWindowId) setNativePreviewWindowId(mNativePreviewWindowId);
+		setNativePreviewWindowId(mNativePreviewWindowId);
 	}
 }
 
@@ -737,10 +738,11 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 				                           dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
+				updateWindowId(participantDevice, label, isMe, contentIsThumbnail);
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 				                           dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
-
+				updateWindowId(participantDevice, label, isMe, contentIsThumbnail);
 				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !contentIsThumbnail &&
 				    !screensharingEnabledInService) {
 					getGroup().addPostRenderHook([this, &label] {
@@ -989,10 +991,11 @@ bool MS2VideoControl::cameraEnabled() const {
 }
 
 // Check [-- Window ID distribution for screen sharing ---] table in MediaSession::getNativeVideoWindowId
-void *MS2VideoControl::createNativeWindowId() const {
+void *MS2VideoControl::createNativeWindowId(void *context) const {
 	VideoStream *vs = getVideoStream();
-	return vs ? video_stream_local_screen_sharing_enabled(vs) ? video_stream_create_native_preview_window_id(vs)
-	                                                          : video_stream_create_native_window_id(vs)
+	return vs ? video_stream_local_screen_sharing_enabled(vs)
+	                ? video_stream_create_native_preview_window_id(vs, context)
+	                : video_stream_create_native_window_id(vs, context)
 	          : nullptr;
 }
 
@@ -1023,11 +1026,12 @@ void *MS2VideoControl::getNativeWindowId() const {
 // MediaSession knows what stream to call:
 // In this case, the check on 'video_stream_local_screen_sharing_enabled' is enough to know what preview the stream is
 // using.
-void *MS2VideoControl::createNativePreviewWindowId() const {
+void *MS2VideoControl::createNativePreviewWindowId(void *context) const {
 	VideoStream *vs = getVideoStream();
 	if (vs) lInfo() << "Create " << this << " / " << vs << " -- " << vs->output2;
-	return vs && !video_stream_local_screen_sharing_enabled(vs) ? video_stream_create_native_preview_window_id(vs)
-	                                                            : nullptr;
+	return vs && !video_stream_local_screen_sharing_enabled(vs)
+	           ? video_stream_create_native_preview_window_id(vs, context)
+	           : nullptr;
 }
 
 void MS2VideoControl::setNativePreviewWindowId(void *w) {

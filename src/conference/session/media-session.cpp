@@ -5611,7 +5611,7 @@ void *MediaSession::getNativePreviewVideoWindowId() const {
 	return nullptr;
 }
 
-void *MediaSession::createNativePreviewVideoWindowId() const {
+void *MediaSession::createNativePreviewVideoWindowId(BCTBX_UNUSED(void *context)) const {
 #ifdef VIDEO_ENABLED
 	L_D();
 	auto iface = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
@@ -5621,17 +5621,20 @@ void *MediaSession::createNativePreviewVideoWindowId() const {
 			auto streamIdx = getThumbnailStreamIdx();
 			if (streamIdx < 0) return nullptr;
 			auto videostream = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
-			return videostream->createNativePreviewWindowId();
-		} else return iface->createNativePreviewWindowId();
+			return videostream->createNativePreviewWindowId(context);
+		} else return iface->createNativePreviewWindowId(context);
 	}
 #endif
 	return nullptr;
 }
 
-void *MediaSession::createNativeVideoWindowId(const std::string label, const bool isMe, const bool isThumbnail) const {
+void *MediaSession::createNativeVideoWindowId(const std::string label,
+                                              const bool isMe,
+                                              const bool isThumbnail,
+                                              void *context) const {
 	auto iface = getVideoControlInterface(label, isMe, isThumbnail);
 	if (iface) {
-		return iface->createNativeWindowId();
+		return iface->createNativeWindowId(context);
 	}
 	return nullptr;
 }

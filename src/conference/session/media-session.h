@@ -133,10 +133,11 @@ public:
 	void *
 	getNativeVideoWindowId(const std::string label = "", const bool isMe = false, const bool isThumbnail = false) const;
 	void *getNativePreviewVideoWindowId() const;
-	void *createNativePreviewVideoWindowId() const;
+	void *createNativePreviewVideoWindowId(void *context = nullptr) const;
 	void *createNativeVideoWindowId(const std::string label = "",
 	                                const bool isMe = false,
-	                                const bool isThumbnail = false) const;
+	                                const bool isThumbnail = false,
+	                                void *context = nullptr) const;
 	const CallSessionParams *getParams() const override;
 	float getPlayVolume() const;
 	float getRecordVolume() const;
