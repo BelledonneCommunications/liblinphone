@@ -25,11 +25,18 @@ set(LINK_LIBS
 	${BCToolbox_TARGET}
 	${Belr_TARGET}
 )
-set(PUBLIC_LINK_LIBS
-	${Ortp_TARGET}
-	${Mediastreamer2_TARGET}
-	${BelleSIP_TARGET}
-)
+if(ANDROID_BUNDLED)
+	set(PUBLIC_LINK_LIBS
+		${Ortp_TARGET}
+		${BelleSIP_TARGET}
+	)
+else()
+	set(PUBLIC_LINK_LIBS
+		${Ortp_TARGET}
+		${Mediastreamer2_TARGET}
+		${BelleSIP_TARGET}
+	)
+endif()
 
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
@@ -814,10 +821,19 @@ target_include_directories(liblinphone PUBLIC
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
 	PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
 )
-target_link_libraries(liblinphone
-	PUBLIC ${PUBLIC_LINK_LIBS}
-	PRIVATE ${LINK_LIBS}
-)
+if(ANDROID_BUNDLED)
+	# Keep JNI symbols from the mediastreamer2 static lib
+	target_link_libraries(liblinphone
+		PUBLIC ${PUBLIC_LINK_LIBS}
+		PUBLIC -Wl,--whole-archive ${Mediastreamer2_TARGET} -Wl,--no-whole-archive
+		PRIVATE ${LINK_LIBS}
+	)
+else()
+	target_link_libraries(liblinphone
+		PUBLIC ${PUBLIC_LINK_LIBS}
+		PRIVATE ${LINK_LIBS}
+	)
+endif()
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	target_link_libraries(liblinphone PUBLIC "Ws2_32" "Iphlpapi" "user32")
 endif()
