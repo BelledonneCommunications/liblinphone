@@ -115,8 +115,8 @@ static void mwi_to_content() {
 	auto expectedContentType = ContentType::Mwi.asString();
 	auto contentBody = content->getBodyAsUtf8String();
 	const string expectedBody = "Messages-Waiting: yes\r\n"
-	                           "Message-Account: sip:bob@vmail.example.com\r\n"
-	                           "Voice-Message: 4/8 (1/2)\r\n";
+	                            "Message-Account: sip:bob@vmail.example.com\r\n"
+	                            "Voice-Message: 4/8 (1/2)\r\n";
 
 	BC_ASSERT_STRING_EQUAL(contentType.c_str(), expectedContentType.c_str());
 	BC_ASSERT_STRING_EQUAL(contentBody.c_str(), expectedBody.c_str());
@@ -142,6 +142,38 @@ static void mwi_changed_on_account(LinphoneAccount *account, const LinphoneMessa
 		counters->number_of_old_urgent_LinphoneMessageWaitingIndicationVoice +=
 		    linphone_message_waiting_indication_summary_get_nb_old_urgent(summary);
 	}
+}
+
+static LinphoneMessageWaitingIndication *refd_mwi = nullptr;
+
+static void mwi_changed_on_account_2(LinphoneAccount *account, const LinphoneMessageWaitingIndication *mwi) {
+	LinphoneCore *lc = linphone_account_get_core(account);
+	/* this external ref is absolutely not necessary for the test, it is just there to verify
+	 * that reffing the passed LinphoneMessageWaitingIndication object (like wrappers do) and freeing it later
+	 * does not create any bug.
+	 */
+	if (!refd_mwi) {
+		refd_mwi = linphone_message_waiting_indication_ref((LinphoneMessageWaitingIndication *)mwi);
+	}
+	lInfo() << "MWI changed for user id [" << linphone_account_params_get_identity(linphone_account_get_params(account))
+	        << "] at account [" << linphone_account_params_get_server_addr(linphone_account_get_params(account)) << "]";
+	stats *counters = get_stats(lc);
+	if (linphone_message_waiting_indication_has_message_waiting(mwi)) {
+		counters->number_of_mwi++;
+	}
+	const LinphoneMessageWaitingIndicationSummary *summary =
+	    linphone_message_waiting_indication_get_summary(mwi, LinphoneMessageWaitingIndicationVoice);
+	if (summary) {
+		counters->number_of_new_LinphoneMessageWaitingIndicationVoice +=
+		    linphone_message_waiting_indication_summary_get_nb_new(summary);
+		counters->number_of_old_LinphoneMessageWaitingIndicationVoice +=
+		    linphone_message_waiting_indication_summary_get_nb_old(summary);
+		counters->number_of_new_urgent_LinphoneMessageWaitingIndicationVoice +=
+		    linphone_message_waiting_indication_summary_get_nb_new_urgent(summary);
+		counters->number_of_old_urgent_LinphoneMessageWaitingIndicationVoice +=
+		    linphone_message_waiting_indication_summary_get_nb_old_urgent(summary);
+	}
+	BC_ASSERT_PTR_NULL(linphone_message_waiting_indication_get_summary(mwi, LinphoneMessageWaitingIndicationPager));
 }
 
 static void mwi_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
@@ -252,15 +284,51 @@ static void mwi_notified_on_account(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static test_t mwi_tests[] = {
-    TEST_NO_TAG("Parse minimal MWI", parse_minimal_mwi),
-    TEST_NO_TAG("Parse normal MWI", parse_normal_mwi),
-    TEST_NO_TAG("Parse mwi without account address", parse_mwi_without_account_address),
-    TEST_NO_TAG("MWI to content", mwi_to_content),
-    TEST_NO_TAG("MWI notified on account", mwi_notified_on_account),
-};
+static void mwi_out_of_dialog() {
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
 
-static int suite_begin(void) {
+	LinphoneAccountCbs *cbs = linphone_factory_create_account_cbs(linphone_factory_get());
+	linphone_account_cbs_set_message_waiting_indication_changed(cbs, mwi_changed_on_account_2);
+	linphone_account_add_callbacks(pauline_account, cbs);
+	linphone_account_cbs_unref(cbs);
+
+	LinphoneEvent *ev = linphone_core_create_notify(marie->lc, pauline->identity, "message-summary");
+	LinphoneContent *ct = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(ct, "application");
+	linphone_content_set_subtype(ct, "simple-message-summary");
+
+	char *tmp = linphone_address_as_string_uri_only(pauline->identity);
+	char *mwi_body = bctbx_strdup_printf("Messages-Waiting: yes\r\n"
+	                                     "Message-Account: %s\r\n"
+	                                     "Voice-Message: 2/8 (0/2)\r\n",
+	                                     tmp);
+
+	linphone_content_set_utf8_text(ct, mwi_body);
+
+	linphone_event_notify(ev, ct);
+	bctbx_free(tmp);
+	bctbx_free(mwi_body);
+
+	linphone_content_unref(ct);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_mwi, 1));
+	linphone_event_unref(ev);
+	linphone_message_waiting_indication_unref(refd_mwi);
+	refd_mwi = NULL;
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+static test_t mwi_tests[] = {TEST_NO_TAG("Parse minimal MWI", parse_minimal_mwi),
+                             TEST_NO_TAG("Parse normal MWI", parse_normal_mwi),
+                             TEST_NO_TAG("Parse mwi without account address", parse_mwi_without_account_address),
+                             TEST_NO_TAG("MWI to content", mwi_to_content),
+                             TEST_NO_TAG("MWI notified on account", mwi_notified_on_account),
+                             TEST_NO_TAG("MWI out of dialog", mwi_out_of_dialog)};
+
+static int suite_begin() {
 	// Supposed to be done by platform helper, but in this case, we don't have it"
 	belr::GrammarLoader::get().addPath(std::string(bc_tester_get_resource_dir_prefix()).append("/share/belr/grammars"));
 	return 0;

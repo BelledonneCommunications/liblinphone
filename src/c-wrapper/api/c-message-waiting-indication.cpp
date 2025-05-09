@@ -66,7 +66,7 @@ const bctbx_list_t *linphone_message_waiting_indication_get_summaries(const Linp
 const LinphoneMessageWaitingIndicationSummary *
 linphone_message_waiting_indication_get_summary(const LinphoneMessageWaitingIndication *mwi,
                                                 LinphoneMessageWaitingIndicationContextClass contextClass) {
-	return MessageWaitingIndication::toCpp(mwi)->getSummary(contextClass)->toC();
+	return toC(MessageWaitingIndication::toCpp(mwi)->getSummary(contextClass));
 }
 
 LinphoneContent *linphone_message_waiting_indication_to_content(const LinphoneMessageWaitingIndication *mwi) {
