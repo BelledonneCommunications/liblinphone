@@ -216,11 +216,18 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 				linphone_conference_info_unref(info);
 			}
 		}
-		ms_free(conferenceAddressString);
 
 		if (time_left > 0) {
+			time_t wait_time = time_left;
+			if (focus_cleanup_window > 0) {
+				wait_time += focus_cleanup_window;
+			}
+			ms_message("Waiting for %0ld seconds for the server to delete conference %s. Expected end time %s and now "
+			           "it is %s",
+			           wait_time, conferenceAddressString, Utils::timeToIso8601(end_time).c_str(),
+			           Utils::timeToIso8601(now).c_str());
 			// wait for the conference to end
-			CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds((time_left + 1)), [] { return false; });
+			CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds((wait_time + 1)), [] { return false; });
 			LinphoneConferenceInfo *focus_info =
 			    linphone_core_find_conference_information_from_uri(focus->lc, confAddr);
 			if (focus_cleanup_window > 0) {
@@ -231,6 +238,7 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 				}
 			}
 		}
+		ms_free(conferenceAddressString);
 	}
 }
 
@@ -8915,7 +8923,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 				    (end_joining_window > 0)) {
 					time_t now = ms_time(NULL);
 					time_t time_left = end_joining_window - now;
-					if (time_left < 0) {
+					if (time_left <= 0) {
 						ms_message("Attempt #%0d - conference information of conference %s was deleted on the server "
 						           "core %s because the conference expired %ld seconds ago",
 						           attempt, conference_address_str, linphone_core_get_identity(mgr->lc), -time_left);

@@ -7867,11 +7867,130 @@ static void call_received_with_tel_uri(void) {
 	linphone_call_terminate(linphone_core_get_current_call(laure->lc));
 
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1,
+	                              liblinphone_tester_sip_timeout));
 	linphone_core_manager_destroy(laure);
 }
 
-static void call_with_custom_m_line(void) {
+static void call_with_custom_m_line_not_encrypted(void) {
+	const char *invite =
+	    "INVITE sip:fraya1_5c36c@218.107.193.68:40833;instance=1108cf52-f678-4a3a-88f6-2faf1dfdb9f3;transport=tls "
+	    "SIP/2.0\r\n"
+	    "Via: SIP/2.0/TLS 20.103.252.41;rport;branch=z9hG4bK.mgB5K2Q3HmS1QyF41ygNN15B4c\r\n"
+	    "Record-Route: <sips:20.103.252.41:5061;lr>\r\n"
+	    "Record-Route: <sip:10.17.4.52:5059;transport=tcp;lr>\r\n"
+	    "Record-Route: <sip:10.17.4.51:5059;transport=tcp;lr>\r\n"
+	    "Record-Route: <sips:20.103.252.84:5061;lr>\r\n"
+	    "Record-Route: <sip:218.107.193.68:23565;transport=tls;lr>\r\n"
+	    "Record-Route: <sip:192.168.75.3:2222;transport=tcp;lr>\r\n"
+	    "Record-Route: <sip:192.168.75.3:5070;transport=tcp;lr>\r\n"
+	    "Record-Route: <sip:192.168.31.149:5070;transport=tcp;lr>\r\n"
+	    "Record-Route: <sip:192.168.31.149:44830;transport=tcp>\r\n"
+	    "Record-Route: <sip:192.168.31.149:2225;transport=udp;lr>\r\n"
+	    "Record-Route: <sip:192.168.31.104:5060;lr>\r\n"
+	    "Via: SIP/2.0/TCP 10.17.4.51:5059;rport=38317;branch=z9hG4bK.tvBvQQUpBUa7Nm5UrHZe212BHa\r\n"
+	    "Via: SIP/2.0/TLS 192.168.75.3:2224;rport=23565;branch=z9hG4bK.A6DJpwUJQ;received=218.107.193.68\r\n"
+	    "Via: SIP/2.0/TCP 192.168.75.3:5070;rport;branch=z9hG4bK.cDtyF1gQZ1BcDe0rr60N5pB10F\r\n"
+	    "Via: SIP/2.0/TCP 192.168.31.149:44830;rport=44830;branch=z9hG4bK.z~Md5C-XV\r\n"
+	    "Via: SIP/2.0/UDP 192.168.31.104;rport;branch=z9hG4bK.HyNtp97erS931r6FyrK6B0N8vc\r\n"
+	    "Via: SIP/2.0/UDP 192.168.31.123:5060;branch=z9hG4bK124035529;rport=5060\r\n"
+	    "Max-Forwards: 66\r\n"
+	    "From: <sip:0071818@ipgw48dd6199-d874-45da-8e61-d78107b1cbd0>;tag=745175727\r\n"
+	    "To: <sip:750007101001@ipgw48dd6199-d874-45da-8e61-d78107b1cbd0>\r\n"
+	    "Call-ID: 1103078726-5060-13@BJC.BGI.DB.BCD\r\n"
+	    "CSeq: 120 INVITE\r\n"
+	    "Contact: \"MyContact\" <sip:test@127.0.0.1:5060>\r\n"
+	    "User-Agent: My User Agent\r\n"
+	    "Accept: application/sdp, application/dtmf-relay, application/dtmf-relay, application/dtmf-relay, "
+	    "application/dtmf-relay, application/dtmf-relay\r\n"
+	    "Allow: INVITE, ACK, OPTIONS, CANCEL, BYE, SUBSCRIBE, NOTIFY, INFO, REFER, UPDATE, MESSAGE\r\n"
+	    "Supported: replaces, path, timer, eventlist\r\n"
+	    "Privacy: none\r\n"
+	    "Content-Type: application/sdp\r\n"
+	    "P-Access-Network-Info: IEEE-EUI-48;eui-48-addr=D4-EE-07-52-95-FC\r\n"
+	    "P-Emergency-Info: IEEE-EUI-48;eui-48-addr=C0-74-AD-B0-01-04\r\n"
+	    "P-Preferred-Identity: \"0071818\" <sip:0071818@192.168.31.104:5060>\r\n"
+	    "Content-Length: 1665\r\n"
+	    "\r\n"
+	    "v=0\r\n"
+	    "o=0071818 8000 8000 IN IP4 192.168.31.123\r\n"
+	    "s=SIP Call\r\n"
+	    "c=IN IP4 20.103.252.84\r\n"
+	    "b=AS:1\r\n"
+	    "t=0 0\r\n"
+	    "a=10.0.65.0:yes\r\n"
+	    "a=192.168.31.149:yes\r\n"
+	    "a=nortpproxy:yes\r\n"
+	    "m=audio 50024 RTP/SAVP 0 8 9 101\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:9 G722/8000\r\n"
+	    "a=rtpmap:101 telephone-event/8000\r\n"
+	    "a=fmtp:101 0-15\r\n"
+	    "a=rtcp:50025\r\n"
+	    "a=ptime:20\r\n"
+	    "a=crypto:1 AES_CM_256_HMAC_SHA1_80 inline:QPPeFseKBO3ISJ5AUx5dFqS7XqMzjjOy8J/c2ju/B3uy5pJ5cJZmON4EeDEj1Q==\r\n"
+	    "a=crypto:2 AES_CM_256_HMAC_SHA1_32 inline:R8eQpWvDNJ51JD5R/nkQBvXC7Ic8XB2ilPunDCzK4XORcRn8NE2bqXHZ+3BSCw==\r\n"
+	    "a=crypto:3 AES_CM_128_HMAC_SHA1_80 inline:dkfOYs4KvuusUuZTXhIdP4avsJ+r5OxGjV0fiM1y\r\n"
+	    "a=crypto:4 AES_CM_128_HMAC_SHA1_32 inline:lEO5YqWIbGNzGLVabBNsiVLyOAKR5OZ9KnTbSvyo\r\n"
+	    "m=video 49228 RTP/SAVP 99 96 98 120\r\n"
+	    "b=AS:2240\r\n"
+	    "a=rtpmap:99 H264/90000\r\n"
+	    "a=fmtp:99 profile-level-id=428028; packetization-mode=1\r\n"
+	    "a=rtpmap:96 H264/90000\r\n"
+	    "a=fmtp:96 profile-level-id=4D0028; packetization-mode=1\r\n"
+	    "a=rtpmap:98 H264/90000\r\n"
+	    "a=fmtp:98 profile-level-id=640028; packetization-mode=1\r\n"
+	    "a=rtpmap:120 GS-FEC/90000\r\n"
+	    "a=rtcp:49229\r\n"
+	    "a=rtcp-fb:* nack\r\n"
+	    "a=rtcp-fb:* nack pli\r\n"
+	    "a=rtcp-fb:* ccm fir\r\n"
+	    "a=gs-fec-version:2\r\n"
+	    "a=gs-fec-version:1\r\n"
+	    "a=crypto:1 AES_CM_256_HMAC_SHA1_80 inline:vJDsdfKR/V71cXeqy+O+N2wQKqUTu4n5ObNtFP1qvLn6qC/tOixLL53C2Willw==\r\n"
+	    "a=crypto:2 AES_CM_256_HMAC_SHA1_32 inline:oBKoyre7hUC0vvMi0vGMj6qGN9lzcQa/oKOBegwnEaw5uXbwdPswKbojS4wU1w==\r\n"
+	    "a=crypto:3 AES_CM_128_HMAC_SHA1_80 inline:G79dU5jRxJ6QZUIR30448PpxqnBhHmuRRyW1krLJ\r\n"
+	    "a=crypto:4 AES_CM_128_HMAC_SHA1_32 inline:ac2IxyAhmOW/KEoBOSlPchlJ48O5ReIl1ilKi7z8\r\n"
+	    "a=content:main\r\n"
+	    "a=label:11\r\n"
+	    "m=application 65488 UDP/BFCP 18868056\r\n"
+	    "a=confid:1\r\n"
+	    "a=userid:1\r\n"
+	    "a=floorid:1 mstrm:12\r\n"
+	    "a=floorctrl:c-s\r\n"
+	    "\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_core_set_video_activation_policy(laure->lc, vpol);
+	linphone_core_enable_video_capture(laure->lc, TRUE);
+	linphone_core_enable_video_display(laure->lc, TRUE);
+	linphone_video_activation_policy_unref(vpol);
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(invite, strlen(invite), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	linphone_call_accept(laure_call);
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(check_custom_m_line(laure_call, "application"));
+	linphone_call_terminate(laure_call);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1,
+	                              liblinphone_tester_sip_timeout));
+	linphone_core_manager_destroy(laure);
+}
+
+static void call_with_custom_m_line_and_crappy_to_header(void) {
 	const char *invite_template =
 	    "INVITE "
 	    "sip:%s@49.36.181.143:33703;transport=tcp;pn-key=7ca80b71bccdbda72957091955dec66f;aor=rsystems1%%40sip1."
@@ -7937,7 +8056,8 @@ static void call_with_custom_m_line(void) {
 	linphone_call_terminate(laure_call);
 
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1,
+	                              liblinphone_tester_sip_timeout));
 
 	/* Make sure that the call-log was reported as belonging to laure's SIP account, despite the To address that does
 	 * not mention sip.example.org. */
@@ -7998,7 +8118,8 @@ static void call_with_from_and_to_without_domain(void) {
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
 	linphone_call_terminate(laure_call);
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1,
+	                              liblinphone_tester_sip_timeout));
 
 	/* Make sure that the call-log was reported as belonging to laure's SIP account, despite the To address that does
 	 * not mention sip.example.org. */
@@ -8058,7 +8179,8 @@ static void call_with_correct_local_account_in_request_uri(void) {
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
 	linphone_call_terminate(laure_call);
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1,
+	                              liblinphone_tester_sip_timeout));
 
 	/* Make sure that the call-log was reported as belonging to laure's SIP account, despite the To address that does
 	 * not mention sip.example.org. */
@@ -8415,7 +8537,8 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently),
     TEST_NO_TAG("Call with audio stream added later on", call_with_audio_stream_added_later_on),
     TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
-    TEST_NO_TAG("Call with custom m line and crappy to header", call_with_custom_m_line),
+    TEST_NO_TAG("Call with custom m line and crappy to header", call_with_custom_m_line_and_crappy_to_header),
+    TEST_NO_TAG("Call with custom m line not encrypted", call_with_custom_m_line_not_encrypted),
     TEST_NO_TAG("Call with crappy from and to headers", call_with_from_and_to_without_domain),
     TEST_NO_TAG("Call with local account identity in request URI and not in to header",
                 call_with_correct_local_account_in_request_uri),

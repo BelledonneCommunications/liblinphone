@@ -430,7 +430,7 @@ void SalStreamDescription::insertOrMergeConfiguration(const unsigned &idx, const
 	const auto sameCfg = std::find_if(cfgs.cbegin(), cfgs.cend(), [&cfg, this](const auto &currentCfg) {
 		// Only potential configurations should be parsed - it is allowed to add a potential configuration identical to
 		// the actual one
-		return ((currentCfg.first != this->getActualConfigurationIndex()) && (currentCfg.second == cfg));
+		return ((currentCfg.first != getActualConfigurationIndex()) && (currentCfg.second == cfg));
 	});
 
 	if (sameCfg == cfgs.cend()) {

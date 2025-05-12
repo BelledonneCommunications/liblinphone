@@ -3272,7 +3272,7 @@ static inline bool checkLegacyCallLogsTableExists(soci::session &session) {
 #ifdef HAVE_DB_STORAGE
 bool MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 	L_Q();
-	bool ret;
+	bool ret = false;
 	if (!q->isInitialized()) {
 		lWarning() << "Unable to import legacy friend because the database has not been initialized";
 		return false;
