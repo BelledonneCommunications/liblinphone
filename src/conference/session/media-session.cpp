@@ -1210,32 +1210,36 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams(std::shared_ptr<SalMed
 		avpfRrInterval = static_cast<uint16_t>(accountParams->getAvpfRrInterval() * 1000);
 	} else avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000);
 	getParams()->setAvpfRrInterval(avpfRrInterval);
-	bool_t mandatory = linphone_core_is_media_encryption_mandatory(lc);
-	bool_t acceptAllEncryptions = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp",
-	                                                        "accept_any_encryption", 0);
+	bool mandatory = !!linphone_core_is_media_encryption_mandatory(lc);
+	bool acceptAllEncryptions = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp",
+	                                                      "accept_any_encryption", 0);
 
+	LinphoneMediaEncryption mediaEncryption = getParams()->getMediaEncryption();
 	if (md->hasZrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
 		if (!mandatory || (mandatory && (acceptAllEncryptions ||
 		                                 linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP)))
-			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
+			mediaEncryption = LinphoneMediaEncryptionZRTP;
 	} else if (md->hasDtls() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionDTLS)) {
 		if (!mandatory || (mandatory && (acceptAllEncryptions ||
 		                                 linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionDTLS)))
-			getParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
+			mediaEncryption = LinphoneMediaEncryptionDTLS;
 	} else if (md->hasSrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionSRTP)) {
 		if (!mandatory || (mandatory && (acceptAllEncryptions ||
 		                                 linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP)))
-			getParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
-	} else if (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
+			mediaEncryption = LinphoneMediaEncryptionSRTP;
+	} else if (mediaEncryption != LinphoneMediaEncryptionZRTP) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionNone))
-			getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
+			mediaEncryption = LinphoneMediaEncryptionNone;
 	}
+	getParams()->setMediaEncryption(mediaEncryption);
+	lInfo() << *q << ": Incoming call media encryption initialized to "
+	        << linphone_media_encryption_to_string(mediaEncryption);
 
 	const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
 	if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 		const std::string &rtpAddr = (audioStream.rtp_addr.empty() == false) ? audioStream.rtp_addr : md->addr;
 		if (ms_is_multicast(rtpAddr.c_str())) {
-			lInfo() << "Incoming offer has audio multicast, enabling it in local params.";
+			lInfo() << *q << ": Incoming offer has audio multicast, enabling it in local params.";
 			getParams()->enableAudioMulticast(true);
 		} else getParams()->enableAudioMulticast(false);
 	}
@@ -1243,7 +1247,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams(std::shared_ptr<SalMed
 	if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 		const std::string &rtpAddr = (videoStream.rtp_addr.empty() == false) ? videoStream.rtp_addr : md->addr;
 		if (ms_is_multicast(rtpAddr.c_str())) {
-			lInfo() << "Incoming offer has video multicast, enabling it in local params.";
+			lInfo() << *q << ": Incoming offer has video multicast, enabling it in local params.";
 			getParams()->enableVideoMulticast(true);
 		} else getParams()->enableVideoMulticast(false);
 	}
@@ -1624,52 +1628,125 @@ void MediaSessionPrivate::addStreamToBundle(const std::shared_ptr<SalMediaDescri
 	}
 }
 
+// Verify that the media protocol is coherent with the supported media encryption list
+SalMediaProto
+MediaSessionPrivate::modifyMdProtoAccordingToEncryptionList(const SalMediaProto &proto,
+                                                            const std::list<LinphoneMediaEncryption> &encs) const {
+	L_Q();
+	auto newProto = proto;
+	if (encs.empty()) {
+		if ((proto == SalProtoRtpSavpf) || (proto == SalProtoUdpTlsRtpSavpf)) {
+			newProto = SalProtoRtpAvpf;
+		} else if ((proto == SalProtoRtpSavp) || (proto == SalProtoUdpTlsRtpSavp)) {
+			newProto = SalProtoRtpAvp;
+		}
+		if (proto != newProto) {
+			lInfo() << *q << ": no encryption list has been given therefore use reference transport protocol "
+			        << sal_media_proto_to_string(newProto);
+		}
+	} else {
+		bool change = false;
+		switch (proto) {
+			case SalProtoRtpSavp:
+			case SalProtoRtpSavpf:
+				change = std::find_if(encs.cbegin(), encs.cend(), [](const auto &enc) {
+					         return enc == LinphoneMediaEncryptionSRTP;
+				         }) == encs.cend();
+				break;
+			case SalProtoUdpTlsRtpSavp:
+			case SalProtoUdpTlsRtpSavpf:
+				change = std::find_if(encs.cbegin(), encs.cend(), [](const auto &enc) {
+					         return enc == LinphoneMediaEncryptionDTLS;
+				         }) == encs.cend();
+				break;
+			default:
+				change = false;
+				break;
+		}
+		if (change) {
+			newProto = linphone_media_encryption_to_sal_media_proto(encs.front(), getParams()->avpfEnabled());
+		}
+	}
+
+	if (proto != newProto) {
+		lWarning() << *q << ": Changing initially guessed transport protocol from " << sal_media_proto_to_string(proto)
+		           << " to " << sal_media_proto_to_string(newProto)
+		           << " to comply with the list of supported encryptions";
+	}
+	return newProto;
+}
+
 /* This function is to authorize the downgrade from avpf to non-avpf, when avpf is enabled locally but the remote
  * offer doesn't offer it consistently for all streams.
  */
-SalMediaProto MediaSessionPrivate::getAudioProto(const std::shared_ptr<SalMediaDescription> remote_md,
-                                                 const bool useCurrentParams) const {
-	SalMediaProto requested = getAudioProto(useCurrentParams);
-	if (remote_md) {
-		const SalStreamDescription &remote_stream = remote_md->findBestStream(SalAudio);
-		if (!remote_stream.hasAvpf()) {
-			switch (requested) {
-				case SalProtoRtpAvpf:
-					requested = SalProtoRtpAvp;
-					break;
-				case SalProtoRtpSavpf:
-					requested = SalProtoRtpSavp;
-					break;
-				default:
-					break;
+SalMediaProto MediaSessionPrivate::getMdProto(SalStreamType type,
+                                              const int &idx,
+                                              const std::shared_ptr<SalMediaDescription> remoteMd,
+                                              const bool useCurrentParams,
+                                              const bool ignoreRemoteMd,
+                                              const std::list<LinphoneMediaEncryption> &encs) const {
+	L_Q();
+	auto streamType = type;
+	bool assigned = false;
+	SalMediaProto requested = SalProtoRtpAvpf;
+	// Ignore remote media description is the encryption is mandatory
+	if (!ignoreRemoteMd && !isEncryptionMandatory() && remoteMd && (idx > -1)) {
+		const SalStreamDescription &remoteStream = remoteMd->getStreamAtIdx(static_cast<unsigned int>(idx));
+		if (remoteStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			// Try to align the local media protocol to the one in the offer. It must be validated later on to be
+			// actually put down in the SDP.
+			streamType = remoteStream.getType();
+			auto actualConfiguration = remoteStream.getActualConfiguration();
+			if (actualConfiguration.hasSrtp()) {
+				requested = SalProtoRtpSavpf;
+			} else if (actualConfiguration.hasDtls()) {
+				requested = SalProtoUdpTlsRtpSavpf;
+			} else {
+				requested = SalProtoRtpAvpf;
+			}
+			assigned = true;
+
+			if (!remoteStream.hasAvpf()) {
+				switch (requested) {
+					case SalProtoRtpAvpf:
+						requested = SalProtoRtpAvp;
+						break;
+					case SalProtoRtpSavpf:
+						requested = SalProtoRtpSavp;
+						break;
+					case SalProtoUdpTlsRtpSavpf:
+						requested = SalProtoUdpTlsRtpSavp;
+						break;
+					default:
+						break;
+				}
 			}
 		}
 	}
-	return requested;
-}
-
-SalMediaProto MediaSessionPrivate::getAudioProto(const bool useCurrentParams) const {
-	L_Q();
-	/*This property is mainly used for testing hybrid case where the SDP offer is made with AVPF only for video
-	 * stream.*/
-	SalMediaProto ret = useCurrentParams ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(),
-	                                                                                    getParams()->avpfEnabled())
-	                                     : getParams()->getMediaProto();
-	if (linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "no_avpf_for_audio",
-	                             false)) {
+	if (!assigned) {
+		requested = useCurrentParams ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(),
+		                                                                            getParams()->avpfEnabled())
+		                             : getParams()->getMediaProto();
+	}
+	requested = modifyMdProtoAccordingToEncryptionList(requested, encs);
+	if ((streamType == SalAudio) && linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc",
+	                                                         "no_avpf_for_audio", false)) {
 		lInfo() << "Removing AVPF for audio mline.";
-		switch (ret) {
+		switch (requested) {
 			case SalProtoRtpAvpf:
-				ret = SalProtoRtpAvp;
+				requested = SalProtoRtpAvp;
 				break;
 			case SalProtoRtpSavpf:
-				ret = SalProtoRtpSavp;
+				requested = SalProtoRtpSavp;
+				break;
+			case SalProtoUdpTlsRtpSavpf:
+				requested = SalProtoUdpTlsRtpSavp;
 				break;
 			default:
 				break;
 		}
 	}
-	return ret;
+	return requested;
 }
 
 void MediaSessionPrivate::fillRtpParameters(SalStreamDescription &stream) const {
@@ -1718,7 +1795,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 	emptyList.clear();
 
 	SalStreamConfiguration cfg;
-	cfg.proto = getParams()->getMediaProto();
+	cfg.proto = modifyMdProtoAccordingToEncryptionList(getParams()->getMediaProto(), encs);
 
 	newStream.type = type;
 
@@ -2136,7 +2213,7 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 					newStream.type = type;
 
 					SalStreamConfiguration cfg;
-					cfg.proto = getParams()->getMediaProto();
+					cfg.proto = modifyMdProtoAccordingToEncryptionList(getParams()->getMediaProto(), encs);
 
 					bool bundle_enabled = getParams()->rtpBundleEnabled();
 					std::list<OrtpPayloadType *> l = pth.makeCodecsList(
@@ -2475,8 +2552,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	descParams.enableCapabilityNegotiationSupport(supportsCapabilityNegotiationAttributes);
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(descParams);
 	std::shared_ptr<SalMediaDescription> &oldMd = localDesc;
+	std::shared_ptr<SalMediaDescription> remoteMd = (!localIsOfferer && op) ? op->getRemoteMediaDescription() : nullptr;
 	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
-	const std::shared_ptr<SalMediaDescription> &refMd = ((localIsOfferer) ? oldMd : op->getRemoteMediaDescription());
+	const std::shared_ptr<SalMediaDescription> &refMd = ((localIsOfferer) ? oldMd : remoteMd);
 
 	this->localIsOfferer = localIsOfferer;
 
@@ -2620,13 +2698,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		                                           : emptyList),
 		                                      rtpBundleEnabled);
 
-		const auto audioStreamIdx = (conference && refMd) ? refMd->findIdxBestStream(SalAudio) : -1;
-		SalStreamDescription &audioStream = addStreamToMd(md, audioStreamIdx, oldMd);
+		const auto remoteAudioStreamIdx = remoteMd ? remoteMd->findFirstStreamIdxOfType(SalAudio, 0) : -1;
+		const auto proto = getMdProto(SalAudio, remoteAudioStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
+		                              addCapabilityNegotiationAttributes, encList);
 		SalStreamDir audioDir = getParams()->getPrivate()->getSalAudioDirection();
-		fillLocalStreamDescription(
-		    audioStream, md, getParams()->audioEnabled(), "Audio", SalAudio,
-		    getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), audioDir,
-		    audioCodecs, "as", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
+		const auto audioStreamIdx = (conference && refMd) ? refMd->findFirstStreamIdxOfType(SalAudio, 0) : -1;
+		SalStreamDescription &audioStream = addStreamToMd(md, audioStreamIdx, oldMd);
+		fillLocalStreamDescription(audioStream, md, getParams()->audioEnabled(), "Audio", SalAudio, proto, audioDir,
+		                           audioCodecs, "as",
+		                           getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
 
 		auto &actualCfg = audioStream.cfgs[audioStream.getActualConfigurationIndex()];
 
@@ -2698,11 +2778,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		                                           ? oldVideoStream.already_assigned_payloads
 		                                           : emptyList),
 		                                      rtpBundleEnabled);
-		const auto proto = offerNegotiatedMediaProtocolOnly
-		                       ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(),
-		                                                                      getParams()->avpfEnabled())
-		                       : getParams()->getMediaProto();
-
 		SalStreamDir videoDir = SalStreamInactive;
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
@@ -2717,35 +2792,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 				           << " may not be able to send video streams or an old video stream is just being copied";
 				enableVideoStream = false;
 			}
-
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 			enableVideoStream = addVideoStream;
 		}
 
-		int videoStreamIdx = -1;
-		if (refMd) {
-			const auto gridStreamIdxWithContent =
-			    refMd->findIdxStreamWithContent(MediaSessionPrivate::GridVideoContentAttribute);
-			const auto activeSpeakerStreamIdxWithContent =
-			    refMd->findIdxStreamWithContent(MediaSessionPrivate::ActiveSpeakerVideoContentAttribute);
-			const auto screenSharingStreamIdxWithContent =
-			    refMd->findIdxStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
-			if (conference) {
-				if (screenSharingStreamIdxWithContent > -1) {
-					videoStreamIdx = screenSharingStreamIdxWithContent;
-				} else if (gridStreamIdxWithContent > -1) {
-					videoStreamIdx = gridStreamIdxWithContent;
-				} else if (activeSpeakerStreamIdxWithContent > -1) {
-					videoStreamIdx = activeSpeakerStreamIdxWithContent;
-				}
-				// If no stream with content has been found, then let's append the stream. There is no way for the SDK
-				// to guess where the main stream should be
-			} else {
-				videoStreamIdx = refMd->findIdxBestStream(SalVideo);
-			}
-		}
-
+		int remoteVideoStreamIdx = q->getMainVideoStreamIdx(remoteMd);
+		const auto proto = getMdProto(SalVideo, remoteVideoStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
+		                              addCapabilityNegotiationAttributes, encList);
+		int videoStreamIdx = q->getMainVideoStreamIdx(refMd);
 		SalStreamDescription &videoStream = addStreamToMd(md, videoStreamIdx, oldMd);
 		fillLocalStreamDescription(videoStream, md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs,
 		                           "vs",
@@ -2780,13 +2835,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		                                          ? oldTextStream.already_assigned_payloads
 		                                          : emptyList),
 		                                     rtpBundleEnabled);
-
-		const auto proto = offerNegotiatedMediaProtocolOnly
-		                       ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(),
-		                                                                      getParams()->avpfEnabled())
-		                       : getParams()->getMediaProto();
-
-		const auto textStreamIdx = refMd ? refMd->findIdxBestStream(SalText) : -1;
+		const auto remoteTextStreamIdx = remoteMd ? remoteMd->findFirstStreamIdxOfType(SalText, 0) : -1;
+		const auto proto = getMdProto(SalText, remoteTextStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
+		                              addCapabilityNegotiationAttributes, encList);
+		const auto textStreamIdx = refMd ? refMd->findFirstStreamIdxOfType(SalText, 0) : -1;
 		SalStreamDescription &textStream = addStreamToMd(md, textStreamIdx, oldMd);
 		fillLocalStreamDescription(textStream, md, getParams()->realtimeTextEnabled(), "Text", SalText, proto,
 		                           SalStreamSendRecv, textCodecs, "ts",
@@ -2817,7 +2869,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 
 		OfferAnswerContext ctx;
 		ctx.localMediaDescription = localDesc;
-		ctx.remoteMediaDescription = localIsOfferer ? nullptr : (op ? op->getRemoteMediaDescription() : nullptr);
+		ctx.remoteMediaDescription = localIsOfferer ? nullptr : remoteMd;
 		ctx.localIsOfferer = localIsOfferer;
 		/* Now instanciate the streams according to the media description. */
 		if (!q->getCore()->getCCore()->sal->mediaDisabled()) getStreamsGroup().createStreams(ctx);

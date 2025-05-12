@@ -346,9 +346,14 @@ private:
 	    const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
 	Stream *getStream(LinphoneStreamType type) const;
 	int portFromStreamIndex(int index);
-	SalMediaProto getAudioProto(const bool useCurrentParams) const;
-	SalMediaProto getAudioProto(const std::shared_ptr<SalMediaDescription> remote_md,
-	                            const bool useCurrentParams) const;
+	SalMediaProto getMdProto(SalStreamType type,
+	                         const int &idx,
+	                         const std::shared_ptr<SalMediaDescription> remoteMd,
+	                         const bool useCurrentParams,
+	                         const bool ignoreRemoteMd,
+	                         const std::list<LinphoneMediaEncryption> &encs) const;
+	SalMediaProto modifyMdProtoAccordingToEncryptionList(const SalMediaProto &proto,
+	                                                     const std::list<LinphoneMediaEncryption> &encs) const;
 	bool hasAvpf(const std::shared_ptr<SalMediaDescription> &md) const;
 	void queueIceGatheringTask(const std::function<LinphoneStatus()> &lambda);
 	void runIceGatheringTasks();
