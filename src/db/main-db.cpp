@@ -309,8 +309,8 @@ long long MainDbPrivate::insertSipAddress(const Address &address) {
 		return -1;
 	}
 	// This is a hack, because all addresses don't print their parameters in the same order.
-	const string sipAddress = address.toStringUriOnlyOrdered();
-	const string displayName = address.getDisplayName();
+	string sipAddress = address.toStringUriOnlyOrdered();
+	string displayName = address.getDisplayName();
 	return insertSipAddress(sipAddress, displayName);
 }
 
@@ -319,8 +319,8 @@ long long MainDbPrivate::insertSipAddress(const std::shared_ptr<Address> &addres
 		return -1;
 	}
 	// This is a hack, because all addresses don't print their parameters in the same order.
-	const string sipAddress = address->toStringUriOnlyOrdered();
-	const string displayName = address->getDisplayName();
+	string sipAddress = address->toStringUriOnlyOrdered();
+	string displayName = address->getDisplayName();
 	return insertSipAddress(sipAddress, displayName);
 }
 
@@ -1042,16 +1042,13 @@ long long MainDbPrivate::insertOrUpdateFriendList(const std::shared_ptr<FriendLi
 long long MainDbPrivate::insertOrUpdateDevice(const std::shared_ptr<Address> &addressWithGruu,
                                               const std::string &displayName) {
 #ifdef HAVE_DB_STORAGE
-	long long deviceAddressId = selectSipAddressId(addressWithGruu, false);
-	if (deviceAddressId <= 0) {
-		deviceAddressId = insertSipAddress(addressWithGruu);
-	}
 
-	auto withoutGruu = addressWithGruu->getUriWithoutGruu();
-	long long sipAaddressId = selectSipAddressId(withoutGruu, false);
-	if (sipAaddressId <= 0) {
-		sipAaddressId = insertSipAddress(withoutGruu);
-	}
+	// insertSipAddress will simply return the ID of the SIP address if it already exists.
+	// No update of the associated display name is done if "" is provided.
+	auto deviceAddressId = insertSipAddress(addressWithGruu->toStringUriOnlyOrdered(), "");
+
+	auto withoutGruu = addressWithGruu->getUriWithoutGruu().toStringUriOnlyOrdered();
+	auto sipAaddressId = insertSipAddress(withoutGruu, "");
 
 	soci::session *session = dbSession.getBackendSession();
 	long long deviceId = -1;
@@ -7834,6 +7831,18 @@ std::list<std::shared_ptr<FriendList>> MainDb::getFriendLists() {
 	};
 #else
 	return std::list<std::shared_ptr<FriendList>>();
+#endif
+}
+
+void MainDb::insertDevices(const std::list<std::pair<std::shared_ptr<Address>, std::string>> &devices) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+		for (auto &deviceAndName : devices) {
+			d->insertOrUpdateDevice(deviceAndName.first, deviceAndName.second);
+		}
+		tr.commit();
+	};
 #endif
 }
 

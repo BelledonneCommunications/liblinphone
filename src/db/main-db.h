@@ -301,6 +301,7 @@ public:
 	std::list<std::shared_ptr<Friend>> getFriends(const std::shared_ptr<FriendList> &list);
 	std::list<std::shared_ptr<FriendList>> getFriendLists();
 
+	void insertDevices(const std::list<std::pair<std::shared_ptr<Address>, std::string>> &devices);
 	long long insertDevice(const std::shared_ptr<Address> &addressWithGruu, const std::string &displayName);
 	void removeDevice(const std::shared_ptr<Address> &addressWithGruu);
 	std::list<std::shared_ptr<FriendDevice>> getDevices(const std::shared_ptr<Address> &address);
