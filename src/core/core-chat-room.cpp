@@ -437,7 +437,9 @@ void CorePrivate::loadChatRooms() {
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
 #endif
 	if (!mainDb->isInitialized()) return;
-	std::set<Address, Address::WeakLess> friendDeviceAddresses;
+	lInfo() << "Beginning loadChatRoms";
+	std::set<Address, Address::WeakLess> friendAddresses;
+	std::list<pair<shared_ptr<Address>, string>> deviceAddressesAndNames;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 		// We are looking for a one to one chatroom which isn't basic
@@ -450,20 +452,23 @@ void CorePrivate::loadChatRooms() {
 		}
 
 		// TODO FIXME: Remove later when devices for friends will be notified through presence
+
 		for (const auto &p : chatRoom->getParticipants()) {
 			const auto &pAddress = p->getAddress();
-			auto [it, success] = friendDeviceAddresses.insert(*pAddress);
+			auto [it, success] = friendAddresses.insert(*pAddress);
 			if (success) {
 				for (const auto &d : p->getDevices()) {
 					auto gruu = d->getAddress();
 					auto &name = d->getName();
-					lDebug() << "[Friend] Inserting existing device of participant [" << *pAddress << "] with name ["
-					         << name << "] and address [" << *gruu << "]";
-					mainDb->insertDevice(gruu, name);
+					deviceAddressesAndNames.push_back(make_pair(gruu, name));
+					// lDebug() << "[Friend] Inserting existing device of participant [" << *pAddress << "] with name ["
+					//          << name << "] and address [" << *gruu << "]";
 				}
 			}
 		}
 	}
+	mainDb->insertDevices(deviceAddressesAndNames);
+	lInfo() << "End loadChatRoms";
 	sendDeliveryNotifications();
 }
 
