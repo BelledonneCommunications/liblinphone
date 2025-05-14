@@ -7827,6 +7827,10 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				                              focus_stat.number_of_LinphoneCallOutgoingInit + 1, 500));
 				BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallIncomingReceived,
 				                              marie_stat.number_of_LinphoneCallIncomingReceived + 1, 500));
+				// Account for reINVITE to reestablish the session as well as the ICE reINVITE
+				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning,
+				                             marie_stat.number_of_LinphoneCallStreamsRunning + 1,
+				                             2 * liblinphone_tester_sip_timeout));
 			} else {
 				ms_message("%s hangs up its call to conference %s", linphone_core_get_identity(marie.getLc()),
 				           conference_address_str);
@@ -7926,9 +7930,9 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			}
 
 			// wait for the sound resources to be freed
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [&marie] {
-				return !linphone_core_sound_resources_locked(marie.getLc());
-			});
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+			                   .waitUntil(chrono::seconds(10),
+			                              [&marie] { return !linphone_core_sound_resources_locked(marie.getLc()); }));
 
 			LinphoneCallParams *new_params = linphone_core_create_call_params(marie.getLc(), nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
