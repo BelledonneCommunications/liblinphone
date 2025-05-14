@@ -758,7 +758,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
 		AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12
-		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16)
 	set_source_files_properties(sal/potential_config_graph.cpp
 			nat/nat-policy.cpp
 			utils/version.cpp
