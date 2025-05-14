@@ -36,6 +36,7 @@ This changelog file was started on October 2019. Previous changes were more or l
   - End to end encryption for audio/video conferences, using double SRTP encryption RFC8723 and RFC8870 (EKT)
 
 ### Changed
+- ConferenceScheduler object doesn't allow anymore create dialout conference. Use linphone_conference_invite_participants() instead.
 - Unifies ChatRoom and Conferences internal classes
 - Allow IMDNs to be sent only to message sender (see linphone_core_set_imdn_to_everybody_threshold() )
 - Echo Canceller Calibrator improvements

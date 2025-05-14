@@ -471,13 +471,6 @@ void CorePrivate::unregisterAccounts() {
 void CorePrivate::uninit() {
 	L_Q();
 
-	// If we have an encryption engine, destroy it.
-	if (imee != nullptr) {
-		auto listener = dynamic_cast<CoreListener *>(q->getEncryptionEngine());
-		if (listener) unregisterListener(listener);
-		imee.reset();
-	}
-
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
 	shared_ptr<ChatRoom> cr;
 	for (const auto &chatRoom : chatRooms) {
@@ -512,6 +505,14 @@ void CorePrivate::uninit() {
 	mConferenceById.clear();
 	q->mConferencesPendingCreation.clear();
 	q->mSipConferenceSchedulers.clear();
+
+	// If we have an encryption engine, destroy it after handling all chat message tasks.
+	// This way, the core will make a last attempt to send messages on encrypted chatrooms.
+	if (imee != nullptr) {
+		auto listener = dynamic_cast<CoreListener *>(q->getEncryptionEngine());
+		if (listener) unregisterListener(listener);
+		imee.reset();
+	}
 
 	listeners.clear();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();

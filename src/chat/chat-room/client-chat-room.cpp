@@ -320,14 +320,23 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 		if (it == mPendingCreationMessages.end()) addPendingMessage(chatMessage);
 	} else if (state == ConferenceInterface::State::Created) {
 		auto encryptionEngine = getCore()->getEncryptionEngine();
-		if (getCurrentParams()->getChatParams()->isEncrypted() && encryptionEngine &&
-		    encryptionEngine->participantListRequired() && conference->getParticipantDevices().empty()) {
-			lInfo() << *conference << ": Delaying sending of message [" << chatMessage
-			        << "] in an encrypted chat room because the list of participant devices has not been received yet "
-			           "and the encryption engine "
-			        << encryptionEngine << " requires it";
-			auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
-			if (it == mPendingCreationMessages.end()) mPendingCreationMessages.push_back(chatMessage);
+		if (getCurrentParams()->getChatParams()->isEncrypted()) {
+			if (!encryptionEngine) {
+				lError() << *conference << ": Unable to send message [" << chatMessage
+				         << "] because the encryption engine of the encrypted chat room has not been found";
+				chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::NotDelivered,
+				                                               ::ms_time(nullptr));
+			} else if (encryptionEngine->participantListRequired() && conference->getParticipantDevices().empty()) {
+				lInfo()
+				    << *conference << ": Delaying sending of message [" << chatMessage
+				    << "] in an encrypted chat room because the list of participant devices has not been received yet "
+				       "and the encryption engine "
+				    << encryptionEngine << " requires it";
+				auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
+				if (it == mPendingCreationMessages.end()) mPendingCreationMessages.push_back(chatMessage);
+			} else {
+				ChatRoom::sendChatMessage(chatMessage);
+			}
 		} else {
 			ChatRoom::sendChatMessage(chatMessage);
 		}
