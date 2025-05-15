@@ -3421,7 +3421,7 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_tcp_rc");
 	int dummy = 0;
 
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
