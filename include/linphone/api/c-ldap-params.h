@@ -297,8 +297,8 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_filter(const LinphoneLdapPa
 /*************************************************************************************/
 
 /**
- * @brief Check these attributes to build Name Friend, separated by a comma and the first is the highest priority.
- * Default value : "sn".
+ * @brief List of ldap attributes to check to for the name of the contact, separated by a comma and the first is the
+ *highest priority. Default value : "sn".
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param name_attribute The comma separated attributes for the search. @maybenil
@@ -306,7 +306,8 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_filter(const LinphoneLdapPa
 LINPHONE_PUBLIC void linphone_ldap_params_set_name_attribute(LinphoneLdapParams *params, const char *name_attribute);
 
 /**
- * @brief Get the attributes to build Name Friend, separated by a comma and the first is the highest priority.
+ * @brief Get the attribute list to build to check to gather the name of the contact, separated by a comma and the first
+ *is the highest priority.
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The comma separated attributes for the search. @maybenil
