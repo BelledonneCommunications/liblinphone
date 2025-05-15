@@ -7961,6 +7961,7 @@ static void call_with_from_and_to_without_domain(void) {
 	    "CSeq: 102 INVITE\r\n"
 	    "Call-ID: 12bc634d4dee9a6a1829a7e07ff4b02d@10.0.0.60:5061\r\n"
 	    "Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO, PUBLISH, MESSAGE\r\n"
+	    "Record-route: <sip:sip1.example.org;lr>, <sip:sip2.example.org;lr>\r\n"
 	    "Supported: replaces, timer\r\n"
 	    "Content-Type: application/sdp\r\n"
 	    "\r\n"
