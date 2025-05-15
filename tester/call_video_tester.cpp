@@ -20,8 +20,10 @@
 
 #include "bctoolbox/defs.h"
 
+#include "bctoolbox/tester.h"
 #include "linphone/types.h"
 #include "mediastreamer2/msanalysedisplay.h"
+#include "mediastreamer2/mscommon.h"
 #include "mediastreamer2/msmediaplayer.h"
 #include "mediastreamer2/msmire.h"
 
@@ -1920,6 +1922,43 @@ static void two_accepted_call_in_send_only(void) {
 	bctbx_list_free(lcs);
 }
 
+static void core_snapshot_taken(LinphoneCore *lc, const char *filepath) {
+	// This is a check on file name. It must not by dynamic : based from filter should be enough
+	char *filename = bc_tester_file((g_display_filter + "snapshot_core.jpeg").c_str());
+	stats *callstats = get_stats(lc);
+	BC_ASSERT_STRING_EQUAL(filepath, filename);
+	callstats->number_of_snapshot_taken++;
+	bc_free(filename);
+}
+
+static void
+take_preview_snapshot(LinphoneCoreManager *caller_mgr, LinphoneCoreManager *callee_mgr, const char *filename) {
+	remove(filename);
+	linphone_core_iterate(caller_mgr->lc);
+	linphone_core_iterate(caller_mgr->lc); // Let time to the core to set new values
+	BC_ASSERT_TRUE(linphone_core_video_preview_enabled(caller_mgr->lc));
+	stats *callstats = get_stats(caller_mgr->lc);
+	int initial_number_of_snapshot_taken = callstats->number_of_snapshot_taken;
+	int jpeg_support = linphone_core_take_preview_snapshot(caller_mgr->lc, filename);
+	if (jpeg_support < 0) ms_warning("No jpegwriter support!");
+	ms_message("Waiting for snapshot to be taken");
+	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_snapshot_taken,
+	                        initial_number_of_snapshot_taken + 1));
+	BC_ASSERT_EQUAL(bctbx_file_exist(filename), 0, int, "%d");
+	BC_ASSERT_TRUE(linphone_core_video_preview_enabled(caller_mgr->lc));
+	remove(filename);
+}
+
+static void snapshot_taken(LinphoneCall *call, const char *filepath) {
+	// This is a check on file name. It must not by dynamic : based from filter should be enough
+	char *filename = bc_tester_file((g_display_filter + "snapshot.jpeg").c_str());
+	LinphoneCore *lc = linphone_call_get_core(call);
+	stats *callstats = get_stats(lc);
+	BC_ASSERT_STRING_EQUAL(filepath, filename);
+	callstats->number_of_snapshot_taken++;
+	ms_free(filename);
+}
+
 /*this is call forking with early media managed at client side (not by flexisip server)*/
 static void multiple_early_media(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -2145,6 +2184,16 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	caller_params = linphone_core_create_call_params(caller_mgr->lc, NULL);
 	linphone_call_params_enable_early_media_sending(caller_params, TRUE);
 
+	// enable preview for caller
+	linphone_core_enable_video_preview(caller_mgr->lc, TRUE);
+	linphone_core_use_preview_window(caller_mgr->lc, TRUE);
+	linphone_core_iterate(caller_mgr->lc); // must iterate for preview
+	linphone_core_iterate(caller_mgr->lc);
+	LinphoneCoreCbs *caller_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_snapshot_taken(caller_cbs, core_snapshot_taken);
+	linphone_core_add_callbacks(caller_mgr->lc, caller_cbs);
+	linphone_core_cbs_unref(caller_cbs);
+
 	caller_call = linphone_core_invite_address_with_params(caller_mgr->lc, callee_mgr->identity, caller_params);
 	linphone_call_params_unref(caller_params);
 	BC_ASSERT_PTR_NOT_NULL(caller_call);
@@ -2153,6 +2202,12 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	BC_ASSERT_TRUE(ok);
 	if (!ok) goto end;
 	BC_ASSERT_TRUE(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress == 1);
+
+	{
+		char *filename = bc_tester_file((g_display_filter + "snapshot_core.jpeg").c_str());
+		take_preview_snapshot(caller_mgr, callee_mgr, filename);
+		bc_free(filename);
+	}
 
 	callee_call = linphone_core_get_call_by_remote_address2(callee_mgr->lc, caller_mgr->identity);
 	early_media_params = linphone_core_create_call_params(callee_mgr->lc, callee_call);
@@ -2179,6 +2234,17 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 			BC_ASSERT_NOT_EQUAL(callee_vstream->source->desc->id, MS_MIRE_ID, int, "%d");
 	} else if (callee_video_direction == LinphoneMediaDirectionRecvOnly) {
 		BC_ASSERT_PTR_NULL(callee_vstream->source);
+	}
+
+	if (caller_call != NULL) {
+		LinphoneCallCbs *caller_call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+		BC_ASSERT_PTR_NOT_NULL(caller_call);
+		linphone_call_cbs_set_snapshot_taken(caller_call_cbs, snapshot_taken);
+		linphone_call_add_callbacks(caller_call, caller_call_cbs);
+		linphone_call_cbs_unref(caller_call_cbs);
+		char *filename = bc_tester_file((g_display_filter + "snapshot.jpeg").c_str());
+		take_preview_snapshot(caller_mgr, callee_mgr, filename);
+		bc_free(filename);
 	}
 
 	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionInactive, callee_video_direction);
@@ -2253,16 +2319,6 @@ static void video_call_recording_h264_test(void) {
 
 static void video_call_recording_vp8_test(void) {
 	record_call(generateRandomFilename("recording_").c_str(), TRUE, "VP8");
-}
-
-static void snapshot_taken(LinphoneCall *call, const char *filepath) {
-	// This is a check on file name. It must not by dynamic : based from filter should be enough
-	char *filename = bc_tester_file((g_display_filter + "snapshot.jpeg").c_str());
-	LinphoneCore *lc = linphone_call_get_core(call);
-	stats *callstats = get_stats(lc);
-	BC_ASSERT_STRING_EQUAL(filepath, filename);
-	callstats->number_of_snapshot_taken++;
-	ms_free(filename);
 }
 
 static void video_call_snapshot(void) {

@@ -163,9 +163,9 @@ static void register_with_refresh_base_2(LinphoneCore *lc,
 static void register_with_refresh_base_for_algo(
     LinphoneCore *lc, bool_t refresh, const char *domain, const char *route, const char *username) {
 	LinphoneTransports *transport = linphone_factory_create_transports(linphone_factory_get());
-	linphone_transports_set_udp_port(transport, 5070);
-	linphone_transports_set_tcp_port(transport, 5070);
-	linphone_transports_set_tls_port(transport, 5071);
+	linphone_transports_set_udp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tcp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tls_port(transport, LC_SIP_TRANSPORT_RANDOM);
 	linphone_transports_set_dtls_port(transport, 0);
 	register_with_refresh_base_3_for_algo(lc, refresh, domain, route, FALSE, transport, LinphoneRegistrationOk,
 	                                      username);
@@ -187,9 +187,9 @@ static void register_with_refresh_for_algo(
 static void register_with_route(LinphoneCoreManager *lcm, const char *domain, const char *route) {
 	stats *lcm_counters = &lcm->stat;
 	LinphoneTransports *transport = linphone_factory_create_transports(linphone_factory_get());
-	linphone_transports_set_udp_port(transport, 5070);
-	linphone_transports_set_tcp_port(transport, 5070);
-	linphone_transports_set_tls_port(transport, 5071);
+	linphone_transports_set_udp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tcp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tls_port(transport, LC_SIP_TRANSPORT_RANDOM);
 	linphone_transports_set_dtls_port(transport, 0);
 
 	LinphoneAddress *from = create_linphone_address_for_algo(domain, NULL);
@@ -427,7 +427,7 @@ static void simple_tcp_register_compatibility_mode(void) {
 	sprintf(route, "sip:%s", test_route);
 	lcm = create_lcm();
 	transport = linphone_factory_create_transports(linphone_factory_get());
-	linphone_transports_set_tcp_port(transport, 5070);
+	linphone_transports_set_tcp_port(transport, LC_SIP_TRANSPORT_RANDOM);
 	register_with_refresh_base_2(lcm->lc, FALSE, test_domain, route, FALSE, transport);
 	linphone_transports_unref(transport);
 	linphone_core_manager_destroy(lcm);
@@ -616,9 +616,9 @@ static void authenticated_register_with_late_credentials(void) {
 
 	lcm = linphone_core_manager_new("empty_rc");
 	transport = linphone_factory_create_transports(linphone_factory_get());
-	linphone_transports_set_udp_port(transport, 5070);
-	linphone_transports_set_tcp_port(transport, 5070);
-	linphone_transports_set_dtls_port(transport, 5071);
+	linphone_transports_set_udp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tcp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_dtls_port(transport, LC_SIP_TRANSPORT_RANDOM);
 
 	counters = get_stats(lcm->lc);
 	register_with_refresh_base_2(lcm->lc, FALSE, auth_domain, route, TRUE, transport);
@@ -709,9 +709,9 @@ static void authenticated_register_with_wrong_late_credentials(void) {
 
 	lcm = linphone_core_manager_new("empty_rc");
 	transport = linphone_factory_create_transports(linphone_factory_get());
-	linphone_transports_set_udp_port(transport, 5070);
-	linphone_transports_set_tcp_port(transport, 5070);
-	linphone_transports_set_tls_port(transport, 5071);
+	linphone_transports_set_udp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tcp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tls_port(transport, LC_SIP_TRANSPORT_RANDOM);
 	linphone_transports_set_dtls_port(transport, 0);
 
 	counters = get_stats(lcm->lc);
@@ -734,9 +734,9 @@ static void authenticated_register_with_wrong_credentials_with_params_base(const
 	char route[256];
 
 	sprintf(route, "sip:%s", test_route);
-	linphone_transports_set_udp_port(transport, 5070);
-	linphone_transports_set_tcp_port(transport, 5070);
-	linphone_transports_set_tls_port(transport, 5071);
+	linphone_transports_set_udp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tcp_port(transport, LC_SIP_TRANSPORT_RANDOM);
+	linphone_transports_set_tls_port(transport, LC_SIP_TRANSPORT_RANDOM);
 	linphone_transports_set_dtls_port(transport, 0);
 
 	sal_set_refresher_retry_after(linphone_core_get_sal(lcm->lc), 500);
@@ -935,9 +935,9 @@ static void transport_busy(void){
 	LCSipTransports tr;
 
 	memset(&tr, 0, sizeof(tr));
-	tr.udp_port = 5070;
-	tr.tcp_port = 5070;
-	tr.tls_port = 5071;
+	tr.udp_port = LC_SIP_TRANSPORT_RANDOM;
+	tr.tcp_port = LC_SIP_TRANSPORT_RANDOM;
+	tr.tls_port = LC_SIP_TRANSPORT_RANDOM;
 
 	linphone_core_set_sip_transports(pauline->lc, &tr);
 

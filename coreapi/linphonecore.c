@@ -6628,7 +6628,10 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 
 	if (!file) return -1;
 	if (call) {
-		return linphone_call_take_preview_snapshot(call, file);
+		if (lc->previewstream)
+			return ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT,
+			                             (void *)file);
+		else return linphone_call_take_preview_snapshot(call, file);
 	} else {
 #ifdef VIDEO_ENABLED
 		if (lc->previewstream == NULL) {
@@ -6643,10 +6646,6 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 			linphone_core_enable_video_preview(lc, TRUE);
 
 			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, video_filter_callback, lc, FALSE);
-		} else {
-			// video_filter_callback will turn OFF video preview, we don't want that here
-			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter,
-			                              video_filter_callback_not_turning_preview_off, lc, FALSE);
 		}
 
 		if (lc->previewstream) {
@@ -6704,6 +6703,10 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
 			}
 			video_stream_set_event_callback(lc->previewstream, video_stream_callback, lc);
 			video_stream_set_display_callback(lc->previewstream, video_stream_preview_display_callback, lc);
+
+			// video_filter_callback will turn OFF video preview, we don't want that here
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter,
+			                              video_filter_callback_not_turning_preview_off, lc, FALSE);
 		}
 	} else {
 		if (lc->previewstream != NULL) {

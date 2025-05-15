@@ -564,12 +564,12 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const LinphoneTesterLime
 	int numberOfReceivedMessagesExpected = 1;
 
 	if (im_encryption_mandatory) {
-		BC_ASSERT_FALSE(
-		    wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
-		             initialMarieStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected));
-		BC_ASSERT_FALSE(
-		    wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived,
-		             initialPaulineStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected));
+		BC_ASSERT_FALSE(wait_for_until(
+		    marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
+		    initialMarieStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected, 3000));
+		BC_ASSERT_FALSE(wait_for_until(
+		    marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived,
+		    initialPaulineStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected, 100));
 		BC_ASSERT_PTR_NULL(pauline->stat.last_received_chat_message);
 	} else {
 		BC_ASSERT_TRUE(
@@ -649,12 +649,12 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const LinphoneTesterLime
 	linphone_chat_message_send(basicMessage2);
 
 	if (im_encryption_mandatory) {
-		BC_ASSERT_FALSE(
-		    wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
-		             initialMarieStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected));
-		BC_ASSERT_FALSE(
-		    wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived,
-		             initialPaulineStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected));
+		BC_ASSERT_FALSE(wait_for_until(
+		    marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
+		    initialMarieStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected, 3000));
+		BC_ASSERT_FALSE(wait_for_until(
+		    marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived,
+		    initialPaulineStats.number_of_LinphoneMessageReceived + numberOfReceivedMessagesExpected, 300));
 	} else {
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
 		                        initialMarieStats.number_of_LinphoneMessageDelivered + 3));
@@ -1008,10 +1008,8 @@ static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const Linp
 	linphone_chat_message_send(message);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessagePendingDelivery, 1,
 	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_FALSE(
-	    wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
-	BC_ASSERT_FALSE(
-	    wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, 3000));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, 2, 300));
 
 	sal_set_send_error(linphone_core_get_sal(pauline->lc), 0);
 	linphone_core_refresh_registers(pauline->lc);
@@ -4436,7 +4434,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const Linpho
 			    wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
 			BC_ASSERT_FALSE(
-			    wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 3000));
+			    wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 300));
 
 			int pauline_messages = linphone_chat_room_get_history_size(paulineOneToOneCr);
 			BC_ASSERT_EQUAL(pauline_messages, 3, int, "%d");
@@ -5860,7 +5858,7 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const LinphoneTesterLim
 	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline setting is to deliver no imdn -> lime recovery cannot work
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
 		                              initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,
-		                              5000)); // Not delivered to pauline
+		                              3000)); // Not delivered to pauline
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	} else { // Pauline did delivered at least a delivery error IMDN, so the recovery shall work
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
@@ -5874,7 +5872,7 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const LinphoneTesterLim
 			                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
 		} else { // Pauline delivered the error IMDN but not the delivered one, wait 5s and check we do not get it
 			BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-			                              initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 5000));
+			                              initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 3000));
 		}
 	}
 

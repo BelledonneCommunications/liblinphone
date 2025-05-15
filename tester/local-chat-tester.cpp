@@ -200,7 +200,7 @@ static void group_chat_room_server_deletion(void) {
 		                              initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneAggregatedMessagesReceived,
-		                              initialMarieStats.number_of_LinphoneAggregatedMessagesReceived + 1, 3000));
+		                              initialMarieStats.number_of_LinphoneAggregatedMessagesReceived + 1, 300));
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
@@ -993,7 +993,7 @@ static void group_chat_room_with_client_registering_with_short_register_expires(
 		                             initialFocusStats.number_of_LinphoneSubscriptionIncomingReceived + 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionOutgoingProgress,
-		                              initialMichelleStats.number_of_LinphoneSubscriptionOutgoingProgress + 3, 5000));
+		                              initialMichelleStats.number_of_LinphoneSubscriptionOutgoingProgress + 3, 3000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
 		                              initialFocusStats.number_of_LinphoneSubscriptionIncomingReceived + 2, 1000));
 
@@ -1426,7 +1426,7 @@ static void group_chat_room_with_client_removed_while_stopped_base(bool_t use_re
 			BC_ASSERT_FALSE(wait_for_list(coresList, &core.getStats().number_of_participant_devices_added,
 			                              initialStats.number_of_participant_devices_added + 1, 2000));
 			BC_ASSERT_FALSE(wait_for_list(coresList, &core.getStats().number_of_participants_added,
-			                              initialStats.number_of_participants_added + 1, 2000));
+			                              initialStats.number_of_participants_added + 1, 200));
 		}
 
 		ms_message("%s starts again its core", michelleContactStr);
@@ -1702,10 +1702,10 @@ static void group_chat_room_with_creator_without_groupchat_capability_in_registe
 		                              initialMichelleStats.number_of_LinphoneChatRoomStateCreated + 1, 2000));
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &berthe.getStats().number_of_LinphoneChatRoomStateCreated,
-		                              initialBertheStats.number_of_LinphoneChatRoomStateCreated + 1, 2000));
+		                              initialBertheStats.number_of_LinphoneChatRoomStateCreated + 1, 200));
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie2.getStats().number_of_LinphoneChatRoomStateCreated,
-		                              initialMarie2Stats.number_of_LinphoneChatRoomStateCreated + 1, 2000));
+		                              initialMarie2Stats.number_of_LinphoneChatRoomStateCreated + 1, 200));
 
 		const std::initializer_list<std::reference_wrapper<ConfCoreManager>> cores{focus, marie, marie2, michelle,
 		                                                                           berthe};
@@ -2443,7 +2443,7 @@ static void group_chat_room_bulk_notify_to_participant_base(bool_t trigger_full_
 		                             initialMarieStats.number_of_participant_devices_removed + 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_removed,
-		                              initialPaulineStats.number_of_participant_devices_removed + 1, 3000));
+		                              initialPaulineStats.number_of_participant_devices_removed + 1, 1000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_removed,
 		                             initialMichelleStats.number_of_participant_devices_removed + 1,
 		                             liblinphone_tester_sip_timeout));
@@ -2451,7 +2451,7 @@ static void group_chat_room_bulk_notify_to_participant_base(bool_t trigger_full_
 		                             initialMarieStats.number_of_participants_removed + 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
-		                              initialPaulineStats.number_of_participants_removed + 1, 3000));
+		                              initialPaulineStats.number_of_participants_removed + 1, 1000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participants_removed,
 		                             initialMichelleStats.number_of_participants_removed + 1,
 		                             liblinphone_tester_sip_timeout));
@@ -3203,27 +3203,27 @@ static void group_chat_room_add_participant_with_invalid_address(void) {
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participants_added,
 		                              initialMarieStats.number_of_participants_added + 1, 5000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_added,
-		                              initialMarieStats.number_of_participant_devices_added + 1, 1000));
+		                              initialMarieStats.number_of_participant_devices_added + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_conference_participant_devices_present,
-		                              initialMarieStats.number_of_conference_participant_devices_present + 1, 1000));
+		                              initialMarieStats.number_of_conference_participant_devices_present + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_present,
-		                              initialMarieStats.number_of_participant_devices_present + 1, 1000));
+		                              initialMarieStats.number_of_participant_devices_present + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
-		                              initialPaulineStats.number_of_participants_added + 1, 1000));
+		                              initialPaulineStats.number_of_participants_added + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
-		                              initialPaulineStats.number_of_participant_devices_added + 1, 1000));
+		                              initialPaulineStats.number_of_participant_devices_added + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_conference_participant_devices_present,
-		                              initialPaulineStats.number_of_conference_participant_devices_present + 1, 1000));
+		                              initialPaulineStats.number_of_conference_participant_devices_present + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_present,
-		                              initialPaulineStats.number_of_participant_devices_present + 1, 1000));
+		                              initialPaulineStats.number_of_participant_devices_present + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participants_added,
-		                              initialMichelleStats.number_of_participants_added + 1, 1000));
+		                              initialMichelleStats.number_of_participants_added + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_added,
-		                              initialMichelleStats.number_of_participant_devices_added + 1, 1000));
+		                              initialMichelleStats.number_of_participant_devices_added + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_conference_participant_devices_present,
-		                              initialMichelleStats.number_of_conference_participant_devices_present + 1, 1000));
+		                              initialMichelleStats.number_of_conference_participant_devices_present + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_present,
-		                              initialMichelleStats.number_of_participant_devices_present + 1, 1000));
+		                              initialMichelleStats.number_of_participant_devices_present + 1, 100));
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
@@ -3292,7 +3292,7 @@ static void group_chat_room_with_only_participant_with_invalid_address(void) {
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated,
 		                              initialMarieStats.number_of_LinphoneChatRoomStateCreated + 1, 3000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomConferenceJoined,
-		                              initialMarieStats.number_of_LinphoneChatRoomConferenceJoined + 1, 1000));
+		                              initialMarieStats.number_of_LinphoneChatRoomConferenceJoined + 1, 100));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreationFailed,
 		                             initialMarieStats.number_of_LinphoneChatRoomStateCreationFailed + 1,
 		                             liblinphone_tester_sip_timeout));

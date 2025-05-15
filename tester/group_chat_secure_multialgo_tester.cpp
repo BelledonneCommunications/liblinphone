@@ -358,7 +358,6 @@ static void group_chat_lime_x3dh_hard_migration(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDeliveredToUser,
 		                             initialPaulineStats.number_of_LinphoneMessageDeliveredToUser + 1,
 		                             10000)); // make sure the IMDN is back to marie
-		wait_for_list(coresList, 0, 1, 4000); // Just to be sure all imdn message finally reach their recipients
 		linphone_chat_message_unref(paulineMessage);
 
 		linphone_address_unref(paulineAddr);

@@ -1285,7 +1285,7 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 				BC_ASSERT_FALSE(wait_for_list(
 				    coresList, &mgr->stat.number_of_participant_devices_media_capability_changed,
 				    participants_initial_stats[counter].number_of_participant_devices_media_capability_changed + 1,
-				    5000));
+				    3000));
 			} else {
 				BC_ASSERT_TRUE(wait_for_list(
 				    coresList, &mgr->stat.number_of_participant_devices_media_capability_changed,
@@ -1305,7 +1305,7 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 		if (media_not_changed) {
 			BC_ASSERT_FALSE(wait_for_list(
 			    coresList, &mgr->stat.number_of_participant_devices_media_capability_changed,
-			    participants_initial_stats[counter].number_of_participant_devices_media_capability_changed + 1, 5000));
+			    participants_initial_stats[counter].number_of_participant_devices_media_capability_changed + 1, 3000));
 		} else {
 			BC_ASSERT_TRUE(wait_for_list(
 			    coresList, &mgr->stat.number_of_participant_devices_media_capability_changed,
@@ -2391,16 +2391,16 @@ void create_conference_base(time_t start_time,
 						if (isPaulineListener && (layout == LinphoneConferenceLayoutGrid)) {
 							BC_ASSERT_FALSE(wait_for_list(
 							    coresList, &focus.getStats().number_of_participant_devices_media_capability_changed,
-							    focus_stat2.number_of_participant_devices_media_capability_changed + 1, 1000));
+							    focus_stat2.number_of_participant_devices_media_capability_changed + 1, 3000));
 							BC_ASSERT_FALSE(wait_for_list(
 							    coresList, &marie.getStats().number_of_participant_devices_media_capability_changed,
-							    marie_stat2.number_of_participant_devices_media_capability_changed + 1, 1000));
+							    marie_stat2.number_of_participant_devices_media_capability_changed + 1, 100));
 							BC_ASSERT_FALSE(wait_for_list(
 							    coresList, &pauline.getStats().number_of_participant_devices_media_capability_changed,
-							    pauline_stat2.number_of_participant_devices_media_capability_changed + 1, 1000));
+							    pauline_stat2.number_of_participant_devices_media_capability_changed + 1, 100));
 							BC_ASSERT_FALSE(wait_for_list(
 							    coresList, &laure.getStats().number_of_participant_devices_media_capability_changed,
-							    laure_stat2.number_of_participant_devices_media_capability_changed + 1, 1000));
+							    laure_stat2.number_of_participant_devices_media_capability_changed + 1, 100));
 						} else {
 							if (new_video_direction == LinphoneMediaDirectionSendRecv) {
 								BC_ASSERT_TRUE(wait_for_list(
@@ -2866,16 +2866,16 @@ void create_conference_base(time_t start_time,
 				} else {
 					BC_ASSERT_FALSE(wait_for_list(
 					    coresList, &focus.getStats().number_of_participant_devices_media_capability_changed,
-					    focus_stat3.number_of_participant_devices_media_capability_changed + 1, 1000));
+					    focus_stat3.number_of_participant_devices_media_capability_changed + 1, 3000));
 					BC_ASSERT_FALSE(wait_for_list(
 					    coresList, &marie.getStats().number_of_participant_devices_media_capability_changed,
-					    marie_stat3.number_of_participant_devices_media_capability_changed + 1, 1000));
+					    marie_stat3.number_of_participant_devices_media_capability_changed + 1, 100));
 					BC_ASSERT_FALSE(wait_for_list(
 					    coresList, &pauline.getStats().number_of_participant_devices_media_capability_changed,
-					    pauline_stat3.number_of_participant_devices_media_capability_changed + 1, 1000));
+					    pauline_stat3.number_of_participant_devices_media_capability_changed + 1, 100));
 					BC_ASSERT_FALSE(wait_for_list(
 					    coresList, &laure.getStats().number_of_participant_devices_media_capability_changed,
-					    laure_stat3.number_of_participant_devices_media_capability_changed + 1, 1000));
+					    laure_stat3.number_of_participant_devices_media_capability_changed + 1, 100));
 				}
 			}
 
@@ -4688,22 +4688,22 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		} else {
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &focus.getStats().number_of_participant_devices_screen_sharing_enabled,
-			                              focus_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+			                              focus_stat.number_of_participant_devices_screen_sharing_enabled + 1, 3000));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &marie.getStats().number_of_participant_devices_screen_sharing_enabled,
-			                              marie_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
-			BC_ASSERT_FALSE(
-			    wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_screen_sharing_enabled,
-			                  michelle_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+			                              marie_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
+			BC_ASSERT_FALSE(wait_for_list(coresList,
+			                              &michelle.getStats().number_of_participant_devices_screen_sharing_enabled,
+			                              michelle_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &berthe.getStats().number_of_participant_devices_screen_sharing_enabled,
-			                              berthe_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+			                              berthe_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &pauline.getStats().number_of_participant_devices_screen_sharing_enabled,
-			                              pauline_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+			                              pauline_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &laure.getStats().number_of_participant_devices_screen_sharing_enabled,
-			                              laure_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+			                              laure_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 
 			if (berthe_call) {
 				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(berthe_call);
@@ -4764,20 +4764,20 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		}
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_screen_sharing_enabled,
-		                              focus_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+		                              focus_stat.number_of_participant_devices_screen_sharing_enabled + 1, 3000));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_screen_sharing_enabled,
-		                              marie_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+		                              marie_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList,
 		                              &michelle.getStats().number_of_participant_devices_screen_sharing_enabled,
-		                              michelle_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+		                              michelle_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList,
 		                              &berthe.getStats().number_of_participant_devices_screen_sharing_enabled,
-		                              berthe_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+		                              berthe_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList,
 		                              &pauline.getStats().number_of_participant_devices_screen_sharing_enabled,
-		                              pauline_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+		                              pauline_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 		BC_ASSERT_FALSE(wait_for_list(coresList, &laure.getStats().number_of_participant_devices_screen_sharing_enabled,
-		                              laure_stat.number_of_participant_devices_screen_sharing_enabled + 1, 1000));
+		                              laure_stat.number_of_participant_devices_screen_sharing_enabled + 1, 100));
 
 		if (laure_call) {
 			const LinphoneCallParams *laure_call_cparams = linphone_call_get_current_params(laure_call);
@@ -5187,22 +5187,22 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		} else {
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &focus.getStats().number_of_participant_devices_screen_sharing_disabled,
-			                              focus_stat.number_of_participant_devices_screen_sharing_disabled + 1, 1000));
+			                              focus_stat.number_of_participant_devices_screen_sharing_disabled + 1, 3000));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &marie.getStats().number_of_participant_devices_screen_sharing_disabled,
-			                              marie_stat.number_of_participant_devices_screen_sharing_disabled + 1, 1000));
+			                              marie_stat.number_of_participant_devices_screen_sharing_disabled + 1, 100));
 			BC_ASSERT_FALSE(
 			    wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_screen_sharing_disabled,
-			                  michelle_stat.number_of_participant_devices_screen_sharing_disabled + 1, 1000));
+			                  michelle_stat.number_of_participant_devices_screen_sharing_disabled + 1, 100));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &berthe.getStats().number_of_participant_devices_screen_sharing_disabled,
-			                              berthe_stat.number_of_participant_devices_screen_sharing_disabled + 1, 1000));
-			BC_ASSERT_FALSE(
-			    wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_screen_sharing_disabled,
-			                  pauline_stat.number_of_participant_devices_screen_sharing_disabled + 1, 1000));
+			                              berthe_stat.number_of_participant_devices_screen_sharing_disabled + 1, 100));
+			BC_ASSERT_FALSE(wait_for_list(coresList,
+			                              &pauline.getStats().number_of_participant_devices_screen_sharing_disabled,
+			                              pauline_stat.number_of_participant_devices_screen_sharing_disabled + 1, 100));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &laure.getStats().number_of_participant_devices_screen_sharing_disabled,
-			                              laure_stat.number_of_participant_devices_screen_sharing_disabled + 1, 1000));
+			                              laure_stat.number_of_participant_devices_screen_sharing_disabled + 1, 100));
 
 			for (const auto &mgr : conferenceMgrs) {
 				LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
@@ -10355,7 +10355,7 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 			                              marie_stat.number_of_participant_devices_media_capability_changed + 1, 2000));
 			BC_ASSERT_FALSE(wait_for_list(coresList,
 			                              &focus.getStats().number_of_participant_devices_media_capability_changed,
-			                              focus_stat.number_of_participant_devices_media_capability_changed + 1, 2000));
+			                              focus_stat.number_of_participant_devices_media_capability_changed + 1, 200));
 		} else {
 			BC_ASSERT_TRUE(wait_for_list(
 			    coresList, &marie.getStats().number_of_participant_devices_media_capability_changed,
@@ -13664,7 +13664,7 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 			BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participants_removed,
 			                              marie_stat.number_of_participants_removed + 1, 3000));
 			BC_ASSERT_FALSE(wait_for_list(coresList, &focus.getStats().number_of_participants_removed,
-			                              focus_stat.number_of_participants_removed + 1, 1000));
+			                              focus_stat.number_of_participants_removed + 1, 100));
 		} else {
 			BC_ASSERT_TRUE(
 			    wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,

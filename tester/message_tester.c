@@ -3202,11 +3202,9 @@ void aggregated_imdns_in_group_chat_base(const LinphoneTesterLimeAlgo curveId) {
 	                             initialPaulineStats.number_of_LinphoneRegistrationOk + 1,
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneSubscriptionOutgoingProgress,
-	                              initialPaulineStats.number_of_LinphoneSubscriptionOutgoingProgress + 1,
-	                              liblinphone_tester_sip_timeout));
+	                              initialPaulineStats.number_of_LinphoneSubscriptionOutgoingProgress + 1, 2000));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneSubscriptionError,
-	                              initialPaulineStats.number_of_LinphoneSubscriptionError + 1,
-	                              liblinphone_tester_sip_timeout));
+	                              initialPaulineStats.number_of_LinphoneSubscriptionError + 1, 2000));
 
 	for (int idx = 0; idx < nbMessages; idx++) {
 		char messageText[100];

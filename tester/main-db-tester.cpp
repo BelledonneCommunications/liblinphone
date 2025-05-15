@@ -675,6 +675,7 @@ test_suite_t main_db_test_suite = {
     liblinphone_tester_after_each,
     sizeof(main_db_tests) / sizeof(main_db_tests[0]),
     main_db_tests,
-    25,
-    4 /*cpu weight: to preserve speed for "Load a lot of chatrooms"*/
+    59, /* It usually runs faster, but since we allow retries for the "Load a lot of chatrooms" tests, it can take
+           longer. */
+    4   /*cpu weight: to preserve speed for "Load a lot of chatrooms"*/
 };
