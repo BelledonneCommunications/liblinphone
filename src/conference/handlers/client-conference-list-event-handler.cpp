@@ -411,10 +411,13 @@ void ClientConferenceListEventHandler::onNetworkReachable(bool sipNetworkReachab
 void ClientConferenceListEventHandler::onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
                                                                          LinphoneRegistrationState state,
                                                                          BCTBX_UNUSED(const std::string &message)) {
-	if ((state == LinphoneRegistrationOk) && (account->getPreviousState() != LinphoneRegistrationRefreshing))
+	const auto &previousAccountState = account->getPreviousState();
+	// Do not subscribe again is the moving from RegistrationOk or RegistrationPending to RegistrationOk
+	if ((state == LinphoneRegistrationOk) && (previousAccountState != LinphoneRegistrationOk) &&
+	    (previousAccountState != LinphoneRegistrationRefreshing)) {
 		subscribe(account);
-	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
-		                                             // the current subscription
+	} else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config
+		                                               // is the current subscription
 		const auto &accountParams = account->getAccountParams();
 		const auto &cfgAddress = accountParams->getIdentityAddress();
 		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &lev) {

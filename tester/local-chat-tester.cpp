@@ -957,12 +957,24 @@ static void group_chat_room_with_client_registering_with_short_register_expires(
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
 		linphone_account_params_set_expires(new_account_params, expires);
+		linphone_account_params_set_conference_factory_address(new_account_params,
+		                                                       focus.getConferenceFactoryAddress().toC());
+		LinphoneAddress *audio_video_conference_factory = linphone_address_new("sip:fakefactory@sip.example.org");
+		linphone_address_set_domain(audio_video_conference_factory,
+		                            linphone_address_get_domain(focus.getConferenceFactoryAddress().toC()));
+		linphone_account_params_set_audio_video_conference_factory_address(new_account_params,
+		                                                                   audio_video_conference_factory);
+		linphone_address_unref(audio_video_conference_factory);
 		linphone_account_set_params(account, new_account_params);
 		linphone_account_params_unref(new_account_params);
 		linphone_core_set_network_reachable(michelle.getLc(), TRUE);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneRegistrationOk,
 		                             initialMichelleStats.number_of_LinphoneRegistrationOk + 1,
 		                             liblinphone_tester_sip_timeout));
+
+		account = linphone_core_get_default_account(michelle.getLc());
+		account_params = linphone_account_get_params(account);
+		BC_ASSERT_EQUAL(linphone_account_params_get_expires(account_params), expires, int, "%d");
 
 		// We expect that the client sends 2 subscriptions to the server:
 		// - one from the call onNetworkReacable which fails because the DNS resolution of sip.example.org has not been
@@ -1039,6 +1051,54 @@ static void group_chat_room_with_client_registering_with_short_register_expires(
 		msg = NULL;
 
 		CoreManagerAssert({focus, marie, michelle, berthe}).waitUntil(std::chrono::seconds(2), [] { return false; });
+
+		coresList = bctbx_list_remove(coresList, michelle.getLc());
+		ms_message("%s is stopping its core", linphone_core_get_identity(michelle.getLc()));
+		linphone_core_manager_reinit(michelle.getCMgr());
+		account = linphone_core_get_default_account(michelle.getLc());
+		account_params = linphone_account_get_params(account);
+		new_account_params = linphone_account_params_clone(account_params);
+		linphone_account_params_set_expires(new_account_params, expires);
+		linphone_account_params_set_conference_factory_address(new_account_params,
+		                                                       focus.getConferenceFactoryAddress().toC());
+		audio_video_conference_factory = linphone_address_new("sip:fakefactory@sip.example.org");
+		linphone_address_set_domain(audio_video_conference_factory,
+		                            linphone_address_get_domain(focus.getConferenceFactoryAddress().toC()));
+		linphone_account_params_set_audio_video_conference_factory_address(new_account_params,
+		                                                                   audio_video_conference_factory);
+		linphone_address_unref(audio_video_conference_factory);
+		linphone_account_set_params(account, new_account_params);
+		linphone_account_params_unref(new_account_params);
+		michelle.configureCoreForConference(focus.getConferenceFactoryAddress());
+		_configure_core_for_audio_video_conference(michelle.getCMgr(), focus.getConferenceFactoryAddress().toC());
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), FALSE);
+		linphone_core_set_add_admin_information_to_contact(michelle.getLc(), FALSE);
+		michelle.setupMgrForConference();
+
+		CoreManagerAssert({focus, marie, michelle, berthe}).waitUntil(std::chrono::seconds(2), [] { return false; });
+
+		ms_message("%s is restarting its core", linphone_core_get_identity(michelle.getLc()));
+		linphone_core_manager_start(michelle.getCMgr(), TRUE);
+		coresList = bctbx_list_append(coresList, michelle.getLc());
+
+		account = linphone_core_get_default_account(michelle.getLc());
+		account_params = linphone_account_get_params(account);
+		BC_ASSERT_EQUAL(linphone_account_params_get_expires(account_params), expires, int, "%d");
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneRegistrationOk, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 2,
+		                              3 * expires * 1000));
+
+		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionTerminated, 2,
+		                              3 * expires * 1000));
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
@@ -3855,8 +3915,9 @@ static test_t local_conference_chat_basic_tests[] = {
 };
 
 static test_t local_conference_chat_advanced_tests[] = {
-    TEST_NO_TAG("Group chat with client registering with a short REGISTER expires",
-                LinphoneTest::group_chat_room_with_client_registering_with_short_register_expires),
+    TEST_ONE_TAG("Group chat with client registering with a short REGISTER expires",
+                 LinphoneTest::group_chat_room_with_client_registering_with_short_register_expires,
+                 "LeaksMemory"), /* beacause of coreMgr restart*/
     TEST_ONE_TAG("Group chat with client restart and removed from server",
                  LinphoneTest::group_chat_room_with_client_restart_removed_from_server,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
