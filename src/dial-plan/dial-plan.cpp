@@ -465,17 +465,21 @@ const list<shared_ptr<DialPlan>> &DialPlan::getAllDialPlans() {
 	return sDialPlans;
 }
 
-bool_t DialPlan::isShortNumber(const int ccc, const std::string &phoneNumber) {
-	std::shared_ptr<DialPlan> dialPlan = findByCcc(ccc);
-	if (phoneNumber.length() < (size_t)dialPlan->getMinNationalNumberLength()) {
+bool DialPlan::isShortNumber(const std::string &phoneNumber) {
+	if (phoneNumber[0] != '+' && phoneNumber.length() < (size_t)getMinNationalNumberLength()) {
 		lDebug() << "[DialPlan] Flattened number [" << phoneNumber << "] is a short number in dial plan ["
-		         << dialPlan->getCountry() << "]";
-		return TRUE;
+		         << getCountry() << "]";
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
-bool_t DialPlan::hasEnoughSignificantDigits(const int ccc, const std::string &phoneNumber) {
+bool DialPlan::isShortNumber(const int ccc, const std::string &phoneNumber) {
+	std::shared_ptr<DialPlan> dialPlan = findByCcc(ccc);
+	return dialPlan->isShortNumber(phoneNumber);
+}
+
+bool DialPlan::hasEnoughSignificantDigits(const int ccc, const std::string &phoneNumber) {
 	std::shared_ptr<DialPlan> dialPlan = findByCcc(ccc);
 
 	string flatten = dialPlan->getSignificantDigits(phoneNumber);

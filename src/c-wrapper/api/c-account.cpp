@@ -343,6 +343,7 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 	if (account) {
 		const LinphoneAccountParams *accountParams = linphone_account_get_params(account);
 		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
+
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 	} else {
 		LinphoneAccountParams *accountParams = linphone_account_params_new(nullptr, FALSE);
@@ -351,50 +352,53 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		linphone_account_params_unref(accountParams);
 	}
 
+	std::shared_ptr<DialPlan> dialplan = DialPlan::findByCcc(dial_prefix ? dial_prefix : "");
+
 	char *flatten = ms_strdup(Utils::flattenPhoneNumber(username).c_str());
 	lDebug() << "Flattened number is [" << flatten << "] for [" << username << "]";
 
 	// if local short number, do not add international prefix
-	if (dial_prefix) {
-		std::shared_ptr<DialPlan> dialplan = DialPlan::findByCcc(dial_prefix);
-		if ((flatten[0] != '+') && (strlen(flatten) < (size_t)dialplan->getMinNationalNumberLength())) {
-			lDebug() << "Short number for [" << flatten << "] identified in dial plan [" << dialplan->getCountry()
-			         << "] (min length is " << dialplan->getMinNationalNumberLength() << ")";
-			return flatten;
-		}
+	if (dialplan->isShortNumber(flatten)) {
+		lDebug() << "Short number for [" << flatten << "] identified in dial plan [" << dialplan->getCountry()
+		         << "] (min length is " << dialplan->getMinNationalNumberLength() << ")";
+		return flatten;
 	}
 
 	int ccc = -1;
-	if (strlen(flatten) > 2 && flatten[0] == '0' && flatten[1] == '0') {
-		std::string copy = std::string(flatten).substr(2);
-		std::string zeroReplacedByPlus = std::string("+" + copy);
-		ccc = DialPlan::lookupCccFromE164(zeroReplacedByPlus.c_str());
-		lDebug() << "Flattened number started by 00, replaced it by + to lookup CCC";
+	// If number starts with the Internation Call Prefix (00 in France, 011 in USA for instance),
+	// replace by plus.
+	if (!dialplan->getInternationalCallPrefix().empty() &&
+	    strncmp(flatten, dialplan->getInternationalCallPrefix().c_str(),
+	            dialplan->getInternationalCallPrefix().size()) == 0) {
+		std::string copy = std::string(flatten).substr(dialplan->getInternationalCallPrefix().size());
+		std::string icpReplacedByPlus = std::string("+" + copy);
+		ccc = DialPlan::lookupCccFromE164(icpReplacedByPlus.c_str());
+		lDebug() << "Flattened number started by ICP, replaced it by + to lookup CCC";
 		if (ccc > -1) {
 			// If a dialplan was found using this, test if it is a short number
 			if (DialPlan::isShortNumber(ccc, flatten)) {
 				lDebug() << "Do not set international prefix for flattened short number";
 				return flatten;
-			} else if (!DialPlan::hasEnoughSignificantDigits(ccc, zeroReplacedByPlus)) {
+			} else if (!DialPlan::hasEnoughSignificantDigits(ccc, icpReplacedByPlus)) {
 				lDebug() << "Flattened number is too short, do not format phone number [" << flatten << "]";
 				return flatten;
 			} else {
 				// If a dialplan was found using this, remove the + in the flatenned number
 				ms_free(flatten);
-				flatten = ms_strdup(zeroReplacedByPlus.substr(1).c_str());
+				flatten = ms_strdup(icpReplacedByPlus.substr(1).c_str());
 			}
 		}
 	} else {
 		ccc = DialPlan::lookupCccFromE164(flatten);
 	}
 	lDebug() << "CCC from flattened number is [" << ccc << "]";
-	std::shared_ptr<DialPlan> dialplan;
 
 	if (ccc > -1) {
 		dialplan = DialPlan::findByCcc(ccc);
 		lDebug() << "Using dial plan [" << dialplan->getCountry() << "]";
 		if (dialplan == DialPlan::MostCommon && dial_prefix) {
 			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << dial_prefix << "]";
+			dialplan = (new DialPlan(*DialPlan::MostCommon))->toSharedPtr();
 			dialplan->setCountryCallingCode(dial_prefix);
 		}
 		std::string formattedNumber = dialplan->formatPhoneNumber(flatten, dial_escape_plus);
@@ -415,6 +419,7 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		}
 		if (dialplan == DialPlan::MostCommon && dial_prefix) {
 			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << dial_prefix << "]";
+			dialplan = (new DialPlan(*DialPlan::MostCommon))->toSharedPtr();
 			dialplan->setCountryCallingCode(dial_prefix);
 		}
 

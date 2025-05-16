@@ -453,18 +453,20 @@ LINPHONE_PUBLIC void linphone_account_params_set_contact_uri_parameters(Linphone
 LINPHONE_PUBLIC const char *linphone_account_params_get_contact_uri_parameters(const LinphoneAccountParams *params);
 
 /**
- * Return whether or not the + should be replaced by 00.
+ * Return whether or not the + should be replaced by the Internal Call Prefix.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return Whether liblinphone should replace "+" by "00" in dialed numbers (passed to #linphone_core_invite()).
+ * @return Whether liblinphone should replace "+" by the Internal Call Prefix. in dialed numbers (passed to
+ *linphone_core_invite()).
  * @deprecated 16/12/2021 Use linphone_account_params_dial_escape_plus_enabled() instead.
  **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
 linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams *params);
 
 /**
- * Return whether or not the + should be replaced by 00.
+ * Return whether or not the + should be replaced by  the Internal Call Prefix.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return Whether liblinphone should replace "+" by "00" in dialed numbers (passed to #linphone_core_invite()).
+ * @return Whether liblinphone should replace "+" by the Internal Call Prefix. in dialed numbers (passed to
+ *linphone_core_invite()).
  **/
 LINPHONE_PUBLIC bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountParams *params);
 

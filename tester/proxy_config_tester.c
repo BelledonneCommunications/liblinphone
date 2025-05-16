@@ -227,6 +227,9 @@ static void phone_normalization_with_proxy(void) {
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "003212345678"), "+3212345678");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0032123456789"), "+32123456789");
 
+	linphone_proxy_config_set_dial_prefix(proxy, "680");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0090992"), "+6800090992");
+
 	linphone_proxy_config_unref(proxy);
 }
 
@@ -242,6 +245,9 @@ static void phone_normalization_with_dial_escape_plus(void) {
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "01"), "01");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "012345678"), "0033012345678"); // not short number
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0123456789"), "0033123456789");
+
+	linphone_proxy_config_set_dial_prefix(proxy, "680");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0090992"), "0116800090992");
 
 	linphone_proxy_config_set_dial_escape_plus(proxy, FALSE);
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+34952636505"), "+34952636505");

@@ -66,6 +66,8 @@ public:
 	std::string formatShortNumber(const std::string &phoneNumber) const;
 	std::string getSignificantDigits(const std::string &phoneNumber) const;
 
+	bool isShortNumber(const std::string &phoneNumber);
+
 	static const std::shared_ptr<DialPlan> MostCommon;
 
 	static int lookupCccFromE164(const std::string &e164);
@@ -73,8 +75,8 @@ public:
 	static std::shared_ptr<DialPlan> findByCcc(int ccc);
 	static std::shared_ptr<DialPlan> findByCcc(const std::string &ccc);
 	static const std::list<std::shared_ptr<DialPlan>> &getAllDialPlans();
-	static bool_t isShortNumber(const int ccc, const std::string &phoneNumber);
-	static bool_t hasEnoughSignificantDigits(const int ccc, const std::string &phoneNumber);
+	static bool isShortNumber(const int ccc, const std::string &phoneNumber);
+	static bool hasEnoughSignificantDigits(const int ccc, const std::string &phoneNumber);
 
 private:
 	std::string country;
