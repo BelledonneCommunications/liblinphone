@@ -101,6 +101,9 @@ public:
 	void setClientId(const std::string &client_id) {
 		mClientId = client_id;
 	}
+	void setClientSecret(const std::string &client_secret) {
+		mClientSecret = client_secret;
+	}
 	void writeConfig(LpConfig *config, int pos);
 	void clearAvailableAlgorithms(); // Remove all algorithms
 
@@ -131,6 +134,9 @@ public:
 	}
 	const std::string &getClientId() const {
 		return mClientId;
+	}
+	const std::string &getClientSecret() const {
+		return mClientSecret;
 	}
 
 	time_t getExpires() const {
@@ -163,6 +169,7 @@ private:
 	std::string mAuthServer;
 	std::string mTokenEndpoint;
 	std::string mClientId;
+	std::string mClientSecret;
 	time_t mExpires = 0;
 	bool mNeedToRenewHa1 = false;
 

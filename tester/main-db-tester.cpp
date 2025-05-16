@@ -428,6 +428,7 @@ static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
 		}
 #endif
 		if (ms <= expectedDurationMs) break;
+		bctbx_sleep_ms(10000); // perhaps disk I/O was already too busy, retry one more time a bit later.
 	}
 	BC_ASSERT_LOWER(ms, expectedDurationMs, long, "%li");
 }

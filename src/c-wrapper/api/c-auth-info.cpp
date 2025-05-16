@@ -283,3 +283,11 @@ time_t linphone_auth_info_get_expires(const LinphoneAuthInfo *auth_info) {
 void linphone_auth_info_set_expires(LinphoneAuthInfo *auth_info, time_t expires) {
 	AuthInfo::toCpp(auth_info)->setExpires(expires);
 }
+
+const char *linphone_auth_info_get_client_secret(const LinphoneAuthInfo *auth_info) {
+	return L_STRING_TO_C(AuthInfo::toCpp(auth_info)->getClientSecret());
+}
+
+void linphone_auth_info_set_client_secret(LinphoneAuthInfo *auth_info, const char *client_secret) {
+	AuthInfo::toCpp(auth_info)->setClientSecret(L_C_TO_STRING(client_secret));
+}

@@ -285,6 +285,18 @@ void CorePrivate::writeNatPolicyConfigurations() {
 	NatPolicy::clearConfigFromIndex(config, index);
 }
 
+std::string CorePrivate::lookupOAuthClientSecret(const std::string &client_id) {
+	const bctbx_list_t *list = linphone_core_get_auth_info_list(getCCore());
+	for (auto elem = list; elem != nullptr; elem = elem->next) {
+		LinphoneAuthInfo *ai = (LinphoneAuthInfo *)elem->data;
+		AuthInfo *cppAi = AuthInfo::toCpp(ai);
+		if (cppAi->getClientId() == client_id && !cppAi->getClientSecret().empty()) {
+			return cppAi->getClientSecret();
+		}
+	}
+	return std::string();
+}
+
 void Core::onStopAsyncBackgroundTaskStarted() {
 	L_D();
 	d->stopAsyncEndEnabled = false;
@@ -2962,6 +2974,7 @@ int Core::sendPublish(LinphonePresenceModel *presence) {
 }
 
 bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
+	L_D();
 	if (ai->getTokenEndpointUri().empty()) {
 		if (ai->getAuthorizationServer().empty()) {
 			lWarning() << "Core::refreshTokens(): no token endpoint uri and no authorization server uri set.";
@@ -2978,6 +2991,18 @@ bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
 	std::string form = "grant_type=refresh_token&refresh_token=" + ai->getRefreshToken()->getToken();
 	if (!ai->getClientId().empty()) {
 		form += "&client_id=" + ai->getClientId();
+		/*
+		 * Add the client secret, if provided in the AuthInfo, or another AuthInfo which is a supported case because
+		 * it is useful: client_id and client_secret may be provisioned before the OAUTH user authentication
+		 * takes places.
+		 */
+		string clientSecret =
+		    ai->getClientSecret().empty() ? d->lookupOAuthClientSecret(ai->getClientId()) : ai->getClientSecret();
+		if (!clientSecret.empty()) {
+			form += "&client_secret=" + clientSecret;
+			// Set the client_secret into the main AuthInfo if necessary.
+			if (ai->getClientSecret().empty()) ai->setClientSecret(clientSecret);
+		}
 	}
 	try {
 		getHttpClient()

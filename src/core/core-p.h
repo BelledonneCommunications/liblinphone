@@ -187,6 +187,8 @@ public:
 	void writeNatPolicyConfigurations();
 	void reorderVideoCodecList();
 	int getCodecPriority(const OrtpPayloadType *pt) const;
+	std::string lookupOAuthClientSecret(const std::string &client_id);
+
 	static const Utils::Version conferenceProtocolVersion;
 	static const Utils::Version groupChatProtocolVersion;
 	static const Utils::Version ephemeralProtocolVersion;

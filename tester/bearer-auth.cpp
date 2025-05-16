@@ -270,7 +270,14 @@ static void provisioning_with_http_bearer_auth_requested_on_demand_aborted(void)
 	linphone_core_manager_destroy(lcm);
 }
 
-static void provisioning_with_http_bearer_expired_token() {
+std::string firstElementOf(const std::string &str) {
+	std::istringstream istr(str);
+	std::string res;
+	istr >> res;
+	return res;
+}
+
+static void provisioning_with_http_bearer_expired_token_base(bool withClientSecret) {
 	bellesip::HttpServer authorizationServer;
 	HttpServerWithBearerAuth httpServer("sip.example.org", "abcdefgh1");
 	httpServer.addResource("/provisioning", "application/xml", "rcfiles/marie_xml");
@@ -279,9 +286,17 @@ static void provisioning_with_http_bearer_expired_token() {
 	                                           "tcp");
 	registrar.addAuthMode(BELLE_SIP_AUTH_MODE_HTTP_BEARER);
 
-	authorizationServer.Post("/oauth/token", [](BCTBX_UNUSED(const httplib::Request &req), httplib::Response &res) {
-		res.status = 200;
-		constexpr const char *body = R"(
+	authorizationServer.Post("/oauth/token",
+	                         [withClientSecret](BCTBX_UNUSED(const httplib::Request &req), httplib::Response &res) {
+		                         if (withClientSecret) {
+			                         std::string body = req.body;
+			                         if (body.find("client_secret=xyz123") == std::string::npos) {
+				                         res.status = 401;
+				                         return;
+			                         }
+		                         }
+		                         res.status = 200;
+		                         constexpr const char *body = R"(
 {
   "access_token":"abcdefgh1",
   "token_type":"Bearer",
@@ -290,12 +305,22 @@ static void provisioning_with_http_bearer_expired_token() {
   "scope":"create"
 }
 						)";
-		res.set_content(body, "application/json");
-	});
+		                         res.set_content(body, "application/json");
+	                         });
 
 	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
 
 	std::string provisioningUri = httpServer.getUrl() + "/provisioning";
+	if (withClientSecret) {
+		/* we want to test a scenario where the client_id and client_secret are set in advance (by provisioning for
+		 * example)*/
+		LinphoneAuthInfo *provisioned_ai =
+		    linphone_factory_create_auth_info_3(linphone_factory_get(), NULL, NULL, NULL);
+		linphone_auth_info_set_client_id(provisioned_ai, "liblinphone-tester");
+		linphone_auth_info_set_client_secret(provisioned_ai, "xyz123");
+		linphone_core_add_auth_info(lcm->lc, provisioned_ai);
+		linphone_auth_info_unref(provisioned_ai);
+	}
 
 	/* set access token and provisioning uri */
 	LinphoneBearerToken *token =
@@ -306,6 +331,7 @@ static void provisioning_with_http_bearer_expired_token() {
 	    linphone_factory_create_auth_info_3(linphone_factory_get(), "marie", token, "sip.example.org");
 	linphone_auth_info_set_access_token(ai, token);
 	linphone_auth_info_set_refresh_token(ai, refresh_token);
+	linphone_auth_info_set_client_id(ai, "liblinphone-tester");
 	linphone_auth_info_set_token_endpoint_uri(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
 	linphone_bearer_token_unref(token);
 	linphone_bearer_token_unref(refresh_token);
@@ -327,11 +353,22 @@ static void provisioning_with_http_bearer_expired_token() {
 	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneGlobalOn, 2));
 	/* Make sure that bearer token is updated */
 	const bctbx_list_t *ai_list = linphone_core_get_auth_info_list(lcm->lc);
+	LinphoneAuthInfo *bai = nullptr;
 	if (BC_ASSERT_PTR_NOT_NULL(ai_list)) {
-		LinphoneAuthInfo *bai = (LinphoneAuthInfo *)ai_list->data;
+		BC_ASSERT_EQUAL((int)bctbx_list_size(ai_list), withClientSecret ? 2 : 1, int, "%i");
+		if (withClientSecret) {
+			if (BC_ASSERT_PTR_NOT_NULL(ai_list->next)) {
+				bai = (LinphoneAuthInfo *)ai_list->next->data;
+			}
+		} else {
+			bai = (LinphoneAuthInfo *)ai_list->data;
+		}
+	}
+	if (BC_ASSERT_PTR_NOT_NULL(bai)) {
 		const LinphoneBearerToken *access_token = linphone_auth_info_get_access_token(bai);
 		BC_ASSERT_STRING_EQUAL(linphone_bearer_token_get_token(access_token), "abcdefgh1");
 	}
+
 	BC_ASSERT_EQUAL(lcm->stat.number_of_authentication_info_requested, 0, int, "%i");
 	linphone_core_manager_setup_dns(lcm);
 
@@ -350,9 +387,52 @@ static void provisioning_with_http_bearer_expired_token() {
 	BC_ASSERT_TRUE(wait_for(lcm->lc, nullptr, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
 	BC_ASSERT_EQUAL(lcm->stat.number_of_authentication_info_requested, 0, int, "%i");
 	ai_list = linphone_core_get_auth_info_list(lcm->lc);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(ai_list), 1, int, "%i");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(ai_list), withClientSecret ? 2 : 1, int, "%i");
 	linphone_core_cbs_unref(cbs);
+
+	/* Make sure that auth info is properly stored in configuration file */
+
+	LinphoneConfig *config = linphone_core_get_config(lcm->lc);
+	if (withClientSecret) {
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_0", "client_id", "unset"),
+		                       "liblinphone-tester");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_0", "client_secret", "unset"), "xyz123");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_0", "username", "unset"), "unset");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_1", "client_id", "unset"),
+		                       "liblinphone-tester");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_1", "client_secret", "unset"), "xyz123");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_1", "username", "unset"), "marie");
+		std::string storedAccessToken =
+		    firstElementOf(linphone_config_get_string(config, "auth_info_1", "access_token", "unset"));
+		std::string storedRefreshToken =
+		    firstElementOf(linphone_config_get_string(config, "auth_info_1", "refresh_token", "unset"));
+
+		BC_ASSERT_STRING_EQUAL(storedAccessToken.c_str(), "abcdefgh1");
+		BC_ASSERT_STRING_EQUAL(storedRefreshToken.c_str(), "xyz2");
+
+	} else {
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_0", "client_id", "unset"),
+		                       "liblinphone-tester");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_0", "client_secret", "unset"), "unset");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "auth_info_0", "username", "unset"), "marie");
+		std::string storedAccessToken =
+		    firstElementOf(linphone_config_get_string(config, "auth_info_0", "access_token", "unset"));
+		std::string storedRefreshToken =
+		    firstElementOf(linphone_config_get_string(config, "auth_info_0", "refresh_token", "unset"));
+
+		BC_ASSERT_STRING_EQUAL(storedAccessToken.c_str(), "abcdefgh1");
+		BC_ASSERT_STRING_EQUAL(storedRefreshToken.c_str(), "xyz2");
+	}
+
 	linphone_core_manager_destroy(lcm);
+}
+
+static void provisioning_with_http_bearer_expired_token() {
+	provisioning_with_http_bearer_expired_token_base(false);
+}
+
+static void provisioning_with_http_bearer_expired_token_with_client_secret() {
+	provisioning_with_http_bearer_expired_token_base(true);
 }
 
 static void provisioning_with_http_bearer_expired_token_invalid_refresh_token() {
@@ -673,6 +753,8 @@ static test_t bearer_auth_tests[] = {
     {"Provisioning with http bearer auth", provisioning_with_http_bearer_auth},
     {"Provisioning with http bearer auth requested on demand", provisioning_with_http_bearer_auth_requested_on_demand},
     {"Provisioning with http bearer auth but expired access token", provisioning_with_http_bearer_expired_token},
+    {"Provisioning with http bearer auth but expired access token, client_secret required",
+     provisioning_with_http_bearer_expired_token_with_client_secret},
     {"Provisioning with http bearer auth but expired access token and invalid refresh token",
      provisioning_with_http_bearer_expired_token_invalid_refresh_token},
     {"Provisioning with http bearer auth requested aborted",

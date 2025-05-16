@@ -311,7 +311,8 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 
 	if (!linphone_auth_info_get_tls_key(info) && !linphone_auth_info_get_tls_key_path(info) &&
 	    !linphone_auth_info_get_ha1(info) && !linphone_auth_info_get_password(info) &&
-	    !linphone_auth_info_get_access_token(info) && !linphone_auth_info_get_refresh_token(info)) {
+	    !linphone_auth_info_get_access_token(info) && !linphone_auth_info_get_refresh_token(info) &&
+	    !linphone_auth_info_get_client_id(info)) {
 		ms_error(
 		    "linphone_core_add_auth_info(): info supplied with empty password, ha1, TLS client/key or bearer token.");
 		return;

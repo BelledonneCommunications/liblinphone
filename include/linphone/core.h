@@ -2501,7 +2501,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_account(LinphoneCore *core, Linph
 
 /**
  * Adds authentication information to the #LinphoneCore.
- * That piece of information will be used during all SIP transactions that require authentication.
+ * These nformation will be used during all SIP or HTTP transactions that require authentication.
  * @param core The #LinphoneCore. @notnil
  * @param info The #LinphoneAuthInfo to add. @notnil
  * @ingroup authentication

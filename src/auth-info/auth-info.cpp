@@ -124,6 +124,7 @@ AuthInfo::AuthInfo(LpConfig *config, string key) {
 	mAuthServer = linphone_config_get_string(config, key.c_str(), "authorization_server", "");
 	mTokenEndpoint = linphone_config_get_string(config, key.c_str(), "token_endpoint", "");
 	mClientId = linphone_config_get_string(config, key.c_str(), "client_id", "");
+	mClientSecret = linphone_config_get_string(config, key.c_str(), "client_secret", "");
 
 	setTlsCertPath(tls_cert_path);
 	setTlsKeyPath(tls_key_path);
@@ -320,11 +321,15 @@ void AuthInfo::writeConfig(LpConfig *config, int pos) {
 	}
 	linphone_config_set_string(config, key, "username", getUsername().c_str());
 	linphone_config_set_string(config, key, "userid", getUserid().c_str());
-	linphone_config_set_string(config, key, "ha1", getHa1().c_str());
 
-	if (store_ha1_passwd && !getHa1().empty()) {
-		/*if we have our ha1 and store_ha1_passwd set to TRUE, then drop the clear text password for security*/
-		setPassword("");
+	/* For everything other than bearer auth, attempt to store ha1 only */
+	if (mClientId.empty()) {
+		linphone_config_set_string(config, key, "ha1", getHa1().c_str());
+
+		if (store_ha1_passwd && !getHa1().empty()) {
+			/*if we have our ha1 and store_ha1_passwd set to TRUE, then drop the clear text password for security*/
+			setPassword("");
+		}
 	}
 	linphone_config_set_string(config, key, "passwd", getPassword().c_str());
 	linphone_config_set_string(config, key, "realm", getRealm().c_str());
@@ -354,6 +359,9 @@ void AuthInfo::writeConfig(LpConfig *config, int pos) {
 	}
 	if (!mClientId.empty()) {
 		linphone_config_set_string(config, key, "client_id", mClientId.c_str());
+	}
+	if (!mClientSecret.empty()) {
+		linphone_config_set_string(config, key, "client_secret", mClientSecret.c_str());
 	}
 }
 

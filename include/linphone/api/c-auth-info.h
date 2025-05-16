@@ -348,11 +348,29 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_client_id(const LinphoneAuthI
 /**
  * Set the OAUTH2 client_id. The client_id may be used
  * to renew access token from refresh token.
+ * If a client_secret is required, it has to be set through linphone_auth_info_set_client_secret().
  * @see linphone_auth_info_set_refresh_token()
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param client_id the client_id. @maybenil
  */
 LINPHONE_PUBLIC void linphone_auth_info_set_client_id(LinphoneAuthInfo *auth_info, const char *client_id);
+
+/**
+ * Get the previously set OAUTH2 client_secret.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return the client_secret. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_auth_info_get_client_secret(const LinphoneAuthInfo *auth_info);
+
+/**
+ * Set the OAUTH2 client_secret. The client_secret may be used
+ * to renew access token from refresh token.
+ *
+ * @see linphone_auth_info_set_refresh_token()
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param client_secret the client_secret. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_client_secret(LinphoneAuthInfo *auth_info, const char *client_secret);
 
 /**
  * Get the expiration time for the current authentication information.
