@@ -7931,8 +7931,14 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 
 			// wait for the sound resources to be freed
 			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
-			                   .waitUntil(chrono::seconds(10),
-			                              [&marie] { return !linphone_core_sound_resources_locked(marie.getLc()); }));
+			                   .waitUntil(chrono::seconds(10), [&marie] {
+				                   for (const auto &call : marie.getCore().getCalls()) {
+					                   if (call->getState() != CallSession::State::StreamsRunning) {
+						                   return false;
+					                   }
+				                   }
+				                   return true;
+			                   }));
 
 			LinphoneCallParams *new_params = linphone_core_create_call_params(marie.getLc(), nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
@@ -8550,14 +8556,15 @@ void conference_joined_multiple_times(LinphoneConferenceSecurityLevel security_l
 			}
 		}
 
+		time_t joining_duration = 0;
 		// Client will join and leave the conference a number of times
 		for (int attempt = 1; attempt <= 5; attempt++) {
-			if ((focus_cleanup_window > 0) && (end_joining_window > 0)) {
-				time_t now = ms_time(NULL);
-				time_t time_left = end_joining_window - now;
+			time_t initial_time = ms_time(NULL);
+			if (end_joining_window > 0) {
+				time_t time_left = end_joining_window - initial_time - joining_duration;
 				if (time_left <= 0) {
-					ms_message("Attempt #%0d - conference %s already expired %ld seconds ago", attempt,
-					           conference_address_str, -time_left);
+					ms_message("Attempt #%0d - conference %s is likely to expire before all participants join it",
+					           attempt, conference_address_str);
 					// In order to verify the rejoining of conferences, the loop must have at least 2 iterations
 					BC_ASSERT_GREATER_STRICT(attempt, 2, int, "%0d");
 					break;
@@ -8700,6 +8707,10 @@ void conference_joined_multiple_times(LinphoneConferenceSecurityLevel security_l
 
 			wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs,
 			                            focus.getCMgr(), memberList, confAddr, TRUE);
+
+			// Estimate the duration of an iteration to avoid that the conference expires while an INVITE session is
+			// establishing
+			joining_duration = ms_time(NULL) - initial_time;
 
 			for (auto mgr : members) {
 				LinphoneConference *pconference =

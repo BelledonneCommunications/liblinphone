@@ -437,7 +437,7 @@ void CorePrivate::loadChatRooms() {
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
 #endif
 	if (!mainDb->isInitialized()) return;
-	lInfo() << "Beginning loadChatRoms";
+	lInfo() << "Beginning loadChatRooms";
 	std::set<Address, Address::WeakLess> friendAddresses;
 	std::list<pair<shared_ptr<Address>, string>> deviceAddressesAndNames;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
@@ -468,7 +468,7 @@ void CorePrivate::loadChatRooms() {
 		}
 	}
 	mainDb->insertDevices(deviceAddressesAndNames);
-	lInfo() << "End loadChatRoms";
+	lInfo() << "End loadChatRooms";
 	sendDeliveryNotifications();
 }
 
