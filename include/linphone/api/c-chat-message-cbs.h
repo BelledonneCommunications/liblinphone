@@ -113,7 +113,9 @@ LINPHONE_PUBLIC void linphone_chat_message_cbs_set_reaction_removed(LinphoneChat
                                                                     LinphoneChatMessageCbsReactionRemovedCb cb);
 
 /**
- * Get the file transfer terminated callback.
+ * Get the download file transfer terminated callback.
+ * @warning this callback is called everytime a message attachment is downloaded. For a message with more than one
+ * attachment, this callback will be called as many times as attachments in the message.
  * @param cbs LinphoneChatMessageCbs object. @notnil
  * @return The current file transfer terminated callback.
  */

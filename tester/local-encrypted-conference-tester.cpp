@@ -1169,7 +1169,7 @@ static void create_simple_end_to_end_encrypted_conference_merging_calls() {
 }
 
 static void encrypted_conference_joined_multiple_times(void) {
-	conference_joined_multiple_times(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1);
 }
 
 } // namespace LinphoneTest

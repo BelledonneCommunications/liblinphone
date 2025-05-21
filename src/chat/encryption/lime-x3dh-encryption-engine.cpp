@@ -1099,7 +1099,7 @@ LimeX3dhEncryptionEngine::onDeviceAdded(const std::shared_ptr<Address> &newDevic
 
 	// Check if the new participant device is unexpected in which case a security alert is created
 	if (nbDevice > maxNbDevicesPerParticipant) {
-		lWarning() << "[LIME] maximum number of devices exceeded for " << participant->getAddress();
+		lWarning() << "[LIME] maximum number of devices exceeded for " << *participant->getAddress();
 		securityEvent = make_shared<ConferenceSecurityEvent>(
 		    time(nullptr), chatRoom->getConferenceId(),
 		    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded, newDeviceAddr);
