@@ -3138,7 +3138,7 @@ static void call_caller_with_custom_header_or_sdp_attributes(void) {
 	linphone_call_params_unref(caller_params);
 
 	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
-	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
+	sal_default_set_sdp_handling(linphone_core_get_sal(callee_mgr->lc), SalOpSDPNormal);
 
 	// Wait for Outgoing Progress
 	if (linphone_core_get_calls_nb(callee_mgr->lc) <= 1)
@@ -3245,7 +3245,7 @@ static void call_callee_with_custom_header_or_sdp_attributes(void) {
 	BC_ASSERT_EQUAL(did_receive_call, !callee_test_params.sdp_simulate_error, int, "%d");
 
 	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
-	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
+	sal_default_set_sdp_handling(linphone_core_get_sal(callee_mgr->lc), SalOpSDPNormal);
 
 	// Wait for Outgoing Progress
 	if (linphone_core_get_calls_nb(callee_mgr->lc) <= 1)

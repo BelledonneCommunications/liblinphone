@@ -5697,6 +5697,11 @@ end:
 		const bctbx_list_t *chatRooms = linphone_core_get_chat_rooms(core);
 		for (const bctbx_list_t *chatRoomIt = chatRooms; chatRoomIt != NULL; chatRoomIt = bctbx_list_next(chatRoomIt)) {
 			LinphoneChatRoom *chatRoom = (LinphoneChatRoom *)bctbx_list_get_data(chatRoomIt);
+			const LinphoneAddress *chatroom_address = linphone_chat_room_get_conference_address(chatRoom);
+			char *chatroom_address_string = linphone_address_as_string(chatroom_address);
+			ms_message("Checking chatroom %s of manager %s", chatroom_address_string,
+			           linphone_core_get_identity(mgr->lc));
+			ms_free(chatroom_address_string);
 			LinphoneChatRoomSecurityLevel security_level = LinphoneChatRoomSecurityLevelClearText;
 			LinphoneChatRoomBackend backend = LinphoneChatRoomBackendFlexisipChat;
 			LinphoneChatRoomEncryptionBackend encryption_backend = LinphoneChatRoomEncryptionBackendNone;

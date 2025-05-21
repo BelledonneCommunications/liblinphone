@@ -6837,17 +6837,17 @@ static void create_point_to_point_encrypted_conference_with_chat(void) {
 
 static void create_conference_with_chat_and_participant_rejoining(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE,
-	                                 (ms_time(NULL) - 45), FALSE);
+	                                 ms_time(NULL), FALSE);
 }
 
 static void create_conference_with_chat_and_cores_restart(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE, FALSE,
-	                                 (ms_time(NULL) - 45), TRUE);
+	                                 ms_time(NULL), TRUE);
 }
 
 static void create_conference_with_chat_network_drops_and_participant_rejoining(void) {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
-	                                 (ms_time(NULL) - 45), FALSE);
+	                                 ms_time(NULL), FALSE);
 }
 
 #ifndef HAVE_EKT_SERVER_PLUGIN
@@ -7483,11 +7483,11 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 }
 
 static void conference_joined_multiple_times(void) {
-	conference_joined_multiple_times(LinphoneConferenceSecurityLevelPointToPoint, FALSE, 1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, 1);
 }
 
 static void conference_with_chat_joined_multiple_times(void) {
-	conference_joined_multiple_times(LinphoneConferenceSecurityLevelNone, TRUE, 1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelNone, TRUE, 1);
 }
 
 } // namespace LinphoneTest

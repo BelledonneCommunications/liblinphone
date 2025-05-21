@@ -188,17 +188,25 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
                                         time_t end_time) {
 	if (end_time > 0) {
 		long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus->lc);
-		time_t now = ms_time(NULL);
-		time_t time_left = end_time - now;
 		if (focus_cleanup_window > 0) {
-			time_left += focus_cleanup_window;
 			// The conference information is only deleted by the cleanup timer. Hence even if the end time went by, the
 			// conference information might not be deleted
 			CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(focus_cleanup_window), [] { return false; });
 		}
 
+		// Compute here how much time is left to the conference to automatically account for the cleanup window delay
+		time_t now = ms_time(NULL);
+		time_t time_left = end_time - now;
+		char *conferenceAddressString = linphone_address_as_string(confAddr);
+		ms_message(
+		    "Checking conference information in member's database for conference %s that has %0ld seconds left (a "
+		    "negative time means that the conference cannot be joined anymore). Expected end time %s and now it is %s",
+		    conferenceAddressString, time_left, Utils::timeToIso8601(end_time).c_str(),
+		    Utils::timeToIso8601(now).c_str());
 		for (const auto &mgr : conferenceMgrs) {
 			LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+			ms_message("Conference information in %s's database for conference %s is %p",
+			           linphone_core_get_identity(mgr->lc), conferenceAddressString, info);
 			if ((mgr == focus) && (time_left <= 0) && (focus_cleanup_window > 0)) {
 				BC_ASSERT_PTR_NULL(info);
 			} else {
@@ -208,6 +216,7 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 				linphone_conference_info_unref(info);
 			}
 		}
+		ms_free(conferenceAddressString);
 
 		if (time_left > 0) {
 			// wait for the conference to end
@@ -7187,7 +7196,6 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t network_drops,
                                       time_t start_time,
                                       bool_t enable_gruu_in_conference_address) {
-
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -8418,9 +8426,9 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 	}
 }
 
-void conference_joined_multiple_times(LinphoneConferenceSecurityLevel security_level,
-                                      bool_t enable_chat,
-                                      long cleanup_window) {
+void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel security_level,
+                                           bool_t enable_chat,
+                                           long cleanup_window) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
