@@ -110,7 +110,7 @@ void RemoteConferenceEventHandler::fillParticipantAttributes(
 			// When a participant is added, then set its role to speaker by default to be backward compatible
 			role = Participant::Role::Speaker;
 		}
-		if (participant->getRole() != role) {
+		if ((participant->getRole() != role) && (role != Participant::Role::Unknown)) {
 			participant->setRole(role);
 			if (!isFullState && notify) {
 				conf->notifyParticipantSetRole(creationTime, isFullState, participant, role);

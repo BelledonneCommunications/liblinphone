@@ -482,6 +482,7 @@ void LocalConference::confirmCreation() {
 			belle_sip_random_token(confId, sizeof(confId));
 			conferenceAddress->setUriParam("conf-id", confId);
 			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
+			setConferenceAddress(conferenceAddress);
 		}
 		const_cast<LinphonePrivate::CallSessionParamsPrivate *>(L_GET_PRIVATE(session->getParams()))
 		    ->setInConference(true);

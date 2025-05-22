@@ -2087,10 +2087,22 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 		}
 #endif
 	}
+
+	auto contactParams = getParams()->getPrivate()->getCustomContactParameters();
+	for (const auto &[name, value] : contactParams) {
+		if (value.empty()) {
+			contactAddress.setParam(name);
+		} else {
+			contactAddress.setParam(name, value);
+		}
+	}
 }
 
 void CallSession::updateContactAddressInOp() {
 	L_D();
+	if (!d->op) {
+		return;
+	}
 	Address contactAddress;
 	const auto &account = d->getDestAccount();
 	if (account) {

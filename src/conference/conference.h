@@ -98,6 +98,7 @@ public:
 	};
 	static constexpr int labelLength = 10;
 	static const std::string SecurityModeParameter;
+	static const std::string IsFocusParameter;
 	~Conference();
 
 	std::shared_ptr<Participant> getActiveParticipant() const;

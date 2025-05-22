@@ -48,6 +48,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 const std::string Conference::SecurityModeParameter = "conference-security-mode";
+const std::string Conference::IsFocusParameter = "isfocus";
 
 Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<Address> &myAddress,

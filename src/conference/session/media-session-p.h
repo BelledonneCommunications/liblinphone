@@ -47,6 +47,7 @@ class LINPHONE_INTERNAL_PUBLIC MediaSessionPrivate : public CallSessionPrivate, 
 	friend class StreamsGroup;
 
 public:
+	static bool isMainStreamContent(const std::string &content);
 	static int resumeAfterFailedTransfer(void *userData, unsigned int);
 	static bool_t startPendingRefer(void *userData);
 	static void stunAuthRequestedCb(void *userData,

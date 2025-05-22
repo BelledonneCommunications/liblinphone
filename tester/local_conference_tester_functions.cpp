@@ -510,38 +510,8 @@ size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, Linphon
 	return nb_video_streams;
 }
 
-size_t compute_no_audio_streams(LinphoneCall *call, LinphoneConference *conference) {
-	size_t nb_audio_streams = 0;
-	const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(conference);
-	if (linphone_conference_params_get_security_level(conference_params) == LinphoneConferenceSecurityLevelEndToEnd) {
-		const LinphoneAddress *remote_address = linphone_call_get_remote_address(call);
-		bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
-		for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
-			LinphoneParticipant *participant = (LinphoneParticipant *)bctbx_list_get_data(itp);
-			LinphoneParticipantRole role = linphone_participant_get_role(participant);
-			if (role == LinphoneParticipantRoleSpeaker) {
-				bctbx_list_t *devices = linphone_participant_get_devices(participant);
-				for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
-					LinphoneParticipantDevice *device = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-					if (linphone_participant_device_get_stream_availability(device, LinphoneStreamTypeAudio)) {
-						nb_audio_streams++;
-					}
-				}
-				bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
-			} else if (linphone_address_weak_equal(linphone_participant_get_address(participant), remote_address)) {
-				// Add an audio stream anyway if the participant holding the call is a listener
-				nb_audio_streams++;
-			}
-		}
-		bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
-		if (!linphone_core_conference_server_enabled(linphone_conference_get_core(conference))) {
-			// Add own audio stream if the core holding the conference is not a server
-			nb_audio_streams++;
-		}
-	} else {
-		nb_audio_streams = 1;
-	}
-	return nb_audio_streams;
+size_t compute_no_audio_streams(BCTBX_UNUSED(LinphoneCall *call), BCTBX_UNUSED(LinphoneConference *conference)) {
+	return 1;
 }
 
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
@@ -6878,29 +6848,30 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 								    linphone_call_params_get_conference_video_layout(pcall2_local_params);
 								BC_ASSERT_EQUAL(new_layout, remote_conf_layout, int, "%d");
 							}
-							LinphoneConference *fconference =
-							    linphone_core_search_conference(focus.getLc(), NULL, NULL, confAddr, NULL);
-							LinphoneParticipant *participant =
-							    linphone_conference_find_participant(fconference, mgr->identity);
-							BC_ASSERT_PTR_NOT_NULL(participant);
-							if (participant) {
-								bctbx_list_t *devices = linphone_participant_get_devices(participant);
-
-								for (bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
-									LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)it_d->data;
-									BC_ASSERT_PTR_NOT_NULL(d);
-									LinphoneCall *participant_call = linphone_core_get_call_by_remote_address2(
-									    focus.getLc(), linphone_participant_device_get_address(d));
-									BC_ASSERT_PTR_NOT_NULL(participant_call);
-									if (participant_call) {
-										const LinphoneCallParams *call_remote_params =
-										    linphone_call_get_remote_params(participant_call);
-										const LinphoneConferenceLayout device_layout =
-										    linphone_call_params_get_conference_video_layout(call_remote_params);
-										BC_ASSERT_EQUAL(device_layout, new_layout, int, "%d");
+							if (video_direction != LinphoneMediaDirectionRecvOnly) {
+								LinphoneConference *fconference =
+								    linphone_core_search_conference(focus.getLc(), NULL, NULL, confAddr, NULL);
+								LinphoneParticipant *participant =
+								    linphone_conference_find_participant(fconference, mgr->identity);
+								BC_ASSERT_PTR_NOT_NULL(participant);
+								if (participant) {
+									bctbx_list_t *devices = linphone_participant_get_devices(participant);
+									for (bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+										LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)it_d->data;
+										BC_ASSERT_PTR_NOT_NULL(d);
+										LinphoneCall *participant_call = linphone_core_get_call_by_remote_address2(
+										    focus.getLc(), linphone_participant_device_get_address(d));
+										BC_ASSERT_PTR_NOT_NULL(participant_call);
+										if (participant_call) {
+											const LinphoneCallParams *call_remote_params =
+											    linphone_call_get_remote_params(participant_call);
+											const LinphoneConferenceLayout device_layout =
+											    linphone_call_params_get_conference_video_layout(call_remote_params);
+											BC_ASSERT_EQUAL(device_layout, new_layout, int, "%d");
+										}
 									}
+									bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
 								}
-								bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
 							}
 
 							LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
