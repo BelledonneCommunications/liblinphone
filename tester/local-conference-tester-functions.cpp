@@ -418,6 +418,7 @@ create_conference_on_server(Focus &focus,
 		linphone_conference_info_set_subject(conf_info, subject);
 		linphone_conference_info_set_description(conf_info, description);
 		linphone_conference_info_set_security_level(conf_info, security_level);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeAudio, TRUE);
 		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeVideo, enable_video);
 		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeText, enable_chat);
 
@@ -1669,7 +1670,7 @@ void create_conference_base(time_t start_time,
 			}
 			char *conference_address2_str = (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("sip:");
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address2_str);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr2, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr2, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr2);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -2094,7 +2095,7 @@ void create_conference_base(time_t start_time,
 			           conference_address_str);
 			LinphoneCallParams *new_params = linphone_core_create_call_params(marie.getLc(), nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
-			linphone_core_invite_address_with_params_2(marie.getLc(), confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(marie.getLc(), confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallOutgoingProgress,
@@ -4405,7 +4406,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 				linphone_call_params_enable_mic(new_params, FALSE);
 			}
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5042,7 +5043,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		linphone_call_params_set_video_direction(michelle_params, video_direction);
 		ms_message("%s joins again conference %s", linphone_core_get_identity(michelle.getLc()),
 		           conference_address_str);
-		linphone_core_invite_address_with_params_2(michelle.getLc(), confAddr, michelle_params, NULL, nullptr);
+		linphone_core_invite_address_with_params_2(michelle.getLc(), confAddr, michelle_params, nullptr, nullptr);
 		linphone_call_params_unref(michelle_params);
 		LinphoneCall *new_michelle_call = linphone_core_get_call_by_remote_address2(michelle.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(new_michelle_call);
@@ -5604,7 +5605,7 @@ void create_conference_with_screen_sharing_chat_base(time_t start_time,
 				linphone_call_params_enable_screen_sharing(new_params, TRUE);
 			}
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5875,7 +5876,7 @@ void create_conference_with_screen_sharing_chat_base(time_t start_time,
 		linphone_call_params_set_video_direction(pauline_new_params, LinphoneMediaDirectionSendRecv);
 		linphone_call_params_set_media_encryption(pauline_new_params, encryption);
 		linphone_call_params_enable_screen_sharing(pauline_new_params, rejoin_with_screen_sharing);
-		linphone_core_invite_address_with_params_2(pauline.getLc(), confAddr, pauline_new_params, NULL, nullptr);
+		linphone_core_invite_address_with_params_2(pauline.getLc(), confAddr, pauline_new_params, nullptr, nullptr);
 		linphone_call_params_unref(pauline_new_params);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning,
 		                             pauline_stat.number_of_LinphoneCallStreamsRunning + 1,
@@ -6428,7 +6429,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 				if (mgr == laure.getCMgr()) {
 					linphone_call_params_enable_mic(new_params, FALSE);
 				}
-				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 				linphone_call_params_unref(new_params);
 			}
 
@@ -7080,7 +7081,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 		           Address::toCpp(confAddr)->toString().c_str());
 		LinphoneCallParams *pauline_new_params = linphone_core_create_call_params(pauline.getLc(), nullptr);
 		linphone_call_params_set_video_direction(pauline_new_params, LinphoneMediaDirectionSendRecv);
-		linphone_core_invite_address_with_params_2(pauline.getLc(), confAddr, pauline_new_params, NULL, nullptr);
+		linphone_core_invite_address_with_params_2(pauline.getLc(), confAddr, pauline_new_params, nullptr, nullptr);
 		linphone_call_params_unref(pauline_new_params);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning,
 		                             pauline_stat.number_of_LinphoneCallStreamsRunning + 1,
@@ -7369,7 +7370,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -7971,7 +7972,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			ms_message("%s is joining again conference %s", linphone_core_get_identity(marie.getLc()),
 			           conference_address_str);
-			linphone_core_invite_address_with_params_2(marie.getLc(), confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(marie.getLc(), confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(marie.getLc(), confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -8369,7 +8370,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 				linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 				ms_message("%s is trying to join again conference %s", linphone_core_get_identity(mgr->lc),
 				           conference_address_str);
-				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 				linphone_call_params_unref(new_params);
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -8604,7 +8605,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 				linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 				ms_message("Attempt #%0d - %s is entering conference %s", attempt, linphone_core_get_identity(mgr->lc),
 				           conference_address_str);
-				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 				linphone_call_params_unref(new_params);
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -9053,7 +9054,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference1_address_str);
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr1, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr1, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 		}
 
@@ -9254,7 +9255,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 					ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc),
 					           conference2_address_str);
 					LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
-					linphone_core_invite_address_with_params_2(mgr->lc, confAddr2, new_params, NULL, nullptr);
+					linphone_core_invite_address_with_params_2(mgr->lc, confAddr2, new_params, nullptr, nullptr);
 					linphone_call_params_unref(new_params);
 				}
 
@@ -9956,7 +9957,7 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			linphone_call_params_enable_video(new_params, TRUE);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 		}
 
@@ -10658,7 +10659,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		// Berthe sends an INVITE with a resource list but she hasn't the right to do so because she was never
 		// invited to the conference. The conference server declines it with a 403 Forbidden
 		LinphoneCall *berthe_focus_call =
-		    linphone_core_invite_address_with_params_2(berthe.getLc(), confAddr, new_params, NULL, nullptr);
+		    linphone_core_invite_address_with_params_2(berthe.getLc(), confAddr, new_params, nullptr, nullptr);
 		BC_ASSERT_PTR_NOT_NULL(berthe_focus_call);
 		linphone_content_unref(content);
 
@@ -10734,7 +10735,7 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		} else {
 			for (auto mgr : members) {
 				LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
-				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 				linphone_call_params_unref(new_params);
 			}
 
@@ -11485,7 +11486,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		linphone_core_set_network_reachable(laure.getLc(), TRUE);
 
 		LinphoneCallParams *laure_params = linphone_core_create_call_params(laure.getLc(), nullptr);
-		linphone_core_invite_address_with_params_2(laure.getLc(), confAddr, laure_params, NULL, nullptr);
+		linphone_core_invite_address_with_params_2(laure.getLc(), confAddr, laure_params, nullptr, nullptr);
 		linphone_call_params_unref(laure_params);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneRegistrationOk, 1,
@@ -12951,7 +12952,7 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 			linphone_call_params_enable_video(new_params, FALSE);
 			linphone_call_params_set_conference_video_layout(new_params, layout);
 			ms_message("%s is calling conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 
 			if (layout == LinphoneConferenceLayoutGrid) {
@@ -13124,7 +13125,7 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		linphone_call_params_set_conference_video_layout(new_params, LinphoneConferenceLayoutActiveSpeaker);
 		ms_message("%s is calling conference %s", linphone_core_get_identity(berthe.getCMgr()->lc),
 		           conference_address_str);
-		linphone_core_invite_address_with_params_2(berthe.getCMgr()->lc, confAddr, new_params, NULL, nullptr);
+		linphone_core_invite_address_with_params_2(berthe.getCMgr()->lc, confAddr, new_params, nullptr, nullptr);
 		linphone_call_params_unref(new_params);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getCMgr()->stat.number_of_LinphoneCallOutgoingProgress, 1,
@@ -14132,7 +14133,7 @@ void change_active_speaker_base(bool transfer_mode) {
 			if (mgr != pauline.getCMgr()) {
 				linphone_call_params_enable_video(new_params, TRUE);
 			}
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 			linphone_call_params_unref(new_params);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,

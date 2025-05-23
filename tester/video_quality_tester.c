@@ -957,7 +957,7 @@ static void video_conference_with_thin_congestion_layout_active_speaker(void) {
 }
 
 static test_t call_video_quality_tests[] = {
-    TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion),
+    TEST_ONE_TAG("Video call with thin congestion", video_call_with_thin_congestion, "shaky"),
     TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
     TEST_NO_TAG("Video call expected FPS for low bandwidth", video_call_expected_fps_for_low_bandwidth),
     TEST_NO_TAG("Video call expected FPS for regular bandwidth", video_call_expected_fps_for_regular_bandwidth),
