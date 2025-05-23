@@ -612,7 +612,7 @@ void liblinphone_tester_add_suites(void) {
 #endif // HAVE_EKT_SERVER_PLUGIN
 	liblinphone_tester_add_suite_with_default_time(&clonable_object_test_suite, 0);
 #ifdef HAVE_DB_STORAGE
-	liblinphone_tester_add_suite_with_default_time(&main_db_test_suite, 25);
+	bc_tester_add_suite(&main_db_test_suite);
 	liblinphone_tester_add_suite_with_default_time(&conference_info_tester, 2);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&property_container_test_suite, 0);

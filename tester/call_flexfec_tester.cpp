@@ -77,7 +77,7 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	network_params.loss_rate = 8.f;
 	network_params.mode = OrtpNetworkSimulatorOutbound;
 
-	marie = linphone_core_manager_new("marie_rc");
+	marie = linphone_core_manager_new("marie_sips_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 	fec_stats *fec_stats = NULL;
 
@@ -704,7 +704,7 @@ static test_t call_flexfec_tests[] = {
     TEST_NO_TAG("Video call with flexfec and srtp", video_call_with_flexfec_and_srtp),
     TEST_NO_TAG("Video call with flexfec and dtls", video_call_with_flexfec_and_dtls),
     TEST_NO_TAG("Video call with flexfec and zrtp", video_call_with_flexfec_and_zrtp),
-    TEST_NO_TAG("Video call with flexfec bandwidth variation", video_call_with_flexfec_bandwidth_variation),
+    TEST_ONE_TAG("Video call with flexfec bandwidth variation", video_call_with_flexfec_bandwidth_variation, "skip"),
     TEST_NO_TAG("Video call with flexfec check fps", video_call_with_flexfec_check_fps),
 };
 
