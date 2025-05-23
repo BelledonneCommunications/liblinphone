@@ -5476,6 +5476,8 @@ LINPHONE_PUBLIC int linphone_core_get_audio_dscp(const LinphoneCore *core);
 /**
  * Sets the DSCP field for outgoing video streams.
  * The DSCP defines the quality of service in IP packets.
+ * When RTP bundling is negociated during the call (see linphone_core_enable_rtp_bundle()), the video
+ * packets are sent through the audio RTP/UDP connection, which leaves the video dscp setting wihtout effect.
  * @note It is usually useless or a bad idea to try to play with DSCP bits unless having full control on the network.
  * @warning Setting the DSCP bits is more or less well supported by operating systems and sometimes requires to disable
  *IPv6.

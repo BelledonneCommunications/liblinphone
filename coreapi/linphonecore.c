@@ -8959,7 +8959,11 @@ void linphone_core_set_sip_dscp(LinphoneCore *lc, int dscp) {
 }
 
 int linphone_core_get_sip_dscp(const LinphoneCore *lc) {
-	return linphone_config_get_int(lc->config, "sip", "dscp", 0x1a);
+	/*
+	 * No DSCP value by default.
+	 * Previously was 0x1a .
+	 */
+	return linphone_config_get_int(lc->config, "sip", "dscp", 0);
 }
 
 void linphone_core_set_audio_dscp(LinphoneCore *lc, int dscp) {
@@ -8967,7 +8971,13 @@ void linphone_core_set_audio_dscp(LinphoneCore *lc, int dscp) {
 }
 
 int linphone_core_get_audio_dscp(const LinphoneCore *lc) {
-	return linphone_config_get_int(lc->config, "rtp", "audio_dscp", 0x2e);
+	/*
+	 * Don't use dscp by default: it can cause more harm than benefits.
+	 * Expidited forwarding might come with very short buffering on routers, causing
+	 * heavy packet losses.
+	 * Previously, default value was 0x2e (expedited formarding).
+	 */
+	return linphone_config_get_int(lc->config, "rtp", "audio_dscp", 0);
 }
 
 void linphone_core_set_video_dscp(LinphoneCore *lc, int dscp) {
