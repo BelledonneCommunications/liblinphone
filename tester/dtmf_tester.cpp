@@ -13,8 +13,6 @@
 using namespace std::chrono_literals;
 using namespace Linphone::Tester;
 
-namespace {
-
 class SimpleAsserter {
 	// Forcing Rep to int to make MSVC happy (with Rep = int64_t the result of .count() could be truncated)
 	using Timeout = std::chrono::duration<int, std::milli>;
@@ -223,7 +221,7 @@ constexpr test_t new_tests[] = {
 
 test_t merged[sizeof(dtmf_tests) / sizeof(dtmf_tests[0]) + sizeof(new_tests) / sizeof(new_tests[0])];
 
-constexpr test_suite_t test_suite() {
+static int init_dtmf_suite() {
 	int i = 0;
 	for (auto &test : dtmf_tests) {
 		merged[i] = test;
@@ -233,23 +231,16 @@ constexpr test_suite_t test_suite() {
 		merged[i] = test;
 		i++;
 	}
-
-	return {
-	    "DTMF",                         // Suite name
-	    nullptr,                        // Before suite
-	    nullptr,                        // After suite
-	    liblinphone_tester_before_each, // Before each test
-	    liblinphone_tester_after_each,  // After each test
-	    i,                              // test array length
-	    merged,                          // test array
-	    26                              // Average execution time of the suite
-	};
+	return 0;
 }
 
-} // namespace
-
-test_suite_t dtmf_test_suite = [] {
-	auto suite = test_suite();
-	bc_tester_add_suite(&suite);
-	return suite;
-}();
+test_suite_t dtmf_test_suite = {
+    "DTMF",                             // Suite name
+    init_dtmf_suite,                    // Before suite
+    nullptr,                            // After suite
+    liblinphone_tester_before_each,     // Before each test
+    liblinphone_tester_after_each,      // After each test
+    sizeof(merged) / sizeof(merged[0]), // test array length
+    merged,                             // test array
+    26                                  // Average execution time of the suite
+};

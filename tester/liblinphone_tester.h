@@ -177,6 +177,7 @@ extern test_suite_t call_twisted_cases_suite;
 extern test_suite_t http_client_test_suite;
 extern test_suite_t turn_server_test_suite;
 extern test_suite_t refer_test_suite;
+extern test_suite_t dtmf_test_suite;
 
 #ifdef VCARD_ENABLED
 extern test_suite_t vcard_test_suite;
