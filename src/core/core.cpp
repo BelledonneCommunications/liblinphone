@@ -225,7 +225,7 @@ void CorePrivate::init() {
 		if (!lc->friends_db_file) {
 			string friendsDbPath = L_C_TO_STRING(
 			    linphone_config_get_string(linphone_core_get_config(lc), "storage", "friends_db_uri", nullptr));
-			if (friendsDbPath.empty()) friendsDbPath = q->getDataPath() + LINPHONE_FRIENDS_DB;
+			if (friendsDbPath.empty()) friendsDbPath = q->getDataPath() + "/" + LINPHONE_FRIENDS_DB;
 			if (friendsDbPath != "null") {
 				lInfo() << "Using [" << friendsDbPath << "] as legacy friends database path";
 				linphone_core_set_friends_database_path(lc, friendsDbPath.c_str());
