@@ -209,7 +209,7 @@ LINPHONE_PUBLIC time_t getTmAsTimeT(const std::tm &t);
 LINPHONE_PUBLIC std::string timeToIso8601(time_t t);
 LINPHONE_PUBLIC time_t iso8601ToTime(const std::string &iso8601DateTime);
 LINPHONE_PUBLIC std::string getTimeAsString(const std::string &format, time_t t);
-LINPHONE_PUBLIC time_t getStringToTime(const std::string &format, const std::string &s);
+LINPHONE_PUBLIC time_t getTimeFromString(const std::string &format, const std::string &s);
 
 LINPHONE_PUBLIC std::string localeToUtf8(const std::string &str);
 LINPHONE_PUBLIC std::string utf8ToLocale(const std::string &str);

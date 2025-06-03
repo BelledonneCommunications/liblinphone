@@ -245,7 +245,7 @@ bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc) {
 			} else {
 				tmp = linphone_config_get_string(cfg, logsection, "start_date", NULL);
 				if (tmp) {
-					cl->setStartTime(Utils::getStringToTime("%c", tmp));
+					cl->setStartTime(Utils::getTimeFromString("%c", tmp));
 				}
 			}
 			cl->setDuration(linphone_config_get_int(cfg, logsection, "duration", 0));

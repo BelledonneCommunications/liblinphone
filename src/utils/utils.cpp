@@ -315,8 +315,26 @@ std::string Utils::getTimeAsString(const std::string &format, time_t t) {
 	return os.str();
 }
 
-time_t Utils::getStringToTime(const std::string &format, const std::string &s) {
-#ifndef _WIN32
+time_t Utils::getTimeFromString(const std::string &format, const std::string &s) {
+#ifdef _WIN32
+	std::tm t = {};
+	std::istringstream ss(s);
+	ss >> std::get_time(&t, format.c_str()); // get_time doesn't manage timezones (before c++20)
+	time_t timestamp = getTmAsTimeT(t); //  std::tm has no timezone data on Windows. getTmAsTimeT()==_mkgmtime() are in
+	                                    //  UTC (so no timezone are done while parsing).
+	if (format.find("%z") != format.npos || format.find("%Z") != format.npos) { // Timezones are in format. Check it.
+		if (s.back() != 'Z') {                                                  // Input is not UTC
+			auto tzIndex = s.find_last_of("-+");
+			if (tzIndex != s.npos) {
+				auto sub = s.substr(tzIndex);
+				auto tz = std::stoi(sub);
+				if (sub.size() <= 3) tz *= 100;                   // "+01" == +1 hour. "-1000" = -10 hours.
+				timestamp -= (tz / 100) * 3600 + (tz % 100) * 60; // Remove timezone offset for a real UTC time.
+			}
+		}
+	}
+	return timestamp;
+#else
 	tm dateTime;
 #ifdef __linux__
 	// strptime doesn't fill tm_zone fields therefore it is left uninitialized
@@ -358,7 +376,10 @@ time_t Utils::iso8601ToTime(const std::string &iso8601DateTime) {
 	return iso8601ToTimeApple(iso8601DateTimeNoFractional);
 #else
 	std::string format = "%FT%T%z";
-	return Utils::getStringToTime(format, iso8601DateTimeNoFractional);
+#ifdef _WIN32
+	format = "%Y-%m-%dT%H:%M:%S%z"; // get_time format (%z is computed by getTimeFromString())
+#endif
+	return Utils::getTimeFromString(format, iso8601DateTimeNoFractional);
 #endif // __APPLE__
 }
 
@@ -366,7 +387,11 @@ std::string Utils::timeToIso8601(time_t t) {
 #ifdef __APPLE__
 	return timeToIso8601Apple(t);
 #else
+#ifdef _WIN32
+	std::string format = "%FT%T+0000"; // Force UTC because tm has to no timezone data on Windows.
+#else
 	std::string format = "%FT%T%z";
+#endif
 	return Utils::getTimeAsString(format, t);
 #endif // __APPLE__
 }
@@ -696,7 +721,7 @@ bool Utils::isIp(const string &remote) {
 	bool ret = false;
 	int err;
 
-	struct addrinfo hints {};
+	struct addrinfo hints{};
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
