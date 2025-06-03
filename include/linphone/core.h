@@ -7063,6 +7063,8 @@ LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push_with_stringified
  * @param dispatch_queue dispatch_queue. @notnil
  * @ingroup initializing
  * @donotwrap
+ * @deprecated 03/06/2025 the "Push and AppDelegate" dispatch queue is now called the "Core queue". It is also used for auto-iterate.
+ * The proper way to set the Core Queue is too pass it during the core creation using the SystemContext (void*) parameter.
  */
 LINPHONE_PUBLIC void linphone_core_set_push_and_app_delegate_dispatch_queue(LinphoneCore *core, void *dispatch_queue);
 

@@ -154,8 +154,12 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3(const L
  * languages.
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param config A #LinphoneConfig object holding the configuration for the #LinphoneCore to be instantiated. @notnil
- * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
- * pass an android Context on android, pass NULL on other platforms. @maybenil
+ * @param system_context A pointer to a system object required by the core to operate.
+ * - ANDROID: REQUIRED, pass an android Context.
+ * - IOS: OPTIONAL, use this parameters to pass the Dispatch Queue (default: main queue) that will call
+ * linphone_core_iterate() if linphone_core_auto_iterate_enabled() is TRUE. It will also receive VoIP push
+ * notifications, and process AppDelegates EnterBackground / EnterForeground callbacks.
+ * - OTHER: pass NULL. @maybenil
  * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app
  * extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".

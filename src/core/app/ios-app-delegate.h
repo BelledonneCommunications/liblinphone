@@ -43,7 +43,7 @@
  */
 @interface IosAppDelegate : IosObject <PKPushRegistryDelegate> {
 	BOOL mStopAsyncEnd;
-	dispatch_queue_t pushAndAppDelegateDispatchQueue;
+	dispatch_queue_t coreQueue;
 	PKPushRegistry* voipRegistry;
 }
 
@@ -51,7 +51,9 @@
 - (void)onStopAsyncEnd: (BOOL)stop;
 - (void)didRegisterForRemotePush:(NSData *)token;
 - (void)didRegisterForRemotePushWithStringifiedToken:(const char *)tokenStr;
-- (void)setPushAndAppDelegateDispatchQueue:(void *)dispatchQueue;
+- (void)setCoreQueue:(void *)dispatchQueue;
+- (dispatch_queue_t)getCoreQueue;
+- (void)iterate;
 - (void)registerForPush;
 
 @end

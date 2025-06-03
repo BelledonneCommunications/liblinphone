@@ -122,7 +122,7 @@ private:
 	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
 	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
 	bool mUseAppDelgate = false; /* app delegate is only used by main core*/
-	NSTimer* mIterateTimer = NULL;
+	dispatch_source_t mIterateTimer = NULL;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -173,24 +173,43 @@ void IosPlatformHelpers::didRegisterForRemotePushWithStringifiedToken(const char
 }
 
 void IosPlatformHelpers::setPushAndAppDelegateDispatchQueue(void *dispatchQueue) {
-	[mAppDelegate setPushAndAppDelegateDispatchQueue:dispatchQueue];
+	[mAppDelegate setCoreQueue:dispatchQueue];
 }
 
 void IosPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
 	if (mUseAppDelgate && mStart) {
 		if (autoIterateEnabled) {
-			if (mIterateTimer && mIterateTimer.valid) {
+			if (mIterateTimer) {
 				ms_message("[IosPlatformHelpers] core.iterate() is already scheduled");
 				return;
 			}
-			mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:mAppDelegate selector:@selector(iterate) userInfo:nil repeats:YES];
-			// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
-			[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
+
+            mIterateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, [mAppDelegate getCoreQueue]);
+            if (!mIterateTimer) {
+                ms_error("[IosPlatformHelpers] Failed to create dispatch source timer for auto iterate. This is a critical error, as nothing will proceed without calls to core iterate.");
+                return;
+            }
+
+            dispatch_source_set_timer(mIterateTimer,
+                                      dispatch_time(DISPATCH_TIME_NOW, 0),
+                                      20 * NSEC_PER_MSEC, // 20ms interval
+                                      1 * NSEC_PER_MSEC); // 1ms leeway
+
+            dispatch_source_set_event_handler(mIterateTimer, ^{
+			    if (mAppDelegate) {
+				    [mAppDelegate iterate];
+				}
+			});
+
 			ms_message("[IosPlatformHelpers] Call to core.iterate() scheduled every 20ms");
+
+			// Start the timer
+            dispatch_resume(mIterateTimer);
+
 		} else {
 			if (mIterateTimer) {
-				[mIterateTimer invalidate];
-				mIterateTimer = NULL;
+				dispatch_source_cancel(mIterateTimer);
+                mIterateTimer = NULL;
 				ms_message("[IosPlatformHelpers] Auto core.iterate() stopped");
 			}
 		}

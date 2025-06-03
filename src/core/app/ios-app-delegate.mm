@@ -62,7 +62,16 @@
 												   name:UIApplicationWillEnterForegroundNotification
 												 object:nil];
 		mStopAsyncEnd = true;
-		pushAndAppDelegateDispatchQueue = dispatch_get_main_queue();
+
+		// system_context is used to pass information from the APP that is not available for the sdk
+		// For iOS, we use that information to access the dispatch queue where we want to run all iterates and delegates
+		// If none was specified, run on main queue, which was the default behaviour when iterating with NSTimer in previous versions
+		if (core->getCCore()->system_context) {
+			coreQueue = (dispatch_queue_t)core->getCCore()->system_context;
+		} else {
+			coreQueue = dispatch_get_main_queue();
+		}
+		ms_message("[Ios App] Using dispatch queue %s for core iterate and callbacks", dispatch_queue_get_label(coreQueue));
 	}
 
 	return self;
@@ -74,14 +83,14 @@
 }
 
 - (void)didEnterBackground:(NSNotification *)notif {
-	if (pushAndAppDelegateDispatchQueue == dispatch_get_main_queue()) {
-		ms_message("[Ios App] didEnterBackground");
+	if (coreQueue == dispatch_get_main_queue()) {
+		ms_message("[Ios App] didEnterBackground (on main dispatch queue)");
 		if ([self getCore]) {
 			[self getCore]->enterBackground();
 		}
 	} else {
-		dispatch_async(pushAndAppDelegateDispatchQueue, ^{
-			ms_message("[Ios App] didEnterBackground (on pushAndAppDelegateDispatchQueue)");
+		dispatch_async(coreQueue, ^{
+			ms_message("[Ios App] didEnterBackground (on dispatch queue : %s)", dispatch_queue_get_label(coreQueue));
 			if ([self getCore]) {
 				[self getCore]->enterBackground();
 			}
@@ -90,14 +99,14 @@
 }
 
 - (void)didEnterForeground:(NSNotification *)notif {
-	if (pushAndAppDelegateDispatchQueue == dispatch_get_main_queue()) {
-		ms_message("[Ios App] didEnterForeground");
+	if (coreQueue == dispatch_get_main_queue()) {
+		ms_message("[Ios App] didEnterForeground (on main dispatch queue)");
 		if ([self getCore]) {
 			[self getCore]->enterForeground();
 		}
 	} else {
-		dispatch_async(pushAndAppDelegateDispatchQueue, ^{
-			ms_message("[Ios App] didEnterForeground (on pushAndAppDelegateDispatchQueue)");
+		dispatch_async(coreQueue, ^{
+			ms_message("[Ios App] didEnterForeground (on dispatch queue : %s)", dispatch_queue_get_label(coreQueue));
 			if ([self getCore]) {
 				[self getCore]->enterForeground();
 			}
@@ -132,8 +141,8 @@
 	if (!core) return;
 
 	ms_message("[PushKit] Connecting for push notifications");
-	ms_message("[PushKit] Initializing push registry with queue : %s", dispatch_queue_get_label(pushAndAppDelegateDispatchQueue));
-	voipRegistry = [[PKPushRegistry alloc] initWithQueue:pushAndAppDelegateDispatchQueue];
+	ms_message("[PushKit] Initializing push registry with queue : %s", dispatch_queue_get_label(coreQueue));
+	voipRegistry = [[PKPushRegistry alloc] initWithQueue:coreQueue];
 	voipRegistry.delegate = self;
 	voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 	
@@ -195,9 +204,13 @@
 	}
 }
 
-- (void)setPushAndAppDelegateDispatchQueue:(void *)dispatchQueue {
-	pushAndAppDelegateDispatchQueue = (dispatch_queue_t)dispatchQueue;
-	ms_message("[PushKit] PushRegistryDispatchQueue set to %s", dispatch_queue_get_label(pushAndAppDelegateDispatchQueue));
+- (void)setCoreQueue:(void *)dispatchQueue {
+    coreQueue = (dispatch_queue_t)dispatchQueue;
+    ms_message("[PushKit] Core dispatch queue set to %s", dispatch_queue_get_label(coreQueue));
+}
+
+- (dispatch_queue_t) getCoreQueue {
+	return coreQueue;
 }
 
 //  PushKit Functions
