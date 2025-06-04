@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -817,6 +817,7 @@ MagicSearch::searchInFriend(const shared_ptr<Friend> &lFriend, const string &wit
 	string phoneNumber = "";
 	unsigned int weight = minWeight;
 	bool addedToResults = false;
+	bool filteredResults = SearchResult::isFilteredResults(flags);
 
 	// NAME & ORGANIZATION
 	const string &name = lFriend->getName();
@@ -831,11 +832,18 @@ MagicSearch::searchInFriend(const shared_ptr<Friend> &lFriend, const string &wit
 		}
 	}
 
+	if (weight == minWeight && filteredResults) {
+		++weight; // Ignore filtering if was already done
+	}
+
 	// SIP URI
 	const auto &addresses = lFriend->getAddresses();
 	for (const auto &addr : addresses) {
 		phoneNumber = "";
 		unsigned int weightAddress = searchInAddress(addr, withDomain);
+		if (weightAddress == minWeight && filteredResults) {
+			++weightAddress; // Ignore filtering if it was already done
+		}
 		if (weightAddress > minWeight && (weightAddress + weight) > minWeight) {
 			// Set phone number if address is generated from it
 			auto username = addr->getUsername();

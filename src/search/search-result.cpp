@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -198,4 +198,14 @@ void SearchResult::merge(const shared_ptr<SearchResult> &other) {
 
 	updateCapabilities();
 }
+
+bool SearchResult::isFilteredResults() const {
+	return isFilteredResults(mSourceFlags);
+}
+
+bool SearchResult::isFilteredResults(int flags) {
+	constexpr int pluginSources = LinphoneMagicSearchSourceLdapServers;
+	return (flags & pluginSources) != 0;
+}
+
 LINPHONE_END_NAMESPACE

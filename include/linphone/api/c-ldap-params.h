@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -297,17 +297,16 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_filter(const LinphoneLdapPa
 /*************************************************************************************/
 
 /**
- * @brief List of ldap attributes to check to for the name of the contact, separated by a comma and the first is the
- *highest priority. Default value : "sn".
- *
+ * @brief List of LDAP attributes to check for the contact name, separated by a comma and the first being the highest
+ * priority. Default value : "sn".
  * @param params The #LinphoneLdapParams object. @notnil
  * @param name_attribute The comma separated attributes for the search. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_ldap_params_set_name_attribute(LinphoneLdapParams *params, const char *name_attribute);
 
 /**
- * @brief Get the attribute list to build to check to gather the name of the contact, separated by a comma and the first
- *is the highest priority.
+ * @brief Get the list of LDAP attributes to check for the contact name, separated by a comma and the first being
+ * the highest priority.
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The comma separated attributes for the search. @maybenil

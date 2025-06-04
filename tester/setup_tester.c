@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -3162,6 +3162,7 @@ static void ldap_search(void) {
 		// Use cn for testing on display names
 		LinphoneLdapParams *params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
 		linphone_ldap_params_set_filter(params, "(cn~=%s)");
+		linphone_ldap_params_set_name_attribute(params, "cn"); // Check accent in name
 		linphone_ldap_set_params(ldap, params);
 		linphone_ldap_params_unref(params);
 	}
@@ -3175,6 +3176,10 @@ static void ldap_search(void) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, "sip:chloe@ldap.example.org", NULL);
 		if (resultList == NULL) BC_FAIL("LDAP search with accent annihilated by magic search.");
+		else {
+			const LinphoneFriend *lf = linphone_search_result_get_friend(bctbx_list_nth_data(resultList, 0));
+			BC_ASSERT_STRING_EQUAL(linphone_friend_get_name(lf), "Chloé");
+		}
 	} else BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 

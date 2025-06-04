@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -734,7 +734,7 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 						struct berval **values = ldap_get_values_len(mLd, entry, attr);
 						struct berval **it = values;
 						while (values && *it && (*it)->bv_val && (*it)->bv_len) {
-							attributes.push_back({Utils::stringToLower(attr), Utils::utf8ToLocale((*it)->bv_val)});
+							attributes.push_back({Utils::stringToLower(attr), (*it)->bv_val});
 							it++;
 						}
 						if (values) ldap_value_free_len(values);

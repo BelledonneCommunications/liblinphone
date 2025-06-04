@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -117,6 +117,17 @@ public:
 	 *lesser than current weight)
 	 **/
 	void merge(const std::shared_ptr<SearchResult> &withResult);
+
+	/**
+	 * Check the source flags if the results are already filtered by the plugin.
+	 * @return true if the result is coming from plugin
+	 */
+	bool isFilteredResults() const;
+	/**
+	 * Static version to check the source flags if the results are already filtered by the plugin.
+	 * @return true if the result is coming from plugin
+	 */
+	static bool isFilteredResults(int flags);
 
 private:
 	void updateCapabilities();
