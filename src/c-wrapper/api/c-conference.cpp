@@ -69,7 +69,7 @@ LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAd
 }
 
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core,
-                                                              LinphoneAddress *addr,
+                                                              const LinphoneAddress *addr,
                                                               const LinphoneConferenceParams *params) {
 
 	LinphoneConferenceParams *cloned_params = NULL;
@@ -97,8 +97,8 @@ LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneA
 }
 
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core,
-                                                               LinphoneAddress *focus,
-                                                               LinphoneAddress *addr,
+                                                               const LinphoneAddress *focus,
+                                                               const LinphoneAddress *addr,
                                                                const LinphoneConferenceParams *params) {
 	LinphoneConferenceParams *cloned_params = NULL;
 	if (params) {
@@ -116,7 +116,7 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
 		linphone_conference_params_unref(cloned_params);
 	}
 	static_pointer_cast<ClientConference>(conference)
-	    ->initWithFocus(Address::toCpp(focus)->getSharedFromThis(), nullptr, nullptr, conference.get());
+	    ->initWithFocus(Address::create(*Address::toCpp(focus)), nullptr, nullptr, conference.get());
 	conference->ref();
 	return conference->toC();
 }

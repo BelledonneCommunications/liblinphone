@@ -2586,7 +2586,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		const auto accountParams = account->getAccountParams();
 		addr = *accountParams->getIdentityAddress();
 	} else {
-		addr = Address(L_C_TO_STRING(linphone_core_get_identity(core)));
+		addr = q->getCore()->getPrimaryContactAddress();
 	}
 	if (!addr.getUsername().empty()) { /* Might be null in case of identity without userinfo */
 		md->username = addr.getUsername();
@@ -4931,7 +4931,7 @@ void MediaSession::sendVfuRequest() {
 // Try to search the local conference by first looking at the contact address and if it is unsuccessfull to the to
 // address as a client may try to be calling a conference URI directly Typically, the search using the contact address
 // will succeed when a client creates a conference.
-const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
+std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	L_D();
 	ConferenceId serverConferenceId;
 	shared_ptr<Conference> conference;
@@ -4946,7 +4946,7 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	if (!conference) {
 		auto contactAddress = getContactAddress();
 		if (contactAddress) {
-			updateContactAddress(*contactAddress);
+			fillParametersIntoContactAddress(*contactAddress);
 			serverConferenceId = ConferenceId(contactAddress, contactAddress, conferenceIdParams);
 			conference = getCore()->findConference(serverConferenceId, false);
 		}

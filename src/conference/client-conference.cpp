@@ -2033,8 +2033,8 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
                                       const LinphoneCallParams *params) {
 	const auto &account = mConfParams->getAccount();
-	const auto organizer = account ? account->getAccountParams()->getIdentityAddress()
-	                               : Address::create(linphone_core_get_identity(getCore()->getCCore()));
+	const auto organizer =
+	    account ? account->getAccountParams()->getIdentityAddress() : Address::create(getCore()->getIdentityAddress());
 
 	// This method only creates ad-hoc conferences
 	mConfParams->setStartTime(-1);

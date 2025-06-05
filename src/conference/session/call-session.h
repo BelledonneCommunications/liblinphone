@@ -242,7 +242,7 @@ protected:
 	explicit CallSession(CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState() const;
 	CallSession::State getLastStableState() const;
-	void updateContactAddress(Address &contactAddress) const;
+	void fillParametersIntoContactAddress(Address &contactAddress) const;
 	void assignAccount(const std::shared_ptr<Account> &account);
 
 private:

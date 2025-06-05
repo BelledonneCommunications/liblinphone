@@ -3844,6 +3844,12 @@ const char *linphone_core_get_primary_contact(LinphoneCore *lc) {
 	return identity;
 }
 
+LinphoneAddress *linphone_core_get_primary_contact_address(LinphoneCore *core) {
+	CoreLogContextualizer logContextualizer(core);
+	Address *ret = new Address(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getPrimaryContactAddress());
+	return ret->toC();
+}
+
 void linphone_core_set_guess_hostname(LinphoneCore *lc, bool_t val) {
 	lc->sip_conf.guess_hostname = val;
 }
@@ -9417,7 +9423,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 
 	bool errorOnRemoteConference = false;
 	// Get factory and identity from linphone conference params, or from default account.
-	LinphoneAddress *identity;
+	Address identity = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getIdentityAddress();
 	LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
 	linphone_conference_params_enable_audio(params2, TRUE);
 	LinphoneAccount *conference_account = linphone_conference_params_get_account(params2);
@@ -9430,22 +9436,13 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	}
 	const LinphoneAddress *factory_uri_const = linphone_conference_params_get_conference_factory_address(params2);
 	conf_method_name = linphone_config_get_string(lc->config, "misc", "conference_type", NULL);
-	const char *core_identity = linphone_core_get_identity(lc);
 
-	// Get identity
-	if (conf_method_name) {
-		// backward compatibility : use default identity even if set in conference parameters
-		identity = linphone_address_new(core_identity);
+	// backward compatibility : use default identity even if set in conference parameters
+	if (!conf_method_name && conference_account) {
+		identity = *Account::toCpp(conference_account)->getAccountParams()->getIdentityAddress();
+		lInfo() << "Creating conference with identity from conference " << *Account::toCpp(conference_account);
 	} else {
-		if (conference_account) {
-			identity = linphone_address_clone(
-			    linphone_account_params_get_identity_address(linphone_account_get_params(conference_account)));
-			lInfo() << "Creating conference with identity from conference " << *Account::toCpp(conference_account);
-		} else {
-			const char *core_identity = linphone_core_get_identity(lc);
-			identity = linphone_address_new(core_identity);
-			lInfo() << "Creating conference with identity from core identity " << core_identity;
-		}
+		lInfo() << "Creating conference with identity from core identity " << identity;
 	}
 
 	// Create a server conference if:
@@ -9456,7 +9453,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	    (!conf_method_name && !linphone_address_is_valid(factory_uri_const)) ||
 	    (conf_method_name && strcasecmp(conf_method_name, "local") == 0)) {
 		lInfo() << "Creating server conference ";
-		conf = linphone_local_conference_new_with_params(lc, identity, params2);
+		conf = linphone_local_conference_new_with_params(lc, identity.toC(), params2);
 	} else if (!serverMode) {
 		// Get Factory URI
 		LinphoneAddress *factory_uri = nullptr;
@@ -9489,7 +9486,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 			}
 		}
 		if (!errorOnRemoteConference) {
-			conf = linphone_remote_conference_new_with_params(lc, factory_uri, identity, params2);
+			conf = linphone_remote_conference_new_with_params(lc, factory_uri, identity.toC(), params2);
 			linphone_address_unref(factory_uri);
 		}
 	} else {
@@ -9503,7 +9500,6 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 		errorOnRemoteConference = true;
 	}
 	linphone_conference_params_unref(params2);
-	linphone_address_unref(identity);
 	if (errorOnRemoteConference) return NULL;
 
 	if (!serverMode) {

@@ -1854,6 +1854,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_primary_contact(LinphoneCore *c
 
 /**
  * Returns the default identity when no account is used.
+ * This SIP address usually contains a private ip address, and may not be routable globally.
  *
  * @ingroup proxies
  * @param core the Core @notnil
@@ -1994,8 +1995,9 @@ LINPHONE_PUBLIC void linphone_core_enable_wifi_only(LinphoneCore *core, bool_t e
  * @param core the #LinphoneCore @notnil
  * @return a #LinphoneAddress object. @maybenil
  * @ingroup proxies
+ * @deprecated prefer using linphone_core_get_primary_contact_address()
  **/
-LINPHONE_PUBLIC LinphoneAddress *linphone_core_create_primary_contact_parsed(LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneAddress *linphone_core_create_primary_contact_parsed(LinphoneCore *core);
 
 /**
  * Sets maximum available download bandwidth
@@ -8294,6 +8296,15 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_send_dtmf(LinphoneCore *c
  * @deprecated 22/10/2018 Use linphone_core_create_primary_contact_parsed() instead.
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *core);
+
+/**
+ * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
+ * instead of a string.
+ * @param core the #LinphoneCore @notnil
+ * @return a #LinphoneAddress object. @maybenil @tobefreed
+ * @ingroup proxies
+ **/
+LINPHONE_PUBLIC LinphoneAddress *linphone_core_get_primary_contact_address(LinphoneCore *core);
 
 /**
  * Returns the list of available audio codecs.

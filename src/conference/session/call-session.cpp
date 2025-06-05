@@ -991,7 +991,7 @@ void CallSessionPrivate::setContactOp() {
 	auto contactAddress = getFixedContact();
 	// Do not try to set contact address if it is not valid
 	if (contactAddress && contactAddress->isValid()) {
-		q->updateContactAddress(*contactAddress);
+		q->fillParametersIntoContactAddress(*contactAddress);
 		if (isInConference()) {
 			// Make the best effort to find the conference linked to the call session on the server side.
 			// Try with both the To or From headers and the guessed contact address
@@ -1236,7 +1236,7 @@ void CallSessionPrivate::refreshContactAddress() {
 		}
 
 		if (contactAddress.isValid()) {
-			q->updateContactAddress(contactAddress);
+			q->fillParametersIntoContactAddress(contactAddress);
 		}
 	}
 
@@ -2162,7 +2162,7 @@ const CallSessionParams *CallSession::getParams() const {
 	return d->params;
 }
 
-void CallSession::updateContactAddress(Address &contactAddress) const {
+void CallSession::fillParametersIntoContactAddress(Address &contactAddress) const {
 	auto contactUriParams = getParams()->getPrivate()->getCustomContactUriParameters();
 	for (const auto &[name, value] : contactUriParams) {
 		if (value.empty()) {
@@ -2198,10 +2198,10 @@ void CallSession::updateContactAddressInOp() {
 	} else if (d->op && d->op->getContactAddress()) {
 		contactAddress.setImpl(d->op->getContactAddress());
 	} else {
-		contactAddress = Address(L_C_TO_STRING(linphone_core_get_identity(getCore()->getCCore())));
+		contactAddress = getCore()->getPrimaryContactAddress();
 	}
 
-	updateContactAddress(contactAddress);
+	fillParametersIntoContactAddress(contactAddress);
 	lInfo() << "Updating contact address for session " << this << " to " << contactAddress;
 	if (d->op) {
 		d->op->setContactAddress(contactAddress.getImpl());

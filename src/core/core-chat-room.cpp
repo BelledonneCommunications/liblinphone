@@ -513,12 +513,11 @@ void CorePrivate::handleEphemeralMessages(time_t currentTime) {
 }
 
 void CorePrivate::initEphemeralMessages() {
-	L_Q();
 	if (mainDb && mainDb->isInitialized()) {
 		ephemeralMessages.clear();
 		ephemeralMessages = mainDb->getEphemeralMessages();
 		if (!ephemeralMessages.empty()) {
-			lInfo() << "[Ephemeral] list initiated on core " << linphone_core_get_identity(q->getCCore());
+			lInfo() << "[Ephemeral] list initiated on core ";
 			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 			startEphemeralMessageTimer(msg->getEphemeralExpireTime());
 		}

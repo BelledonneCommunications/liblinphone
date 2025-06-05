@@ -3198,4 +3198,14 @@ std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::
 	return nullptr;
 }
 
+Address Core::getPrimaryContactAddress() const {
+	return Address(linphone_core_get_primary_contact(getCCore()));
+}
+
+Address Core::getIdentityAddress() const {
+	auto account = getDefaultAccount();
+	if (account) return *account->getAccountParams()->getIdentityAddress();
+	return getPrimaryContactAddress();
+}
+
 LINPHONE_END_NAMESPACE

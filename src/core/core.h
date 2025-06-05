@@ -439,6 +439,8 @@ public:
 	std::shared_ptr<Account> findAccountByUsername(const std::string &username) const;
 	void releaseAccounts();
 	const bctbx_list_t *getProxyConfigList() const;
+	Address getPrimaryContactAddress() const;
+	Address getIdentityAddress() const;
 
 	// ---------------------------------------------------------------------------
 	// AuthInfos

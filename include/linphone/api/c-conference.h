@@ -574,12 +574,12 @@ LINPHONE_PUBLIC LinphoneAccount *linphone_conference_get_account(LinphoneConfere
 /* ********** */
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress *addr);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core,
-                                                              LinphoneAddress *addr,
+                                                              const LinphoneAddress *addr,
                                                               const LinphoneConferenceParams *params);
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress *addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core,
-                                                               LinphoneAddress *focus,
-                                                               LinphoneAddress *addr,
+                                                               const LinphoneAddress *focus,
+                                                               const LinphoneAddress *addr,
                                                                const LinphoneConferenceParams *params);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
