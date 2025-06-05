@@ -48,6 +48,9 @@ public:
 	friend FriendList;
 
 	// Setters
+	void setFriendList(const std::shared_ptr<FriendList> &lf) {
+		mFriendList = lf;
+	}
 	void
 	setContactCreatedCallback(std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> cb) {
 		mContactCreatedCb = cb;
@@ -68,7 +71,7 @@ public:
 
 	void deleteVcard(const std::shared_ptr<Friend> &f);
 	void putVcard(const std::shared_ptr<Friend> &f);
-	void synchronize(std::shared_ptr<FriendList> friendList);
+	void synchronize();
 
 	void setMagicSearchPlugin(const std::shared_ptr<CardDavMagicSearchPlugin> &plugin);
 	void queryVcards(const std::string serverUrl, const std::list<CardDavPropFilter> &propFilters, unsigned int limit);

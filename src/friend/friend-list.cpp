@@ -339,6 +339,7 @@ bool FriendList::subscriptionsEnabled() const {
 void FriendList::createCardDavContextIfNotDoneYet() {
 	if (mCardDavContext == nullptr) {
 		mCardDavContext = make_shared<CardDAVContext>(getCore());
+		mCardDavContext->setFriendList(getSharedFromThis());
 		mCardDavContext->setContactCreatedCallback(carddavCreated);
 		mCardDavContext->setContactRemovedCallback(carddavRemoved);
 		mCardDavContext->setContactUpdatedCallback(carddavUpdated);
@@ -436,7 +437,7 @@ void FriendList::synchronizeFriendsFromServer() {
 		createCardDavContextIfNotDoneYet();
 		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
 		                                  LinphoneFriendListSyncStarted, nullptr);
-		mCardDavContext->synchronize(getSharedFromThis());
+		mCardDavContext->synchronize();
 	} else {
 		lError() << "Failed to create a CardDAV context for friend list [" << toC() << "] with URI [" << mUri << "]";
 	}

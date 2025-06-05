@@ -124,12 +124,14 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 	}
 }
 
-void CardDAVContext::synchronize(shared_ptr<FriendList> friendList) {
-	if (!friendList) return;
+void CardDAVContext::synchronize() {
+	if (!mFriendList) {
+		lError() << "[CardDAV] No FriendList associated to this context, can't synchronize!";
+		return;
+	}
 
-	mFriendList = friendList;
-	mCtag = friendList->getRevision();
-	mSyncUri = friendList->getUri();
+	mCtag = mFriendList->getRevision();
+	mSyncUri = mFriendList->getUri();
 
 	if (!mCtag.empty()) {
 		lInfo() << "[CardDAV] A synchronization was already made, only query server CTAG and compare it with locally "
