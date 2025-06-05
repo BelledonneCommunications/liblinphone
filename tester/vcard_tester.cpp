@@ -582,8 +582,51 @@ carddav_sync_status_changed(LinphoneFriendList *list, LinphoneFriendListSyncStat
 	}
 }
 
-static void carddav_clean(
-    void) { // This is to ensure the content of the test addressbook is in the correct state for the following tests
+static void carddav_operation_before_sync(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
+	LinphoneFriendListCbs *cbs = NULL;
+	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
+	LinphoneFriend *lf = NULL;
+	LinphoneVcard *lvc = NULL;
+
+	cbs = linphone_factory_create_friend_list_cbs(linphone_factory_get());
+	linphone_friend_list_cbs_set_user_data(cbs, stats);
+	linphone_friend_list_cbs_set_contact_created(cbs, carddav_contact_created);
+	linphone_friend_list_cbs_set_contact_deleted(cbs, carddav_contact_deleted);
+	linphone_friend_list_cbs_set_contact_updated(cbs, carddav_contact_updated);
+	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
+	linphone_friend_list_add_callbacks(lfl, cbs);
+	linphone_friend_list_cbs_unref(cbs);
+	linphone_friend_list_set_display_name(lfl, "CardDAV friend list");
+	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER_WITH_PORT);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
+	linphone_core_add_friend_list(manager->lc, lfl);
+	linphone_friend_list_unref(lfl);
+
+	BC_ASSERT_STRING_EQUAL(linphone_friend_list_get_revision(lfl), "");
+	// DO NOT SYNCHRONIZE THE NEWLY CREATE FRIEND LIST
+	// linphone_friend_list_synchronize_friends_from_server(lfl);
+
+	lvc = linphone_vcard_context_get_vcard_from_buffer(
+	    linphone_core_get_vcard_context(manager->lc),
+	    "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain "
+	    "Berfini\r\nIMPP:sip:sylvain@sip.linphone.org\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nEND:VCARD\r\n");
+	linphone_vcard_set_url(lvc, ME_VCF);
+	lf = linphone_core_create_friend_from_vcard(manager->lc, lvc);
+	linphone_vcard_unref(lvc);
+	linphone_friend_list_add_friend(lfl, lf);
+	linphone_friend_unref(lf);
+	
+	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
+	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
+
+	ms_free(stats);
+	linphone_core_manager_destroy(manager);
+}
+
+static void carddav_clean(void) { 
+	// This is to ensure the content of the test addressbook is in the correct state for the following tests
 	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneFriendListCbs *cbs = NULL;
@@ -1224,6 +1267,7 @@ test_t vcard_tests[] = {
     TEST_NO_TAG("vCard with local photo file to base64", linphone_vcard_local_photo_to_base_64),
     TEST_NO_TAG("Friends working if no db set", friends_if_no_db_set),
     TEST_NO_TAG("Friends storage in sqlite database", friends_sqlite_storage),
+    TEST_ONE_TAG("CardDAV operation before client sync", carddav_operation_before_sync, "CardDAV"),
     TEST_ONE_TAG("CardDAV clean", carddav_clean, "CardDAV"), // This is to ensure the content of the test addressbook is
                                                              // in the correct state for the following tests
     TEST_ONE_TAG("CardDAV integration", carddav_integration, "CardDAV"),
