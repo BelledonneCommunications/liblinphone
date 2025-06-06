@@ -49,7 +49,9 @@ void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
 	if (mCtag.empty()) {
 		string msg = "Address book wasn't synchronized yet";
 		lWarning() << "[CardDAV] " << msg << ", do it first before deleting a vCard";
-		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
+
+		shared_ptr<FriendList> friendList = mFriendList.lock();
+		if (friendList) friendList->carddavDone(false, msg);
 		return;
 	}
 
@@ -63,7 +65,9 @@ void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, "
 				    "can't delete it";
 				lWarning() << "[CardDAV] " << msg;
-				if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
+
+				shared_ptr<FriendList> friendList = mFriendList.lock();
+				if (friendList) friendList->carddavDone(false, msg);
 				return;
 			} else {
 				vcard->setUrl(url);
@@ -78,7 +82,9 @@ void CardDAVContext::deleteVcard(const shared_ptr<Friend> &f) {
 		else if (vcard->getUid().empty()) msg = "vCard doesn't have an UID";
 		else if (vcard->getEtag().empty()) msg = "vCard doesn't have an eTag";
 		lError() << "[CardDAV] " << msg;
-		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
+
+		shared_ptr<FriendList> friendList = mFriendList.lock();
+		if (friendList) friendList->carddavDone(false, msg);
 	}
 }
 
@@ -87,7 +93,9 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 	if (mCtag.empty()) {
 		string msg = "Address book wasn't synchronized yet";
 		lWarning() << "[CardDAV] " << msg << ", do it first before putting a vCard";
-		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
+
+		shared_ptr<FriendList> friendList = mFriendList.lock();
+		if (friendList) friendList->carddavDone(false, msg);
 		return;
 	}
 
@@ -106,7 +114,9 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 				const string msg =
 				    "vCard doesn't have an URL, and friendlist doesn't have a CardDAV server set either, can't push it";
 				lWarning() << "[CardDAV] " << msg;
-				if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
+
+				shared_ptr<FriendList> friendList = mFriendList.lock();
+				if (friendList) friendList->carddavDone(false, msg);
 				return;
 			} else {
 				vcard->setUrl(url);
@@ -120,18 +130,21 @@ void CardDAVContext::putVcard(const shared_ptr<Friend> &f) {
 	} else {
 		const string msg = "vCard is NULL";
 		lError() << "[CardDAV] " << msg;
-		if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, false, msg);
+
+		shared_ptr<FriendList> friendList = mFriendList.lock();
+		if (friendList) friendList->carddavDone(false, msg);
 	}
 }
 
 void CardDAVContext::synchronize() {
-	if (!mFriendList) {
+	shared_ptr<FriendList> friendList = mFriendList.lock();
+	if (!friendList) {
 		lError() << "[CardDAV] No FriendList associated to this context, can't synchronize!";
 		return;
 	}
 
-	mCtag = mFriendList->getRevision();
-	mSyncUri = mFriendList->getUri();
+	mCtag = friendList->getRevision();
+	mSyncUri = friendList->getUri();
 
 	if (!mCtag.empty()) {
 		lInfo() << "[CardDAV] A synchronization was already made, only query server CTAG and compare it with locally "
@@ -178,7 +191,8 @@ void CardDAVContext::queryVcards(const string serverUrl,
 
 void CardDAVContext::clientToServerSyncDone(bool success, const string &msg) {
 	if (!success) lError() << "[CardDAV] CardDAV client to server sync failure: " << msg;
-	if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, success, msg);
+	shared_ptr<FriendList> friendList = mFriendList.lock();
+	if (friendList) friendList->carddavDone(success, msg);
 }
 
 void CardDAVContext::userPrincipalUrlRetrieved(string principalUrl) {
@@ -224,7 +238,8 @@ void CardDAVContext::addressBookUrlAndCtagRetrieved(const list<CardDAVResponse> 
 			        << ctag << "] but our local one is [" << mCtag << "], fetching vCards";
 			mSyncUri = fullUrl;
 
-			if (!mFriendList) {
+			shared_ptr<FriendList> friendList = mFriendList.lock();
+			if (!friendList) {
 				shared_ptr<CardDavMagicSearchPlugin> plugin = mCardDavMagicSearchPlugin.lock();
 				if (plugin) {
 					lInfo() << "[CardDAV] Address book URL discovered, asking magic search plugin to retry the query";
@@ -237,14 +252,14 @@ void CardDAVContext::addressBookUrlAndCtagRetrieved(const list<CardDAVResponse> 
 			}
 
 			mCtag = ctag;
-			if (mFriendList->getDisplayName().empty() && !displayName.empty()) {
+			if (friendList->getDisplayName().empty() && !displayName.empty()) {
 				lInfo() << "[CardDAV] Updating friend list display name with address book's one";
-				mFriendList->setDisplayName(displayName);
+				friendList->setDisplayName(displayName);
 			}
-			mFriendList->setUri(mSyncUri);
+			friendList->setUri(mSyncUri);
 			if (!mCtag.empty()) {
 				lInfo() << "[CardDAV] Updating friend list CTAG to [" << mCtag << "]";
-				mFriendList->updateRevision(mCtag);
+				friendList->updateRevision(mCtag);
 			}
 			lInfo() << "[CardDAV] Friend list sync URI & revision updated, fetching vCards";
 			fetchVcards();
@@ -423,13 +438,14 @@ void CardDAVContext::processQueryResponse(shared_ptr<CardDAVQuery> query, const 
 			case CardDAVQuery::Type::AddressbookQueryWithFilter:
 				vcardsFetched(parseVcardsEtagsFromXmlResponse(body));
 				break;
-			case CardDAVQuery::Type::AddressbookMultiget:
-				if (mFriendList) {
+			case CardDAVQuery::Type::AddressbookMultiget: {
+				shared_ptr<FriendList> friendList = mFriendList.lock();
+				if (friendList) {
 					vcardsPulled(parseVcardsFromXmlResponse(body));
 				} else {
 					magicSearchResultsVcardsPulled(parseVcardsFromXmlResponse(body));
 				}
-				break;
+			} break;
 			case CardDAVQuery::Type::Put: {
 				shared_ptr<Friend> f = Friend::getSharedFromThis(static_cast<LinphoneFriend *>(query->getUserData()));
 				f->unref();
@@ -479,11 +495,12 @@ void CardDAVContext::processQueryResponse(shared_ptr<CardDAVQuery> query, const 
 }
 
 void CardDAVContext::serverToClientSyncDone(bool success, const string &msg) {
+	shared_ptr<FriendList> friendList = mFriendList.lock();
 	if (success) {
-		if (mFriendList) {
+		if (friendList) {
 			if (!mCtag.empty()) {
 				lInfo() << "[CardDAV] Sync successful, saving new cTag [" << mCtag << "]";
-				mFriendList->updateRevision(mCtag);
+				friendList->updateRevision(mCtag);
 			} else if (mCtag.empty()) {
 				lWarning() << "[CardDAV] Sync successful but new cTag is empty!";
 			}
@@ -495,7 +512,8 @@ void CardDAVContext::serverToClientSyncDone(bool success, const string &msg) {
 			plugin->notifyError(msg);
 		}
 	}
-	if (mSynchronizationDoneCb) mSynchronizationDoneCb(this, success, msg);
+
+	if (friendList) friendList->carddavDone(success, msg);
 }
 
 void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
@@ -509,7 +527,8 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 		return;
 	}
 
-	if (!mFriendList) {
+	shared_ptr<FriendList> friendList = mFriendList.lock();
+	if (!friendList) {
 		if (plugin) {
 			pullVcards(vCards);
 		}
@@ -517,7 +536,7 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 	}
 
 	list<CardDAVResponse> vCardsToPull = vCards;
-	const list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
+	const list<shared_ptr<Friend>> &friends = friendList->getFriends();
 	list<shared_ptr<Friend>> friendsToRemove;
 	for (const auto &f : friends) {
 		lDebug() << "[CardDAV] Found friend [" << f->getName() << "] with eTag [" << f->getVcard()->getEtag() << "]";
@@ -546,11 +565,8 @@ void CardDAVContext::vcardsFetched(const list<CardDAVResponse> &vCards) {
 		}
 	}
 	for (auto f : friendsToRemove) {
-		if (mContactRemovedCb) {
-			lInfo() << "[CardDAV] Contact removed [" << f->getName() << "] with eTag [" << f->getVcard()->getEtag()
-			        << "]";
-			mContactRemovedCb(this, f);
-		}
+		lInfo() << "[CardDAV] Contact removed [" << f->getName() << "] with eTag [" << f->getVcard()->getEtag() << "]";
+		friendList->carddavRemoved(f);
 	}
 
 	for (auto &vcard : vCardsToPull) {
@@ -597,10 +613,11 @@ void CardDAVContext::magicSearchResultsVcardsPulled(const list<CardDAVResponse> 
 }
 
 void CardDAVContext::vcardsPulled(const list<CardDAVResponse> &vCards) {
-	if (!mFriendList) return;
+	shared_ptr<FriendList> friendList = mFriendList.lock();
+	if (!friendList) return;
 
 	if (!vCards.empty()) {
-		const list<shared_ptr<Friend>> &friends = mFriendList->getFriends();
+		const list<shared_ptr<Friend>> &friends = friendList->getFriends();
 		for (const auto &response : vCards) {
 			string vCardBuffer = response.mVcard;
 			shared_ptr<Vcard> vcard =
@@ -640,17 +657,14 @@ void CardDAVContext::vcardsPulled(const list<CardDAVResponse> &vCards) {
 						newFriend->setRefKey(oldFriend->getRefKey());
 						newFriend->mPresenceReceived = oldFriend->mPresenceReceived;
 						newFriend->mFriendList = oldFriend->mFriendList;
-						if (mContactUpdatedCb) {
-							lInfo() << "[CardDAV] Contact updated [" << newFriend->getName() << "] with eTag ["
-							        << newFriend->getVcard()->getEtag() << "]";
-							mContactUpdatedCb(this, newFriend, oldFriend);
-						}
+
+						lInfo() << "[CardDAV] Contact updated [" << newFriend->getName() << "] with eTag ["
+						        << newFriend->getVcard()->getEtag() << "]";
+						friendList->carddavUpdated(newFriend, oldFriend);
 					} else {
-						if (mContactCreatedCb) {
-							lInfo() << "[CardDAV] Contact created [" << newFriend->getName() << "] with eTag ["
-							        << newFriend->getVcard()->getEtag() << "]";
-							mContactCreatedCb(this, newFriend);
-						}
+						lInfo() << "[CardDAV] Contact created [" << newFriend->getName() << "] with eTag ["
+						        << newFriend->getVcard()->getEtag() << "]";
+						friendList->carddavCreated(newFriend);
 					}
 				} else {
 					lError() << "[CardDAV] Couldn't create a friend from vCard";

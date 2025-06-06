@@ -168,12 +168,10 @@ private:
 	subscriptionStateChanged(LinphoneCore *lc, const std::shared_ptr<Event> event, LinphoneSubscriptionState state);
 #ifdef VCARD_ENABLED
 	void createCardDavContextIfNotDoneYet();
-	static void carddavCreated(const CardDAVContext *context, const std::shared_ptr<Friend> &f);
-	static void carddavDone(const CardDAVContext *context, bool success, const std::string &msg);
-	static void carddavRemoved(const CardDAVContext *context, const std::shared_ptr<Friend> &f);
-	static void carddavUpdated(const CardDAVContext *context,
-	                           const std::shared_ptr<Friend> &newFriend,
-	                           const std::shared_ptr<Friend> &oldFriend);
+	void carddavCreated(const std::shared_ptr<Friend> &f);
+	void carddavDone(bool success, const std::string &msg);
+	void carddavRemoved(const std::shared_ptr<Friend> &f);
+	void carddavUpdated(const std::shared_ptr<Friend> &newFriend, const std::shared_ptr<Friend> &oldFriend);
 #endif
 
 	std::shared_ptr<Event> mEvent;

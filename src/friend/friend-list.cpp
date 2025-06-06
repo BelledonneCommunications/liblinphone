@@ -340,10 +340,6 @@ void FriendList::createCardDavContextIfNotDoneYet() {
 	if (mCardDavContext == nullptr) {
 		mCardDavContext = make_shared<CardDAVContext>(getCore());
 		mCardDavContext->setFriendList(getSharedFromThis());
-		mCardDavContext->setContactCreatedCallback(carddavCreated);
-		mCardDavContext->setContactRemovedCallback(carddavRemoved);
-		mCardDavContext->setContactUpdatedCallback(carddavUpdated);
-		mCardDavContext->setSynchronizationDoneCallback(carddavDone);
 	}
 }
 
@@ -1081,34 +1077,29 @@ void FriendList::subscriptionStateChanged(LinphoneCore *lc,
 
 #ifdef VCARD_ENABLED
 
-void FriendList::carddavCreated(const CardDAVContext *context, const std::shared_ptr<Friend> &f) {
-	context->mFriendList->addLocalFriend(f); // Add as local because we do not want to synchronize it right now
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, context->mFriendList, linphone_friend_list_cbs_get_contact_created,
-	                                  f->toC());
+void FriendList::carddavCreated(const std::shared_ptr<Friend> &f) {
+	addLocalFriend(f); // Add as local because we do not want to synchronize it right now
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_contact_created, f->toC());
 }
 
-void FriendList::carddavDone(const CardDAVContext *context, bool success, const std::string &msg) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(
-	    FriendList, context->mFriendList, linphone_friend_list_cbs_get_sync_status_changed,
-	    success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg.c_str());
+void FriendList::carddavDone(bool success, const std::string &msg) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
+	                                  success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure,
+	                                  msg.c_str());
 }
 
-void FriendList::carddavRemoved(const CardDAVContext *context, const std::shared_ptr<Friend> &f) {
-	context->mFriendList->removeFriend(f, false);
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, context->mFriendList, linphone_friend_list_cbs_get_contact_deleted,
-	                                  f->toC());
+void FriendList::carddavRemoved(const std::shared_ptr<Friend> &f) {
+	removeFriend(f, false);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_contact_deleted, f->toC());
 }
 
-void FriendList::carddavUpdated(const CardDAVContext *context,
-                                const std::shared_ptr<Friend> &newFriend,
-                                const std::shared_ptr<Friend> &oldFriend) {
-	auto it =
-	    std::find_if(context->mFriendList->mFriendsList.mList.begin(), context->mFriendList->mFriendsList.mList.end(),
-	                 [&](const auto &elem) { return elem == oldFriend; });
-	if (it != context->mFriendList->mFriendsList.mList.end()) *it = newFriend;
+void FriendList::carddavUpdated(const std::shared_ptr<Friend> &newFriend, const std::shared_ptr<Friend> &oldFriend) {
+	auto it = std::find_if(mFriendsList.mList.begin(), mFriendsList.mList.end(),
+	                       [&](const auto &elem) { return elem == oldFriend; });
+	if (it != mFriendsList.mList.end()) *it = newFriend;
 	newFriend->saveInDb();
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, context->mFriendList, linphone_friend_list_cbs_get_contact_updated,
-	                                  newFriend->toC(), oldFriend->toC());
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_contact_updated, newFriend->toC(),
+	                                  oldFriend->toC());
 }
 
 #endif /* VCARD_ENABLED */

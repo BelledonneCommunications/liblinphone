@@ -51,23 +51,6 @@ public:
 	void setFriendList(const std::shared_ptr<FriendList> &lf) {
 		mFriendList = lf;
 	}
-	void
-	setContactCreatedCallback(std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> cb) {
-		mContactCreatedCb = cb;
-	}
-	void
-	setContactRemovedCallback(std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> cb) {
-		mContactRemovedCb = cb;
-	}
-	void setContactUpdatedCallback(std::function<void(const CardDAVContext *context,
-	                                                  const std::shared_ptr<Friend> &newFriend,
-	                                                  const std::shared_ptr<Friend> &oldFriend)> cb) {
-		mContactUpdatedCb = cb;
-	}
-	void setSynchronizationDoneCallback(
-	    std::function<void(const CardDAVContext *context, bool success, const std::string &message)> cb) {
-		mSynchronizationDoneCb = cb;
-	}
 
 	void deleteVcard(const std::shared_ptr<Friend> &f);
 	void putVcard(const std::shared_ptr<Friend> &f);
@@ -121,17 +104,8 @@ private:
 	HttpRequest *mHttpRequest = nullptr;
 	std::shared_ptr<CardDAVQuery> mQuery = nullptr;
 
-	std::shared_ptr<FriendList> mFriendList = nullptr;
+	std::weak_ptr<FriendList> mFriendList;
 	std::weak_ptr<CardDavMagicSearchPlugin> mCardDavMagicSearchPlugin;
-
-	std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> mContactCreatedCb = nullptr;
-	std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> mContactRemovedCb = nullptr;
-	std::function<void(const CardDAVContext *context,
-	                   const std::shared_ptr<Friend> &newFriend,
-	                   const std::shared_ptr<Friend> &oldFriend)>
-	    mContactUpdatedCb = nullptr;
-	std::function<void(const CardDAVContext *context, bool success, const std::string &message)>
-	    mSynchronizationDoneCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
