@@ -10207,3 +10207,11 @@ void linphone_core_set_add_admin_information_to_contact(LinphoneCore *lc, bool_t
 bool_t linphone_core_get_add_admin_information_to_contact(const LinphoneCore *lc) {
 	return !!linphone_config_get_bool(linphone_core_get_config(lc), "misc", "add_admin_information_to_contact", TRUE);
 }
+
+bool_t linphone_core_account_strict_matching_enabled(const LinphoneCore *core) {
+	return linphone_config_get_bool(linphone_core_get_config(core), "sip", "account_strict_matching", FALSE);
+}
+
+void linphone_core_enable_account_strict_matching(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_bool(linphone_core_get_config(core), "sip", "account_strict_matching", enable);
+}

@@ -458,6 +458,10 @@ LINPHONE_PUBLIC bool_t linphone_core_gruu_in_conference_address_enabled(const Li
 LINPHONE_PUBLIC LinphoneChatRoom *
 linphone_core_create_basic_chat_room(LinphoneCore *core, const char *localSipUri, const char *remoteSipUri);
 
+bool_t linphone_core_account_strict_matching_enabled(const LinphoneCore *core);
+
+LINPHONE_PUBLIC void linphone_core_enable_account_strict_matching(LinphoneCore *core, bool_t enable);
+
 #ifdef __cplusplus
 }
 #endif

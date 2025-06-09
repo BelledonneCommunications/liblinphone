@@ -8139,7 +8139,7 @@ static void call_with_from_and_to_without_domain(void) {
 	linphone_core_manager_destroy(laure);
 }
 
-static void call_with_correct_local_account_in_request_uri(void) {
+static void call_with_correct_local_account_in_request_uri_base(bool_t enable_account_strict_matching) {
 	const char *invite_template =
 	    "INVITE sip:%s@10.0.0.210:35932;transport=tls SIP/2.0\r\n"
 	    "Via: SIP/2.0/TLS 10.0.0.60:5061;branch=z9hG4bK79920c86;rport\r\n"
@@ -8169,6 +8169,9 @@ static void call_with_correct_local_account_in_request_uri(void) {
 	    "a=sendrecv\r\n";
 
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+	linphone_core_enable_account_strict_matching(laure->lc, enable_account_strict_matching);
+	linphone_config_set_bool(linphone_core_get_config(laure->lc), "sip", "account_strict_matching",
+	                         enable_account_strict_matching);
 
 	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
 	const char *laure_username = linphone_address_get_username(laure->identity);
@@ -8182,6 +8185,9 @@ static void call_with_correct_local_account_in_request_uri(void) {
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
 	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	if (enable_account_strict_matching) {
+		BC_ASSERT_PTR_NULL(linphone_call_params_get_account(linphone_call_get_current_params(laure_call)));
+	}
 	linphone_call_terminate(laure_call);
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
 	/*
@@ -8191,7 +8197,10 @@ static void call_with_correct_local_account_in_request_uri(void) {
 	/* Make sure that the call-log was reported as belonging to laure's SIP account, despite the To address that does
 	 * not mention sip.example.org. */
 	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(laure->lc));
-	if (BC_ASSERT_PTR_NOT_NULL(call_logs)) {
+	if (enable_account_strict_matching) {
+		BC_ASSERT_PTR_NULL(call_logs);
+	} else {
+		BC_ASSERT_PTR_NOT_NULL(call_logs);
 		BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 1);
 		LinphoneCallLog *clog = (LinphoneCallLog *)call_logs->data;
 		BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(linphone_call_log_get_to_address(clog)), "sip.example.org");
@@ -8199,6 +8208,14 @@ static void call_with_correct_local_account_in_request_uri(void) {
 	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 	bctbx_free(invite);
 	linphone_core_manager_destroy(laure);
+}
+
+static void call_with_correct_local_account_in_request_uri(void) {
+	call_with_correct_local_account_in_request_uri_base(FALSE);
+}
+
+static void call_with_correct_local_account_in_request_uri_enable_account_strict_matching(void) {
+	call_with_correct_local_account_in_request_uri_base(TRUE);
 }
 
 void call_with_core_without_media(void) {
@@ -8548,6 +8565,8 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Call with crappy from and to headers", call_with_from_and_to_without_domain),
     TEST_NO_TAG("Call with local account identity in request URI and not in to header",
                 call_with_correct_local_account_in_request_uri),
+    TEST_NO_TAG("Call with local account identity in request URI and not in to header, enable account strict matching",
+                call_with_correct_local_account_in_request_uri_enable_account_strict_matching),
     TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri),
     TEST_NO_TAG("Two accounts not sharing same connection", two_accounts_use_different_connections)};
 
