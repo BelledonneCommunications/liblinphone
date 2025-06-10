@@ -237,6 +237,11 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneMessageDisplayed,
 		                             initialMichelle2Stats.number_of_LinphoneMessageDisplayed + 1,
 		                             liblinphone_tester_sip_timeout));
+		/* Wait for IMDNs messages to be sent and receive by server, otherwise if marie's chatroom
+		 is deleted too early, it will be exhumed in order to send the IMDNs. */
+		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(5), [] {
+			return false;
+		});
 		linphone_chat_message_unref(msg);
 		msg = nullptr;
 
@@ -257,7 +262,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		                             liblinphone_tester_sip_timeout));
 
 		// wait a bit longer to detect side effect if any
-		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(5), [] {
+		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});
 
@@ -268,7 +273,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		coresList = bctbx_list_append(coresList, focus.getLc());
 
 		// wait a bit longer to detect side effect if any
-		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(5), [] {
+		CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).waitUntil(chrono::seconds(2), [] {
 			return false;
 		});
 
