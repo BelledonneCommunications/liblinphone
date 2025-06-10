@@ -7385,6 +7385,7 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallOutgoingInit,
 		                              focus_stat.number_of_LinphoneCallOutgoingInit + 1, 500));
+		auto focusDeletedCount = focus.getStats().number_of_LinphoneConferenceStateDeleted;
 		for (auto mgr : members) {
 			BC_ASSERT_FALSE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallIncomingReceived, 1, 500));
 		}
@@ -7425,6 +7426,9 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 		const bctbx_list_t *calls = linphone_core_get_calls(focus.getLc());
 		BC_ASSERT_EQUAL(bctbx_list_size(calls), 0, size_t, "%zu");
 
+		// Let some time for the focus to clean its conferences.
+		wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, focusDeletedCount + 1,
+		              500);
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NULL(fconference);
 
