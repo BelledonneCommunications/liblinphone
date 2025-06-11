@@ -366,7 +366,7 @@ bool_t wait_for_list_interval(bctbx_list_t *lcs, int *counter, int min, int max,
 #endif
 		iteratesStop = bctbx_get_cur_time_ms();
 		if (iteratesStop - iteratesStart < LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)
-			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
+			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS * 1000);
 	}
 	if (counter && (*counter < min || *counter > max)) return FALSE;
 	else return TRUE;
@@ -396,7 +396,7 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 #endif
 		iteratesStop = bctbx_get_cur_time_ms();
 		if (iteratesStop - iteratesStart < LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)
-			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
+			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS * 1000);
 	}
 	if (counter && *counter < value) return FALSE;
 	else return TRUE;
@@ -426,7 +426,7 @@ bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint
 #endif
 		iteratesStop = bctbx_get_cur_time_ms();
 		if (iteratesStop - iteratesStart < LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)
-			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
+			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS * 1000);
 	}
 	if (counter && *counter < value) return FALSE;
 	else return TRUE;
