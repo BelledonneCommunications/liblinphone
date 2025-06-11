@@ -345,10 +345,12 @@ bool_t wait_for(LinphoneCore *lc_1, LinphoneCore *lc_2, int *counter, int value)
 bool_t wait_for_list_interval(bctbx_list_t *lcs, int *counter, int min, int max, int timeout_ms) {
 	bctbx_list_t *iterator;
 	MSTimeSpec start;
+	uint64_t iteratesStart, iteratesStop;
 
 	liblinphone_tester_clock_start(&start);
 	while ((counter == NULL || *counter < min || *counter > max) &&
 	       !liblinphone_tester_clock_elapsed(&start, timeout_ms)) {
+		iteratesStart = bctbx_get_cur_time_ms();
 		for (iterator = lcs; iterator != NULL; iterator = iterator->next) {
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
@@ -362,7 +364,9 @@ bool_t wait_for_list_interval(bctbx_list_t *lcs, int *counter, int min, int max,
 			}
 		}
 #endif
-		ms_usleep(20000);
+		iteratesStop = bctbx_get_cur_time_ms();
+		if (iteratesStop - iteratesStart < LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)
+			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
 	}
 	if (counter && (*counter < min || *counter > max)) return FALSE;
 	else return TRUE;
@@ -371,16 +375,16 @@ bool_t wait_for_list_interval(bctbx_list_t *lcs, int *counter, int min, int max,
 bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeout_ms) {
 	bctbx_list_t *iterator;
 	MSTimeSpec start;
+	uint64_t iteratesStart, iteratesStop;
 
 	liblinphone_tester_clock_start(&start);
 	while ((counter == NULL || *counter < value) && !liblinphone_tester_clock_elapsed(&start, timeout_ms)) {
+		iteratesStart = bctbx_get_cur_time_ms();
 		for (iterator = lcs; iterator != NULL; iterator = iterator->next) {
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{
-			bc_tester_process_events();
-		}
+		{ bc_tester_process_events(); }
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -390,7 +394,9 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 			}
 		}
 #endif
-		ms_usleep(20000);
+		iteratesStop = bctbx_get_cur_time_ms();
+		if (iteratesStop - iteratesStart < LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)
+			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
 	}
 	if (counter && *counter < value) return FALSE;
 	else return TRUE;
@@ -399,16 +405,16 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint64_t value, int timeout_ms) {
 	bctbx_list_t *iterator;
 	MSTimeSpec start;
+	uint64_t iteratesStart, iteratesStop;
 
 	liblinphone_tester_clock_start(&start);
 	while ((counter == NULL || *counter < value) && !liblinphone_tester_clock_elapsed(&start, timeout_ms)) {
+		iteratesStart = bctbx_get_cur_time_ms();
 		for (iterator = lcs; iterator != NULL; iterator = iterator->next) {
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{
-			bc_tester_process_events();
-		}
+		{ bc_tester_process_events(); }
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -418,7 +424,9 @@ bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint
 			}
 		}
 #endif
-		ms_usleep(20000);
+		iteratesStop = bctbx_get_cur_time_ms();
+		if (iteratesStop - iteratesStart < LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)
+			ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
 	}
 	if (counter && *counter < value) return FALSE;
 	else return TRUE;

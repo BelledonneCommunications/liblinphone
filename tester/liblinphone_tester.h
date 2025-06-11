@@ -825,6 +825,9 @@ void audio_devices_list_updated(LinphoneCore *lc);
 
 LinphoneAddress *create_linphone_address(const char *domain);
 LinphoneAddress *create_linphone_address_for_algo(const char *domain, const char *username);
+
+#define LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS 10000
+
 bool_t wait_for(LinphoneCore *lc_1, LinphoneCore *lc_2, int *counter, int value);
 bool_t wait_for_list(MSList *lcs, const int *counter, int value, int timeout_ms);
 bool_t wait_for_list_for_uint64(MSList *lcs, const uint64_t *counter, uint64_t value, int timeout_ms);

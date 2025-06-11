@@ -41,10 +41,15 @@ public:
 
 		bool_t result;
 		while (!(result = condition()) && (std::chrono::steady_clock::now() - start < timeout)) {
+			auto iteratesStart = std::chrono::steady_clock::now();
 			for (const std::function<void()> &iterate : mIterateFuncs) {
 				iterate();
 			}
-			ms_usleep(100);
+			auto iteratesStop = std::chrono::steady_clock::now();
+			if (iteratesStop - iteratesStart <
+			    std::chrono::milliseconds(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS)) {
+				ms_usleep(LIBLINPHONE_TESTER_WAIT_FOR_SLEEP_INTERVAL_MS);
+			}
 		}
 		return result;
 	}
