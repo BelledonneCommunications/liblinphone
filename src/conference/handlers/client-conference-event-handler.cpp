@@ -908,7 +908,8 @@ void ClientConferenceEventHandler::onAccountRegistrationStateChanged(std::shared
 	const auto &address = params->getIdentityAddress();
 	auto conference = getConference();
 	bool isChatOnly = conference && conference->isChatOnly();
-	if (localAddress && address->weakEqual(*localAddress) && (state == LinphoneRegistrationOk) && isChatOnly) {
+	if (localAddress && address->weakEqual(*localAddress) && (state == LinphoneRegistrationOk) &&
+	    (account->getPreviousState() != LinphoneRegistrationRefreshing) && isChatOnly) {
 		subscribe(conferenceId);
 	}
 }

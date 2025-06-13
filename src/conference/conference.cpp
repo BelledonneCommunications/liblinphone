@@ -444,8 +444,8 @@ int Conference::removeParticipantDevice(const std::shared_ptr<CallSession> &sess
 			time_t creationTime = ms_time(nullptr);
 			notifyParticipantDeviceRemoved(creationTime, false, p, device);
 
-			lInfo() << "Removing device with session " << session << " from participant " << *p->getAddress()
-			        << " in conference " << *getConferenceAddress();
+			lInfo() << "Removing device with session " << session << " from participant " << *p->getAddress() << " in "
+			        << *this;
 			p->removeDevice(session);
 
 			auto op = session->getPrivate()->getOp();
@@ -503,13 +503,12 @@ bool Conference::removeParticipant(const std::shared_ptr<Participant> &participa
 	}
 	auto conferenceParticipant = findParticipant(participant->getAddress());
 	if (!conferenceParticipant) {
-		lWarning() << "Unable to remove participant " << *participant->getAddress() << " from conference "
-		           << *getConferenceAddress() << " because it is not a member of it";
+		lWarning() << "Unable to remove participant " << *participant->getAddress() << " from " << *this
+		           << " because it is not a member of it";
 		return false;
 	}
 
-	lInfo() << "Removing participant with address " << *conferenceParticipant->getAddress() << " from conference "
-	        << *getConferenceAddress();
+	lInfo() << "Removing participant with address " << *conferenceParticipant->getAddress() << " from " << *this;
 
 	if (!mConfParams->chatEnabled()) {
 		auto &devices = conferenceParticipant->getDevices();
@@ -690,7 +689,7 @@ LinphoneStatus Conference::updateMainSession(bool modifyParams) {
 			currentParams->enableScreenSharing(wasScreenSharingEnabled);
 			session->getPrivate()->setParams(currentParams);
 		} else {
-			lWarning() << "Unable to update session " << session << " of conference " << *getConferenceAddress()
+			lWarning() << "Unable to update session " << session << " of " << *this
 			           << " because RTP bundle is disabled";
 			ret = 0;
 		}
@@ -1604,7 +1603,7 @@ void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::Sec
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
-				lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+				lInfo() << "Updating conference information of " << *this
 				        << " because its security level has been changed to " << level;
 				mainDb->insertConferenceInfo(info);
 			}
@@ -1633,8 +1632,8 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
-				lInfo() << "Updating conference information of conference " << *getConferenceAddress()
-				        << " because its subject has been changed to " << subject;
+				lInfo() << "Updating conference information of " << *this << " because its subject has been changed to "
+				        << subject;
 				mainDb->insertConferenceInfo(info);
 			}
 		}
@@ -1669,14 +1668,13 @@ void Conference::updateParticipantRoleInConferenceInfo(const std::shared_ptr<Par
 				// the contact address of the call
 				auto &mainDb = getCore()->getPrivate()->mainDb;
 				if (mainDb) {
-					lInfo() << "Updating conference information of conference " << *getConferenceAddress()
-					        << " because the role of participant " << *address << " changed to " << newRole;
+					lInfo() << "Updating conference information of " << *this << " because the role of participant "
+					        << *address << " changed to " << newRole;
 					mainDb->insertConferenceInfo(info);
 				}
 			} else {
 				lError() << "Unable to update role of participant " << *address << " to " << newRole
-				         << " because it cannot be found in the conference info linked to conference "
-				         << *getConferenceAddress();
+				         << " because it cannot be found in the conference info linked to " << *this;
 			}
 		}
 	}
@@ -1717,8 +1715,7 @@ bool Conference::updateParticipantInfoInConferenceInfo(std::shared_ptr<Conferenc
 void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Participant> &participant) const {
 	const auto &participantAddress = participant->getAddress();
 	if (!participant) {
-		lError() << "Conference " << *getConferenceAddress()
-		         << " received a request to update the conference info to add participant with address "
+		lError() << *this << " received a request to update the conference info to add participant with address "
 		         << *participantAddress << " but it looks like he/she is not part of this conference";
 		return;
 	}
@@ -1734,9 +1731,8 @@ void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Partici
 			// the contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb && update) {
-				lInfo() << "Updating conference information of conference " << *getConferenceAddress()
-				        << " because participant " << *participantAddress
-				        << " has been added or has modified its informations";
+				lInfo() << "Updating conference information of " << *this << " because participant "
+				        << *participantAddress << " has been added or has modified its informations";
 				mainDb->insertConferenceInfo(info);
 			}
 		}
@@ -1800,9 +1796,8 @@ void Conference::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice)
 		    currentInputDevice ? ((audioDevice != currentInputDevice) || (*audioDevice != *currentInputDevice)) : true;
 
 		if (!change) {
-			lInfo() << "Ignoring request to change input audio device of conference " << *getConferenceAddress()
-			        << " to [" << audioDevice << "] (" << audioDevice
-			        << ") because it is the same as the one currently used";
+			lInfo() << "Ignoring request to change input audio device of " << *this << " to [" << audioDevice << "] ("
+			        << audioDevice << ") because it is the same as the one currently used";
 			return;
 		}
 		if (audioDevice &&
@@ -1810,20 +1805,19 @@ void Conference::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice)
 			AudioControlInterface *aci = getAudioControlInterface();
 			if (aci) {
 				lInfo() << "Set input audio device [" << audioDevice->toString() << "] (" << audioDevice
-				        << ") to audio control interface " << aci << " for conference " << *getConferenceAddress();
+				        << ") to audio control interface " << aci << " for " << *this;
 				aci->setInputDevice(audioDevice);
 				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
 			} else {
 				lError() << "Unable to set input audio device [" << audioDevice->toString() << "] (" << audioDevice
-				         << ") of conference " << *getConferenceAddress() << " because audio control interface is NULL";
+				         << ") of " << *this << " because audio control interface is NULL";
 			}
 		} else {
 			lError() << "Unable to set input audio device to [" << audioDevice->toString() << "] (" << audioDevice
-			         << ") for conference " << *getConferenceAddress() << " due to missing record capability";
+			         << ") for " << *this << " due to missing record capability";
 		}
 	} else {
-		lError() << "Unable to set undefined input audio device (" << audioDevice << ") for conference "
-		         << *getConferenceAddress();
+		lError() << "Unable to set undefined input audio device (" << audioDevice << ") for " << *this;
 	}
 }
 
@@ -1837,8 +1831,8 @@ void Conference::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevice
 		                  : true;
 
 		if (!change) {
-			lInfo() << "Ignoring request to change output audio device of conference " << *getConferenceAddress()
-			        << " to [" << audioDevice->toString() << "] (" << audioDevice
+			lInfo() << "Ignoring request to change output audio device of " << *this << " to ["
+			        << audioDevice->toString() << "] (" << audioDevice
 			        << ") because it is the same as the one currently used";
 			return;
 		}
@@ -1846,20 +1840,19 @@ void Conference::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevice
 			AudioControlInterface *aci = getAudioControlInterface();
 			if (aci) {
 				lInfo() << "Set output audio device [" << audioDevice->toString() << "] (" << audioDevice
-				        << ") to audio control interface " << aci << " for conference " << *getConferenceAddress();
+				        << ") to audio control interface " << aci << " for " << *this;
 				aci->setOutputDevice(audioDevice);
 				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
 			} else {
 				lError() << "Unable to set output audio device [" << audioDevice->toString() << "] (" << audioDevice
-				         << ") of conference " << *getConferenceAddress() << " because audio control interface is NULL";
+				         << ") of " << *this << " because audio control interface is NULL";
 			}
 		} else {
 			lError() << "Unable to set output audio device to [" << audioDevice->toString() << "] (" << audioDevice
-			         << ") for conference " << *getConferenceAddress() << " due to missing play capability";
+			         << ") for " << *this << " due to missing play capability";
 		}
 	} else {
-		lError() << "Unable to set undefined output audio device (" << audioDevice << ") for conference "
-		         << *getConferenceAddress();
+		lError() << "Unable to set undefined output audio device (" << audioDevice << ") for " << *this;
 	}
 }
 
@@ -1888,8 +1881,7 @@ shared_ptr<AudioDevice> Conference::getInputAudioDevice() const {
 		return aci->getInputDevice();
 	}
 
-	lError() << "Unable to retrieve input audio device from undefined audio control interface of conference "
-	         << *getConferenceAddress();
+	lError() << "Unable to retrieve input audio device from undefined audio control interface of " << *this;
 	return nullptr;
 }
 
@@ -1899,8 +1891,7 @@ shared_ptr<AudioDevice> Conference::getOutputAudioDevice() const {
 		return aci->getOutputDevice();
 	}
 
-	lError() << "Unable to retrieve output audio device from undefined audio control interface of conference "
-	         << *getConferenceAddress();
+	lError() << "Unable to retrieve output audio device from undefined audio control interface of " << *this;
 	return nullptr;
 }
 
@@ -1909,8 +1900,8 @@ bool Conference::getMicrophoneMuted() const {
 	if (aci) {
 		return !aci->micEnabled();
 	}
-	lError() << "Unable to get status of microphone because the audio control interface of conference "
-	         << *getConferenceAddress() << " cannot be found";
+	lError() << "Unable to get status of microphone because the audio control interface of " << *this
+	         << " cannot be found";
 	return false;
 }
 
@@ -1946,8 +1937,7 @@ float Conference::getRecordVolume() const {
 	if (aci) {
 		return aci->getRecordVolume();
 	}
-	lError() << "Unable to get record volume because the audio control interface of conference "
-	         << *getConferenceAddress() << " cannot be found";
+	lError() << "Unable to get record volume because the audio control interface of " << *this << " cannot be found";
 	return 0.0;
 }
 
