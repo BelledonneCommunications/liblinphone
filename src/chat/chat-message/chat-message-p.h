@@ -330,6 +330,11 @@ private:
 
 	std::list<std::shared_ptr<ChatMessageListener>> listeners;
 
+	void stopDelayMessageSendTimer();
+	static int delayMessageSendTimerExpired(void *data, unsigned int revents);
+	BackgroundTask mDelayMessageSendBgTask;
+	belle_sip_source_t *mDelayMessageSendTimer = nullptr;
+
 	L_DECLARE_PUBLIC(ChatMessage);
 };
 

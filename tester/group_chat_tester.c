@@ -61,7 +61,9 @@ static bool_t wait_for_chat_room_participants(bctbx_list_t *lcs, LinphoneChatRoo
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -631,8 +633,11 @@ static bctbx_list_t *_init_core_for_conference_with_factory_uri(bctbx_list_t *co
 
 	bctbx_list_t *coresList = NULL;
 	bctbx_list_t *item = coreManagerList;
-	for (item = coreManagerList; item; item = bctbx_list_next(item))
-		coresList = bctbx_list_append(coresList, ((LinphoneCoreManager *)(bctbx_list_get_data(item)))->lc);
+	for (item = coreManagerList; item; item = bctbx_list_next(item)) {
+		LinphoneCore *lc = ((LinphoneCoreManager *)(bctbx_list_get_data(item)))->lc;
+		linphone_config_set_int(linphone_core_get_config(lc), "misc", "delay_message_send_s", 2);
+		coresList = bctbx_list_append(coresList, lc);
+	}
 	return coresList;
 }
 

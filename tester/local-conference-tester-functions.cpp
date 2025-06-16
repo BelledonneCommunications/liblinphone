@@ -207,6 +207,14 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 			LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
 			ms_message("Conference information in %s's database for conference %s is %p",
 			           linphone_core_get_identity(mgr->lc), conferenceAddressString, info);
+
+			if ((mgr == focus) && (time_left == 1) && (focus_cleanup_window > 0)) {
+				ms_message("Wait for 1 more second before checking the existence of conference information in %s's "
+				           "database for conference %s because the time left is %0ld second(s) and deletion might "
+				           "happen within milliseconds",
+				           linphone_core_get_identity(mgr->lc), conferenceAddressString, time_left);
+				CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(1), [] { return false; });
+			}
 			if ((mgr == focus) && (time_left <= 0) && (focus_cleanup_window > 0)) {
 				BC_ASSERT_PTR_NULL(info);
 			} else {

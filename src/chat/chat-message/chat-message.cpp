@@ -107,6 +107,7 @@ static FsmIntegrityChecker<ChatMessage::State> chatMessageFsmChecker{
 
 ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction dir)
     : fileTransferChatMessageModifier(chatRoom->getCore()->getHttpClient().getProvider()) {
+	mDelayMessageSendBgTask.setName("Delay message sending");
 	direction = dir;
 	setChatRoom(chatRoom);
 }
@@ -118,6 +119,7 @@ ChatMessagePrivate::~ChatMessagePrivate() {
 	}
 	if (salCustomHeaders) sal_custom_header_unref(salCustomHeaders);
 	if (errorInfo) linphone_error_info_unref(errorInfo);
+	stopDelayMessageSendTimer();
 }
 
 void ChatMessagePrivate::setStorageId(long long id) {
@@ -1273,6 +1275,26 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 	}
 }
 
+void ChatMessagePrivate::stopDelayMessageSendTimer() {
+	L_Q();
+	if (mDelayMessageSendTimer) {
+		try {
+			auto core = q->getCore()->getCCore();
+			if (core && core->sal) core->sal->cancelTimer(mDelayMessageSendTimer);
+		} catch (const bad_weak_ptr &) {
+		}
+		belle_sip_object_unref(mDelayMessageSendTimer);
+		mDelayMessageSendTimer = nullptr;
+	}
+}
+
+int ChatMessagePrivate::delayMessageSendTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
+	ChatMessagePrivate *msgPrivate = static_cast<ChatMessagePrivate *>(data);
+	msgPrivate->stopDelayMessageSendTimer();
+	msgPrivate->send();
+	return 0;
+}
+
 void ChatMessagePrivate::send() {
 	L_Q();
 
@@ -1290,17 +1312,18 @@ void ChatMessagePrivate::send() {
 	const auto &chatBackend = chatRoomParams->getChatParams()->getBackend();
 	const auto conference = chatRoom->getConference();
 	const auto subscriptionUnderway = conference ? conference->isSubscriptionUnderWay() : false;
-	if ((coreGlobalState != LinphoneGlobalOff) && (coreGlobalState != LinphoneGlobalShutdown) &&
-	    (chatBackend == ChatParams::Backend::FlexisipChat) &&
-	    (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
-		lInfo() << "Message " << q << " in chat room [" << chatRoom << "] " << chatRoom->getConferenceId()
-		        << " is being sent while the subscription is underway (actually subscription is"
-		        << std::string(subscriptionUnderway ? " " : " not ")
-		        << "underway) or the chat room is not in the created state (actual state "
-		        << Utils::toString(chatRoomState) << ")";
-		chatRoom->addPendingMessage(q->getSharedFromThis());
-		return;
-	}
+	/*	if ((coreGlobalState != LinphoneGlobalOff) &&
+	        (coreGlobalState != LinphoneGlobalShutdown) && (chatBackend == ChatParams::Backend::FlexisipChat) &&
+	        (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
+	                lInfo() << "Message " << q << " in chat room [" << chatRoom << "] " << chatRoom->getConferenceId()
+	                        << " is being sent while the subscription is underway (actually subscription is"
+	                        << std::string(subscriptionUnderway ? " " : " not ")
+	                        << "underway) or the chat room is not in the created state (actual state "
+	                        << Utils::toString(chatRoomState) << ")";
+	                chatRoom->addPendingMessage(q->getSharedFromThis());
+	        return;
+	    }
+	*/
 
 	markAsRead();
 	SalOp *op = salOp;
@@ -1327,6 +1350,26 @@ void ChatMessagePrivate::send() {
 			}
 		}
 	}
+
+	if (!mDelayMessageSendBgTask.hasStarted() && (coreGlobalState != LinphoneGlobalOff) &&
+	    (coreGlobalState != LinphoneGlobalShutdown) && (chatBackend == ChatParams::Backend::FlexisipChat) &&
+	    (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
+		int delayMessageSendS = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()),
+		                                                "misc", "delay_message_send_s", 15);
+		lInfo() << "Message " << q << " in chat room [" << chatRoom << "] " << chatRoom->getConferenceId()
+		        << " is being sent while the subscription is underway (actually subscription is"
+		        << std::string(subscriptionUnderway ? " " : " not ")
+		        << "underway) or the chat room is not in the created state (actual state "
+		        << Utils::toString(chatRoomState) << "). Waiting " << delayMessageSendS
+		        << "s before sending the message";
+		mDelayMessageSendBgTask.start(q->getCore());
+		mDelayMessageSendTimer = q->getCore()->getCCore()->sal->createTimer(
+		    delayMessageSendTimerExpired, this, static_cast<unsigned int>(delayMessageSendS) * 1000,
+		    "delay message sending timeout");
+		return;
+	}
+
+	mDelayMessageSendBgTask.stop();
 
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
