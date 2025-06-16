@@ -1311,7 +1311,7 @@ void CallSessionPrivate::repairIfBroken() {
 				reinviteOnCancelResponseRequested = true;
 				broken = false;
 			} else {
-				lError() << "Do something here.";
+				lError() << *q << ": Do something here.";
 			}
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
@@ -1320,7 +1320,8 @@ void CallSessionPrivate::repairIfBroken() {
 				repairByNewInvite(true);
 				broken = false;
 			} else {
-				lWarning() << "No remote tag in last provisional response, no early dialog, so trying to cancel lost "
+				lWarning() << *q
+				           << ": No remote tag in last provisional response, no early dialog, so trying to cancel lost "
 				              "INVITE and will retry later.";
 				if (op->cancelInvite() == 0) {
 					reinviteOnCancelResponseRequested = true;
@@ -1334,7 +1335,7 @@ void CallSessionPrivate::repairIfBroken() {
 			// Keep the call broken until a forked INVITE is received from the server
 			break;
 		default:
-			lWarning() << "CallSessionPrivate::repairIfBroken: don't know what to do in state ["
+			lWarning() << "CallSessionPrivate::repairIfBroken: don't know what to do as " << *q << " is in state ["
 			           << Utils::toString(state);
 			broken = false;
 			break;

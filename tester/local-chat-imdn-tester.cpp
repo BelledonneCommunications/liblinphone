@@ -1005,6 +1005,58 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 		                             marie_stat.number_of_LinphoneMessageDeliveredToUser + 1,
 		                             liblinphone_tester_sip_timeout)); // Message is received by everybody
 
+		// Checks on clients'side
+		for (const auto client :
+		     {marie.getCMgr(), pauline.getCMgr(), pauline2.getCMgr(), laure.getCMgr(), michelle.getCMgr()}) {
+			BC_ASSERT_TRUE(
+			    CoreManagerAssert({focus, marie, pauline, pauline2, laure, michelle})
+			        .wait([&client, &msg_text0, &confAddr] {
+				        auto ret = true;
+				        const LinphoneAddress *deviceAddr =
+				            linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(client->lc));
+				        LinphoneChatRoom *clientCr =
+				            linphone_core_search_chat_room(client->lc, NULL, deviceAddr, confAddr, NULL);
+				        if (!clientCr) {
+					        return false;
+				        }
+				        LinphoneEventLog *messageEventLog = linphone_chat_room_search_chat_message_by_text(
+				            clientCr, msg_text0.c_str(), NULL, LinphoneSearchDirectionDown);
+				        if (!messageEventLog) {
+					        return false;
+				        }
+				        LinphoneChatMessage *lastMsg = linphone_event_log_get_chat_message(messageEventLog);
+				        if (!lastMsg) {
+					        return false;
+				        }
+
+				        bctbx_list_t *client_not_delivered = linphone_chat_message_get_participants_by_imdn_state(
+				            lastMsg, LinphoneChatMessageStateNotDelivered);
+				        ret &= (bctbx_list_size(client_not_delivered) == 0);
+				        bctbx_list_free_with_data(client_not_delivered,
+				                                  (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+				        bctbx_list_t *client_delivered = linphone_chat_message_get_participants_by_imdn_state(
+				            lastMsg, LinphoneChatMessageStateDelivered);
+				        ret &= (bctbx_list_size(client_delivered) == 0);
+				        bctbx_list_free_with_data(client_delivered,
+				                                  (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+				        bctbx_list_t *client_delivered_to_user = linphone_chat_message_get_participants_by_imdn_state(
+				            lastMsg, LinphoneChatMessageStateDeliveredToUser);
+				        ret &= (bctbx_list_size(client_delivered_to_user) == 3);
+				        bctbx_list_free_with_data(client_delivered_to_user,
+				                                  (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+				        bctbx_list_t *client_displayed = linphone_chat_message_get_participants_by_imdn_state(
+				            lastMsg, LinphoneChatMessageStateDisplayed);
+				        ret &= (bctbx_list_size(client_displayed) == 0);
+				        bctbx_list_free_with_data(client_displayed,
+				                                  (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+				        ret &= (linphone_chat_message_get_state(lastMsg) == LinphoneChatMessageStateDeliveredToUser);
+				        return ret;
+			        }));
+		}
 		Address paulineContactAddress =
 		    *Address::toCpp(linphone_account_get_contact_address(linphone_core_get_default_account(pauline.getLc())));
 		Address pauline2ContactAddress =
@@ -1131,7 +1183,6 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 
 		// Checks on Laure's side
 		LinphoneChatMessage *laureLastMsg = laureCr ? linphone_chat_room_get_last_message_in_history(laureCr) : NULL;
-
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure, michelle}).wait([&laureLastMsg] {
 			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
 			            laureLastMsg, LinphoneChatMessageStateDeliveredToUser)) == 1);
@@ -1205,13 +1256,49 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(client->lc));
 			LinphoneChatRoom *clientCr = linphone_core_search_chat_room(client->lc, NULL, deviceAddr, confAddr, NULL);
 			BC_ASSERT_PTR_NOT_NULL(clientCr);
-			LinphoneChatMessage *lastMsg = clientCr ? linphone_chat_room_get_last_message_in_history(clientCr) : NULL;
-			BC_ASSERT_PTR_NOT_NULL(lastMsg);
-
-			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure, michelle}).wait([&lastMsg] {
-				return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
-				            lastMsg, LinphoneChatMessageStateDeliveredToUser)) == 2);
+			if (!clientCr) {
+				continue;
+			}
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure, michelle}).wait([&clientCr] {
+				return (linphone_chat_room_get_history_size(clientCr) == 2);
 			}));
+
+			LinphoneEventLog *messageEventLog = linphone_chat_room_search_chat_message_by_text(
+			    clientCr, msg_text1.c_str(), NULL, LinphoneSearchDirectionDown);
+			BC_ASSERT_PTR_NOT_NULL(messageEventLog);
+			if (!messageEventLog) {
+				continue;
+			}
+			LinphoneChatMessage *lastMsg = linphone_event_log_get_chat_message(messageEventLog);
+			BC_ASSERT_PTR_NOT_NULL(lastMsg);
+			if (!lastMsg) {
+				continue;
+			}
+
+			bctbx_list_t *client_not_delivered =
+			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateNotDelivered);
+			BC_ASSERT_EQUAL(bctbx_list_size(client_not_delivered), 0, size_t, "%zu");
+			bctbx_list_free_with_data(client_not_delivered,
+			                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			bctbx_list_t *client_delivered =
+			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateDelivered);
+			BC_ASSERT_EQUAL(bctbx_list_size(client_delivered), 1, size_t, "%zu");
+			bctbx_list_free_with_data(client_delivered, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			bctbx_list_t *client_delivered_to_user =
+			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateDeliveredToUser);
+			BC_ASSERT_EQUAL(bctbx_list_size(client_delivered_to_user), 2, size_t, "%zu");
+			bctbx_list_free_with_data(client_delivered_to_user,
+			                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			bctbx_list_t *client_displayed =
+			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateDisplayed);
+			BC_ASSERT_EQUAL(bctbx_list_size(client_displayed), 0, size_t, "%zu");
+			bctbx_list_free_with_data(client_displayed, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(lastMsg), (int)LinphoneChatMessageStateDelivered, int,
+			                "%0d");
 		}
 
 		// Not delivered
@@ -1238,8 +1325,20 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(client->lc));
 			LinphoneChatRoom *clientCr = linphone_core_search_chat_room(client->lc, NULL, deviceAddr, confAddr, NULL);
 			BC_ASSERT_PTR_NOT_NULL(clientCr);
-			LinphoneChatMessage *lastMsg = clientCr ? linphone_chat_room_get_last_message_in_history(clientCr) : NULL;
+			if (!clientCr) {
+				continue;
+			}
+			LinphoneEventLog *messageEventLog = linphone_chat_room_search_chat_message_by_text(
+			    clientCr, msg_text0.c_str(), NULL, LinphoneSearchDirectionDown);
+			BC_ASSERT_PTR_NOT_NULL(messageEventLog);
+			if (!messageEventLog) {
+				continue;
+			}
+			LinphoneChatMessage *lastMsg = linphone_event_log_get_chat_message(messageEventLog);
 			BC_ASSERT_PTR_NOT_NULL(lastMsg);
+			if (!lastMsg) {
+				continue;
+			}
 
 			bctbx_list_t *client_not_delivered =
 			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateNotDelivered);
@@ -1249,12 +1348,12 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 
 			bctbx_list_t *client_delivered =
 			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateDelivered);
-			BC_ASSERT_EQUAL(bctbx_list_size(client_delivered), 1, size_t, "%zu");
+			BC_ASSERT_EQUAL(bctbx_list_size(client_delivered), 0, size_t, "%zu");
 			bctbx_list_free_with_data(client_delivered, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
 
 			bctbx_list_t *client_delivered_to_user =
 			    linphone_chat_message_get_participants_by_imdn_state(lastMsg, LinphoneChatMessageStateDeliveredToUser);
-			BC_ASSERT_EQUAL(bctbx_list_size(client_delivered_to_user), 2, size_t, "%zu");
+			BC_ASSERT_EQUAL(bctbx_list_size(client_delivered_to_user), 3, size_t, "%zu");
 			bctbx_list_free_with_data(client_delivered_to_user,
 			                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
 
@@ -1263,8 +1362,8 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 			BC_ASSERT_EQUAL(bctbx_list_size(client_displayed), 0, size_t, "%zu");
 			bctbx_list_free_with_data(client_displayed, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
 
-			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(lastMsg), (int)LinphoneChatMessageStateDelivered, int,
-			                "%0d");
+			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(lastMsg), (int)LinphoneChatMessageStateDeliveredToUser,
+			                int, "%0d");
 		}
 
 		marie_stat = marie.getStats();
@@ -1693,14 +1792,12 @@ static test_t local_conference_chat_imdn_tests[] = {
     TEST_ONE_TAG("Secure group chat with client IMDN sent after restart and participant added",
                  LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added,
                  "LeaksMemory"), /* because of network up and down */
-    TEST_TWO_TAGS("Secure group chat with message state going from delivered to displayed",
-                  LinphoneTest::secure_group_chat_message_state_transition_from_delivered_to_displayed,
-                  "LeaksMemory",
-                  "shaky"), /* LeaksMemory because of network up and down */
-    TEST_TWO_TAGS("Secure group chat with message state going from not delivered to displayed",
-                  LinphoneTest::secure_group_chat_message_state_transition_from_not_delivered_to_displayed,
-                  "LeaksMemory",
-                  "shaky"), /* LeaksMemory because of network up and down */
+    TEST_ONE_TAG("Secure group chat with message state going from delivered to displayed",
+                 LinphoneTest::secure_group_chat_message_state_transition_from_delivered_to_displayed,
+                 "LeaksMemory"), /* LeaksMemory because of network up and down */
+    TEST_ONE_TAG("Secure group chat with message state going from not delivered to displayed",
+                 LinphoneTest::secure_group_chat_message_state_transition_from_not_delivered_to_displayed,
+                 "LeaksMemory"), /* LeaksMemory because of network up and down */
     TEST_NO_TAG("Group chat with IMDN", LinphoneTest::group_chat_room_with_imdn),
     TEST_NO_TAG("Group chat with IMDN and core restarts", LinphoneTest::group_chat_room_with_imdn_and_core_restarts),
     TEST_ONE_TAG(

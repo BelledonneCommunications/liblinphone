@@ -145,9 +145,7 @@ protected:
 	// Temporary method to unify audio video conference and conference codes for group chats
 	std::shared_ptr<CallSession>
 	createSession(const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia);
-	inline void setSession(std::shared_ptr<CallSession> callSession) {
-		session = callSession;
-	}
+	void setSession(std::shared_ptr<CallSession> callSession);
 	inline std::shared_ptr<CallSession> getSession() const {
 		return session;
 	}

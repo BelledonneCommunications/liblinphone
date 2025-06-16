@@ -778,7 +778,8 @@ bool ClientConference::addParticipants(const list<std::shared_ptr<Address>> &add
 		const auto &endTime = mConfParams->getEndTimeString();
 		const auto now = time(NULL);
 		lError() << "Could not add participants to " << *this << " because local participant " << *getMe()->getAddress()
-		         << " is not admin or conference already ended (expected endtime: " << endTime
+		         << " is not admin (is admin: " << (getMe()->isAdmin() ? "true" : "false")
+		         << " or conference already ended (expected end time: " << endTime
 		         << " now: " << Utils::timeToIso8601(now);
 		return false;
 	}

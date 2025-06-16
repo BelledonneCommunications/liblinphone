@@ -43,7 +43,7 @@ Participant::Participant(const std::shared_ptr<Conference> conference,
                          const std::shared_ptr<const Address> &address,
                          std::shared_ptr<CallSession> callSession)
     : Participant(conference, address) {
-	session = callSession;
+	setSession(callSession);
 }
 
 Participant::Participant(std::shared_ptr<Address> address) : mAddress(address) {
@@ -76,14 +76,20 @@ Participant::createSession(const Conference &conference, const CallSessionParams
 
 shared_ptr<CallSession>
 Participant::createSession(const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia) {
+	shared_ptr<CallSession> callSession;
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
-		session = make_shared<MediaSession>(core, getSharedFromThis(), params);
+		callSession = make_shared<MediaSession>(core, getSharedFromThis(), params);
 	} else {
-		session = make_shared<CallSession>(core, params);
+		callSession = make_shared<CallSession>(core, params);
 	}
-	return session;
+	setSession(callSession);
+	return getSession();
 }
 
+void Participant::setSession(std::shared_ptr<CallSession> callSession) {
+	lInfo() << "Assigning session " << session << " to " << *this;
+	session = callSession;
+}
 // -----------------------------------------------------------------------------
 
 std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<ParticipantDevice> &device) {
