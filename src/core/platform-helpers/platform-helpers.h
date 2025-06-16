@@ -68,6 +68,7 @@ public:
 	virtual std::string getRingResource(const std::string &filename) const = 0;
 	virtual std::string getSoundResource(const std::string &filename) const = 0;
 	virtual void *getPathContext() = 0;
+	virtual std::string getPhysicalDeviceIdentifier() const = 0;
 
 	enum NetworkType { Unknown, Wifi, MobileData };
 	virtual NetworkType getNetworkType() const = 0;
@@ -154,6 +155,7 @@ public:
 	std::string getRingResource(const std::string &filename) const override;
 	std::string getSoundResource(const std::string &filename) const override;
 	void *getPathContext() override;
+	std::string getPhysicalDeviceIdentifier() const override;
 
 	NetworkType getNetworkType() const override;
 	std::string getWifiSSID() override;

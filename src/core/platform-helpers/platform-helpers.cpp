@@ -96,6 +96,10 @@ void *GenericPlatformHelpers::getPathContext() {
 	return nullptr;
 }
 
+string GenericPlatformHelpers::getPhysicalDeviceIdentifier() const {
+	return "";
+}
+
 void GenericPlatformHelpers::setVideoPreviewWindow(BCTBX_UNUSED(void *windowId)) {
 }
 
@@ -158,13 +162,13 @@ bool GenericPlatformHelpers::startNetworkMonitoring() {
 void GenericPlatformHelpers::stopNetworkMonitoring() {
 }
 
-void GenericPlatformHelpers::startPushService(){};
+void GenericPlatformHelpers::startPushService() {};
 
-void GenericPlatformHelpers::stopPushService(){};
+void GenericPlatformHelpers::stopPushService() {};
 
-void GenericPlatformHelpers::startFileTransferService(){};
+void GenericPlatformHelpers::startFileTransferService() {};
 
-void GenericPlatformHelpers::stopFileTransferService(){};
+void GenericPlatformHelpers::stopFileTransferService() {};
 
 void GenericPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	if (!monitoringEnabled) return;

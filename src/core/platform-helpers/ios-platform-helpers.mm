@@ -65,6 +65,7 @@ public:
 	void releaseCpuLock () override;
 
 	void * getPathContext () override;
+	string getPhysicalDeviceIdentifier() const override;
 
 	NetworkType getNetworkType()const override;
 	string getWifiSSID() override;
@@ -277,6 +278,16 @@ void IosPlatformHelpers::releaseCpuLock () {
 
 void *IosPlatformHelpers::getPathContext () {
 	return getSharedCoreHelpers()->getPathContext();
+}
+
+string IosPlatformHelpers::getPhysicalDeviceIdentifier() const {
+    NSUUID *identifierForVendor = [[UIDevice currentDevice] identifierForVendor];
+    if (identifierForVendor) {
+        NSString *identifierString = [identifierForVendor UUIDString];
+        return std::string([identifierString UTF8String]);
+    }
+	ms_warning("[IosPlatformHelpers] Did not manage to retrieve this device's identifierForVendor. This could prevent the proper detection of a device change in case of configuration cloning" );
+    return "unavailable_identifier";
 }
 
 void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {

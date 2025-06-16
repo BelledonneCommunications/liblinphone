@@ -3545,8 +3545,33 @@ static void linphone_core_before_start_apply_settings(LinphoneCore *lc) {
 	if (!uuid) {
 		string uuid = lc->sal->createUuid();
 		linphone_config_set_string(lc->config, "misc", "uuid", uuid.c_str());
-	} else if (strcmp(uuid, "0") != 0) /*to allow to disable sip.instance*/
-		lc->sal->setUuid(uuid);
+	} else if (strcmp(uuid, "0") != 0) { /*to allow to disable sip.instance*/
+		bool needRegenerateUuid = false;
+		if (lc->platform_helper) {
+			const char *configDeviceId =
+			    linphone_config_get_string(lc->config, "misc", "physical_device_identifier", NULL);
+			string currentDeviceId = getPlatformHelpers(lc)->getPhysicalDeviceIdentifier();
+			if (!currentDeviceId.empty()) {
+				linphone_config_set_string(lc->config, "misc", "physical_device_identifier", currentDeviceId.c_str());
+			}
+			if (configDeviceId) {
+				needRegenerateUuid = strcmp(configDeviceId, currentDeviceId.c_str()) != 0;
+			}
+		}
+
+		if (needRegenerateUuid) {
+			// We detected that the saved physical_device_identifier from the config does not match the actual
+			// identifier we are currently using. This means that this configuration has been cloned on another device.
+			// We need to take that into account, and use a fresh Uuid for +sip.instance from now on.
+			ms_message(
+			    "Detected cloning of configuration on a different device, generating a new UUID for sip instance");
+			string sUuid = lc->sal->createUuid();
+			linphone_config_set_string(lc->config, "misc", "uuid", sUuid.c_str());
+			lc->sal->setUuid(sUuid.c_str());
+		} else {
+			lc->sal->setUuid(uuid);
+		}
+	}
 
 	if (!lc->sal->getRootCa().empty()) {
 		auto &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient();
