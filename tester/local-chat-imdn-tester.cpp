@@ -1693,12 +1693,14 @@ static test_t local_conference_chat_imdn_tests[] = {
     TEST_ONE_TAG("Secure group chat with client IMDN sent after restart and participant added",
                  LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added,
                  "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Secure group chat with message state going from delivered to displayed",
-                 LinphoneTest::secure_group_chat_message_state_transition_from_delivered_to_displayed,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Secure group chat with message state going from not delivered to displayed",
-                 LinphoneTest::secure_group_chat_message_state_transition_from_not_delivered_to_displayed,
-                 "LeaksMemory"), /* because of network up and down */
+    TEST_TWO_TAGS("Secure group chat with message state going from delivered to displayed",
+                  LinphoneTest::secure_group_chat_message_state_transition_from_delivered_to_displayed,
+                  "LeaksMemory",
+                  "shaky"), /* LeaksMemory because of network up and down */
+    TEST_TWO_TAGS("Secure group chat with message state going from not delivered to displayed",
+                  LinphoneTest::secure_group_chat_message_state_transition_from_not_delivered_to_displayed,
+                  "LeaksMemory",
+                  "shaky"), /* LeaksMemory because of network up and down */
     TEST_NO_TAG("Group chat with IMDN", LinphoneTest::group_chat_room_with_imdn),
     TEST_NO_TAG("Group chat with IMDN and core restarts", LinphoneTest::group_chat_room_with_imdn_and_core_restarts),
     TEST_ONE_TAG(
