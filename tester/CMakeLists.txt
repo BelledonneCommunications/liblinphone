@@ -316,7 +316,6 @@ set(SOURCE_FILES_CXX
 	capability_negotiation_tester.cpp
 	clonable-object-tester.cpp
 	conference-info-tester.cpp
-	dtmf_tester.cpp
 	http-client-tester.cpp
 	http-server-utils.cpp
 	ice_capability_negotiation_tester.cpp

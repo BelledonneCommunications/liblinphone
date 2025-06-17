@@ -207,7 +207,7 @@ static void send_dtmf_sip_info(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
-void linphone_call_send_dtmf__char__rfc2833_and_sip_info_enabled(void) {
+static void send_dtmf_rfc2833_and_sip_info_enabled(void) {
 	LinphoneCoreManager *marie, *pauline;
 	send_dtmf_base(&marie, &pauline, TRUE, TRUE, '5', NULL, FALSE);
 	send_dtmf_cleanup(marie, pauline);
@@ -225,7 +225,7 @@ static void send_dtmfs_sequence_sip_info(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
-void linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled(void) {
+static void send_dtmf_sequence_rfc2833_and_sip_info_enabled(void) {
 	LinphoneCoreManager *marie, *pauline;
 	send_dtmf_base(&marie, &pauline, TRUE, TRUE, '\0', "3125A", FALSE);
 	send_dtmf_cleanup(marie, pauline);
@@ -260,16 +260,246 @@ static void send_dtmf_rfc2833_opus(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
-test_t dtmf_tests[10] = {
+/* Test that DTMF does not get through when clients are configured in incompatible ways */
+static void send_dtmf_char_not_received(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	int timeout = 200;
+
+	/* Sanity check
+	 *         | RFC 2833 | SIP INFO
+	 * Marie   |   YES    |    NO
+	 * Pauline |   YES    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, TRUE);
+	linphone_core_set_use_info_for_dtmf(marie->lc, FALSE);
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, TRUE);
+	linphone_core_set_use_info_for_dtmf(pauline->lc, FALSE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	char dtmf = 'B';
+	int dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	/*wait for the DTMF to be received from pauline*/
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |    NO    |    NO
+	 * Pauline |    NO    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, FALSE);
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, FALSE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = 'D';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	// DTMF NOT received
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |   YES    |    NO
+	 * Pauline |    NO    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, TRUE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '3';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	// DTMF NOT received
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |    NO    |    NO
+	 * Pauline |   YES    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, FALSE);
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, TRUE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '2';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	// DTMF NOT received
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |    NO    |    NO
+	 * Pauline |   YES    |   YES
+	 */
+	linphone_core_set_use_info_for_dtmf(pauline->lc, TRUE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '9';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	// DTMF NOT received
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |    NO    |    NO
+	 * Pauline |    NO    |   YES
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, FALSE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '1';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	// DTMF NOT received
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |   YES    |    NO
+	 * Pauline |    NO    |   YES
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, TRUE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '4';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	// DTMF NOT received
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void send_dtmf_char_SIP_INFO_does_not_depend_on_callee_config(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	int timeout = 200;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |   YES    |   YES
+	 * Pauline |    NO    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, TRUE);
+	linphone_core_set_use_info_for_dtmf(marie->lc, TRUE);
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, FALSE);
+	linphone_core_set_use_info_for_dtmf(pauline->lc, FALSE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	char dtmf = '6';
+	int dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	/*wait for the DTMF to be received from pauline*/
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |    NO    |   YES
+	 * Pauline |    NO    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, FALSE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '8';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	/*wait for the DTMF to be received from pauline*/
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	/*         | RFC 2833 | SIP INFO
+	 * Marie   |    NO    |   YES
+	 * Pauline |   YES    |    NO
+	 */
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, TRUE);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (!marie_call) return;
+
+	dtmf = '4';
+	dtmf_count_prev = pauline->stat.dtmf_count;
+	BC_ASSERT_EQUAL(linphone_call_send_dtmf(marie_call, dtmf), 0, int, "%i");
+	/*wait for the DTMF to be received from pauline*/
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, timeout));
+	end_call(marie, pauline);
+	marie_call = NULL;
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+test_t dtmf_tests[] = {
     TEST_NO_TAG("Send DTMF using RFC2833", send_dtmf_rfc2833),
     TEST_NO_TAG("Send DTMF using SIP INFO", send_dtmf_sip_info),
-    TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__rfc2833_and_sip_info_enabled),
+    TEST_NO_TAG("Send DTMF with RFC2833 and SIP INFO enabled", send_dtmf_rfc2833_and_sip_info_enabled),
     TEST_NO_TAG("Send DTMF sequence using RFC2833", send_dtmfs_sequence_rfc2833),
     TEST_NO_TAG("Send DTMF sequence using RFC2833 with hardcoded payload type",
                 send_dtmfs_sequence_rfc2833_with_hardcoded_payload_type),
     TEST_NO_TAG("Send DTMF sequence using RFC2833 and different payload type numbering",
                 send_dtmfs_sequence_rfc2833_with_different_numbering),
     TEST_NO_TAG("Send DTMF sequence using SIP INFO", send_dtmfs_sequence_sip_info),
-    TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled),
+    TEST_NO_TAG("Send DTMF sequence with RFC2833 and SIP INFO enabled",
+                send_dtmf_sequence_rfc2833_and_sip_info_enabled),
     TEST_NO_TAG("DTMF sequence canceled if call state changed", send_dtmfs_sequence_call_state_changed),
+    TEST_NO_TAG("DTMF chat not received", send_dtmf_char_not_received),
+    TEST_NO_TAG("DTMF char SIP INFO does not depend on callee config",
+                send_dtmf_char_SIP_INFO_does_not_depend_on_callee_config),
     TEST_NO_TAG("Send DTMF using RFC2833 using Opus", send_dtmf_rfc2833_opus)};
+
+test_suite_t dtmf_test_suite = {"DTMF",
+                                NULL,
+                                NULL,
+                                liblinphone_tester_before_each,
+                                liblinphone_tester_after_each,
+                                sizeof(dtmf_tests) / sizeof(dtmf_tests[0]),
+                                dtmf_tests};

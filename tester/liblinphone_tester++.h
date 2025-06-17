@@ -88,9 +88,6 @@ public:
 	}
 
 	// Wrapped methods
-	bool call(CoreManager &other) {
-		return _call(mMgr.get(), other.mMgr.get());
-	}
 	bool callWithSASvalidation(CoreManager &other) {
 		linphone_core_set_media_encryption(mMgr->lc, LinphoneMediaEncryptionZRTP);
 		linphone_core_set_media_encryption(other.mMgr->lc, LinphoneMediaEncryptionZRTP);
@@ -116,12 +113,6 @@ public:
 	}
 	LinphonePrivate::Address getIdentity() const {
 		return *LinphonePrivate::Address::toCpp(mMgr->identity);
-	}
-	void setUseRfc2833ForDtmf(bool value) {
-		linphone_core_set_use_rfc2833_for_dtmf(mMgr->lc, value);
-	}
-	void setUseInfoForDtmf(bool value) {
-		linphone_core_set_use_info_for_dtmf(mMgr->lc, value);
 	}
 	std::shared_ptr<LinphonePrivate::Call> getCurrentCall() {
 		return getCore().getCurrentCall();
