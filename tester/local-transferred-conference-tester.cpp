@@ -794,8 +794,9 @@ static void conference_joined_in_early_media(void) {
 static test_t local_conference_transferred_conference_basic_tests[] = {
     TEST_NO_TAG("Create audio transfer conference", LinphoneTest::create_audio_transfer_conference),
     TEST_NO_TAG("Create video transfer conference", LinphoneTest::create_video_transfer_conference),
-    TEST_NO_TAG("Create video transfer conference with active speaker changed",
-                LinphoneTest::create_video_transfer_conference_active_speaker_changed),
+    TEST_ONE_TAG("Create video transfer conference with active speaker changed",
+                 LinphoneTest::create_video_transfer_conference_active_speaker_changed,
+                 "shaky"),
     TEST_NO_TAG("Conference joined in early media", LinphoneTest::conference_joined_in_early_media),
 #ifdef HAVE_EKT_SERVER_PLUGIN
     TEST_ONE_TAG(

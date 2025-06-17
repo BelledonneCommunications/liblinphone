@@ -7571,7 +7571,7 @@ static test_t local_conference_scheduled_conference_advanced_tests[] = {
                 LinphoneTest::two_overlapping_scheduled_conferences_from_different_organizers),
     TEST_NO_TAG("Create scheduled conference with active call",
                 LinphoneTest::create_scheduled_conference_with_active_call),
-    TEST_NO_TAG("Change active speaker", LinphoneTest::change_active_speaker),
+    TEST_ONE_TAG("Change active speaker", LinphoneTest::change_active_speaker, "shaky"),
 #ifndef HAVE_EKT_SERVER_PLUGIN
     TEST_NO_TAG("Failure in creating end to end encrypted conference EKT plugin missing",
                 LinphoneTest::failure_in_creating_end_to_end_encrypted_conference_ekt_plugin_missing)

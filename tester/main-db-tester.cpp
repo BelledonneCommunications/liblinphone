@@ -663,8 +663,8 @@ static test_t main_db_tests[] = {
     TEST_NO_TAG("Database with chatroom duplicates and GRUU pruned", database_with_chatroom_duplicates_gruu_pruned),
     TEST_NO_TAG("Database with chatroom duplicates and GRUU pruned in conference server",
                 database_with_chatroom_duplicates_gruu_pruned_conference_server),
-    TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
-    TEST_NO_TAG("Load a lot of chatrooms cleaning GRUU", load_a_lot_of_chatrooms_cleaning_gruu),
+    TEST_ONE_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms, "shaky"),
+    TEST_ONE_TAG("Load a lot of chatrooms cleaning GRUU", load_a_lot_of_chatrooms_cleaning_gruu, "shaky"),
     TEST_NO_TAG("Search messages in chatroom", search_messages_in_chat_room)};
 
 test_suite_t main_db_test_suite = {
