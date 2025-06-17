@@ -474,32 +474,41 @@ size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, Linphon
 	    is_in_conference ? linphone_call_get_remote_params(call) : linphone_call_get_params(call);
 	bool_t call_video_enabled = linphone_call_params_video_enabled(call_params);
 	LinphoneMediaDirection call_video_dir = linphone_call_params_get_video_direction(call_params);
-
+	bool_t camera_enabled =
+	    (call_video_dir == LinphoneMediaDirectionSendOnly) || (call_video_dir == LinphoneMediaDirectionSendRecv);
 	if (enable_video && call_video_enabled && (call_video_dir != LinphoneMediaDirectionInactive)) {
 		bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
 		for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 			LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+			bool_t video_available = linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo);
 			LinphoneMediaDirection dir = linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo);
+			bool_t thumbnail_available = video_available;
 			const LinphoneAddress *device_address = linphone_participant_device_get_address(d);
 			bool_t is_me = is_in_conference
 			                   ? linphone_address_weak_equal(device_address, linphone_call_get_remote_address(call))
 			                   : linphone_conference_is_me(conference, device_address);
-			bool_t dir_has_send_component =
-			    ((dir == LinphoneMediaDirectionSendRecv) || (dir == LinphoneMediaDirectionSendOnly));
 			LinphoneConferenceLayout call_video_layout = linphone_call_params_get_conference_video_layout(call_params);
-			LinphoneConferenceSecurityLevel conference_security_level =
-			    linphone_conference_params_get_security_level(linphone_conference_get_current_params(conference));
-			if (dir_has_send_component) {
-				if (is_me || ((call_video_layout == LinphoneConferenceLayoutActiveSpeaker) &&
-				              (conference_security_level == LinphoneConferenceSecurityLevelEndToEnd))) {
-					nb_video_streams += 2;
+			bool_t is_active_speaker = (call_video_layout == LinphoneConferenceLayoutActiveSpeaker);
+			bool_t is_grid = (call_video_layout == LinphoneConferenceLayoutGrid);
+
+			// Stream with content main/speaker
+			// The SDP has a main stream if
+			// - it is available and the camera is on
+			// - in active speaker layout, its direction is recvonly
+			if (is_me && ((video_available && (is_active_speaker || (is_grid && camera_enabled))) ||
+			              (is_active_speaker && (dir == LinphoneMediaDirectionRecvOnly)))) {
+				nb_video_streams++;
+			}
+
+			if (thumbnail_available) {
+				if (is_me) {
+					// Stream with content thumbnail
+					if (camera_enabled) {
+						nb_video_streams++;
+					}
 				} else {
 					nb_video_streams++;
 				}
-			} else if (is_me && (call_video_layout == LinphoneConferenceLayoutActiveSpeaker) &&
-			           (dir == LinphoneMediaDirectionRecvOnly) &&
-			           (conference_security_level != LinphoneConferenceSecurityLevelEndToEnd)) {
-				nb_video_streams++;
 			}
 		}
 		bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
@@ -521,6 +530,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
                                  const LinphoneAddress *confAddr,
                                  bool_t enable_video) {
 	for (auto mgr : conferenceMgrs) {
+		ms_message("Waiting for manager %s to reach a stable state", linphone_core_get_identity(mgr->lc));
 		// wait bit more to detect side effect if any
 		BC_ASSERT_TRUE(CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(50), [mgr, &focus, &members, confAddr,
 		                                                                           enable_video] {
@@ -6870,7 +6880,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 											BC_ASSERT_EQUAL(device_layout, new_layout, int, "%d");
 										}
 									}
-									bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+									bctbx_list_free_with_data(devices,
+									                          (void (*)(void *))linphone_participant_device_unref);
 								}
 							}
 

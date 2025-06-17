@@ -2209,11 +2209,37 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 				// stream when the conference is in the Grid layout
 				const auto &refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
 				// Other participants thumbnails are send by the server to the client
-				const auto thumbnailDirection = isConferenceServer ? SalStreamRecvOnly : SalStreamSendOnly;
+				// ------------------|-----------|-----------|
+				//                   |        localIsOfferer |
+				// ConferenceServer  |                       |
+				// ------------------|-----------|-----------|
+				//                   |    No     |    Yes    |
+				// ------------------|-----------|-----------|
+				//        No         |  SendOnly | RecvOnly  |
+				// ------------------|-----------|-----------|
+				//        Yes        |  RecvOnly | SendOnly  |
+				// ------------------|-----------|-----------|
+				const auto thumbnailDirection =
+				    (localIsOfferer ^ isConferenceServer) ? SalStreamRecvOnly : SalStreamSendOnly;
 				auto beginIt = refMd->streams.cbegin();
 				for (auto sIt = beginIt; sIt != refMd->streams.end(); sIt++) {
 					const auto &s = *sIt;
-					const std::string contentAttrValue = s.getContent();
+					const auto idx = std::distance(refMd->streams.cbegin(), sIt);
+					std::string contentAttrValue = s.getContent();
+					if (contentAttrValue.empty()) {
+						// The content in the reference stream is empty, then try to find if a stream at the desired
+						// index has already been create in the new SDP. If so, make a last attempt to retrieve its
+						// content. This happens when a client is merging multiple calls into a conference; the
+						// reference SDP, being one for a call, has neither the label nor the content attribute. If the
+						// call was in the paused state, the main stream might be confused with a thumbnail one of a
+						// client using the Grid layout by only looking at the reference SDP.
+						const SalStreamDescription &createdStream = md->getStreamIdx(static_cast<unsigned int>(idx));
+						if (createdStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+							contentAttrValue = (createdStream == Utils::getEmptyConstRefObject<SalStreamDescription>())
+							                       ? s.getContent()
+							                       : createdStream.getContent();
+						}
+					}
 					if ((s.getType() == type) && (s.getDirection() == thumbnailDirection) &&
 					    !MediaSessionPrivate::isMainStreamContent(contentAttrValue)) {
 						const auto idx = std::distance(refMd->streams.cbegin(), sIt);
