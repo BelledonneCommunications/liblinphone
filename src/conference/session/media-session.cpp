@@ -1821,7 +1821,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 		std::list<OrtpPayloadType *> l = pth.makeCodecsList(type, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 		if (!l.empty()) {
 			if (!!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "misc",
-			                              "add_participant_label_to_sdp", 1)) {
+			                              "add_device_stream_label_to_sdp", 1)) {
 				newStream.setLabel(label);
 			}
 			newStream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
@@ -2406,25 +2406,49 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 			} else if (isConferenceServer ||
 			           (remoteContactAddress && remoteContactAddress->hasParam(Conference::IsFocusParameter))) {
 				// The conference server is a passive element, therefore it should always look at the client offer to
-				// know the participant stream order Clients may also enter this if branch if they receive an INVITE by
-				// a conference server. This is the case at the beginning of dial out conference for the initial INVITE
-				// and the ICE reINVITE, should ICE be enabled In the case of clients, it is important to verify that
-				// they are still in a conference. As they end up executing this code when they receive an offer from
-				// the server, it is important to make sure that the isfocus parameter is found in the remote contact
-				// address. In fact, if the server remove a participant from a conference, the client conference is
-				// still alive (i.e. its pointer is not null). In such a scenario, the conference will not add any
-				// content to the streams (including the main one) and the client will associate it to a thumbnail
-				// stream when the conference is in the Grid layout
+				// know the participant stream order.
+				// Clients may also enter this if branch if they receive an INVITE by a conference server.
+				// This is the case at the beginning of dial out conference for the initial INVITE  and the ICE
+				// reINVITE, should ICE be enabled In the case of clients, it is important to verify that they are still
+				// in a conference. As they end up executing this code when they receive an offer from the server, it is
+				// important to make sure that the isfocus parameter is found in the remote contact address. In fact, if
+				// the server remove a participant from a conference, the client conference is still alive (i.e. its
+				// pointer is not null). In such a scenario, the conference will not add any content to the streams
+				// (including the main one) and the client will associate it to a thumbnail stream when the conference
+				// is in the Grid layout
 				const auto &refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
 				// Other participants thumbnails are send by the server to the client
-				const auto thumbnailDirection = isConferenceServer ? SalStreamRecvOnly : SalStreamSendOnly;
+				// ------------------|-----------|-----------|
+				//                   |        localIsOfferer |
+				// ConferenceServer  |                       |
+				// ------------------|-----------|-----------|
+				//                   |    No     |    Yes    |
+				// ------------------|-----------|-----------|
+				//        No         |  SendOnly | RecvOnly  |
+				// ------------------|-----------|-----------|
+				//        Yes        |  RecvOnly | SendOnly  |
+				// ------------------|-----------|-----------|
+				const auto thumbnailDirection =
+				    (localIsOfferer ^ isConferenceServer) ? SalStreamRecvOnly : SalStreamSendOnly;
 				auto beginIt = refMd->streams.cbegin();
 				for (auto sIt = beginIt; sIt != refMd->streams.end(); sIt++) {
 					const auto &s = *sIt;
-					const std::string contentAttrValue = s.getContent();
+					const auto idx = std::distance(refMd->streams.cbegin(), sIt);
+					std::string contentAttrValue = s.getContent();
+					if (contentAttrValue.empty()) {
+						// The content in the reference stream is empty, then try to find if a stream at the desired
+						// index has already been create in the new SDP. If so, make a last attempt to retrieve its
+						// content. This happens when a client is merging multiple calls into a conference; the
+						// reference SDP, being one for a call, has neither the label nor the content attribute. If the
+						// call was in the paused state, the main stream might be confused with a thumbnail one of a
+						// client using the Grid layout by only looking at the reference SDP.
+						const auto createdStream = md->getStreamAtIdx(static_cast<unsigned int>(idx));
+						if (createdStream.has_value()) {
+							contentAttrValue = (*createdStream)->getContent();
+						}
+					}
 					if ((s.getType() == type) && (s.getDirection() == thumbnailDirection) &&
 					    !MediaSessionPrivate::isMainStreamContent(contentAttrValue)) {
-						const auto idx = std::distance(refMd->streams.cbegin(), sIt);
 						const std::string participantLabel = s.getLabel();
 
 						std::shared_ptr<ParticipantDevice> dev;
@@ -2534,6 +2558,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> &m
 				newStream.rtp_port = 0;
 				newStream.rtcp_port = 0;
 				newStream.type = s.type;
+				newStream.typeother = s.typeother;
 				newStream.name = s.name;
 				newStream.disable();
 				SalStreamConfiguration cfg;
@@ -2854,7 +2879,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 #ifdef HAVE_ADVANCED_IM
 	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc",
 	                                                  "conference_event_log_enabled", TRUE);
-	if (conferenceCreated && eventLogEnabled && participantDevice &&
+	bool addDeviceLabels = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "misc",
+	                                                 "add_device_stream_label_to_sdp", 1);
+	if (addDeviceLabels && conferenceCreated && eventLogEnabled && participantDevice &&
 	    ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) ||
 	     (deviceState == ParticipantDevice::State::OnHold)) &&
 	    addVideoStream) {

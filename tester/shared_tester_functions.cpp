@@ -897,7 +897,10 @@ bool_t check_custom_m_line(LinphoneCall *call, const char *m_line) {
 	SalStreamType type = SalOther;
 	const std::string m_line_str(m_line);
 	SalMediaDescription *result_desc = _linphone_call_get_result_desc(call);
-	const auto result_stream = result_desc->findBestStream(type);
+	auto result_stream = result_desc->findBestStream(type);
+	if (!result_stream.has_value()) {
+		result_stream = result_desc->findFirstStreamOfType(type);
+	}
 	bool_t result_stream_found = (result_stream.has_value());
 	BC_ASSERT_TRUE(result_stream_found);
 	std::string result_stream_type_string;
@@ -909,7 +912,10 @@ bool_t check_custom_m_line(LinphoneCall *call, const char *m_line) {
 	BC_ASSERT_TRUE(result_stream_type_ok);
 
 	SalMediaDescription *local_desc = _linphone_call_get_local_desc(call);
-	const auto local_stream = local_desc->findBestStream(type);
+	auto local_stream = local_desc->findBestStream(type);
+	if (!local_stream.has_value()) {
+		local_stream = local_desc->findFirstStreamOfType(type);
+	}
 	bool_t local_stream_found = (local_stream.has_value());
 	BC_ASSERT_TRUE(local_stream_found);
 	std::string local_stream_type_string;
@@ -921,7 +927,10 @@ bool_t check_custom_m_line(LinphoneCall *call, const char *m_line) {
 	BC_ASSERT_TRUE(local_stream_type_ok);
 
 	SalMediaDescription *remote_desc = _linphone_call_get_remote_desc(call);
-	const auto remote_stream = remote_desc->findBestStream(type);
+	auto remote_stream = remote_desc->findBestStream(type);
+	if (!remote_stream.has_value()) {
+		remote_stream = remote_desc->findFirstStreamOfType(type);
+	}
 	bool_t remote_stream_found = (remote_stream.has_value());
 	std::string remote_stream_type_string;
 	if (remote_stream_found) {

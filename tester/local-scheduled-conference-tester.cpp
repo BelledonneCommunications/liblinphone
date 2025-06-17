@@ -4099,8 +4099,9 @@ void create_conference_with_recvonly_participant(void) {
 						if (enable) {
 							LinphoneMediaDirection device_video_direction =
 							    linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo);
-							BC_ASSERT_TRUE(video_available == (((device_video_direction == LinphoneMediaDirectionSendOnly) ||
-							                                    (device_video_direction == LinphoneMediaDirectionSendRecv))));
+							BC_ASSERT_TRUE(video_available ==
+							               (((device_video_direction == LinphoneMediaDirectionSendOnly) ||
+							                 (device_video_direction == LinphoneMediaDirectionSendRecv))));
 						} else {
 							BC_ASSERT_FALSE(video_available);
 						}
@@ -5208,7 +5209,7 @@ static void create_simple_conference_with_participant_no_label_base(LinphoneConf
 			}
 		}
 
-		linphone_config_set_int(linphone_core_get_config(laure.getLc()), "misc", "add_participant_label_to_sdp", 0);
+		linphone_config_set_int(linphone_core_get_config(laure.getLc()), "misc", "add_device_stream_label_to_sdp", 0);
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());

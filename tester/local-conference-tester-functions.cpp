@@ -888,18 +888,25 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 	for (auto mgr : conferenceMgrs) {
 		ms_message("Waiting for manager %s to reach a stable state", linphone_core_get_identity(mgr->lc));
 		// wait a bit longer to detect side effect if any
-		BC_ASSERT_TRUE(CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(50), [mgr, &focus, &members, confAddr,
-		                                                                           enable_video, &camera_enabled_map,
-		                                                                           conferenceMgrs] {
+		bool video_check = false;
+		bool participant_check = false;
+		bool device_check = false;
+		bool call_check = true;
+		bool audio_direction_check = true;
+		bool security_check = true;
+
+		CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(50), [mgr, &focus, &members, confAddr, enable_video,
+		                                                            &camera_enabled_map, conferenceMgrs, &video_check,
+		                                                            &participant_check, &device_check, &call_check,
+		                                                            &audio_direction_check, &security_check] {
+			video_check = false;
+			participant_check = false;
+			device_check = false;
+			call_check = true;
+			audio_direction_check = true;
+			security_check = true;
 			size_t nb_text_streams = 0;
 			std::list<LinphoneCall *> calls;
-
-			bool video_check = false;
-			bool participant_check = false;
-			bool device_check = false;
-			bool call_check = true;
-			bool audio_direction_check = true;
-			bool security_check = true;
 
 			LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
 			if (conference && mgr != focus) {
@@ -943,7 +950,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 						size_t nb_audio_streams = compute_no_audio_streams(call, conference);
 						size_t nb_video_streams = 0;
 						if (!!linphone_config_get_int(linphone_core_get_config(mgr->lc), "misc",
-						                              "add_participant_label_to_sdp", 1)) {
+						                              "add_device_stream_label_to_sdp", 1)) {
 							nb_video_streams = compute_no_video_streams(enable_video, call, conference);
 						} else {
 							const LinphoneCallParams *call_params = linphone_call_get_params(call);
@@ -1147,7 +1154,14 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 			}
 			return audio_direction_check && video_check && device_check && call_check && participant_check &&
 			       security_check;
-		}));
+		});
+		ms_message("Checking if manager %s has reached a stable state", linphone_core_get_identity(mgr->lc));
+		BC_ASSERT_TRUE(audio_direction_check);
+		BC_ASSERT_TRUE(video_check);
+		BC_ASSERT_TRUE(device_check);
+		BC_ASSERT_TRUE(call_check);
+		BC_ASSERT_TRUE(participant_check);
+		BC_ASSERT_TRUE(security_check);
 	}
 #ifdef HAVE_ADVANCED_IM
 	does_all_participants_have_matching_ekt(focus, members, confAddr);
