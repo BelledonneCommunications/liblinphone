@@ -861,9 +861,9 @@ static void check_avpf_features(LinphoneCore *lc, unsigned char expected_feature
 	if (lcall != NULL) {
 		SalMediaDescription *resultDesc = _linphone_call_get_result_desc(lcall);
 		const auto &desc = resultDesc->findStream(SalProtoRtpAvpf, SalVideo);
-		BC_ASSERT_TRUE(desc != Utils::getEmptyConstRefObject<SalStreamDescription>());
-		if (desc != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-			const auto &payloads = desc.getPayloads();
+		BC_ASSERT_TRUE(desc.has_value());
+		if (desc.has_value()) {
+			const auto &payloads = (*desc)->getPayloads();
 			BC_ASSERT_FALSE(payloads.empty());
 			if (!payloads.empty()) {
 				PayloadType *pt = payloads.front();
@@ -1068,7 +1068,11 @@ static void _call_with_unknown_stream(bool_t accepted, bool_t unknown_at_end) {
 		linphone_call_accept(linphone_core_get_current_call(laure->lc));
 		BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
 		auto resultDesc = _linphone_call_get_result_desc(linphone_core_get_current_call(laure->lc));
-		std::string streamType = resultDesc->getStreamAtIdx(unknown_at_end ? 2 : 1).getTypeAsString();
+		std::string streamType;
+		auto stream = resultDesc->getStreamAtIdx(unknown_at_end ? 2 : 1);
+		if (stream.has_value()) {
+			streamType = (*stream)->getTypeAsString();
+		}
 		BC_ASSERT_STRING_EQUAL(streamType.c_str(), "application");
 		linphone_call_terminate(linphone_core_get_current_call(laure->lc));
 	} else {

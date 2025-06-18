@@ -205,7 +205,7 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 		if (!ownerIndexes.empty()) {
 			for (const auto &idx : ownerIndexes) {
 				const auto &sd = finalMd->getStreamAtIdx(static_cast<unsigned int>(idx));
-				isThereAnActiveOwner |= sd.enabled();
+				isThereAnActiveOwner |= (*sd)->enabled();
 			}
 			bundleOwnerRejected = !isThereAnActiveOwner;
 		}
@@ -1187,8 +1187,8 @@ bool MediaSessionPrivate::hasAvpf(const std::shared_ptr<SalMediaDescription> &md
 	 */
 	bool hasAvpf = !!md->hasAvpf();
 	const auto &videoStream = md->findBestStream(SalVideo);
-	if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-		hasAvpf = videoStream.hasAvpf();
+	if (videoStream.has_value()) {
+		hasAvpf = (*videoStream)->hasAvpf();
 	}
 	return hasAvpf;
 }
@@ -1235,16 +1235,18 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams(std::shared_ptr<SalMed
 	lInfo() << *q << ": Incoming call media encryption initialized to "
 	        << linphone_media_encryption_to_string(mediaEncryption);
 
-	const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
-	if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+	const auto audioStreamOpt = md->findBestStream(SalAudio);
+	if (audioStreamOpt.has_value()) {
+		auto &audioStream = **audioStreamOpt;
 		const std::string &rtpAddr = (audioStream.rtp_addr.empty() == false) ? audioStream.rtp_addr : md->addr;
 		if (ms_is_multicast(rtpAddr.c_str())) {
 			lInfo() << *q << ": Incoming offer has audio multicast, enabling it in local params.";
 			getParams()->enableAudioMulticast(true);
 		} else getParams()->enableAudioMulticast(false);
 	}
-	const SalStreamDescription &videoStream = md->findBestStream(SalVideo);
-	if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+	const auto videoStreamOpt = md->findBestStream(SalVideo);
+	if (videoStreamOpt.has_value()) {
+		auto &videoStream = **videoStreamOpt;
 		const std::string &rtpAddr = (videoStream.rtp_addr.empty() == false) ? videoStream.rtp_addr : md->addr;
 		if (ms_is_multicast(rtpAddr.c_str())) {
 			lInfo() << *q << ": Incoming offer has video multicast, enabling it in local params.";
@@ -1350,8 +1352,9 @@ std::string MediaSessionPrivate::getLocalIpFromMedia() const {
 		if (remoteDesc) {
 			remoteAddr = remoteDesc->getConnectionAddress();
 			if (remoteAddr.empty()) {
-				if (remoteDesc->getNbStreams() > 0) {
-					remoteAddr = remoteDesc->getStreamAtIdx(0).rtp_addr;
+				auto remoteStream = remoteDesc->getStreamAtIdx(0);
+				if (remoteStream.has_value()) {
+					remoteAddr = (*remoteStream)->rtp_addr;
 				}
 			}
 		}
@@ -1691,8 +1694,9 @@ SalMediaProto MediaSessionPrivate::getMdProto(SalStreamType type,
 	SalMediaProto requested = SalProtoRtpAvpf;
 	// Ignore remote media description is the encryption is mandatory
 	if (!ignoreRemoteMd && !isEncryptionMandatory() && remoteMd && (idx > -1)) {
-		const SalStreamDescription &remoteStream = remoteMd->getStreamAtIdx(static_cast<unsigned int>(idx));
-		if (remoteStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		const auto remoteStreamOpt = remoteMd->getStreamAtIdx(static_cast<unsigned int>(idx));
+		if (remoteStreamOpt.has_value()) {
+			auto &remoteStream = **remoteStreamOpt;
 			// Try to align the local media protocol to the one in the offer. It must be validated later on to be
 			// actually put down in the SDP.
 			streamType = remoteStream.getType();
@@ -1806,12 +1810,13 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 		bool useThumbnailStream = (isVideoStream && q->requestThumbnail(dev));
 		const auto &label = (useThumbnailStream) ? dev->getThumbnailStreamLabel()
 		                                         : dev->getStreamLabel(sal_stream_type_to_linphone(type));
-		const auto &previousParticipantStream =
-		    oldMd ? oldMd->findStreamWithLabel(type, label) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-		const auto alreadyAssignedPayloads =
-		    ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>())
-		         ? previousParticipantStream.already_assigned_payloads
-		         : emptyList);
+		auto alreadyAssignedPayloads = emptyList;
+		if (oldMd) {
+			const auto &previousParticipantStream = oldMd->findStreamWithLabel(type, label);
+			if (previousParticipantStream.has_value()) {
+				alreadyAssignedPayloads = (*previousParticipantStream)->already_assigned_payloads;
+			}
+		}
 
 		std::list<OrtpPayloadType *> l = pth.makeCodecsList(type, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 		if (!l.empty()) {
@@ -2061,9 +2066,11 @@ SalStreamDescription &MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMedi
 		const auto &protectedIdx = (std::find(protectedStreamNumbers.cbegin(), protectedStreamNumbers.cend(),
 		                                      mdStreamIdx) != protectedStreamNumbers.cend());
 		auto stream = md->getStreamAtIdx(static_cast<unsigned int>(mdStreamIdx));
-		if (!protectedIdx && (stream.getDirection() == SalStreamInactive)) {
-			freeSlot = static_cast<int>(mdStreamIdx);
-			break;
+		if (stream.has_value()) {
+			if (!protectedIdx && ((*stream)->getDirection() == SalStreamInactive)) {
+				freeSlot = static_cast<int>(mdStreamIdx);
+				break;
+			}
 		}
 	}
 
@@ -2086,7 +2093,9 @@ SalStreamDescription &MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMedi
 					    (std::find(protectedStreamNumbersOldMd.cbegin(), protectedStreamNumbersOldMd.cend(),
 					               mdStreamIdx) != protectedStreamNumbersOldMd.cend());
 					auto oldStream = oldMd->getStreamAtIdx(static_cast<unsigned int>(mdStreamIdx));
-					oldStreamLabel = oldStream.getLabel();
+					if (oldStream.has_value()) {
+						oldStreamLabel = (*oldStream)->getLabel();
+					}
 					bool oldStreamLabelEmpty = oldStreamLabel.empty();
 					// Select index if either the labels match or the new and old stream have no labels and the index is
 					// not the same. In fact it may happen that a faulty core sends an SDP with multiple streams without
@@ -2684,20 +2693,20 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 			addAudioStream &= isAudioConferenceEnabled;
 		}
 	}
-	const SalStreamDescription &oldAudioStream =
-	    refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	SalMediaDescription::optional_sal_stream_description oldAudioStream{};
+	if (refMd) {
+		oldAudioStream = refMd->findBestStream(SalAudio);
+	}
 
 	// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
 	const auto remoteContactAddress = q->getRemoteContactAddress();
 	q->updateContactAddressInOp();
 
-	if (addAudioStream || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
-		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
-		                                      ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())
-		                                           ? oldAudioStream.already_assigned_payloads
-		                                           : emptyList),
-		                                      rtpBundleEnabled);
-
+	if (addAudioStream || oldAudioStream.has_value()) {
+		auto audioCodecs = pth.makeCodecsList(
+		    SalAudio, getParams()->getAudioBandwidthLimit(), -1,
+		    ((oldAudioStream.has_value()) ? (*oldAudioStream)->already_assigned_payloads : emptyList),
+		    rtpBundleEnabled);
 		const auto remoteAudioStreamIdx = remoteMd ? remoteMd->findFirstStreamIdxOfType(SalAudio, 0) : -1;
 		const auto proto = getMdProto(SalAudio, remoteAudioStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
 		                              addCapabilityNegotiationAttributes, encList);
@@ -2741,43 +2750,39 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	auto callVideoEnabled =
 	    (!conferenceCreated && conference) ? getCurrentParams()->videoEnabled() : getParams()->videoEnabled();
 	bool addVideoStream = callVideoEnabled;
-	// If the call is linked to a conference, search stream with content main first
-	// Check if there was a main stream earlier on in the SDP.
-	// It is necessary to check for both Grid and ActiveSpeaker layout in order to cover the case when the layout is
-	// changed
-	const SalStreamDescription &oldScreenSharingMainVideoStream =
-	    refMd ? refMd->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute)
-	          : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	const SalStreamDescription &oldGridLayoutMainVideoStream =
-	    refMd ? refMd->findStreamWithContent(MediaSessionPrivate::GridVideoContentAttribute)
-	          : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	const SalStreamDescription &oldActiveSpeakerLayoutMainVideoStream =
-	    refMd ? refMd->findStreamWithContent(MediaSessionPrivate::ActiveSpeakerVideoContentAttribute)
-	          : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	const SalStreamDescription &oldMainVideoStream =
-	    refMd ? refMd->findBestStream(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+
 	if (conference && isInLocalConference) {
 		addVideoStream &= isVideoConferenceEnabled;
 	}
 
-	SalStreamDescription oldVideoStream;
-	if (conference) {
-		if (oldScreenSharingMainVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-			oldVideoStream = oldScreenSharingMainVideoStream;
-		} else if (oldGridLayoutMainVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-			oldVideoStream = oldGridLayoutMainVideoStream;
+	SalMediaDescription::optional_sal_stream_description oldVideoStream{};
+	if (refMd) {
+		if (conference) {
+			// If the call is linked to a conference, search stream with content main first
+			// Check if there was a main stream earlier on in the SDP.
+			// It is necessary to check for both Grid and ActiveSpeaker layout in order to cover the case when the
+			// layout is changed
+			const auto oldScreenSharingMainVideoStream =
+			    refMd->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
+			const auto oldGridLayoutMainVideoStream =
+			    refMd->findStreamWithContent(MediaSessionPrivate::GridVideoContentAttribute);
+			const auto oldActiveSpeakerLayoutMainVideoStream =
+			    refMd->findStreamWithContent(MediaSessionPrivate::ActiveSpeakerVideoContentAttribute);
+			if (oldScreenSharingMainVideoStream.has_value()) {
+				oldVideoStream = oldScreenSharingMainVideoStream;
+			} else if (oldGridLayoutMainVideoStream.has_value()) {
+				oldVideoStream = oldGridLayoutMainVideoStream;
+			} else {
+				oldVideoStream = oldActiveSpeakerLayoutMainVideoStream;
+			}
 		} else {
-			oldVideoStream = oldActiveSpeakerLayoutMainVideoStream;
+			oldVideoStream = refMd->findBestStream(SalVideo);
 		}
-	} else {
-		oldVideoStream = oldMainVideoStream;
 	}
-	if (addVideoStream || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
-		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1,
-		                                      ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())
-		                                           ? oldVideoStream.already_assigned_payloads
-		                                           : emptyList),
-		                                      rtpBundleEnabled);
+	if (addVideoStream || oldVideoStream.has_value()) {
+		auto videoCodecs = pth.makeCodecsList(
+		    SalVideo, 0, -1, ((oldVideoStream.has_value()) ? (*oldVideoStream)->already_assigned_payloads : emptyList),
+		    rtpBundleEnabled);
 		SalStreamDir videoDir = SalStreamInactive;
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
@@ -2826,15 +2831,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		addConferenceLocalParticipantStreams(addVideoStream, md, oldMd, pth, encList, SalVideo);
 	}
 
-	const SalStreamDescription &oldTextStream =
-	    refMd ? refMd->findBestStream(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if ((localIsOfferer && getParams()->realtimeTextEnabled()) ||
-	    (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
-		auto textCodecs = pth.makeCodecsList(SalText, 0, -1,
-		                                     ((oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())
-		                                          ? oldTextStream.already_assigned_payloads
-		                                          : emptyList),
-		                                     rtpBundleEnabled);
+	SalMediaDescription::optional_sal_stream_description oldTextStream{};
+	if (refMd) {
+		oldTextStream = refMd->findBestStream(SalText);
+	}
+	if ((localIsOfferer && getParams()->realtimeTextEnabled()) || oldTextStream.has_value()) {
+		auto textCodecs = pth.makeCodecsList(
+		    SalText, 0, -1, ((oldTextStream.has_value()) ? (*oldTextStream)->already_assigned_payloads : emptyList),
+		    rtpBundleEnabled);
 		const auto remoteTextStreamIdx = remoteMd ? remoteMd->findFirstStreamIdxOfType(SalText, 0) : -1;
 		const auto proto = getMdProto(SalText, remoteTextStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
 		                              addCapabilityNegotiationAttributes, encList);
@@ -3877,8 +3881,12 @@ LinphoneMediaDirection MediaSessionPrivate::getDirFromMd(const std::shared_ptr<S
 			return LinphoneMediaDirectionInactive;
 		}
 	}
+	SalStreamDir direction = SalStreamInactive;
 	const auto &videoStream = md->findBestStream(type);
-	return MediaSessionParamsPrivate::salStreamDirToMediaDirection(videoStream.getDirection());
+	if (videoStream.has_value()) {
+		direction = (*videoStream)->getDirection();
+	}
+	return MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction);
 }
 
 void MediaSessionPrivate::updateCurrentParams() const {
@@ -3933,9 +3941,16 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		srtpEncryptionMatch = true;
 		bool srtpSuiteSet = false;
 		for (size_t idx = 0; idx < md->getNbStreams(); idx++) {
-			const auto &salStream = md->getStreamAtIdx(static_cast<unsigned int>(idx));
-			if (salStream.enabled() && (salStream.getDirection() != SalStreamInactive) && salStream.hasSrtp()) {
-				const auto &streamCryptos = salStream.getCryptos();
+			const auto &salStreamOpt = md->getStreamAtIdx(static_cast<unsigned int>(idx));
+			bool addSrtpCryptoSuites = false;
+			std::vector<SalSrtpCryptoAlgo> streamCryptos;
+			if (salStreamOpt.has_value()) {
+				auto salStream = **salStreamOpt;
+				addSrtpCryptoSuites =
+				    (salStream.enabled() && (salStream.getDirection() != SalStreamInactive) && salStream.hasSrtp());
+				streamCryptos = salStream.getCryptos();
+			}
+			if (addSrtpCryptoSuites) {
 				const auto &stream = getStreamsGroup().getStream(idx);
 				if (stream) {
 					for (const auto &crypto : streamCryptos) {
@@ -4015,8 +4030,9 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		} else {
 			getCurrentParams()->setAvpfRrInterval(0);
 		}
-		const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
-		if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		const auto audioStreamOpt = md->findBestStream(SalAudio);
+		if (audioStreamOpt.has_value()) {
+			auto &audioStream = **audioStreamOpt;
 			const auto audioDir = getDirFromMd(md, SalAudio);
 			getCurrentParams()->setAudioDirection(audioDir);
 			if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
@@ -4033,22 +4049,25 @@ void MediaSessionPrivate::updateCurrentParams() const {
 
 		const auto mainStreamIdx = q->getMainVideoStreamIdx(md);
 		bool mainStreamEnabled = false;
+		bool videoMulticastEnabled = false;
+		bool implicitRtcpFbEnabled = false;
 		if (mainStreamIdx != -1) {
-			const auto &mainVideoStream = md->getStreamAtIdx(static_cast<unsigned int>(mainStreamIdx));
-			mainStreamEnabled = mainVideoStream.enabled();
-			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(mainVideoStream.hasImplicitAvpf());
+			const auto &mainVideoStreamOpt = md->getStreamAtIdx(static_cast<unsigned int>(mainStreamIdx));
+			if (mainVideoStreamOpt.has_value()) {
+				auto &mainVideoStream = **mainVideoStreamOpt;
+				mainStreamEnabled = mainVideoStream.enabled();
+				implicitRtcpFbEnabled = mainVideoStream.hasImplicitAvpf();
 
-			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
-				const std::string &rtpAddr =
-				    (mainVideoStream.getRtpAddress().empty() == false) ? mainVideoStream.getRtpAddress() : md->addr;
-				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr.c_str()));
-			} else {
-				getCurrentParams()->enableVideoMulticast(false);
+				if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
+					const std::string &rtpAddr =
+					    (mainVideoStream.getRtpAddress().empty() == false) ? mainVideoStream.getRtpAddress() : md->addr;
+					videoMulticastEnabled = !!ms_is_multicast(rtpAddr.c_str());
+				}
 			}
-		} else {
-			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(false);
-			getCurrentParams()->enableVideoMulticast(false);
 		}
+
+		getCurrentParams()->getPrivate()->enableImplicitRtcpFb(implicitRtcpFbEnabled);
+		getCurrentParams()->enableVideoMulticast(videoMulticastEnabled);
 
 		const auto videoDirection = getDirFromMd(md, SalVideo);
 		getCurrentParams()->setVideoDirection(videoDirection);
@@ -4060,7 +4079,9 @@ void MediaSessionPrivate::updateCurrentParams() const {
 			const auto thumbnailStreamIdx = q->getThumbnailStreamIdx();
 			if (thumbnailStreamIdx != -1) {
 				const auto &thumbnailVideoStream = md->getStreamAtIdx(static_cast<unsigned int>(thumbnailStreamIdx));
-				thumbnailStreamDirection = thumbnailVideoStream.getDirection();
+				if (thumbnailVideoStream.has_value()) {
+					thumbnailStreamDirection = (*thumbnailVideoStream)->getDirection();
+				}
 			}
 		} else {
 			thumbnailStreamDirection = SalStreamSendRecv;
@@ -4072,10 +4093,10 @@ void MediaSessionPrivate::updateCurrentParams() const {
 		    ((thumbnailStreamDirection == SalStreamSendRecv) || (thumbnailStreamDirection == SalStreamSendOnly)) &&
 		    getCurrentParams()->videoEnabled());
 
-		const SalStreamDescription &textStream = md->findBestStream(SalText);
-		if (textStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		const auto textStream = md->findBestStream(SalText);
+		if (textStream.has_value()) {
 			// Direction and multicast are not supported for real-time text.
-			getCurrentParams()->enableRealtimeText(textStream.enabled());
+			getCurrentParams()->enableRealtimeText((*textStream)->enabled());
 		} else {
 			getCurrentParams()->enableRealtimeText(false);
 		}
@@ -4168,8 +4189,7 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 	if (newMd || op->getSal()->mediaDisabled()) {
 		// If negotiated media description doesn't contain a video stream after the first INVITE message sequence, then
 		// disable video in the local call parameters
-		if (getParams()->videoEnabled() &&
-		    (newMd->findBestStream(SalVideo) == Utils::getEmptyConstRefObject<SalStreamDescription>())) {
+		if (getParams()->videoEnabled() && !newMd->findBestStream(SalVideo).has_value()) {
 			getParams()->enableVideo(false);
 		}
 		updateStreams(newMd, CallSession::State::StreamsRunning);
@@ -5622,9 +5642,9 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 			bool screenSharingEnabled = false;
 			const auto screenSharingStream =
 			    md->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
-			if (screenSharingStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			if (screenSharingStream.has_value()) {
 				bool isServer = linphone_core_conference_server_enabled(getCore()->getCCore());
-				SalStreamDir screenSharingDirectionStreamDir = screenSharingStream.getDirection();
+				SalStreamDir screenSharingDirectionStreamDir = (*screenSharingStream)->getDirection();
 				screenSharingEnabled =
 				    (screenSharingDirectionStreamDir == ((isServer) ? SalStreamSendOnly : SalStreamRecvOnly)) ||
 				    (screenSharingDirectionStreamDir == SalStreamSendRecv);
@@ -5634,8 +5654,9 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 				params->setConferenceVideoLayout(computeConferenceLayout(md));
 			}
 
-			const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
-			if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			const auto audioStreamOpt = md->findBestStream(SalAudio);
+			if (audioStreamOpt.has_value()) {
+				auto &audioStream = **audioStreamOpt;
 				const auto audioDir = d->getDirFromMd(md, SalAudio);
 				params->enableAudio(audioStream.enabled());
 				params->setAudioDirection(audioDir);
@@ -5649,13 +5670,17 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 			const auto mainStreamIdx = getMainVideoStreamIdx(md);
 			SalStreamDir mainStreamDirection = SalStreamInactive;
 			if (mainStreamIdx != -1) {
-				const auto &mainVideoStream = md->getStreamAtIdx(static_cast<unsigned int>(mainStreamIdx));
-				mainStreamEnabled = mainVideoStream.enabled();
-				mainStreamDirection = mainVideoStream.getDirection();
-				params->setMediaEncryption(mainVideoStream.hasSrtp() ? LinphoneMediaEncryptionSRTP
-				                                                     : LinphoneMediaEncryptionNone);
-				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo,
-				                                                  mainVideoStream.custom_sdp_attributes);
+				const auto &mainVideoStreamOpt = md->getStreamAtIdx(static_cast<unsigned int>(mainStreamIdx));
+				LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
+				if (mainVideoStreamOpt.has_value()) {
+					auto &mainVideoStream = **mainVideoStreamOpt;
+					mainStreamEnabled = mainVideoStream.enabled();
+					mainStreamDirection = mainVideoStream.getDirection();
+					encryption = mainVideoStream.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone;
+					params->setMediaEncryption(encryption);
+					params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo,
+					                                                  mainVideoStream.custom_sdp_attributes);
+				}
 			}
 
 			const auto videoDir = d->getDirFromMd(md, SalVideo);
@@ -5669,7 +5694,9 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 				if (thumbnailStreamIdx != -1) {
 					const auto &thumbnailVideoStream =
 					    md->getStreamAtIdx(static_cast<unsigned int>(thumbnailStreamIdx));
-					thumbnailStreamDirection = thumbnailVideoStream.getDirection();
+					if (thumbnailVideoStream.has_value()) {
+						thumbnailStreamDirection = (*thumbnailVideoStream)->getDirection();
+					}
 				}
 			} else {
 				thumbnailStreamDirection = mainStreamDirection;
@@ -5681,8 +5708,9 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 			    ((thumbnailStreamDirection == SalStreamSendRecv) || (thumbnailStreamDirection == SalStreamSendOnly)) &&
 			    params->videoEnabled());
 
-			const SalStreamDescription &textStream = md->findBestStream(SalText);
-			if (textStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			const auto textStreamOpt = md->findBestStream(SalText);
+			if (textStreamOpt.has_value()) {
+				auto &textStream = **textStreamOpt;
 				params->enableRealtimeText(textStream.enabled());
 				params->setMediaEncryption(textStream.hasSrtp() ? LinphoneMediaEncryptionSRTP
 				                                                : LinphoneMediaEncryptionNone);
@@ -6008,14 +6036,12 @@ void MediaSession::confirmGoClear() {
 
 uint32_t MediaSession::getSsrc(std::string content) const {
 	L_D();
-
 	uint32_t ssrc = 0;
 	const auto remoteMediaDesc = d->getOp()->getRemoteMediaDescription();
 	if (remoteMediaDesc) {
-		const auto idx = remoteMediaDesc->findIdxStreamWithContent(content);
-		if (idx != -1) {
-			const SalStreamDescription &videoStream = remoteMediaDesc->getStreamAtIdx(static_cast<unsigned int>(idx));
-			const auto &videoStreamCfg = videoStream.getActualConfiguration();
+		const auto videoStream = remoteMediaDesc->findStreamWithContent(content);
+		if (videoStream.has_value()) {
+			const auto &videoStreamCfg = (*videoStream)->getActualConfiguration();
 			ssrc = videoStreamCfg.conference_ssrc;
 		}
 	}
@@ -6031,17 +6057,20 @@ uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
 		switch (type) {
 			case LinphoneStreamTypeAudio: {
 				const auto &audioStream = remoteMediaDesc->getActiveStreamOfType(SalAudio, 0);
-				const auto &audioStreamCfg = audioStream.getActualConfiguration();
-				ssrc = audioStreamCfg.conference_ssrc;
+				if (audioStream.has_value()) {
+					const auto &audioStreamCfg = (*audioStream)->getActualConfiguration();
+					ssrc = audioStreamCfg.conference_ssrc;
+				}
 			} break;
 			case LinphoneStreamTypeVideo: {
 				const auto &videoStreamIdx = getMainVideoStreamIdx(remoteMediaDesc);
 				if ((videoStreamIdx >= 0) &&
 				    (d->getOp()->getFinalMediaDescription()->nbActiveStreamsOfType(SalVideo) > 0)) {
-					const SalStreamDescription &videoStream =
-					    remoteMediaDesc->getStreamAtIdx(static_cast<unsigned int>(videoStreamIdx));
-					const auto &videoStreamCfg = videoStream.getActualConfiguration();
-					ssrc = videoStreamCfg.conference_ssrc;
+					const auto videoStream = remoteMediaDesc->getStreamAtIdx(static_cast<unsigned int>(videoStreamIdx));
+					if (videoStream.has_value()) {
+						const auto &videoStreamCfg = (*videoStream)->getActualConfiguration();
+						ssrc = videoStreamCfg.conference_ssrc;
+					}
 				}
 			} break;
 			case LinphoneStreamTypeText:

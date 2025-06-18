@@ -41,6 +41,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 	friend class MediaSessionPrivate;
 
 public:
+	using optional_sal_stream_description = std::optional<const SalStreamDescription *>;
+
 	// Adding 2208988800 to convert from UNIX time to NTP
 	// UNIX time uses an epoch located at 1/1/1970-00:00h (UTC) and NTP uses 1/1/1900-00:00h.
 	// The offset between the two epochs is 70 years (with 17 leap year in between).
@@ -61,33 +63,35 @@ public:
 	std::list<int> getTransportOwnerIndexes() const;
 	int getIndexOfTransportOwner(const SalStreamDescription &sd) const;
 
-	const SalStreamDescription &findStream(SalMediaProto proto, SalStreamType type) const;
+	const optional_sal_stream_description findStream(SalMediaProto proto, SalStreamType type) const;
 	int findIdxStream(SalMediaProto proto, SalStreamType type) const;
 	unsigned int nbStreamsOfType(SalStreamType type) const;
 	unsigned int nbActiveStreamsOfType(SalStreamType type) const;
-	const SalStreamDescription &getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
-	const SalStreamDescription &findSecureStreamOfType(SalStreamType type) const;
-	const SalStreamDescription &findBestStream(SalStreamType type) const;
+	const optional_sal_stream_description getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
+	const optional_sal_stream_description findSecureStreamOfType(SalStreamType type) const;
+	const optional_sal_stream_description findBestStream(SalStreamType type) const;
 	int findIdxBestStream(SalStreamType type) const;
-	const SalStreamDescription &
+	const optional_sal_stream_description
 	findStreamWithSdpAttribute(const SalStreamType type,
 	                           const std::vector<std::pair<std::string, std::string>> &attributes) const;
-	const SalStreamDescription &
+	const optional_sal_stream_description
 	findStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &attributes) const;
-	const SalStreamDescription &findFirstStreamOfType(SalStreamType type, int startingIdx = -1) const;
+	const optional_sal_stream_description findFirstStreamOfType(SalStreamType type, int startingIdx = -1) const;
 	int findFirstStreamIdxOfType(SalStreamType type, int startingIdx = -1) const;
 	const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
 	int findIdxStreamWithSdpAttribute(const SalStreamType,
 	                                  const std::vector<std::pair<std::string, std::string>> &attributes) const;
 	int findIdxStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &attributes) const;
-	const SalStreamDescription &findStreamWithLabel(SalStreamType type, const std::string label) const;
+	const optional_sal_stream_description findStreamWithLabel(SalStreamType type, const std::string label) const;
 	int findIdxStreamWithLabel(SalStreamType type, const std::string label) const;
 
-	const SalStreamDescription &findStreamWithContent(const std::string content) const;
+	const optional_sal_stream_description findStreamWithContent(const std::string content) const;
 	int findIdxStreamWithContent(const std::string content) const;
-	const SalStreamDescription &findStreamWithContent(const std::string content, const SalStreamDir direction) const;
+	const optional_sal_stream_description findStreamWithContent(const std::string content,
+	                                                            const SalStreamDir direction) const;
 	int findIdxStreamWithContent(const std::string content, const SalStreamDir direction) const;
-	const SalStreamDescription &findStreamWithContent(const std::string content, const std::string label) const;
+	const optional_sal_stream_description findStreamWithContent(const std::string content,
+	                                                            const std::string label) const;
 	int findIdxStreamWithContent(const std::string content, const std::string label) const;
 
 	bool isEmpty() const;
@@ -121,7 +125,7 @@ public:
 	size_t getNbStreams() const;
 	const std::string &getOriginAddress() const;
 	const std::string &getConnectionAddress() const;
-	const SalStreamDescription &getStreamAtIdx(unsigned int idx) const;
+	const optional_sal_stream_description getStreamAtIdx(unsigned int idx) const;
 
 	void addTcap(const unsigned int &idx, const std::string &value);
 	void addTcapToStream(const std::size_t &streamIdx, const unsigned int &idx, const std::string &value);

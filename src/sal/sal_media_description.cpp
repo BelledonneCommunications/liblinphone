@@ -373,12 +373,13 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
 	return streamIt;
 }
 
-const SalStreamDescription &SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
+const SalMediaDescription::optional_sal_stream_description SalMediaDescription::findStream(SalMediaProto proto,
+                                                                                           SalStreamType type) const {
 	const auto &streamIt = findStreamIt(proto, type);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxStream(SalMediaProto proto, SalStreamType type) const {
@@ -397,13 +398,13 @@ SalMediaDescription::findStreamItWithLabel(SalStreamType type, const std::string
 	return streamIt;
 }
 
-const SalStreamDescription &SalMediaDescription::findStreamWithLabel(SalStreamType type,
-                                                                     const std::string label) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findStreamWithLabel(SalStreamType type, const std::string label) const {
 	const auto &streamIt = findStreamItWithLabel(type, label);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxStreamWithLabel(SalStreamType type, const std::string label) const {
@@ -422,12 +423,13 @@ SalMediaDescription::findStreamItWithContent(const std::string content) const {
 	return streamIt;
 }
 
-const SalStreamDescription &SalMediaDescription::findStreamWithContent(const std::string content) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findStreamWithContent(const std::string content) const {
 	const auto &streamIt = findStreamItWithContent(content);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxStreamWithContent(const std::string content) const {
@@ -447,13 +449,13 @@ SalMediaDescription::findStreamItWithContent(const std::string content, const Sa
 	return streamIt;
 }
 
-const SalStreamDescription &SalMediaDescription::findStreamWithContent(const std::string content,
-                                                                       const SalStreamDir direction) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findStreamWithContent(const std::string content, const SalStreamDir direction) const {
 	const auto &streamIt = findStreamItWithContent(content, direction);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxStreamWithContent(const std::string content, const SalStreamDir direction) const {
@@ -473,13 +475,13 @@ SalMediaDescription::findStreamItWithContent(const std::string content, const st
 	return streamIt;
 }
 
-const SalStreamDescription &SalMediaDescription::findStreamWithContent(const std::string content,
-                                                                       const std::string label) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findStreamWithContent(const std::string content, const std::string label) const {
 	const auto &streamIt = findStreamItWithContent(content, label);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxStreamWithContent(const std::string content, const std::string label) const {
@@ -506,31 +508,34 @@ unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) cons
 	return nb;
 }
 
-const SalStreamDescription &SalMediaDescription::getActiveStreamOfType(SalStreamType type, unsigned int idx) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::getActiveStreamOfType(SalStreamType type, unsigned int idx) const {
 	const auto &streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type, &idx](const auto &stream) {
 		return (stream.enabled() && (idx-- == 0) && (stream.getType() == type));
 	});
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
-const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
 	auto idx = findIdxStream(SalProtoRtpSavpf, type);
 	if (idx == -1) idx = findIdxStream(SalProtoRtpSavp, type);
 	if (idx != -1) {
 		return getStreamAtIdx(static_cast<unsigned int>(idx));
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
-const SalStreamDescription &SalMediaDescription::findBestStream(SalStreamType type) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findBestStream(SalStreamType type) const {
 	const auto idx = findIdxBestStream(type);
 	if (idx != -1) {
 		return getStreamAtIdx(static_cast<unsigned int>(idx));
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxBestStream(SalStreamType type) const {
@@ -552,13 +557,13 @@ int SalMediaDescription::findIdxStreamWithSdpAttribute(
 	return -1;
 }
 
-const SalStreamDescription &SalMediaDescription::findStreamWithSdpAttribute(
+const SalMediaDescription::optional_sal_stream_description SalMediaDescription::findStreamWithSdpAttribute(
     const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	const auto &streamIt = findStreamItWithSdpAttribute(type, attributes);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findIdxStreamWithSdpAttribute(
@@ -570,13 +575,13 @@ int SalMediaDescription::findIdxStreamWithSdpAttribute(
 	return -1;
 }
 
-const SalStreamDescription &SalMediaDescription::findStreamWithSdpAttribute(
+const SalMediaDescription::optional_sal_stream_description SalMediaDescription::findStreamWithSdpAttribute(
     const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	const auto &streamIt = findStreamItWithSdpAttribute(attributes);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(
@@ -630,12 +635,13 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findFirst
 	return streamIt;
 }
 
-const SalStreamDescription &SalMediaDescription::findFirstStreamOfType(SalStreamType type, int startingIdx) const {
+const SalMediaDescription::optional_sal_stream_description
+SalMediaDescription::findFirstStreamOfType(SalStreamType type, int startingIdx) const {
 	auto streamIt = findFirstStreamItOfType(type, startingIdx);
 	if (streamIt != streams.end()) {
-		return *streamIt;
+		return &(*streamIt);
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 int SalMediaDescription::findFirstStreamIdxOfType(SalStreamType type, int startingIdx) const {
@@ -905,14 +911,14 @@ const std::string &SalMediaDescription::getConnectionAddress() const {
 	return addr;
 }
 
-const SalStreamDescription &SalMediaDescription::getStreamAtIdx(unsigned int idx) const {
+const SalMediaDescription::optional_sal_stream_description SalMediaDescription::getStreamAtIdx(unsigned int idx) const {
 	try {
-		return streams.at(idx);
+		return &streams.at(idx);
 	} catch (std::out_of_range &) {
 		lError() << "Unable to find stream at index " << idx << " because media description " << this << " has "
 		         << streams.size() << " streams";
 	}
-	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+	return std::nullopt;
 }
 
 belle_sdp_session_description_t *SalMediaDescription::toSdp() const {
@@ -1082,18 +1088,18 @@ const SalStreamDescription::tcap_map_t &SalMediaDescription::getTcaps() const {
 }
 const SalStreamDescription::cfg_map SalMediaDescription::getCfgsForStream(const unsigned int &idx) const {
 	SalStreamDescription::cfg_map cfgs;
-	const SalStreamDescription &stream = getStreamAtIdx(idx);
-	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-		cfgs = stream.getAllCfgs();
+	const auto stream = getStreamAtIdx(idx);
+	if (stream.has_value()) {
+		cfgs = (*stream)->getAllCfgs();
 	}
 	return cfgs;
 }
 
 const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(const unsigned int &idx) const {
 	SalStreamDescription::acap_map_t allAcaps;
-	const SalStreamDescription &stream = getStreamAtIdx(idx);
-	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-		allAcaps = stream.getAcaps();
+	const auto stream = getStreamAtIdx(idx);
+	if (stream.has_value()) {
+		allAcaps = (*stream)->getAcaps();
 		auto globalAcaps = getAcaps();
 		allAcaps.insert(globalAcaps.begin(), globalAcaps.end());
 	}
@@ -1101,9 +1107,9 @@ const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(
 }
 const SalStreamDescription::tcap_map_t SalMediaDescription::getAllTcapForStream(const unsigned int &idx) const {
 	SalStreamDescription::tcap_map_t allTcaps;
-	const SalStreamDescription &stream = getStreamAtIdx(idx);
-	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-		allTcaps = stream.getTcaps();
+	const auto stream = getStreamAtIdx(idx);
+	if (stream.has_value()) {
+		allTcaps = (*stream)->getTcaps();
 		auto globalTcaps = getTcaps();
 		allTcaps.insert(globalTcaps.begin(), globalTcaps.end());
 	}

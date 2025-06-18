@@ -169,8 +169,8 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 			LinphonePrivate::SalCallOp *op = LinphonePrivate::Call::toCpp(c2)->getOp();
 			const std::shared_ptr<SalMediaDescription> &result_desc = op->getFinalMediaDescription();
 			const auto &result_stream = result_desc->getStreamAtIdx(0);
-			if (result_stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-				expected_addr = result_stream.getRtpAddress();
+			if (result_stream.has_value()) {
+				expected_addr = (*result_stream)->getRtpAddress();
 			}
 			if (expected_addr.empty()) {
 				expected_addr = result_desc->getConnectionAddress();
@@ -330,8 +330,9 @@ bool_t is_srtp_secured(LinphoneCall *call, LinphoneStreamType ctype) {
 			break;
 	}
 	SalMediaDescription *desc = _linphone_call_get_result_desc(call);
-	const SalStreamDescription &stream = desc->findBestStream(type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) return FALSE;
+	const auto streamOpt = desc->findBestStream(type);
+	if (!streamOpt.has_value()) return FALSE;
+	auto &stream = **streamOpt;
 	if (stream.hasSrtp()) {
 		const auto &streamCryptos = stream.getCryptos();
 		for (const auto &crypto : streamCryptos) {
@@ -380,8 +381,9 @@ void check_local_desc_stream(LinphoneCall *call) {
 	const auto &core = linphone_call_get_core(call);
 	const auto &params = linphone_call_get_params(call);
 
-	const auto &audioStream = desc->findBestStream(SalAudio);
-	if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+	const auto &audioStreamOpt = desc->findBestStream(SalAudio);
+	if (audioStreamOpt.has_value()) {
+		auto &audioStream = **audioStreamOpt;
 		const auto &streamDir = audioStream.getDirection();
 		const auto &callParamsAudioDir = sal_dir_from_call_params_dir(linphone_call_params_get_audio_direction(params));
 		if (params && linphone_call_params_audio_enabled(params)) {
@@ -396,8 +398,9 @@ void check_local_desc_stream(LinphoneCall *call) {
 		}
 	}
 
-	const auto &videoStream = desc->findBestStream(SalVideo);
-	if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+	const auto &videoStreamOpt = desc->findBestStream(SalVideo);
+	if (videoStreamOpt.has_value()) {
+		auto &videoStream = **videoStreamOpt;
 		const auto &streamDir = videoStream.getDirection();
 		const auto &callParamsVideoDir = sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
 		if (params && linphone_call_params_video_enabled(params)) {
@@ -412,8 +415,9 @@ void check_local_desc_stream(LinphoneCall *call) {
 		}
 	}
 
-	const auto &textStream = desc->findBestStream(SalText);
-	if (textStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+	const auto &textStreamOpt = desc->findBestStream(SalText);
+	if (textStreamOpt.has_value()) {
+		auto &textStream = **textStreamOpt;
 		const auto &streamDir = textStream.getDirection();
 		if (params && linphone_call_params_realtime_text_enabled(params)) {
 			BC_ASSERT_EQUAL(streamDir, SalStreamSendRecv, int, "%d");
@@ -757,9 +761,11 @@ const char *_linphone_call_get_subject(LinphoneCall *call) {
 }
 
 static std::string get_ice_default_candidate(LinphoneCoreManager *m) {
+	const auto stream = _linphone_call_get_local_desc(linphone_core_get_current_call(m->lc))->getStreamAtIdx(0);
 	std::string rtpAddress;
-	rtpAddress =
-	    _linphone_call_get_local_desc(linphone_core_get_current_call(m->lc))->getStreamAtIdx(0).getRtpAddress();
+	if (stream.has_value()) {
+		rtpAddress = (*stream)->getRtpAddress();
+	}
 	if (!rtpAddress.empty()) {
 		return rtpAddress;
 	} else {
@@ -891,35 +897,35 @@ bool_t check_custom_m_line(LinphoneCall *call, const char *m_line) {
 	SalStreamType type = SalOther;
 	const std::string m_line_str(m_line);
 	SalMediaDescription *result_desc = _linphone_call_get_result_desc(call);
-	const SalStreamDescription &result_stream = result_desc->findBestStream(type);
-	bool_t result_stream_found = (result_stream == Utils::getEmptyConstRefObject<SalStreamDescription>());
+	const auto result_stream = result_desc->findBestStream(type);
+	bool_t result_stream_found = (result_stream.has_value());
 	BC_ASSERT_TRUE(result_stream_found);
 	std::string result_stream_type_string;
 	if (result_stream_found) {
-		result_stream_type_string = result_stream.getTypeAsString();
+		result_stream_type_string = (*result_stream)->getTypeAsString();
 	}
 	bool_t result_stream_type_ok =
 	    (!result_stream_type_string.empty() || (result_stream_type_string.compare(m_line_str) == 0));
 	BC_ASSERT_TRUE(result_stream_type_ok);
 
 	SalMediaDescription *local_desc = _linphone_call_get_local_desc(call);
-	const SalStreamDescription &local_stream = local_desc->findBestStream(type);
-	bool_t local_stream_found = (local_stream == Utils::getEmptyConstRefObject<SalStreamDescription>());
+	const auto local_stream = local_desc->findBestStream(type);
+	bool_t local_stream_found = (local_stream.has_value());
 	BC_ASSERT_TRUE(local_stream_found);
 	std::string local_stream_type_string;
 	if (local_stream_found) {
-		local_stream_type_string = local_stream.getTypeAsString();
+		local_stream_type_string = (*local_stream)->getTypeAsString();
 	}
 	bool_t local_stream_type_ok =
 	    (!local_stream_type_string.empty() || (local_stream_type_string.compare(m_line_str) == 0));
 	BC_ASSERT_TRUE(local_stream_type_ok);
 
 	SalMediaDescription *remote_desc = _linphone_call_get_remote_desc(call);
-	const SalStreamDescription &remote_stream = remote_desc->findBestStream(type);
-	bool_t remote_stream_found = (remote_stream == Utils::getEmptyConstRefObject<SalStreamDescription>());
+	const auto remote_stream = remote_desc->findBestStream(type);
+	bool_t remote_stream_found = (remote_stream.has_value());
 	std::string remote_stream_type_string;
 	if (remote_stream_found) {
-		remote_stream_type_string = remote_stream.getTypeAsString();
+		remote_stream_type_string = (*remote_stream)->getTypeAsString();
 	}
 	bool_t remote_stream_type_ok = (!remote_stream_found || !remote_stream_type_string.empty() ||
 	                                (remote_stream_type_string.compare(m_line_str) == 0));
@@ -1006,9 +1012,9 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 
 static bool_t screen_sharing_enabled_in_stream(const std::shared_ptr<SalMediaDescription> md) {
 	if (md) {
-		SalStreamDescription stream = md->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
-		if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-			const SalStreamDir dir = stream.getDirection();
+		const auto &stream = md->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
+		if (stream.has_value()) {
+			const SalStreamDir dir = (*stream)->getDirection();
 			return (dir == SalStreamSendRecv) || (dir == SalStreamSendOnly);
 		}
 	}
@@ -1043,9 +1049,9 @@ bool_t screen_sharing_enabled_in_negotiated_description(LinphoneCall *call) {
 		int streamIdx = desc->findIdxStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
 		if (streamIdx != -1) {
 			const std::shared_ptr<SalMediaDescription> &negotiated_desc = op->getFinalMediaDescription();
-			SalStreamDescription stream = negotiated_desc->getStreamAtIdx(streamIdx);
-			if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-				const SalStreamDir dir = stream.getDirection();
+			const auto stream = negotiated_desc->getStreamAtIdx(streamIdx);
+			if (stream.has_value()) {
+				const SalStreamDir dir = (*stream)->getDirection();
 				return (dir == SalStreamSendRecv) || (dir == SalStreamSendOnly);
 			}
 		}
@@ -1079,8 +1085,13 @@ bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_e
 		} else {
 			const std::shared_ptr<SalMediaDescription> &label_desc =
 			    is_in_conference ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
-			SalStreamDescription screen_sharing_stream = label_desc->getStreamAtIdx(screenSharingStreamIdx);
-			const SalStreamDir screen_sharing_direction = screen_sharing_stream.getDirection();
+			const auto screen_sharing_stream_opt = label_desc->getStreamAtIdx(screenSharingStreamIdx);
+			SalStreamDir screen_sharing_direction = SalStreamInactive;
+			std::string screen_sharing_label;
+			if (screen_sharing_stream_opt.has_value()) {
+				screen_sharing_direction = (*screen_sharing_stream_opt)->getDirection();
+				screen_sharing_label = (*screen_sharing_stream_opt)->getLabel();
+			}
 			int thumbnailStreamIdx =
 			    content_desc->findIdxStreamWithContent(MediaSessionPrivate::ThumbnailVideoContentAttribute);
 			if (thumbnailStreamIdx == -1) {
@@ -1088,9 +1099,11 @@ bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_e
 				ret &= screen_sharing_enabled ? (screen_sharing_direction != SalStreamInactive)
 				                              : (screen_sharing_direction == SalStreamInactive);
 			} else {
-				SalStreamDescription thumbnail_stream = label_desc->getStreamAtIdx(thumbnailStreamIdx);
-				const std::string thumbnail_label = thumbnail_stream.getLabel();
-				const std::string screen_sharing_label = screen_sharing_stream.getLabel();
+				std::string thumbnail_label;
+				const auto thumbnail_stream_opt = label_desc->getStreamAtIdx(thumbnailStreamIdx);
+				if (thumbnail_stream_opt.has_value()) {
+					thumbnail_label = (*thumbnail_stream_opt)->getLabel();
+				}
 				// Verify that the label of the screen sharing and thumbnail streams are different
 				ret &= screen_sharing_enabled ? (thumbnail_label.compare(screen_sharing_label) != 0)
 				                              : (thumbnail_label.compare(screen_sharing_label) == 0);
