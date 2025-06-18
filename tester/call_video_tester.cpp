@@ -4019,8 +4019,7 @@ static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
     TEST_NO_TAG("Call paused resumed with video send-only", call_paused_resumed_with_video_send_only),
     TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
-    TEST_NO_TAG("ZRTP video call", zrtp_video_call),
-    TEST_NO_TAG("Simple video call AVPF", video_call_avpf),
+    TEST_NO_TAG("ZRTP video call", zrtp_video_call), TEST_NO_TAG("Simple video call AVPF", video_call_avpf),
     TEST_NO_TAG("Simple video call implicit AVPF both", video_call_using_policy_AVPF_implicit_caller_and_callee),
     TEST_NO_TAG("Simple video call disable implicit AVPF on callee", video_call_disable_implicit_AVPF_on_callee),
     TEST_NO_TAG("Simple video call disable implicit AVPF on caller", video_call_disable_implicit_AVPF_on_caller),
@@ -4065,8 +4064,7 @@ static test_t call_video_tests[] = {
                  "ICE"),
     TEST_ONE_TAG("Video call recording (H264)", video_call_recording_h264_test, "H264"),
     TEST_NO_TAG("Video call recording (VP8)", video_call_recording_vp8_test),
-    TEST_NO_TAG("Snapshot", video_call_snapshot),
-    TEST_NO_TAG("Snapshots", video_call_snapshots),
+    TEST_NO_TAG("Snapshot", video_call_snapshot), TEST_NO_TAG("Snapshots", video_call_snapshots),
     TEST_NO_TAG("Video call with early media and no matching audio codecs",
                 video_call_with_early_media_no_matching_audio_codecs),
     TEST_ONE_TAG("DTLS SRTP video call", dtls_srtp_video_call, "DTLS"),
@@ -4076,8 +4074,14 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("Video call accepted in send only", accept_call_in_send_only, "H264"),
     TEST_TWO_TAGS("Video call accepted in send only with ice", accept_call_in_send_only_with_ice, "ICE", "H264"),
     TEST_ONE_TAG("2 Video call accepted in send only", two_accepted_call_in_send_only, "H264"),
-    TEST_ONE_TAG("Classic video entry phone setup (sendrecv)", classic_video_entry_phone_setup_sendrecv, "H264"),
-    TEST_ONE_TAG("Classic video entry phone setup (recvonly)", classic_video_entry_phone_setup_recvonly, "H264"),
+    /*
+     * These two tests below are unreliable, possibly because of a bug in rocky8 libc:
+     * https://sourceware.org/bugzilla/show_bug.cgi?id=25847
+     */
+    TEST_TWO_TAGS(
+        "Classic video entry phone setup (sendrecv)", classic_video_entry_phone_setup_sendrecv, "H264", "shaky"),
+    TEST_TWO_TAGS(
+        "Classic video entry phone setup (recvonly)", classic_video_entry_phone_setup_recvonly, "H264", "shaky"),
     TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
     TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only",
                 video_call_with_auto_video_accept_disabled_on_one_end),

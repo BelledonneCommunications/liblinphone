@@ -219,10 +219,12 @@ void CallSessionPrivate::onCallStateChanged(BCTBX_UNUSED(LinphoneCall *call),
                                             BCTBX_UNUSED(const std::string &message)) {
 	L_Q();
 	auto zis = q->getSharedFromThis();
-	q->getCore()->doLater([zis, this] {
-		(void)zis;
-		this->executePendingActions();
-	});
+	if (!pendingActions.empty()) {
+		q->getCore()->doLater([zis, this] {
+			(void)zis;
+			this->executePendingActions();
+		});
+	}
 }
 
 void CallSessionPrivate::executePendingActions() {
