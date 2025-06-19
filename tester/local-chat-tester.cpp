@@ -3896,32 +3896,38 @@ static test_t local_conference_chat_error_tests[] = {
                  "LeaksMemory"), /* because of network up and down */
 };
 
-test_suite_t local_conference_test_suite_chat_basic = {"Local conference tester (Chat Basic)",
-                                                       NULL,
-                                                       NULL,
-                                                       liblinphone_tester_before_each,
-                                                       liblinphone_tester_after_each,
-                                                       sizeof(local_conference_chat_basic_tests) /
-                                                           sizeof(local_conference_chat_basic_tests[0]),
-                                                       local_conference_chat_basic_tests,
-                                                       0};
+test_suite_t local_conference_test_suite_chat_basic = {
+    "Local conference tester (Chat Basic)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_chat_basic_tests) / sizeof(local_conference_chat_basic_tests[0]),
+    local_conference_chat_basic_tests,
+    0,
+    2 /*cpu_weight : chat uses more resources due to core restarts */
+};
 
-test_suite_t local_conference_test_suite_chat_advanced = {"Local conference tester (Chat Advanced)",
-                                                          NULL,
-                                                          NULL,
-                                                          liblinphone_tester_before_each,
-                                                          liblinphone_tester_after_each,
-                                                          sizeof(local_conference_chat_advanced_tests) /
-                                                              sizeof(local_conference_chat_advanced_tests[0]),
-                                                          local_conference_chat_advanced_tests,
-                                                          0};
+test_suite_t local_conference_test_suite_chat_advanced = {
+    "Local conference tester (Chat Advanced)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_chat_advanced_tests) / sizeof(local_conference_chat_advanced_tests[0]),
+    local_conference_chat_advanced_tests,
+    0,
+    2 /*cpu_weight : chat uses more resources due to core restarts */
+};
 
-test_suite_t local_conference_test_suite_chat_error = {"Local conference tester (Chat error)",
-                                                       NULL,
-                                                       NULL,
-                                                       liblinphone_tester_before_each,
-                                                       liblinphone_tester_after_each,
-                                                       sizeof(local_conference_chat_error_tests) /
-                                                           sizeof(local_conference_chat_error_tests[0]),
-                                                       local_conference_chat_error_tests,
-                                                       0};
+test_suite_t local_conference_test_suite_chat_error = {
+    "Local conference tester (Chat error)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_chat_error_tests) / sizeof(local_conference_chat_error_tests[0]),
+    local_conference_chat_error_tests,
+    0,
+    2 /*cpu_weight : chat uses more resources due to core restarts */
+};

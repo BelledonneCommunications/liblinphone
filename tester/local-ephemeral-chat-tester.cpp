@@ -910,12 +910,14 @@ static test_t local_conference_ephemeral_chat_tests[] = {
     TEST_NO_TAG("Group chat Server chat room with ephemeral message mode changed",
                 LinphoneTest::group_chat_room_server_ephemeral_mode_changed)};
 
-test_suite_t local_conference_test_suite_ephemeral_chat = {"Local conference tester (Ephemeral Chat)",
-                                                           NULL,
-                                                           NULL,
-                                                           liblinphone_tester_before_each,
-                                                           liblinphone_tester_after_each,
-                                                           sizeof(local_conference_ephemeral_chat_tests) /
-                                                               sizeof(local_conference_ephemeral_chat_tests[0]),
-                                                           local_conference_ephemeral_chat_tests,
-                                                           0};
+test_suite_t local_conference_test_suite_ephemeral_chat = {
+    "Local conference tester (Ephemeral Chat)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_ephemeral_chat_tests) / sizeof(local_conference_ephemeral_chat_tests[0]),
+    local_conference_ephemeral_chat_tests,
+    0,
+    2 /*cpu_weight : chat uses more resources due to core restarts */
+};

@@ -6231,9 +6231,9 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 
 	// Update row one by one to avoid disk IO Errors from SQL
 	for (const auto &row : rows) {
-		auto eventid = d->dbSession.getUnsignedInt(row, 0, 0);
+		auto eventId = d->dbSession.resolveId(row, 0);
 		*session << "UPDATE conference_event SET chat_room_id = :newChatRoomid WHERE event_id = :eventId",
-		    soci::use(dbChatRoomToAddId), soci::use(eventid);
+		    soci::use(dbChatRoomToAddId), soci::use(eventId);
 	}
 
 	if (dbChatRoomToRemoveId != -1) {
@@ -6283,7 +6283,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 
 		soci::session *session = d->dbSession.getBackendSession();
 
-		soci::rowset<soci::row> rows = (session->prepare << query);
+		soci::rowset<soci::row> chatRoomRows = (session->prepare << query);
 		// SOCI uses a hack for sqlite3:
 		// "sqlite3 type system does not have a date or time field.  Also it does not reliably id other data types.
 		// It has a tendency to see everything as text.
@@ -6312,15 +6312,15 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 		}
 
-		for (const auto &row : rows) {
+		for (const auto &chatRoomRow : chatRoomRows) {
 			if (!typeHasBeenSet) {
-				unreadMessageCountType = row.get_properties(12).get_data_type();
+				unreadMessageCountType = chatRoomRow.get_properties(12).get_data_type();
 				typeHasBeenSet = true;
 			}
 
-			Address pAddress(row.get<string>(1), true);
+			Address pAddress(chatRoomRow.get<string>(1), true);
 			Address oldPAddress(pAddress);
-			Address lAddress(row.get<string>(2), true);
+			Address lAddress(chatRoomRow.get<string>(2), true);
 			Address oldLAddress(lAddress);
 			bool conferenceIdChanged = (!keepGruu && (pAddress.hasUriParam("gr") || lAddress.hasUriParam("gr")));
 			if (!chatroomDomain.empty()) {
@@ -6338,7 +6338,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 			ConferenceId conferenceId(std::move(pAddress), std::move(lAddress), conferenceIdParams);
 
-			const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
+			const long long &dbChatRoomId = d->dbSession.resolveId(chatRoomRow, 0);
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
 				ChatRoomContext context(chatRoom, dbChatRoomId, false, false);
@@ -6347,12 +6347,12 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 
 			bool updateFlags = false;
-			time_t creationTime = d->dbSession.getTime(row, 3);
-			time_t lastUpdateTime = d->dbSession.getTime(row, 4);
-			int capabilities = row.get<int>(5);
-			string subject = row.get<string>(6, "");
-			const long long &lastMessageId = d->dbSession.resolveId(row, 9);
-			bool muted = !!row.get<int>(13);
+			time_t creationTime = d->dbSession.getTime(chatRoomRow, 3);
+			time_t lastUpdateTime = d->dbSession.getTime(chatRoomRow, 4);
+			int capabilities = chatRoomRow.get<int>(5);
+			string subject = chatRoomRow.get<string>(6, "");
+			const long long &lastMessageId = d->dbSession.resolveId(chatRoomRow, 9);
+			bool muted = !!chatRoomRow.get<int>(13);
 
 			shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
 			const auto backend = params->getChatParams()->getBackend();
@@ -6362,7 +6362,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			} else if (backend == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
 				const auto &localAddress = conferenceId.getLocalAddress();
-				unsigned int lastNotifyId = d->dbSession.getUnsignedInt(row, 7, 0);
+				unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
 				list<shared_ptr<Participant>> participants = selectChatRoomParticipants(dbChatRoomId);
 				const auto meIt =
 				    std::find_if(participants.begin(), participants.end(), [&localAddress](const auto &participant) {
@@ -6375,12 +6375,12 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				}
 
 				params->setUtf8Subject(subject);
-				params->getChatParams()->setEphemeralLifetime((long)row.get<double>(11));
-				params->getChatParams()->enableEphemeral(!!row.get<int>(10, 0));
+				params->getChatParams()->setEphemeralLifetime((long)chatRoomRow.get<double>(11));
+				params->getChatParams()->enableEphemeral(!!chatRoomRow.get<int>(10, 0));
 				const auto &conferenceAddress = conferenceId.getPeerAddress();
 				params->setConferenceAddress(conferenceAddress);
 
-				const long long &conferenceInfoId = d->dbSession.resolveId(row, 14);
+				const long long &conferenceInfoId = d->dbSession.resolveId(chatRoomRow, 14);
 				shared_ptr<ConferenceInfo> confInfo;
 				if (conferenceInfoId > 0) {
 					soci::row conferenceInfoRow;
@@ -6422,7 +6422,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						lError() << "Unable to find me (" << *localAddress << ") in: " << conferenceId;
 						continue;
 					}
-					bool hasBeenLeft = !!row.get<int>(8, 0);
+					bool hasBeenLeft = !!chatRoomRow.get<int>(8, 0);
 					conference = (new ClientConference(core, nullptr, params))->toSharedPtr();
 					conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
 					chatRoom = conference->getChatRoom();
@@ -6440,9 +6440,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						    "SELECT sip_address.value FROM one_to_one_chat_room_previous_conference_id, sip_address"
 						    " WHERE chat_room_id = :chatRoomId"
 						    " AND sip_address_id = sip_address.id";
-						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
-						for (const auto &row : rows) {
-							ConferenceId previousId = ConferenceId(Address::create(row.get<string>(0), true),
+						soci::rowset<soci::row> previousIdRows = (session->prepare << query, soci::use(dbChatRoomId));
+						for (const auto &previousIdRow : previousIdRows) {
+							ConferenceId previousId = ConferenceId(Address::create(previousIdRow.get<string>(0), true),
 							                                       localAddress, conferenceIdParams);
 							if (previousId != conferenceId) {
 								lInfo() << "Keeping around previous chat room ID [" << previousId
@@ -6500,8 +6500,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			chatRoom->setIsMuted(muted, false);
 
 			int unreadMessagesCount = 0;
-			if (unreadMessageCountType == soci::dt_string) unreadMessagesCount = std::stoi(row.get<string>(12, "0"));
-			else unreadMessagesCount = row.get<int>(12, 0);
+			if (unreadMessageCountType == soci::dt_string)
+				unreadMessagesCount = std::stoi(chatRoomRow.get<string>(12, "0"));
+			else unreadMessagesCount = chatRoomRow.get<int>(12, 0);
 
 			lDebug() << "Found chat room in DB: " << conferenceId;
 

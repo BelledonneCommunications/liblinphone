@@ -1808,12 +1808,14 @@ static test_t local_conference_chat_imdn_tests[] = {
     TEST_NO_TAG("Group chat Lime Server chat room clear message",
                 LinphoneTest::group_chat_room_lime_server_clear_message)};
 
-test_suite_t local_conference_test_suite_chat_imdn = {"Local conference tester (Chat IMDN)",
-                                                      NULL,
-                                                      NULL,
-                                                      liblinphone_tester_before_each,
-                                                      liblinphone_tester_after_each,
-                                                      sizeof(local_conference_chat_imdn_tests) /
-                                                          sizeof(local_conference_chat_imdn_tests[0]),
-                                                      local_conference_chat_imdn_tests,
-                                                      0};
+test_suite_t local_conference_test_suite_chat_imdn = {
+    "Local conference tester (Chat IMDN)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_chat_imdn_tests) / sizeof(local_conference_chat_imdn_tests[0]),
+    local_conference_chat_imdn_tests,
+    0,
+    2 /*cpu_weight : chat uses more resources due to core restarts */
+};

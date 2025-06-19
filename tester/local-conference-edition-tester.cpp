@@ -2518,12 +2518,14 @@ static test_t local_conference_conference_edition_tests[] = {
     TEST_NO_TAG("Create conference with server restart (conference cancelled)",
                 LinphoneTest::create_conference_with_server_restart_conference_cancelled)};
 
-test_suite_t local_conference_test_suite_conference_edition = {"Local conference tester (Conference edition)",
-                                                               NULL,
-                                                               NULL,
-                                                               liblinphone_tester_before_each,
-                                                               liblinphone_tester_after_each,
-                                                               sizeof(local_conference_conference_edition_tests) /
-                                                                   sizeof(local_conference_conference_edition_tests[0]),
-                                                               local_conference_conference_edition_tests,
-                                                               0};
+test_suite_t local_conference_test_suite_conference_edition = {
+    "Local conference tester (Conference edition)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_conference_edition_tests) / sizeof(local_conference_conference_edition_tests[0]),
+    local_conference_conference_edition_tests,
+    0,
+    2 /*cpu_weight : video conference uses more resources */
+};
