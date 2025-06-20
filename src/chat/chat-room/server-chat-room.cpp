@@ -72,7 +72,8 @@ void ServerChatRoom::confirmCreation() {
 void ServerChatRoom::confirmRecreation(SalCallOp *op) {
 	const auto from = Address::create(op->getFrom());
 	const auto to = Address::create(op->getTo());
-	auto participant = getConference()->findInvitedParticipant(from);
+	const auto &conf = getConference();
+	auto participant = conf->findInvitedParticipant(from);
 	if (!participant) {
 		lError() << this << " bug - " << *from << " is not a participant.";
 		op->decline(SalReasonInternalError, "");
@@ -80,14 +81,18 @@ void ServerChatRoom::confirmRecreation(SalCallOp *op) {
 	}
 
 	lInfo() << this << " is re-joined by " << *participant->getAddress();
-	shared_ptr<Participant> me = getConference()->getMe();
-	shared_ptr<CallSession> session = me->createSession(*getConference().get(), nullptr, false);
-	session->addListener(getConference());
+	auto confAddr = conf->getConferenceAddress();
+	shared_ptr<Participant> me = conf->getMe();
+	if (!me) {
+		me = conf->initializeMe(confAddr);
+	}
+	shared_ptr<CallSession> session = me->createSession(*conf.get(), nullptr, false);
+	session->addListener(conf);
 	session->configure(LinphoneCallIncoming, nullptr, op, from, to);
 	session->startIncomingNotification(false);
-	auto confAddr = *getConference()->getConferenceAddress();
-	confAddr.setParam(Conference::IsFocusParameter);
-	session->redirect(confAddr);
+	auto redirectAddr = *confAddr;
+	redirectAddr.setParam(Conference::IsFocusParameter);
+	session->redirect(redirectAddr);
 }
 
 // -----------------------------------------------------------------------------

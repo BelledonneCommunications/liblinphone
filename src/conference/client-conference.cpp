@@ -142,7 +142,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 	// Local conference sets last notify to 1 in its constructor
 	setLastNotify(0);
 
-	inititializeMe();
+	initializeFromAccount();
 
 	const auto &core = getCore();
 	std::shared_ptr<Address> organizerAddress = nullptr;

@@ -106,7 +106,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 	// Remote conference sets last notify to 0 in its constructor
 	setLastNotify(1);
 
-	inititializeMe();
+	initializeFromAccount();
 	setOrganizer(op ? Address::create(op->getFrom()) : mMe->getAddress());
 
 	const auto &core = getCore();

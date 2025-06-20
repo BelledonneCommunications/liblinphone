@@ -98,7 +98,12 @@ Conference::~Conference() {
 }
 
 // -----------------------------------------------------------------------------
-void Conference::inititializeMe() {
+const std::shared_ptr<Participant> &Conference::initializeMe(const std::shared_ptr<Address> &address) {
+	mMe = Participant::create(getSharedFromThis(), address);
+	return mMe;
+}
+
+void Conference::initializeFromAccount() {
 	const auto &core = getCore();
 	auto account = mConfParams->getAccount();
 	if (!account) {
@@ -116,7 +121,7 @@ void Conference::inititializeMe() {
 	if (account) {
 		auto meAddress = account->getAccountParams()->getIdentityAddress()->getUri();
 		mConferenceId = ConferenceId(Address(), std::move(meAddress), core->createConferenceIdParams());
-		mMe = Participant::create(getSharedFromThis(), mConferenceId.getLocalAddress());
+		initializeMe(mConferenceId.getLocalAddress());
 	}
 }
 

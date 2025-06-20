@@ -214,6 +214,12 @@ static void create_user_sip_client_cert_chain(const LinphoneTesterLimeAlgo curve
 	start_core_for_conference(coresManagerList);
 	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
 
+	if (expectFailure) {
+		BC_ASSERT_TRUE(
+		    wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationFailure, 2, x3dhServer_creationTimeout));
+		BC_ASSERT_EQUAL(lcm->stat.number_of_X3dhUserCreationSuccess, 0, int, "%d");
+	}
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(lcm);
