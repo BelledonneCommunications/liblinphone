@@ -153,6 +153,7 @@ private:
 	                     const std::string &attrValue);
 	bool encryptionFound(const SalStreamDescription::tcap_map_t &caps, const LinphoneMediaEncryption encEnum) const;
 	void startDtls();
+	bool networkChanged(const OfferAnswerContext &params);
 	belle_sip_source_t *mTimer = nullptr;
 	belle_sip_source_t *mMonitorTimer = nullptr;
 	IceCheckList *mIceCheckList = nullptr;

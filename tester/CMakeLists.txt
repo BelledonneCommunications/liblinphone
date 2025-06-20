@@ -171,6 +171,7 @@ set(RC_FILES
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
+	rcfiles/marie_tls_rc
 	rcfiles/marie_rc_call_logs_migration
 	rcfiles/marie_rtp_port_range_rc
 	rcfiles/marie_os_defined_rtp_ports_rc

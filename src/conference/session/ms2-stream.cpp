@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
@@ -33,6 +33,10 @@
 #include "nat/ice-service.h"
 #include "sal/sal_stream_description.h"
 #include "utils/payload-type-handler.h"
+
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
 
 using namespace ::std;
 
@@ -678,6 +682,22 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 	}
 }
 
+bool MS2Stream::networkChanged(const OfferAnswerContext &params) {
+	if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED) return true;
+#if TARGET_OS_IPHONE
+	if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED) {
+		/* on iOS, getaddrinfo() performs automatic translation of IPv4 to a NAT64 address if the local network
+		 * only has IPv6.
+		 * In doubt, re-apply the network destination (which will use getaddrinfo()) to make sure that appropriate
+		 * IP address is given to the RtpSession.
+		 */
+		lInfo() << "Default local ip address changed, need to re-apply RTP network destinations.";
+		return true;
+	}
+#endif
+	return false;
+}
+
 /*
  * Handle some basic session changes.
  * Return true everything was handled, false otherwise, in which case the caller will have to restart the stream.
@@ -701,7 +721,7 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, BCTBX_UNUSE
 			return false;
 		}
 		int changesToHandle = params.resultStreamDescriptionChanges;
-		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED) {
+		if (networkChanged(params)) {
 			updateDestinations(params);
 			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 		}

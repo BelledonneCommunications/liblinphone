@@ -698,12 +698,12 @@ typedef struct _CallConfig {
 	bool_t caller_pause;
 	bool_t callee_pause;
 	bool_t forced_relay;
+	enum { None, IPv6toIPv4, IPv4toIPv6 } ip_family_change;
 } CallConfig;
 
 static void _call_with_network_switch(const CallConfig *config) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager *pauline =
-	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	LinphoneCallParams *pauline_params = NULL;
 	LinphoneCall *marie_call = NULL;
 	LinphoneCall *pauline_call = NULL;
@@ -712,6 +712,17 @@ static void _call_with_network_switch(const CallConfig *config) {
 
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	if (config->ip_family_change != None &&
+	    (!liblinphone_tester_ipv6_available() || !liblinphone_tester_ipv4_available())) {
+		bctbx_warning("Test skipped, both IP families are required");
+		goto end;
+	}
+	if (config->ip_family_change == IPv4toIPv6) {
+		linphone_core_enable_ipv6(marie->lc, FALSE);
+		BC_ASSERT_TRUE(
+		    wait_for_list(lcs, &marie->stat.number_of_LinphoneRegistrationOk, 2, liblinphone_tester_sip_timeout));
+	}
 
 	if (config->use_ice) {
 		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
@@ -768,6 +779,12 @@ static void _call_with_network_switch(const CallConfig *config) {
 
 	/*marie looses the network and reconnects*/
 	linphone_core_set_network_reachable(marie->lc, FALSE);
+
+	if (config->ip_family_change == IPv4toIPv6) {
+		linphone_core_enable_ipv6(marie->lc, TRUE);
+	} else if (config->ip_family_change == IPv6toIPv4) {
+		linphone_core_enable_ipv6(marie->lc, FALSE);
+	}
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 
 	/*marie will reconnect and register*/
@@ -860,6 +877,28 @@ end:
 
 static void call_with_network_switch(void) {
 	CallConfig cfg = {0};
+	_call_with_network_switch(&cfg);
+}
+
+static void call_with_network_switch_ipv6_to_ipv4(void) {
+	CallConfig cfg = {0};
+	cfg.ip_family_change = IPv6toIPv4;
+	/*
+	 * FIXME: Flexisip 2.4 MediaRelay fails to propose an IPv4 address to the client that switched to IPv4.
+	 * Fortunately, this works because the RTP socket was originally created with IPv6, thus accepts
+	 * an IPv6 destination.
+	 */
+	cfg.forced_relay = TRUE;
+	_call_with_network_switch(&cfg);
+}
+
+static void call_with_network_switch_ipv4_to_ipv6(void) {
+	CallConfig cfg = {0};
+	cfg.ip_family_change = IPv4toIPv6;
+	/*
+	 * FIXME: Flexisip 2.4 MediaRelay fails to propose an IPv6 address to the client that switched to IPv6.
+	 */
+	cfg.forced_relay = TRUE;
 	_call_with_network_switch(&cfg);
 }
 
@@ -1040,6 +1079,8 @@ end:
 
 static test_t call_recovery_tests[] = {
     TEST_NO_TAG("Call with network switch", call_with_network_switch),
+    TEST_NO_TAG("Call with network switch ipv6 to ipv4", call_with_network_switch_ipv6_to_ipv4),
+    TEST_NO_TAG("Call with network switch ipv4 to ipv6", call_with_network_switch_ipv4_to_ipv6),
     TEST_NO_TAG("Call with network switch and no recovery possible", call_with_network_switch_no_recovery),
     TEST_ONE_TAG("Recovered call on network switch in early state 1",
                  recovered_call_on_network_switch_in_early_state_1,
