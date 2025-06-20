@@ -5264,7 +5264,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 	LinphoneCoreManager *pauline = NULL;
 	LinphoneCallParams *marieParams = NULL;
 	LinphoneCallParams *paulineParams = NULL;
-	LinphoneCall *callInst = NULL;
+	LinphoneCall *marie_call = NULL;
 	const char **formats, *file_format;
 	char *filepath;
 	int dummy = 0, i;
@@ -5321,24 +5321,38 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		remove(filepath);
 		linphone_call_params_set_record_file(marieParams, filepath);
 		BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
-		BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
+
+		BC_ASSERT_PTR_NOT_NULL(marie_call = linphone_core_get_current_call(marie->lc));
 		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
-		if ((call_succeeded == TRUE) && (callInst != NULL)) {
+		if ((call_succeeded == TRUE) && (marie_call != NULL)) {
+			liblinphone_tester_set_next_video_frame_decoded_cb(marie_call);
+			/* Wait for first image to be decoded before starting the record,
+			 * otherwise the FIR requested by the recorder may reference a void SSRC
+			 * if no video packets have been received yet.
+			 */
+			BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_IframeDecoded, 1, 3000));
 			if (!early_record) {
 				ms_message("call_recording(): start recording into %s", filepath);
-				linphone_call_start_recording(callInst);
+				linphone_call_start_recording(marie_call);
 			}
 			if (strcmp(file_format, "mkv") == 0 && enableVideo) {
 				VideoStream *pauline_vstream =
 				    (VideoStream *)linphone_call_get_stream(pauline_call, LinphoneStreamTypeVideo);
 				/* make sure that Pauline receives a RTCP FIR (Full Intra Request) requested by Marie's recorder.*/
 				if (BC_ASSERT_PTR_NOT_NULL(pauline_vstream)) {
-					BC_ASSERT_TRUE(
-					    wait_for(marie->lc, pauline->lc, &pauline_vstream->ms_video_stat.counter_rcvd_fir, 1));
+					if (!early_record) {
+						/* for the same reason explained above, in early record scenario the presence of the FIR
+						 * can't be asserted. But that's not a real problem, the IDR frame will be present with the
+						 * first packet, or will be requested upon receiving first non-IDR packets. It is just that the
+						 * assert can't be made reliabily.'
+						 */
+						BC_ASSERT_TRUE(
+						    wait_for(marie->lc, pauline->lc, &pauline_vstream->ms_video_stat.counter_rcvd_fir, 1));
+					}
 				}
 			}
 			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000);
-			linphone_call_stop_recording(callInst);
+			linphone_call_stop_recording(marie_call);
 			end_call(marie, pauline);
 			BC_ASSERT_EQUAL(bctbx_file_exist(filepath), 0, int, "%d");
 		}
