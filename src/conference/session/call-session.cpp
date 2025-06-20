@@ -1512,7 +1512,7 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 			}
 			if (!cAccount) {
 				auto account = getCore()->findAccountByIdentityAddress(d->log->getToAddress());
-				if (!account) {
+				if (!account && !linphone_core_account_strict_matching_enabled(getCore()->getCCore())) {
 					account = getCore()->guessLocalAccountFromMalformedMessage(d->log->getToAddress(),
 					                                                           d->log->getFromAddress());
 					if (account) {
@@ -1523,18 +1523,15 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 						// We must "hack" the call-log so it is correctly reported for this Account.
 						d->log->setToAddress(account->getAccountParams()->getIdentityAddress());
 					} else {
-						if (!linphone_core_account_strict_matching_enabled(getCore()->getCCore())) {
-							account = getCore()->guessLocalAccountFromMalformedMessage(getRequestAddress(),
-							                                                           d->log->getFromAddress());
-							if (account) {
-								// We failed to find matching local account using From & To headers but we did using the
-								// request URI.
-								lWarning()
-								    << "Applying workaround to have this call assigned to a known account using the "
-								       "request URI";
-								// We must "hack" the call-log so it is correctly reported for this Account.
-								d->log->setToAddress(account->getAccountParams()->getIdentityAddress());
-							}
+						account = getCore()->guessLocalAccountFromMalformedMessage(getRequestAddress(),
+						                                                           d->log->getFromAddress());
+						if (account) {
+							// We failed to find matching local account using From & To headers but we did using the
+							// request URI.
+							lWarning() << "Applying workaround to have this call assigned to a known account using the "
+							              "request URI";
+							// We must "hack" the call-log so it is correctly reported for this Account.
+							d->log->setToAddress(account->getAccountParams()->getIdentityAddress());
 						}
 					}
 				}
