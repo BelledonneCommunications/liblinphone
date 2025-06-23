@@ -195,7 +195,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_publish_expires(LinphoneAccount
 LINPHONE_PUBLIC int linphone_account_params_get_publish_expires(const LinphoneAccountParams *params);
 
 /**
- * Set whether liblinphone should replace "+" by international calling prefix in dialed numbers (passed to
+ * Set whether liblinphone should replace "+" by international calling prefix (ICP) in dialed numbers (passed to
  * #linphone_core_invite).
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
@@ -205,7 +205,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void
 linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
- * Set whether liblinphone should replace "+" by international calling prefix in dialed numbers (passed to
+ * Set whether liblinphone should replace "+" by international calling prefix (ICP) in dialed numbers (passed to
  * #linphone_core_invite).
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
@@ -213,9 +213,11 @@ linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *para
 LINPHONE_PUBLIC void linphone_account_params_enable_dial_escape_plus(LinphoneAccountParams *params, bool_t enable);
 
 /**
- * Sets an international prefix to be automatically prepended when inviting a number with
- * linphone_core_invite();
+ * Sets an international prefix (country code) to be automatically prepended when inviting a number with
+ * linphone_core_invite() or when using linphone_account_normalize_phone_number().
  * This international prefix shall usually be the country code of the country where the user is living, without "+".
+ * @warning It is also referred as 'ccc' (Calling Country Code) and must not be confused with the ICP (International
+ *Call Prefix). The ICP is a fixed property of the country dial plan, and cannot be set in the #LinphoneAccountParams .
  * @param params The #LinphoneAccountParams object. @notnil
  * @param prefix The prefix to set (withouth the +). @maybenil
  **/
@@ -453,9 +455,9 @@ LINPHONE_PUBLIC void linphone_account_params_set_contact_uri_parameters(Linphone
 LINPHONE_PUBLIC const char *linphone_account_params_get_contact_uri_parameters(const LinphoneAccountParams *params);
 
 /**
- * Return whether or not the + should be replaced by the Internal Call Prefix.
+ * Return whether or not the + should be replaced by the International Call Prefix.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return Whether liblinphone should replace "+" by the Internal Call Prefix. in dialed numbers (passed to
+ * @return Whether liblinphone should replace "+" by the International Call Prefix. in dialed numbers (passed to
  *linphone_core_invite()).
  * @deprecated 16/12/2021 Use linphone_account_params_dial_escape_plus_enabled() instead.
  **/
@@ -463,9 +465,9 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
 linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams *params);
 
 /**
- * Return whether or not the + should be replaced by  the Internal Call Prefix.
+ * Return whether or not the + should be replaced by  the International Call Prefix.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return Whether liblinphone should replace "+" by the Internal Call Prefix. in dialed numbers (passed to
+ * @return Whether liblinphone should replace "+" by the International Call Prefix. in dialed numbers (passed to
  *linphone_core_invite()).
  **/
 LINPHONE_PUBLIC bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountParams *params);

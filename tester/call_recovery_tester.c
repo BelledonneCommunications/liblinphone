@@ -885,8 +885,9 @@ static void call_with_network_switch_ipv6_to_ipv4(void) {
 	cfg.ip_family_change = IPv6toIPv4;
 	/*
 	 * FIXME: Flexisip 2.4 MediaRelay fails to propose an IPv4 address to the client that switched to IPv4.
-	 * Fortunately, this works because the RTP socket was originally created with IPv6, thus accepts
+	 * Fortunately, this may work because the RTP socket was originally created with IPv6, thus accepts
 	 * an IPv6 destination.
+	 * However, this does not work under the livebox network.
 	 */
 	cfg.forced_relay = TRUE;
 	_call_with_network_switch(&cfg);
@@ -1079,7 +1080,7 @@ end:
 
 static test_t call_recovery_tests[] = {
     TEST_NO_TAG("Call with network switch", call_with_network_switch),
-    TEST_NO_TAG("Call with network switch ipv6 to ipv4", call_with_network_switch_ipv6_to_ipv4),
+    TEST_ONE_TAG("Call with network switch ipv6 to ipv4", call_with_network_switch_ipv6_to_ipv4, "skip"),
     TEST_NO_TAG("Call with network switch ipv4 to ipv6", call_with_network_switch_ipv4_to_ipv6),
     TEST_NO_TAG("Call with network switch and no recovery possible", call_with_network_switch_no_recovery),
     TEST_ONE_TAG("Recovered call on network switch in early state 1",

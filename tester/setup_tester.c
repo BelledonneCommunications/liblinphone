@@ -3831,7 +3831,7 @@ static void friend_phone_number_lookup_without_plus(void) {
 	linphone_account_set_params(account, cloned_params);
 	linphone_account_params_unref(cloned_params);
 
-	found = linphone_core_find_friend_by_phone_number(core, "4912345678901");
+	found = linphone_core_find_friend_by_phone_number(core, "12345678901");
 	BC_ASSERT_PTR_NOT_NULL(found);
 
 	linphone_core_manager_destroy(manager);

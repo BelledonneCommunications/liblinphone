@@ -90,6 +90,7 @@ static void phone_normalization_with_proxy(void) {
 	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(NULL);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "012 3456 789"), "+33123456789");
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, " 3 32 42 6789"), "+33332426789");
 	linphone_proxy_config_set_dial_prefix(proxy, NULL);
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+33123456789"), "+33123456789");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+33 0123456789"), "+33123456789");

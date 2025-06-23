@@ -415,17 +415,17 @@ string DialPlan::getSignificantDigits(const string &phoneNumber) const {
 	lDebug() << "[DialPlan] Flattened number for [" << phoneNumber << "] is: [" << flatten << "]";
 
 	// if flatten starts by +, remove it
-	if (flatten.rfind("+", 0) == 0) {
+	if (!flatten.empty() && flatten[0] == '+') {
 		flatten = flatten.substr(1);
 		lDebug() << "[DialPlan] Flattened number started by +, removing it: [" << flatten << "]";
-	}
 
-	size_t countryCallingCodePos = flatten.find(countryCallingCode);
-	// if flatten starts with country calling code (but isn't equal to it!), remove it first
-	if (countryCallingCodePos == 0 && flatten.length() != countryCallingCode.length()) {
-		flatten = flatten.substr(countryCallingCodePos + countryCallingCode.length());
-		lDebug() << "[DialPlan] Flattened number started by [" << countryCallingCode << "], removing it: [" << flatten
-		         << "]";
+		size_t countryCallingCodePos = flatten.find(countryCallingCode);
+		// if flatten starts with country calling code (but isn't equal to it!), remove it first
+		if (countryCallingCodePos == 0 && flatten.length() != countryCallingCode.length()) {
+			flatten = flatten.substr(countryCallingCodePos + countryCallingCode.length());
+			lDebug() << "[DialPlan] Flattened number started by [" << countryCallingCode << "], removing it: ["
+			         << flatten << "]";
+		}
 	}
 	return flatten;
 }

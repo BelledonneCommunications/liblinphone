@@ -337,22 +337,22 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 		return NULL;
 	}
 
-	const char *dial_prefix;
+	const char *ccc_str;
 	bool_t dial_escape_plus;
 
 	if (account) {
 		const LinphoneAccountParams *accountParams = linphone_account_get_params(account);
-		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
+		ccc_str = linphone_account_params_get_international_prefix(accountParams);
 
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 	} else {
 		LinphoneAccountParams *accountParams = linphone_account_params_new(nullptr, FALSE);
-		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
+		ccc_str = linphone_account_params_get_international_prefix(accountParams);
 		dial_escape_plus = linphone_account_params_dial_escape_plus_enabled(accountParams);
 		linphone_account_params_unref(accountParams);
 	}
 
-	std::shared_ptr<DialPlan> dialplan = DialPlan::findByCcc(dial_prefix ? dial_prefix : "");
+	std::shared_ptr<DialPlan> dialplan = DialPlan::findByCcc(ccc_str ? ccc_str : "");
 
 	char *flatten = ms_strdup(Utils::flattenPhoneNumber(username).c_str());
 	lDebug() << "Flattened number is [" << flatten << "] for [" << username << "]";
@@ -365,7 +365,7 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 	}
 
 	int ccc = -1;
-	// If number starts with the Internation Call Prefix (00 in France, 011 in USA for instance),
+	// If number starts with the International Call Prefix (00 in France, 011 in USA for instance),
 	// replace by plus.
 	if (!dialplan->getInternationalCallPrefix().empty() &&
 	    strncmp(flatten, dialplan->getInternationalCallPrefix().c_str(),
@@ -383,9 +383,8 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 				lDebug() << "Flattened number is too short, do not format phone number [" << flatten << "]";
 				return flatten;
 			} else {
-				// If a dialplan was found using this, remove the + in the flatenned number
 				ms_free(flatten);
-				flatten = ms_strdup(icpReplacedByPlus.substr(1).c_str());
+				flatten = ms_strdup(icpReplacedByPlus.c_str());
 			}
 		}
 	} else {
@@ -396,10 +395,10 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 	if (ccc > -1) {
 		dialplan = DialPlan::findByCcc(ccc);
 		lDebug() << "Using dial plan [" << dialplan->getCountry() << "]";
-		if (dialplan == DialPlan::MostCommon && dial_prefix) {
-			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << dial_prefix << "]";
+		if (dialplan == DialPlan::MostCommon && ccc_str) {
+			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << ccc_str << "]";
 			dialplan = (new DialPlan(*DialPlan::MostCommon))->toSharedPtr();
-			dialplan->setCountryCallingCode(dial_prefix);
+			dialplan->setCountryCallingCode(ccc_str);
 		}
 		std::string formattedNumber = dialplan->formatPhoneNumber(flatten, dial_escape_plus);
 
@@ -411,16 +410,10 @@ char *linphone_account_normalize_phone_number(const LinphoneAccount *account, co
 			lDebug() << "Unknown ccc for e164 like number [" << flatten << "]";
 			return flatten;
 		}
-
-		if (dial_prefix) {
-			dialplan = DialPlan::findByCcc(dial_prefix);
-		} else {
-			dialplan = DialPlan::MostCommon;
-		}
-		if (dialplan == DialPlan::MostCommon && dial_prefix) {
-			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << dial_prefix << "]";
+		if (dialplan == DialPlan::MostCommon && ccc_str) {
+			lDebug() << "MostCommon dial plan found, applying account dial prefix [" << ccc_str << "]";
 			dialplan = (new DialPlan(*DialPlan::MostCommon))->toSharedPtr();
-			dialplan->setCountryCallingCode(dial_prefix);
+			dialplan->setCountryCallingCode(ccc_str);
 		}
 
 		lDebug() << "Using dial plan [" << dialplan->getCountry() << "]";
