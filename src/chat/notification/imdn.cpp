@@ -299,7 +299,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 				if (status.getDisplayed().present() && linphone_im_notif_policy_get_recv_imdn_displayed(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::Displayed, imdnTime);
 					if (localAddress->weakEqual(*participantAddress)) {
-						auto lastMsg = cr->getLastChatMessageInHistory();
+						auto lastMsg = cm->getChatRoom()->getLastChatMessageInHistory();
 						if (lastMsg == cm) {
 							lInfo() << "Received Display IMDN from ourselves for last message in this chat room, "
 							           "marking it as read";
