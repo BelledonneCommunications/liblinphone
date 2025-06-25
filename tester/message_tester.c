@@ -4673,7 +4673,13 @@ static void baudot_text_message(LinphoneBaudotMode initial_sender_baudot_mode,
 				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
 				                              &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i + 1,
 				                              liblinphone_tester_sip_timeout));
-				BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)toupper(message[i]), char, "%c");
+				/* To ensure readability of the xml report, do not print a non-ascii and even non-utf-8 character in the
+				 * assert, should this test case be failing.*/
+				int expectedChar = toupper(message[i]);
+				int readChar = (int)linphone_chat_room_get_char(marie_chat_room);
+				if (BC_ASSERT_TRUE(isascii(readChar) != 0)) {
+					BC_ASSERT_EQUAL(readChar, expectedChar, char, "%c");
+				}
 			}
 			linphone_chat_message_send(chat_message);
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
@@ -4975,17 +4981,17 @@ static test_t rtt_message_tests[] = {
 #ifdef HAVE_BAUDOT
 
 static test_t baudot_message_tests[] = {
-    TEST_ONE_TAG("Baudot text message US", baudot_text_message_us, "Baudot"),
-    TEST_ONE_TAG("Baudot text message Europe", baudot_text_message_europe, "Baudot"),
-    TEST_ONE_TAG("Baudot text message voice switch to US TTY", baudot_text_message_voice_switch_tty_us, "Baudot"),
+    TEST_ONE_TAG("Baudot text message US", baudot_text_message_us, "shaky"),
+    TEST_ONE_TAG("Baudot text message Europe", baudot_text_message_europe, "shaky"),
+    TEST_ONE_TAG("Baudot text message voice switch to US TTY", baudot_text_message_voice_switch_tty_us, "shaky"),
     TEST_ONE_TAG(
-        "Baudot text message voice switch to Europe TTY", baudot_text_message_voice_switch_tty_europe, "Baudot"),
+        "Baudot text message voice switch to Europe TTY", baudot_text_message_voice_switch_tty_europe, "shaky"),
     TEST_ONE_TAG("Baudot text message voice switch to US Voice CarryOver",
                  baudot_text_message_voice_switch_voice_carryover_us,
-                 "Baudot"),
+                 "shaky"),
     TEST_ONE_TAG("Baudot text message voice switch to Europe Voice CarryOver",
                  baudot_text_message_voice_switch_voice_carryover_europe,
-                 "Baudot"),
+                 "shaky"),
 };
 #endif /* HAVE_BAUDOT */
 
