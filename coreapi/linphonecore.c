@@ -5122,7 +5122,10 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 
 	// If variable is still NULL, then the SDK has to make a decision because one is dependent from
 	// the other one. In such a scenario, it is assumed that the application wishes to use the default account
-	if (account == nullptr) account = linphone_core_get_default_account(lc);
+	if (account == nullptr) {
+		account = linphone_core_get_default_account(lc);
+		ms_message("Associate the default account %p to the next call", account);
+	}
 
 	// If an account has been found earlier on either because it has been set in the call params or it is the
 	// default one or it has been deduced thanks to the from or to addresses, then get the from address if not

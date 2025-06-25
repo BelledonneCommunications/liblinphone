@@ -564,8 +564,10 @@ static void automatic_call_termination(void) {
 	linphone_core_destroy(pauline->lc);
 	pauline->lc = NULL;
 	/*marie shall receive the BYE*/
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1,
+	                              liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1,
+	                              liblinphone_tester_sip_timeout));
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1220,14 +1222,25 @@ static void call_with_maxptime(void) {
 	/*wait a bit that bitstreams are stabilized*/
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
 
-	// network-birate = ((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
+	bctbx_list_t *mgrs = bctbx_list_append(NULL, pauline);
+	mgrs = bctbx_list_append(mgrs, marie);
+	int dummy = 0;
 
-	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(pauline), 80, int, "%i");
-	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(pauline), 70, int,
-	                  "%i"); // without maxptime=40, it should be 67
-	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(marie), 80, int, "%i");
-	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(marie), 70, int,
-	                  "%i"); // without maxptime=40, it should be 67
+	// network-birate = ((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
+	for (bctbx_list_t *elem = mgrs; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneCoreManager *mgr = (LinphoneCoreManager *)bctbx_list_get_data(elem);
+		int counter = 0;
+		do {
+			counter++;
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+		} while ((counter < 100) && ((linphone_core_manager_get_mean_audio_up_bw(mgr) <= 70) ||
+		                             (linphone_core_manager_get_mean_audio_up_bw(mgr) >= 80)));
+		BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(mgr), 80, int, "%i");
+		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(mgr), 70, int,
+		                  "%i"); // without maxptime=40, it should be 67
+	}
+
+	bctbx_list_free(mgrs);
 
 	end_call(pauline, marie);
 
@@ -5174,6 +5187,7 @@ void check_media_direction(LinphoneCoreManager *mgr,
 		call = linphone_call_ref(call);    // Iterate can remove the call
 		wait_for_list(lcs, NULL, 0, 5000); /*on some device, it may take 3 to 4s to get audio from mic*/
 		params = linphone_call_get_current_params(call);
+		int counter = 0;
 #ifdef VIDEO_ENABLED
 		if (video_dir != LinphoneMediaDirectionInvalid) {
 			int current_recv_iframe = mgr->stat.number_of_IframeDecoded;
@@ -5192,18 +5206,14 @@ void check_media_direction(LinphoneCoreManager *mgr,
 			}
 			switch (video_dir) {
 				case LinphoneMediaDirectionInactive:
-					if (stats) {
-						BC_ASSERT_LOWER((int)linphone_call_stats_get_upload_bandwidth(stats), 5, int, "%i");
-					} else {
-						/* it is expected that there is no stats for an inactive stream.*/
-					}
+					BC_ASSERT_LOWER(linphone_core_manager_get_mean_video_up_bw(mgr), 5, int, "%i");
 					break;
 				case LinphoneMediaDirectionSendOnly:
 					expected_recv_iframe = 0;
-					BC_ASSERT_LOWER((int)linphone_call_stats_get_download_bandwidth(stats), 5, int, "%i");
+					BC_ASSERT_LOWER(linphone_core_manager_get_mean_video_down_bw(mgr), 5, int, "%i");
 					break;
 				case LinphoneMediaDirectionRecvOnly:
-					BC_ASSERT_LOWER((int)linphone_call_stats_get_upload_bandwidth(stats), 5, int, "%i");
+					BC_ASSERT_LOWER(linphone_core_manager_get_mean_video_up_bw(mgr), 5, int, "%i");
 					BCTBX_NO_BREAK; /*intentionally no break*/
 				case LinphoneMediaDirectionSendRecv:
 					expected_recv_iframe = 1;
@@ -5217,6 +5227,7 @@ void check_media_direction(LinphoneCoreManager *mgr,
 		}
 #endif
 		if (audio_dir != LinphoneMediaDirectionInvalid) {
+			LinphoneCallStats *stats = linphone_call_get_video_stats(call);
 			BC_ASSERT_EQUAL(linphone_call_params_get_audio_direction(params), audio_dir, int, "%d");
 			switch (audio_dir) {
 				case LinphoneMediaDirectionInactive:
@@ -5224,18 +5235,38 @@ void check_media_direction(LinphoneCoreManager *mgr,
 					BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_down_bw(mgr), 5, int, "%i");
 					break;
 				case LinphoneMediaDirectionSendOnly:
+					do {
+						counter++;
+						wait_for_list(lcs, NULL, 0, 100);
+					} while ((counter < 100) && (linphone_core_manager_get_mean_audio_up_bw(mgr) <= 70));
 					BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(mgr), 70, int, "%i");
 					break;
 				case LinphoneMediaDirectionRecvOnly:
 					BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(mgr), 5, int, "%i");
+
+					do {
+						counter++;
+						wait_for_list(lcs, NULL, 0, 100);
+					} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(mgr) <= 70));
+					BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(mgr), 70, int, "%i");
 					break;
 				case LinphoneMediaDirectionSendRecv:
-					BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(mgr), 70, int, "%i");
+					do {
+						counter++;
+						wait_for_list(lcs, NULL, 0, 100);
+					} while ((counter < 100) && (linphone_core_manager_get_mean_audio_up_bw(mgr) <= 70));
 					BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(mgr), 70, int, "%i");
+
+					do {
+						counter++;
+						wait_for_list(lcs, NULL, 0, 100);
+					} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(mgr) <= 70));
+					BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(mgr), 70, int, "%i");
 					break;
 				default:
 					break;
 			}
+			if (stats) linphone_call_stats_unref(stats);
 		}
 		linphone_call_unref(call);
 	}
@@ -5704,9 +5735,16 @@ static void call_with_paused_no_sdp_on_resume(void) {
 
 	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
 	BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(marie), 70, int, "%i");
+	int counter = 0;
+	do {
+		counter++;
+		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+	} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) < 70));
+	BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 70, int, "%i");
 	stats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(stats) > 70);
+	BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(stats), 70, int, "%i");
 	linphone_call_stats_unref(stats);
+
 	end_call(marie, pauline);
 end:
 

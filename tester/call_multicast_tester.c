@@ -170,13 +170,24 @@ static void early_media_with_multicast_base(bool_t video) {
 
 		wait_for_list(lcs, &dummy, 1, 3000);
 
-		stats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline), 70, int, "%i");
+		int counter = 0;
+		do {
+			counter++;
+			wait_for_list(lcs, NULL, 0, 100);
+		} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) >= 90));
+		BC_ASSERT_LOWER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 90, int, "%i");
+		stats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_LOWER((int)linphone_call_stats_get_download_bandwidth(stats), 90, int, "%i");
 		linphone_call_stats_unref(stats);
 
+		counter = 0;
+		do {
+			counter++;
+			wait_for_list(lcs, NULL, 0, 100);
+		} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline2) >= 90));
+		BC_ASSERT_LOWER((int)linphone_core_manager_get_mean_audio_down_bw(pauline2), 90, int, "%i");
 		stats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline2->lc));
-		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline2), 70, int, "%i");
 		BC_ASSERT_LOWER((int)linphone_call_stats_get_download_bandwidth(stats), 90, int, "%i");
 		linphone_call_stats_unref(stats);
 

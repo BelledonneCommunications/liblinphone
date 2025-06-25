@@ -1078,6 +1078,8 @@ int linphone_core_manager_get_max_audio_down_bw(const LinphoneCoreManager *mgr);
 int linphone_core_manager_get_max_audio_up_bw(const LinphoneCoreManager *mgr);
 int linphone_core_manager_get_mean_audio_down_bw(const LinphoneCoreManager *mgr);
 int linphone_core_manager_get_mean_audio_up_bw(const LinphoneCoreManager *mgr);
+int linphone_core_manager_get_mean_video_down_bw(const LinphoneCoreManager *mgr);
+int linphone_core_manager_get_mean_video_up_bw(const LinphoneCoreManager *mgr);
 
 void video_call_base_2(LinphoneCoreManager *pauline,
                        LinphoneCoreManager *marie,

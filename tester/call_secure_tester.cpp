@@ -99,6 +99,9 @@ mgr_calling_each_other(LinphoneCoreManager *marie,
 	linphone_core_reset_tone_manager_stats(marie->lc);
 	linphone_core_reset_tone_manager_stats(pauline->lc);
 
+	int dummy = 0;
+	int counter = 0;
+
 	BC_ASSERT_TRUE(call(pauline, marie));
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
@@ -109,7 +112,13 @@ mgr_calling_each_other(LinphoneCoreManager *marie,
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(marie), 70, int, "%i");
 		LinphoneCallStats *pauline_stats = linphone_call_get_audio_stats(pauline_call);
-		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) > 70);
+		counter = 0;
+		do {
+			counter++;
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+		} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) <= 70));
+		BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 70, int, "%i");
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(pauline_stats), 70, int, "%i");
 		linphone_call_stats_unref(pauline_stats);
 		pauline_stats = NULL;
 
@@ -142,7 +151,13 @@ mgr_calling_each_other(LinphoneCoreManager *marie,
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline), 70, int, "%i");
 		LinphoneCallStats *marie_stats = linphone_call_get_audio_stats(marie_call);
-		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) > 70);
+		counter = 0;
+		do {
+			counter++;
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+		} while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(marie) <= 70));
+		BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(marie), 70, int, "%i");
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(marie_stats), 70, int, "%i");
 		linphone_call_stats_unref(marie_stats);
 		marie_stats = NULL;
 
@@ -227,6 +242,7 @@ ekt_call(MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, bool unmatching
 		    int dummy = 0;
 		    wait_for_until(pauline->lc, marie->lc, &dummy, 1, 2000);
 
+		    int counter = 0;
 		    LinphoneCallStats *marie_stats = linphone_call_get_audio_stats(marieCall);
 		    LinphoneCallStats *pauline_stats = linphone_call_get_audio_stats(paulineCall);
 
@@ -248,15 +264,41 @@ ekt_call(MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, bool unmatching
 			    BC_ASSERT_TRUE(paulineSrtpInfo->recv_source == 0);
 
 			    // Bandwidth usage tests it shall be near to 0, no new packets arrived in the last 2 seconds
-			    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) < 5);
-			    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) < 5);
+			    counter = 0;
+			    do {
+				    counter++;
+				    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+			    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) >= 5));
+			    BC_ASSERT_LOWER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 5, int, "%i");
+			    BC_ASSERT_LOWER((int)linphone_call_stats_get_download_bandwidth(pauline_stats), 5, int, "%i");
+
+			    counter = 0;
+			    do {
+				    counter++;
+				    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+			    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(marie) >= 5));
+			    BC_ASSERT_LOWER((int)linphone_core_manager_get_mean_audio_down_bw(marie), 5, int, "%i");
+			    BC_ASSERT_LOWER((int)linphone_call_stats_get_download_bandwidth(marie_stats), 5, int, "%i");
 		    } else { // EKT matches so the stream should be double encrypted and fine
 			    // Check we are now double encrypted and inner encryption comes from EKT and uses the given suite
 			    BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, crypto_suite, MSSrtpKeySourceEKT, TRUE));
 
 			    // Bandwidth usage tests to be sure we actually still exchange data
-			    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) > 70);
-			    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) > 70);
+			    counter = 0;
+			    do {
+				    counter++;
+				    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+			    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) <= 70));
+			    BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 70, int, "%i");
+			    BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(pauline_stats), 70, int, "%i");
+
+			    counter = 0;
+			    do {
+				    counter++;
+				    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+			    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(marie) <= 70));
+			    BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(marie), 70, int, "%i");
+			    BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(marie_stats), 70, int, "%i");
 
 			    if (update_ekt) {
 				    // Both parties update their EKT
@@ -270,8 +312,21 @@ ekt_call(MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, bool unmatching
 				    linphone_call_stats_unref(pauline_stats);
 				    marie_stats = linphone_call_get_audio_stats(marieCall);
 				    pauline_stats = linphone_call_get_audio_stats(paulineCall);
-				    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) > 70);
-				    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) > 70);
+				    counter = 0;
+				    do {
+					    counter++;
+					    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+				    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) <= 70));
+				    BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 70, int, "%i");
+				    BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(pauline_stats), 70, int, "%i");
+
+				    counter = 0;
+				    do {
+					    counter++;
+					    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+				    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(marie) <= 70));
+				    BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(marie), 70, int, "%i");
+				    BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(marie_stats), 70, int, "%i");
 
 				    // Marie updates her EKT but not pauline
 				    generate_ekt(&ekt_params, ekt_cipher, crypto_suite, 0x3456);
@@ -283,9 +338,29 @@ ekt_call(MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, bool unmatching
 				    marie_stats = linphone_call_get_audio_stats(marieCall);
 				    pauline_stats = linphone_call_get_audio_stats(paulineCall);
 				    // Marie still receives Pauline packets but Pauline cannot decrypt Marie's one
-				    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) > 70);
-				    BC_ASSERT_TRUE(linphone_call_stats_get_upload_bandwidth(marie_stats) > 70);
-				    BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) < 5);
+				    counter = 0;
+				    do {
+					    counter++;
+					    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+				    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(marie) <= 70));
+				    BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_down_bw(marie), 70, int, "%i");
+				    BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(marie_stats), 70, int, "%i");
+
+				    counter = 0;
+				    do {
+					    counter++;
+					    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+				    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_up_bw(marie) <= 70));
+				    BC_ASSERT_GREATER((int)linphone_core_manager_get_mean_audio_up_bw(marie), 70, int, "%i");
+				    BC_ASSERT_GREATER((int)linphone_call_stats_get_upload_bandwidth(marie_stats), 70, int, "%i");
+
+				    counter = 0;
+				    do {
+					    counter++;
+					    wait_for_until(marie->lc, pauline->lc, &dummy, 1, 100);
+				    } while ((counter < 100) && (linphone_core_manager_get_mean_audio_down_bw(pauline) >= 5));
+				    BC_ASSERT_LOWER((int)linphone_core_manager_get_mean_audio_down_bw(pauline), 5, int, "%i");
+				    BC_ASSERT_LOWER((int)linphone_call_stats_get_download_bandwidth(pauline_stats), 5, int, "%i");
 			    }
 		    }
 

@@ -2914,6 +2914,12 @@ end:
 	if (!foundAccount && foundAccountDomainMatch) foundAccount = foundAccountDomainMatch;
 	else if (!foundAccount && foundRegAccountDomainMatch) foundAccount = foundRegAccountDomainMatch;
 	else if (!foundAccount && foundNoRegAccountDomainMatch) foundAccount = foundNoRegAccountDomainMatch;
+
+	if (foundAccount) {
+		lInfo() << "Looking up for an account matching " << uri << " ended up finding " << *foundAccount;
+	} else {
+		lInfo() << "Looking up for an account matching " << uri << " ended up finding no accounts";
+	}
 	return foundAccount;
 }
 

@@ -948,7 +948,13 @@ void CallSessionPrivate::updateCurrentParams() const {
 }
 
 void CallSessionPrivate::setDestAccount(const shared_ptr<Account> &destAccount) {
+	L_Q();
 	account = destAccount;
+	if (account) {
+		lInfo() << "Setting account of " << *q << " to " << *account;
+	} else {
+		lInfo() << "Do not set or unset account for " << *q;
+	}
 	if (params) {
 		params->setAccount(account);
 	}

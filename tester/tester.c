@@ -384,7 +384,9 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -414,7 +416,9 @@ bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{ bc_tester_process_events(); }
+		{
+			bc_tester_process_events();
+		}
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -3236,7 +3240,7 @@ static int linphone_core_manager_get_max_audio_bw_base(const int array[], int ar
 	return result;
 }
 
-static int linphone_core_manager_get_mean_audio_bw_base(const int array[], int array_size) {
+static int linphone_core_manager_get_mean_bw_base(const int array[], int array_size) {
 	int i, result = 0;
 	for (i = 0; i < array_size; i++) {
 		result += array[i];
@@ -3254,12 +3258,21 @@ int linphone_core_manager_get_max_audio_up_bw(const LinphoneCoreManager *mgr) {
 }
 
 int linphone_core_manager_get_mean_audio_down_bw(const LinphoneCoreManager *mgr) {
-	return linphone_core_manager_get_mean_audio_bw_base(mgr->stat.audio_download_bandwidth,
-	                                                    sizeof(mgr->stat.audio_download_bandwidth) / sizeof(int));
+	return linphone_core_manager_get_mean_bw_base(mgr->stat.audio_download_bandwidth,
+	                                              sizeof(mgr->stat.audio_download_bandwidth) / sizeof(int));
 }
 int linphone_core_manager_get_mean_audio_up_bw(const LinphoneCoreManager *mgr) {
-	return linphone_core_manager_get_mean_audio_bw_base(mgr->stat.audio_upload_bandwidth,
-	                                                    sizeof(mgr->stat.audio_upload_bandwidth) / sizeof(int));
+	return linphone_core_manager_get_mean_bw_base(mgr->stat.audio_upload_bandwidth,
+	                                              sizeof(mgr->stat.audio_upload_bandwidth) / sizeof(int));
+}
+
+int linphone_core_manager_get_mean_video_down_bw(const LinphoneCoreManager *mgr) {
+	return linphone_core_manager_get_mean_bw_base(mgr->stat.video_download_bandwidth,
+	                                              sizeof(mgr->stat.video_download_bandwidth) / sizeof(int));
+}
+int linphone_core_manager_get_mean_video_up_bw(const LinphoneCoreManager *mgr) {
+	return linphone_core_manager_get_mean_bw_base(mgr->stat.video_upload_bandwidth,
+	                                              sizeof(mgr->stat.video_upload_bandwidth) / sizeof(int));
 }
 
 void liblinphone_tester_before_each(void) {
