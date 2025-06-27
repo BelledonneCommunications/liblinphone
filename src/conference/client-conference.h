@@ -164,6 +164,7 @@ public:
 #endif // HAVE_ADVANCED_IM
 
 	void requestFullState();
+	void sendPendingMessages();
 
 	/* Report the csrc included in the video stream, so that we can notify who is presented on the screen.*/
 	void notifyDisplayedSpeaker(uint32_t csrc);
@@ -200,6 +201,7 @@ protected:
 	                                       CallSession::State state) override;
 
 private:
+	std::shared_ptr<ClientConferenceEventHandler> getEventHandler() const;
 	void acceptSession(const std::shared_ptr<CallSession> &session);
 	std::shared_ptr<CallSession> createSessionTo(const std::shared_ptr<const Address> &sessionTo);
 	std::shared_ptr<CallSession> createSession();

@@ -1959,17 +1959,25 @@ void ClientConference::notifyLouderSpeaker(uint32_t ssrc) {
 	}
 }
 
+std::shared_ptr<ClientConferenceEventHandler> ClientConference::getEventHandler() const {
+#ifdef HAVE_ADVANCED_IM
+	auto handler = getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId());
+	if (!handler) {
+		handler = mEventHandler;
+	}
+	return handler;
+#else
+	return nullptr;
+#endif // HAVE_ADVANCED_IM
+}
 bool ClientConference::isSubscriptionUnderWay() const {
 	bool underWay = false;
 #ifdef HAVE_ADVANCED_IM
-	if (getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
-		underWay =
-		    getCore()->getPrivate()->clientListEventHandler->getInitialSubscriptionUnderWayFlag(getConferenceId());
-	} else {
-		underWay = mEventHandler ? mEventHandler->getInitialSubscriptionUnderWayFlag() : false;
+	auto handler = getEventHandler();
+	if (handler) {
+		underWay = handler->getInitialSubscriptionUnderWayFlag();
 	}
 #endif // HAVE_ADVANCED_IM
-
 	return underWay;
 }
 
@@ -1979,13 +1987,12 @@ bool ClientConference::isSubscriptionUnderWay() const {
 #endif // _MSC_VER
 void ClientConference::multipartNotifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content) {
 #ifdef HAVE_ADVANCED_IM
-	if (mEventHandler) {
-		const auto initialSubscription = mEventHandler->getInitialSubscriptionUnderWayFlag();
-		mEventHandler->multipartNotifyReceived(notifyLev, content);
-		const auto &chatRoom = getChatRoom();
-		if (mConfParams->chatEnabled() && chatRoom && initialSubscription &&
-		    !mEventHandler->getInitialSubscriptionUnderWayFlag()) {
-			chatRoom->sendPendingMessages();
+	auto handler = getEventHandler();
+	if (handler) {
+		const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
+		handler->multipartNotifyReceived(notifyLev, content);
+		if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
+			sendPendingMessages();
 		}
 		return;
 	}
@@ -2011,13 +2018,12 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 			return;
 		}
 	} else {
-		if (mEventHandler) {
-			const auto initialSubscription = mEventHandler->getInitialSubscriptionUnderWayFlag();
-			mEventHandler->notifyReceived(notifyLev, content);
-			const auto &chatRoom = getChatRoom();
-			if (mConfParams->chatEnabled() && chatRoom && initialSubscription &&
-			    !mEventHandler->getInitialSubscriptionUnderWayFlag()) {
-				chatRoom->sendPendingMessages();
+		auto handler = getEventHandler();
+		if (handler) {
+			const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
+			handler->notifyReceived(notifyLev, content);
+			if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
+				sendPendingMessages();
 			}
 			return;
 		}
@@ -2030,6 +2036,15 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
+
+#ifdef HAVE_ADVANCED_IM
+void ClientConference::sendPendingMessages() {
+	const auto &chatRoom = getChatRoom();
+	if (mConfParams->chatEnabled() && chatRoom) {
+		chatRoom->sendPendingMessages();
+	}
+}
+#endif // HAVE_ADVANCED_IM
 
 int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
                                       const LinphoneCallParams *params) {

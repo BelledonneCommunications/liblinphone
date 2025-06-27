@@ -113,6 +113,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 				Address addr = conferenceId.getPeerAddress()->getUri();
 				const auto lastNotify = handler->getLastNotify();
 				addr.setUriParam("Last-Notify", Utils::toString(lastNotify));
+				handler->setSubscriptionWanted(true);
 				handler->setInitialSubscriptionUnderWayFlag(handler->notAlreadySubscribed());
 				Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 				l.getEntry().push_back(entry);
@@ -156,6 +157,7 @@ void ClientConferenceListEventHandler::unsubscribe() {
 	for (const auto &[key, handlerWkPtr] : handlers) {
 		try {
 			const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
+			handler->setSubscriptionWanted(false);
 			handler->setManagedByListEventhandler(false);
 		} catch (const bad_weak_ptr &) {
 		}
@@ -180,6 +182,7 @@ void ClientConferenceListEventHandler::unsubscribe(const std::shared_ptr<Account
 			const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
 			const ConferenceId &conferenceId = handler->getConferenceId();
 			if (identityAddress->weakEqual(*conferenceId.getLocalAddress())) {
+				handler->setSubscriptionWanted(false);
 				handler->setManagedByListEventhandler(false);
 			}
 		} catch (const bad_weak_ptr &) {
@@ -223,9 +226,16 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 			auto handler = findHandler(id);
 			if (!handler) return;
 
+			const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
 			handler->notifyReceived(*notifyContent);
 			if (handler->getInitialSubscriptionUnderWayFlag()) {
 				handler->setInitialSubscriptionUnderWayFlag(!levFound);
+			}
+			if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
+				auto conference = dynamic_pointer_cast<ClientConference>(handler->getConference());
+				if (conference) {
+					conference->sendPendingMessages();
+				}
 			}
 			return;
 		}
@@ -253,15 +263,23 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 
 			if (contentType == ContentType::Multipart) handler->multipartNotifyReceived(content);
 			else if (contentType == ContentType::ConferenceInfo) handler->notifyReceived(content);
+		}
 
-			for (const auto &[key, handlerWkPtr] : handlers) {
-				try {
-					const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
+		// Remove subscription underway flag from all handlers matching the account that sent the subscription
+		for (const auto &[key, handlerWkPtr] : handlers) {
+			try {
+				const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
+				const ConferenceId &conferenceId = handler->getConferenceId();
+				if (from->weakEqual(*conferenceId.getLocalAddress())) {
 					if (handler->getInitialSubscriptionUnderWayFlag()) {
 						handler->setInitialSubscriptionUnderWayFlag(!levFound);
 					}
-				} catch (const bad_weak_ptr &) {
+					auto conference = dynamic_pointer_cast<ClientConference>(handler->getConference());
+					if (conference) {
+						conference->sendPendingMessages();
+					}
 				}
+			} catch (const bad_weak_ptr &) {
 			}
 		}
 	}

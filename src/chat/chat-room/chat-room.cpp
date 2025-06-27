@@ -309,7 +309,7 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage(ChatMessage::Direction direc
 	return message;
 }
 
-Address ChatRoom::getImdnChatRoomPeerAddress(const shared_ptr<ChatMessage> &message) const {
+std::optional<Address> ChatRoom::getImdnChatRoomPeerAddress(const shared_ptr<ChatMessage> &message) const {
 	const auto messageParticipants = static_cast<int>(message->getParticipantsState().size());
 	const auto imdnParticipantThreshold = getCore()->getImdnToEverybodyThreshold();
 	std::shared_ptr<Address> peerAddress;
@@ -319,7 +319,10 @@ Address ChatRoom::getImdnChatRoomPeerAddress(const shared_ptr<ChatMessage> &mess
 		// An IMDN for an outgoing message would be sent to ourself
 		peerAddress = message->getFromAddress();
 	}
-	return peerAddress ? peerAddress->getUriWithoutGruu() : Address();
+	if (peerAddress) {
+		return peerAddress->getUriWithoutGruu();
+	}
+	return std::nullopt;
 }
 
 std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_ptr<Address> peerAddress) {
@@ -367,14 +370,14 @@ list<shared_ptr<ImdnMessage>> ChatRoom::createImdnMessages(const list<shared_ptr
 		std::map<Address, MessagePair> messagesByImdnChatRoom;
 		for (const auto &message : deliveredMessages) {
 			auto peerAddress = getImdnChatRoomPeerAddress(message);
-			if (peerAddress.isValid()) {
-				messagesByImdnChatRoom[peerAddress].deliveredMessages.push_back(message);
+			if (peerAddress.has_value()) {
+				messagesByImdnChatRoom[*peerAddress].deliveredMessages.push_back(message);
 			}
 		}
 		for (const auto &message : displayedMessages) {
 			auto peerAddress = getImdnChatRoomPeerAddress(message);
-			if (peerAddress.isValid()) {
-				messagesByImdnChatRoom[peerAddress].displayedMessages.push_back(message);
+			if (peerAddress.has_value()) {
+				messagesByImdnChatRoom[*peerAddress].displayedMessages.push_back(message);
 			}
 		}
 		for (const auto &[peerAddress, messagePair] : messagesByImdnChatRoom) {
@@ -385,15 +388,15 @@ list<shared_ptr<ImdnMessage>> ChatRoom::createImdnMessages(const list<shared_ptr
 	} else {
 		for (const auto &message : deliveredMessages) {
 			auto peerAddress = getImdnChatRoomPeerAddress(message);
-			if (peerAddress.isValid()) {
-				imdns.push_back(shared_ptr<ImdnMessage>(new ImdnMessage(getImdnChatRoom(Address::create(peerAddress)),
+			if (peerAddress.has_value()) {
+				imdns.push_back(shared_ptr<ImdnMessage>(new ImdnMessage(getImdnChatRoom(Address::create(*peerAddress)),
 				                                                        {message}, list<shared_ptr<ChatMessage>>())));
 			}
 		}
 		for (const auto &message : displayedMessages) {
 			auto peerAddress = getImdnChatRoomPeerAddress(message);
-			if (peerAddress.isValid()) {
-				imdns.push_back(shared_ptr<ImdnMessage>(new ImdnMessage(getImdnChatRoom(Address::create(peerAddress)),
+			if (peerAddress.has_value()) {
+				imdns.push_back(shared_ptr<ImdnMessage>(new ImdnMessage(getImdnChatRoom(Address::create(*peerAddress)),
 				                                                        list<shared_ptr<ChatMessage>>(), {message})));
 			}
 		}
@@ -408,8 +411,8 @@ list<shared_ptr<ImdnMessage>> ChatRoom::createImdnMessages(const list<Imdn::Mess
 		std::map<Address, std::list<Imdn::MessageReason>> messagesByImdnChatRoom;
 		for (const auto &messageReason : nonDeliveredMessages) {
 			auto peerAddress = getImdnChatRoomPeerAddress(messageReason.message);
-			if (peerAddress.isValid()) {
-				messagesByImdnChatRoom[peerAddress].push_back(messageReason);
+			if (peerAddress.has_value()) {
+				messagesByImdnChatRoom[*peerAddress].push_back(messageReason);
 			}
 		}
 		for (const auto &[peerAddress, messageReasons] : messagesByImdnChatRoom) {
@@ -419,9 +422,9 @@ list<shared_ptr<ImdnMessage>> ChatRoom::createImdnMessages(const list<Imdn::Mess
 	} else {
 		for (const auto &messageReason : nonDeliveredMessages) {
 			auto peerAddress = getImdnChatRoomPeerAddress(messageReason.message);
-			if (peerAddress.isValid()) {
+			if (peerAddress.has_value()) {
 				imdns.push_back(shared_ptr<ImdnMessage>(
-				    new ImdnMessage(getImdnChatRoom(Address::create(peerAddress)), {messageReason})));
+				    new ImdnMessage(getImdnChatRoom(Address::create(*peerAddress)), {messageReason})));
 			}
 		}
 	}

@@ -68,6 +68,8 @@ public:
 	unsigned int getLastNotify() const;
 	void requestFullState();
 
+	void setSubscriptionWanted(bool wanted);
+
 	void setInitialSubscriptionUnderWayFlag(bool on);
 	bool getInitialSubscriptionUnderWayFlag() const;
 
@@ -99,7 +101,6 @@ protected:
 	bool initialSubscriptionUnderWay = false;
 
 private:
-	void setSubscriptionWanted(bool wanted);
 	void unsubscribePrivate();
 	void updateInitialSubcriptionUnderWay(std::shared_ptr<Event> notifyLev);
 	time_t dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const;

@@ -40,18 +40,18 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
                                      LinphoneChatRoom *senderCr,
                                      LinphoneChatRoom *recipientCr,
                                      const std::string basicText,
-                                     const int noMsg) {
+                                     const size_t noMsg) {
 
 	bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 	coresList = bctbx_list_append(coresList, sender.getLc());
 	coresList = bctbx_list_append(coresList, recipient.getLc());
 
 	bctbx_list_t *senderHistory = linphone_chat_room_get_history(senderCr, 0);
-	auto initialSenderMessages = (int)bctbx_list_size(senderHistory);
+	auto initialSenderMessages = bctbx_list_size(senderHistory);
 	bctbx_list_free_with_data(senderHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 
 	bctbx_list_t *recipientHistory = linphone_chat_room_get_history(recipientCr, 0);
-	auto initialRecipientMessages = (int)bctbx_list_size(recipientHistory);
+	auto initialRecipientMessages = bctbx_list_size(recipientHistory);
 	bctbx_list_free_with_data(recipientHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 
 	int initialUnreadMessages = linphone_chat_room_get_unread_messages_count(recipientCr);
@@ -61,17 +61,21 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
 
 	std::list<LinphoneChatMessage *> messages;
 	// Marie sends messages
-	for (int i = 0; i < noMsg; i++) {
+	for (size_t i = 0; i < noMsg; i++) {
 		const std::string text = basicText + std::to_string(i);
 		messages.push_back(_send_message_ephemeral(senderCr, text.c_str(), TRUE));
 	}
 
-	senderHistory = linphone_chat_room_get_history(senderCr, 0);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(senderHistory), (noMsg + initialSenderMessages), int, "%i");
+	auto expectedSenderHistoryCount = (noMsg + initialSenderMessages);
+	BC_ASSERT_TRUE(
+	    CoreManagerAssert({focus, sender, recipient}).wait([&senderHistory, &expectedSenderHistoryCount, senderCr] {
+		    senderHistory = linphone_chat_room_get_history(senderCr, 0);
+		    return (bctbx_list_size(senderHistory) == expectedSenderHistoryCount);
+	    }));
 	set_ephemeral_cbs(senderHistory);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient.getStats().number_of_LinphoneMessageReceived,
-	                             recipient_stat.number_of_LinphoneMessageReceived + noMsg, 11000));
+	                             recipient_stat.number_of_LinphoneMessageReceived + static_cast<int>(noMsg), 11000));
 
 	// Check that the message has been delivered to Pauline
 	for (const auto &msg : messages) {
@@ -81,46 +85,58 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
 	}
 
 	BC_ASSERT_TRUE(CoreManagerAssert({focus, sender, recipient}).wait([&, recipientCr] {
-		return linphone_chat_room_get_unread_messages_count(recipientCr) == (noMsg + initialUnreadMessages);
+		return linphone_chat_room_get_unread_messages_count(recipientCr) ==
+		       (static_cast<int>(noMsg) + initialUnreadMessages);
 	}));
 
-	recipientHistory = linphone_chat_room_get_history(recipientCr, 0);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(recipientHistory), (noMsg + initialRecipientMessages), int, "%i");
+	auto expectedRecipientHistoryCount = (noMsg + initialRecipientMessages);
+	BC_ASSERT_TRUE(CoreManagerAssert({focus, sender, recipient})
+	                   .wait([&recipientHistory, &expectedRecipientHistoryCount, recipientCr] {
+		                   recipientHistory = linphone_chat_room_get_history(recipientCr, 0);
+		                   return (bctbx_list_size(recipientHistory) == expectedRecipientHistoryCount);
+	                   }));
+	BC_ASSERT_EQUAL(bctbx_list_size(recipientHistory), expectedRecipientHistoryCount, size_t, "%zu");
 	set_ephemeral_cbs(recipientHistory);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &sender.getStats().number_of_LinphoneMessageDeliveredToUser,
-	                             sender_stat.number_of_LinphoneMessageDeliveredToUser + noMsg,
+	                             sender_stat.number_of_LinphoneMessageDeliveredToUser + static_cast<int>(noMsg),
 	                             liblinphone_tester_sip_timeout));
 
 	// Pauline marks the message as read, check that the state is now displayed on Marie's side
 	linphone_chat_room_mark_as_read(recipientCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &sender.getStats().number_of_LinphoneMessageDisplayed,
-	                             sender_stat.number_of_LinphoneMessageDisplayed + noMsg,
+	                             sender_stat.number_of_LinphoneMessageDisplayed + static_cast<int>(noMsg),
 	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &sender.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             sender_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg,
+	                             sender_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + static_cast<int>(noMsg),
 	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             recipient_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg,
-	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(coresList, &recipient.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted,
+	                  recipient_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + static_cast<int>(noMsg),
+	                  liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &sender.getStats().number_of_LinphoneMessageEphemeralTimerStarted,
-	                             sender_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg,
+	                             sender_stat.number_of_LinphoneMessageEphemeralTimerStarted + static_cast<int>(noMsg),
 	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient.getStats().number_of_LinphoneMessageEphemeralTimerStarted,
-	                             recipient_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg,
-	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(coresList, &recipient.getStats().number_of_LinphoneMessageEphemeralTimerStarted,
+	                  recipient_stat.number_of_LinphoneMessageEphemeralTimerStarted + static_cast<int>(noMsg),
+	                  liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &sender.getStats().number_of_LinphoneChatRoomEphemeralDeleted,
-	                             sender_stat.number_of_LinphoneChatRoomEphemeralDeleted + noMsg, 15000));
+	                             sender_stat.number_of_LinphoneChatRoomEphemeralDeleted + static_cast<int>(noMsg),
+	                             15000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient.getStats().number_of_LinphoneChatRoomEphemeralDeleted,
-	                             recipient_stat.number_of_LinphoneChatRoomEphemeralDeleted + noMsg, 15000));
+	                             recipient_stat.number_of_LinphoneChatRoomEphemeralDeleted + static_cast<int>(noMsg),
+	                             15000));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &sender.getStats().number_of_LinphoneMessageEphemeralDeleted,
-	                             sender_stat.number_of_LinphoneMessageEphemeralDeleted + noMsg, 15000));
+	                             sender_stat.number_of_LinphoneMessageEphemeralDeleted + static_cast<int>(noMsg),
+	                             15000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient.getStats().number_of_LinphoneMessageEphemeralDeleted,
-	                             recipient_stat.number_of_LinphoneMessageEphemeralDeleted + noMsg, 15000));
+	                             recipient_stat.number_of_LinphoneMessageEphemeralDeleted + static_cast<int>(noMsg),
+	                             15000));
 
 	bctbx_list_free_with_data(recipientHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 	bctbx_list_free_with_data(senderHistory, (bctbx_list_free_func)linphone_chat_message_unref);
@@ -129,9 +145,9 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
 	CoreManagerAssert({focus, sender, recipient}).waitUntil(chrono::seconds(2), [] { return false; });
 
 	recipientHistory = linphone_chat_room_get_history(recipientCr, 0);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(recipientHistory), initialRecipientMessages, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(recipientHistory), initialRecipientMessages, size_t, "%zu");
 	senderHistory = linphone_chat_room_get_history(senderCr, 0);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(senderHistory), initialSenderMessages, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(senderHistory), initialSenderMessages, size_t, "%zu");
 
 	for (auto &msg : messages) {
 		linphone_chat_message_unref(msg);
@@ -690,7 +706,7 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddr.toC()));
 
 		const char *initialSubject = "Colleagues (characters: $ £ çà)";
-		int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
+		int participantsAddressesSize = static_cast<int>(bctbx_list_size(participantsAddresses));
 		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie.getLc());
 
 		linphone_chat_room_params_enable_encryption(params, encrypted);
@@ -1478,7 +1494,7 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 			simparams.mode = OrtpNetworkSimulatorOutbound;
 			simparams.enabled = TRUE;
 			simparams.max_bandwidth = 430000; /*we first limit to 430 kbit/s*/
-			simparams.max_buffer_size = (int)simparams.max_bandwidth;
+			simparams.max_buffer_size = static_cast<int>(simparams.max_bandwidth);
 			simparams.latency = 60;
 			simparams.loss_rate = 90;
 			linphone_core_set_network_simulator_params(pauline.getLc(), &simparams);

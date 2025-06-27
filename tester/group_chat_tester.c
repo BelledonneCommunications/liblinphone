@@ -381,13 +381,12 @@ void _configure_core_for_conference(LinphoneCoreManager *lcm, const LinphoneAddr
 }
 
 void _configure_core_for_audio_video_conference(LinphoneCoreManager *lcm, const LinphoneAddress *factoryAddr) {
-	if (factoryAddr) {
-		LinphoneAccount *account = linphone_core_get_default_account(lcm->lc);
-		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
-		linphone_account_params_set_audio_video_conference_factory_address(params, factoryAddr);
-		linphone_account_set_params(account, params);
-		linphone_account_params_unref(params);
-	}
+	LinphoneAccount *account = linphone_core_get_default_account(lcm->lc);
+	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+	linphone_account_params_set_conference_factory_address(params, factoryAddr);
+	linphone_account_params_set_audio_video_conference_factory_address(params, factoryAddr);
+	linphone_account_set_params(account, params);
+	linphone_account_params_unref(params);
 }
 
 void configure_core_for_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {

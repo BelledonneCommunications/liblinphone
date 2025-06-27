@@ -232,7 +232,7 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> aggregatedMessages;
 
 protected:
-	Address getImdnChatRoomPeerAddress(const std::shared_ptr<ChatMessage> &message) const;
+	std::optional<Address> getImdnChatRoomPeerAddress(const std::shared_ptr<ChatMessage> &message) const;
 	std::shared_ptr<AbstractChatRoom> getImdnChatRoom(const std::shared_ptr<Address> peerAddress);
 	std::shared_ptr<ChatMessage> getMessageFromSal(SalOp *op, const SalMessage *message);
 	explicit ChatRoom(const std::shared_ptr<Core> &core, const std::shared_ptr<Conference> &conf = nullptr);

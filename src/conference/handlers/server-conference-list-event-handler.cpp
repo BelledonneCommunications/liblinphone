@@ -104,7 +104,6 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 	Xsd::Rlmi::List::ResourceSequence resources;
 
 	// Parse resource list
-	bool noContent = true;
 	list<Content> contents;
 	istringstream data(xmlBody);
 	unique_ptr<Xsd::ResourceLists::ResourceLists> rl;
@@ -153,7 +152,6 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 			auto content = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
 			if (content->isEmpty()) continue;
 
-			noContent = false;
 			char token[17];
 			belle_sip_random_token(token, sizeof(token));
 			content->addHeader("Content-Id", token);
@@ -169,8 +167,6 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 			resources.push_back(resource);
 		}
 	}
-
-	if (noContent) return;
 
 	Xsd::Rlmi::List rlmiList("", 0, TRUE);
 	rlmiList.setResource(resources);

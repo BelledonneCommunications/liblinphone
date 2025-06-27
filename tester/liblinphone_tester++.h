@@ -163,6 +163,7 @@ public:
 
 	void configureCoreForConference(const LinphonePrivate::Address &factoryUri) {
 		_configure_core_for_conference(mMgr.get(), factoryUri.toC());
+		linphone_config_set_bool(linphone_core_get_config(getLc()), "chat", "send_message_after_notify", 1);
 	}
 	void setupMgrForConference(const char *conferenceVersion = nullptr) {
 		setup_mgr_for_conference(mMgr.get(), conferenceVersion);
@@ -212,6 +213,8 @@ public:
 	ClientCoreManager(std::string rc, LinphonePrivate::Address factoryUri)
 	    : ConfCoreManager(rc, [this, factoryUri](bool) {
 		      configureCoreForConference(factoryUri);
+		      linphone_config_set_bool(linphone_core_get_config(getLc()), "chat", "send_message_after_notify", 0);
+		      linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "delay_message_send_s", 2);
 		      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
 		      setupMgrForConference();
 		      LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
@@ -226,46 +229,47 @@ public:
 	ClientCoreManager(std::string rc,
 	                  const LinphonePrivate::Address factoryUri,
 	                  const std::vector<lime::CurveId> &algoList)
-	    : ConfCoreManager(rc,
-	                      [this, factoryUri, algoList](bool initialRun) {
-		                      configureCoreForConference(factoryUri);
-		                      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
-		                      setupMgrForConference();
-		                      LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-		                      linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
-		                      linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
-		                      linphone_core_add_callbacks(getLc(), cbs);
-		                      linphone_core_cbs_unref(cbs);
-		                      linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(getLc()));
-		                      // At first execution, we must use the algoList captured because it is not yet stored in
-		                      // the derived class properties Then use the properties one so we can modify it before a
-		                      // restart
-		                      std::vector<lime::CurveId> actualAlgoList;
-		                      if (initialRun) {
-			                      actualAlgoList = algoList;
-		                      } else {
-			                      actualAlgoList = m_limeAlgoList;
-		                      }
+	    : ConfCoreManager(
+	          rc,
+	          [this, factoryUri, algoList](bool initialRun) {
+		          configureCoreForConference(factoryUri);
+		          linphone_config_set_bool(linphone_core_get_config(getLc()), "chat", "send_message_after_notify", 0);
+		          linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "delay_message_send_s", 2);
+		          _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
+		          setupMgrForConference();
+		          LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		          linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
+		          linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
+		          linphone_core_add_callbacks(getLc(), cbs);
+		          linphone_core_cbs_unref(cbs);
+		          linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(getLc()));
+		          // At first execution, we must use the algoList captured because it is not yet stored in
+		          // the derived class properties Then use the properties one so we can modify it before a
+		          // restart
+		          std::vector<lime::CurveId> actualAlgoList;
+		          if (initialRun) {
+			          actualAlgoList = algoList;
+		          } else {
+			          actualAlgoList = m_limeAlgoList;
+		          }
 
-		                      if (!actualAlgoList.empty()) {
-			                      auto algoListString = CurveId2String(actualAlgoList);
-			                      const bctbx_list_t *accountList = linphone_core_get_account_list(getLc());
-			                      while (accountList != NULL) {
-				                      LinphoneAccount *account = (LinphoneAccount *)(accountList->data);
-				                      const LinphoneAccountParams *account_params =
-				                          linphone_account_get_params(account);
-				                      LinphoneAccountParams *new_account_params =
-				                          linphone_account_params_clone(account_params);
-				                      linphone_account_params_set_lime_algo(new_account_params, algoListString.c_str());
-				                      linphone_account_params_set_lime_server_url(
-				                          new_account_params,
-				                          lime_server_url); // Note: this code does not allow to select the lime server
-				                      linphone_account_set_params(account, new_account_params);
-				                      linphone_account_params_unref(new_account_params);
-				                      accountList = accountList->next;
-			                      }
-		                      }
-	                      }),
+		          if (!actualAlgoList.empty()) {
+			          auto algoListString = CurveId2String(actualAlgoList);
+			          const bctbx_list_t *accountList = linphone_core_get_account_list(getLc());
+			          while (accountList != NULL) {
+				          LinphoneAccount *account = (LinphoneAccount *)(accountList->data);
+				          const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+				          LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+				          linphone_account_params_set_lime_algo(new_account_params, algoListString.c_str());
+				          linphone_account_params_set_lime_server_url(
+				              new_account_params,
+				              lime_server_url); // Note: this code does not allow to select the lime server
+				          linphone_account_set_params(account, new_account_params);
+				          linphone_account_params_unref(new_account_params);
+				          accountList = accountList->next;
+			          }
+		          }
+	          }),
 	      m_limeAlgoList(algoList) {
 	}
 	void set_limeAlgoList(std::vector<lime::CurveId> algoList) {

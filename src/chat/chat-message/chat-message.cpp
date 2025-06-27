@@ -1291,8 +1291,13 @@ void ChatMessagePrivate::stopDelayMessageSendTimer() {
 int ChatMessagePrivate::delayMessageSendTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
 	ChatMessagePrivate *msgPrivate = static_cast<ChatMessagePrivate *>(data);
 	msgPrivate->stopDelayMessageSendTimer();
+	msgPrivate->setDelayTimerExpired();
 	msgPrivate->send();
 	return 0;
+}
+
+void ChatMessagePrivate::setDelayTimerExpired() {
+	mDelayTimerExpired = true;
 }
 
 void ChatMessagePrivate::send() {
@@ -1301,6 +1306,7 @@ void ChatMessagePrivate::send() {
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 	if (!chatRoom) return;
 
+	auto ref = q->getSharedFromThis();
 	const auto &meAddress = q->getMeAddress();
 	const auto &chatRoomState = chatRoom->getState();
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
@@ -1312,18 +1318,19 @@ void ChatMessagePrivate::send() {
 	const auto &chatBackend = chatRoomParams->getChatParams()->getBackend();
 	const auto conference = chatRoom->getConference();
 	const auto subscriptionUnderway = conference ? conference->isSubscriptionUnderWay() : false;
-	/*	if ((coreGlobalState != LinphoneGlobalOff) &&
-	        (coreGlobalState != LinphoneGlobalShutdown) && (chatBackend == ChatParams::Backend::FlexisipChat) &&
-	        (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
-	                lInfo() << "Message " << q << " in chat room [" << chatRoom << "] " << chatRoom->getConferenceId()
-	                        << " is being sent while the subscription is underway (actually subscription is"
-	                        << std::string(subscriptionUnderway ? " " : " not ")
-	                        << "underway) or the chat room is not in the created state (actual state "
-	                        << Utils::toString(chatRoomState) << ")";
-	                chatRoom->addPendingMessage(q->getSharedFromThis());
-	        return;
-	    }
-	*/
+	bool sendMessagesAfterNotify =
+	    !!linphone_config_get_bool(linphone_core_get_config(core->getCCore()), "chat", "send_message_after_notify", 0);
+	if (sendMessagesAfterNotify && (coreGlobalState != LinphoneGlobalOff) &&
+	    (coreGlobalState != LinphoneGlobalShutdown) && (chatBackend == ChatParams::Backend::FlexisipChat) &&
+	    (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
+		lInfo() << "Message " << q << " in chat room [" << chatRoom << "] " << chatRoom->getConferenceId()
+		        << " is being sent while the subscription is underway (actually subscription is"
+		        << std::string(subscriptionUnderway ? " " : " not ")
+		        << "underway) or the chat room is not in the created state (actual state "
+		        << Utils::toString(chatRoomState) << ")";
+		chatRoom->addPendingMessage(ref);
+		return;
+	}
 
 	markAsRead();
 	SalOp *op = salOp;
@@ -1334,7 +1341,7 @@ void ChatMessagePrivate::send() {
 	currentSendStep &= ~ChatMessagePrivate::Step::Sent;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
-	chatRoom->addTransientChatMessage(q->getSharedFromThis());
+	chatRoom->addTransientChatMessage(ref);
 
 	if (toBeStored && (currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))) {
 		storeInDb();
@@ -1351,7 +1358,7 @@ void ChatMessagePrivate::send() {
 		}
 	}
 
-	if (!mDelayMessageSendBgTask.hasStarted() && (coreGlobalState != LinphoneGlobalOff) &&
+	if (!sendMessagesAfterNotify && !mDelayTimerExpired && (coreGlobalState != LinphoneGlobalOff) &&
 	    (coreGlobalState != LinphoneGlobalShutdown) && (chatBackend == ChatParams::Backend::FlexisipChat) &&
 	    (subscriptionUnderway || (chatRoomState != ConferenceInterface::State::Created))) {
 		int delayMessageSendS = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()),
@@ -1374,7 +1381,7 @@ void ChatMessagePrivate::send() {
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
 	} else {
-		ChatMessageModifier::Result result = fileTransferChatMessageModifier.encode(q->getSharedFromThis(), errorCode);
+		ChatMessageModifier::Result result = fileTransferChatMessageModifier.encode(ref, errorCode);
 		if (result == ChatMessageModifier::Result::Error) {
 			setParticipantState(meAddress, ChatMessage::State::NotDelivered, ::ms_time(nullptr),
 			                    linphone_error_code_to_reason(errorCode));
@@ -1442,7 +1449,7 @@ void ChatMessagePrivate::send() {
 			} else {
 				if (contents.size() > 1) {
 					MultipartChatMessageModifier mcmm;
-					mcmm.encode(q->getSharedFromThis(), errorCode);
+					mcmm.encode(ref, errorCode);
 				}
 				currentSendStep |= ChatMessagePrivate::Step::Multipart;
 			}
@@ -1458,7 +1465,7 @@ void ChatMessagePrivate::send() {
 				lInfo() << "Cpim step already done, skipping";
 			} else {
 				CpimChatMessageModifier ccmm;
-				ccmm.encode(q->getSharedFromThis(), errorCode);
+				ccmm.encode(ref, errorCode);
 				currentSendStep |= ChatMessagePrivate::Step::Cpim;
 			}
 		} else {
@@ -1474,7 +1481,7 @@ void ChatMessagePrivate::send() {
 			if (!encryptionPrevented) {
 				currentSendStep |= ChatMessagePrivate::Step::Encryption;
 				EncryptionChatMessageModifier ecmm;
-				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
+				ChatMessageModifier::Result result = ecmm.encode(ref, errorCode);
 				if (result == ChatMessageModifier::Result::Error) {
 					sal_error_info_set((SalErrorInfo *)op->getErrorInfo(), SalReasonNotAcceptable, "SIP", errorCode,
 					                   "Unable to encrypt IM", nullptr);
@@ -1483,7 +1490,7 @@ void ChatMessagePrivate::send() {
 					restoreFileTransferContentAsFileContent();
 					setParticipantState(meAddress, ChatMessage::State::NotDelivered, ::ms_time(nullptr),
 					                    linphone_error_code_to_reason(errorCode));
-					chatRoom->removeTransientChatMessage(q->getSharedFromThis());
+					chatRoom->removeTransientChatMessage(ref);
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
 					return;
@@ -1495,7 +1502,7 @@ void ChatMessagePrivate::send() {
 	} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
 		if (!encryptionPrevented) {
 			EncryptionChatMessageModifier ecmm;
-			ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
+			ChatMessageModifier::Result result = ecmm.encode(ref, errorCode);
 			if (result == ChatMessageModifier::Result::Error) {
 				return;
 			}
@@ -1548,7 +1555,7 @@ void ChatMessagePrivate::send() {
 
 	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
 	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
-		chatRoom->removeTransientChatMessage(q->getSharedFromThis());
+		chatRoom->removeTransientChatMessage(ref);
 	}
 
 	string callId = op->getCallId();
@@ -1593,7 +1600,7 @@ void ChatMessagePrivate::send() {
 
 	// Do not notify message sent callback when it's a resend or an IMDN/Composing
 	if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
-		chatRoom->onChatMessageSent(q->getSharedFromThis());
+		chatRoom->onChatMessageSent(ref);
 	}
 }
 

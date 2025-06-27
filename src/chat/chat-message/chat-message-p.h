@@ -254,6 +254,8 @@ public:
 
 	void setAutomaticallyResent(bool enable);
 
+	void setDelayTimerExpired();
+
 	long long storageId = -1;
 
 protected:
@@ -320,6 +322,8 @@ private:
 	bool isEphemeral = false;
 	long ephemeralLifetime = 0;
 	time_t ephemeralExpireTime = 0;
+
+	bool mDelayTimerExpired = false;
 
 	std::list<std::shared_ptr<Content>> contents;
 	mutable std::list<std::shared_ptr<ChatMessageReaction>> reactions;
