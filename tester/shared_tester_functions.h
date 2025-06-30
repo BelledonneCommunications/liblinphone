@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -21,10 +21,34 @@
 #ifndef _SHARED_TESTER_FUNCTIONS_H_
 #define _SHARED_TESTER_FUNCTIONS_H_
 
+#ifdef __cplusplus
+#include <vector>
+#endif
+
 #include "liblinphone_tester.h"
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef __cplusplus
+typedef struct _ZrtpAlgoString ZrtpAlgoString;
+struct _ZrtpAlgoString {
+	const char *cipher_algo = nullptr;          /**< Cipher algorithm */
+	bctbx_list_t *key_agreement_algo = nullptr; /**< Key agreement algorithm */
+	const char *hash_algo = nullptr;            /**< Hash algorithm */
+	const char *auth_tag_algo = nullptr;        /**< Authentication tag algorithm */
+	const char *sas_algo = nullptr;             /**< SAS algorithm */
+};
+typedef struct _ZrtpAlgoRes ZrtpAlgoRes;
+struct _ZrtpAlgoRes {
+	std::vector<int> cipher_algo;        /**< Cipher algorithm */
+	std::vector<int> key_agreement_algo; /**< Key agreement algorithm */
+	std::vector<int> hash_algo;          /**< Hash algorithm */
+	std::vector<int> auth_tag_algo;      /**< Authentication tag algorithm */
+	std::vector<int> sas_algo;           /**< SAS algorithm */
+};
+
 #endif
 
 bool_t check_screen_sharing_sdp(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled);

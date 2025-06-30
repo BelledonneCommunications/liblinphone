@@ -926,7 +926,7 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_lime_server_url(const Li
 /**
  * Set the base(s) x3dh algorithm.
  * accept an ordered comma separated list (without space) of lime base algorithms
- * accepted values are a combinaison of : c25519, c448 and c25519k512
+ * accepted values are a combination of: c25519, c448 and c25519mlk512
  * NULL is also valid, it will unset the value
  * @param params The #LinphoneAccountParams object. @notnil
  * @param algo The x3dh base algorithm. @maybenil

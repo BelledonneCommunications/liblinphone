@@ -33,6 +33,7 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "private.h"
+#include "shared_tester_functions.h"
 #include "tester_utils.h"
 
 #ifdef _WIN32
@@ -41,24 +42,6 @@
 #define F_OK 00 /*visual studio does not define F_OK*/
 #endif
 #endif
-
-typedef struct _ZrtpAlgoString ZrtpAlgoString;
-struct _ZrtpAlgoString {
-	const char *cipher_algo = NULL;          /**< Cipher algorithm */
-	bctbx_list_t *key_agreement_algo = NULL; /**< Key agreement algorithm */
-	const char *hash_algo = NULL;            /**< Hash algorithm */
-	const char *auth_tag_algo = NULL;        /**< Authencation tag algorithm */
-	const char *sas_algo = NULL;             /**< SAS algorithm */
-};
-
-typedef struct _ZrtpAlgoRes ZrtpAlgoRes;
-struct _ZrtpAlgoRes {
-	std::vector<int> cipher_algo;        /**< Cipher algorithm */
-	std::vector<int> key_agreement_algo; /**< Key agreement algorithm */
-	std::vector<int> hash_algo;          /**< Hash algorithm */
-	std::vector<int> auth_tag_algo;      /**< Authencation tag algorithm */
-	std::vector<int> sas_algo;           /**< SAS algorithm */
-};
 
 static void srtp_call_non_zero_tag(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");

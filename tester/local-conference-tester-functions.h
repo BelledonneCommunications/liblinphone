@@ -50,9 +50,9 @@ class Focus;
 /*Core manager acting as a client*/
 class ClientConference : public ConfCoreManager {
 public:
-	ClientConference(std::string rc, Address factoryUri, bool encrypted = false)
+	ClientConference(std::string rc, Address factoryUri, LinphoneTesterLimeAlgo limeAlgo = UNSET)
 	    : ConfCoreManager(rc,
-	                      [this, factoryUri, encrypted](bool) {
+	                      [this, factoryUri, limeAlgo](bool) {
 		                      configureCoreForConference(factoryUri);
 		                      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
 		                      linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
@@ -67,9 +67,7 @@ public:
 		                      linphone_core_cbs_set_message_received(cbs, encrypted_message_received);
 		                      linphone_core_add_callbacks(getLc(), cbs);
 		                      linphone_core_cbs_unref(cbs);
-		                      if (encrypted) {
-			                      set_lime_server_and_curve(C25519, mMgr.get());
-		                      }
+		                      set_lime_server_and_curve(limeAlgo, mMgr.get());
 	                      }),
 	      mFocus(nullptr) {
 	}
@@ -289,7 +287,6 @@ private:
 };
 
 // Chat rooms
-void group_chat_room_server_admin_managed_messages_base(bool_t encrypted);
 void group_chat_room_lime_server_message(bool encrypted);
 void group_chat_room_with_client_restart_base(bool encrypted);
 void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_error, bool encrypted);
@@ -342,7 +339,8 @@ void create_conference_base(time_t start_time,
                             bool_t add_participant_after_end,
                             bool_t version_mismatch,
                             bool_t slow_ice_negotiation,
-                            bool_t enable_chat);
+                            bool_t enable_chat,
+                            LinphoneTesterLimeAlgo lime_algo);
 
 void create_conference_with_screen_sharing_base(time_t start_time,
                                                 int duration,

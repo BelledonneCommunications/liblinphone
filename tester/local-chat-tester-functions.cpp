@@ -192,111 +192,14 @@ bool checkChatroom(Focus &focus, const ConfCoreManager &core, const time_t baseJ
 	return true;
 }
 
-void group_chat_room_server_admin_managed_messages_base(bool_t encrypted) {
-	Focus focus("chloe_rc");
-	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
-
-		focus.registerAsParticipantDevice(marie);
-		focus.registerAsParticipantDevice(pauline);
-
-		linphone_core_set_default_ephemeral_lifetime(marie.getLc(), 25);
-
-		// Enable IMDN
-		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
-		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
-
-		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
-		coresList = bctbx_list_append(coresList, marie.getLc());
-		coresList = bctbx_list_append(coresList, pauline.getLc());
-		Address paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
-
-		stats chloe_stat = focus.getStats();
-		stats marie_stat = marie.getStats();
-		stats pauline_stat = pauline.getStats();
-
-		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues (characters: $ £ çà)";
-		const LinphoneChatRoomEphemeralMode adminMode = LinphoneChatRoomEphemeralModeAdminManaged;
-		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie.getLc());
-
-		linphone_chat_room_params_enable_group(params, FALSE);
-		linphone_chat_room_params_enable_encryption(params, FALSE);
-		linphone_chat_room_params_set_ephemeral_mode(params, adminMode);
-		linphone_chat_room_params_set_ephemeral_lifetime(params, 5);
-		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
-
-		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_params(
-		    coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, params);
-		linphone_chat_room_params_unref(params);
-		BC_ASSERT_PTR_NOT_NULL(marieCr);
-		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-
-		// Check that the chat room is correctly created on Pauline's side and that the participants are added
-		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &pauline_stat,
-		                                                                   confAddr, initialSubject, 1, FALSE);
-
-		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(marieCr), adminMode, int, "%d");
-		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
-		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 5, int, "%d");
-		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(paulineCr), adminMode, int, "%d");
-		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(paulineCr));
-		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 5, int, "%d");
-
-		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
-			for (auto chatRoom : focus.getCore().getChatRooms()) {
-				for (auto participant : chatRoom->getParticipants()) {
-					for (auto device : participant->getDevices())
-						if (device->getState() != ParticipantDevice::State::Present) {
-							return false;
-						}
-				}
-			}
-			return true;
-		}));
-
-		chloe_stat = focus.getStats();
-		marie_stat = marie.getStats();
-		pauline_stat = pauline.getStats();
-
-		constexpr int noMsg = 10;
-		sendEphemeralMessageInAdminMode(focus, marie, pauline, marieCr, paulineCr, "Hello ", noMsg);
-
-		for (auto chatRoom : focus.getCore().getChatRooms()) {
-			for (auto participant : chatRoom->getParticipants()) {
-				//  force deletion by removing devices
-				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
-			}
-		}
-
-		// wait until chatroom is deleted server side
-		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
-			return focus.getCore().getChatRooms().size() == 0;
-		}));
-
-		// wait a bit longer to detect side effect if any
-		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
-
-		// to avoid creation attempt of a new chatroom
-		auto config = focus.getDefaultProxyConfig();
-		linphone_proxy_config_edit(config);
-		linphone_proxy_config_set_conference_factory_uri(config, NULL);
-		linphone_proxy_config_done(config);
-
-		bctbx_list_free(coresList);
-	}
-}
-
 void group_chat_room_with_client_restart_base(bool encrypted) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), encrypted);
+		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(michelle);
@@ -389,7 +292,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			        .waitUntil(chrono::seconds(10), [&focus, &core] { return checkChatroom(focus, core, -1); }));
 		};
 
-		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
 		stats initialMichelle2Stats = michelle2.getStats();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {
@@ -685,12 +588,13 @@ server_core_chat_room_state_changed_sip_error(LinphoneCore *core, LinphoneChatRo
 void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_error, bool encrypted) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
+		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		stats initialFocusStats = focus.getStats();
 		stats initialMarieStats = marie.getStats();
@@ -1345,11 +1249,13 @@ void group_chat_room_lime_server_message(bool encrypted) {
 	Focus focus("chloe_rc");
 	LinphoneChatMessage *msg;
 	{ // to make sure focus is destroyed after clients.
+		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
+
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1485,10 +1391,12 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 	Focus focus("chloe_rc");
 	LinphoneChatMessage *msg;
 	{ // to make sure focus is destroyed after clients.
+		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
+
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

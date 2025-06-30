@@ -32,7 +32,7 @@
 
 namespace LinphoneTest {
 
-static void conference_with_media_lost(void) {
+static void conference_with_media_lost() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -261,14 +261,14 @@ static void conference_with_media_lost(void) {
 	}
 }
 
-static void alone_in_conference_with_chat_exits_enter(void) {
+static void alone_in_conference_with_chat_exits_enter() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), FALSE);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -714,14 +714,14 @@ static void alone_in_conference_with_chat_exits_enter(void) {
 	}
 }
 
-static void conference_with_participants_late_except_one(void) {
+static void conference_with_participants_late_except_one() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), FALSE);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1086,7 +1086,7 @@ static void conference_with_participants_late_except_one(void) {
 	}
 }
 
-static void call_to_inexisting_conference_address(void) {
+static void call_to_inexisting_conference_address() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -1119,7 +1119,7 @@ static void call_to_inexisting_conference_address(void) {
 	}
 }
 
-static void create_conference_on_unresponsive_server(void) {
+static void create_conference_on_unresponsive_server() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -1225,13 +1225,11 @@ static void create_conference_on_unresponsive_server(void) {
 static void create_simple_conference_db_conference_scheduler_base(bool_t server_restart) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		bool_t enable_lime = FALSE;
-
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1512,24 +1510,22 @@ static void create_simple_conference_db_conference_scheduler_base(bool_t server_
 	}
 }
 
-static void create_simple_conference_db_conference_scheduler(void) {
+static void create_simple_conference_db_conference_scheduler() {
 	create_simple_conference_db_conference_scheduler_base(FALSE);
 }
 
-static void create_simple_conference_db_conference_scheduler_server_restart(void) {
+static void create_simple_conference_db_conference_scheduler_server_restart() {
 	create_simple_conference_db_conference_scheduler_base(TRUE);
 }
 
-static void schedule_simple_conference_db_conference_scheduler(void) {
+static void schedule_simple_conference_db_conference_scheduler() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		bool_t enable_lime = FALSE;
-
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1677,209 +1673,209 @@ static void schedule_simple_conference_db_conference_scheduler(void) {
 	}
 }
 
-static void create_simple_conference(void) {
+static void create_simple_conference() {
 	create_conference_base(ms_time(NULL), 1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_simple_point_to_point_encrypted_conference(void) {
+static void create_simple_point_to_point_encrypted_conference() {
 	create_conference_base(
 	    ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE,
 	    LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
 	    LinphoneConferenceSecurityLevelPointToPoint, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener},
-	    FALSE, FALSE, FALSE, FALSE);
+	    FALSE, FALSE, FALSE, FALSE, UNSET);
 }
 
-static void create_simple_conference_with_server_restart(void) {
+static void create_simple_conference_with_server_restart() {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_simple_conference_with_client_restart(void) {
+static void create_simple_conference_with_client_restart() {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       TRUE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_simple_zrtp_conference(void) {
+static void create_simple_zrtp_conference() {
 	create_conference_base(
 	    ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionZRTP, TRUE,
 	    LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly,
 	    FALSE, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener},
-	    FALSE, FALSE, FALSE, FALSE);
+	    FALSE, FALSE, FALSE, FALSE, UNSET);
 }
 
-static void create_simple_dtls_conference(void) {
+static void create_simple_dtls_conference() {
 	create_conference_base(
 	    ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionDTLS, TRUE,
 	    LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly,
 	    FALSE, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener},
-	    FALSE, FALSE, FALSE, FALSE);
+	    FALSE, FALSE, FALSE, FALSE, UNSET);
 }
 
-static void create_simple_srtp_conference(void) {
+static void create_simple_srtp_conference() {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_conference_with_chat_only_speakers_and_uninvited_participant(void) {
+static void create_conference_with_chat_only_speakers_and_uninvited_participant() {
 	create_conference_base(
 	    ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, TRUE,
 	    LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv,
-	    FALSE, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker}, FALSE, FALSE, FALSE, TRUE);
+	    FALSE, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker}, FALSE, FALSE, FALSE, TRUE, UNSET);
 }
 
-static void create_conference_with_only_listeners_and_uninvited_participant(void) {
+static void create_conference_with_only_listeners_and_uninvited_participant() {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE, FALSE);
+	                       {LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE, FALSE, UNSET);
 }
 
-static void create_conference_with_uninvited_participant(void) {
+static void create_conference_with_uninvited_participant() {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_conference_with_uninvited_participant_added_after_end(void) {
+static void create_conference_with_uninvited_participant_added_after_end() {
 	create_conference_base(ms_time(NULL), 1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, TRUE, LinphoneConferenceSecurityLevelNone,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, TRUE, FALSE, FALSE,
-	                       FALSE);
+	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, TRUE, FALSE, FALSE, FALSE,
+	                       UNSET);
 }
 
-static void create_conference_with_uninvited_participant_not_allowed(void) {
+static void create_conference_with_uninvited_participant_not_allowed() {
 	create_conference_base(
 	    ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE,
 	    LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv,
 	    FALSE, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener},
-	    FALSE, FALSE, FALSE, FALSE);
+	    FALSE, FALSE, FALSE, FALSE, UNSET);
 }
 
-static void create_conference_starting_immediately(void) {
+static void create_conference_starting_immediately() {
 	create_conference_base(ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_conference_starting_in_the_past(void) {
+static void create_conference_starting_in_the_past() {
 	create_conference_base(
 	    ms_time(NULL) - 640, 11, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE, LinphoneMediaEncryptionNone,
 	    FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
 	    LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
-	    {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE, FALSE);
+	    {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE, FALSE, UNSET);
 }
 
-static void create_simple_conference_with_audio_only_participant(void) {
+static void create_simple_conference_with_audio_only_participant() {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_conference_with_audio_only_and_uninvited_participant(void) {
+static void create_conference_with_audio_only_and_uninvited_participant() {
 	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_simple_conference_with_audio_only_participant_enabling_video(void) {
+static void create_simple_conference_with_audio_only_participant_enabling_video() {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE,
 	                       FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE, LinphoneConferenceSecurityLevelNone,
 	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener}, FALSE, FALSE, FALSE,
-	                       FALSE);
+	                       FALSE, UNSET);
 }
 
-static void create_conference_with_late_participant_addition(void) {
+static void create_conference_with_late_participant_addition() {
 	create_conference_with_late_participant_addition_base(ms_time(NULL), -1, LinphoneConferenceLayoutGrid,
 	                                                      LinphoneConferenceParticipantListTypeClosed, TRUE, TRUE,
 	                                                      LinphoneConferenceSecurityLevelNone);
 }
 
-static void create_conference_with_late_participant_addition_declined(void) {
+static void create_conference_with_late_participant_addition_declined() {
 	create_conference_with_late_participant_addition_base(ms_time(NULL), -1, LinphoneConferenceLayoutActiveSpeaker,
 	                                                      LinphoneConferenceParticipantListTypeClosed, FALSE, TRUE,
 	                                                      LinphoneConferenceSecurityLevelNone);
 }
 
-static void create_simple_conference_with_screen_sharing(void) {
+static void create_simple_conference_with_screen_sharing() {
 	create_conference_with_screen_sharing_base(ms_time(NULL), -1, LinphoneMediaEncryptionNone,
 	                                           LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE,
 	                                           LinphoneMediaDirectionSendRecv, LinphoneConferenceSecurityLevelNone,
 	                                           {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
-static void create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screensharing(void) {
+static void create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screensharing() {
 	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
 	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
 }
 
-static void create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screensharing(void) {
+static void create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screensharing() {
 	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
 	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
 }
 
-static void create_simple_conference_with_screen_sharing_override(void) {
+static void create_simple_conference_with_screen_sharing_override() {
 	create_conference_with_screen_sharing_base(
 	    ms_time(NULL), -1, LinphoneMediaEncryptionZRTP, LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE,
 	    LinphoneMediaDirectionSendOnly, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker});
 }
 
-static void create_simple_conference_with_screen_sharing_turn_off(void) {
+static void create_simple_conference_with_screen_sharing_turn_off() {
 	create_conference_with_screen_sharing_base(
 	    ms_time(NULL), -1, LinphoneMediaEncryptionZRTP, LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, TRUE,
 	    LinphoneMediaDirectionSendOnly, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker});
 }
 
-static void create_simple_conference_with_screen_sharing_override_no_camera(void) {
+static void create_simple_conference_with_screen_sharing_override_no_camera() {
 	create_conference_with_screen_sharing_base(
 	    ms_time(NULL), -1, LinphoneMediaEncryptionZRTP, LinphoneConferenceLayoutActiveSpeaker, TRUE, FALSE, FALSE,
 	    LinphoneMediaDirectionSendOnly, LinphoneConferenceSecurityLevelNone, {LinphoneParticipantRoleSpeaker});
 }
 
-static void create_simple_conference_with_screen_sharing_grid_layout(void) {
+static void create_simple_conference_with_screen_sharing_grid_layout() {
 	create_conference_with_screen_sharing_base(ms_time(NULL), -1, LinphoneMediaEncryptionNone,
 	                                           LinphoneConferenceLayoutGrid, TRUE, TRUE, FALSE,
 	                                           LinphoneMediaDirectionSendRecv, LinphoneConferenceSecurityLevelNone,
 	                                           {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
-static void create_simple_conference_with_screen_sharing_no_video(void) {
+static void create_simple_conference_with_screen_sharing_no_video() {
 	create_conference_with_screen_sharing_base(ms_time(NULL), -1, LinphoneMediaEncryptionNone,
 	                                           LinphoneConferenceLayoutActiveSpeaker, FALSE, TRUE, FALSE,
 	                                           LinphoneMediaDirectionSendRecv, LinphoneConferenceSecurityLevelNone,
 	                                           {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
-static void create_simple_conference_with_screen_sharing_no_video_send_component(void) {
+static void create_simple_conference_with_screen_sharing_no_video_send_component() {
 	create_conference_with_screen_sharing_base(
 	    ms_time(NULL), -1, LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE,
 	    LinphoneMediaDirectionRecvOnly, LinphoneConferenceSecurityLevelPointToPoint,
 	    {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
-static void participant_joins_simple_conference_with_screen_sharing(void) {
+static void participant_joins_simple_conference_with_screen_sharing() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -2338,7 +2334,7 @@ static void participant_joins_simple_conference_with_screen_sharing(void) {
 	}
 }
 
-static void conference_with_screen_sharing_enabled_since_the_start(void) {
+static void conference_with_screen_sharing_enabled_since_the_start() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -2784,7 +2780,7 @@ static void conference_with_screen_sharing_enabled_since_the_start(void) {
 	}
 }
 
-static void conference_with_two_participant_having_screen_sharing_enabled_since_the_start(void) {
+static void conference_with_two_participant_having_screen_sharing_enabled_since_the_start() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -3206,7 +3202,7 @@ static void conference_with_two_participant_having_screen_sharing_enabled_since_
 	}
 }
 
-static void conference_with_screen_sharing_participant_only(void) {
+static void conference_with_screen_sharing_participant_only() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -3631,15 +3627,15 @@ static void conference_with_screen_sharing_participant_only(void) {
 	}
 }
 
-static void organizer_schedule_two_conferences(void) {
+static void organizer_schedule_two_conferences() {
 	two_overlapping_conferences_base(TRUE, FALSE);
 }
 
-static void two_overlapping_scheduled_conferences_from_different_organizers(void) {
+static void two_overlapping_scheduled_conferences_from_different_organizers() {
 	two_overlapping_conferences_base(FALSE, FALSE);
 }
 
-static void create_conference_with_audio_only_participants(void) {
+static void create_conference_with_audio_only_participants() {
 	create_conference_with_audio_only_participants_base(LinphoneConferenceSecurityLevelNone);
 }
 
@@ -4823,11 +4819,11 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 	}
 }
 
-static void create_conference_with_organizer_codec_mismatch(void) {
+static void create_conference_with_organizer_codec_mismatch() {
 	create_conference_with_codec_mismatch_base(TRUE);
 }
 
-static void create_conference_with_participant_codec_mismatch(void) {
+static void create_conference_with_participant_codec_mismatch() {
 	create_conference_with_codec_mismatch_base(FALSE);
 }
 
@@ -5169,11 +5165,11 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 	}
 }
 
-static void create_conference_with_server_restart_organizer_first(void) {
+static void create_conference_with_server_restart_organizer_first() {
 	create_conference_with_server_restart_base(TRUE);
 }
 
-static void create_conference_with_server_restart_participant_first(void) {
+static void create_conference_with_server_restart_participant_first() {
 	create_conference_with_server_restart_base(FALSE);
 }
 
@@ -5461,15 +5457,15 @@ static void create_simple_conference_with_participant_no_label_base(LinphoneConf
 	}
 }
 
-static void create_simple_conference_with_participant_no_label_grid(void) {
+static void create_simple_conference_with_participant_no_label_grid() {
 	create_simple_conference_with_participant_no_label_base(LinphoneConferenceLayoutGrid);
 }
 
-static void create_simple_conference_with_participant_no_label_active_speaker(void) {
+static void create_simple_conference_with_participant_no_label_active_speaker() {
 	create_simple_conference_with_participant_no_label_base(LinphoneConferenceLayoutActiveSpeaker);
 }
 
-static void create_simple_conference_with_update_deferred(void) {
+static void create_simple_conference_with_update_deferred() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -5977,23 +5973,23 @@ static void create_simple_conference_with_update_deferred(void) {
 	}
 }
 
-static void change_active_speaker(void) {
+static void change_active_speaker() {
 	change_active_speaker_base(false);
 }
 
-static void one_participant_conference_toggles_video_grid(void) {
+static void one_participant_conference_toggles_video_grid() {
 	create_one_participant_conference_toggle_video_base(LinphoneConferenceLayoutGrid, FALSE, FALSE);
 }
 
-static void one_participant_conference_toggles_video_active_speaker(void) {
+static void one_participant_conference_toggles_video_active_speaker() {
 	create_one_participant_conference_toggle_video_base(LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE);
 }
 
-static void create_scheduled_conference_with_active_call(void) {
+static void create_scheduled_conference_with_active_call() {
 	create_conference_with_active_call_base(FALSE);
 }
 
-static void rejoining_conference_after_expiration_before_cleanup(void) {
+static void rejoining_conference_after_expiration_before_cleanup() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -6524,31 +6520,31 @@ static void conference_with_participant_dialing_in_outside_valid_time_slot(bool_
 	}
 }
 
-static void conference_with_participants_dialing_in_after_end(void) {
+static void conference_with_participants_dialing_in_after_end() {
 	conference_with_participant_dialing_in_outside_valid_time_slot(FALSE, 0, 0);
 }
 
-static void conference_with_participants_dialing_in_before_start(void) {
+static void conference_with_participants_dialing_in_before_start() {
 	conference_with_participant_dialing_in_outside_valid_time_slot(TRUE, 0, 0);
 }
 
-static void create_scheduled_conference_joined_after_end(void) {
+static void create_scheduled_conference_joined_after_end() {
 	conference_with_participant_dialing_in_outside_valid_time_slot(FALSE, 0, 100);
 }
 
-static void create_scheduled_conference_joined_before_start(void) {
+static void create_scheduled_conference_joined_before_start() {
 	conference_with_participant_dialing_in_outside_valid_time_slot(TRUE, 100, 0);
 }
 
-static void create_always_available_scheduled_conference_joined_before_start(void) {
+static void create_always_available_scheduled_conference_joined_before_start() {
 	conference_with_participant_dialing_in_outside_valid_time_slot(TRUE, -1, 0);
 }
 
-static void create_never_ending_scheduled_conference_joined_after_end(void) {
+static void create_never_ending_scheduled_conference_joined_after_end() {
 	conference_with_participant_dialing_in_outside_valid_time_slot(FALSE, 0, -1);
 }
 
-static void uninvited_participant_rejoins(void) {
+static void uninvited_participant_rejoins() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -7228,11 +7224,11 @@ static void rejoining_conference_after_end(int cleanup_window) {
 	}
 }
 
-static void rejoining_conference_after_end_with_cleanup_window(void) {
+static void rejoining_conference_after_end_with_cleanup_window() {
 	rejoining_conference_after_end(10);
 }
 
-static void rejoining_conference_after_end_without_cleanup_window(void) {
+static void rejoining_conference_after_end_without_cleanup_window() {
 	rejoining_conference_after_end(-1);
 }
 
@@ -7242,7 +7238,7 @@ static void on_eof(LinphonePlayer *player) {
 	mgr->stat.number_of_player_eof++;
 }
 
-static void create_simple_conference_in_sfu_payload_mode(void) {
+static void create_simple_conference_in_sfu_payload_mode() {
 	char *pauline_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_pauline.wav");
 	char *marie_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_marie.wav");
 	char *pauline_dummy_recordpath = bc_tester_file("record-local_scheduled_conference_sfu_pauline_dummy.wav");
@@ -7620,27 +7616,27 @@ static void create_simple_conference_in_sfu_payload_mode(void) {
 	bc_free(soundpath);
 }
 
-static void create_conference_with_chat(void) {
+static void create_conference_with_chat() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, 1, TRUE, FALSE, FALSE,
 	                                 ms_time(NULL), FALSE);
 }
 
-static void create_point_to_point_encrypted_conference_with_chat(void) {
+static void create_point_to_point_encrypted_conference_with_chat() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, FALSE, TRUE, -1, TRUE, FALSE,
 	                                 FALSE, ms_time(NULL), FALSE);
 }
 
-static void create_conference_with_chat_and_participant_rejoining(void) {
+static void create_conference_with_chat_and_participant_rejoining() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, TRUE, -1, TRUE, TRUE, FALSE,
 	                                 ms_time(NULL), FALSE);
 }
 
-static void create_conference_with_chat_and_cores_restart(void) {
+static void create_conference_with_chat_and_cores_restart() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, TRUE, TRUE, TRUE, 1, FALSE, FALSE, FALSE,
 	                                 ms_time(NULL), TRUE);
 }
 
-static void create_conference_with_chat_network_drops_and_participant_rejoining(void) {
+static void create_conference_with_chat_network_drops_and_participant_rejoining() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelNone, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
 	                                 ms_time(NULL), FALSE);
 }
@@ -7663,8 +7659,9 @@ static void handle_ekt_plugin_missing_error(LinphoneConferenceScheduler *schedul
 static void failure_in_creating_end_to_end_encrypted_conference_ekt_plugin_missing() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		LinphoneTest::ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), TRUE);
-		LinphoneTest::ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), TRUE);
+		const LinphoneTesterLimeAlgo lime_algo = C25519;
+		LinphoneTest::ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		LinphoneTest::ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -7766,16 +7763,17 @@ static void failure_in_creating_end_to_end_encrypted_conference_ekt_plugin_missi
 }
 #endif // HAVE_EKT_SERVER_PLUGIN
 
-static void create_conference_with_chat_with_server_restarted_before_conference_expires(void) {
+static void create_conference_with_chat_with_server_restarted_before_conference_expires() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -8281,11 +8279,11 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 	}
 }
 
-static void conference_joined_multiple_times(void) {
+static void conference_joined_multiple_times() {
 	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, 1);
 }
 
-static void conference_with_chat_joined_multiple_times(void) {
+static void conference_with_chat_joined_multiple_times() {
 	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelNone, TRUE, 1);
 }
 

@@ -56,10 +56,11 @@ void create_transfer_conference_base(time_t start_time,
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		// Record files, each participant gets a different input file so we can check manually the mix is actually
 		// performed
@@ -484,42 +485,42 @@ void create_transfer_conference_base(time_t start_time,
 	                                layout, security_level, audio_transfer, video_transfer);
 }
 
-static void create_audio_transfer_conference(void) {
+static void create_audio_transfer_conference() {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionNone, LinphoneConferenceLayoutGrid,
 	                                LinphoneConferenceSecurityLevelNone, true, false);
 }
 
-static void create_video_transfer_conference(void) {
+static void create_video_transfer_conference() {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionNone, LinphoneConferenceLayoutActiveSpeaker,
 	                                LinphoneConferenceSecurityLevelNone, true, true);
 }
 
 #ifdef HAVE_EKT_SERVER_PLUGIN
-static void create_audio_video_encrypted_conference_multi_encrypt(void) {
+static void create_audio_video_encrypted_conference_multi_encrypt() {
 	create_transfer_conference_base(
 	    ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	    {LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS},
 	    LinphoneConferenceLayoutActiveSpeaker, LinphoneConferenceSecurityLevelEndToEnd, true, true);
 }
 
-static void create_audio_video_encrypted_conference(void) {
+static void create_audio_video_encrypted_conference() {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionSRTP, LinphoneConferenceLayoutActiveSpeaker,
 	                                LinphoneConferenceSecurityLevelEndToEnd, true, true);
 }
 #endif // HAVE_EKT_SERVER_PLUGIN
 
-static void create_video_transfer_conference_active_speaker_changed(void) {
+static void create_video_transfer_conference_active_speaker_changed() {
 	change_active_speaker_base(true);
 }
 
-static void conference_joined_in_early_media(void) {
+static void conference_joined_in_early_media() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), FALSE);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), FALSE);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
 		// A B2BUA doesn't have a factory address
 		LinphoneAccount *account = linphone_core_get_default_account(focus.getLc());

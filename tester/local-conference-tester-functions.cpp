@@ -1472,16 +1472,21 @@ void create_conference_base(time_t start_time,
                             bool_t add_participant_after_end,
                             bool_t version_mismatch,
                             bool_t use_relay_ice_candidates,
-                            bool_t enable_chat) {
+                            bool_t enable_chat,
+                            LinphoneTesterLimeAlgo lime_algo) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo_to_use = enable_lime ? lime_algo : UNSET;
+		if (enable_lime && lime_algo_to_use == UNSET) {
+			ms_fatal("Lime is enabled but no lime algo is specified.");
+		}
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo_to_use);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo_to_use);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo_to_use);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo_to_use);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo_to_use);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1538,6 +1543,19 @@ void create_conference_base(time_t start_time,
 
 			if (do_not_use_proxy) {
 				linphone_core_set_default_proxy_config(mgr->lc, NULL);
+			}
+
+			if (lime_algo == C25519MLK512 || lime_algo == C448MLK1024) {
+				ZrtpAlgoString mgrAlgo;
+				bctbx_list_t *ka_list = nullptr;
+				if (lime_algo == C25519MLK512) {
+					ka_list = bctbx_list_append(ka_list, (void *)(intptr_t)(LinphoneZrtpKeyAgreementK255Mlk512));
+				} else {
+					ka_list = bctbx_list_append(ka_list, (void *)(intptr_t)(LinphoneZrtpKeyAgreementK448Mlk1024));
+				}
+				mgrAlgo.key_agreement_algo = ka_list;
+				linphone_core_set_zrtp_key_agreement_suites(mgr->lc, mgrAlgo.key_agreement_algo);
+				bctbx_list_free(ka_list);
 			}
 
 			// Enable ICE at the account level but not at the core level
@@ -4293,12 +4311,13 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -5507,12 +5526,13 @@ void create_conference_with_screen_sharing_chat_base(time_t start_time,
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -6301,6 +6321,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 	Focus focus("chloe_dual_proxy_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 		// Create conference on the server using an account that is not the default one
 		LinphoneAccount *focus_default_account = linphone_core_get_default_account(focus.getLc());
 		LinphoneAccount *focus_conference_account = NULL;
@@ -6326,11 +6347,11 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 		    linphone_account_params_get_conference_factory_address(focus_account_params);
 		Address focus_conference_factory = *Address::toCpp(factory_uri);
 		// Change the conference factory of Marie only
-		ClientConference marie("marie_rc", focus_conference_factory, enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus_conference_factory, lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -7238,11 +7259,12 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -8474,11 +8496,12 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -11202,9 +11225,10 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool is_encrypted = (security_level == LinphoneConferenceSecurityLevelEndToEnd);
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), is_encrypted);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), is_encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), is_encrypted);
+		const LinphoneTesterLimeAlgo lime_algo = is_encrypted ? C25519 : UNSET;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -11944,14 +11968,15 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 		// Cannot send ICS in dial out conferences
 		bool_t send_ics = FALSE;
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -12878,11 +12903,12 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -13444,12 +13470,13 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (securityLevel == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
+		const LinphoneTesterLimeAlgo lime_algo = enable_lime ? C25519 : UNSET;
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

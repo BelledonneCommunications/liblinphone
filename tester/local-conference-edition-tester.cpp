@@ -29,17 +29,15 @@
 
 namespace LinphoneTest {
 
-static void edit_and_cancel_simple_conference_db_conference_scheduler(void) {
+static void edit_and_cancel_simple_conference_db_conference_scheduler() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		bool_t enable_lime = FALSE;
-
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), enable_lime);
-		ClientConference lise("lise_rc", focus.getConferenceFactoryAddress(), enable_lime);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
+		ClientConference lise("lise_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1278,36 +1276,36 @@ static void edit_simple_conference_base(bool_t from_organizer,
 	}
 }
 
-static void organizer_edits_simple_conference(void) {
+static void organizer_edits_simple_conference() {
 	edit_simple_conference_base(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, LinphoneConferenceSecurityLevelNone, FALSE,
 	                            FALSE);
 }
-static void organizer_edits_simple_conference_using_different_account(void) {
+static void organizer_edits_simple_conference_using_different_account() {
 	edit_simple_conference_base(TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneConferenceSecurityLevelNone, FALSE,
 	                            FALSE);
 }
 
-static void organizer_edits_simple_conference_while_active(void) {
+static void organizer_edits_simple_conference_while_active() {
 	edit_simple_conference_base(TRUE, TRUE, FALSE, TRUE, TRUE, FALSE, LinphoneConferenceSecurityLevelNone, FALSE,
 	                            FALSE);
 }
 
-static void participant_edits_simple_conference(void) {
+static void participant_edits_simple_conference() {
 	edit_simple_conference_base(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, LinphoneConferenceSecurityLevelNone, FALSE,
 	                            FALSE);
 }
 
-static void participant_edits_simple_conference_using_different_account(void) {
+static void participant_edits_simple_conference_using_different_account() {
 	edit_simple_conference_base(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, LinphoneConferenceSecurityLevelNone, FALSE,
 	                            FALSE);
 }
 
-static void organizer_edits_simple_conference_with_server_restart(void) {
+static void organizer_edits_simple_conference_with_server_restart() {
 	edit_simple_conference_base(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, LinphoneConferenceSecurityLevelNone, FALSE,
 	                            FALSE);
 }
 
-static void conference_edition_with_participant_role_changed(void) {
+static void conference_edition_with_participant_role_changed() {
 	edit_simple_conference_base(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, LinphoneConferenceSecurityLevelNone, TRUE, TRUE);
 }
 
@@ -1316,10 +1314,11 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 	{ // to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), true);
-		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), true);
-		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), true);
-		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), true);
+		const LinphoneTesterLimeAlgo lime_algo = C25519;
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1729,11 +1728,11 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 	}
 }
 
-static void conference_edition_with_simultaneous_participant_add_remove(void) {
+static void conference_edition_with_simultaneous_participant_add_remove() {
 	conference_edition_with_simultaneous_participant_add_remove_base(FALSE);
 }
 
-static void conference_edition_with_organizer_codec_mismatch(void) {
+static void conference_edition_with_organizer_codec_mismatch() {
 	conference_edition_with_simultaneous_participant_add_remove_base(TRUE);
 }
 
@@ -2228,23 +2227,23 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 	}
 }
 
-static void conference_cancelled_through_edit(void) {
+static void conference_cancelled_through_edit() {
 	conference_cancelled_through_edit_base(FALSE, FALSE, FALSE);
 }
 
-static void zrtp_conference_cancelled_through_edit(void) {
+static void zrtp_conference_cancelled_through_edit() {
 	conference_cancelled_through_edit_base(FALSE, TRUE, FALSE);
 }
 
-static void create_conference_with_server_restart_conference_cancelled(void) {
+static void create_conference_with_server_restart_conference_cancelled() {
 	conference_cancelled_through_edit_base(TRUE, FALSE, FALSE);
 }
 
-static void conference_cancelled_through_edit_after_joining(void) {
+static void conference_cancelled_through_edit_after_joining() {
 	conference_cancelled_through_edit_base(FALSE, FALSE, TRUE);
 }
 
-static void conference_cancelled_through_edit_while_active(void) {
+static void conference_cancelled_through_edit_while_active() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
