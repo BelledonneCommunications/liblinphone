@@ -718,10 +718,6 @@ JNIEXPORT void JNICALL Java_org_linphone_core_ParticipantDeviceImpl_setNativeVid
 	linphone_participant_device_set_native_video_window_id(cptr, (void *)id);
 }
 
-JNIEXPORT jobject JNICALL Java_org_linphone_core_FactoryImpl_getCore(JNIEnv *env, jobject thiz, jlong ptr, jlong lcPtr) {
-	return getCore(env, (LinphoneCore*)lcPtr, TRUE, FALSE);
-}
-
 JNIEXPORT jlong JNICALL Java_org_linphone_core_FactoryImpl_init(JNIEnv *env, jobject thiz, jlong ptr) {
 	return (jlong)linphone_factory_get();
 }

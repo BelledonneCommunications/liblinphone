@@ -140,8 +140,6 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
      */
     abstract public void enableLogcatLogs(boolean enable);
 
-    abstract public Core getCore(long ptr);
-
 {{/isLinphoneFactory}}
 {{#isLinphoneCore}}
     /**
@@ -257,12 +255,6 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
         System.loadLibrary("linphone");
         Version.dumpCapabilities();
 {{/isAndroid}}
-    }
-
-    private native Core getCore(long nativePtr, long ptr);
-    @Override
-    public Core getCore(long ptr) {
-        return getCore(nativePtr, ptr);
     }
 
     @Override
