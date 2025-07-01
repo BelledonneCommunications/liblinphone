@@ -414,61 +414,66 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress());
 
 		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
-		const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
-		if (chatRoomId >= 0) {
-			// The chat room is already stored in DB, but still update the notify id and the flags that might have
-			// changed
-			lInfo() << "Update chat room in database: " << conferenceId << ".";
-			*dbSession.getBackendSession() << "UPDATE chat_room SET"
-			                                  " last_notify_id = :lastNotifyId, "
-			                                  " flags = :flags "
-			                                  " WHERE id = :chatRoomId",
-			    soci::use(notifyId), soci::use(flags), soci::use(chatRoomId);
-		} else {
+		try {
+			const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
+			if (chatRoomId >= 0) {
+				// The chat room is already stored in DB, but still update the notify id and the flags that might have
+				// changed
+				lInfo() << "Update chat room in database: " << conferenceId << ".";
+				*dbSession.getBackendSession() << "UPDATE chat_room SET"
+								  " last_notify_id = :lastNotifyId, "
+								  " flags = :flags "
+								  " WHERE id = :chatRoomId",
+				    soci::use(notifyId), soci::use(flags), soci::use(chatRoomId);
+			} else {
 
-			lInfo() << "Insert new chat room in database: " << conferenceId << ".";
+				lInfo() << "Insert new chat room in database: " << conferenceId << ".";
 
-			auto creationTime = dbSession.getTimeWithSociIndicator(chatRoom->getCreationTime());
-			auto lastUpdateTime = dbSession.getTimeWithSociIndicator(chatRoom->getLastUpdateTime());
+				auto creationTime = dbSession.getTimeWithSociIndicator(chatRoom->getCreationTime());
+				auto lastUpdateTime = dbSession.getTimeWithSociIndicator(chatRoom->getLastUpdateTime());
 
-			// Remove capabilities like `Proxy`.
-			const int &capabilities =
-			    chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
+				// Remove capabilities like `Proxy`.
+				const int &capabilities =
+				    chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
 
-			const string &subject = chatRoom->getUtf8Subject();
-			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
-			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
-			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
-			                                  "  peer_sip_address_id, local_sip_address_id, creation_time,"
-			                                  "  last_update_time, capabilities, subject, flags, last_notify_id, "
-			                                  "ephemeral_enabled, ephemeral_messages_lifetime"
-			                                  ") VALUES ("
-			                                  "  :peerSipAddressId, :localSipAddressId, :creationTime,"
-			                                  "  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, "
-			                                  ":ephemeralEnabled, :ephemeralLifeTime"
-			                                  ")",
-			    soci::use(peerSipAddressId), soci::use(localSipAddressId),
-			    soci::use(creationTime.first, creationTime.second),
-			    soci::use(lastUpdateTime.first, lastUpdateTime.second), soci::use(capabilities), soci::use(subject),
-			    soci::use(flags), soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
+				const string &subject = chatRoom->getUtf8Subject();
+				int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
+				long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
+				*dbSession.getBackendSession() << "INSERT INTO chat_room ("
+								  "  peer_sip_address_id, local_sip_address_id, creation_time,"
+								  "  last_update_time, capabilities, subject, flags, last_notify_id, "
+								  "ephemeral_enabled, ephemeral_messages_lifetime"
+								  ") VALUES ("
+								  "  :peerSipAddressId, :localSipAddressId, :creationTime,"
+								  "  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, "
+								  ":ephemeralEnabled, :ephemeralLifeTime"
+								  ")",
+				    soci::use(peerSipAddressId), soci::use(localSipAddressId),
+				    soci::use(creationTime.first, creationTime.second),
+				    soci::use(lastUpdateTime.first, lastUpdateTime.second), soci::use(capabilities), soci::use(subject),
+				    soci::use(flags), soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
 
-			chatRoomId = dbSession.getLastInsertId();
+				chatRoomId = dbSession.getLastInsertId();
+			}
+			// Do not add 'me' when creating a server-group-chat-room.
+			if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
+				shared_ptr<Participant> me = chatRoom->getMe();
+				long long meId = insertChatRoomParticipant(chatRoomId, insertSipAddress(me->getAddress()), me->isAdmin());
+				for (const auto &device : me->getDevices())
+					insertChatRoomParticipantDevice(meId, device);
+			}
+
+			for (const auto &participant : chatRoom->getParticipants()) {
+				long long participantId = insertChatRoomParticipant(chatRoomId, insertSipAddress(participant->getAddress()),
+										    participant->isAdmin());
+				for (const auto &device : participant->getDevices())
+					insertChatRoomParticipantDevice(participantId, device);
+			}
+		} catch (const soci::soci_error &e) {
+			lInfo() << "Caught SOCI exception " << e.what() << " when inserting or updating chat room " << chatRoom << " (id " << chatRoomId << ")";
+		} catch (...) {
+			lInfo() << "Caught C++ exception when inserting or updating chat room " << chatRoom << " (id " << chatRoomId << ")";
 		}
-		// Do not add 'me' when creating a server-group-chat-room.
-		if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
-			shared_ptr<Participant> me = chatRoom->getMe();
-			long long meId = insertChatRoomParticipant(chatRoomId, insertSipAddress(me->getAddress()), me->isAdmin());
-			for (const auto &device : me->getDevices())
-				insertChatRoomParticipantDevice(meId, device);
-		}
-
-		for (const auto &participant : chatRoom->getParticipants()) {
-			long long participantId = insertChatRoomParticipant(chatRoomId, insertSipAddress(participant->getAddress()),
-			                                                    participant->isAdmin());
-			for (const auto &device : participant->getDevices())
-				insertChatRoomParticipantDevice(participantId, device);
-		}
-
 		return chatRoomId;
 	}
 #endif
@@ -598,74 +603,79 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 
 	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressId);
 	ConferenceInfo::participant_list_t dbParticipantList;
-	if (conferenceInfoId >= 0) {
-		// The conference info is already stored in DB, but still update it some information might have changed
-		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
-		if (oldConferenceInfo) {
-			dbParticipantList = oldConferenceInfo->getParticipants();
+	try {
+		if (conferenceInfoId >= 0) {
+			// The conference info is already stored in DB, but still update it some information might have changed
+			lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
+			if (oldConferenceInfo) {
+				dbParticipantList = oldConferenceInfo->getParticipants();
+			}
+
+			*dbSession.getBackendSession() << "UPDATE conference_info SET"
+							  "  organizer_sip_address_id = :organizerSipAddressId,"
+							  "  start_time = :startTime,"
+							  "  duration = :duration,"
+							  "  subject = :subject,"
+							  "  description = :description,"
+							  "  state = :state,"
+							  "  ics_sequence = :sequence,"
+							  "  ics_uid = :uid,"
+							  "  security_level = :security_level"
+							  " WHERE id = :conferenceInfoId",
+			    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
+			    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
+			    soci::use(security_level), soci::use(conferenceInfoId);
+		} else {
+			lInfo() << "Insert new conference info in database.";
+
+			*dbSession.getBackendSession() << "INSERT INTO conference_info ("
+							  "  organizer_sip_address_id, uri_sip_address_id, start_time, duration, "
+							  "subject, description, state, ics_sequence, ics_uid, security_level"
+							  ") VALUES ("
+							  "  :organizerSipAddressId, :uriSipAddressId, :startTime, :duration, "
+							  ":subject, :description, :state, :sequence, :uid, :security_level"
+							  ")",
+			    soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second),
+			    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
+			    soci::use(uid), soci::use(security_level);
+
+			conferenceInfoId = dbSession.getLastInsertId();
 		}
 
-		*dbSession.getBackendSession() << "UPDATE conference_info SET"
-		                                  "  organizer_sip_address_id = :organizerSipAddressId,"
-		                                  "  start_time = :startTime,"
-		                                  "  duration = :duration,"
-		                                  "  subject = :subject,"
-		                                  "  description = :description,"
-		                                  "  state = :state,"
-		                                  "  ics_sequence = :sequence,"
-		                                  "  ics_uid = :uid,"
-		                                  "  security_level = :security_level"
-		                                  " WHERE id = :conferenceInfoId",
-		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
-		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
-		    soci::use(security_level), soci::use(conferenceInfoId);
-	} else {
-		lInfo() << "Insert new conference info in database.";
+		const auto &participantList = conferenceInfo->getParticipants();
+		const bool isOrganizerAParticipant =
+		    std::find_if(participantList.cbegin(), participantList.cend(), [&organizerAddress](const auto &info) {
+			    return organizerAddress->weakEqual(*info->getAddress());
+		    }) != participantList.cend();
+		insertOrUpdateConferenceInfoOrganizer(conferenceInfoId, organizerSipAddressId, organizer->getAllParameters(),
+						      isOrganizerAParticipant);
 
-		*dbSession.getBackendSession() << "INSERT INTO conference_info ("
-		                                  "  organizer_sip_address_id, uri_sip_address_id, start_time, duration, "
-		                                  "subject, description, state, ics_sequence, ics_uid, security_level"
-		                                  ") VALUES ("
-		                                  "  :organizerSipAddressId, :uriSipAddressId, :startTime, :duration, "
-		                                  ":subject, :description, :state, :sequence, :uid, :security_level"
-		                                  ")",
-		    soci::use(organizerSipAddressId), soci::use(uriSipAddressId), soci::use(startTime.first, startTime.second),
-		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
-		    soci::use(uid), soci::use(security_level);
-
-		conferenceInfoId = dbSession.getLastInsertId();
-	}
-
-	const auto &participantList = conferenceInfo->getParticipants();
-	const bool isOrganizerAParticipant =
-	    std::find_if(participantList.cbegin(), participantList.cend(), [&organizerAddress](const auto &info) {
-		    return organizerAddress->weakEqual(*info->getAddress());
-	    }) != participantList.cend();
-	insertOrUpdateConferenceInfoOrganizer(conferenceInfoId, organizerSipAddressId, organizer->getAllParameters(),
-	                                      isOrganizerAParticipant);
-
-	for (const auto &participantInfo : participantList) {
-		const auto participantAddress = participantInfo->getAddress();
-		insertOrUpdateConferenceInfoParticipant(conferenceInfoId, participantInfo, false,
-		                                        participantAddress->weakEqual(*organizerAddress), true);
-	}
-
-	for (const auto &oldParticipantInfo : dbParticipantList) {
-		const bool deleted =
-		    (std::find_if(participantList.cbegin(), participantList.cend(), [&oldParticipantInfo](const auto &p) {
-			     return (p->getAddress()->weakEqual(*oldParticipantInfo->getAddress()));
-		     }) == participantList.cend());
-		if (deleted) {
-			const auto participantAddress = oldParticipantInfo->getAddress();
-			const auto &isOrganizer = participantAddress->weakEqual(*organizerAddress);
-			// If the participant to be deleted is the organizer, do not change the participant information parameters
-			const auto &info = isOrganizer ? organizer : oldParticipantInfo;
-			insertOrUpdateConferenceInfoParticipant(conferenceInfoId, info, true, isOrganizer, true);
+		for (const auto &participantInfo : participantList) {
+			const auto participantAddress = participantInfo->getAddress();
+			insertOrUpdateConferenceInfoParticipant(conferenceInfoId, participantInfo, false,
+								participantAddress->weakEqual(*organizerAddress), true);
 		}
+
+		for (const auto &oldParticipantInfo : dbParticipantList) {
+			const bool deleted =
+			    (std::find_if(participantList.cbegin(), participantList.cend(), [&oldParticipantInfo](const auto &p) {
+				     return (p->getAddress()->weakEqual(*oldParticipantInfo->getAddress()));
+			     }) == participantList.cend());
+			if (deleted) {
+				const auto participantAddress = oldParticipantInfo->getAddress();
+				const auto &isOrganizer = participantAddress->weakEqual(*organizerAddress);
+				// If the participant to be deleted is the organizer, do not change the participant information parameters
+				const auto &info = isOrganizer ? organizer : oldParticipantInfo;
+				insertOrUpdateConferenceInfoParticipant(conferenceInfoId, info, true, isOrganizer, true);
+			}
+		}
+
+		cache(conferenceInfo, conferenceInfoId);
+	} catch (const soci::soci_error &e) {
+		lInfo() << "Caught SOCI exception " << e.what() << " when inserting or updating confererence information " << conferenceInfo << " (id " << conferenceInfoId << ")";
+	} catch (...) {
+		lInfo() << "Caught C++ exception when inserting or updating confererence information " << conferenceInfo << " (id " << conferenceInfoId << ")";
 	}
-
-	cache(conferenceInfo, conferenceInfoId);
-
 	return conferenceInfoId;
 #else
 	return -1;

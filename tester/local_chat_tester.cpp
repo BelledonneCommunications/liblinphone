@@ -64,7 +64,7 @@ static void group_chat_room_creation_server(void) {
 		                                                                 confAddr, initialSubject, 2, FALSE);
 
 		// Marie now changes the subject
-		const char *newSubject = "Let's go drink a beer #party";
+		const char *newSubject = "Let's go drink a beer #party #Zoë";
 		linphone_chat_room_set_subject(marieCr, newSubject);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_subject_changed,
 		                             initialMarieStats.number_of_subject_changed + 1, liblinphone_tester_sip_timeout));
