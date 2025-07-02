@@ -136,6 +136,10 @@ public class DeviceUtils {
 		try {
 			NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 			NotificationManager.Policy policy = notificationManager.getNotificationPolicy();
+			if (policy == null) {
+				Log.e("[Device Utils] NotificationManager Policy object is null!");
+				return false;
+			}
 			return policy.priorityCallSenders == NotificationManager.Policy.PRIORITY_SENDERS_STARRED;
 		} catch (SecurityException se) {
 			Log.e("[Device Utils] Can't check notification policy: " + se);
