@@ -6350,7 +6350,21 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 		}
 
-		for (const auto &chatRoomRow : chatRoomRows) {
+		// Because of SOCI limitation, we cannot loops twice on previous query
+		static const string idsQuery = "SELECT id, capabilities FROM chat_room";
+		soci::rowset<soci::row> idsRows = (session->prepare << idsQuery);
+		list<long long> dbChatRoomIds;
+		for (auto &row : idsRows) {
+			int capabilities = row.get<int>(1);
+			shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
+			const auto backend = params->getChatParams()->getBackend();
+			if (backend == ChatParams::Backend::FlexisipChat) {
+				const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
+				dbChatRoomIds.push_back(dbChatRoomId);
+			}
+		}
+		auto allChatRoomParticipants = selectChatRoomParticipants(dbChatRoomIds);
+		for (auto &chatRoomRow : chatRoomRows) {
 			if (!typeHasBeenSet) {
 				unreadMessageCountType = chatRoomRow.get_properties(12).get_data_type();
 				typeHasBeenSet = true;
@@ -6401,7 +6415,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 #ifdef HAVE_ADVANCED_IM
 				const auto &localAddress = conferenceId.getLocalAddress();
 				unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
-				list<shared_ptr<Participant>> participants = selectChatRoomParticipants(dbChatRoomId);
+				list<shared_ptr<Participant>> participants = allChatRoomParticipants[dbChatRoomId];
 				const auto meIt =
 				    std::find_if(participants.begin(), participants.end(), [&localAddress](const auto &participant) {
 					    return (participant->getAddress()->weakEqual(*localAddress));
@@ -6878,50 +6892,106 @@ void MainDb::updateChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 #endif
 }
 
+// TODO optimization: if still slow with many chat rooms:
+// - join 2 requests into 1
+// - make search from a vector of chat room ids and do only one request.
 list<shared_ptr<Participant>> MainDb::selectChatRoomParticipants(const long long chatRoomId) const {
-	list<shared_ptr<Participant>> participants;
+	list<long long> ids;
+	ids.push_back(chatRoomId);
+	auto participants = MainDb::selectChatRoomParticipants(ids);
+	return participants.size() > 0 ? participants.begin()->second : list<shared_ptr<Participant>>();
+}
+
+map<long long, list<shared_ptr<Participant>>>
+MainDb::selectChatRoomParticipants(const list<long long> &chatRoomIds) const {
+	map<long long, list<shared_ptr<Participant>>> allParticipants;
+	map<long long, list<long long>> allParticipantsIds;
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	if (isInitialized()) {
+		ostringstream chatRoomIdsStr, participantIdsStr;
+		bool first = true;
+		for (const auto &id : chatRoomIds) {
+			if (first) {
+				chatRoomIdsStr << id;
+				first = false;
+			} else chatRoomIdsStr << "," << id;
+		}
 		soci::session *session = d->dbSession.getBackendSession();
-		static const string participantQuery =
-		    "SELECT chat_room_participant.id, sip_address.value, is_admin FROM sip_address, chat_room, "
-		    "chat_room_participant WHERE chat_room.id = :chatRoomId AND sip_address.id = "
+		const string participantQuery =
+		    "SELECT chat_room_participant.id, sip_address.value, is_admin, chat_room.id FROM sip_address, chat_room, "
+		    "chat_room_participant WHERE chat_room.id IN(" +
+		    chatRoomIdsStr.str() +
+		    ") AND sip_address.id = "
 		    "chat_room_participant.participant_sip_address_id AND chat_room_participant.chat_room_id = "
 		    "chat_room.id";
 
 		// Fetch participants.
-		soci::rowset<soci::row> participantRows = (session->prepare << participantQuery, soci::use(chatRoomId));
+		const soci::rowset<soci::row> participantRows = (session->prepare << participantQuery);
+		first = true;
+		long long lastId = -1;
+		list<shared_ptr<Participant>> *lastParticipant = nullptr;
+		list<long long> *lastParticipantId = nullptr;
 		for (const auto &participantRow : participantRows) {
+			const long long &participantId = d->dbSession.resolveId(participantRow, 0);
+			const long long &chatRoomId = d->dbSession.resolveId(participantRow, 3);
 			shared_ptr<Participant> participant =
 			    Participant::create(Address::create(participantRow.get<string>(1), true));
 			participant->setAdmin(!!participantRow.get<int>(2));
+			if (lastId != chatRoomId) {
+				lastId = chatRoomId;
+				lastParticipant = &allParticipants[chatRoomId];
+				lastParticipantId = &allParticipantsIds[chatRoomId];
+			}
+			lastParticipant->push_back(participant);
+			lastParticipantId->push_back(participantId);
 
+			if (first) {
+				participantIdsStr << participantId;
+				first = false;
+			} else participantIdsStr << "," << participantId;
+		}
+		if (!first) {
 			// Fetch devices.
-			{
-				const long long &participantId = d->dbSession.resolveId(participantRow, 0);
-				static const string deviceQuery =
-				    "SELECT sip_address.value, state, name, joining_time, joining_method FROM "
-				    "chat_room_participant_device, sip_address WHERE chat_room_participant_id = :participantId AND "
-				    "participant_device_sip_address_id = sip_address.id";
-
-				soci::rowset<soci::row> deviceRows = (session->prepare << deviceQuery, soci::use(participantId));
-				for (const auto &deviceRow : deviceRows) {
-					shared_ptr<ParticipantDevice> device = participant->addDevice(
-					    Address::create(deviceRow.get<string>(0), true), deviceRow.get<string>(2, ""));
-					device->setState(ParticipantDevice::State(static_cast<unsigned int>(deviceRow.get<int>(1, 0))),
-					                 false);
-					device->setJoiningMethod(
-					    ParticipantDevice::JoiningMethod(static_cast<unsigned int>(deviceRow.get<int>(4, 0))));
-					time_t joiningTime = d->dbSession.getTime(deviceRow, 3);
-					device->setTimeOfJoining(joiningTime);
+			string deviceQuery =
+			    "SELECT sip_address.value, state, name, joining_time, joining_method, chat_room_participant_id FROM "
+			    "chat_room_participant_device, sip_address WHERE chat_room_participant_id IN( " +
+			    participantIdsStr.str() +
+			    " ) AND "
+			    "participant_device_sip_address_id = sip_address.id";
+			// const soci::rowset<soci::row> deviceRows = (session->prepare << deviceQuery, soci::use(participantIds));
+			const soci::rowset<soci::row> deviceRows = (session->prepare << deviceQuery);
+			for (const auto &deviceRow : deviceRows) {
+				const long long &participantId = d->dbSession.resolveId(deviceRow, 5);
+				auto sipAddress = deviceRow.get<string>(0);
+				auto state = deviceRow.get<int>(1, 0);
+				auto name = deviceRow.get<string>(2, "");
+				const time_t joiningTime = d->dbSession.getTime(deviceRow, 3);
+				auto joiningMethod = deviceRow.get<int>(4, 0);
+				auto allParticipantsIdsIt = allParticipantsIds.begin();
+				for (auto participants = allParticipants.begin(); participants != allParticipants.end();
+				     ++participants, ++allParticipantsIdsIt) {
+					// auto &allParticipantsIdsIt = allParticipantsIds[participants->first];
+					auto participantPos =
+					    std::find_if(allParticipantsIdsIt->second.begin(), allParticipantsIdsIt->second.end(),
+					                 [participantId](const long long &id) { return id == participantId; });
+					if (participantPos != allParticipantsIdsIt->second.end()) {
+						auto participantIt = participants->second.begin();
+						advance(participantIt, distance(allParticipantsIdsIt->second.begin(), participantPos));
+						const auto participant = *participantIt;
+						shared_ptr<ParticipantDevice> device =
+						    participant->addDevice(Address::create(sipAddress, true), name);
+						device->setState(ParticipantDevice::State(static_cast<unsigned int>(state)), false);
+						device->setJoiningMethod(
+						    ParticipantDevice::JoiningMethod(static_cast<unsigned int>(joiningMethod)));
+						device->setTimeOfJoining(joiningTime);
+					}
 				}
 			}
-			participants.push_back(participant);
 		}
 	}
 #endif
-	return participants;
+	return allParticipants;
 }
 
 list<shared_ptr<Participant>>

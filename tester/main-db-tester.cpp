@@ -431,6 +431,7 @@ static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
 		if (ms <= expectedDurationMs) break;
 		bctbx_sleep_ms(1000); // perhaps disk I/O was already too busy, retry one more time a bit later.
 	}
+	ms_message("load_a_lot_of_chatrooms(): Last duration time:  %li", ms);
 	BC_ASSERT_LOWER(ms, expectedDurationMs, long, "%li");
 }
 
