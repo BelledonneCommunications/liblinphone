@@ -2566,7 +2566,7 @@ bool ServerConference::removeParticipant(const std::shared_ptr<Participant> &par
 				mainDb->deleteChatRoomParticipant(serverGroupChatRoom, participant->getAddress());
 			}
 
-			if (!hasAdminLeft()) chooseAnotherAdminIfNoneInConference();
+			if (!hasAdminLeft()) chooseAnotherAdminIfNoneInConference(participant);
 		}
 #endif // HAVE_ADVANCED_IM
 	}
@@ -2586,16 +2586,35 @@ void ServerConference::setParticipantAdminStatus(const shared_ptr<Participant> &
 	}
 }
 
-void ServerConference::chooseAnotherAdminIfNoneInConference() {
+void ServerConference::chooseAnotherAdminIfNoneInConference(const std::shared_ptr<Participant> &exceptParticipant) {
 	if ((!mConfParams->chatEnabled() || (mConfParams->chatEnabled() && mConfParams->isGroup())) &&
 	    !mParticipants.empty()) {
-		const auto adminParticipant = std::find_if(mParticipants.cbegin(), mParticipants.cend(),
-		                                           [&](const auto &p) { return (p->isAdmin() == true); });
+		const auto adminParticipant =
+		    std::find_if(mParticipants.cbegin(), mParticipants.cend(), [&exceptParticipant](const auto &p) {
+			    if (exceptParticipant && p->getAddress()->weakEqual(*exceptParticipant->getAddress())) {
+				    return false;
+			    }
+			    return p->isAdmin();
+		    });
 		// If not admin participant is found
 		if (adminParticipant == mParticipants.cend()) {
-			const auto &newAdmin = mParticipants.front();
+			std::shared_ptr<Participant> newAdmin;
+			if (exceptParticipant) {
+				const auto newParticipantIt =
+				    std::find_if_not(mParticipants.cbegin(), mParticipants.cend(), [&exceptParticipant](const auto &p) {
+					    return p->getAddress()->weakEqual(*exceptParticipant->getAddress());
+				    });
+				if (newParticipantIt != mParticipants.cend()) {
+					newAdmin = *newParticipantIt;
+				}
+			}
+			if (!newAdmin) {
+				newAdmin = mParticipants.front();
+				lInfo() << *this << " cannot be left without an admin, therefore unilaterally designate "
+				        << *newAdmin << " as its new admin";
+			}
 			setParticipantAdminStatus(newAdmin, true);
-			lInfo() << *this << " has just automatically designed " << *newAdmin->getAddress() << " as its new admin";
+			lInfo() << *this << " has just automatically designed " << *newAdmin << " as its new admin";
 		}
 	}
 }
@@ -3907,6 +3926,7 @@ void ServerConference::handleRefer(SalReferOp *op,
 			if (referParticipant) {
 				bool value = Utils::stob(referAddr->getParamValue(Conference::AdminParameter));
 				setParticipantAdminStatus(referParticipant, value);
+				if (!hasAdminLeft()) chooseAnotherAdminIfNoneInConference(referParticipant);
 			}
 		}
 	}

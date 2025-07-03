@@ -218,6 +218,111 @@ static void group_chat_room_with_imdn_base(bool_t core_goes_offline) {
 		linphone_chat_message_unref(msg);
 		msg = nullptr;
 
+		const std::initializer_list<std::reference_wrapper<ConfCoreManager>> cores{
+		    focus, marie, marie2, michelle, michelle2, pauline, pauline2};
+		for (const ConfCoreManager &core : cores) {
+			for (auto chatRoom : core.getCore().getChatRooms()) {
+				auto lc = core.getLc();
+				std::shared_ptr<Participant> marieChatRoomParticipant;
+				auto me = chatRoom->getMe();
+				if ((lc == marie.getLc()) || (lc == marie2.getLc())) {
+					marieChatRoomParticipant = me;
+				} else {
+					marieChatRoomParticipant =
+					    chatRoom->findParticipant(Address::toCpp(marie.getCMgr()->identity)->getSharedFromThis());
+				}
+				BC_ASSERT_PTR_NOT_NULL(marieChatRoomParticipant);
+				if (marieChatRoomParticipant) {
+					BC_ASSERT_TRUE(marieChatRoomParticipant->isAdmin());
+				}
+
+				int admins = 0;
+				if ((lc != focus.getLc()) && me && me->isAdmin()) {
+					admins++;
+				}
+				for (const auto &participant : chatRoom->getParticipants()) {
+					if (participant->isAdmin()) {
+						admins++;
+					}
+				}
+				BC_ASSERT_EQUAL(admins, 1, int, "%0d");
+			}
+		}
+
+		LinphoneParticipant *marieParticipant = linphone_chat_room_get_me(marieCr);
+		BC_ASSERT_PTR_NOT_NULL(marieParticipant);
+		if (marieParticipant) {
+			ms_message("%s removes herself its admin rights", linphone_core_get_identity(marie.getLc()));
+			linphone_chat_room_set_participant_admin_status(marieCr, marieParticipant, FALSE);
+			for (const ConfCoreManager &core : cores) {
+				BC_ASSERT_TRUE(wait_for_list(coresList,
+				                             &core.getStats().number_of_chat_room_participant_admin_statuses_changed, 2,
+				                             liblinphone_tester_sip_timeout));
+			}
+		}
+
+		LinphoneChatRoom *focusChatRoom = focus.searchChatRoom(confAddr, confAddr);
+		BC_ASSERT_PTR_NOT_NULL(focusChatRoom);
+		const LinphoneParticipant *adminParticipant = NULL;
+		if (focusChatRoom) {
+			bctbx_list_t *participants = linphone_chat_room_get_participants(focusChatRoom);
+			for (const bctbx_list_t *participant_it = participants; participant_it != NULL;
+			     participant_it = participant_it->next) {
+				const LinphoneParticipant *participant =
+				    static_cast<const LinphoneParticipant *>(bctbx_list_get_data(participant_it));
+				if (!!linphone_participant_is_admin(participant)) {
+					adminParticipant = participant;
+				}
+			}
+			if (participants) {
+				bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
+			}
+		}
+
+		const LinphoneAddress *adminParticipantAddress = NULL;
+		BC_ASSERT_PTR_NOT_NULL(adminParticipant);
+		if (adminParticipant) {
+			adminParticipantAddress = linphone_participant_get_address(adminParticipant);
+			BC_ASSERT_PTR_NOT_NULL(adminParticipantAddress);
+			if (adminParticipantAddress) {
+				BC_ASSERT_FALSE(linphone_address_weak_equal(adminParticipantAddress, marie.getCMgr()->identity));
+			}
+		}
+		BC_ASSERT_PTR_NOT_NULL(adminParticipantAddress);
+
+		for (const ConfCoreManager &core : cores) {
+			for (auto chatRoom : core.getCore().getChatRooms()) {
+				std::shared_ptr<Participant> marieChatRoomParticipant;
+				auto lc = core.getLc();
+				auto me = chatRoom->getMe();
+				if ((lc == marie.getLc()) || (lc == marie2.getLc())) {
+					marieChatRoomParticipant = me;
+				} else {
+					marieChatRoomParticipant =
+					    chatRoom->findParticipant(Address::toCpp(marie.getCMgr()->identity)->getSharedFromThis());
+				}
+				BC_ASSERT_PTR_NOT_NULL(marieChatRoomParticipant);
+				if (marieChatRoomParticipant) {
+					BC_ASSERT_FALSE(marieChatRoomParticipant->isAdmin());
+				}
+
+				int admins = 0;
+				if ((lc != focus.getLc()) && me && me->isAdmin()) {
+					admins++;
+				}
+				for (const auto &participant : chatRoom->getParticipants()) {
+					if (participant->isAdmin()) {
+						if (adminParticipantAddress) {
+							BC_ASSERT_TRUE(
+							    linphone_address_weak_equal(participant->getAddress()->toC(), adminParticipantAddress));
+						}
+						admins++;
+					}
+				}
+				BC_ASSERT_EQUAL(admins, 1, int, "%0d");
+			}
+		}
+
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices

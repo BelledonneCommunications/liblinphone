@@ -262,7 +262,7 @@ private:
 	bool validateNewParameters(const ConferenceParams &newConfParams) const;
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device,
 	                                         const MediaSessionParams *csp);
-	void chooseAnotherAdminIfNoneInConference();
+	void chooseAnotherAdminIfNoneInConference(const std::shared_ptr<Participant> &exceptParticipant);
 	void checkIfTerminated();
 	std::list<std::shared_ptr<const Address>> getAllowedAddresses() const;
 	virtual void configure(SalCallOp *op) override;
