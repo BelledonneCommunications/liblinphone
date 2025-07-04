@@ -1221,8 +1221,8 @@ void *Call::getNativeVideoWindowId() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getNativeVideoWindowId();
 }
 
-void *Call::createNativeVideoWindowId() const {
-	return static_pointer_cast<const MediaSession>(getActiveSession())->createNativeVideoWindowId();
+void *Call::createNativeVideoWindowId(void * context) const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->createNativeVideoWindowId("", false, false, context);
 }
 
 const MediaSessionParams *Call::getParams() const {

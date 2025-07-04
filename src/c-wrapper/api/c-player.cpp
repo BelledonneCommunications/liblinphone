@@ -100,8 +100,12 @@ void linphone_player_close(LinphonePlayer *player) {
 	Player::toCpp(player)->close();
 }
 
+void *linphone_player_create_window_id_2(LinphonePlayer *player, void *context) {
+	return Player::toCpp(player)->createWindowId(context);
+}
+
 void *linphone_player_create_window_id(LinphonePlayer *player) {
-	return Player::toCpp(player)->createWindowId();
+	return linphone_player_create_window_id_2(player, NULL);
 }
 
 void linphone_player_set_window_id(LinphonePlayer *player, void *window_id) {

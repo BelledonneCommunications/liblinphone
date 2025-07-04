@@ -695,9 +695,21 @@ LINPHONE_PUBLIC void *linphone_call_get_native_video_window_id(const LinphoneCal
 /**
  * Create a native video window id where the video is to be displayed.
  * @see linphone_core_set_native_video_window_id() for a general discussion about window IDs.
+ *
+ * A context can be used to prevent Linphone from allocating the container (#MSOglContextInfo for MSOGL). NULL if not used.
  * @param call the #LinphoneCall object @notnil
+ * @param context preallocated Window ID (Used only for MSOGL) @maybenil
  * @return the native video window id (type may vary depending on platform). @maybenil
  **/
+LINPHONE_PUBLIC void *linphone_call_create_native_video_window_id_2(const LinphoneCall *call, void *context);
+
+/**
+ * Create a native video window id where the video is to be displayed.
+ * @see linphone_core_set_native_video_window_id() for a general discussion about window IDs.
+ *
+ * @param call the #LinphoneCall object @notnil
+ * @return the native video window id (type may vary depending on platform). @maybenil
+**/
 LINPHONE_PUBLIC void *linphone_call_create_native_video_window_id(const LinphoneCall *call);
 
 /**

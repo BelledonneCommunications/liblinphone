@@ -182,7 +182,7 @@ public:
 	void enableAdminModeSupport(bool support);
 
 	// Media getters and setters
-	void *createWindowId();
+	void *createWindowId(void *context);
 	void setWindowId(void *newWindowId);
 	void *getWindowId() const;
 

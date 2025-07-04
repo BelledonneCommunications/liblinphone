@@ -55,7 +55,7 @@ public:
 
 	// Others
 	virtual void close();
-	virtual void *createWindowId();
+	virtual void *createWindowId(void *context);
 	virtual LinphoneStatus open(const std::string &filename);
 	virtual LinphoneStatus pause();
 	virtual LinphoneStatus seek(int time_ms);

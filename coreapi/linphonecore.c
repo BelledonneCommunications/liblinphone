@@ -7189,7 +7189,7 @@ void *linphone_core_create_native_preview_window_id_2(LinphoneCore *lc, void *co
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call) {
 		auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
-		if (ms) return ms->createNativePreviewVideoWindowId();
+		if (ms) return ms->createNativePreviewVideoWindowId(context);
 	}
 	if (lc->previewstream == NULL && linphone_core_video_preview_enabled(lc) &&
 	    !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls())

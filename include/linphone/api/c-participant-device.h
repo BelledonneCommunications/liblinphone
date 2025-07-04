@@ -269,10 +269,25 @@ linphone_participant_device_get_native_video_window_id(const LinphoneParticipant
 
 /**
  * Creates a window ID and return it.
+ * @see linphone_core_set_native_video_window_id() for a general discussion about window IDs.
+ *
+ * A context can be used to prevent Linphone from allocating the container (#MSOglContextInfo for MSOGL). NULL if not used.
+ *
  * @param participant_device A #LinphoneParticipantDevice object @notnil
- * @return the window ID of the device @maybenil
+ * @param context preallocated Window ID (Used only for MSOGL) @maybenil
+ * @return the native video window id (type may vary depending on platform). @maybenil
  */
 LINPHONE_PUBLIC void *
+linphone_participant_device_create_native_video_window_id_2(LinphoneParticipantDevice *participant_device, void *context);
+
+/**
+ * Creates a window ID and return it.
+ * @see linphone_core_set_native_video_window_id() for a general discussion about window IDs.
+ *
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return the native video window id (type may vary depending on platform). @maybenil
+ */
+LINPHONE_PUBLIC  void *
 linphone_participant_device_create_native_video_window_id(LinphoneParticipantDevice *participant_device);
 
 /**

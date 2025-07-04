@@ -49,7 +49,7 @@ public:
 
 	// Others
 	void close() override;
-	void *createWindowId() override;
+	void *createWindowId(void *context) override;
 	LinphoneStatus open(const std::string &filename) override;
 	LinphoneStatus pause() override;
 	LinphoneStatus seek(int time_ms) override;

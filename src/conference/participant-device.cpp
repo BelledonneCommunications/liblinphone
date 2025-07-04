@@ -786,8 +786,8 @@ void ParticipantDevice::videoDisplayErrorOccurred(int error_code) {
 	_linphone_participant_device_notify_video_display_error_occurred(toC(), error_code);
 }
 
-void *ParticipantDevice::createWindowId() {
-	void *windowId = nullptr;
+void *ParticipantDevice::createWindowId(void * context) {
+	void *windowId = context;
 #ifdef VIDEO_ENABLED
 	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
@@ -800,7 +800,7 @@ void *ParticipantDevice::createWindowId() {
 			lError() << "Unable to create a window ID for " << *this << " because no label is associated to it";
 		} else {
 			windowId = static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(
-			    label, conference->isMe(mGruu), true);
+			    label, conference->isMe(mGruu), true, context);
 		}
 	} else {
 		lError() << "Unable to create a window ID for " << *this << " because no session is linked to this device";

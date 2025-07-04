@@ -70,7 +70,7 @@ bool Player::isVideoAvailable() const {
 void Player::close() {
 }
 
-void *Player::createWindowId() {
+void *Player::createWindowId(BCTBX_UNUSED(void *context)) {
 	return nullptr;
 }
 

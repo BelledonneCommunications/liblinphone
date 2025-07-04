@@ -4259,7 +4259,7 @@ LINPHONE_PUBLIC float linphone_core_get_static_picture_fps(LinphoneCore *core);
  ** linphone_core_set_native_video_window_id() must be called with this object after the creation.
  ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
  *
- * A context can be used to prevent Linphone from allocating the container (#MSOglContextInfo for MSOGL).
+ * A context can be used to prevent Linphone from allocating the container (#MSOglContextInfo for MSOGL). NULL if not used.
  *
  * @param core #LinphoneCore object @notnil
  * @param context preallocated Window ID (Used only for MSOGL) @maybenil
@@ -4267,6 +4267,17 @@ LINPHONE_PUBLIC float linphone_core_get_static_picture_fps(LinphoneCore *core);
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void *linphone_core_create_native_video_window_id_2(const LinphoneCore *core, void *context);
+
+
+/**
+ * Create a native window handle for the video window from the current call.
+ * see linphone_core_create_native_video_window_id_2() for details
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return The native window handle of the video window. @maybenil
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC void *linphone_core_create_native_video_window_id(const LinphoneCore *core);
 
 /**
  * Get the native window handle of the video window.
@@ -4332,7 +4343,7 @@ LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core
  ** linphone_core_set_native_preview_window_id_2() must be called with this object after the creation.
  ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
  *
- * A context can be used to prevent Linphone from allocating the container (#MSOglContextInfo for MSOGL).
+ * A context can be used to prevent Linphone from allocating the container (#MSOglContextInfo for MSOGL). NULL if not used.
  *
  * @param core #LinphoneCore object @notnil
  * @param context preallocated Window ID (Used only for MSOGL) @maybenil
@@ -4340,6 +4351,16 @@ LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void *linphone_core_create_native_preview_window_id_2(LinphoneCore *core, void *context);
+
+/**
+ * Create a native window handle for the video preview window.
+ * see linphone_core_create_native_preview_window_id_2() for details
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return The native window handle of the video preview window. @maybenil
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC void *linphone_core_create_native_preview_window_id(LinphoneCore *core);
 
 /**
  * Get the native window handle of the video preview window.
@@ -9420,28 +9441,6 @@ LINPHONE_PUBLIC bool_t linphone_core_is_ekt_plugin_loaded(const LinphoneCore *co
  * @ingroup ekt_api
  */
 LINPHONE_PUBLIC void linphone_core_set_ekt_plugin_loaded(LinphoneCore *core, bool_t ekt_plugin_loaded);
-
-/**
- * Create a native window handle for the video window from the current call.
- * see linphone_core_create_native_video_window_id_2() for details
- *
- * @param core #LinphoneCore object @notnil
- * @return The native window handle of the video window. @maybenil
- * @ingroup media_parameters
- * @deprecated 23/06/2025 Use linphone_core_create_native_video_window_id_2() instead
- **/
-LINPHONE_DEPRECATED LINPHONE_PUBLIC void *linphone_core_create_native_video_window_id(const LinphoneCore *core);
-
-/**
- * Create a native window handle for the video preview window.
- * see linphone_core_create_native_preview_window_id_2() for details
- *
- * @param core #LinphoneCore object @notnil
- * @return The native window handle of the video preview window. @maybenil
- * @ingroup media_parameters
- * @deprecated 23/06/2025 Use linphone_core_create_native_preview_window_id_2() instead
- **/
-LINPHONE_DEPRECATED LINPHONE_PUBLIC void *linphone_core_create_native_preview_window_id(LinphoneCore *core);
 
 #ifdef __cplusplus
 }

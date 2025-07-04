@@ -218,8 +218,12 @@ void *linphone_participant_device_get_native_video_window_id(const LinphoneParti
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
 }
 
+void *linphone_participant_device_create_native_video_window_id_2(LinphoneParticipantDevice *participant_device, void *context) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->createWindowId(context);
+}
+
 void *linphone_participant_device_create_native_video_window_id(LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->createWindowId();
+	return linphone_participant_device_create_native_video_window_id_2(participant_device, NULL);
 }
 
 void _linphone_participant_device_notify_state_changed(LinphoneParticipantDevice *participant_device,

@@ -83,8 +83,8 @@ void LocalPlayer::close() {
 	ms_media_player_close(mMediaPlayer);
 }
 
-void *LocalPlayer::createWindowId() {
-	return ms_media_player_create_window_id(mMediaPlayer);
+void *LocalPlayer::createWindowId(void *context) {
+	return ms_media_player_create_window_id_2(mMediaPlayer, context);
 }
 
 LinphoneStatus LocalPlayer::open(const std::string &filename) {

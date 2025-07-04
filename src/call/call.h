@@ -162,7 +162,7 @@ public:
 	RtpTransport *getMetaRtpTransport(int streamIndex) const;
 	float getMicrophoneVolumeGain() const;
 	void *getNativeVideoWindowId() const;
-	void *createNativeVideoWindowId() const;
+	void *createNativeVideoWindowId(void *context) const;
 	const MediaSessionParams *getParams() const;
 	std::shared_ptr<Player> getPlayer() const;
 	float getPlayVolume() const;
