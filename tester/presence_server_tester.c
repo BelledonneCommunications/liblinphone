@@ -1491,7 +1491,13 @@ static void multiple_publish_aggregation(void) {
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePresenceActivityVacation, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline2->lc, &marie->stat.number_of_LinphonePresenceActivityAway, 1));
-	nb_act = linphone_presence_model_get_nb_activities(linphone_friend_get_presence_model(f));
+	// Wait until 2 activities have been notified
+	int iter = 0;
+	do {
+		wait_for_list(lcs, NULL, 0, 100);
+		iter++;
+		nb_act = linphone_presence_model_get_nb_activities(linphone_friend_get_presence_model(f));
+	} while ((iter < 100) && (nb_act != 2));
 	BC_ASSERT_EQUAL(nb_act, 2, int, "%d");
 
 	for (i = 0; i < nb_act; i++) {
@@ -2493,8 +2499,8 @@ static void notify_friend_capabilities_with_alias(void) {
 		linphone_friend_unref(marieFriend);
 		linphone_friend_unref(laureFriend);
 		belle_sip_object_remove_from_leak_detector(
-		    (void *)dialPlan); // because mostCommon dial plan is a static object freed at the end of the process. This
-		                       // f is only to avoid wrong leak detection.
+		    (void *)dialPlan); // because mostCommon dial plan is a static object freed at the end of the process.
+		                       // This f is only to avoid wrong leak detection.
 		belle_sip_object_remove_from_leak_detector((void *)genericDialPlan);
 		linphone_core_manager_destroy(pauline);
 		bctbx_free(e164Laure);
@@ -2578,8 +2584,8 @@ static void notify_search_result_capabilities_with_alias(void) {
 		linphone_friend_unref(marieFriend);
 
 		belle_sip_object_remove_from_leak_detector(
-		    (void *)dialPlan); // because mostCommon dial plan is a static object freed at the end of the process. This
-		                       // f is only to avoid wrong leak detection.
+		    (void *)dialPlan); // because mostCommon dial plan is a static object freed at the end of the process.
+		                       // This f is only to avoid wrong leak detection.
 		belle_sip_object_remove_from_leak_detector((void *)genericDialPlan);
 		linphone_core_manager_destroy(pauline);
 
