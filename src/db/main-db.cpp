@@ -432,11 +432,20 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 	L_Q();
 	if (q->isInitialized()) {
 		const ConferenceId &conferenceId = chatRoom->getConferenceId();
+		const auto &localAddress = conferenceId.getLocalAddress();
 		const auto &peerAddress = conferenceId.getPeerAddress();
+		const auto localAddressNoGruu = localAddress->getUriWithoutGruu();
+		const auto peerAddressNoGruu = peerAddress->getUriWithoutGruu();
 		const long long &peerSipAddressId = insertSipAddress(peerAddress);
-		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress());
+		const long long &localSipAddressId = insertSipAddress(localAddress);
+		const long long &peerSipAddressNoGruuId = insertSipAddress(peerAddressNoGruu);
+		const long long &localSipAddressNoGruuId = insertSipAddress(localAddressNoGruu);
 
 		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
+		if (chatRoomId < 0) {
+			// If no chatroom has been found with the actual conference ID, try without the GRUU
+			chatRoomId = selectChatRoomId(peerSipAddressNoGruuId, localSipAddressNoGruuId);
+		}
 		const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 
@@ -460,10 +469,10 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 			const int &capabilities =
 			    chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
 
+			// TODO: store chatroom local and peer addresses without GRUU
 			const string &subject = chatRoomParams->getUtf8Subject();
 			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
 			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
-			const long long peerSipAddressNoGruuId = selectSipAddressId(peerAddress->getUriWithoutGruu(), true);
 			const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressNoGruuId);
 			const long long conferenceInfoId = (dbConferenceInfoId <= 0) ? 0 : dbConferenceInfoId;
 			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
@@ -6442,8 +6451,18 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				}
 
 				if (confInfo) {
-					params->enableAudio(confInfo->getCapability(LinphoneStreamTypeAudio));
-					params->enableVideo(confInfo->getCapability(LinphoneStreamTypeVideo));
+					bool audio = confInfo->getCapability(LinphoneStreamTypeAudio);
+					bool video = confInfo->getCapability(LinphoneStreamTypeAudio);
+					/*
+					if (serverMode && (audio || video)) {
+					    lInfo()
+					        << "Chat room [" << *conferenceAddress
+					        << "] has media capabilities, therefore will be create only if a client wants to join it";
+					    continue;
+					}
+					*/
+					params->enableAudio(audio);
+					params->enableVideo(video);
 					params->setDescription(confInfo->getDescription());
 					const auto startTime = confInfo->getDateTime();
 					params->setStartTime(startTime);
@@ -7458,12 +7477,7 @@ void MainDb::deleteConferenceInfo(long long dbConferenceId) {
 	if (session->got_data()) {
 		long long chatRoomId = d->selectChatRoomId(peerId);
 		if (chatRoomId >= 0) {
-			long long localId;
-			std::string localIdQuery = "SELECT local_sip_address_id FROM chat_room WHERE (id = :chatRoomId)";
-			*session << localIdQuery, soci::use(dbConferenceId), soci::into(localId);
-			Address peer(d->selectSipAddressFromId(peerId));
-			Address local(d->selectSipAddressFromId(localId));
-			d->deleteChatRoom(ConferenceId(std::move(peer), std::move(local), getCore()->createConferenceIdParams()));
+			d->deleteChatRoom(chatRoomId);
 		}
 	}
 

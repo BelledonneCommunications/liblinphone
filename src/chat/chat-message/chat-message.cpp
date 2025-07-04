@@ -1216,6 +1216,14 @@ void ChatMessagePrivate::handleAutoDownload() {
 				auto confInfo = ConferenceInfo::toCpp(cConfInfo)->getSharedFromThis();
 #ifdef HAVE_DB_STORAGE
 				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+				auto dbInfo = mainDb->getConferenceInfoFromURI(confInfo->getUri());
+				if (dbInfo) {
+					// If a conference information has been found in the database, then copy the capabilities as this
+					// information is not available in the ICS
+					for (const auto type : {LinphoneStreamTypeAudio, LinphoneStreamTypeVideo, LinphoneStreamTypeText}) {
+						confInfo->setCapability(type, dbInfo->getCapability(type));
+					}
+				}
 				mainDb->insertConferenceInfo(confInfo);
 #endif // HAVE_DB_STORAGE
 				linphone_core_notify_conference_info_received(q->getCore()->getCCore(), cConfInfo);

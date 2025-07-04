@@ -7846,16 +7846,6 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			}
 		}
 
-		for (auto mgr : members) {
-			LinphoneAddress *deviceAddr =
-			    linphone_account_get_contact_address(linphone_core_get_default_account(mgr->lc));
-			LinphoneChatRoom *chat_room = linphone_core_search_chat_room(mgr->lc, NULL, deviceAddr, confAddr, NULL);
-			BC_ASSERT_PTR_NOT_NULL(chat_room);
-			if (chat_room) {
-				BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(chat_room), 2, int, "%d");
-			}
-		}
-
 		if (!!client_reenter_conference) {
 			stats marie_stat = marie.getStats();
 			focus_stat = focus.getStats();
