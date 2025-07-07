@@ -387,6 +387,16 @@ LinphoneStatus linphone_core_start_echo_canceller_calibration(LinphoneCore *lc) 
 		ms_error("Echo calibration is still on going !");
 		return -1;
 	}
+
+	if (lc->sound_conf.play_sndcard == NULL) {
+		ms_error("No playback device configured, can't start echo calibration!");
+		return -1;
+	}
+	if (lc->sound_conf.capt_sndcard == NULL) {
+		ms_error("No recording device configured, can't start echo calibration!");
+		return -1;
+	}
+
 	rate = (unsigned int)linphone_config_get_int(lc->config, "sound", "echo_cancellation_rate", 8000);
 	getPlatformHelpers(lc)->routeAudioToSpeaker();
 	lc->ecc = ec_calibrator_new(lc->factory, lc->sound_conf.play_sndcard, lc->sound_conf.capt_sndcard, rate,
