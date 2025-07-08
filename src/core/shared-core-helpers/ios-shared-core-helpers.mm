@@ -353,7 +353,10 @@ void IosSharedCoreHelpers::cleanUserDefaultsMessages() {
 	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
 
 	NSDictionary *msgDictionary = [defaults dictionaryForKey:@"messages"];
-	if (msgDictionary == nil) return;
+	if (msgDictionary == nil) {
+		[defaults release];
+		return;
+	}
 	NSMutableDictionary *messages = [[NSMutableDictionary alloc] initWithDictionary:msgDictionary];
 
 	NSArray<NSString *> *callIds = [messages allKeys];
