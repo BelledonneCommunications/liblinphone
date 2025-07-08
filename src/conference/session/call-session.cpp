@@ -54,11 +54,11 @@ const std::map<CallSession::PredefinedSubjectType, std::string> CallSession::pre
 // =============================================================================
 
 int CallSessionPrivate::computeDuration() const {
-	if (log->getConnectedTime() == 0) {
+	if (log->getConnectedTime() == -1) {
 		if (log->getStartTime() == 0) return 0;
-		return (int)(ms_time(nullptr) - log->getStartTime());
+		return static_cast<int>(ms_time(nullptr) - log->getStartTime());
 	}
-	return (int)(ms_time(nullptr) - log->getConnectedTime());
+	return static_cast<int>(ms_time(nullptr) - log->getConnectedTime());
 }
 
 /*
@@ -1107,7 +1107,7 @@ bool CallSessionPrivate::reportEvents() const {
 
 void CallSessionPrivate::completeLog() {
 	L_Q();
-	int duration = log->getConnectedTime() == 0 ? 0 : computeDuration(); /* Store duration since connected */
+	int duration = (log->getConnectedTime() == -1) ? 0 : computeDuration(); /* Store duration since connected */
 	log->setDuration(duration);
 	log->setErrorInfo(ei);
 	if (log->getStatus() == LinphoneCallMissed) {
