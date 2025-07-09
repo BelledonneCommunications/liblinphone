@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -1440,8 +1440,11 @@ void Conference::setState(ConferenceInterface::State state) {
 }
 
 void Conference::notifyStateChanged(ConferenceInterface::State state) {
-	for (const auto &l : mConfListeners) {
-		l->onStateChanged(state);
+	auto it = mConfListeners.begin();
+	while (it != mConfListeners.end()) {
+		auto listener = *it;
+		it++;
+		listener->onStateChanged(state);
 	}
 }
 

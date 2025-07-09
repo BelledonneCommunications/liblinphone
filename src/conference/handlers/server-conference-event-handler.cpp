@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -1525,7 +1525,9 @@ void ServerConferenceEventHandler::onStateChanged(LinphonePrivate::ConferenceInt
 			conf->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
-			if (conf->getParticipantDevices(false).size() == 0) conf->setState(ConferenceInterface::State::Terminated);
+			if (conf->getParticipantDevices(false).size() == 0) {
+				conf->getCore()->doLater([conf] { conf->setState(ConferenceInterface::State::Terminated); });
+			}
 			break;
 		case ConferenceInterface::State::Terminated:
 			if (!textEnabled) conf->resetLastNotify();

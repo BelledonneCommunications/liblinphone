@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2010-2022 belledonne communications sarl.
+ * copyright (c) 2010-2025 belledonne communications sarl.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -8868,6 +8868,22 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 				int participant_calls_nb = static_cast<int>(bctbx_list_size(participant_calls));
 				BC_ASSERT_EQUAL(participant_calls_nb, 1, int, "%d");
 
+				LinphoneConference *pconference =
+				    linphone_core_search_conference(mgr->lc, NULL, mgr->identity, confAddr, NULL);
+
+#ifdef HAVE_ADVANCED_IM
+				int nbClientEktManagerListener = 0;
+				for (auto conferenceListener : Conference::toCpp(pconference)->getConferenceListenerList()) {
+					auto clientEktManager = dynamic_pointer_cast<ClientEktManager>(conferenceListener);
+					if (clientEktManager) nbClientEktManagerListener++;
+				}
+				if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+					BC_ASSERT_EQUAL(nbClientEktManagerListener, 1, int, "%d");
+				} else {
+					BC_ASSERT_EQUAL(nbClientEktManagerListener, 0, int, "%d");
+				}
+#endif // HAVE_ADVANCED_IM
+
 				LinphoneCall *call = linphone_core_get_call_by_remote_address2(mgr->lc, focus.getCMgr()->identity);
 				BC_ASSERT_PTR_NOT_NULL(call);
 				if (call) {
@@ -8891,8 +8907,19 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 					                             attempt, liblinphone_tester_sip_timeout));
 				}
 
-				LinphoneConference *pconference =
-				    linphone_core_search_conference(mgr->lc, NULL, mgr->identity, confAddr, NULL);
+				pconference = linphone_core_search_conference(mgr->lc, NULL, mgr->identity, confAddr, NULL);
+
+#ifdef HAVE_ADVANCED_IM
+				if (pconference) {
+					nbClientEktManagerListener = 0;
+					for (auto conferenceListener : Conference::toCpp(pconference)->getConferenceListenerList()) {
+						auto clientEktManager = dynamic_pointer_cast<ClientEktManager>(conferenceListener);
+						if (clientEktManager) nbClientEktManagerListener++;
+					}
+					BC_ASSERT_EQUAL(nbClientEktManagerListener, 0, int, "%d");
+				}
+#endif // HAVE_ADVANCED_IM
+
 				if (enable_chat) {
 					BC_ASSERT_PTR_NOT_NULL(pconference);
 					if (pconference) {

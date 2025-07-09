@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -1187,6 +1187,10 @@ static void encrypted_conference_joined_multiple_times() {
 	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1);
 }
 
+static void encrypted_conference_joined_multiple_times_with_chat() {
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, -1);
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[] = {
@@ -1258,15 +1262,17 @@ static test_t local_conference_end_to_end_encryption_scheduled_conference_tests[
 static test_t local_conference_end_to_end_encryption_scheduled_conference_with_chat_tests[] = {
     TEST_ONE_TAG(
         "Create encrypted conference with chat", LinphoneTest::create_encrypted_conference_with_chat, "End2EndConf"),
-    TEST_TWO_TAGS("Create encrypted conference with chat and cores restart",
-                  LinphoneTest::create_encrypted_conference_with_chat_and_cores_restart,
-                  "LeaksMemory",
-                  "End2EndConf"),
+    TEST_ONE_TAG("Create encrypted conference with chat and cores restart",
+                 LinphoneTest::create_encrypted_conference_with_chat_and_cores_restart,
+                 "End2EndConf"),
     TEST_ONE_TAG("Create encrypted conference with chat network drops and participant rejoining",
                  LinphoneTest::create_encrypted_conference_with_chat_network_drops_and_participant_rejoining,
                  "End2EndConf"),
     TEST_ONE_TAG("Create simple end-to-end encrypted dial out conference with chat",
                  LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out_with_chat,
+                 "End2EndConf"),
+    TEST_ONE_TAG("End-to-End Conference joined multiple times with chat",
+                 LinphoneTest::encrypted_conference_joined_multiple_times_with_chat,
                  "End2EndConf"),
 };
 

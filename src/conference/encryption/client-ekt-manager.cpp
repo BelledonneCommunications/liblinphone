@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2024 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -199,6 +199,7 @@ void ClientEktManager::onStateChanged(ConferenceInterface::State newState) {
 						L_GET_PRIVATE_FROM_C_OBJECT(cCore)->unregisterListener(this);
 					}
 				}
+				rc->removeListener(shared_from_this());
 			}
 			break;
 	}
