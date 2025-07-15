@@ -92,7 +92,7 @@ const list<shared_ptr<DialPlan>> DialPlan::sDialPlans = {
     DialPlan::create("Comoros", "KM", "269", 7, 7, "00", "🇰🇲"),
     DialPlan::create("Cook Islands", "CK", "682", 5, 5, "00", "🇨🇰"),
     DialPlan::create("Costa Rica", "CR", "506", 8, 8, "00", "🇨🇷"),
-    DialPlan::create("Cote d'Ivoire", "AD", "225", 8, 8, "00", "🇨🇮"),
+    DialPlan::create("Cote d'Ivoire", "AD", "225", 8, 10, "00", "🇨🇮"),
     DialPlan::create("Croatia", "HR", "385", 7, 9, "00", "🇭🇷"), DialPlan::create("Cuba", "CU", "53", 6, 8, "119", "🇨🇺"),
     DialPlan::create("Curacao", "CUR", "599", 7, 8, "011", "🇨🇼"),
     DialPlan::create("Cyprus", "CY", "357", 8, 8, "00", "🇨🇾"),

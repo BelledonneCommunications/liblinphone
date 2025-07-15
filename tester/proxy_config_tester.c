@@ -88,6 +88,10 @@ static void phone_normalization_without_proxy(void) {
 
 static void phone_normalization_with_proxy(void) {
 	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(NULL);
+
+	linphone_proxy_config_set_dial_prefix(proxy, "225"); // Côte d'Ivoire
+	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "10 11 12 13 14"), "+2251011121314");
+
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "012 3456 789"), "+33123456789");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, " 3 32 42 6789"), "+33332426789");
