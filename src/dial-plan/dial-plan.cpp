@@ -120,7 +120,7 @@ const list<shared_ptr<DialPlan>> DialPlan::sDialPlans = {
     DialPlan::create("French Polynesia", "PF", "689", 6, 6, "00", "🇵🇫"),
     DialPlan::create("Gabon", "GA", "241", 7, 8, "00", "🇬🇦"), DialPlan::create("Gambia", "GM", "220", 7, 7, "00", "🇬🇲"),
     DialPlan::create("Georgia", "GE", "995", 9, 9, "00", "🇬🇪"),
-    DialPlan::create("Germany", "DE", "49", 6, 12, "00", "🇩🇪"),
+    DialPlan::create("Germany", "DE", "49", 6, 13, "00", "🇩🇪"),
     DialPlan::create("Ghana", "GH", "233", 5, 9, "00", "🇬🇭"),
     DialPlan::create("Gibraltar", "GI", "350", 8, 8, "00", "🇬🇮"),
     DialPlan::create("Greece", "GR", "30", 10, 10, "00", "🇬🇷"),
