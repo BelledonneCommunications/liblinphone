@@ -316,7 +316,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 
 void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel security_level,
                                            bool_t enable_chat,
-                                           long cleanup_window);
+                                           long cleanup_window,
+                                           bool_t keep_client_ekt_manager_refs);
 
 void create_conference_base(time_t start_time,
                             int duration,

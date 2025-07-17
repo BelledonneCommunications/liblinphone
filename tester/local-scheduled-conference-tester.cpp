@@ -8280,11 +8280,11 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 }
 
 static void conference_joined_multiple_times() {
-	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, 1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelPointToPoint, FALSE, 1, FALSE);
 }
 
 static void conference_with_chat_joined_multiple_times() {
-	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelNone, TRUE, 1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelNone, TRUE, 1, FALSE);
 }
 
 } // namespace LinphoneTest

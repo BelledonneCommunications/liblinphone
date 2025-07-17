@@ -1184,11 +1184,15 @@ static void create_simple_end_to_end_encrypted_conference_merging_calls() {
 }
 
 static void encrypted_conference_joined_multiple_times() {
-	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, -1, FALSE);
 }
 
 static void encrypted_conference_joined_multiple_times_with_chat() {
-	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, -1);
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, -1, FALSE);
+}
+
+static void encrypted_conference_joined_multiple_times_with_chat_keeping_client_ekt_refs() {
+	conference_joined_multiple_times_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, -1, TRUE);
 }
 
 } // namespace LinphoneTest
@@ -1273,6 +1277,9 @@ static test_t local_conference_end_to_end_encryption_scheduled_conference_with_c
                  "End2EndConf"),
     TEST_ONE_TAG("End-to-End Conference joined multiple times with chat",
                  LinphoneTest::encrypted_conference_joined_multiple_times_with_chat,
+                 "End2EndConf"),
+    TEST_ONE_TAG("End-to-End Conference joined multiple times with chat keeping client EKT manager refs",
+                 LinphoneTest::encrypted_conference_joined_multiple_times_with_chat_keeping_client_ekt_refs,
                  "End2EndConf"),
 };
 

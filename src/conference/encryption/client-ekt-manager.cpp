@@ -252,7 +252,8 @@ void ClientEktManager::subscribe() {
 	if (mEventSubscribe == nullptr) {
 		mEventSubscribe = dynamic_pointer_cast<EventSubscribe>(
 		    (new EventSubscribe(mClientConf.lock()->getCore(), peerAddress, Account::toCpp(acc)->getSharedFromThis(),
-		                        "ekt", 600))
+		                        "ekt", 30))
+		        //"ekt", 600))
 		        ->toSharedPtr());
 		mEventSubscribe->getOp()->setFromAddress(localAddress->getImpl());
 		mEventSubscribe->setInternal(true);
@@ -424,7 +425,8 @@ void ClientEktManager::sendPublish(const shared_ptr<EktInfo> &ei) {
 
 	if (mEventPublish == nullptr) {
 		mEventPublish = dynamic_pointer_cast<EventPublish>(
-		    (new EventPublish(core, mClientConf.lock()->getConferenceAddress(), "ekt", 600))->toSharedPtr());
+		    (new EventPublish(core, mClientConf.lock()->getConferenceAddress(), "ekt", 30))->toSharedPtr());
+		//(new EventPublish(core, mClientConf.lock()->getConferenceAddress(), "ekt", 600))->toSharedPtr());
 		shared_ptr<EventCbs> cbs = EventCbs::create();
 		cbs->setUserData(this);
 		cbs->publishStateChangedCb = onPublishStateChangedCb;

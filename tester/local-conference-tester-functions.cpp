@@ -8482,7 +8482,8 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 
 void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel security_level,
                                            bool_t enable_chat,
-                                           long cleanup_window) {
+                                           long cleanup_window,
+                                           [[maybe_unused]] bool_t keep_client_ekt_manager_refs) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		bool_t enable_lime = (security_level == LinphoneConferenceSecurityLevelEndToEnd ? TRUE : FALSE);
@@ -8559,6 +8560,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 		                                                laure.getCMgr(), michelle.getCMgr(), berthe.getCMgr()};
 		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(),
 		                                         michelle.getCMgr(), berthe.getCMgr()};
+		std::set<std::shared_ptr<LinphonePrivate::ClientEktManager>> clientEktManagers;
 
 		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 			configure_end_to_end_encrypted_conference_server(focus);
@@ -8819,7 +8821,8 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 			}
 
 			// wait a bit longer to detect side effect if any
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
+			// CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
+			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(30), [] {
 				return false;
 			});
 
@@ -8875,7 +8878,12 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 				int nbClientEktManagerListener = 0;
 				for (auto conferenceListener : Conference::toCpp(pconference)->getConferenceListenerList()) {
 					auto clientEktManager = dynamic_pointer_cast<ClientEktManager>(conferenceListener);
-					if (clientEktManager) nbClientEktManagerListener++;
+					if (clientEktManager) {
+						nbClientEktManagerListener++;
+						if (!!keep_client_ekt_manager_refs) {
+							clientEktManagers.insert(clientEktManager);
+						}
+					}
 				}
 				if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 					BC_ASSERT_EQUAL(nbClientEktManagerListener, 1, int, "%d");
