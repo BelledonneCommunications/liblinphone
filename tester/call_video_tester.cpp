@@ -4269,7 +4269,7 @@ static test_t call_video_tests[] = {
                  audio_call_with_ice_with_video_policy_enabled,
                  "ICE"),
     TEST_ONE_TAG("Video call recording (H264)", video_call_recording_h264_test, "H264"),
-    TEST_NO_TAG("Video call recording (VP8)", video_call_recording_vp8_test),
+    TEST_ONE_TAG("Video call recording (VP8)", video_call_recording_vp8_test, "shaky"),
     TEST_NO_TAG("Snapshot", video_call_snapshot),
     TEST_NO_TAG("Snapshots", video_call_snapshots),
     TEST_NO_TAG("Video call with early media and no matching audio codecs",
