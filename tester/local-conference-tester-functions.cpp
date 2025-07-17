@@ -1583,6 +1583,103 @@ void create_conference_base(time_t start_time,
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(berthe.getLc()));
 		}
 
+		// Shuffle focus's payload type numbers
+		LinphonePayloadType *pt_vp8 = linphone_core_get_payload_type(focus.getLc(), "VP8", 90000, 1);
+		int pt_vp8_number = 101;
+		if (pt_vp8) {
+			pt_vp8_number = linphone_payload_type_get_number(pt_vp8);
+		}
+		LinphonePayloadType *pt_av1 = linphone_core_get_payload_type(focus.getLc(), "AV1", 90000, 1);
+		int pt_av1_number = 102;
+		if (pt_av1) {
+			pt_av1_number = linphone_payload_type_get_number(pt_av1);
+		}
+		LinphonePayloadType *pt_h264 = linphone_core_get_payload_type(focus.getLc(), "H264", 90000, 1);
+		int pt_h264_number = 103;
+		if (pt_h264) {
+			pt_h264_number = linphone_payload_type_get_number(pt_h264);
+		}
+		LinphonePayloadType *pt_h265 = linphone_core_get_payload_type(focus.getLc(), "H265", 90000, 1);
+		int pt_h265_number = 104;
+		if (pt_h265) {
+			pt_h265_number = linphone_payload_type_get_number(pt_h265);
+		}
+		if (pt_vp8) {
+			linphone_payload_type_set_number(pt_vp8, pt_h264_number);
+			linphone_payload_type_unref(pt_vp8);
+			disable_all_video_codecs_except_one(focus.getLc(), "VP8");
+		}
+		if (pt_av1) {
+			linphone_payload_type_set_number(pt_av1, pt_vp8_number);
+			linphone_payload_type_unref(pt_av1);
+		}
+		if (pt_h264) {
+			linphone_payload_type_set_number(pt_h264, pt_h265_number);
+			linphone_payload_type_unref(pt_h264);
+		}
+		if (pt_h265) {
+			linphone_payload_type_set_number(pt_h265, pt_av1_number);
+			linphone_payload_type_unref(pt_h265);
+		}
+
+		// Shuffle marie's payload type numbers
+		pt_vp8 = linphone_core_get_payload_type(marie.getLc(), "VP8", 90000, 1);
+		pt_vp8_number = 101;
+		if (pt_vp8) {
+			pt_vp8_number = linphone_payload_type_get_number(pt_vp8);
+		}
+		pt_av1 = linphone_core_get_payload_type(marie.getLc(), "AV1", 90000, 1);
+		pt_av1_number = 102;
+		if (pt_av1) {
+			pt_av1_number = linphone_payload_type_get_number(pt_av1);
+		}
+		pt_h264 = linphone_core_get_payload_type(marie.getLc(), "H264", 90000, 1);
+		pt_h264_number = 103;
+		if (pt_h264) {
+			pt_h264_number = linphone_payload_type_get_number(pt_h264);
+		}
+		if (pt_vp8) {
+			linphone_payload_type_set_number(pt_vp8, pt_av1_number);
+			linphone_payload_type_unref(pt_vp8);
+		}
+		if (pt_av1) {
+			linphone_payload_type_set_number(pt_av1, pt_h264_number);
+			linphone_payload_type_unref(pt_av1);
+		}
+		if (pt_h264) {
+			linphone_payload_type_set_number(pt_h264, pt_vp8_number);
+			linphone_payload_type_unref(pt_h264);
+		}
+
+		// Shuffle laure's payload type numbers
+		pt_vp8 = linphone_core_get_payload_type(laure.getLc(), "VP8", 90000, 1);
+		pt_vp8_number = 101;
+		if (pt_vp8) {
+			pt_vp8_number = linphone_payload_type_get_number(pt_vp8);
+		}
+		pt_av1 = linphone_core_get_payload_type(laure.getLc(), "AV1", 90000, 1);
+		pt_av1_number = 102;
+		if (pt_av1) {
+			pt_av1_number = linphone_payload_type_get_number(pt_av1);
+		}
+		pt_h264 = linphone_core_get_payload_type(laure.getLc(), "H264", 90000, 1);
+		pt_h264_number = 103;
+		if (pt_h264) {
+			pt_h264_number = linphone_payload_type_get_number(pt_h264);
+		}
+		if (pt_vp8) {
+			linphone_payload_type_set_number(pt_vp8, pt_av1_number);
+			linphone_payload_type_unref(pt_vp8);
+		}
+		if (pt_av1) {
+			linphone_payload_type_set_number(pt_av1, pt_h264_number);
+			linphone_payload_type_unref(pt_av1);
+		}
+		if (pt_h264) {
+			linphone_payload_type_set_number(pt_h264, pt_vp8_number);
+			linphone_payload_type_unref(pt_h264);
+		}
+
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), participant_list_type);
 
@@ -12056,6 +12153,74 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 				BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(mgr->lc));
 			}
+		}
+
+		// Shuffle focus's payload type numbers
+		LinphonePayloadType *pt_vp8 = linphone_core_get_payload_type(focus.getLc(), "VP8", 90000, 1);
+		int pt_vp8_number = 101;
+		if (pt_vp8) {
+			pt_vp8_number = linphone_payload_type_get_number(pt_vp8);
+		}
+		LinphonePayloadType *pt_av1 = linphone_core_get_payload_type(focus.getLc(), "AV1", 90000, 1);
+		int pt_av1_number = 102;
+		if (pt_av1) {
+			pt_av1_number = linphone_payload_type_get_number(pt_av1);
+		}
+		LinphonePayloadType *pt_h264 = linphone_core_get_payload_type(focus.getLc(), "H264", 90000, 1);
+		int pt_h264_number = 103;
+		if (pt_h264) {
+			pt_h264_number = linphone_payload_type_get_number(pt_h264);
+		}
+		LinphonePayloadType *pt_h265 = linphone_core_get_payload_type(focus.getLc(), "H265", 90000, 1);
+		int pt_h265_number = 104;
+		if (pt_h265) {
+			pt_h265_number = linphone_payload_type_get_number(pt_h265);
+		}
+		if (pt_vp8) {
+			linphone_payload_type_set_number(pt_vp8, pt_h264_number);
+			linphone_payload_type_unref(pt_vp8);
+			disable_all_video_codecs_except_one(focus.getLc(), "VP8");
+		}
+		if (pt_av1) {
+			linphone_payload_type_set_number(pt_av1, pt_vp8_number);
+			linphone_payload_type_unref(pt_av1);
+		}
+		if (pt_h264) {
+			linphone_payload_type_set_number(pt_h264, pt_h265_number);
+			linphone_payload_type_unref(pt_h264);
+		}
+		if (pt_h265) {
+			linphone_payload_type_set_number(pt_h265, pt_av1_number);
+			linphone_payload_type_unref(pt_h265);
+		}
+
+		// Shuffle laure's payload type numbers
+		pt_vp8 = linphone_core_get_payload_type(laure.getLc(), "VP8", 90000, 1);
+		pt_vp8_number = 101;
+		if (pt_vp8) {
+			pt_vp8_number = linphone_payload_type_get_number(pt_vp8);
+		}
+		pt_av1 = linphone_core_get_payload_type(laure.getLc(), "AV1", 90000, 1);
+		pt_av1_number = 102;
+		if (pt_av1) {
+			pt_av1_number = linphone_payload_type_get_number(pt_av1);
+		}
+		pt_h264 = linphone_core_get_payload_type(laure.getLc(), "H264", 90000, 1);
+		pt_h264_number = 103;
+		if (pt_h264) {
+			pt_h264_number = linphone_payload_type_get_number(pt_h264);
+		}
+		if (pt_vp8) {
+			linphone_payload_type_set_number(pt_vp8, pt_av1_number);
+			linphone_payload_type_unref(pt_vp8);
+		}
+		if (pt_av1) {
+			linphone_payload_type_set_number(pt_av1, pt_h264_number);
+			linphone_payload_type_unref(pt_av1);
+		}
+		if (pt_h264) {
+			linphone_payload_type_set_number(pt_h264, pt_vp8_number);
+			linphone_payload_type_unref(pt_h264);
 		}
 
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);

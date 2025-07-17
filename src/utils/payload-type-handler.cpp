@@ -93,14 +93,12 @@ int PayloadTypeHandler::lookupTypicalVbrBitrate(int maxBandwidth, int clockRate)
 }
 
 // -----------------------------------------------------------------------------
-
 void PayloadTypeHandler::assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs,
                                                   const std::list<OrtpPayloadType *> &previousList) {
 	OrtpPayloadType *red = nullptr;
 	OrtpPayloadType *t140 = nullptr;
-
 	for (const auto &pt : codecs) {
-		/* Look for a previously assigned number for this codec */
+		// Look for a previously assigned number for this codec
 		int number = findPayloadTypeNumber(previousList, pt);
 		if (number != -1) {
 			payload_type_set_number(pt, number);
@@ -111,30 +109,34 @@ void PayloadTypeHandler::assignPayloadTypeNumbers(const std::list<OrtpPayloadTyp
 
 		// Check if number is duplicated: it could be the case if the remote forced us to use a mapping with a previous
 		// offer.
-		if ((number != -1) && !(pt->flags & PAYLOAD_TYPE_FROZEN_NUMBER)) {
+		if (number != -1) {
 			if (!isPayloadTypeNumberAvailable(codecs, number, pt)) {
-				lInfo() << "Reassigning payload type " << number << " " << pt->mime_type << "/" << pt->clock_rate
-				        << " because already offered";
-				// Need to be re-assigned.
-				number = -1;
+				// Payload type can be frozen, i.e. it cannot be changed anymore
+				if (!(pt->flags & PAYLOAD_TYPE_FROZEN_NUMBER)) {
+					lInfo() << "Reassigning payload type " << number << " " << pt->mime_type << "/" << pt->clock_rate
+					        << " because already offered";
+					// Need to be re-assigned.
+					number = -1;
+				} else {
+					// If a payload type is frozen and it is a duplicate, search the other payload type associated to
+					// the same number to try change it
+					auto ptToUpdate = getPayloadTypeWithSameNumber(codecs, number, pt);
+					lInfo() << "Reassigning payload type " << number << " " << ptToUpdate->mime_type << "/"
+					        << ptToUpdate->clock_rate << " because payload type " << pt->mime_type << "/"
+					        << pt->clock_rate << " is frozen and its number cannot be changed";
+					if (!(ptToUpdate->flags & PAYLOAD_TYPE_FROZEN_NUMBER)) {
+						chooseDynamicPayloadNumber(codecs, ptToUpdate);
+					} else {
+						lFatal() << "Found two frozen payload type associated to number " << number
+						         << ":\n - payload type " << pt->mime_type << "/" << pt->clock_rate
+						         << "\n -  payload type " << ptToUpdate->mime_type << "/" << ptToUpdate->clock_rate;
+					}
+				}
 			}
 		}
 
 		if (number == -1) {
-			int dynNumber = getCore()->getCCore()->codecs_conf.dyn_pt;
-			while (dynNumber < 127) {
-				if (isPayloadTypeNumberAvailable(codecs, dynNumber, nullptr)) {
-					payload_type_set_number(pt, dynNumber);
-					dynNumber++;
-					break;
-				}
-				dynNumber++;
-			}
-			if (dynNumber == 127) {
-				lError() << "Too many payload types configured ! codec " << pt->mime_type << "/" << pt->clock_rate
-				         << " is disabled";
-				payload_type_set_enable(pt, false);
-			}
+			chooseDynamicPayloadNumber(codecs, pt);
 		}
 
 		if (strcmp(pt->mime_type, payload_type_t140_red.mime_type) == 0) red = pt;
@@ -147,6 +149,23 @@ void PayloadTypeHandler::assignPayloadTypeNumbers(const std::list<OrtpPayloadTyp
 		    ms_strdup_printf("%i/%i/%i", t140_payload_type_number, t140_payload_type_number, t140_payload_type_number);
 		payload_type_set_recv_fmtp(red, red_fmtp);
 		ms_free(red_fmtp);
+	}
+}
+
+void PayloadTypeHandler::chooseDynamicPayloadNumber(const std::list<OrtpPayloadType *> &codecs, OrtpPayloadType *pt) {
+	int dynNumber = getCore()->getCCore()->codecs_conf.dyn_pt;
+	while (dynNumber < 127) {
+		if (isPayloadTypeNumberAvailable(codecs, dynNumber, nullptr)) {
+			payload_type_set_number(pt, dynNumber);
+			dynNumber++;
+			break;
+		}
+		dynNumber++;
+	}
+	if (dynNumber == 127) {
+		lError() << "Too many payload types configured ! codec " << pt->mime_type << "/" << pt->clock_rate
+		         << " is disabled";
+		payload_type_set_enable(pt, false);
 	}
 }
 
@@ -274,11 +293,19 @@ int PayloadTypeHandler::getRemainingBandwidthForVideo(int total, int audio) {
 bool PayloadTypeHandler::isPayloadTypeNumberAvailable(const std::list<OrtpPayloadType *> &codecs,
                                                       int number,
                                                       const OrtpPayloadType *ignore) {
+
+	auto pt = getPayloadTypeWithSameNumber(codecs, number, ignore);
+	return (pt == nullptr);
+}
+
+OrtpPayloadType *PayloadTypeHandler::getPayloadTypeWithSameNumber(const std::list<OrtpPayloadType *> &codecs,
+                                                                  int number,
+                                                                  const OrtpPayloadType *ignore) {
 	for (const auto &pt : codecs) {
 		if (!pt) continue;
-		if (pt && (pt != ignore) && (payload_type_get_number(pt) == number)) return false;
+		if (pt && (pt != ignore) && (payload_type_get_number(pt) == number)) return pt;
 	}
-	return true;
+	return nullptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -324,16 +351,17 @@ std::list<OrtpPayloadType *> PayloadTypeHandler::makeCodecsList(SalStreamType ty
 		nb++;
 		if ((maxCodecs > 0) && (nb >= maxCodecs)) break;
 	}
+
 	if (type == SalAudio) {
 		auto specials = createSpecialPayloadTypes(result);
 		result.insert(result.cend(), specials.cbegin(), specials.cend());
 	}
-	if (type == SalVideo && bundle_enabled && linphone_core_fec_enabled(getCore()->getCCore())) {
 
+	if (type == SalVideo && bundle_enabled && linphone_core_fec_enabled(getCore()->getCCore())) {
 		auto fec_pt = createFecPayloadType();
-		lInfo() << "payload created for fec is " << payload_type_get_number(fec_pt) << " ***";
 		result.push_back(fec_pt);
 	}
+
 	assignPayloadTypeNumbers(result, previousList);
 	return result;
 }

@@ -6248,7 +6248,7 @@ static void basic_chat_room_with_cpim_base(bool_t use_gruu, bool_t enable_imdn) 
 	LinphoneChatRoom *marieCr = linphone_core_create_chat_room_7(marie->lc, marie_params, participantsAddresses);
 	bctbx_list_free(participantsAddresses);
 	participantsAddresses = NULL;
-	linphone_chat_room_params_unref(marie_params);
+	linphone_conference_params_unref(marie_params);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreated, 1,
 	                             liblinphone_tester_sip_timeout));
@@ -6288,7 +6288,7 @@ static void basic_chat_room_with_cpim_base(bool_t use_gruu, bool_t enable_imdn) 
 	LinphoneChatRoom *paulineCr =
 	    linphone_core_search_chat_room_2(pauline->lc, pauline_params, pauline_identity_address, NULL, NULL);
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
-	linphone_chat_room_params_unref(pauline_params);
+	linphone_conference_params_unref(pauline_params);
 
 	const char *pauline_text = "Yes Madam";
 	LinphoneChatMessage *pauline_msg = NULL;

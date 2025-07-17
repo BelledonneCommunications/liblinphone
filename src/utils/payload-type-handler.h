@@ -51,11 +51,11 @@ public:
 	explicit PayloadTypeHandler(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
 	}
 
-	std::list<OrtpPayloadType *> makeCodecsList(SalStreamType type,
-	                                            int bandwidthLimit,
-	                                            int maxCodecs,
-	                                            const std::list<OrtpPayloadType *> &previousList,
-	                                            bool bundle_enabled);
+	LINPHONE_PUBLIC std::list<OrtpPayloadType *> makeCodecsList(SalStreamType type,
+	                                                            int bandwidthLimit,
+	                                                            int maxCodecs,
+	                                                            const std::list<OrtpPayloadType *> &previousList,
+	                                                            bool bundle_enabled);
 
 	static bool bandwidthIsGreater(int bandwidth1, int bandwidth2);
 	static int getAudioPayloadTypeBandwidth(const OrtpPayloadType *pt, int maxBandwidth);
@@ -74,6 +74,9 @@ private:
 	static bool isPayloadTypeUsableForBandwidth(const OrtpPayloadType *pt, int bandwidthLimit);
 	static int lookupTypicalVbrBitrate(int maxBandwidth, int clockRate);
 
+	static OrtpPayloadType *
+	getPayloadTypeWithSameNumber(const std::list<OrtpPayloadType *> &codecs, int number, const OrtpPayloadType *ignore);
+	void chooseDynamicPayloadNumber(const std::list<OrtpPayloadType *> &codecs, OrtpPayloadType *pt);
 	void assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs,
 	                              const std::list<OrtpPayloadType *> &previousList);
 	std::list<OrtpPayloadType *> createSpecialPayloadTypes(const std::list<OrtpPayloadType *> &codecs);

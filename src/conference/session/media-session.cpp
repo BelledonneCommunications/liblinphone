@@ -1794,10 +1794,6 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
                                                           const std::string &mid) {
 	L_Q();
 
-	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
-	std::list<OrtpPayloadType *> emptyList;
-	emptyList.clear();
-
 	SalStreamConfiguration cfg;
 	cfg.proto = modifyMdProtoAccordingToEncryptionList(getParams()->getMediaProto(), encs);
 
@@ -1810,7 +1806,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 		bool useThumbnailStream = (isVideoStream && q->requestThumbnail(dev));
 		const auto &label = (useThumbnailStream) ? dev->getThumbnailStreamLabel()
 		                                         : dev->getStreamLabel(sal_stream_type_to_linphone(type));
-		auto alreadyAssignedPayloads = emptyList;
+		std::list<OrtpPayloadType *> alreadyAssignedPayloads;
 		if (oldMd) {
 			const auto &previousParticipantStream = oldMd->findStreamWithLabel(type, label);
 			if (previousParticipantStream.has_value()) {
@@ -1892,6 +1888,7 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 				}
 				newStream.setSupportedEncryptions(encs);
 			}
+
 			cfg.replacePayloads(l);
 			newStream.addActualConfiguration(cfg);
 			fillRtpParameters(newStream);
@@ -2189,7 +2186,6 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 		const auto &currentConfParams = conference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams->videoEnabled();
 		if (((type == SalVideo) && isVideoConferenceEnabled) || (type == SalAudio)) {
-			std::list<OrtpPayloadType *> emptyList;
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			const auto &participantDevice = isInLocalConference
 			                                    ? conference->findParticipantDevice(q->getSharedFromThis())
@@ -2225,13 +2221,14 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 					cfg.proto = modifyMdProtoAccordingToEncryptionList(getParams()->getMediaProto(), encs);
 
 					bool bundle_enabled = getParams()->rtpBundleEnabled();
-					std::list<OrtpPayloadType *> l = pth.makeCodecsList(
-					    type, 0, -1,
-					    (((foundStreamIdx >= 0) && localIsOfferer)
-					         ? oldMd->streams[static_cast<decltype(oldMd->streams)::size_type>(foundStreamIdx)]
-					               .already_assigned_payloads
-					         : emptyList),
-					    bundle_enabled);
+					std::list<OrtpPayloadType *> alreadyAssignedPayloads;
+					if ((foundStreamIdx >= 0) && localIsOfferer) {
+						alreadyAssignedPayloads =
+						    oldMd->streams[static_cast<decltype(oldMd->streams)::size_type>(foundStreamIdx)]
+						        .already_assigned_payloads;
+					}
+					std::list<OrtpPayloadType *> l =
+					    pth.makeCodecsList(type, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 					if (!l.empty()) {
 						newStream.name = "Thumbnail " + std::string(sal_stream_type_to_string(type)) + " " +
 						                 participantDevice->getAddress()->toString();
@@ -2542,8 +2539,6 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> &m
                                          const std::list<LinphoneMediaEncryption> &encs) {
 	if (refMd) {
 		// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
-		std::list<OrtpPayloadType *> emptyList;
-		emptyList.clear();
 		const auto noStreams = md->streams.size();
 		const auto refNoStreams = refMd->streams.size();
 		if (noStreams <= refNoStreams) {
@@ -2636,8 +2631,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	PayloadTypeHandler pth(q->getCore());
 
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
-	std::list<OrtpPayloadType *> emptyList;
-	emptyList.clear();
 	auto encList = q->getSupportedEncryptions();
 	// Delete duplicates
 	encList.unique();
@@ -2728,10 +2721,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	q->updateContactAddressInOp();
 
 	if (addAudioStream || oldAudioStream.has_value()) {
-		auto audioCodecs = pth.makeCodecsList(
-		    SalAudio, getParams()->getAudioBandwidthLimit(), -1,
-		    ((oldAudioStream.has_value()) ? (*oldAudioStream)->already_assigned_payloads : emptyList),
-		    rtpBundleEnabled);
+		std::list<OrtpPayloadType *> alreadyAssignedAudioPayloads;
+		if (oldAudioStream.has_value()) {
+			alreadyAssignedAudioPayloads = (*oldAudioStream)->already_assigned_payloads;
+		}
+		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
+		                                      alreadyAssignedAudioPayloads, rtpBundleEnabled);
 		const auto remoteAudioStreamIdx = remoteMd ? remoteMd->findFirstStreamIdxOfType(SalAudio, 0) : -1;
 		const auto proto = getMdProto(SalAudio, remoteAudioStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
 		                              addCapabilityNegotiationAttributes, encList);
@@ -2805,9 +2800,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		}
 	}
 	if (addVideoStream || oldVideoStream.has_value()) {
-		auto videoCodecs = pth.makeCodecsList(
-		    SalVideo, 0, -1, ((oldVideoStream.has_value()) ? (*oldVideoStream)->already_assigned_payloads : emptyList),
-		    rtpBundleEnabled);
+		std::list<OrtpPayloadType *> alreadyAssignedVideoPayloads;
+		if (oldVideoStream.has_value()) {
+			alreadyAssignedVideoPayloads = (*oldVideoStream)->already_assigned_payloads;
+		}
+		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, alreadyAssignedVideoPayloads, rtpBundleEnabled);
 		SalStreamDir videoDir = SalStreamInactive;
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
@@ -2861,9 +2858,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		oldTextStream = refMd->findBestStream(SalText);
 	}
 	if ((localIsOfferer && getParams()->realtimeTextEnabled()) || oldTextStream.has_value()) {
-		auto textCodecs = pth.makeCodecsList(
-		    SalText, 0, -1, ((oldTextStream.has_value()) ? (*oldTextStream)->already_assigned_payloads : emptyList),
-		    rtpBundleEnabled);
+		std::list<OrtpPayloadType *> alreadyAssignedTextPayloads;
+		if (oldTextStream.has_value()) {
+			alreadyAssignedTextPayloads = (*oldTextStream)->already_assigned_payloads;
+		}
+		auto textCodecs = pth.makeCodecsList(SalText, 0, -1, alreadyAssignedTextPayloads, rtpBundleEnabled);
 		const auto remoteTextStreamIdx = remoteMd ? remoteMd->findFirstStreamIdxOfType(SalText, 0) : -1;
 		const auto proto = getMdProto(SalText, remoteTextStreamIdx, remoteMd, offerNegotiatedMediaProtocolOnly,
 		                              addCapabilityNegotiationAttributes, encList);

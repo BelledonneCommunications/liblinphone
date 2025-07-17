@@ -68,6 +68,10 @@ const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const Linpho
 	return AbstractChatRoom::toCpp(chat_room)->getCurrentParams()->toC();
 }
 
+const LinphoneConferenceParams *linphone_chat_room_get_params(const LinphoneChatRoom *chat_room) {
+	return AbstractChatRoom::toCpp(chat_room)->getCurrentParams()->toC();
+}
+
 // Deprecated
 void linphone_chat_room_send_message(LinphoneChatRoom *chat_room, const char *msg) {
 	ChatRoomLogContextualizer logContextualizer(chat_room);

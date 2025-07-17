@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <set>
+
 #include "bctoolbox/utils.hh"
 
 #include "address/address.h"
@@ -25,6 +27,7 @@
 #include "liblinphone_tester.h"
 #include "linphone/utils/utils.h"
 #include "tester_utils.h"
+#include "utils/payload-type-handler.h"
 
 // =============================================================================
 
@@ -75,6 +78,48 @@ static void trim() {
 	string stringContainingSpaces(" hello world!    ");
 	result = Utils::trim(stringContainingSpaces);
 	BC_ASSERT_STRING_EQUAL(result.c_str(), "hello world!");
+}
+
+static void payload_type_handler(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_create("marie_rc");
+
+	OrtpPayloadType *pt0 = nullptr;
+	OrtpPayloadType *pt1 = nullptr;
+	int number = 96;
+	for (const char *type : {"VP8", "AV1", "H264", "H265"}) {
+		OrtpPayloadType *pt = linphone_core_find_payload_type(manager->lc, type, 90000, 1);
+		if (pt) {
+			payload_type_set_number(pt, number);
+			if (!pt0) {
+				pt0 = payload_type_clone(pt);
+			} else if (!pt1) {
+				pt1 = payload_type_clone(pt);
+			}
+			number++;
+		}
+	}
+
+	if (pt0 && pt1) {
+		PayloadTypeHandler pth(L_GET_CPP_PTR_FROM_C_OBJECT(manager->lc));
+		payload_type_set_flag(pt0, PAYLOAD_TYPE_FROZEN_NUMBER);
+		payload_type_set_number(pt0, payload_type_get_number(pt1));
+		const std::list<OrtpPayloadType *> previousList{pt0};
+		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, previousList, true);
+		std::set<int> payloadNumbers;
+		for (const auto &codec : videoCodecs) {
+			auto [it, add] = payloadNumbers.insert(payload_type_get_number(codec));
+			BC_ASSERT_TRUE(add);
+		}
+		payload_type_destroy(pt0);
+		payload_type_destroy(pt1);
+		for (const auto &codec : videoCodecs) {
+			payload_type_destroy(codec);
+		}
+	} else {
+		ms_error("Core has less than two video payloads availables.");
+		BC_PASS("Core has less than two video payloads availables.");
+	}
+	linphone_core_manager_destroy(manager);
 }
 
 static void version_comparisons(void) {
@@ -235,6 +280,7 @@ static void parse_capabilities(void) {
 static test_t utils_tests[] = {
     TEST_NO_TAG("split", split),
     TEST_NO_TAG("trim", trim),
+    TEST_NO_TAG("Payload type handler", payload_type_handler),
     TEST_NO_TAG("Timestamp pruning", timestamp_pruning),
     TEST_NO_TAG("Version comparisons", version_comparisons),
     TEST_NO_TAG("Address comparisons", address_comparisons),

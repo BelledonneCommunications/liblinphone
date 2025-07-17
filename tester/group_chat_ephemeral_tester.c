@@ -132,32 +132,42 @@ static void ephemeral_message_test(bool_t encrypted, bool_t remained, bool_t exp
 
 	// Check that the message has been delivered to Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + size + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + size + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	// Pauline marks the message as read, check that the state is now displayed on Marie's side
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed,
-	                             initialMarieStats.number_of_LinphoneMessageDisplayed + size + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDisplayed + size + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + size, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + size,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + size, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + size,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + size, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + size,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + size, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + size,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 10, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 10,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10,
+	                             liblinphone_tester_sip_timeout));
 
-	wait_for_list(coresList, NULL, 1, 10000);
+	wait_for_list(coresList, NULL, 1, liblinphone_tester_sip_timeout);
 	size = size - 9;
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), size, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), size, int, "%d");
@@ -196,14 +206,18 @@ static void ephemeral_message_test(bool_t encrypted, bool_t remained, bool_t exp
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int, "%d");
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-		                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 10000));
+		                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10,
+		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-		                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 10000));
+		                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10,
+		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralDeleted,
-		                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 10, 10000));
+		                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 10,
+		                             liblinphone_tester_sip_timeout));
 		if (!expired)
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted,
-			                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10, 10000));
+			                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10,
+			                             liblinphone_tester_sip_timeout));
 
 		bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 	}
@@ -308,17 +322,20 @@ static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(con
 
 	LinphoneChatMessage *message = _send_message(marieCr, "Hello");
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
-	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1,
+	                             liblinphone_tester_sip_timeout));
 	bctbx_list_t *history = linphone_chat_room_get_history(paulineCr, 0);
 	set_ephemeral_cbs(history);
 
 	// Check that the message has been delivered to Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
+	                             liblinphone_tester_sip_timeout));
 	// Pauline  marks the message as read, check that the state is now displayed on Marie's side
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed,
-	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int, "%d");
@@ -402,67 +419,85 @@ static void mixed_ephemeral_message_test_curve(const int curveId) {
 	LinphoneChatMessage *message = _send_message_ephemeral(marieCr, "This is Marie", TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
-	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	bctbx_list_t *history = linphone_chat_room_get_history(paulineCr, 0);
 	set_ephemeral_cbs(history);
 
 	// Check that the message has been delivered to Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	// Pauline  marks the message as read, check that the state is now displayed on Marie's side
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed,
-	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
 	// Marie sends messages
 	LinphoneChatMessage *message2 = _send_message_ephemeral(marieCr, "Hello", TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
-	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	// Check that the message has been delivered to Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	// wait messages inserted in db
-	wait_for_list(coresList, NULL, 1, 10000);
+	wait_for_list(coresList, NULL, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int, "%d");
 	bctbx_list_t *history2 = linphone_chat_room_get_history(paulineCr, 0);
 	set_ephemeral_cbs(history2);
 	// Pauline  marks the message as read, check that the state is now displayed on Marie's side
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed,
-	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(paulineCr);
 	if (BC_ASSERT_PTR_NOT_NULL(msg)) {
@@ -676,7 +711,8 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived,
 	                             initialLaureStats.number_of_LinphoneMessageReceived + 1, 60000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
@@ -701,46 +737,60 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 
 	// Check that the message has been delivered to Pauline & Laure
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 2, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 2,
+	                             liblinphone_tester_sip_timeout));
 
 	// Pauline marks the message as read, check that the state is not displayed on Marie's side since Laure hasn't read
 	// it yet
 	linphone_chat_room_mark_as_read(paulineCr);
-	wait_for_list(coresList, NULL, 1, 10000);
+	wait_for_list(coresList, NULL, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneMessageDisplayed,
 	                    initialMarieStats.number_of_LinphoneMessageDisplayed + 2, int, "%i");
 
 	linphone_chat_room_mark_as_read(laureCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed,
-	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 2, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 2,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
-	                             initialLaureStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1, 10000));
+	                             initialLaureStats.number_of_LinphoneChatRoomEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageEphemeralTimerStarted,
-	                             initialLaureStats.number_of_LinphoneMessageEphemeralTimerStarted + 1, 10000));
+	                             initialLaureStats.number_of_LinphoneMessageEphemeralTimerStarted + 1,
+	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomEphemeralDeleted,
-	                             initialLaureStats.number_of_LinphoneChatRoomEphemeralDeleted + 1, 10000));
+	                             initialLaureStats.number_of_LinphoneChatRoomEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 1, 10000));
+	                             initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 1, 10000));
+	                             initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageEphemeralDeleted,
-	                             initialLaureStats.number_of_LinphoneMessageEphemeralDeleted + 1, 10000));
+	                             initialLaureStats.number_of_LinphoneMessageEphemeralDeleted + 1,
+	                             liblinphone_tester_sip_timeout));
 
-	wait_for_list(coresList, NULL, 1, 10000);
+	wait_for_list(coresList, NULL, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(laureCr), 1, int, "%d");

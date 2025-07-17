@@ -681,12 +681,24 @@ linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *chat
 
 /**
  * Returns current parameters associated with the chat room.
- * This is typically the parameters passed at chat room chat_roomeation to linphone_core_chat_roomeate_chat_room() or
- *some default parameters if no #LinphoneChatRoomParams was explicitely passed during chat room chat_roomeation.
+ * This is typically the parameters passed during the #LinphoneChatRoom creation process to
+ *linphone_core_chat_room_create_chat_room() or some default parameters if no #LinphoneChatRoomParams was explicitely
+ *passed during #LinphoneChatRoom creation.
+ * @param chat_room the #LinphoneChatRoom object @notnil
+ * @return the current #LinphoneChatRoomParams parameters. @notnil
+ * @deprecated 17/07/2025. Use linphone_chat_room_get_params() instead.
+ **/
+LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *chat_room);
+
+/**
+ * Returns current parameters associated with the chat room.
+ * This is typically the parameters passed during the #LinphoneChatRoom creation process to
+ *linphone_core_chat_room_create_chat_room() or some default parameters if no #LinphoneChatRoomParams was explicitely
+ *passed during #LinphoneChatRoom creation.
  * @param chat_room the #LinphoneChatRoom object @notnil
  * @return the current #LinphoneChatRoomParams parameters. @notnil
  **/
-LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *chat_room);
+LINPHONE_PUBLIC const LinphoneConferenceParams *linphone_chat_room_get_params(const LinphoneChatRoom *chat_room);
 
 /**
  * Gets if a chat room has been flagged as muted (not by default).
