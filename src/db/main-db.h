@@ -123,8 +123,10 @@ public:
 	using ParticipantStateRetrievalFunc =
 	    std::function<std::list<ParticipantState>(const std::shared_ptr<EventLog> &eventLog)>;
 
-	int getChatMessageCount(const ConferenceId &conferenceId = ConferenceId()) const;
-	int getUnreadChatMessageCount(const ConferenceId &conferenceId = ConferenceId()) const;
+	int getChatMessageCount(const ConferenceId &conferenceId) const;
+	int getChatMessageGlobalCount() const;
+	int getUnreadChatMessageCount(const ConferenceId &conferenceId) const;
+	int getUnreadChatMessageGlobalCount() const;
 
 	void markChatMessagesAsRead(const ConferenceId &conferenceId) const;
 	void updateChatRoomEphemeralEnabled(const ConferenceId &conferenceId, bool ephemeralEnabled) const;

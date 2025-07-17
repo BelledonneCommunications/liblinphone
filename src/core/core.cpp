@@ -1635,7 +1635,7 @@ void Core::healNetworkConnections() {
 int Core::getUnreadChatMessageCount() const {
 	L_D();
 	if (d->mainDb && d->mainDb->isInitialized()) {
-		return d->mainDb->getUnreadChatMessageCount();
+		return d->mainDb->getUnreadChatMessageGlobalCount();
 	}
 	return -1;
 }

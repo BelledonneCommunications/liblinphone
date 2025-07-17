@@ -4783,25 +4783,31 @@ int MainDb::getChatMessageCount(const ConferenceId &conferenceId) const {
 	    ", local=" + conferenceId.getLocalAddress()->toStringUriOnlyOrdered() + ")."
 	);
 	*/
-
+	if (!conferenceId.isValid()) return 0;
+	string query = "SELECT COUNT(*) FROM conference_chat_message_event "
+	               " WHERE event_id IN ("
+	               "  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
+	               ")";
 	return L_DB_TRANSACTION {
 		L_D();
-
-		int count;
-
+		int count = 0;
 		soci::session *session = d->dbSession.getBackendSession();
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		*session << query, soci::use(dbChatRoomId), soci::into(count);
+		return count;
+	};
+#else
+	return 0;
+#endif
+}
 
-		string query = "SELECT COUNT(*) FROM conference_chat_message_event";
-		if (!conferenceId.isValid()) *session << query, soci::into(count);
-		else {
-			query += " WHERE event_id IN ("
-			         "  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
-			         ")";
-
-			const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-			*session << query, soci::use(dbChatRoomId), soci::into(count);
-		}
-
+int MainDb::getChatMessageGlobalCount() const {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+		int count = 0;
+		soci::session *session = d->dbSession.getBackendSession();
+		*session << "SELECT COUNT(*) FROM conference_chat_message_event", soci::into(count);
 		return count;
 	};
 #else
@@ -4812,19 +4818,14 @@ int MainDb::getChatMessageCount(const ConferenceId &conferenceId) const {
 int MainDb::getUnreadChatMessageCount(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	L_D();
+	if (!conferenceId.isValid()) return 0;
+	const int *count = d->unreadChatMessageCountCache[conferenceId];
+	if (count) return *count;
 
-	if (conferenceId.isValid()) {
-		const int *count = d->unreadChatMessageCountCache[conferenceId];
-		if (count) return *count;
-	}
-
-	string query = "SELECT COUNT(*) FROM conference_chat_message_event WHERE";
-	if (conferenceId.isValid())
-		query += " event_id IN ("
-		         "  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
-		         ") AND";
-
-	query += " marked_as_read = 0 ";
+	string query = "SELECT COUNT(*) FROM conference_chat_message_event WHERE event_id IN ("
+	               "  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
+	               ") AND "
+	               " marked_as_read = 0 ";
 
 	/*
 	DurationLogger durationLogger(
@@ -4835,16 +4836,24 @@ int MainDb::getUnreadChatMessageCount(const ConferenceId &conferenceId) const {
 
 	return L_DB_TRANSACTION {
 		int count = 0;
-
 		soci::session *session = d->dbSession.getBackendSession();
-
-		if (!conferenceId.isValid()) *session << query, soci::into(count);
-		else {
-			const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-			*session << query, soci::use(dbChatRoomId), soci::into(count);
-		}
-
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		*session << query, soci::use(dbChatRoomId), soci::into(count);
 		d->unreadChatMessageCountCache.insert(conferenceId, count);
+		return count;
+	};
+#else
+	return 0;
+#endif
+}
+
+int MainDb::getUnreadChatMessageGlobalCount() const {
+#ifdef HAVE_DB_STORAGE
+	L_D();
+	return L_DB_TRANSACTION {
+		int count = 0;
+		soci::session *session = d->dbSession.getBackendSession();
+		*session << "SELECT COUNT(*) FROM conference_chat_message_event WHERE marked_as_read = 0 ", soci::into(count);
 		return count;
 	};
 #else
