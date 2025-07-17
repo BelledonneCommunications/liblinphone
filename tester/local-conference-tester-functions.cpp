@@ -8551,6 +8551,13 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
 		linphone_core_set_conference_cleanup_period(focus.getLc(), cleanup_window);
+
+		int ekt_subscribe_publish_expires = 10;
+		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "sip", "ekt_publish_expires",
+		                        ekt_subscribe_publish_expires);
+		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "sip", "ekt_subscribe_expires",
+		                        ekt_subscribe_publish_expires);
+
 		long expiry_after_s = 1;
 		linphone_core_set_conference_expire_period(focus.getLc(), expiry_after_s);
 
@@ -8821,10 +8828,8 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 			}
 
 			// wait a bit longer to detect side effect if any
-			// CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(30), [] {
-				return false;
-			});
+			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+			    .waitUntil(chrono::seconds(ekt_subscribe_publish_expires), [] { return false; });
 
 			if (expiry_after_s >= 0) {
 				LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);

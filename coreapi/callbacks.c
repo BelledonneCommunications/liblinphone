@@ -1138,9 +1138,10 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 		linphone_event_set_publish_state(lev, LinphonePublishRefreshing);
 	}
 
+	auto event = Event::toCpp(lev)->getSharedFromThis();
+
 	if (ret == Core::ETagStatus::AddOrUpdateETag)
-		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addOrUpdatePublishByEtag(
-		    op, dynamic_pointer_cast<EventPublish>(Event::toCpp(lev)->getSharedFromThis()));
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addOrUpdatePublishByEtag(op, dynamic_pointer_cast<EventPublish>(event));
 
 	LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 	Address to(op->getTo());
@@ -1149,7 +1150,7 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 		op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(account)));
 	}
 	linphone_core_notify_publish_received(lc, lev, eventname, ct);
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_publish_received, ct);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, event, linphone_event_cbs_get_publish_received, ct);
 	if (ct) linphone_content_unref(ct);
 }
 
@@ -1157,6 +1158,10 @@ static void incoming_publish_closed(SalOp *op) {
 	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
 
 	if (lev) linphone_event_set_publish_state(lev, LinphonePublishCleared);
+	else {
+		lInfo() << "Op [" << op << "] is not associated to any event, hence releasign it";
+		op->release();
+	}
 }
 
 static void on_publish_response(SalOp *op) {

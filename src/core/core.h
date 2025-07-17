@@ -396,6 +396,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void addOrUpdatePublishByEtag(SalPublishOp *op, std::shared_ptr<LinphonePrivate::EventPublish>);
+	void removePublishByEtag(const SalPublishOp *op);
 	Core::ETagStatus eTagHandler(SalPublishOp *op, const SalBodyHandler *body);
 
 	void notifyPublishStateChangedToAccount(const std::shared_ptr<Event> event, LinphonePublishState state);

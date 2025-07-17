@@ -194,6 +194,7 @@ void EventPublish::setState(LinphonePublishState state) {
 				break;
 			case LinphonePublishCleared:
 			case LinphonePublishError:
+				getCore()->removePublishByEtag(dynamic_cast<SalPublishOp *>(mOp));
 				release();
 				break;
 			case LinphonePublishOutgoingProgress:

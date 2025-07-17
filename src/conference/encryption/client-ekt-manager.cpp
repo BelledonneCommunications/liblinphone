@@ -250,11 +250,11 @@ void ClientEktManager::subscribe() {
 
 	const auto &peerAddress = mClientConf.lock()->getConferenceAddress();
 	if (mEventSubscribe == nullptr) {
-		mEventSubscribe = dynamic_pointer_cast<EventSubscribe>(
-		    (new EventSubscribe(mClientConf.lock()->getCore(), peerAddress, Account::toCpp(acc)->getSharedFromThis(),
-		                        "ekt", 30))
-		        //"ekt", 600))
-		        ->toSharedPtr());
+		auto core = mClientConf.lock()->getCore();
+		int subscribeExpires =
+		    linphone_config_get_int(linphone_core_get_config(core->getCCore()), "sip", "ekt_subscribe_expires", 600);
+		mEventSubscribe = EventSubscribe::create<EventSubscribe>(
+		    core, peerAddress, Account::toCpp(acc)->getSharedFromThis(), "ekt", subscribeExpires);
 		mEventSubscribe->getOp()->setFromAddress(localAddress->getImpl());
 		mEventSubscribe->setInternal(true);
 	}
@@ -424,9 +424,10 @@ void ClientEktManager::sendPublish(const shared_ptr<EktInfo> &ei) {
 	content->setBody((const uint8_t *)xmlBody.c_str(), strlen(xmlBody.c_str()));
 
 	if (mEventPublish == nullptr) {
-		mEventPublish = dynamic_pointer_cast<EventPublish>(
-		    (new EventPublish(core, mClientConf.lock()->getConferenceAddress(), "ekt", 30))->toSharedPtr());
-		//(new EventPublish(core, mClientConf.lock()->getConferenceAddress(), "ekt", 600))->toSharedPtr());
+		int publishExpires =
+		    linphone_config_get_int(linphone_core_get_config(core->getCCore()), "sip", "ekt_publish_expires", 600);
+		mEventPublish =
+		    EventPublish::create<EventPublish>(core, mClientConf.lock()->getConferenceAddress(), "ekt", publishExpires);
 		shared_ptr<EventCbs> cbs = EventCbs::create();
 		cbs->setUserData(this);
 		cbs->publishStateChangedCb = onPublishStateChangedCb;
