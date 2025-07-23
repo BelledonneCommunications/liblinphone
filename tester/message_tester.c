@@ -4678,7 +4678,7 @@ static void baudot_text_message(LinphoneBaudotMode initial_sender_baudot_mode,
 				int expectedChar = toupper(message[i]);
 				int readChar = (int)linphone_chat_room_get_char(marie_chat_room);
 				if (BC_ASSERT_TRUE(isascii(readChar) != 0)) {
-					BC_ASSERT_EQUAL(readChar, expectedChar, char, "%c");
+					BC_ASSERT_EQUAL(readChar, expectedChar, int, "%c");
 				}
 			}
 			linphone_chat_message_send(chat_message);

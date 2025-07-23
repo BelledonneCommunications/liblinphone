@@ -5362,7 +5362,8 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 			 * if no video packets have been received yet.
 			 */
 			if (enableVideo)
-				BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_IframeDecoded, 1, 3000));
+				BC_ASSERT_TRUE(
+				    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_IframeDecoded, i + 1, 5000));
 			if (!early_record) {
 				ms_message("call_recording(): start recording into %s", filepath);
 				linphone_call_start_recording(marie_call);
