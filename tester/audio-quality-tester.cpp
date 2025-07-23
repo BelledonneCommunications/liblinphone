@@ -199,8 +199,9 @@ audio_call_stereo_call(const char *codec_name, int clock_rate, int bitrate_overr
 			min_threshold = .4f;
 			max_threshold = .68f;
 		}
-		BC_ASSERT_EQUAL(ms_audio_diff(stereo_file, recordpath, &similar, &audio_cmp_params, completion_cb, NULL), 0,
-		                int, "%d");
+		BC_ASSERT_EQUAL(
+		    liblinphone_tester_audio_diff(stereo_file, recordpath, &similar, &audio_cmp_params, completion_cb, NULL), 0,
+		    int, "%d");
 		BC_ASSERT_GREATER(similar, min_threshold, double, "%g");
 		BC_ASSERT_LOWER(similar, max_threshold, double, "%g");
 		if (similar < min_threshold || similar > max_threshold) {
@@ -342,9 +343,9 @@ static void audio_call_loss_resilience(const char *codec_name,
 					if (BC_ASSERT_TRUE(call(pauline, marie))) {
 						wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength + jitterBufferMs);
 						end_call(pauline, marie);
-						BC_ASSERT_EQUAL(
-						    ms_audio_diff(recordPath, referenceFile, &similarity, &audioCmpParams, NULL, NULL), 0, int,
-						    "%d");
+						BC_ASSERT_EQUAL(liblinphone_tester_audio_diff(recordPath, referenceFile, &similarity,
+						                                              &audioCmpParams, NULL, NULL),
+						                0, int, "%d");
 					}
 					similarityMin = min(similarityMin, similarity);
 					similarityMax = max(similarityMax, similarity);

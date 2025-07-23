@@ -413,14 +413,16 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 
 					linphone_chat_message_reaction_send(reactionMsg);
 					BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
-					                              &marie->stat.number_of_LinphoneReactionSentOrReceived, 1, 1000));
+					                              &marie->stat.number_of_LinphoneReactionSentOrReceived, 1,
+					                              liblinphone_tester_sip_timeout));
 					linphone_chat_message_reaction_unref(reactionMsg);
 
 					if (allow_cpim_in_basic_chat_room_sender) {
 						BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc,
 						                        &pauline->stat.number_of_LinphoneReactionSentOrReceived, 1));
 						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
-						                               &pauline->stat.number_of_LinphoneMessageReceived, 1, 1000));
+						                               &pauline->stat.number_of_LinphoneMessageReceived, 1,
+						                               liblinphone_tester_sip_timeout));
 
 						bctbx_list_t *expected_reaction = bctbx_list_append(NULL, "👍");
 						const LinphoneAddress *contact =
@@ -435,7 +437,8 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 						bctbx_list_free_with_data(expected_reaction_from, (bctbx_list_free_func)ms_free);
 					} else {
 						BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
-						                              &pauline->stat.number_of_LinphoneMessageReceived, 1, 3000));
+						                              &pauline->stat.number_of_LinphoneMessageReceived, 1,
+						                              liblinphone_tester_sip_timeout));
 						BC_ASSERT_FALSE(wait_for_until(
 						    pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneReactionSentOrReceived, 1, 3000));
 					}

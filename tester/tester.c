@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef WIN32
+#include <sys/resource.h>
+#endif
+
 #include <bctoolbox/defs.h>
 #include <bctoolbox/tester.h>
 #include <bctoolbox/vfs.h>
@@ -185,6 +189,33 @@ bool_t liblinphone_tester_clock_elapsed(const MSTimeSpec *start, int value_ms) {
 	if ((((current.tv_sec - start->tv_sec) * 1000LL) + ((current.tv_nsec - start->tv_nsec) / 1000000LL)) >= value_ms)
 		return TRUE;
 	return FALSE;
+}
+
+int liblinphone_tester_audio_diff(const char *ref_file,
+                                  const char *matched_file,
+                                  double *ret,
+                                  const MSAudioDiffParams *params,
+                                  MSAudioDiffProgressNotify func,
+                                  void *user_data) {
+	int ret_value;
+#ifndef _WIN32
+	int current_priority = getpriority(PRIO_PROCESS, 0);
+	/* be nice */
+	int err = setpriority(PRIO_PROCESS, 0, 5);
+	if (err != 0) {
+		ms_warning("liblinphone_tester_audio_diff(): setpriority failed [%s], will not be nice.", strerror(errno));
+	}
+#endif
+
+	ret_value = ms_audio_diff(ref_file, matched_file, ret, params, func, user_data);
+#ifndef _WIN32
+	err = setpriority(PRIO_PROCESS, 0, current_priority);
+	if (err != 0) {
+		ms_warning("liblinphone_tester_audio_diff(): cannot restore priority to [%i]: %s", current_priority,
+		           strerror(errno));
+	}
+#endif
+	return ret_value;
 }
 
 LinphoneAddress *create_linphone_address(const char *domain) {
@@ -384,9 +415,7 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{
-			bc_tester_process_events();
-		}
+		{ bc_tester_process_events(); }
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
@@ -416,9 +445,7 @@ bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint
 			linphone_core_iterate((LinphoneCore *)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
-		{
-			bc_tester_process_events();
-		}
+		{ bc_tester_process_events(); }
 #elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;

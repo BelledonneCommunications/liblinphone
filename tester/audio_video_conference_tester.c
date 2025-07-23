@@ -4674,7 +4674,8 @@ static void on_eof(LinphonePlayer *player) {
 int liblinphone_tester_check_recorded_audio(const char *hellopath, const char *recordpath) {
 	double similar = 1;
 	const double threshold = 0.9;
-	BC_ASSERT_EQUAL(ms_audio_diff(hellopath, recordpath, &similar, &audio_cmp_params, NULL, NULL), 0, int, "%d");
+	BC_ASSERT_EQUAL(liblinphone_tester_audio_diff(hellopath, recordpath, &similar, &audio_cmp_params, NULL, NULL), 0,
+	                int, "%d");
 	BC_ASSERT_GREATER(similar, threshold, double, "%g");
 	BC_ASSERT_LOWER(similar, 1.0, double, "%g");
 	if (similar >= threshold && similar <= 1.0) {

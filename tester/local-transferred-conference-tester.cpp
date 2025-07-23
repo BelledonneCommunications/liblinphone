@@ -777,8 +777,9 @@ static void conference_joined_in_early_media() {
 
 		double similar = 1;
 		const double threshold = 0.85;
-		BC_ASSERT_EQUAL(ms_audio_diff(pauline_soundpath, marie_recordpath, &similar, &audio_cmp_params, NULL, NULL), 0,
-		                int, "%d");
+		BC_ASSERT_EQUAL(
+		    liblinphone_tester_audio_diff(pauline_soundpath, marie_recordpath, &similar, &audio_cmp_params, NULL, NULL),
+		    0, int, "%d");
 		BC_ASSERT_GREATER(similar, threshold, double, "%g");
 		BC_ASSERT_LOWER(similar, 1.0, double, "%g");
 

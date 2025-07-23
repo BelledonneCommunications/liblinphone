@@ -1302,6 +1302,16 @@ int liblinphone_tester_sound_detection(LinphoneCoreManager *a,
                                        int timeout_ms,
                                        const char *log_tag);
 
+/* Simple wrapper around ms_audio_diff() utility, that reduces current process priority during the processing
+ * in order to avoid to negatively affect other processes running test suites.
+ */
+int liblinphone_tester_audio_diff(const char *ref_file,
+                                  const char *matched_file,
+                                  double *ret,
+                                  const MSAudioDiffParams *params,
+                                  MSAudioDiffProgressNotify func,
+                                  void *user_data);
+
 #ifdef __cplusplus
 };
 #endif

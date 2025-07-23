@@ -1620,7 +1620,8 @@ static void transcoder_tester(void) {
 	end_call(marie, pauline);
 	/*cannot run on iphone simulator because locks main loop beyond permitted time (should run
 	on another thread) */
-	BC_ASSERT_EQUAL(ms_audio_diff(hellopath, recordpath, &similar, &audio_cmp_params, NULL, NULL), 0, int, "%d");
+	BC_ASSERT_EQUAL(liblinphone_tester_audio_diff(hellopath, recordpath, &similar, &audio_cmp_params, NULL, NULL), 0,
+	                int, "%d");
 
 	BC_ASSERT_GREATER(similar, threshold, double, "%g");
 	BC_ASSERT_LOWER(similar, 1.0, double, "%g");
