@@ -257,9 +257,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					} else if (mediaType.compare("video") == 0) {
 						conference->getCurrentParams()->enableVideo(enabled);
 					} else if (mediaType.compare("text") == 0) {
-						// Do not allow to turn off chat capabilities in order to preserve backward compatibility
-						conference->getCurrentParams()->enableChat(enabled ||
-						                                           conference->getCurrentParams()->chatEnabled());
+						conference->getCurrentParams()->enableChat(enabled);
 					} else {
 						lError() << "Unrecognized media type " << mediaType;
 					}
