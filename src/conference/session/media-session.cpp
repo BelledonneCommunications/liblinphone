@@ -525,22 +525,24 @@ bool MediaSessionPrivate::failure() {
 			     (state == CallSession::State::OutgoingRinging) || (state == CallSession::State::OutgoingEarlyMedia))) {
 				bool mediaEncrptionSrtp = getParams()->getMediaEncryption() == LinphoneMediaEncryptionSRTP;
 				bool avpfEnabled = getParams()->avpfEnabled();
-				if (mediaEncrptionSrtp || avpfEnabled) {
-					lInfo() << "Outgoing CallSession [" << q << "] failed with SRTP and/or AVPF enabled";
-					string previousCallId = op->getCallId();
+				string previousCallId = op->getCallId();
+				const auto call = q->getCore()->getCallByCallId(previousCallId);
+				// Do not retry INVIYE if there is no call associated to this call ID
+				if (call && (mediaEncrptionSrtp || avpfEnabled)) {
+					lInfo() << "Outgoing " << *q << " failed with SRTP and/or AVPF enabled";
 					for (auto &stream : localDesc->streams) {
 						bool firstStream = (stream == localDesc->streams[0]);
 						if (!stream.enabled()) continue;
 						if (mediaEncrptionSrtp) {
 							if (avpfEnabled) {
-								if (firstStream) lInfo() << "Retrying CallSession [" << q << "] with SAVP";
+								if (firstStream) lInfo() << "Retrying " << *q << " with SAVP";
 								getParams()->enableAvpf(false);
 								restartInvite();
 								linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(),
 								                                     op->getCallId().c_str());
 								return true;
 							} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
-								if (firstStream) lInfo() << "Retrying CallSession [" << q << "] with AVP";
+								if (firstStream) lInfo() << "Retrying " << *q << " with AVP";
 								getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 								stream.cfgs[stream.getChosenConfigurationIndex()].crypto.clear();
 								getParams()->enableAvpf(false);
@@ -550,7 +552,7 @@ bool MediaSessionPrivate::failure() {
 								return true;
 							}
 						} else if (avpfEnabled) {
-							if (firstStream) lInfo() << "Retrying CallSession [" << q << "] with AVP";
+							if (firstStream) lInfo() << "Retrying " << *q << " with AVP";
 							getParams()->enableAvpf(false);
 							getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 							stream.cfgs[stream.getChosenConfigurationIndex()].crypto.clear();

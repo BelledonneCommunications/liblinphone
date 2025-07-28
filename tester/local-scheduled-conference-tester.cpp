@@ -261,6 +261,105 @@ static void conference_with_media_lost() {
 	}
 }
 
+#ifndef HAVE_EKT_SERVER_PLUGIN
+static void encrypted_conference_on_server_without_e2e_support() {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(laure);
+
+		setup_conference_info_cbs(marie.getCMgr());
+
+		bctbx_list_t *coresList = NULL;
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr()}) {
+			LinphoneVideoActivationPolicy *pol =
+			    linphone_factory_create_video_activation_policy(linphone_factory_get());
+			linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+			linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+			linphone_core_set_video_activation_policy(mgr->lc, pol);
+			linphone_video_activation_policy_unref(pol);
+
+			linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(mgr->lc, TRUE);
+			linphone_core_enable_video_display(mgr->lc, TRUE);
+
+			if (mgr != focus.getCMgr()) {
+				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
+				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
+			}
+
+			// Enable ICE at the account level but not at the core level
+			enable_stun_in_mgr(mgr, TRUE, TRUE, FALSE, FALSE);
+
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip",
+			                        "update_call_when_ice_completed_with_dtls", FALSE);
+
+			coresList = bctbx_list_append(coresList, mgr->lc);
+		}
+
+		int nortp_timeout = 5;
+		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
+		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
+
+		stats marie_stat = marie.getStats();
+
+		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr()};
+		std::list<LinphoneCoreManager *> members{marie.getCMgr()};
+
+		time_t start_time = ms_time(NULL);
+		unsigned int duration = 100;
+		const char *subject = "Test characters: ^ :) ¤ çà @";
+		const char *description = "Paris Baker";
+		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelEndToEnd;
+
+		bctbx_list_t *participants_info = NULL;
+		add_participant_info_to_list(&participants_info, laure.getCMgr()->identity, LinphoneParticipantRoleSpeaker, -1);
+
+		// The organizer creates a conference scheduler
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_sip_conference_scheduler(
+		    marie.getLc(), linphone_core_get_default_account(marie.getLc()));
+		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
+		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+		linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+		linphone_conference_scheduler_cbs_unref(cbs);
+
+		LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
+		linphone_conference_info_set_organizer(conf_info, marie.getCMgr()->identity);
+		linphone_conference_info_set_participant_infos(conf_info, participants_info);
+		linphone_conference_info_set_duration(conf_info, duration);
+		linphone_conference_info_set_date_time(conf_info, start_time);
+		linphone_conference_info_set_subject(conf_info, subject);
+		linphone_conference_info_set_description(conf_info, description);
+		linphone_conference_info_set_security_level(conf_info, security_level);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeAudio, TRUE);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeVideo, FALSE);
+		linphone_conference_info_set_capability(conf_info, LinphoneStreamTypeText, FALSE);
+
+		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+		linphone_conference_info_unref(conf_info);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateAllocationPending,
+		                             marie_stat.number_of_ConferenceSchedulerStateAllocationPending + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateError,
+		                             marie_stat.number_of_ConferenceSchedulerStateError + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
+		linphone_conference_scheduler_unref(conference_scheduler);
+		bctbx_list_free(coresList);
+	}
+}
+#endif // HAVE_EKT_SERVER_PLUGIN
+
 static void alone_in_conference_with_chat_exits_enter() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -8293,6 +8392,10 @@ static test_t local_conference_scheduled_conference_basic_tests[] = {
     TEST_NO_TAG("Conference joined multiple times", LinphoneTest::conference_joined_multiple_times),
     TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
     TEST_NO_TAG("Conference with media lost", LinphoneTest::conference_with_media_lost),
+#ifndef HAVE_EKT_SERVER_PLUGIN
+    TEST_NO_TAG("Encrypted conference on server without e2e support",
+                LinphoneTest::encrypted_conference_on_server_without_e2e_support),
+#endif // HAVE_EKT_SERVER_PLUGIN
     TEST_NO_TAG("Conference with participants are late except for one",
                 LinphoneTest::conference_with_participants_late_except_one),
     TEST_NO_TAG("Create conference on unresponsive server", LinphoneTest::create_conference_on_unresponsive_server),
