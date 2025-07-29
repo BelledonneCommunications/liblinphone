@@ -21,6 +21,7 @@
 #include "lpc2xml.h"
 #include <libxml/xmlsave.h>
 #include <libxml/xmlversion.h>
+#include <libxml/xmlerror.h>
 #include <string.h>
 
 #define LPC2XML_BZ 2048
