@@ -10261,3 +10261,19 @@ bool_t linphone_core_account_strict_matching_enabled(const LinphoneCore *core) {
 void linphone_core_enable_account_strict_matching(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_bool(linphone_core_get_config(core), "sip", "account_strict_matching", enable);
 }
+
+bool_t linphone_core_send_message_after_notify_enabled(const LinphoneCore *core) {
+	return linphone_config_get_bool(linphone_core_get_config(core), "chat", "send_message_after_notify", 0);
+}
+
+void linphone_core_enable_send_message_after_notify(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_bool(linphone_core_get_config(core), "chat", "send_message_after_notify", enable);
+}
+
+int linphone_core_get_message_sending_delay(const LinphoneCore *core) {
+	return linphone_config_get_int(linphone_core_get_config(core), "misc", "delay_message_send_s", 10);
+}
+
+void linphone_core_set_message_sending_delay(LinphoneCore *core, int duration) {
+	linphone_config_set_int(linphone_core_get_config(core), "misc", "delay_message_send_s", duration);
+}

@@ -1970,6 +1970,18 @@ std::shared_ptr<ClientConferenceEventHandler> ClientConference::getEventHandler(
 	return nullptr;
 #endif // HAVE_ADVANCED_IM
 }
+
+bool ClientConference::delayTimerExpired() const {
+	bool expired = false;
+#ifdef HAVE_ADVANCED_IM
+	auto handler = getEventHandler();
+	if (handler) {
+		expired = handler->delayTimerExpired();
+	}
+#endif // HAVE_ADVANCED_IM
+	return expired;
+}
+
 bool ClientConference::isSubscriptionUnderWay() const {
 	bool underWay = false;
 #ifdef HAVE_ADVANCED_IM

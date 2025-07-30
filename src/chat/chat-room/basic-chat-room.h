@@ -61,6 +61,8 @@ public:
 	std::list<std::shared_ptr<Participant>> getParticipants() const override;
 	std::list<std::shared_ptr<Address>> getParticipantAddresses() const override;
 
+	bool canSendMessages() const override;
+
 protected:
 	explicit BasicChatRoom(const std::shared_ptr<Core> &core,
 	                       const ConferenceId &conferenceId,

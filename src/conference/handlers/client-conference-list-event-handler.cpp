@@ -118,6 +118,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 				Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 				l.getEntry().push_back(entry);
 				handler->setManagedByListEventhandler(true);
+				handler->startDelayMessageSendTimer();
 			}
 		} catch (const bad_weak_ptr &) {
 		}

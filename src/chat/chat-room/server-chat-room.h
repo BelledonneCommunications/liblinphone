@@ -107,6 +107,7 @@ public:
 
 	void finalizeCreation();
 
+	bool canSendMessages() const override;
 	bool dispatchMessagesAfterFullState(const std::shared_ptr<ParticipantDevice> &device) const;
 	bool dispatchMessagesAfterFullState(const std::shared_ptr<CallSession> &session) const;
 	void dispatchQueuedMessages();

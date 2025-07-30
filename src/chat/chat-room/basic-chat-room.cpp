@@ -166,4 +166,7 @@ std::list<std::shared_ptr<Address>> BasicChatRoom::getParticipantAddresses() con
 	return addresses;
 }
 
+bool BasicChatRoom::canSendMessages() const {
+	return true;
+}
 LINPHONE_END_NAMESPACE

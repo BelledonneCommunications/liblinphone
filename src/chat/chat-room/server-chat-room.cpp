@@ -383,6 +383,10 @@ void ServerChatRoom::sendMessage(BCTBX_UNUSED(const shared_ptr<ServerChatRoom::M
 	msg->send();
 }
 
+bool ServerChatRoom::canSendMessages() const {
+	return true;
+}
+
 bool ServerChatRoom::dispatchMessagesAfterFullState(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) const {
 #ifdef HAVE_ADVANCED_IM
 	const auto &conference = getConference();

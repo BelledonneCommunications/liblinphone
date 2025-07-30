@@ -95,6 +95,7 @@ public:
 	unsigned int getLastNotifyId() const;
 
 	void onChatRoomCreated(const std::shared_ptr<Address> &remoteContact);
+	bool canSendMessages() const override;
 	void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;

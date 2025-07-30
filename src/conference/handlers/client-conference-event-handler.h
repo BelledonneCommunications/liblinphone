@@ -73,6 +73,9 @@ public:
 	void setInitialSubscriptionUnderWayFlag(bool on);
 	bool getInitialSubscriptionUnderWayFlag() const;
 
+	void startDelayMessageSendTimer();
+	bool delayTimerExpired() const;
+
 	void setManagedByListEventhandler(bool managed);
 
 	static void subscribeStateChangedCb(LinphoneEvent *lev, LinphoneSubscriptionState state);
@@ -99,6 +102,7 @@ protected:
 	bool waitingFullState = false;
 	bool fullStateRequested = false;
 	bool initialSubscriptionUnderWay = false;
+	bool mDelayTimerExpired = false;
 
 private:
 	void unsubscribePrivate();
@@ -109,6 +113,13 @@ private:
 	                               Xsd::ConferenceInfo::StateType state,
 	                               bool isFullState,
 	                               bool notify) const;
+
+	void stopDelayMessageSendTimer();
+	void handleDelayMessageSendTimerExpired();
+	static int delayMessageSendTimerExpired(void *data, unsigned int revents);
+	BackgroundTask mDelayMessageSendBgTask;
+	belle_sip_source_t *mDelayMessageSendTimer = nullptr;
+
 	L_DISABLE_COPY(ClientConferenceEventHandler);
 };
 

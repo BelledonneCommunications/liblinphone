@@ -634,7 +634,7 @@ static bctbx_list_t *_init_core_for_conference_with_factory_uri(bctbx_list_t *co
 	bctbx_list_t *item = coreManagerList;
 	for (item = coreManagerList; item; item = bctbx_list_next(item)) {
 		LinphoneCore *lc = ((LinphoneCoreManager *)(bctbx_list_get_data(item)))->lc;
-		linphone_config_set_int(linphone_core_get_config(lc), "misc", "delay_message_send_s", 2);
+		linphone_core_set_message_sending_delay(lc, 2);
 		coresList = bctbx_list_append(coresList, lc);
 	}
 	return coresList;

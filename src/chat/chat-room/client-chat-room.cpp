@@ -349,6 +349,44 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 }
 
 // -----------------------------------------------------------------------------
+bool ClientChatRoom::canSendMessages() const {
+	shared_ptr<Core> core = getCore();
+	const auto &chatRoomState = getState();
+	const auto &chatRoomParams = getCurrentParams();
+	// Postpone the sending of a message through an encrypted chatroom when we don't know yet the full list of
+	// participants. However, if the core is shutting down, the message should be sent anyway even though we are
+	// potentially send it to an incomplete list of devices
+	const auto &chatBackend = chatRoomParams->getChatParams()->getBackend();
+	bool subscriptionUnderway = false;
+	bool delayTimerExpired = false;
+	LinphoneGlobalState coreGlobalState = linphone_core_get_global_state(getCore()->getCCore());
+	bool coreShuttingDown = ((coreGlobalState == LinphoneGlobalOff) || (coreGlobalState == LinphoneGlobalShutdown));
+	const auto conference = getConference();
+	if (conference) {
+		subscriptionUnderway = conference->isSubscriptionUnderWay();
+		delayTimerExpired = conference->delayTimerExpired();
+	}
+	bool sendMessagesAfterNotify = !!linphone_core_send_message_after_notify_enabled(core->getCCore());
+	bool handlerAllowsMessageSending = sendMessagesAfterNotify ? !subscriptionUnderway : delayTimerExpired;
+	// Chat message can be sent only after the subscription has been finalized and the first NOTIFY received
+	bool canMessageBeSent =
+	    (handlerAllowsMessageSending && !coreShuttingDown && (chatBackend == ChatParams::Backend::FlexisipChat) &&
+	     (chatRoomState == ConferenceInterface::State::Created));
+	if (!canMessageBeSent) {
+		lInfo() << *conference << " cannot yet send messages: ";
+		lInfo() << " - the chat room is not in the created state (actual state " << Utils::toString(chatRoomState)
+		        << ")";
+		if (sendMessagesAfterNotify) {
+			lInfo() << " - subscription is underway (actually subscription is"
+			        << std::string(subscriptionUnderway ? " " : " not ") << "underway)";
+		} else {
+			lInfo() << " - message delay timer hasn't expired (actually the time has"
+			        << std::string(delayTimerExpired ? " " : " not ") << "expired)";
+		}
+	}
+	return canMessageBeSent;
+}
+
 void ClientChatRoom::sendPendingMessages() {
 	const auto &conference = getConference();
 	// Now that chat room has been inserted in database, we can send any pending message
