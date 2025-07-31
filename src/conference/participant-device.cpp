@@ -786,7 +786,7 @@ void ParticipantDevice::videoDisplayErrorOccurred(int error_code) {
 	_linphone_participant_device_notify_video_display_error_occurred(toC(), error_code);
 }
 
-void *ParticipantDevice::createWindowId(void * context) {
+void *ParticipantDevice::createWindowId(void *context) {
 	void *windowId = context;
 #ifdef VIDEO_ENABLED
 	const auto &conference = getConference();
@@ -816,8 +816,14 @@ void *ParticipantDevice::createWindowId(void * context) {
 void ParticipantDevice::setWindowId(void *newWindowId) {
 #ifdef VIDEO_ENABLED
 	mWindowId = newWindowId;
-	const auto &conference = getConference();
-	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
+	const auto conference = getConference();
+	auto session = getSession();
+	if (!session) {
+		if (conference) {
+			session = conference->getMainSession();
+		}
+	}
+
 	if (session) {
 		auto s = static_pointer_cast<MediaSession>(session);
 		const auto &label = (s->requestThumbnail(getSharedFromThis())) ? getThumbnailStreamLabel()
@@ -825,13 +831,17 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 		// Empty label is used only for main stream which is handled by the call.
 		if (label.empty() || !mGruu) {
 			lError() << "Unable to set a window ID for device " << *this << " because no label is associated to it";
-		} else {
+		} else if (conference) {
 			const auto isMe = conference->isMe(mGruu);
 			if (isMe) {
 				linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
 			} else {
 				s->setNativeVideoWindowId(mWindowId, label, isMe, true);
 			}
+		} else {
+			lWarning() << "Unable to find the conference " << *this
+			           << " is attached to, hence set the core native preview window ID";
+			linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
 		}
 	} else {
 		lError() << "Unable to set a window ID for device " << *this << " because no session is linked to this device";
