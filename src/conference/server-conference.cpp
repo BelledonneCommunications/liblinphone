@@ -1543,10 +1543,8 @@ bool ServerConference::dialOutAddresses(const std::list<std::shared_ptr<Address>
 	}
 
 	if (mOrganizer && mediaSupported) {
-		auto sipfrag = Content::create();
 		const auto organizerUri = mOrganizer->getUri();
-		sipfrag->setBodyFromLocale("From: <" + organizerUri.toString() + ">");
-		sipfrag->setContentType(ContentType::SipFrag);
+		auto sipfrag = Utils::createSipFragContent(organizerUri.toString());
 		L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);
 	}
 	auto success = (inviteAddresses(addressList, new_params) == 0);
@@ -2610,8 +2608,8 @@ void ServerConference::chooseAnotherAdminIfNoneInConference(const std::shared_pt
 			}
 			if (!newAdmin) {
 				newAdmin = mParticipants.front();
-				lInfo() << *this << " cannot be left without an admin, therefore unilaterally designate "
-				        << *newAdmin << " as its new admin";
+				lInfo() << *this << " cannot be left without an admin, therefore unilaterally designate " << *newAdmin
+				        << " as its new admin";
 			}
 			setParticipantAdminStatus(newAdmin, true);
 			lInfo() << *this << " has just automatically designed " << *newAdmin << " as its new admin";

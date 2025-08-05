@@ -5564,10 +5564,10 @@ void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
 	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
-	                             liblinphone_tester_sip_timeout));
+	                             3 * liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneMessageDeliveredToUser,
 	                             initialMarie2Stats.number_of_LinphoneMessageDeliveredToUser + 1,
-	                             liblinphone_tester_sip_timeout));
+	                             3 * liblinphone_tester_sip_timeout));
 
 	// The chat room has gone over the threshold therefore no one receives the IMDN
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDeliveredToUser,

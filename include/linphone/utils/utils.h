@@ -270,6 +270,7 @@ private:
  * version numbers: "lime,groupchat/1.1,ephemeral". If absent, the version number is arbitrary supposed to be 1.0.
  */
 LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
+std::shared_ptr<Content> createSipFragContent(const std::string &address);
 std::string getSipFragAddress(const Content &content);
 std::string getResourceLists(const std::list<Address> &addresses);
 std::string getXconId(const std::shared_ptr<const Address> &address);

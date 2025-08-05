@@ -456,6 +456,13 @@ map<string, Utils::Version> Utils::parseCapabilityDescriptor(const string &descr
 	return result;
 }
 
+std::shared_ptr<Content> Utils::createSipFragContent(const std::string &address) {
+	auto sipfrag = Content::create();
+	sipfrag->setBodyFromLocale("From: " + address);
+	sipfrag->setContentType(ContentType::SipFrag);
+	return sipfrag;
+}
+
 std::string Utils::getSipFragAddress(const Content &content) {
 	if (content.getContentType() != ContentType::SipFrag) {
 		lError() << "Content type is not SipFrag hence " << __func__ << " is unable to extract the address";

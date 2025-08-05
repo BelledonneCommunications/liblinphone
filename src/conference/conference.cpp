@@ -1456,6 +1456,7 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 }
 
 void Conference::setOrganizer(const std::shared_ptr<Address> &organizer) const {
+	lInfo() << "Setting organizer of " << *this << " to " << *organizer;
 	mOrganizer = organizer->clone()->toSharedPtr();
 }
 

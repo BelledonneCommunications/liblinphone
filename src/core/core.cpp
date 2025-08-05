@@ -235,7 +235,7 @@ void CorePrivate::init() {
 		lInfo() << "The Core was explicitely requested not to use any database";
 	}
 
-	createConferenceCleanupTimer();
+	createConferenceCleanupTimer(q->getConferenceCleanupPeriod());
 
 #ifdef __ANDROID__
 	// On Android assume Core has been started in background,
@@ -367,10 +367,9 @@ void CorePrivate::deleteConferenceInfo(const std::shared_ptr<Address> &conferenc
 	}
 }
 
-void CorePrivate::createConferenceCleanupTimer() {
+void CorePrivate::createConferenceCleanupTimer(long period) {
 	L_Q();
-
-	const auto period = q->getConferenceCleanupPeriod();
+	stopConferenceCleanupTimer();
 	if (period > 0) {
 		auto onConferenceCleanup = [this]() -> bool {
 			auto it = mConferenceById.begin();
@@ -1867,21 +1866,10 @@ void Core::invalidateAccountInConferencesAndChatRooms(const std::shared_ptr<Acco
 
 void Core::setConferenceCleanupPeriod(long seconds) {
 	L_D();
-	auto oldPeriod = getConferenceCleanupPeriod();
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	linphone_config_set_int64(config, "misc", "conference_cleanup_period", seconds);
 	lInfo() << "Set conference clean window to " << seconds << " seconds";
-	if ((oldPeriod <= 0) && (seconds > 0)) {
-		// Create cleanup time if not already done
-		d->createConferenceCleanupTimer();
-	} else if ((oldPeriod > 0) && (seconds <= 0)) {
-		// Stop time if the new period is 0 or lower
-		d->stopConferenceCleanupTimer();
-	} else {
-		// Update timer
-		d->stopConferenceCleanupTimer();
-		d->createConferenceCleanupTimer();
-	}
+	d->createConferenceCleanupTimer(seconds);
 }
 
 long Core::getConferenceCleanupPeriod() const {

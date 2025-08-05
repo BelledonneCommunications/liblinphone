@@ -415,9 +415,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				// ---------------------------------------------- SIPFRAG
 
 				// For backward compatibility only since 4.4.0
-				auto sipfrag = Content::create();
-				sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
-				sipfrag->setContentType(ContentType::SipFrag);
+				auto sipfrag = Utils::createSipFragContent(localDeviceId);
 				contents.push_back(std::move(sipfrag));
 
 				// ---------------------------------------------- HEADERS

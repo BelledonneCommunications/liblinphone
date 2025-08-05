@@ -51,23 +51,7 @@ class Focus;
 class ClientConference : public ConfCoreManager {
 public:
 	ClientConference(std::string rc, Address factoryUri, LinphoneTesterLimeAlgo limeAlgo = UNSET)
-	    : ConfCoreManager(rc,
-	                      [this, factoryUri, limeAlgo](bool) {
-		                      configureCoreForConference(factoryUri);
-		                      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
-		                      linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
-		                      linphone_core_set_add_admin_information_to_contact(getLc(), FALSE);
-		                      linphone_core_enable_send_message_after_notify(getLc(), TRUE);
-		                      setupMgrForConference();
-		                      LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-		                      linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
-		                      linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
-		                      linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
-		                      linphone_core_cbs_set_message_received(cbs, encrypted_message_received);
-		                      linphone_core_add_callbacks(getLc(), cbs);
-		                      linphone_core_cbs_unref(cbs);
-		                      set_lime_server_and_curve(limeAlgo, mMgr.get());
-	                      }),
+	    : ConfCoreManager(rc, [this, factoryUri, limeAlgo](bool) { configure(factoryUri, limeAlgo); }),
 	      mFocus(nullptr) {
 	}
 
@@ -116,6 +100,23 @@ public:
 		}
 	}
 
+	void configure(Address factoryUri, LinphoneTesterLimeAlgo limeAlgo = UNSET) {
+		configureCoreForConference(factoryUri);
+		_configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
+		linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
+		linphone_core_set_add_admin_information_to_contact(getLc(), FALSE);
+		linphone_core_enable_send_message_after_notify(getLc(), TRUE);
+		setupMgrForConference();
+		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
+		linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
+		linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
+		linphone_core_cbs_set_message_received(cbs, encrypted_message_received);
+		linphone_core_add_callbacks(getLc(), cbs);
+		linphone_core_cbs_unref(cbs);
+		set_lime_server_and_curve(limeAlgo, mMgr.get());
+	}
+
 	friend Focus;
 
 protected:
@@ -130,15 +131,7 @@ private:
 /* Core manager acting as a focus*/
 class Focus : public ConfCoreManager {
 public:
-	Focus(std::string rc)
-	    : ConfCoreManager(rc, [this](bool) {
-		      linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
-		      linphone_core_enable_conference_server(getLc(), TRUE);
-		      linphone_core_set_conference_availability_before_start(getLc(), 0);
-		      linphone_core_set_conference_expire_period(getLc(), 0);
-	      }) {
-
-		configureFocus();
+	Focus(std::string rc) : ConfCoreManager(rc, [this](bool) { configureFocus(); }) {
 	}
 	~Focus() {
 		CoreManagerAssert({*this}).waitUntil(chrono::seconds(1), [] { return false; });
@@ -175,16 +168,43 @@ public:
 		linphone_chat_room_notify_participant_device_registration(cr, participantDevice);
 	}
 
-	void reStart(bool check_for_proxies = TRUE) {
-		ConfCoreManager::reStart(check_for_proxies);
-		configureFocus();
-	}
-
 	const Address getConferenceFactoryAddress() const {
 		LinphoneAccount *account = linphone_core_get_default_account(getLc());
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 		const LinphoneAddress *factory_uri = linphone_account_params_get_conference_factory_address(account_params);
 		return *Address::toCpp(factory_uri);
+	}
+
+	void configureFocus() {
+		linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
+		linphone_core_enable_conference_server(getLc(), TRUE);
+		linphone_core_set_conference_availability_before_start(getLc(), 0);
+		linphone_core_set_conference_expire_period(getLc(), 0);
+
+		LinphoneCoreCbs *cbs = linphone_core_get_first_callbacks(getLc());
+		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_empty_chat_rooms", 0);
+		linphone_config_set_int(linphone_core_get_config(getLc()), "sip", "reject_duplicated_calls", 0);
+		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_chat_rooms_from_removed_proxies", 0);
+		linphone_core_enable_rtp_bundle(getLc(), TRUE);
+		linphone_core_set_conference_cleanup_period(getLc(), 1);
+
+		const bctbx_list_t *accounts = linphone_core_get_account_list(getLc());
+		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+			LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+			LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+			linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
+			linphone_account_params_set_conference_factory_address(
+			    new_account_params, linphone_account_params_get_identity_address(account_params));
+			linphone_account_set_params(account, new_account_params);
+			linphone_account_params_unref(new_account_params);
+			BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
+		}
+
+		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
+		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
+		linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
+		//		linphone_core_cbs_set_refer_received(cbs, linphone_conference_server_refer_received);
 	}
 
 private:
@@ -242,33 +262,6 @@ private:
 				bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
 			}
 		}
-	}
-
-	void configureFocus() {
-		LinphoneCoreCbs *cbs = linphone_core_get_first_callbacks(getLc());
-		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_empty_chat_rooms", 0);
-		linphone_config_set_int(linphone_core_get_config(getLc()), "sip", "reject_duplicated_calls", 0);
-		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_chat_rooms_from_removed_proxies", 0);
-		linphone_core_enable_rtp_bundle(getLc(), TRUE);
-		linphone_core_set_conference_cleanup_period(getLc(), 1);
-
-		const bctbx_list_t *accounts = linphone_core_get_account_list(getLc());
-		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
-			LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
-			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
-			LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
-			linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
-			linphone_account_params_set_conference_factory_address(
-			    new_account_params, linphone_account_params_get_identity_address(account_params));
-			linphone_account_set_params(account, new_account_params);
-			linphone_account_params_unref(new_account_params);
-			BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
-		}
-
-		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
-		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
-		linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
-		//		linphone_core_cbs_set_refer_received(cbs, linphone_conference_server_refer_received);
 	}
 
 	static void

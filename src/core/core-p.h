@@ -158,7 +158,7 @@ public:
 
 	void stopChatMessagesAggregationTimer();
 	void deleteConferenceInfo(const std::shared_ptr<Address> &conferenceAddress);
-	void createConferenceCleanupTimer();
+	void createConferenceCleanupTimer(long period);
 	void stopConferenceCleanupTimer();
 
 	// Cancel task scheduled on the main loop

@@ -1267,11 +1267,43 @@ void group_chat_room_lime_server_message(bool encrypted) {
 	{ // to make sure focus is destroyed after clients.
 		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
 
-		linphone_core_enable_lime_x3dh(focus.getLc(), true);
-
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
 		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
 		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), lime_algo);
+
+		ms_message("%s reinitializes its core to force angle brackets on addresses",
+		           linphone_core_get_identity(laure.getLc()));
+		linphone_core_manager_reinit(laure.getCMgr());
+
+		// Force angle bracket on all SIP outputs
+		linphone_config_set_int(linphone_core_get_config(laure.getLc()), "sip", "force_name_addr", 1);
+
+		ms_message("%s configures and starts again its core", linphone_core_get_identity(laure.getLc()));
+		laure.configure(focus.getConferenceFactoryAddress());
+		linphone_core_manager_start(laure.getCMgr(), TRUE);
+
+		ms_message("%s reinitializes its core to force angle brackets on addresses",
+		           linphone_core_get_identity(marie.getLc()));
+		linphone_core_manager_reinit(marie.getCMgr());
+
+		// Force angle bracket on all SIP outputs
+		linphone_config_set_int(linphone_core_get_config(marie.getLc()), "sip", "force_name_addr", 1);
+
+		ms_message("%s configures and starts again its core", linphone_core_get_identity(marie.getLc()));
+		marie.configure(focus.getConferenceFactoryAddress(), lime_algo);
+		linphone_core_manager_start(marie.getCMgr(), TRUE);
+
+		ms_message("%s reinitializes its core to force angle brackets on addresses",
+		           linphone_core_get_identity(focus.getLc()));
+		linphone_core_manager_reinit(focus.getCMgr());
+
+		// Force angle bracket on all SIP outputs
+		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "sip", "force_name_addr", 1);
+
+		ms_message("%s configures and starts again its core", linphone_core_get_identity(focus.getLc()));
+		focus.configureFocus();
+		linphone_core_enable_lime_x3dh(focus.getLc(), true);
+		linphone_core_manager_start(focus.getCMgr(), TRUE);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

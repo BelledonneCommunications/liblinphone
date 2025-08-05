@@ -799,8 +799,7 @@ static void group_chat_room_with_client_deletes_chatroom_after_restart() {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
-		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
-		laure.configureCoreForConference(focus.getConferenceFactoryAddress());
+		laure.configure(focus.getConferenceFactoryAddress());
 
 		stats focus_stat = focus.getStats();
 		marie_stat = marie.getStats();
@@ -1098,11 +1097,8 @@ static void group_chat_room_with_client_registering_with_short_register_expires(
 		linphone_address_unref(audio_video_conference_factory);
 		linphone_account_set_params(account, new_account_params);
 		linphone_account_params_unref(new_account_params);
-		michelle.configureCoreForConference(focus.getConferenceFactoryAddress());
-		_configure_core_for_audio_video_conference(michelle.getCMgr(), focus.getConferenceFactoryAddress().toC());
+		michelle.configure(focus.getConferenceFactoryAddress());
 		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
-		linphone_core_set_add_admin_information_to_contact(michelle.getLc(), FALSE);
-		michelle.setupMgrForConference();
 
 		CoreManagerAssert({focus, marie, michelle, berthe}).waitUntil(std::chrono::seconds(2), [] { return false; });
 
@@ -1519,10 +1515,7 @@ static void group_chat_room_with_client_removed_while_stopped_base(const bool_t 
 		ms_message("%s starts again its core", michelleContactStr);
 		ms_free(michelleContactStr);
 		linphone_core_manager_configure(michelle.getCMgr());
-		michelle.configureCoreForConference(focus.getConferenceFactoryAddress());
-		_configure_core_for_audio_video_conference(
-		    michelle.getCMgr(), (!!use_remote_event_list_handler) ? focus.getConferenceFactoryAddress().toC() : NULL);
-
+		michelle.configure((!!use_remote_event_list_handler) ? focus.getConferenceFactoryAddress() : Address());
 		// Make sure gruu is preserved
 		linphone_config_set_string(linphone_core_get_config(michelle.getLc()), "misc", "uuid", uuid_copy);
 		linphone_core_manager_start(michelle.getCMgr(), TRUE);
@@ -3614,6 +3607,7 @@ static void group_chat_room_with_duplications() {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
+		laure.configure(focus.getConferenceFactoryAddress());
 		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
 		linphone_config_set_string(linphone_core_get_config(laure.getLc()), "misc", "uuid", NULL);
 		linphone_core_remove_linphone_spec(laure.getLc(), "groupchat");
@@ -3773,7 +3767,7 @@ static void group_chat_room_with_duplications() {
 		laure_stat = laure.getStats();
 
 		ms_message("%s starts one last time its core", linphone_core_get_identity(laure.getLc()));
-		laure.configureCoreForConference(focus.getConferenceFactoryAddress());
+		laure.configure(focus.getConferenceFactoryAddress());
 		linphone_core_manager_start(laure.getCMgr(), TRUE);
 		focus.registerAsParticipantDevice(laure);
 		setup_mgr_for_conference(laure.getCMgr(), NULL);

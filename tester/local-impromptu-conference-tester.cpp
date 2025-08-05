@@ -430,9 +430,34 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 
 		setup_conference_info_cbs(marie.getCMgr());
 
-		bctbx_list_t *coresList = NULL;
+		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()};
+		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr()};
+		std::list<LinphoneCoreManager *> participants{pauline.getCMgr()};
 
-		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()}) {
+		ms_message("%s reinitializes its core to force angle brackets on addresses",
+		           linphone_core_get_identity(marie.getLc()));
+		linphone_core_manager_reinit(marie.getCMgr());
+
+		// Force angle bracket on all SIP outputs
+		linphone_config_set_int(linphone_core_get_config(marie.getLc()), "sip", "force_name_addr", 1);
+
+		ms_message("%s configures and starts again its core", linphone_core_get_identity(marie.getLc()));
+		marie.configure(focus.getConferenceFactoryAddress());
+		linphone_core_manager_start(marie.getCMgr(), TRUE);
+
+		ms_message("%s reinitializes its core to force angle brackets on addresses",
+		           linphone_core_get_identity(focus.getLc()));
+		linphone_core_manager_reinit(focus.getCMgr());
+
+		// Force angle bracket on all SIP outputs
+		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "sip", "force_name_addr", 1);
+
+		ms_message("%s configures and starts again its core", linphone_core_get_identity(focus.getLc()));
+		focus.configureFocus();
+		linphone_core_manager_start(focus.getCMgr(), TRUE);
+
+		bctbx_list_t *coresList = NULL;
+		for (auto mgr : conferenceMgrs) {
 			LinphoneVideoActivationPolicy *pol =
 			    linphone_factory_create_video_activation_policy(linphone_factory_get());
 			linphone_video_activation_policy_set_automatically_accept(pol, (mgr != marie.getCMgr()));
@@ -458,10 +483,6 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 
 		stats focus_stat = focus.getStats();
 		stats marie_stat = marie.getStats();
-
-		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr()};
-		std::list<LinphoneCoreManager *> members{marie.getCMgr(), pauline.getCMgr()};
-		std::list<LinphoneCoreManager *> participants{pauline.getCMgr()};
 
 		const char *initialSubject = "Schedule of the trip towards the top of Europe";
 		const char *description = "To the top of the Mont Blanc!!!! :-)";
