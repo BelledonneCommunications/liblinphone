@@ -1560,6 +1560,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_start(LinphoneCore *core);
  * This function may block to perform SIP server unregistration.
  * Using linphone_core_stop_async() is preferred.
  * @ingroup initializing
+ * @warning This function must never be called from within an event notification triggered by Liblinphone.
  * @param core The #LinphoneCore object to be stopped @notnil
  */
 LINPHONE_PUBLIC void linphone_core_stop(LinphoneCore *core);
@@ -1571,6 +1572,7 @@ LINPHONE_PUBLIC void linphone_core_stop(LinphoneCore *core);
  * #LinphoneGlobalState is On. When #LinphoneGlobalState is Off #LinphoneCore can be started again using
  * linphone_core_start().
  * @ingroup initializing
+ * @warning This function must never be called from within an event notification triggered by Liblinphone.
  * @param core The #LinphoneCore object to be stopped @notnil
  */
 LINPHONE_PUBLIC void linphone_core_stop_async(LinphoneCore *core);

@@ -24,15 +24,11 @@
 #include <bctoolbox/map.h>
 
 #ifdef HAVE_XML2
-#include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
-#include <libxml/xpathInternals.h>
 #endif
 
-#ifdef HAVE_SQLITE
-#include "sqlite3.h"
-#else
+#ifndef HAVE_SQLITE
 typedef struct _sqlite3 sqlite3;
 #endif
 
@@ -40,7 +36,6 @@ typedef struct _sqlite3 sqlite3;
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #include "linphone/sipsetup.h"
-#include "sal/event-op.h"
 #include "sal/register-op.h"
 
 struct _CallCallbackObj {
@@ -541,7 +536,8 @@ class Core;
 	bool_t record_aware;                                                                                               \
 	bool_t auto_send_ringing;                                                                                          \
 	int number_of_duplicated_messages;                                                                                 \
-	bool_t goog_remb_enabled;
+	bool_t goog_remb_enabled;                                                                                          \
+	bool_t in_iterate;
 
 #define LINPHONE_CORE_STRUCT_FIELDS                                                                                    \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS                                                                                   \

@@ -19,7 +19,6 @@
  */
 
 #include "linphone/types.h"
-#include <math.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -51,13 +50,11 @@
 
 #include "mediastreamer2/dtmfgen.h"
 #include "mediastreamer2/mediastream.h"
-#include "mediastreamer2/msequalizer.h"
 #include "mediastreamer2/mseventqueue.h"
 #include "mediastreamer2/msfactory.h"
 #include "mediastreamer2/msjpegwriter.h"
 #include "mediastreamer2/msogl.h"
 #include "mediastreamer2/msqrcodereader.h"
-#include "mediastreamer2/msvolume.h"
 #include <mediastreamer2/dtls_srtp.h>
 #include <mediastreamer2/zrtp.h>
 #ifdef JAVA_WRAPPER
@@ -71,14 +68,12 @@
 #include "conference/conference.h"
 #include "conference/server-conference.h"
 #include "content/file-transfer-content.h"
-#include "linphone/api/c-account-manager-services.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
 #include "linphone/api/c-audio-device.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/api/c-call-log.h"
-#include "linphone/api/c-chat-room.h"
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference-info.h"
 #include "linphone/api/c-conference-params.h"
@@ -98,8 +93,6 @@
 #include "private.h"
 #include "quality_reporting.h"
 #ifdef HAVE_ADVANCED_IM
-#include "chat/chat-room/client-chat-room.h"
-#include "chat/chat-room/server-chat-room.h"
 #include "conference/handlers/client-conference-event-handler.h"
 #include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/handlers/server-conference-list-event-handler.h"
@@ -112,7 +105,6 @@
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "conference/sip-conference-scheduler.h"
-#include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
 #include "event/event-publish.h"
@@ -195,9 +187,6 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
 static LinphoneStatus
 _linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports *tr_config, bool_t applyIt);
 bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const LinphoneCallParams *params);
-
-#include "contact_providers_priv.h"
-#include "enum.h"
 
 static void toggle_video_preview(LinphoneCore *lc, bool_t val);
 
@@ -3329,6 +3318,7 @@ static void linphone_core_init(LinphoneCore *lc,
 	// During the core initialization, the accounts are reloaded, therefore the previous accounts can be safely deleted
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->resetAccounts();
 
+	lc->in_iterate = FALSE;
 	lc->is_unreffing = FALSE;
 	lc->supported_encryptions = NULL;
 	lc->config = linphone_config_ref(config);
@@ -4593,6 +4583,9 @@ static void linphone_core_do_plugin_tasks(LinphoneCore *lc) {
 
 void linphone_core_iterate(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
+
+	lc->in_iterate = TRUE;
+
 	uint64_t curtime_ms = ms_get_cur_time_ms(); /*monotonic time*/
 	time_t current_real_time = ms_time(NULL);
 	int64_t diff_time;
@@ -4644,6 +4637,7 @@ void linphone_core_iterate(LinphoneCore *lc) {
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
 	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring) {
 		// Avoid registration before getting remote configuration results
+		lc->in_iterate = FALSE;
 		return;
 	}
 
@@ -4690,6 +4684,7 @@ void linphone_core_iterate(LinphoneCore *lc) {
 			_linphone_core_stop_async_end(lc);
 		}
 	}
+	lc->in_iterate = FALSE;
 }
 
 LinphoneAddress *linphone_core_interpret_url(LinphoneCore *lc, const char *url) {
@@ -8176,11 +8171,19 @@ static void _linphone_core_stop(LinphoneCore *lc) {
 
 void linphone_core_stop(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
+	if (lc->in_iterate) {
+		lFatal() << __func__ << " : cannot be called from within linphone_core_iterate().";
+		return;
+	}
 	_linphone_core_stop(lc);
 }
 
 void linphone_core_stop_async(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
+	if (lc->in_iterate) {
+		lFatal() << __func__ << " : cannot be called from within linphone_core_iterate().";
+		return;
+	}
 	_linphone_core_stop_async_start(lc);
 }
 
