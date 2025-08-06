@@ -1184,15 +1184,38 @@ long long MainDbPrivate::selectChatRoomId(long long peerSipAddressId, long long 
 
 long long MainDbPrivate::selectChatRoomId(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
-	long long peerSipAddressId =
-	    conferenceId.getPeerAddress() ? selectSipAddressId(conferenceId.getPeerAddress(), true) : -1;
-	if (peerSipAddressId < 0) return -1;
+	const auto &peerAddress = conferenceId.getPeerAddress();
+	if (!peerAddress) {
+		return -1;
+	}
+	long long peerSipAddressId = selectSipAddressId(peerAddress, true);
+	long long peerSipAddressNoGruuId = selectSipAddressId(peerAddress->getUriWithoutGruu(), true);
+	bool peerAddressOk = (peerSipAddressId >= 0);
+	bool peerAddressNoGruuOk = (peerSipAddressNoGruuId >= 0);
+	if (!peerAddressOk && !peerAddressNoGruuOk) {
+		return -1;
+	}
 
-	long long localSipAddressId =
-	    conferenceId.getLocalAddress() ? selectSipAddressId(conferenceId.getLocalAddress(), true) : -1;
-	if (localSipAddressId < 0) return -1;
+	const auto &localAddress = conferenceId.getLocalAddress();
+	if (!localAddress) {
+		return -1;
+	}
+	long long localSipAddressId = selectSipAddressId(localAddress, true);
+	long long localSipAddressNoGruuId = selectSipAddressId(localAddress->getUriWithoutGruu(), true);
+	bool localAddressOk = (localSipAddressId >= 0);
+	bool localAddressNoGruuOk = (localSipAddressNoGruuId >= 0);
+	if (!localAddressOk && !localAddressNoGruuOk) {
+		return -1;
+	}
 
-	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
+	long long id = -1;
+	if (localAddressOk && peerAddressOk) {
+		id = selectChatRoomId(peerSipAddressId, localSipAddressId);
+	}
+	if (localAddressNoGruuOk && peerAddressNoGruuOk && (id == -1)) {
+		id = selectChatRoomId(peerSipAddressNoGruuId, localSipAddressNoGruuId);
+	}
+
 	if (id != -1) {
 		cache(conferenceId, id);
 	}

@@ -49,6 +49,10 @@ static void group_chat_room_with_imdn_base(bool_t core_goes_offline) {
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline2.getLc()));
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
+
 		stats marie_stat = marie.getStats();
 		stats marie2_stat = marie.getStats();
 		stats michelle_stat = michelle.getStats();
@@ -761,6 +765,9 @@ static void group_chat_room_with_client_idmn_after_restart_base(const LinphoneTe
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
 		}
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+
 		bctbx_list_t *participantsAddresses = NULL;
 		Address michelleAddr = michelle.getIdentity();
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
@@ -1391,6 +1398,8 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 		                             x3dhServer_creationTimeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_X3dhUserCreationSuccess, 1,
 		                             x3dhServer_creationTimeout));
+
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
 
 		Address paulineAddr = pauline.getIdentity();
 		Address michelleAddr = michelle.getIdentity();

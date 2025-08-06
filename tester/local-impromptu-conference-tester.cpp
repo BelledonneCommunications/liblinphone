@@ -426,6 +426,8 @@ static void create_conference_dial_out_with_video_activation_and_layout_change(v
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+
 		setup_conference_info_cbs(marie.getCMgr());
 
 		bctbx_list_t *coresList = NULL;

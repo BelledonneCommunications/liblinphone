@@ -1494,6 +1494,9 @@ void create_conference_base(time_t start_time,
 		focus.registerAsParticipantDevice(michelle);
 		focus.registerAsParticipantDevice(berthe);
 
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(berthe.getLc(), TRUE);
+
 		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
 		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
 
@@ -10755,6 +10758,12 @@ void create_conference_with_active_call_base(bool_t dialout) {
 
 		setup_conference_info_cbs(marie.getCMgr());
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
+
+		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
+		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
+
 		bctbx_list_t *coresList = NULL;
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr(),
@@ -11360,6 +11369,12 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 		focus.registerAsParticipantDevice(laure);
+
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
+
+		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
+		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
 
 		setup_conference_info_cbs(marie.getCMgr());
 
@@ -12112,6 +12127,12 @@ void create_conference_dial_out_base(LinphoneConferenceLayout layout,
 		focus.registerAsParticipantDevice(berthe);
 
 		setup_conference_info_cbs(marie.getCMgr());
+
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(berthe.getLc(), TRUE);
+
+		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
+		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
 
 		bctbx_list_t *coresList = NULL;
 

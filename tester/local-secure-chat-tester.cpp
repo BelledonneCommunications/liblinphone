@@ -80,6 +80,10 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(michelle.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(michelle2.getLc()));
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(marie2.getLc(), TRUE);
+
 		bctbx_list_t *participantsAddresses = NULL;
 		Address michelleAddr = michelle.getIdentity();
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
@@ -385,6 +389,10 @@ static void secure_group_chat_room_with_client_with_uppercase_username() {
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(michelle.getLc()));
+
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
 
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
@@ -788,6 +796,9 @@ static void secure_one_to_one_chat_room_send_message_after_restart(void) {
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
 
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
+
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
@@ -891,6 +902,7 @@ static void secure_one_to_one_chat_room_send_message_after_restart(void) {
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		BC_ASSERT_EQUAL(marie.getCore().getChatRooms().size(), 1, size_t, "%0zu");
 

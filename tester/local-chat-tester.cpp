@@ -51,6 +51,9 @@ static void group_chat_room_creation_server() {
 		stats initialPaulineStats = pauline.getStats();
 		stats initialLaureStats = laure.getStats();
 
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues @work";
 		LinphoneChatRoom *marieCr =
@@ -141,6 +144,8 @@ static void group_chat_room_server_deletion() {
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 		focus.registerAsParticipantDevice(pauline2);
+
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
 
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
@@ -343,6 +348,10 @@ static void group_chat_room_with_client_removed_added() {
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(michelle);
 		focus.registerAsParticipantDevice(pauline);
+
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
 
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
@@ -722,6 +731,12 @@ static void group_chat_room_with_client_deletes_chatroom_after_restart() {
 		coresList = bctbx_list_append(coresList, laure.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
+
 		bctbx_list_t *participantsAddresses = NULL;
 		Address michelleAddr = michelle.getIdentity();
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
@@ -1085,7 +1100,7 @@ static void group_chat_room_with_client_registering_with_short_register_expires(
 		linphone_account_params_unref(new_account_params);
 		michelle.configureCoreForConference(focus.getConferenceFactoryAddress());
 		_configure_core_for_audio_video_conference(michelle.getCMgr(), focus.getConferenceFactoryAddress().toC());
-		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), FALSE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
 		linphone_core_set_add_admin_information_to_contact(michelle.getLc(), FALSE);
 		michelle.setupMgrForConference();
 
@@ -3599,7 +3614,7 @@ static void group_chat_room_with_duplications() {
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
-		linphone_core_enable_gruu_in_conference_address(laure.getLc(), FALSE);
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
 		linphone_config_set_string(linphone_core_get_config(laure.getLc()), "misc", "uuid", NULL);
 		linphone_core_remove_linphone_spec(laure.getLc(), "groupchat");
 		const char *spec = "groupchat/1.2";

@@ -377,6 +377,12 @@ static void alone_in_conference_with_chat_exits_enter() {
 
 		setup_conference_info_cbs(marie.getCMgr());
 
+		linphone_core_enable_gruu_in_conference_address(marie.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(pauline.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(laure.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(michelle.getLc(), TRUE);
+		linphone_core_enable_gruu_in_conference_address(berthe.getLc(), TRUE);
+
 		bctbx_list_t *coresList = NULL;
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr(),
@@ -834,6 +840,7 @@ static void conference_with_participants_late_except_one() {
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr(),
 		                 berthe.getCMgr()}) {
+			linphone_core_enable_gruu_in_conference_address(mgr->lc, TRUE);
 			LinphoneVideoActivationPolicy *pol =
 			    linphone_factory_create_video_activation_policy(linphone_factory_get());
 			linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
@@ -1999,7 +2006,9 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 			linphone_core_enable_video_capture(mgr->lc, TRUE);
 			linphone_core_enable_video_display(mgr->lc, TRUE);
 
-			if (mgr != focus.getCMgr()) {
+			if (mgr == focus.getCMgr()) {
+				linphone_core_enable_gruu_in_conference_address(mgr->lc, TRUE);
+			} else {
 				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
 			}
@@ -4940,6 +4949,8 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 		setup_conference_info_cbs(marie.getCMgr());
 
 		bctbx_list_t *coresList = NULL;
+
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			LinphoneVideoActivationPolicy *pol =
