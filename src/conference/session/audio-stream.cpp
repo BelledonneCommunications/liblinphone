@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2025 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -27,7 +27,6 @@
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/msvolume.h"
 
-#include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "conference/client-conference.h"
 #include "conference/conference.h"
@@ -633,11 +632,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 	if (getMediaSession().isPlayingRingbackTone()) setupRingbackPlayer();
 
-	std::shared_ptr<ParticipantDevice> device = nullptr;
-	if (conference) {
-		device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
-	}
-
 	if (audioMixer && !mMuted) {
 		const auto &audioConfParams = ms_audio_conference_get_params(audioMixer->getAudioConference());
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE, audioConfParams->mode);
@@ -678,8 +672,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 
 	setupMediaLossCheck(targetState == CallSession::State::Paused);
-
-	return;
 }
 
 void MS2AudioStream::stop() {
@@ -927,6 +919,7 @@ bool MS2AudioStream::speakerEnabled() const {
 }
 
 bool MS2AudioStream::supportsTelephoneEvents() {
+	if (!mStream) return false;
 	return audio_stream_supports_telephone_events(mStream);
 }
 
