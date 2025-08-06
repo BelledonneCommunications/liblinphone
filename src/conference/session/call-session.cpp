@@ -1198,6 +1198,23 @@ void CallSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 
 void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	L_Q();
+
+	// Default Replaces header (RFC3891) to the sal setting. Nonetheless if the supported header of the account should be used, then override it
+	bool replacesSupported = op->getSal()->hasSupportedTag("replaces");
+	const auto &account = getDestAccount();
+	if (account) {
+		const auto &accountParams = account->getAccountParams();
+		if (accountParams && accountParams->useSupportedTags()) {
+			replacesSupported = accountParams->hasSupportedTag("replaces");
+		}
+	}
+
+	if (withReplaces && !replacesSupported) {
+		lInfo() << "Terminate " << *q << " because it is not possible to recover it if the Replaces header (RFC3891) is not supported";
+		terminate();
+		return;
+	}
+
 	lInfo() << *q << " is going to have a new INVITE one in order to recover from lost connectivity; "
 	        << (withReplaces ? "with" : "without") << " Replaces header";
 

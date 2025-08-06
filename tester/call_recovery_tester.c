@@ -202,32 +202,37 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 	wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_NetworkReachableFalse, 1);
 	linphone_core_set_network_reachable(callerMgr->lc, TRUE);
 	wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_NetworkReachableTrue, 2);
-	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
-	char *repared_callid = bctbx_strdup(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)));
+	bool_t callerSupportsReplaces = sal_has_supported_tag(linphone_core_get_sal(callerMgr->lc), "replaces");
+	if (!!callerSupportsReplaces) {
+		BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
+		char *repared_callid = bctbx_strdup(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)));
 
-	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingRinging, 2));
-	BC_ASSERT_EQUAL(number_of_call_log_updated, 2, int, "%d");
-	BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
+		BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingRinging, 2));
+		BC_ASSERT_EQUAL(number_of_call_log_updated, 2, int, "%d");
+		BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
 
-	incoming_call = linphone_core_get_current_call(pauline->lc);
-	remote_params = linphone_call_get_remote_params(incoming_call);
-	BC_ASSERT_PTR_NOT_NULL(remote_params);
-	if (remote_params != NULL) {
-		const char *replaces_header = linphone_call_params_get_custom_header(remote_params, "Replaces");
-		BC_ASSERT_PTR_NOT_NULL(replaces_header);
+		incoming_call = linphone_core_get_current_call(pauline->lc);
+		remote_params = linphone_call_get_remote_params(incoming_call);
+		BC_ASSERT_PTR_NOT_NULL(remote_params);
+		if (remote_params != NULL) {
+			const char *replaces_header = linphone_call_params_get_custom_header(remote_params, "Replaces");
+			BC_ASSERT_PTR_NOT_NULL(replaces_header);
+		}
+
+		linphone_call_accept(incoming_call);
+		BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallStreamsRunning, 1));
+		BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+
+		liblinphone_tester_check_rtcp(callerMgr, pauline);
+		/*to make sure the call is only "repaired one time"*/
+		BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
+
+		bctbx_free(repared_callid);
+
+		linphone_call_terminate(incoming_call);
+	} else {
+		BC_ASSERT_FALSE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
 	}
-
-	linphone_call_accept(incoming_call);
-	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallStreamsRunning, 1));
-	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
-
-	liblinphone_tester_check_rtcp(callerMgr, pauline);
-	/*to make sure the call is only "repaired one time"*/
-	BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
-
-	bctbx_free(repared_callid);
-
-	linphone_call_terminate(incoming_call);
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallReleased, 1));
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
@@ -239,6 +244,12 @@ end:
 }
 static void recovered_call_on_network_switch_in_early_state_1(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	recovered_call_on_network_switch_in_early_state(marie);
+	linphone_core_manager_destroy(marie);
+}
+static void recovered_call_on_network_switch_in_early_state_without_replaces_support(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	linphone_core_remove_supported_tag(marie->lc, "replaces");
 	recovered_call_on_network_switch_in_early_state(marie);
 	linphone_core_manager_destroy(marie);
 }
@@ -1085,6 +1096,9 @@ static test_t call_recovery_tests[] = {
     TEST_NO_TAG("Call with network switch and no recovery possible", call_with_network_switch_no_recovery),
     TEST_ONE_TAG("Recovered call on network switch in early state 1",
                  recovered_call_on_network_switch_in_early_state_1,
+                 "CallRecovery"),
+    TEST_ONE_TAG("Recovered call on network switch in early state without replaces support",
+                 recovered_call_on_network_switch_in_early_state_without_replaces_support,
                  "CallRecovery"),
     TEST_ONE_TAG("Recovered call on network family switch in early state 1",
                  recovered_call_on_network_family_switch_in_early_state,

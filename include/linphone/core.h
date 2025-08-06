@@ -1603,11 +1603,11 @@ LINPHONE_PUBLIC void linphone_core_unref(LinphoneCore *core);
  * - handles timers and timeout
  * - performs registration to proxies
  * - authentication retries
- * The application MUST call this function periodically, from its main loop.
- * Be careful that this function must be called from the same thread as
- * other liblinphone methods. If it is not the case make sure all liblinphone calls are
- * serialized with a mutex.
- * A recommanded timer value is 20 ms for calling this function.
+ * The application must call this function periodically, from the same thread it uses for calling other liblinphone
+ *methods. It may triggered from the timer in the application's main loop if the application design is single thread
+ *model, or from an application thread if the application decides to perform all liblinphone invocations from a
+ *dedicated thread. If it is not the case make sure all liblinphone calls are serialized with a mutex. A recommanded
+ *timer value is 20 ms for calling this function.
  * @param core #LinphoneCore object @notnil
  * @ingroup initializing
  **/

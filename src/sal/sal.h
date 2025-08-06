@@ -203,6 +203,7 @@ public:
 	// ---------------------------------------------------------------------------
 	void setSupportedTags(const std::string &tags);
 	const std::string &getSupportedTags() const;
+	bool hasSupportedTag(const std::string &tag) const;
 	void addSupportedTag(const std::string &tag);
 	void removeSupportedTag(const std::string &tag);
 

@@ -173,6 +173,8 @@ public:
 	void setTransport(LinphonePrivate::Transport transport);
 	LinphonePrivate::Transport getTransport() const;
 
+	bool hasSupportedTag(const std::string &tag) const;
+
 	void writeToConfigFile(LinphoneConfig *config, int index);
 
 private:

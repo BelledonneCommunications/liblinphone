@@ -366,6 +366,7 @@ LINPHONE_PUBLIC void sal_set_transport_timeout(Sal *sal, int timeout);
 LINPHONE_PUBLIC void sal_enable_test_features(Sal *ctx, bool_t value);
 LINPHONE_PUBLIC bool_t sal_transport_available(Sal *ctx, SalTransport t);
 
+LINPHONE_PUBLIC bool_t sal_has_supported_tag(Sal *sal, const char *tag);
 LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
 LINPHONE_PUBLIC bool_t sal_call_dialog_request_pending(const SalOp *op);
 LINPHONE_PUBLIC void sal_call_set_sdp_handling(SalOp *h, SalOpSDPHandling handling);

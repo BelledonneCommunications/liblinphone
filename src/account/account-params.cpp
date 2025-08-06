@@ -1136,6 +1136,14 @@ void AccountParams::setInstantMessagingEncryptionMandatory(bool mandatory) {
 	mInstantMessagingEncryptionMandatory = mandatory;
 }
 
+bool AccountParams::hasSupportedTag(const std::string &tag) const {
+	if (tag.empty()) {
+		return false;
+	}
+	auto it = find(mSupportedTagsList.mList.cbegin(), mSupportedTagsList.mList.cend(), tag);
+	return (it != mSupportedTagsList.mList.cend());
+}
+
 const std::list<std::string> &AccountParams::getSupportedTagsList() const {
 	return mSupportedTagsList.mList;
 }

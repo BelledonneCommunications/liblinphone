@@ -649,6 +649,14 @@ const string &Sal::getSupportedTags() const {
 	return mSupported;
 }
 
+bool Sal::hasSupportedTag(const string &tag) const {
+	if (tag.empty()) {
+		return false;
+	}
+	auto it = find(mSupportedTags.cbegin(), mSupportedTags.cend(), tag);
+	return (it != mSupportedTags.cend());
+}
+
 void Sal::addSupportedTag(const string &tag) {
 	auto it = find(mSupportedTags.cbegin(), mSupportedTags.cend(), tag);
 	if (it == mSupportedTags.cend()) {
@@ -1077,6 +1085,10 @@ LINPHONE_PUBLIC void sal_set_uuid(Sal *ctx, const char *uuid) {
 
 LINPHONE_PUBLIC const char *sal_get_uuid(const Sal *ctx) {
 	return ctx->getUuid().c_str();
+}
+
+LINPHONE_PUBLIC bool_t sal_has_supported_tag(Sal *sal, const char *tag) {
+	return (bool_t)sal->hasSupportedTag(L_C_TO_STRING(tag));
 }
 
 LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal *h, SalOpSDPHandling sdpHandlingMethod) {
