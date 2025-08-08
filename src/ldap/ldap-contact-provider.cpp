@@ -25,7 +25,6 @@
 #include <iomanip>
 #include <iostream>
 
-#include "bctoolbox/crypto.hh"
 #include "contact_providers_priv.h"
 #include "friend/friend.h"
 #include "ldap-config-keys.h"
@@ -212,11 +211,6 @@ static void onLdapLog(const char *msg) {
 	}
 }
 
-int LdapContactProvider::randomProvider(void *buffer, int bytes) {
-	bctoolbox::RNG::cRandomize((uint8_t *)buffer, (size_t)bytes);
-	return 0;
-}
-
 void LdapContactProvider::initializeLdap() {
 	int proto_version = LDAP_VERSION3;
 	int ret = ldap_set_option(NULL, LDAP_OPT_PROTOCOL_VERSION, &proto_version);
@@ -268,11 +262,6 @@ void LdapContactProvider::initializeLdap() {
 		if (ret != LDAP_SUCCESS)
 			lError() << "[LDAP] Problem initializing TLS on setting require SAN '" << mServerUrl[mServerUrlIndex]
 			         << "': " << ret << " (" << ldap_err2string(ret) << ")";
-
-		ret = ldap_set_option(NULL, LDAP_OPT_X_TLS_RANDOM_FUNC, (void *)randomProvider);
-		if (ret != LDAP_SUCCESS) {
-			lError() << "[LDAP] Problem initializing TLS random generator function.";
-		}
 	}
 	ret = ldap_initialize(&mLd, mServerUrl[mServerUrlIndex].c_str()); // Trying to connect even on error on options
 

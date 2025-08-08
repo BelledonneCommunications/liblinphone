@@ -321,6 +321,11 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_domain(const LinphoneAcc
 
 /**
  * Get the realm of the given account params.
+ * This is optional, but recommended as it allows digest authentication context to be re-used
+ * accross subsequent SIP requests, which reduces by almost half the number of SIP rmessages
+ * exchanged between a client and a server.
+ * The server is required to support the qop=auth digest authentication mode to benefit from this feature.
+ * @see rfc7616 https://datatracker.ietf.org/doc/html/rfc7616
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The realm of the account params. @maybenil
  **/
@@ -328,6 +333,11 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_realm(const LinphoneAcco
 
 /**
  * Set the realm of the given account params.
+ * This is optional, but recommended as it allows digest authentication context to be re-used
+ * accross subsequent SIP requests, which reduces by almost half the number of SIP rmessages
+ * exchanged between a client and a server.
+ * The server is required to support the qop=auth digest authentication mode to benefit from this feature.
+ * @see rfc7616 https://datatracker.ietf.org/doc/html/rfc7616
  * @param params The #LinphoneAccountParams object. @notnil
  * @param realm New realm value. @maybenil
  **/
