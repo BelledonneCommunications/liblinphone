@@ -2434,7 +2434,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 					const auto &s = *sIt;
 					const auto idx = std::distance(refMd->streams.cbegin(), sIt);
 					std::string contentAttrValue = s.getContent();
-					if (contentAttrValue.empty()) {
+					// If this session is answering to an offer, there is no need to guess the stream content as it relies on the remote SDP
+					if (localIsOfferer && contentAttrValue.empty()) {
 						// The content in the reference stream is empty, then try to find if a stream at the desired
 						// index has already been create in the new SDP. If so, make a last attempt to retrieve its
 						// content. This happens when a client is merging multiple calls into a conference; the
