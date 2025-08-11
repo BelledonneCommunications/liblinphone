@@ -71,7 +71,7 @@ MagicSearch::MagicSearch(const shared_ptr<Core> &core) : CoreAccessor(core) {
 MagicSearch::~MagicSearch() {
 	resetSearchCache();
 	if (mIteration) {
-		getCore()->destroyTimer(mIteration);
+		Core::destroyTimer(mIteration);
 		mIteration = nullptr;
 	}
 }
@@ -171,7 +171,7 @@ bool MagicSearch::iterate(void) {
 		} else mState = STATE_END;
 	}
 	if (mState == STATE_END && mIteration) {
-		getCore()->destroyTimer(mIteration);
+		Core::destroyTimer(mIteration);
 		mIteration = NULL;
 		continueLoop = false;
 	}

@@ -3626,6 +3626,7 @@ static void group_chat_room_with_duplications() {
 
 		ms_message("%s starts again its core", linphone_core_get_identity(laure.getLc()));
 		laure.configureCoreForConference(focus.getConferenceFactoryAddress());
+		linphone_core_enable_send_message_after_notify(laure.getLc(), FALSE);
 		linphone_core_manager_start(laure.getCMgr(), TRUE);
 		focus.registerAsParticipantDevice(laure);
 		setup_mgr_for_conference(laure.getCMgr(), NULL);

@@ -294,7 +294,7 @@ void ToneManager::playTone(const MSDtmfGenCustomTone &tone) {
 }
 
 void ToneManager::scheduleRingStreamDestruction() {
-	if (mRingStreamTimer) getCore().destroyTimer(mRingStreamTimer);
+	if (mRingStreamTimer) Core::destroyTimer(mRingStreamTimer);
 	mRingStreamTimer = getCore().createTimer(
 	    [this]() -> bool {
 		    if (!mRingStream) return false;
@@ -323,7 +323,7 @@ void ToneManager::destroyRingStream() {
 	}
 
 	if (mRingStreamTimer) {
-		getCore().destroyTimer(mRingStreamTimer);
+		Core::destroyTimer(mRingStreamTimer);
 		mRingStreamTimer = nullptr;
 		mStats.number_of_stopTone++;
 	}
@@ -768,7 +768,7 @@ void ToneManager::stopSecurityAlert() {
 	if (!linphone_core_security_alert_enabled(getCore().getCCore())) return;
 	stopTone();
 	if (mSecurityAlertTimer) {
-		getCore().destroyTimer(mSecurityAlertTimer);
+		Core::destroyTimer(mSecurityAlertTimer);
 		mSecurityAlertTimer = nullptr;
 	}
 }

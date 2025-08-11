@@ -30,8 +30,6 @@
 #include "client-conference-event-handler-base.h"
 #include "conference/conference-id.h"
 #include "conference/conference.h"
-#include "core/core-accessor.h"
-#include "core/core-listener.h"
 
 // =============================================================================
 
@@ -42,12 +40,10 @@ class Content;
 class EventSubscribe;
 class ClientConferenceEventHandler;
 
-class ClientConferenceListEventHandler : public ClientConferenceEventHandlerBase,
-                                         public CoreAccessor,
-                                         public CoreListener {
+class ClientConferenceListEventHandler : public ClientConferenceEventHandlerBase {
 public:
 	ClientConferenceListEventHandler(const std::shared_ptr<Core> &core);
-	~ClientConferenceListEventHandler();
+	virtual ~ClientConferenceListEventHandler() = default;
 
 	bool subscribe() override;
 	bool subscribe(const std::shared_ptr<Account> &account);
@@ -60,6 +56,7 @@ public:
 	void clearHandlers();
 	std::shared_ptr<ClientConferenceEventHandler> findHandler(const ConferenceId &conferenceId) const;
 	bool getInitialSubscriptionUnderWayFlag(const ConferenceId &conferenceId) const;
+	virtual void handleDelayMessageSendTimerExpired(const Address address) override;
 
 private:
 	bool isHandlerInSameDomainAsCore(const ConferenceId &conferenceId) const;

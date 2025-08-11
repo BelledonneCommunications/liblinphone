@@ -45,7 +45,7 @@ MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session) {
 
 MS2AudioMixer::~MS2AudioMixer() {
 	if (mTimer) {
-		mSession.getCore().destroyTimer(mTimer);
+		Core::destroyTimer(mTimer);
 	}
 	if (mRecordEndpoint) {
 		stopRecording();

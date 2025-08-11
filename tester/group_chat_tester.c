@@ -5342,6 +5342,40 @@ void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
 		                             initialPaulineStats.number_of_LinphoneMessageDeliveredToUser + 1,
 		                             liblinphone_tester_sip_timeout));
 	} else {
+
+		if (!add_participant) {
+			// Clients create a one to one chatroom to send the IMDN to Marie
+			BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneChatRoomStateCreated,
+			                             initialChloeStats.number_of_LinphoneChatRoomStateCreated + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneChatRoomConferenceJoined,
+			                             initialChloeStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateCreated,
+			                             initialLaureStats.number_of_LinphoneChatRoomStateCreated + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomConferenceJoined,
+			                             initialLaureStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			if (!participant_goes_offline) {
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateCreated,
+				                             initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1,
+				                             liblinphone_tester_sip_timeout));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined,
+				                             initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+				                             liblinphone_tester_sip_timeout));
+			}
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle->stat.number_of_LinphoneChatRoomStateCreated,
+			                             initialMichelleStats.number_of_LinphoneChatRoomStateCreated + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle->stat.number_of_LinphoneChatRoomConferenceJoined,
+			                             initialMichelleStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+			                             liblinphone_tester_sip_timeout));
+		}
+
 		// The threshold is expected to be 4 therefore only the sender receives the IMDM
 		BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDeliveredToUser,
 		                              initialChloeStats.number_of_LinphoneMessageDeliveredToUser + 1, 1000));
@@ -5545,6 +5579,8 @@ void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
 
 	const char *marieTextMessage2 = "My second message";
 	LinphoneChatMessage *marieMessage2 = _send_message(marieCr, marieTextMessage2);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent,
+	                             initialMarieStats.number_of_LinphoneMessageSent + 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageReceived,
 	                             initialChloeStats.number_of_LinphoneMessageReceived + 1,
 	                             liblinphone_tester_sip_timeout));
@@ -5560,16 +5596,54 @@ void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
 	BC_ASSERT_TRUE(wait_for_list(coresList, &michelle->stat.number_of_LinphoneMessageReceived,
 	                             initialMichelleStats.number_of_LinphoneMessageReceived + 1,
 	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, 1000));
 
+	if (!!add_participant) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneChatRoomStateCreated,
+		                             initialChloeStats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneChatRoomConferenceJoined,
+		                             initialChloeStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateCreated,
+		                             initialLaureStats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomConferenceJoined,
+		                             initialLaureStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateCreated,
+		                             initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined,
+		                             initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle->stat.number_of_LinphoneChatRoomStateCreated,
+		                             initialMichelleStats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle->stat.number_of_LinphoneChatRoomConferenceJoined,
+		                             initialMichelleStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe->stat.number_of_LinphoneChatRoomStateCreated,
+		                             initialBertheStats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe->stat.number_of_LinphoneChatRoomConferenceJoined,
+		                             initialBertheStats.number_of_LinphoneChatRoomConferenceJoined + 1,
+		                             liblinphone_tester_sip_timeout));
+	}
+
+	// Clients have to create 1-1 chat with Marie
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
 	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
-	                             3 * liblinphone_tester_sip_timeout));
+	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneMessageDeliveredToUser,
 	                             initialMarie2Stats.number_of_LinphoneMessageDeliveredToUser + 1,
-	                             3 * liblinphone_tester_sip_timeout));
+	                             liblinphone_tester_sip_timeout));
 
-	// The chat room has gone over the threshold therefore no one receives the IMDN
+	// The chat room's participant number has gone above the threshold IMDNs are sent to everybody therefore only the
+	// sender has this information
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDeliveredToUser,
 	                              initialChloeStats.number_of_LinphoneMessageDeliveredToUser + 1, 1000));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageDeliveredToUser,
@@ -5633,7 +5707,8 @@ void group_chat_with_imdn_sent_only_to_sender_base(bool_t add_participant,
 	                             initialMarie2Stats.number_of_LinphoneMessageDisplayed + 1,
 	                             liblinphone_tester_sip_timeout));
 
-	// The chat room has gone over the threshold therefore no one receives the IMDN
+	// The chat room's participant number has gone above the threshold IMDNs are sent to everybody therefore only the
+	// sender has this information
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed,
 	                              initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 1000));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageDisplayed,
@@ -5741,7 +5816,7 @@ static void group_chat_with_imdn_sent_only_to_sender_with_participant_offline(vo
 	group_chat_with_imdn_sent_only_to_sender_base(FALSE, FALSE, TRUE);
 }
 
-static void group_chat_with_imdn_sent_only_to_sender_after_going_over_threshold(void) {
+static void group_chat_with_imdn_sent_only_to_sender_after_participant_number_goes_above_threshold(void) {
 	group_chat_with_imdn_sent_only_to_sender_base(TRUE, FALSE, FALSE);
 }
 
@@ -9770,8 +9845,8 @@ test_t group_chat4_tests[] = {
     TEST_NO_TAG("Group chat with IMDN sent only to sender", group_chat_with_imdn_sent_only_to_sender),
     TEST_NO_TAG("Group chat with IMDN sent only to sender with participant offline",
                 group_chat_with_imdn_sent_only_to_sender_with_participant_offline),
-    TEST_NO_TAG("Group chat with IMDN sent only to sender after going over threshold",
-                group_chat_with_imdn_sent_only_to_sender_after_going_over_threshold),
+    TEST_NO_TAG("Group chat with IMDN sent only to sender after the number of participants goes above threshold",
+                group_chat_with_imdn_sent_only_to_sender_after_participant_number_goes_above_threshold),
     TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2)};
 
 test_suite_t group_chat_test_suite = {"Group Chat",

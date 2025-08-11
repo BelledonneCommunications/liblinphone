@@ -26,7 +26,6 @@
 #include "chat/chat-room/client-chat-room.h"
 #include "client-conference-event-handler-base.h"
 #include "conference/conference-id.h"
-#include "core/core-listener.h"
 #include "xml/conference-info-linphone-extension.h"
 #include "xml/conference-info.h"
 
@@ -42,14 +41,12 @@ class EventSubscribe;
 class ClientConferenceEventHandlerBase;
 
 class LINPHONE_PUBLIC ClientConferenceEventHandler : public std::enable_shared_from_this<ClientConferenceEventHandler>,
-                                                     public CoreAccessor,
-                                                     public ClientConferenceEventHandlerBase,
-                                                     public CoreListener {
+                                                     public ClientConferenceEventHandlerBase {
 public:
 	ClientConferenceEventHandler(const std::shared_ptr<Core> &core,
 	                             const std::shared_ptr<Conference> &clientConference,
 	                             ConferenceListener *listener);
-	~ClientConferenceEventHandler();
+	virtual ~ClientConferenceEventHandler() = default;
 
 	bool subscribe(const ConferenceId &conferenceId);
 	bool notAlreadySubscribed() const;
@@ -73,10 +70,9 @@ public:
 	void setInitialSubscriptionUnderWayFlag(bool on);
 	bool getInitialSubscriptionUnderWayFlag() const;
 
-	void startDelayMessageSendTimer();
-	bool delayTimerExpired() const;
-
 	void setManagedByListEventhandler(bool managed);
+
+	virtual void handleDelayMessageSendTimerExpired(const Address address) override;
 
 	static void subscribeStateChangedCb(LinphoneEvent *lev, LinphoneSubscriptionState state);
 
@@ -102,7 +98,6 @@ protected:
 	bool waitingFullState = false;
 	bool fullStateRequested = false;
 	bool initialSubscriptionUnderWay = false;
-	bool mDelayTimerExpired = false;
 
 private:
 	void unsubscribePrivate();
@@ -113,12 +108,6 @@ private:
 	                               Xsd::ConferenceInfo::StateType state,
 	                               bool isFullState,
 	                               bool notify) const;
-
-	void stopDelayMessageSendTimer();
-	void handleDelayMessageSendTimerExpired();
-	static int delayMessageSendTimerExpired(void *data, unsigned int revents);
-	BackgroundTask mDelayMessageSendBgTask;
-	belle_sip_source_t *mDelayMessageSendTimer = nullptr;
 
 	L_DISABLE_COPY(ClientConferenceEventHandler);
 };

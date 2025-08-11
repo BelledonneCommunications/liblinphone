@@ -21,24 +21,43 @@
 #ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_BASE_H_
 #define _L_REMOTE_CONFERENCE_EVENT_HANDLER_BASE_H_
 
-#include "conference/conference-id.h"
-
 // =============================================================================
+
+#include <belle-sip/mainloop.h>
+
+#include "address/address.h"
+#include "core/core-accessor.h"
+#include "core/core-listener.h"
+#include "linphone/utils/general.h"
+#include "utils/background-task.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceId;
+class Core;
 
-class LINPHONE_PUBLIC ClientConferenceEventHandlerBase {
+class LINPHONE_PUBLIC ClientConferenceEventHandlerBase : public CoreAccessor, public CoreListener {
 	friend class ClientChatRoom;
 
 public:
-	virtual ~ClientConferenceEventHandlerBase() = default;
+	ClientConferenceEventHandlerBase(const std::shared_ptr<Core> &core);
+	virtual ~ClientConferenceEventHandlerBase();
+
+	void startDelayMessageSendTimer(const Address address);
+	void stopDelayMessageSendTimer(const Address address);
+	bool delayMessageSendTimerStarted(const Address address) const;
+	void setDelayTimerExpired(bool expired, const Address address);
+	bool delayTimerExpired(const Address address) const;
 
 	// virtual void publish() = 0;
 	virtual bool subscribe() = 0;
-	virtual void unsubscribe() = 0;
+	virtual void unsubscribe();
 	virtual void invalidateSubscription() = 0;
+
+protected:
+	virtual void handleDelayMessageSendTimerExpired(const Address address) = 0;
+	std::map<const Address, bool> mDelayTimersExpired;
+	std::map<const Address, BackgroundTask> mDelayMessageSendBgTasks;
+	std::map<const Address, belle_sip_source_t *> mDelayMessageSendTimers;
 };
 
 LINPHONE_END_NAMESPACE

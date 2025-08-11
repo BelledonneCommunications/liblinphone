@@ -421,7 +421,7 @@ void TunnelManager::unlinkLinphoneCore() {
 		stopClient();
 		if (mCore->sal) {
 			mCore->sal->setTunnel(NULL);
-			L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->destroyTimer(mIterateTimer);
+			Core::destroyTimer(mIterateTimer);
 		}
 		linphone_core_remove_callbacks(mCore, mCoreCbs);
 		linphone_core_cbs_unref(mCoreCbs);

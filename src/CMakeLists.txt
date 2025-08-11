@@ -681,6 +681,7 @@ if(ENABLE_ADVANCED_IM)
 		conference/encryption/ekt-info.cpp
 		conference/handlers/server-conference-event-handler.cpp
 		conference/handlers/server-conference-list-event-handler.cpp
+		conference/handlers/client-conference-event-handler-base.cpp
 		conference/handlers/client-conference-event-handler.cpp
 		conference/handlers/client-conference-list-event-handler.cpp
 		xml/conference-info-linphone-extension.cpp

@@ -104,6 +104,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class MS2Stream;
 	friend class MediaSessionPrivate;
 	friend class ClientConference;
+	friend class ClientConferenceEventHandlerBase;
 	friend class ClientConferenceEventHandler;
 	friend class ClientConferenceListEventHandler;
 	friend class ServerChatRoom;
@@ -361,9 +362,10 @@ public:
 	 */
 	belle_sip_source_t *
 	createTimer(const std::function<bool()> &something, unsigned int millisecond, const std::string &name);
-	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
 
-	void destroyTimer(belle_sip_source_t *timer);
+	/* Stop (ie cancel) and destroy a timer created by createTimer()
+	   Use static keyword to handle timer destruction in the Core class destructor*/
+	static void destroyTimer(belle_sip_source_t *timer);
 
 	void onStopAsyncBackgroundTaskStarted(); /* Using background task to ensure stop core async ended */
 	void onStopAsyncBackgroundTaskStopped();

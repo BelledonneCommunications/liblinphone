@@ -50,18 +50,7 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 ClientConferenceListEventHandler::ClientConferenceListEventHandler(const std::shared_ptr<Core> &core)
-    : CoreAccessor(core) {
-	getCore()->getPrivate()->registerListener(this);
-}
-
-ClientConferenceListEventHandler::~ClientConferenceListEventHandler() {
-	try {
-		getCore()->getPrivate()->unregisterListener(this);
-	} catch (const bad_weak_ptr &) {
-		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
-	}
-
-	unsubscribe();
+    : ClientConferenceEventHandlerBase(core) {
 }
 
 // -----------------------------------------------------------------------------
@@ -118,7 +107,6 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 				Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 				l.getEntry().push_back(entry);
 				handler->setManagedByListEventhandler(true);
-				handler->startDelayMessageSendTimer();
 			}
 		} catch (const bad_weak_ptr &) {
 		}
@@ -132,7 +120,8 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(
 	    (new EventSubscribe(getCore(), factoryUri, "conference", 600))->toSharedPtr());
-	evSub->getOp()->setFromAddress(account->getContactAddress()->getImpl());
+	const auto &from = account->getContactAddress();
+	evSub->getOp()->setFromAddress(from->getImpl());
 	evSub->setInternal(true);
 	evSub->addCustomHeader("Require", "recipient-list-subscribe");
 	evSub->addCustomHeader("Accept", "multipart/related, application/conference-info+xml, application/rlmi+xml");
@@ -145,6 +134,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 	evSub->setProperty("event-handler-private", this);
 	auto ret = evSub->send(content);
 	levs.push_back(evSub);
+	startDelayMessageSendTimer(*from);
 
 	return (ret == 0);
 }
@@ -227,56 +217,81 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 			auto handler = findHandler(id);
 			if (!handler) return;
 
-			const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
 			handler->notifyReceived(*notifyContent);
+			const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
 			if (handler->getInitialSubscriptionUnderWayFlag()) {
 				handler->setInitialSubscriptionUnderWayFlag(!levFound);
 			}
-			if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
+			if (!delayMessageSendTimerStarted(*from) && initialSubscription &&
+			    !handler->getInitialSubscriptionUnderWayFlag()) {
 				auto conference = dynamic_pointer_cast<ClientConference>(handler->getConference());
 				if (conference) {
 					conference->sendPendingMessages();
 				}
 			}
-			return;
-		}
+		} else {
+			list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
+			map<string, std::shared_ptr<Address>> addresses;
+			for (const auto &content : contents) {
+				const string &body = content.getBodyAsUtf8String();
+				const ContentType &contentType = content.getContentType();
+				if (contentType == ContentType::Rlmi) {
+					addresses = parseRlmi(body);
+					continue;
+				}
 
-		list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
-		map<string, std::shared_ptr<Address>> addresses;
-		for (const auto &content : contents) {
-			const string &body = content.getBodyAsUtf8String();
-			const ContentType &contentType = content.getContentType();
-			if (contentType == ContentType::Rlmi) {
-				addresses = parseRlmi(body);
-				continue;
+				const string &cid = content.getHeader("Content-Id").getValue();
+				if (cid.empty()) continue;
+
+				map<string, std::shared_ptr<Address>>::const_iterator it = addresses.find(cid);
+				if (it == addresses.cend()) continue;
+
+				std::shared_ptr<Address> peer = it->second;
+				ConferenceId id(peer, from, conferenceIdParams);
+				auto handler = findHandler(id);
+				if (!handler) continue;
+
+				if (contentType == ContentType::Multipart) handler->multipartNotifyReceived(content);
+				else if (contentType == ContentType::ConferenceInfo) handler->notifyReceived(content);
 			}
 
-			const string &cid = content.getHeader("Content-Id").getValue();
-			if (cid.empty()) continue;
-
-			map<string, std::shared_ptr<Address>>::const_iterator it = addresses.find(cid);
-			if (it == addresses.cend()) continue;
-
-			std::shared_ptr<Address> peer = it->second;
-			ConferenceId id(peer, from, conferenceIdParams);
-			auto handler = findHandler(id);
-			if (!handler) continue;
-
-			if (contentType == ContentType::Multipart) handler->multipartNotifyReceived(content);
-			else if (contentType == ContentType::ConferenceInfo) handler->notifyReceived(content);
+			// Remove subscription underway flag from all handlers matching the account that sent the subscription
+			for (const auto &[key, handlerWkPtr] : handlers) {
+				try {
+					const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
+					const ConferenceId &conferenceId = handler->getConferenceId();
+					if (from->weakEqual(*conferenceId.getLocalAddress())) {
+						if (handler->getInitialSubscriptionUnderWayFlag()) {
+							handler->setInitialSubscriptionUnderWayFlag(!levFound);
+						}
+						if (!delayMessageSendTimerStarted(*from)) {
+							auto conference = dynamic_pointer_cast<ClientConference>(handler->getConference());
+							if (conference) {
+								conference->sendPendingMessages();
+							}
+						}
+					}
+				} catch (const bad_weak_ptr &) {
+				}
+			}
 		}
+		handleDelayMessageSendTimerExpired(*from);
+	}
+}
 
-		// Remove subscription underway flag from all handlers matching the account that sent the subscription
+void ClientConferenceListEventHandler::handleDelayMessageSendTimerExpired(const Address address) {
+	if (delayMessageSendTimerStarted(address)) {
+		setDelayTimerExpired(true, address);
+		stopDelayMessageSendTimer(address);
 		for (const auto &[key, handlerWkPtr] : handlers) {
 			try {
 				const std::shared_ptr<ClientConferenceEventHandler> handler(handlerWkPtr);
-				const ConferenceId &conferenceId = handler->getConferenceId();
-				if (from->weakEqual(*conferenceId.getLocalAddress())) {
-					if (handler->getInitialSubscriptionUnderWayFlag()) {
-						handler->setInitialSubscriptionUnderWayFlag(!levFound);
-					}
-					auto conference = dynamic_pointer_cast<ClientConference>(handler->getConference());
-					if (conference) {
+				auto conference = dynamic_pointer_cast<ClientConference>(handler->getConference());
+				if (conference) {
+					handler->setDelayTimerExpired(true, *conference->getConferenceAddress());
+					if (conference->getCurrentParams()->chatEnabled()) {
+						lInfo() << "Timer to delay message sending in " << *conference
+						        << " has expired. Sending all pending messages if the conference has chat capabilities";
 						conference->sendPendingMessages();
 					}
 				}

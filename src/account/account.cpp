@@ -320,11 +320,7 @@ void Account::triggerDeletion() {
 
 void Account::cancelDeletion() {
 	if (mDeletionTimer) {
-		try {
-			getCore()->destroyTimer(mDeletionTimer);
-		} catch (const bad_weak_ptr &) {
-			// ignored.
-		}
+		Core::destroyTimer(mDeletionTimer);
 		mDeletionTimer = nullptr;
 	}
 }

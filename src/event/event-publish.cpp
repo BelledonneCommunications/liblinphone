@@ -252,7 +252,7 @@ void EventPublish::startTimeoutHandling() {
 void EventPublish::stopTimeoutHandling() {
 	if (mTimer) {
 		lInfo() << "stopTimeoutHandling()";
-		getCore()->destroyTimer(mTimer);
+		Core::destroyTimer(mTimer);
 		mTimer = nullptr;
 	}
 }

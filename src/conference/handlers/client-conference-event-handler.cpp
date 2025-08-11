@@ -59,28 +59,9 @@ using namespace Xsd::ConferenceInfoLinphoneExtension;
 ClientConferenceEventHandler::ClientConferenceEventHandler(const std::shared_ptr<Core> &core,
                                                            const std::shared_ptr<Conference> &clientConference,
                                                            ConferenceListener *listener)
-    : CoreAccessor(core) {
+    : ClientConferenceEventHandlerBase(core) {
 	conf = clientConference;
 	confListener = listener;
-	mDelayMessageSendBgTask.setName("Delay message sending");
-	try {
-		getCore()->getPrivate()->registerListener(this);
-	} catch (const bad_weak_ptr &) {
-		lError() << "ClientConferenceEventHandler [" << this
-		         << "]: Unable to register listener as the core has already been destroyed";
-	}
-}
-
-ClientConferenceEventHandler::~ClientConferenceEventHandler() {
-
-	try {
-		getCore()->getPrivate()->unregisterListener(this);
-	} catch (const bad_weak_ptr &) {
-		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
-	}
-
-	stopDelayMessageSendTimer();
-	unsubscribe();
 }
 
 // -----------------------------------------------------------------------------
@@ -809,6 +790,22 @@ void ClientConferenceEventHandler::requestFullState() {
 	fullStateRequested = true;
 }
 
+void ClientConferenceEventHandler::handleDelayMessageSendTimerExpired(const Address address) {
+	if (delayMessageSendTimerStarted(address)) {
+		setDelayTimerExpired(true, address);
+		stopDelayMessageSendTimer(address);
+		auto conference = getConference();
+		if (conference) {
+			lInfo() << "Timer to delay message sending in " << *conference
+			        << " has expired. Sending all pending messages if the conference has chat capabilities";
+			const auto &chatRoom = conference->getChatRoom();
+			if (chatRoom) {
+				chatRoom->sendPendingMessages();
+			}
+		}
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 bool ClientConferenceEventHandler::notAlreadySubscribed() const {
@@ -833,62 +830,6 @@ void ClientConferenceEventHandler::subscribeStateChangedCb(LinphoneEvent *lev, L
 		ClientConferenceEventHandler *handler = static_cast<ClientConferenceEventHandler *>(cbs->getUserData());
 		handler->setInitialSubscriptionUnderWayFlag(false);
 	}
-}
-
-void ClientConferenceEventHandler::startDelayMessageSendTimer() {
-	stopDelayMessageSendTimer();
-	bool sendMessagesAfterNotify = !!linphone_core_send_message_after_notify_enabled(getCore()->getCCore());
-	if (!sendMessagesAfterNotify) {
-		int delayMessageSendS = linphone_core_get_message_sending_delay(getCore()->getCCore());
-		mDelayMessageSendBgTask.start(getCore());
-		auto conference = getConference();
-		lInfo() << *conference
-		        << " will not wait for the NOTIFY full state before sending messages, hence start timer to delay "
-		           "message sending by "
-		        << delayMessageSendS << "s to ensure that chat messages are sent to all participants";
-		mDelayMessageSendTimer = getCore()->getCCore()->sal->createTimer(
-		    delayMessageSendTimerExpired, this, static_cast<unsigned int>(delayMessageSendS) * 1000,
-		    "delay message sending timeout");
-	}
-}
-
-void ClientConferenceEventHandler::stopDelayMessageSendTimer() {
-	if (mDelayMessageSendTimer) {
-		try {
-			auto core = getCore()->getCCore();
-			if (core && core->sal) core->sal->cancelTimer(mDelayMessageSendTimer);
-		} catch (const bad_weak_ptr &) {
-		}
-		belle_sip_object_unref(mDelayMessageSendTimer);
-		mDelayMessageSendTimer = nullptr;
-		mDelayMessageSendBgTask.stop();
-	}
-}
-
-void ClientConferenceEventHandler::handleDelayMessageSendTimerExpired() {
-	mDelayTimerExpired = true;
-	if (mDelayMessageSendTimer) {
-		stopDelayMessageSendTimer();
-		auto conference = getConference();
-		if (conference) {
-			lInfo() << "Timer to delay message sending in " << *conference
-			        << " has expired. Sending all pending messages if the conference has chat capabilities";
-			const auto &chatRoom = conference->getChatRoom();
-			if (chatRoom) {
-				chatRoom->sendPendingMessages();
-			}
-		}
-	}
-}
-
-int ClientConferenceEventHandler::delayMessageSendTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
-	ClientConferenceEventHandler *handler = static_cast<ClientConferenceEventHandler *>(data);
-	handler->handleDelayMessageSendTimerExpired();
-	return 0;
-}
-
-bool ClientConferenceEventHandler::delayTimerExpired() const {
-	return mDelayTimerExpired;
 }
 
 bool ClientConferenceEventHandler::subscribe() {
@@ -920,9 +861,8 @@ bool ClientConferenceEventHandler::subscribe() {
 		ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
 		ev->setInternal(true);
 		ev->setProperty("event-handler-private", this);
-		lInfo() << *localAddress << " is subscribing to chat room or conference: " << *subscribeToHeader
-		        << " with last notify: " << lastNotifyStr;
-		startDelayMessageSendTimer();
+		lInfo() << *localAddress << " is subscribing to " << conference << " with last notify: " << lastNotifyStr;
+		startDelayMessageSendTimer(*subscribeToHeader);
 		return (ev->send(nullptr) == 0);
 	} catch (const bad_weak_ptr &) {
 		lError() << "ClientConferenceEventHandler [" << this << "]: Unable to send subscribe to " << *conference
@@ -1035,7 +975,9 @@ void ClientConferenceEventHandler::notifyReceived(const Content &content) {
 	const ContentType &contentType = content.getContentType();
 	if (contentType == ContentType::ConferenceInfo) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
-		handleDelayMessageSendTimerExpired();
+		auto conference = getConference();
+		const auto &conferenceAddress = conference->getConferenceAddress();
+		handleDelayMessageSendTimerExpired(*conferenceAddress);
 	}
 }
 
@@ -1057,15 +999,15 @@ shared_ptr<Conference> ClientConferenceEventHandler::getConference() const {
 	} catch (const bad_weak_ptr &) {
 		return nullptr;
 	}
-};
+}
 
 const ConferenceId &ClientConferenceEventHandler::getConferenceId() const {
 	return getConference() ? getConference()->getConferenceId() : Utils::getEmptyConstRefObject<ConferenceId>();
-};
+}
 
 unsigned int ClientConferenceEventHandler::getLastNotify() const {
 	return getConference() ? getConference()->getLastNotify() : 0;
-};
+}
 
 time_t ClientConferenceEventHandler::dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const {
 	tm timeStruct;

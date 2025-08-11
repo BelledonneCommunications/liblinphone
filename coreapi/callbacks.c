@@ -357,6 +357,7 @@ static void call_received(SalCallOp *h) {
 							msg += " has already expired";
 							reason = SalReasonGone;
 						}
+						lInfo() << "Rejecting INVITE session because " << msg;
 						sal_error_info_set(&sei, reason, "SIP", 0, nullptr, msg.c_str());
 						h->replyWithErrorInfo(&sei);
 						sal_error_info_reset(&sei);

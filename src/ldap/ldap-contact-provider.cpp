@@ -83,7 +83,7 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core,
 
 LdapContactProvider::~LdapContactProvider() {
 	if (mIteration) {
-		mCore->destroyTimer(mIteration);
+		Core::destroyTimer(mIteration);
 		mIteration = nullptr;
 	}
 	cleanLdap();

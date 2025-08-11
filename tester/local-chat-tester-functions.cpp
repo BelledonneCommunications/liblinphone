@@ -502,8 +502,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			}
 		}
 
-		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(michelle2Cr, "back with you");
-		linphone_chat_message_send(msg);
+		LinphoneChatMessage *msg = ClientConference::sendTextMsg(michelle2Cr, "back with you");
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 		}));
@@ -513,8 +512,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		linphone_chat_message_unref(msg);
 		msg = NULL;
 
-		msg = linphone_chat_room_create_message_from_utf8(marieCr, "welcome back");
-		linphone_chat_message_send(msg);
+		msg = ClientConference::sendTextMsg(marieCr, "welcome back");
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 		}));
@@ -527,8 +525,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		linphone_chat_message_unref(msg);
 		msg = NULL;
 
-		msg = linphone_chat_room_create_message_from_utf8(michelleCr, "message blabla");
-		linphone_chat_message_send(msg);
+		msg = ClientConference::sendTextMsg(michelleCr, "message blabla");
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 		}));

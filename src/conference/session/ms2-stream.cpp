@@ -1263,11 +1263,11 @@ void MS2Stream::startTimers() {
 
 void MS2Stream::stopTimers() {
 	if (mTimer) {
-		getCore().destroyTimer(mTimer);
+		Core::destroyTimer(mTimer);
 		mTimer = nullptr;
 	}
 	if (mMonitorTimer) {
-		getCore().destroyTimer(mMonitorTimer);
+		Core::destroyTimer(mMonitorTimer);
 		mMonitorTimer = nullptr;
 	}
 }

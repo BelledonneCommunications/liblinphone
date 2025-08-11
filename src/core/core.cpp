@@ -394,9 +394,8 @@ void CorePrivate::createConferenceCleanupTimer(long period) {
 }
 
 void CorePrivate::stopConferenceCleanupTimer() {
-	L_Q();
 	if (mConferenceCleanupTimer) {
-		q->destroyTimer(mConferenceCleanupTimer);
+		Core::destroyTimer(mConferenceCleanupTimer);
 		mConferenceCleanupTimer = nullptr;
 	}
 }
