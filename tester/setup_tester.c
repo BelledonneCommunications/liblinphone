@@ -3870,6 +3870,18 @@ static void friend_phone_number_lookup_without_plus(void) {
 	linphone_core_add_friend(core, lf);
 	linphone_friend_unref(lf);
 
+	// Make sure phone number are correctly flattened no matter if we apply the prefix or not,
+	LinphoneAddress *addr = linphone_core_interpret_url_2(core, "+49-123-456(78 901)", FALSE);
+	char *addr_as_string = linphone_address_as_string_uri_only(addr);
+	BC_ASSERT_STRING_EQUAL(addr_as_string, "sip:+4912345678901@sip.example.org");
+	ms_free(addr_as_string);
+	linphone_address_unref(addr);
+	addr = linphone_core_interpret_url_2(core, "+49-123-456(78 901)", TRUE);
+	addr_as_string = linphone_address_as_string_uri_only(addr);
+	BC_ASSERT_STRING_EQUAL(addr_as_string, "sip:+4912345678901@sip.example.org");
+	ms_free(addr_as_string);
+	linphone_address_unref(addr);
+
 	LinphoneFriend *found = linphone_core_find_friend_by_phone_number(core, "4912345678901");
 	BC_ASSERT_PTR_NULL(found);
 

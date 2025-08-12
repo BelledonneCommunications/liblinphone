@@ -4707,13 +4707,17 @@ LinphoneAddress *linphone_core_interpret_url_2(LinphoneCore *lc, const char *url
 		}
 	}
 
-	if (apply_international_prefix && linphone_account_is_phone_number(account, url_lowercase)) {
-		char *normalized_number = linphone_account_normalize_phone_number(account, url_lowercase);
-		if (normalized_number) {
-			result = linphone_account_normalize_sip_uri(account, normalized_number);
-			ms_free(normalized_number);
+	char *processed_phone_number = nullptr;
+	if (linphone_account_is_phone_number(account, url_lowercase)) {
+		if (apply_international_prefix) {
+			processed_phone_number = linphone_account_normalize_phone_number(account, url_lowercase);
 		} else {
-			result = linphone_account_normalize_sip_uri(account, url_lowercase);
+			processed_phone_number = ms_strdup(Utils::flattenPhoneNumber(url_lowercase).c_str());
+		}
+
+		if (processed_phone_number) {
+			result = linphone_account_normalize_sip_uri(account, processed_phone_number);
+			ms_free(processed_phone_number);
 		}
 	} else {
 		result = linphone_account_normalize_sip_uri(account, url_lowercase);
