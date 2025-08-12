@@ -1961,7 +1961,7 @@ static void snapshot_taken(LinphoneCall *call, const char *filepath) {
 }
 
 /*this is call forking with early media managed at client side (not by flexisip server)*/
-static void multiple_early_media(void) {
+static void multiple_early_media() {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneCoreManager *marie1 = linphone_core_manager_new("marie_early_rc");
 	LinphoneCoreManager *marie2 = linphone_core_manager_new("marie_early_rc");
@@ -2005,9 +2005,12 @@ static void multiple_early_media(void) {
 	linphone_core_invite_address_with_params(pauline->lc, marie1->identity, params);
 	linphone_call_params_unref(params);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 3000));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, liblinphone_tester_sip_timeout));
 
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	marie1_call = linphone_core_get_current_call(marie1->lc);
@@ -2020,20 +2023,22 @@ static void multiple_early_media(void) {
 	if (pauline_call && marie1_call && marie2_call) {
 
 		/*wait a bit that streams are established*/
-		wait_for_list(lcs, &dummy, 1, 6000);
+		wait_for_list(lcs, &dummy, 1, liblinphone_tester_sip_timeout);
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline), 70, int, "%i");
 		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie1), 70, int, "%i");
 		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie2), 70, int, "%i");
 
 		linphone_call_accept(linphone_core_get_current_call(marie1->lc));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, 3000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 3000));
+		BC_ASSERT_TRUE(
+		    wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
 
 		/*marie2 should get her call terminated*/
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
 
 		/*wait a bit that streams are established*/
-		wait_for_list(lcs, &dummy, 1, 3000);
+		wait_for_list(lcs, &dummy, 1, liblinphone_tester_sip_timeout);
 		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(pauline), 71, int, "%i");
 		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie1), 71, int, "%i");
 
@@ -2041,7 +2046,7 @@ static void multiple_early_media(void) {
 		info = linphone_core_create_info_message(marie1->lc);
 		linphone_call_send_info_message(marie1_call, info);
 		linphone_info_message_unref(info);
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, 1, liblinphone_tester_sip_timeout));
 	}
 
 	end_call(pauline, marie1);
