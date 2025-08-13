@@ -493,8 +493,14 @@ void SalCallOp::sendAckBye(const belle_sip_response_event_t *event) {
 	belle_sip_header_cseq_t *invite_cseq = belle_sip_message_get_header_by_type(request, belle_sip_header_cseq_t);
 	auto ack = belle_sip_dialog_create_ack(dialog, belle_sip_header_cseq_get_seq_number(invite_cseq));
 	if (ack) {
+		/* belle_sip_dialog_create_ack() returns a floating reference.
+		 * It must be acquired before going through the call_acb_being_sent callback, that
+		 * comes up to the API.
+		 */
+		belle_sip_object_ref(ack);
 		mRoot->mCallbacks.call_ack_being_sent(this, reinterpret_cast<SalCustomHeader *>(ack));
 		belle_sip_dialog_send_ack(dialog, ack);
+		belle_sip_object_unref(ack);
 		;
 	} else {
 		lError() << "Failed to generate ACK.";

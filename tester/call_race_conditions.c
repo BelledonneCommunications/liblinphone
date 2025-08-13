@@ -221,6 +221,22 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+/*
+ * This is to reproduce a crash observed on iOS, where the LinphoneHeaders (actually the ACK message)
+ * was accidentally destroyed because of a ref-counting issue.
+ */
+static void on_ack_processing(BCTBX_UNUSED(LinphoneCall *call), LinphoneHeaders *ack, BCTBX_UNUSED(bool_t in_out)) {
+	linphone_headers_ref(ack);
+	linphone_headers_unref(ack);
+}
+
+static void setup_sip_ack_callback(LinphoneCall *call) {
+	LinphoneCallCbs *cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+	linphone_call_cbs_set_ack_processing(cbs, on_ack_processing);
+	linphone_call_add_callbacks(call, cbs);
+	linphone_call_cbs_unref(cbs);
+}
+
 static void call_cancel_accept_simultaneously(bool_t through_proxy) {
 	LinphoneCall *pauline_call;
 	LinphoneCall *marie_call;
@@ -241,11 +257,13 @@ static void call_cancel_accept_simultaneously(bool_t through_proxy) {
 	/* We do not unset the default account for pauline (the callee): it shall be able to handle the call
 	 * even if it does not come from the server */
 	marie_call = linphone_core_invite_address(marie->lc, pauline_dest);
+	setup_sip_ack_callback(marie_call);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_call)) {
+		setup_sip_ack_callback(pauline_call);
 		linphone_call_terminate(marie_call);
 		linphone_call_accept(pauline_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected, 1));
