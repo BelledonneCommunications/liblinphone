@@ -124,18 +124,23 @@ CorePrivate::createServerChatRoom(BCTBX_UNUSED(const std::shared_ptr<const Addre
 	}
 
 	LinphoneCore *cCore = getCCore();
-	auto newConferenceParameters = params->clone()->toSharedPtr();
-	newConferenceParameters->enableChat(true);
+	auto chatRoomParameters = params->clone()->toSharedPtr();
+	chatRoomParameters->enableChat(true);
+	if (params->audioEnabled() || params->videoEnabled()) {
+		lWarning() << "Trying to create a server chat room with audio video capabilities; removing them";
+		chatRoomParameters->enableAudio(false);
+		chatRoomParameters->enableVideo(false);
+	}
 	const auto localAddr = Address::create(op->getTo());
-	if (!newConferenceParameters->getAccount() && localAddr && localAddr->isValid()) {
+	if (!chatRoomParameters->getAccount() && localAddr && localAddr->isValid()) {
 		LinphoneAccount *account = linphone_core_lookup_known_account(cCore, localAddr->toC());
 		if (account) {
-			newConferenceParameters->setAccount(Account::toCpp(account)->getSharedFromThis());
+			chatRoomParameters->setAccount(Account::toCpp(account)->getSharedFromThis());
 		}
 	}
 
 	auto conference = dynamic_pointer_cast<ServerConference>(
-	    (new ServerConference(q->getSharedFromThis(), nullptr, newConferenceParameters))->toSharedPtr());
+	    (new ServerConference(q->getSharedFromThis(), nullptr, chatRoomParameters))->toSharedPtr());
 	conference->init(op, conference.get());
 	return conference->getChatRoom();
 #else
@@ -163,22 +168,8 @@ CorePrivate::createClientChatRoom(const std::shared_ptr<const Address> &conferen
 		lWarning() << "Invalid chat room parameters given for client group chat room creation";
 		return nullptr;
 	}
-	LinphoneCore *cCore = getCCore();
-	auto newConferenceParameters = params->clone()->toSharedPtr();
-	newConferenceParameters->enableChat(true);
-	newConferenceParameters->getChatParams()->enableEphemeral(
-	    (params->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) &&
-	    (params->getChatParams()->getEphemeralLifetime() > 0));
-	const auto &localAddr = conferenceId.getLocalAddress();
-	if (!newConferenceParameters->getAccount() && localAddr && localAddr->isValid()) {
-		LinphoneAccount *account = linphone_core_lookup_known_account(cCore, localAddr->toC());
-		if (account) {
-			newConferenceParameters->setAccount(Account::toCpp(account)->getSharedFromThis());
-		}
-	}
-
 	auto conference = dynamic_pointer_cast<ClientConference>(
-	    (new ClientConference(q->getSharedFromThis(), nullptr, newConferenceParameters))->toSharedPtr());
+	    (new ClientConference(q->getSharedFromThis(), nullptr, params))->toSharedPtr());
 	conference->initWithFocus(conferenceFactoryUri, nullptr, op, conference.get());
 	if (conferenceId.isValid()) {
 		conference->setConferenceId(conferenceId);
@@ -208,6 +199,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const string &sub
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 	shared_ptr<ConferenceParams> params = ConferenceParams::create(q->getSharedFromThis());
+	params->setChatDefaults();
 	params->setUtf8Subject(subject);
 	params->setSecurityLevel(encrypted ? ConferenceParams::SecurityLevel::EndToEnd
 	                                   : ConferenceParams::SecurityLevel::None);
@@ -248,21 +240,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientChatRoom(const string &sub
 shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom(const ConferenceId &conferenceId,
                                                               const shared_ptr<ConferenceParams> &params) {
 	L_Q();
-
-	LinphoneCore *cCore = getCCore();
-	auto newConferenceParameters = params->clone()->toSharedPtr();
-	newConferenceParameters->enableChat(true);
-	const auto &localAddr = conferenceId.getLocalAddress();
-	if (!newConferenceParameters->getAccount() && localAddr && localAddr->isValid()) {
-		LinphoneAccount *account = linphone_core_lookup_known_account(cCore, localAddr->toC());
-		if (account) {
-			newConferenceParameters->setAccount(Account::toCpp(account)->getSharedFromThis());
-		}
-	}
-
 	shared_ptr<AbstractChatRoom> chatRoom;
 	shared_ptr<AbstractChatRoom> basicChatRoom =
-	    (new BasicChatRoom(q->getSharedFromThis(), conferenceId, newConferenceParameters))->toSharedPtr();
+	    (new BasicChatRoom(q->getSharedFromThis(), conferenceId, params))->toSharedPtr();
 	chatRoom = basicChatRoom;
 	chatRoom->setState(ConferenceInterface::State::Instantiated);
 	chatRoom->setState(ConferenceInterface::State::Created);
@@ -310,6 +290,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 		lWarning() << "Trying to create chat room when the chat capability is disabled in the conference parameters";
 		return nullptr;
 	}
+	if (params->audioEnabled() || params->videoEnabled()) {
+		lWarning() << "Trying to create chat room with audio video capabilities; removing them";
+	}
 	if (!params->isValid()) {
 		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
 		return nullptr;
@@ -320,15 +303,21 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 		return nullptr;
 	}
 
-	auto account = params->getAccount();
+	auto chatRoomParameters = params->clone()->toSharedPtr();
+	chatRoomParameters->enableAudio(false);
+	chatRoomParameters->enableVideo(false);
+	chatRoomParameters->enableChat(true);
+	auto account = chatRoomParameters->getAccount();
 	if (!account) {
 		account = q->getDefaultAccount();
+		chatRoomParameters->setAccount(account);
 	}
+
 	const std::shared_ptr<const Address> localAddr =
 	    account ? account->getAccountParams()->getIdentityAddress() : getDefaultLocalAddress(nullptr, false);
 
 	shared_ptr<AbstractChatRoom> chatRoom;
-	if (params->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat) {
+	if (chatRoomParameters->getChatParams()->getBackend() == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
 		const auto &conferenceFactoryUri = account->getAccountParams()->getConferenceFactoryAddress();
 		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
@@ -337,8 +326,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 			return nullptr;
 		}
 
-		if (!params->isGroup() && participants.size() > 0) {
-			chatRoom = searchChatRoom(params, localAddr, nullptr, participants);
+		if (!chatRoomParameters->isGroup() && participants.size() > 0) {
+			chatRoom = searchChatRoom(chatRoomParameters, localAddr, nullptr, participants);
 			if (chatRoom) {
 				lWarning() << "Found already existing 1-1 chat room that matches the given parameters, using this one "
 				           << *chatRoom;
@@ -346,10 +335,14 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 			}
 		}
 
+		chatRoomParameters->getChatParams()->enableEphemeral(
+		    (params->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) &&
+		    (params->getChatParams()->getEphemeralLifetime() > 0));
 		ConferenceId conferenceId(nullptr, localAddr, q->createConferenceIdParams());
-		chatRoom = createClientChatRoom(conferenceFactoryUri, conferenceId, nullptr, params);
+		chatRoom = createClientChatRoom(conferenceFactoryUri, conferenceId, nullptr, chatRoomParameters);
 		if (!chatRoom) {
-			lWarning() << "Cannot create createClientChatRoom with subject [" << params->getSubject() << "]";
+			lWarning() << "Cannot create createClientChatRoom with subject [" << chatRoomParameters->getSubject()
+			           << "]";
 			return nullptr;
 		}
 
@@ -368,10 +361,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 		}
 
 		std::shared_ptr<const Address> remoteAddr = participants.front();
-		chatRoom = searchChatRoom(params, localAddr, remoteAddr, {});
+		chatRoom = searchChatRoom(chatRoomParameters, localAddr, remoteAddr, {});
 		if (chatRoom == nullptr) {
 			std::shared_ptr<const Address> remoteAddr = participants.front();
-			chatRoom = createBasicChatRoom(ConferenceId(remoteAddr, localAddr, q->createConferenceIdParams()), params);
+			chatRoom = createBasicChatRoom(ConferenceId(remoteAddr, localAddr, q->createConferenceIdParams()),
+			                               chatRoomParameters);
 			insertChatRoom(chatRoom);
 			insertChatRoomWithDb(chatRoom);
 		} else {

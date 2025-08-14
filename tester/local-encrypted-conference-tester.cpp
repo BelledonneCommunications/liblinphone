@@ -1178,9 +1178,9 @@ static void create_simple_end_to_end_encrypted_conference_terminated_early() {
 	}
 }
 
-static void create_simple_end_to_end_encrypted_conference_merging_calls() {
+static void create_simple_end_to_end_encrypted_conference_with_chat_merging_calls() {
 	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE,
-	                                            LinphoneConferenceSecurityLevelEndToEnd, FALSE);
+	                                            LinphoneConferenceSecurityLevelEndToEnd, FALSE, TRUE);
 }
 
 static void encrypted_conference_joined_multiple_times() {
@@ -1309,8 +1309,8 @@ static test_t local_conference_end_to_end_encryption_impromptu_conference_tests[
     TEST_ONE_TAG("Create end-to-end encrypted dial out conference terminate call on version mismatch",
                  LinphoneTest::create_end_to_end_encrypted_conference_dial_out_terminate_call_on_version_mismatch,
                  "End2EndConf"),
-    TEST_ONE_TAG("Create simple end-to-end encrypted conference by merging calls",
-                 LinphoneTest::create_simple_end_to_end_encrypted_conference_merging_calls,
+    TEST_ONE_TAG("Create simple end-to-end encrypted conference with chat by merging calls",
+                 LinphoneTest::create_simple_end_to_end_encrypted_conference_with_chat_merging_calls,
                  "End2EndConf"),
 };
 

@@ -396,6 +396,8 @@ static void group_chat_room_with_imdn_sent_to_one_one(void) {
 		// Marie creates a new chat room
 		const char *initialSubject = "Unreliable network";
 		LinphoneConferenceParams *conference_params = linphone_core_create_conference_params_2(marie.getLc(), NULL);
+		// The developer mistakenly enables audio capabilities
+		linphone_conference_params_enable_audio(conference_params, TRUE);
 		linphone_conference_params_enable_chat(conference_params, TRUE);
 		linphone_conference_params_enable_group(conference_params, TRUE);
 		linphone_conference_params_set_subject(conference_params, initialSubject);

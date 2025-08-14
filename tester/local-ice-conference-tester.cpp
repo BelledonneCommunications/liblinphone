@@ -102,7 +102,7 @@ static void create_simple_point_to_point_encrypted_ice_conference(void) {
 
 static void create_simple_ice_conference_merging_calls(void) {
 	create_simple_conference_merging_calls_base(TRUE, LinphoneConferenceLayoutActiveSpeaker, TRUE, FALSE, TRUE,
-	                                            LinphoneConferenceSecurityLevelNone, FALSE);
+	                                            LinphoneConferenceSecurityLevelNone, FALSE, FALSE);
 }
 
 static void abort_call_to_ice_conference(void) {

@@ -304,7 +304,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
                                                  bool_t toggle_all_mananger_video,
                                                  bool_t change_layout,
                                                  LinphoneConferenceSecurityLevel security_level,
-                                                 bool_t enable_screen_sharing);
+                                                 bool_t enable_screen_sharing,
+                                                 bool_t enable_chat);
 
 void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel security_level,
                                            bool_t enable_chat,

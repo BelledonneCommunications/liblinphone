@@ -1511,7 +1511,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_in_background(const LinphoneCore *core);
  * This label is used by the logger to give context. When running an application with several #LinphoneCore objects,
  * (such as a test), it is useful to enhance the log's readability'.
  * @param core the #LinphoneCore
- * @param label a developper-friendly label.
+ * @param label a developer-friendly label.
  **/
 LINPHONE_PUBLIC void linphone_core_set_label(LinphoneCore *core, const char *label);
 
