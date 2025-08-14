@@ -446,72 +446,81 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 			// If no chatroom has been found with the actual conference ID, try without the GRUU
 			chatRoomId = selectChatRoomId(peerSipAddressNoGruuId, localSipAddressNoGruuId);
 		}
-		const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
-		const auto &chatRoomParams = chatRoom->getCurrentParams();
 
-		if (chatRoomId >= 0) {
-			// The chat room is already stored in DB, but still update the notify id and the flags that might have
-			// changed
-			lInfo() << "Update chat room in database: " << conferenceId << ".";
-			*dbSession.getBackendSession() << "UPDATE chat_room SET"
-			                                  " last_notify_id = :lastNotifyId, "
-			                                  " flags = :flags "
-			                                  " WHERE id = :chatRoomId",
-			    soci::use(notifyId), soci::use(flags), soci::use(chatRoomId);
-		} else {
+		try {
+			const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
+			const auto &chatRoomParams = chatRoom->getCurrentParams();
 
-			lInfo() << "Insert new chat room in database: " << conferenceId << ".";
+			if (chatRoomId >= 0) {
+				// The chat room is already stored in DB, but still update the notify id and the flags that might have
+				// changed
+				lInfo() << "Update chat room in database: " << conferenceId << ".";
+				*dbSession.getBackendSession() << "UPDATE chat_room SET"
+				                                  " last_notify_id = :lastNotifyId, "
+				                                  " flags = :flags "
+				                                  " WHERE id = :chatRoomId",
+				    soci::use(notifyId), soci::use(flags), soci::use(chatRoomId);
+			} else {
 
-			auto creationTime = dbSession.getTimeWithSociIndicator(chatRoom->getCreationTime());
-			auto lastUpdateTime = dbSession.getTimeWithSociIndicator(chatRoom->getLastUpdateTime());
+				lInfo() << "Insert new chat room in database: " << conferenceId << ".";
 
-			// Remove capabilities like `Proxy`.
-			const int &capabilities =
-			    chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
+				auto creationTime = dbSession.getTimeWithSociIndicator(chatRoom->getCreationTime());
+				auto lastUpdateTime = dbSession.getTimeWithSociIndicator(chatRoom->getLastUpdateTime());
 
-			// TODO: store chatroom local and peer addresses without GRUU
-			const string &subject = chatRoomParams->getUtf8Subject();
-			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
-			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
-			const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressNoGruuId);
-			const long long conferenceInfoId = (dbConferenceInfoId <= 0) ? 0 : dbConferenceInfoId;
-			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
-			                                  "  peer_sip_address_id, local_sip_address_id, creation_time,"
-			                                  "  last_update_time, capabilities, subject, flags, last_notify_id, "
-			                                  "ephemeral_enabled, ephemeral_messages_lifetime, conference_info_id"
-			                                  ") VALUES ("
-			                                  "  :peerSipAddressId, :localSipAddressId, :creationTime,"
-			                                  "  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, "
-			                                  ":ephemeralEnabled, :ephemeralLifeTime, :conferenceInfoId"
-			                                  ")",
-			    soci::use(peerSipAddressId), soci::use(localSipAddressId),
-			    soci::use(creationTime.first, creationTime.second),
-			    soci::use(lastUpdateTime.first, lastUpdateTime.second), soci::use(capabilities), soci::use(subject),
-			    soci::use(flags), soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime),
-			    soci::use(conferenceInfoId);
+				// Remove capabilities like `Proxy`.
+				const int &capabilities =
+				    chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
 
-			chatRoomId = dbSession.getLastInsertId();
-		}
+				// TODO: store chatroom local and peer addresses without GRUU
+				const string &subject = chatRoomParams->getUtf8Subject();
+				int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
+				long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
+				const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressNoGruuId);
+				const long long conferenceInfoId = (dbConferenceInfoId <= 0) ? 0 : dbConferenceInfoId;
+				*dbSession.getBackendSession() << "INSERT INTO chat_room ("
+				                                  "  peer_sip_address_id, local_sip_address_id, creation_time,"
+				                                  "  last_update_time, capabilities, subject, flags, last_notify_id, "
+				                                  "ephemeral_enabled, ephemeral_messages_lifetime, conference_info_id"
+				                                  ") VALUES ("
+				                                  "  :peerSipAddressId, :localSipAddressId, :creationTime,"
+				                                  "  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, "
+				                                  ":ephemeralEnabled, :ephemeralLifeTime, :conferenceInfoId"
+				                                  ")",
+				    soci::use(peerSipAddressId), soci::use(localSipAddressId),
+				    soci::use(creationTime.first, creationTime.second),
+				    soci::use(lastUpdateTime.first, lastUpdateTime.second), soci::use(capabilities), soci::use(subject),
+				    soci::use(flags), soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime),
+				    soci::use(conferenceInfoId);
 
-		bool isBasic = (chatRoomParams->getChatParams()->getBackend() == ChatParams::Backend::Basic);
-		// Do not add 'me' when creating a server-chat-room.
-		if (*conferenceId.getLocalAddress() != *conferenceId.getPeerAddress()) {
-			shared_ptr<Participant> me = chatRoom->getMe();
-			long long meId = insertChatRoomParticipant(chatRoomId, insertSipAddress(me->getAddress()), me->isAdmin());
-			for (const auto &device : me->getDevices()) {
-				insertChatRoomParticipantDevice(meId, device);
+				chatRoomId = dbSession.getLastInsertId();
 			}
-		}
 
-		for (const auto &participant : (isBasic ? dynamic_pointer_cast<BasicChatRoom>(chatRoom)->getParticipants()
-		                                        : chatRoom->getParticipants())) {
-			long long participantId = insertChatRoomParticipant(chatRoomId, insertSipAddress(participant->getAddress()),
-			                                                    participant->isAdmin());
-			for (const auto &device : participant->getDevices()) {
-				insertChatRoomParticipantDevice(participantId, device);
+			bool isBasic = (chatRoomParams->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+			// Do not add 'me' when creating a server-chat-room.
+			if (*conferenceId.getLocalAddress() != *conferenceId.getPeerAddress()) {
+				shared_ptr<Participant> me = chatRoom->getMe();
+				long long meId =
+				    insertChatRoomParticipant(chatRoomId, insertSipAddress(me->getAddress()), me->isAdmin());
+				for (const auto &device : me->getDevices()) {
+					insertChatRoomParticipantDevice(meId, device);
+				}
 			}
-		}
 
+			for (const auto &participant : (isBasic ? dynamic_pointer_cast<BasicChatRoom>(chatRoom)->getParticipants()
+			                                        : chatRoom->getParticipants())) {
+				long long participantId = insertChatRoomParticipant(
+				    chatRoomId, insertSipAddress(participant->getAddress()), participant->isAdmin());
+				for (const auto &device : participant->getDevices()) {
+					insertChatRoomParticipantDevice(participantId, device);
+				}
+			}
+		} catch (const soci::soci_error &e) {
+			lInfo() << "Caught SOCI exception " << e.what() << " when inserting or updating chat room " << chatRoom
+			        << " (id " << chatRoomId << ")";
+		} catch (...) {
+			lInfo() << "Caught C++ exception when inserting or updating chat room " << chatRoom << " (id " << chatRoomId
+			        << ")";
+		}
 		return chatRoomId;
 	}
 #endif
