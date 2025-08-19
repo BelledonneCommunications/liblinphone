@@ -22,7 +22,7 @@
 #define _L_C_PARTICIPANT_H_
 
 #include "linphone/api/c-types.h"
-#include "time.h"
+#include <time.h>
 
 // =============================================================================
 

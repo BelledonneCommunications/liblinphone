@@ -21,7 +21,7 @@
 #ifndef _L_C_PARTICIPANT_DEVICE_H_
 #define _L_C_PARTICIPANT_DEVICE_H_
 
-#include "time.h"
+#include <time.h>
 
 #include "linphone/api/c-participant-device-cbs.h"
 #include "linphone/api/c-types.h"
