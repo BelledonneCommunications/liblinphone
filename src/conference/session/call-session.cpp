@@ -1727,7 +1727,7 @@ void CallSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 
 	const auto callTimeout = getCore()->getCCore()->sip_conf.in_call_timeout;
 	const auto &connectedTime = d->log->getConnectedTime();
-	if ((callTimeout > 0) && (connectedTime != 0) && ((currentRealTime - connectedTime) > callTimeout)) {
+	if ((callTimeout > 0) && (connectedTime != -1) && ((currentRealTime - connectedTime) > callTimeout)) {
 		lInfo() << "Terminating call session " << this << " (local address " << *getLocalAddress() << " remote address "
 		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ") because the call timeout ("
 		        << callTimeout << "s) has been reached";
