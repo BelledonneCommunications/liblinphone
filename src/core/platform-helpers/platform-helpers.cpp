@@ -199,6 +199,24 @@ void GenericPlatformHelpers::routeAudioToSpeaker() {
 void GenericPlatformHelpers::restorePreviousAudioRoute() {
 }
 
+bool GenericPlatformHelpers::checkIPChange(const std::string &currentIP,
+                                           const std::string &newIP,
+                                           const std::string &loopbackIP) {
+	bool changed = false;
+	// Check for IP address changes:
+	if (currentIP != newIP) {
+		if (currentIP == loopbackIP) {
+			lInfo() << "New IP address appeared: " << newIP;
+		} else if (newIP == loopbackIP) {
+			lInfo() << currentIP << " has retired.";
+		} else {
+			lInfo() << "IP address changed from [" << currentIP << "] to [" << newIP << "]";
+			changed = true;
+		}
+	}
+	return changed;
+}
+
 bool GenericPlatformHelpers::checkIpAddressChanged() {
 	LinphoneCore *core = getCore()->getCCore();
 	bool ipv6Enabled = linphone_core_ipv6_enabled(core);
@@ -211,15 +229,18 @@ bool GenericPlatformHelpers::checkIpAddressChanged() {
 	bool status = strcmp(newIp6, "::1") != 0 || strcmp(newIp4, "127.0.0.1") != 0;
 	bool ipChanged = false;
 
+	/* We monitor for IP address changes.
+	 * However, if a new IP address appears in addition to an already existing one,
+	 * or an IP address is removed but the other remains, we don't want to trigger
+	 * a network change event (network reachability DOWN/UP), in order to
+	 * avoid breaking connections that may keep working without problems.
+	 */
 	if (status && core->network_last_status) {
-
 		// Check for IP address changes:
-		if (strcmp(newIp4, core->localip4) != 0) {
-			lInfo() << "IPv4 address change detected";
+		if (checkIPChange(core->localip4, newIp4, "127.0.0.1")) {
 			ipChanged = true;
 		}
-		if (ipv6Enabled && strcmp(newIp6, core->localip6) != 0) {
-			lInfo() << "IPv6 address change detected";
+		if (ipv6Enabled && checkIPChange(core->localip6, newIp6, "::1")) {
 			ipChanged = true;
 		}
 		if (ipChanged) {

@@ -210,6 +210,7 @@ public:
 
 protected:
 	bool checkIpAddressChanged();
+	bool checkIPChange(const std::string &currentIP, const std::string &newIP, const std::string &loopbackIP);
 	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;
 	std::string mCurrentSSID;
 	std::string mHttpProxyHost;
