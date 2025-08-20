@@ -1199,7 +1199,8 @@ void CallSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	L_Q();
 
-	// Default Replaces header (RFC3891) to the sal setting. Nonetheless if the supported header of the account should be used, then override it
+	// Default Replaces header (RFC3891) to the sal setting. Nonetheless if the supported header of the account should
+	// be used, then override it
 	bool replacesSupported = op->getSal()->hasSupportedTag("replaces");
 	const auto &account = getDestAccount();
 	if (account) {
@@ -1210,7 +1211,8 @@ void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	}
 
 	if (withReplaces && !replacesSupported) {
-		lInfo() << "Terminate " << *q << " because it is not possible to recover it if the Replaces header (RFC3891) is not supported";
+		lInfo() << "Terminate " << *q
+		        << " because it is not possible to recover it if the Replaces header (RFC3891) is not supported";
 		terminate();
 		return;
 	}
@@ -1727,7 +1729,7 @@ void CallSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 
 	const auto callTimeout = getCore()->getCCore()->sip_conf.in_call_timeout;
 	const auto &connectedTime = d->log->getConnectedTime();
-	if ((callTimeout > 0) && (connectedTime != 0) && ((currentRealTime - connectedTime) > callTimeout)) {
+	if ((callTimeout > 0) && (connectedTime != (time_t)-1) && ((currentRealTime - connectedTime) > callTimeout)) {
 		lInfo() << "Terminating call session " << this << " (local address " << *getLocalAddress() << " remote address "
 		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "sip:") << ") because the call timeout ("
 		        << callTimeout << "s) has been reached";
