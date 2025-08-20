@@ -105,19 +105,21 @@ HttpRequest::HttpRequest(HttpClient &client, const std::string &method, const st
 	if (!mRequest) throw std::invalid_argument("Could not create request");
 
 	const char *core_user_agent = linphone_core_get_user_agent(client.getCore()->getCCore());
-	auto header = belle_sip_header_create("User-Agent", core_user_agent);
-	if (header) {
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(mRequest),
-		                             belle_sip_header_create("User-Agent", core_user_agent));
-	} else {
-		lError() << "Bad user agent header value: " << core_user_agent;
+	try {
+		addHeader("User-Agent", core_user_agent);
+	} catch (std::invalid_argument &e) {
+		// ignored
 	}
 	belle_sip_object_ref(mRequest);
 }
 
 HttpRequest &HttpRequest::addHeader(const std::string &headerName, const std::string &headerValue) {
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(mRequest),
-	                             belle_http_header_create(headerName.c_str(), L_STRING_TO_C(headerValue)));
+	auto header = belle_http_header_create(headerName.c_str(), L_STRING_TO_C(headerValue));
+	if (!header) {
+		lError() << "Bad header [" << headerName << ": " << headerValue << "]";
+		throw std::invalid_argument("bad header");
+	}
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(mRequest), header);
 	return *this;
 }
 

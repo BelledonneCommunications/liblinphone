@@ -135,7 +135,6 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		L_GET_CPP_PTR_FROM_C_OBJECT(lc)
 		    ->getHttpClient()
 		    .createRequest("GET", version_check_url)
-		    .addHeader("User-Agent", linphone_core_get_user_agent(lc))
 		    .execute([update](const HttpResponse &response) { update_check_process_response_event(update, response); });
 		bctbx_free(version_check_url);
 	}
