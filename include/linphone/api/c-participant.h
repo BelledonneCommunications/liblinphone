@@ -21,8 +21,9 @@
 #ifndef _L_C_PARTICIPANT_H_
 #define _L_C_PARTICIPANT_H_
 
+#include <time.h>
+
 #include "linphone/api/c-types.h"
-#include "time.h"
 
 // =============================================================================
 
