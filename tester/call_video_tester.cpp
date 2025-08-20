@@ -1901,7 +1901,7 @@ static void two_accepted_call_in_send_only(void) {
 
 	marie = linphone_core_manager_new("marie_rc");
 	linphone_core_set_use_files(marie->lc, TRUE);
-	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
+	linphone_core_set_media_resource_mode(marie->lc, LinphoneMediaResourceModeShared);
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	laure = linphone_core_manager_new("laure_tcp_rc");
 
@@ -3503,7 +3503,7 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	disable_all_video_codecs_except_one(marie->lc, "VP8");
 
 	// Set Marie to shared media resources so that she can have two calls without pause
-	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
+	linphone_core_set_media_resource_mode(marie->lc, LinphoneMediaResourceModeShared);
 
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);

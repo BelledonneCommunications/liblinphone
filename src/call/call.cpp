@@ -602,7 +602,7 @@ void Call::onCallSessionTransferStateChanged(BCTBX_UNUSED(const shared_ptr<CallS
 void Call::onCheckForAcceptation(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
 	// If the core is a conference server, there is no need to ensure that media resources are not shared
 	if (!linphone_core_conference_server_enabled(getCore()->getCCore()) &&
-	    (linphone_core_get_media_resource_mode(getCore()->getCCore()) != LinphoneSharedMediaResources)) {
+	    (linphone_core_get_media_resource_mode(getCore()->getCCore()) != LinphoneMediaResourceModeShared)) {
 		list<shared_ptr<Call>> calls = getCore()->getCalls();
 		shared_ptr<Call> currentCall = getSharedFromThis();
 		for (const auto &call : calls) {
@@ -1221,8 +1221,9 @@ void *Call::getNativeVideoWindowId() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getNativeVideoWindowId();
 }
 
-void *Call::createNativeVideoWindowId(void * context) const {
-	return static_pointer_cast<const MediaSession>(getActiveSession())->createNativeVideoWindowId("", false, false, context);
+void *Call::createNativeVideoWindowId(void *context) const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())
+	    ->createNativeVideoWindowId("", false, false, context);
 }
 
 const MediaSessionParams *Call::getParams() const {

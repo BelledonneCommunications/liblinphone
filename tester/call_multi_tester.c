@@ -1564,6 +1564,54 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+/* We want to check that, in LinphoneMediaResourceModeShared, marie can accept two calls at the same time
+ * pause and resume one without affecting the other */
+static void calls_shared_media_resource(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_tcp_rc");
+	const bctbx_list_t *calls;
+	bctbx_list_t *core_list = bctbx_list_append(NULL, marie->lc);
+	core_list = bctbx_list_append(core_list, pauline->lc);
+	core_list = bctbx_list_append(core_list, laure->lc);
+
+	linphone_core_set_use_files(marie->lc, TRUE);
+	linphone_core_set_media_resource_mode(marie->lc, LinphoneMediaResourceModeShared);
+	if (!BC_ASSERT_TRUE(call(pauline, marie))) goto end;
+	if (!BC_ASSERT_TRUE(call(laure, marie))) goto end;
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, 0, int, "%i");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausing, 0, int, "%i");
+
+	calls = linphone_core_get_calls(marie->lc);
+	if (BC_ASSERT_TRUE(bctbx_list_size(calls) == 2)) {
+		LinphoneCall *call1 = (LinphoneCall *)calls->data;
+		LinphoneCall *call2 = (LinphoneCall *)calls->next->data;
+		linphone_call_pause(call1);
+		BC_ASSERT_TRUE(
+		    wait_for_list(core_list, &marie->stat.number_of_LinphoneCallPaused, 1, liblinphone_tester_sip_timeout));
+		linphone_call_resume(call1);
+		BC_ASSERT_TRUE(wait_for_list(core_list, &marie->stat.number_of_LinphoneCallStreamsRunning, 3,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, 1, int, "%i");
+		linphone_call_terminate(call1);
+		linphone_call_terminate(call2);
+	}
+	BC_ASSERT_TRUE(wait_for_list(core_list, &marie->stat.number_of_LinphoneCallEnd, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(core_list, &marie->stat.number_of_LinphoneCallReleased, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(core_list, &pauline->stat.number_of_LinphoneCallReleased, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(core_list, &laure->stat.number_of_LinphoneCallReleased, 1, liblinphone_tester_sip_timeout));
+
+end:
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+}
+
 static test_t multi_call_tests[] = {
     TEST_NO_TAG("Call waiting indication", call_waiting_indication),
     TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
@@ -1605,7 +1653,8 @@ static test_t multi_call_tests[] = {
     TEST_NO_TAG("Stop ringing when accepting call while holding another without ICE",
                 stop_ringing_when_accepting_call_while_holding_another_without_ice),
     TEST_NO_TAG("Stop paused tone when second call is accepted with early media", second_call_with_early_media),
-    TEST_NO_TAG("Call transfer for back to back user agent", call_transfer_for_b2bua)};
+    TEST_NO_TAG("Call transfer for back to back user agent", call_transfer_for_b2bua),
+    TEST_NO_TAG("2 calls in shared media resource mode", calls_shared_media_resource)};
 
 test_suite_t multi_call_test_suite = {"Multi call",
                                       NULL,

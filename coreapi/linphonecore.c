@@ -5073,13 +5073,13 @@ void linphone_core_set_media_resource_mode(LinphoneCore *lc, LinphoneMediaResour
 }
 
 LinphoneMediaResourceMode linphone_core_get_media_resource_mode(const LinphoneCore *lc) {
-	return (LinphoneMediaResourceMode)linphone_config_get_int(linphone_core_get_config(lc), "misc",
-	                                                          "media_resources_mode", LinphoneExclusiveMediaResources);
+	return (LinphoneMediaResourceMode)linphone_config_get_int(
+	    linphone_core_get_config(lc), "misc", "media_resources_mode", LinphoneMediaResourceModeExclusive);
 }
 
 // This function states whether a locking of the sound resources is required based on the given call parameters
 bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const LinphoneCallParams *params) {
-	return ((linphone_core_get_media_resource_mode(lc) == LinphoneExclusiveMediaResources) &&
+	return ((linphone_core_get_media_resource_mode(lc) == LinphoneMediaResourceModeExclusive) &&
 	        linphone_call_params_audio_enabled(params) &&
 	        linphone_call_params_get_audio_direction(params) != LinphoneMediaDirectionInactive &&
 	        linphone_call_params_get_local_conference_mode(params) == FALSE);

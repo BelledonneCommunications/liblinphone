@@ -748,8 +748,8 @@ typedef enum _LinphoneMediaDirection {
  * @ingroup media_parameters
  **/
 typedef enum _LinphoneMediaResourceMode {
-	LinphoneExclusiveMediaResources = 0, /**< Media resources are not shared */
-	LinphoneSharedMediaResources = 1,    /**< Media resources are shared */
+	LinphoneMediaResourceModeExclusive = 0, /**< Media resources are not shared */
+	LinphoneMediaResourceModeShared = 1,    /**< Media resources are shared */
 } LinphoneMediaResourceMode;
 
 /**

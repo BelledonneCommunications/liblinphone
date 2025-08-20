@@ -548,7 +548,7 @@ static void conference_joined_in_early_media() {
 		linphone_core_set_play_file(focus.getLc(), NULL);
 		linphone_core_set_use_files(focus.getLc(), TRUE);
 
-		linphone_core_set_media_resource_mode(focus.getLc(), LinphoneSharedMediaResources);
+		linphone_core_set_media_resource_mode(focus.getLc(), LinphoneMediaResourceModeShared);
 		LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
 		linphone_config_set_int(focus_config, "sound", "conference_mode",
 		                        static_cast<int>(MSConferenceModeRouterFullPacket));

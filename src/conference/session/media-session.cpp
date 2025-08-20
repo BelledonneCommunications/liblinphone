@@ -2434,7 +2434,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 					const auto &s = *sIt;
 					const auto idx = std::distance(refMd->streams.cbegin(), sIt);
 					std::string contentAttrValue = s.getContent();
-					// If this session is answering to an offer, there is no need to guess the stream content as it relies on the remote SDP
+					// If this session is answering to an offer, there is no need to guess the stream content as it
+					// relies on the remote SDP
 					if (localIsOfferer && contentAttrValue.empty()) {
 						// The content in the reference stream is empty, then try to find if a stream at the desired
 						// index has already been create in the new SDP. If so, make a last attempt to retrieve its
@@ -4174,7 +4175,7 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 
 	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
-		if ((linphone_core_get_media_resource_mode(q->getCore()->getCCore()) == LinphoneExclusiveMediaResources) &&
+		if ((linphone_core_get_media_resource_mode(q->getCore()->getCCore()) == LinphoneMediaResourceModeExclusive) &&
 		    linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local address " << *q->getLocalAddress()
 			        << " remote address " << *q->getRemoteAddress() << ") in state " << Utils::toString(state)
@@ -4830,7 +4831,8 @@ LinphoneStatus MediaSession::resume() {
 		           << Utils::toString(d->state);
 		return -1;
 	}
-	if (!d->getParams()->getPrivate()->getInConference()) {
+	if (!d->getParams()->getPrivate()->getInConference() &&
+	    linphone_core_get_media_resource_mode(getCore()->getCCore()) == LinphoneMediaResourceModeExclusive) {
 		if (linphone_core_sound_resources_locked(getCore()->getCCore())) {
 			lWarning() << "Cannot resume MediaSession " << this
 			           << " because another call is locking the sound resources";

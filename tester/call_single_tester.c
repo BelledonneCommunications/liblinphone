@@ -964,7 +964,7 @@ static void test_accounts_connections(bool_t accounts_channel_isolation_enabled)
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "accounts_channel_isolation",
 	                        (int)accounts_channel_isolation_enabled);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "reject_duplicated_calls", 0);
-	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
+	linphone_core_set_media_resource_mode(marie->lc, LinphoneMediaResourceModeShared);
 	linphone_core_set_use_files(marie->lc, TRUE);
 	linphone_core_manager_start(marie, TRUE);
 	accounts = linphone_core_get_account_list(marie->lc);

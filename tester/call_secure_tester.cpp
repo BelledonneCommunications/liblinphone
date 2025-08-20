@@ -2262,7 +2262,7 @@ static void secure_call_with_replaces(LinphoneMediaEncryption encryption) {
 	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
 
 	// Set Pauline to shared media resources so that she can have two calls without pause
-	linphone_core_set_media_resource_mode(pauline->lc, LinphoneSharedMediaResources);
+	linphone_core_set_media_resource_mode(pauline->lc, LinphoneMediaResourceModeShared);
 
 	linphone_core_invite_address(pauline->lc, marie->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 1));
