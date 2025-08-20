@@ -108,6 +108,7 @@ HttpRequest::HttpRequest(HttpClient &client, const std::string &method, const st
 	try {
 		addHeader("User-Agent", core_user_agent);
 	} catch (std::invalid_argument &e) {
+		(void)e;
 		// ignored
 	}
 	belle_sip_object_ref(mRequest);

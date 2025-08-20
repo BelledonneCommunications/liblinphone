@@ -1610,6 +1610,7 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	bctbx_list_free(core_list);
 }
 
 static test_t multi_call_tests[] = {
