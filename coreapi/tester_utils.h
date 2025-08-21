@@ -408,8 +408,8 @@ LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDe
                                                            LinphoneParticipantDeviceState state);
 LINPHONE_PUBLIC LinphoneCore *linphone_participant_device_get_core(const LinphoneParticipantDevice *participant_device);
 #else
-	LINPHONE_PUBLIC LinphonePrivate::Sal *linphone_core_get_sal(const LinphoneCore *lc);
-	LINPHONE_PUBLIC void sal_default_set_sdp_handling(LinphonePrivate::Sal *h, SalOpSDPHandling handling_method);
+LINPHONE_PUBLIC LinphonePrivate::Sal *linphone_core_get_sal(const LinphoneCore *lc);
+LINPHONE_PUBLIC void sal_default_set_sdp_handling(LinphonePrivate::Sal *h, SalOpSDPHandling handling_method);
 #endif // !defined(__cplusplus)
 
 LINPHONE_PUBLIC bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTunnel *tunnel, const RtpTransport *tp);
@@ -441,22 +441,6 @@ linphone_account_manager_services_create_delete_account_as_admin_request(Linphon
                                                                          int account_id);
 
 LINPHONE_PUBLIC void linphone_core_enable_goog_remb(LinphoneCore *core, bool_t enable);
-
-/**
- * Do not prune gr parameter in conference address
- * @param core #LinphoneCore object @notnil
- * @param enabled TRUE if enabled, FALSE otherwise.
- **/
-LINPHONE_PUBLIC void linphone_core_enable_gruu_in_conference_address(LinphoneCore *core, bool_t enabled);
-
-/**
- * Return whether the gr parameter is kept in the conference address
- * Returns enablement of text sending via Baudot tones in the audio stream.
- * @ingroup media_parameters
- * @param core #LinphoneCore object @notnil
- * @return TRUE if the "gr" parameter is kept in the conference address, FALSE otherwise.
- **/
-LINPHONE_PUBLIC bool_t linphone_core_gruu_in_conference_address_enabled(const LinphoneCore *core);
 
 LINPHONE_PUBLIC LinphoneChatRoom *
 linphone_core_create_basic_chat_room(LinphoneCore *core, const char *localSipUri, const char *remoteSipUri);

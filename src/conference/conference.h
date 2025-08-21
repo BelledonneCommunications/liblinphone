@@ -436,7 +436,7 @@ protected:
 
 	void notifyNewDevice(const std::shared_ptr<ParticipantDevice> &device);
 
-	virtual void configure(SalCallOp *op) = 0;
+	virtual std::pair<bool, std::shared_ptr<Address>> configure(SalCallOp *op) = 0;
 	const std::shared_ptr<Participant> &initializeMe(const std::shared_ptr<Address> &address);
 	void initializeFromAccount();
 

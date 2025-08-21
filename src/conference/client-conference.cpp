@@ -80,7 +80,7 @@ void ClientConference::createFocus(const std::shared_ptr<const Address> &focusAd
 	lInfo() << *this << ": Create focus '" << *mFocus->getAddress() << "' from address : " << *focusAddr;
 }
 
-void ClientConference::configure(SalCallOp *op) {
+std::pair<bool, std::shared_ptr<Address>> ClientConference::configure(SalCallOp *op) {
 	mConfParams->setUtf8Subject(op->getSubject());
 
 	std::shared_ptr<Address> organizer = nullptr;
@@ -91,6 +91,7 @@ void ClientConference::configure(SalCallOp *op) {
 	}
 
 	fillInvitedParticipantList(op, organizer, false);
+	return std::make_pair(false, nullptr);
 }
 
 void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,

@@ -9473,7 +9473,7 @@ static void linphone_core_set_conference(LinphoneCore *lc, LinphoneConference *c
 LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc,
                                                                 const LinphoneConferenceParams *params) {
 	CoreLogContextualizer logContextualizer(lc);
-	const char *conf_method_name;
+	const char *conf_method_name = nullptr;
 	LinphoneConference *conf = nullptr;
 	bool serverMode = params && !linphone_conference_params_local_participant_enabled(params);
 

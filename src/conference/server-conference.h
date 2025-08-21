@@ -166,6 +166,7 @@ public:
 
 	virtual void notifyFullState() override;
 	void confirmCreation();
+	void updateConferenceParams(SalCallOp *op);
 	bool updateConferenceInformation(SalCallOp *op);
 	virtual std::shared_ptr<Call> getCall() const override;
 
@@ -265,7 +266,7 @@ private:
 	void chooseAnotherAdminIfNoneInConference(const std::shared_ptr<Participant> &exceptParticipant);
 	void checkIfTerminated();
 	std::list<std::shared_ptr<const Address>> getAllowedAddresses() const;
-	virtual void configure(SalCallOp *op) override;
+	virtual std::pair<bool, std::shared_ptr<Address>> configure(SalCallOp *op) override;
 	void enableScreenSharing(const std::shared_ptr<LinphonePrivate::CallSession> &session, bool notify);
 	MediaSessionParams *updateParameterForParticipantRemoval(const std::shared_ptr<CallSession> &session) const;
 	void terminateConferenceWithReason(const std::shared_ptr<Address> &remoteContactAddress,
@@ -286,7 +287,11 @@ private:
 	                                bool addToListEventHandler = false) override;
 
 	bool hasAdminLeft() const;
+
+	void updateConferenceInformation();
+	void checkConferenceParams();
 	bool supportsVideoCapabilities() const;
+	bool supportsChatCapabilities() const;
 
 	void cleanup();
 

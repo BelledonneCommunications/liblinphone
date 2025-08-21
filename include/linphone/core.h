@@ -7555,6 +7555,26 @@ LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *c
                                                                  LinphoneConferenceInfo *conference_info);
 
 /**
+ * Sets whether to keep GRUU parameter in the conference addresses
+ * @param core #LinphoneCore object @notnil
+ * @param enabled TRUE if enabled, FALSE otherwise.
+ * @warning This setting will also remove the GRUU parameter from all conference and chat room addresses stored in the
+ *database at startup. Setting it to FALSE after it being set to TRUE earlier on does not restore the previous state of
+ *the database
+ * @ingroup conference
+ **/
+LINPHONE_PUBLIC void linphone_core_enable_gruu_in_conference_address(LinphoneCore *core, bool_t enabled);
+
+/**
+ * Returns whether the gr parameter is kept in the conference address
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if the "gr" parameter is kept in the conference address, FALSE otherwise.
+ * @see linphone_core_enable_gruu_in_conference_address() for more informations
+ * @ingroup conference
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_gruu_in_conference_address_enabled(const LinphoneCore *core);
+
+/**
  * @addtogroup contacts
  * @{
  */

@@ -218,7 +218,7 @@ private:
 	void onPendingCallStateChanged(std::shared_ptr<Call> call, CallSession::State callState);
 	std::list<Address> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 
-	virtual void configure(SalCallOp *op) override;
+	virtual std::pair<bool, std::shared_ptr<Address>> configure(SalCallOp *op) override;
 
 	bool hasBeenLeft() const;
 

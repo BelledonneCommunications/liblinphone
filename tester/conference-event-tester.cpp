@@ -1516,6 +1516,7 @@ void send_added_notify_through_address() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
@@ -2101,6 +2102,7 @@ void send_removed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
@@ -2148,6 +2150,7 @@ void send_admined_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
@@ -2195,6 +2198,7 @@ void send_unadmined_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
@@ -2240,6 +2244,7 @@ void send_subject_changed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
 	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr());
 	localConf->init();
@@ -2289,13 +2294,13 @@ void send_subject_changed_notify() {
 void send_device_added_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_notify_sent(cbs, linphone_notify_sent);
 	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
 	linphone_core_cbs_unref(cbs);
 
 	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr();
-	;
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2391,6 +2396,7 @@ void send_device_added_notify() {
 void send_device_removed_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr();
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
@@ -2447,6 +2453,7 @@ void one_to_one_keyword() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
 	shared_ptr<ConferenceEventTester> tester =
 	    dynamic_pointer_cast<ConferenceEventTester>((new ConferenceEventTester(marie->lc->cppPtr))->toSharedPtr());
 	tester->init();
@@ -2471,8 +2478,6 @@ void one_to_one_keyword() {
 	localConf->Conference::addParticipant(bobAddr);
 	ServerConferenceEventHandler *localHandler =
 	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), mEventHandler)).get();
-	localConf->setState(ConferenceInterface::State::Instantiated);
-	localConf->setConferenceAddress(addr);
 	auto content = localHandler->createNotifyFullState(NULL);
 	tester->setConferenceAddress(addr);
 	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);

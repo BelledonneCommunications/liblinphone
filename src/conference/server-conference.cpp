@@ -101,7 +101,6 @@ void ServerConference::initFromDb(const std::shared_ptr<Participant> &me,
 }
 
 void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
-
 	// Set last notify to 1 in order to ensure that the 1st notify to client conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
 	setLastNotify(1);
@@ -119,23 +118,15 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		lWarning() << "The organizer address cannot be deduced neither from the op nor from the local participant";
 	}
 
-	const auto &core = getCore();
 	createEventHandler(confListener);
-	if (mConfParams->chatEnabled()) {
-		mConfParams->enableLocalParticipant(false);
-		core->getPrivate()->registerListener(this);
-#ifdef HAVE_ADVANCED_IM
-		auto chatRoom =
-		    dynamic_pointer_cast<ServerChatRoom>((new ServerChatRoom(core, getSharedFromThis()))->toSharedPtr());
-		setChatRoom(chatRoom);
-#endif // HAVE_ADVANCED_IM
-	}
-	setState(ConferenceInterface::State::Instantiated);
+	const auto &core = getCore();
 	LinphoneCore *lc = core->getCCore();
+	std::shared_ptr<Address> conferenceAddress;
+	bool isUpdate = false;
 	if (op) {
-		configure(op);
+		std::tie(isUpdate, conferenceAddress) = configure(op);
 	} else {
-		// Update proxy contact address to add conference ID
+		// Add the conf-id parameter to the account contact address.
 		// Do not use organizer address directly as it may lack some parameter like gruu
 		auto account = core->lookupKnownAccount(mOrganizer, true);
 		char *contactAddressStr = nullptr;
@@ -146,47 +137,60 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 			contactAddressStr =
 			    ms_strdup(linphone_core_find_best_identity(lc, const_cast<LinphoneAddress *>(cAddress)));
 		}
-		std::shared_ptr<Address> contactAddress = Address::create(contactAddressStr);
-		char confId[ServerConference::sConfIdLength];
-		belle_sip_random_token(confId, sizeof(confId));
-		contactAddress->setUriParam(Conference::ConfIdParameter, confId);
+		conferenceAddress = Address::create(contactAddressStr);
 		if (contactAddressStr) {
 			ms_free(contactAddressStr);
 		}
-
-		setConferenceAddress(contactAddress);
-		if (mMe) {
-			mMe->setRole(Participant::Role::Speaker);
-			mMe->setAdmin(true);
-			mMe->setFocus(true);
-		}
+		char confId[ServerConference::sConfIdLength];
+		belle_sip_random_token(confId, sizeof(confId));
+		conferenceAddress->setUriParam(Conference::ConfIdParameter, confId);
 
 		bool_t eventLogEnabled = FALSE;
 #ifdef HAVE_ADVANCED_IM
 		eventLogEnabled =
 		    linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
 #endif // HAVE_ADVANCED_IM
-
 		if (!eventLogEnabled) {
-			setConferenceId(ConferenceId(contactAddress, contactAddress, core->createConferenceIdParams()));
+			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams()));
 		}
 
-#ifdef HAVE_DB_STORAGE
-		const auto &conferenceInfo = createOrGetConferenceInfo();
-		if (conferenceInfo) {
-			auto &mainDb = core->getPrivate()->mainDb;
-			if (mainDb) {
-				lInfo() << "Inserting new conference information to database in order to be able to recreate " << *this
-				        << " in case of restart";
-				mainDb->insertConferenceInfo(conferenceInfo);
-			}
+		if (mMe) {
+			mMe->setRole(Participant::Role::Speaker);
+			mMe->setAdmin(true);
+			mMe->setFocus(true);
 		}
-#endif // HAVE_DB_STORAGE
+
+		checkConferenceParams();
 	}
-	if (mConfParams->videoEnabled() && !supportsVideoCapabilities()) {
-		lWarning() << *this
-		           << ": Video capability is not supported when the device hosting a conference is not a server";
-		mConfParams->enableVideo(false);
+	if (mConfParams->chatEnabled()) {
+		mConfParams->enableLocalParticipant(false);
+		core->getPrivate()->registerListener(this);
+#ifdef HAVE_ADVANCED_IM
+		auto chatRoom =
+		    dynamic_pointer_cast<ServerChatRoom>((new ServerChatRoom(core, getSharedFromThis()))->toSharedPtr());
+		setChatRoom(chatRoom);
+#endif // HAVE_ADVANCED_IM
+	}
+	setState(ConferenceInterface::State::Instantiated);
+	if (conferenceAddress) {
+		setConferenceAddress(conferenceAddress);
+		if (op) {
+			if (isUpdate) {
+				updateConferenceInformation();
+			}
+		} else {
+#ifdef HAVE_DB_STORAGE
+			const auto &conferenceInfo = createOrGetConferenceInfo();
+			if (conferenceInfo) {
+				auto &mainDb = core->getPrivate()->mainDb;
+				if (mainDb) {
+					lInfo() << "Inserting new conference information to database in order to be able to recreate "
+					        << *this << " in case of restart";
+					mainDb->insertConferenceInfo(conferenceInfo);
+				}
+			}
+#endif // HAVE_DB_STORAGE
+		}
 	}
 }
 
@@ -250,6 +254,24 @@ bool ServerConference::supportsVideoCapabilities() const {
 	return !!linphone_core_conference_server_enabled(getCore()->getCCore());
 }
 
+bool ServerConference::supportsChatCapabilities() const {
+	return !!linphone_core_conference_server_enabled(getCore()->getCCore());
+}
+
+void ServerConference::checkConferenceParams() {
+	if (mConfParams->videoEnabled() && !supportsVideoCapabilities()) {
+		lWarning() << *this
+		           << ": Video capability is not supported when the device hosting a conference is not a server";
+		mConfParams->enableVideo(false);
+	}
+
+	if (mConfParams->chatEnabled() && !supportsChatCapabilities()) {
+		lWarning() << *this
+		           << ": Chat capability is not supported when the device hosting a conference is not a server";
+		mConfParams->enableChat(false);
+	}
+}
+
 bool ServerConference::update(const ConferenceParamsInterface &newParameters) {
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = mConfParams->videoEnabled();
@@ -261,11 +283,7 @@ bool ServerConference::update(const ConferenceParamsInterface &newParameters) {
 	}
 	mConfParams = ConferenceParams::create(newConfParams);
 
-	if (!supportsVideoCapabilities() && mConfParams->videoEnabled()) {
-		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting "
-		              "a conference.";
-		mConfParams->enableVideo(false);
-	}
+	checkConferenceParams();
 
 	bool newVideoEnablement = mConfParams->videoEnabled();
 	bool newAudioEnablement = mConfParams->audioEnabled();
@@ -328,55 +346,18 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 		    Address::create((op->getDir() == SalOp::Dir::Incoming) ? op->getFrom() : op->getTo());
 
 		if (findParticipantDevice(remoteAddress, address) || invited || address->weakEqual(*mOrganizer)) {
-			lInfo() << "Updating conference informations of conference " << *conferenceAddress;
-			const auto &remoteMd = op->getRemoteMediaDescription();
-
-			// The following informations are retrieved from the received INVITE:
-			// - start and end time from the SDP active time attribute
-			// - conference active media:
-			//    - if the SDP has at least one active audio stream, audio is enabled
-			//    - if the SDP has at least one active video stream, video is enabled
-			// - Subject is got from the "Subject" header in the INVITE
-			const auto audioEnabled = (remoteMd && (remoteMd->nbActiveStreamsOfType(SalAudio) > 0));
-			const auto videoEnabled =
-			    (supportsVideoCapabilities()) ? (remoteMd && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0)) : false;
-			if (!supportsVideoCapabilities()) {
-				lWarning() << "Video capability in a conference is not supported when a device that is not a server is "
-				              "hosting a conference.";
-			}
-			auto recvCustomHeaders = op->getRecvCustomHeaders();
-			string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "End-To-End-Encrypted"));
-			string ephemerable = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "Ephemerable"));
-			string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "Ephemeral-Life-Time"));
-			string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "One-To-One-Chat-Room"));
-			const auto remoteContactAddress = op->getRemoteContactAddress();
-			const auto chatEnabled = !ephemerable.empty() || !ephemeralLifeTime.empty() || !endToEndEncrypted.empty() ||
-			                         !oneToOneChatRoom.empty() ||
-			                         !!(sal_address_has_param(remoteContactAddress, Conference::TextParameter.c_str()));
-
 			bool previousChatEnablement = mConfParams->chatEnabled();
 			bool previousVideoEnablement = mConfParams->videoEnabled();
 			bool previousAudioEnablement = mConfParams->audioEnabled();
 
-			mConfParams->enableAudio(audioEnabled);
-			mConfParams->enableVideo(videoEnabled);
-			mConfParams->enableChat(chatEnabled);
+			lInfo() << "Updating conference informations of conference " << *conferenceAddress;
+			updateConferenceParams(op);
 
 			if ((mConfParams->chatEnabled() != previousChatEnablement) ||
 			    (mConfParams->videoEnabled() != previousVideoEnablement) ||
 			    (mConfParams->audioEnabled() != previousAudioEnablement)) {
 				time_t creationTime = time(nullptr);
 				notifyAvailableMediaChanged(creationTime, false, getMediaCapabilities());
-			}
-			setUtf8Subject(op->getSubject());
-
-			mConfParams->enableOneParticipantConference(true);
-			if (remoteMd) {
-				const auto times = remoteMd->times;
-				if (times.size() > 0) {
-					const auto [startTime, endTime] = times.front();
-					setConferenceTimes(startTime, endTime);
-				}
 			}
 
 			if (mMe) {
@@ -389,25 +370,7 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 			bool isEmpty = !resourceList || resourceList.value().get().isEmpty();
 			fillInvitedParticipantList(op, mOrganizer, isEmpty);
 
-			const auto &conferenceInfo =
-			    createConferenceInfoWithCustomParticipantList(mOrganizer, mInvitedParticipants);
-			auto infoState = ConferenceInfo::State::New;
-			if (isEmpty) {
-				infoState = ConferenceInfo::State::Cancelled;
-			} else {
-				infoState = ConferenceInfo::State::Updated;
-			}
-			conferenceInfo->setState(infoState);
-
-#ifdef HAVE_DB_STORAGE
-			auto &mainDb = getCore()->getPrivate()->mainDb;
-			if (mainDb) {
-				lInfo() << "Inserting updated conference information to database in order to be able to recreate the "
-				           "conference "
-				        << *conferenceAddress << " in case of restart";
-				mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
-			}
-#endif // HAVE_DB_STORAGE
+			updateConferenceInformation();
 		} else {
 			lWarning() << "Device with address " << address
 			           << " is not allowed to update the conference because they have not been invited nor are "
@@ -418,8 +381,67 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 	return true;
 }
 
-void ServerConference::configure(SalCallOp *op) {
-	LinphoneCore *lc = getCore()->getCCore();
+void ServerConference::updateConferenceInformation() {
+	const auto &conferenceInfo = createConferenceInfoWithCustomParticipantList(mOrganizer, mInvitedParticipants);
+	auto infoState = ConferenceInfo::State::New;
+	if (mInvitedParticipants.empty()) {
+		infoState = ConferenceInfo::State::Cancelled;
+	} else {
+		infoState = ConferenceInfo::State::Updated;
+	}
+	conferenceInfo->setState(infoState);
+
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		lInfo() << "Inserting updated conference information to database in order to be able to recreate " << *this
+		        << " in case of restart";
+		mConferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
+	}
+#endif // HAVE_DB_STORAGE
+}
+
+void ServerConference::updateConferenceParams(SalCallOp *op) {
+	const auto &remoteMd = op->getRemoteMediaDescription();
+
+	// The following informations are retrieved from the received INVITE:
+	// - start and end time from the SDP active time attribute
+	// - conference active media:
+	//    - if the SDP has at least one active audio stream, audio is enabled
+	//    - if the SDP has at least one active video stream, video is enabled
+	// - Subject is got from the "Subject" header in the INVITE
+	const auto audioEnabled = (remoteMd && (remoteMd->nbActiveStreamsOfType(SalAudio) > 0));
+	const auto videoEnabled = (remoteMd && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0));
+	auto recvCustomHeaders = op->getRecvCustomHeaders();
+	string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "End-To-End-Encrypted"));
+	string ephemerable = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "Ephemerable"));
+	string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "Ephemeral-Life-Time"));
+	string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(recvCustomHeaders, "One-To-One-Chat-Room"));
+	const auto remoteContactAddress = op->getRemoteContactAddress();
+	const auto chatEnabled = (!ephemerable.empty() || !ephemeralLifeTime.empty() || !endToEndEncrypted.empty() ||
+	                          !oneToOneChatRoom.empty() ||
+	                          !!(sal_address_has_param(remoteContactAddress, Conference::TextParameter.c_str())));
+
+	mConfParams->enableAudio(audioEnabled);
+	mConfParams->enableVideo(videoEnabled);
+	mConfParams->enableChat(chatEnabled);
+
+	setUtf8Subject(op->getSubject());
+
+	mConfParams->enableLocalParticipant(false);
+	mConfParams->enableOneParticipantConference(true);
+	if (remoteMd) {
+		const auto times = remoteMd->times;
+		if (times.size() > 0) {
+			const auto [startTime, endTime] = times.front();
+			setConferenceTimes(startTime, endTime);
+		}
+	}
+
+	checkConferenceParams();
+}
+
+std::pair<bool, std::shared_ptr<Address>> ServerConference::configure(SalCallOp *op) {
 	std::shared_ptr<ConferenceInfo> info = nullptr;
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -461,21 +483,14 @@ void ServerConference::configure(SalCallOp *op) {
 		}
 	}
 	if (!isAdmin) {
-		isAdmin = (mState == ConferenceInterface::State::Instantiated);
+		isAdmin = (mState == ConferenceInterface::State::None);
 	}
-
-	bool audioEnabled = false;
-	bool videoEnabled = false;
-	std::string subject;
-	time_t startTime = ms_time(NULL);
-	time_t endTime = ms_time(NULL);
 
 	time_t startTimeSdp = 0;
 	time_t endTimeSdp = 0;
 
 	const auto &remoteMd = op->getRemoteMediaDescription();
 	if (remoteMd) {
-		videoEnabled = !!linphone_core_video_enabled(lc);
 		const auto times = remoteMd->times;
 		if (times.size() > 0) {
 			startTimeSdp = times.front().first;
@@ -484,9 +499,6 @@ void ServerConference::configure(SalCallOp *op) {
 	}
 
 	const bool createdConference = (info && info->isValidUri());
-	// If start time or end time is not -1, then the client wants to update the conference
-	const auto isUpdate = (isAdmin && ((startTimeSdp != -1) || (endTimeSdp != -1)) && info);
-
 	ConferenceParams::SecurityLevel securityLevel = ConferenceParams::SecurityLevel::None;
 	if (createdConference && info) {
 		securityLevel = info->getSecurityLevel();
@@ -511,56 +523,41 @@ void ServerConference::configure(SalCallOp *op) {
 		mMixerSession->setSecurityLevel(mConfParams->getSecurityLevel());
 	}
 
+	// If start time or end time is not -1, then the client wants to update the conference
+	const auto isUpdate = (isAdmin && ((startTimeSdp != -1) || (endTimeSdp != -1)) && info);
 	if (isUpdate || (isAdmin && !createdConference)) {
-		// The following informations are retrieved from the received INVITE:
-		// - start and end time from the SDP active time attribute
-		// - conference active media:
-		//    - if the SDP has at least one active audio stream, audio is enabled
-		//    - if the core is a conference server, video is enabled
-		// - Subject is got from the "Subject" header in the INVITE
-		audioEnabled = remoteMd && (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
-		videoEnabled = remoteMd && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
-		if (!op->getSubject().empty()) {
-			subject = op->getSubject();
-		}
 		setOrganizer(from);
-
-		startTime = startTimeSdp;
-		if (startTime <= 0) {
-			startTime = ms_time(NULL);
-		}
-		endTime = endTimeSdp;
-		if (endTime <= 0) {
-			endTime = -1;
-		}
-		fillInvitedParticipantList(op, mOrganizer, false);
+		updateConferenceParams(op);
+		const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
+		bool isEmpty = !resourceList || resourceList.value().get().isEmpty();
+		fillInvitedParticipantList(op, mOrganizer, isEmpty);
 	} else if (info) {
-		audioEnabled = info->getCapability(LinphoneStreamTypeAudio);
-		videoEnabled &= info->getCapability(LinphoneStreamTypeVideo);
-		subject = info->getUtf8Subject();
 		setOrganizer(info->getOrganizerAddress());
 
-		startTime = info->getDateTime();
+		mConfParams->enableAudio(info->getCapability(LinphoneStreamTypeAudio));
+		mConfParams->enableVideo(info->getCapability(LinphoneStreamTypeVideo));
+
+		time_t startTime = info->getDateTime();
 		const auto duration = info->getDuration();
+		time_t endTime = ms_time(NULL);
 		if ((duration > 0) && (startTime >= 0)) {
 			endTime = startTime + static_cast<time_t>(duration) * 60;
 		} else {
 			endTime = -1;
 		}
+		setConferenceTimes(startTime, endTime);
+
+		const auto subject = info->getUtf8Subject();
+		if (!subject.empty()) {
+			mConfParams->setUtf8Subject(subject);
+		}
+		mConfParams->enableLocalParticipant(false);
+		mConfParams->enableOneParticipantConference(true);
+
+		checkConferenceParams();
+
 		fillInvitedParticipantList(info->getParticipants());
 	}
-
-	mConfParams->enableAudio(audioEnabled);
-	mConfParams->enableVideo(videoEnabled);
-
-	if (!subject.empty()) {
-		mConfParams->setUtf8Subject(subject);
-	}
-	mConfParams->enableLocalParticipant(false);
-	mConfParams->enableOneParticipantConference(true);
-
-	setConferenceTimes(startTime, endTime);
-
 	if (!isUpdate && !info) {
 		// Set joining mode only when creating a conference
 		bool immediateStart = (startTimeSdp < 0);
@@ -570,20 +567,20 @@ void ServerConference::configure(SalCallOp *op) {
 	}
 
 	if (isAdmin && !createdConference) {
-		std::shared_ptr<Address> conferenceAddress = Address::create(op->getTo());
+		std::shared_ptr<Address> to = Address::create(op->getTo());
 		MediaSessionParams *msp = new MediaSessionParams();
 		msp->initDefault(getCore(), LinphoneCallIncoming);
-		msp->enableAudio(audioEnabled);
-		msp->enableVideo(videoEnabled);
+		msp->enableAudio(mConfParams->audioEnabled());
+		msp->enableVideo(mConfParams->videoEnabled());
 		msp->getPrivate()->disableRinging(true);
 		msp->getPrivate()->enableToneIndications(false);
 		msp->getPrivate()->setConferenceCreation(true);
 		msp->getPrivate()->setInConference(true);
-		msp->getPrivate()->setStartTime(startTime);
-		msp->getPrivate()->setEndTime(endTime);
+		msp->getPrivate()->setStartTime(mConfParams->getStartTime());
+		msp->getPrivate()->setEndTime(mConfParams->getEndTime());
 		shared_ptr<CallSession> session = getMe()->createSession(*this, msp, true);
 		session->addListener(getSharedFromThis());
-		session->configure(LinphoneCallIncoming, nullptr, op, mOrganizer, conferenceAddress);
+		session->configure(LinphoneCallIncoming, nullptr, op, mOrganizer, to);
 		delete msp;
 	}
 
@@ -593,15 +590,12 @@ void ServerConference::configure(SalCallOp *op) {
 		mMe->setFocus(true);
 	}
 
+	std::shared_ptr<Address> conferenceAddress;
 	if (createdConference && info) {
-		const auto &conferenceAddress = info->getUri();
+		conferenceAddress = info->getUri();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
-		setConferenceAddress(conferenceAddress);
 	}
-
-	if (isUpdate) {
-		updateConferenceInformation(op);
-	}
+	return std::make_pair(isUpdate, conferenceAddress);
 }
 
 void ServerConference::setConferenceTimes(time_t startTime, time_t endTime) {
