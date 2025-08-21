@@ -6968,7 +6968,7 @@ MainDb::selectChatRoomParticipants(const list<long long> &chatRoomIds) const {
 	map<long long, list<long long>> allParticipantsIds;
 #ifdef HAVE_DB_STORAGE
 	L_D();
-	if (isInitialized()) {
+	if (isInitialized() && chatRoomIds.size() > 0) {
 		ostringstream chatRoomIdsStr, participantIdsStr;
 		bool first = true;
 		for (const auto &id : chatRoomIds) {
