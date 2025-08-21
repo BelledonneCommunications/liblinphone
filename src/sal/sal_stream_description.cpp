@@ -1446,10 +1446,17 @@ void SalStreamDescription::sdpParsePayloadTypes(SalStreamConfiguration &cfg,
 		pt->channels = belle_sdp_mime_parameter_get_channel_count(mime_param);
 		payload_type_set_send_fmtp(pt, belle_sdp_mime_parameter_get_parameters(mime_param));
 		payload_type_set_avpf_params(pt, avpf_params);
-		cfg.payloads.push_back(pt);
-		cfg.ptime = belle_sdp_mime_parameter_get_ptime(mime_param);
-		cfg.maxptime = belle_sdp_mime_parameter_get_max_ptime(mime_param);
-		ms_message("Found payload %s/%i fmtp=%s", pt->mime_type, pt->clock_rate, pt->send_fmtp ? pt->send_fmtp : "");
+		if (payload_type_is_valid(pt)) {
+			cfg.payloads.push_back(pt);
+			cfg.ptime = belle_sdp_mime_parameter_get_ptime(mime_param);
+			cfg.maxptime = belle_sdp_mime_parameter_get_max_ptime(mime_param);
+			ms_message("Found payload %s/%i fmtp=%s", pt->mime_type, pt->clock_rate,
+			           pt->send_fmtp ? pt->send_fmtp : "");
+		} else {
+			ms_warning("Ignore not valid payload %s/%i fmtp=%s", pt->mime_type ? pt->mime_type : "", pt->clock_rate,
+			           pt->send_fmtp ? pt->send_fmtp : "");
+			payload_type_destroy(pt);
+		}
 	}
 	if (mime_params) belle_sip_list_free_with_data(mime_params, belle_sip_object_unref);
 }
