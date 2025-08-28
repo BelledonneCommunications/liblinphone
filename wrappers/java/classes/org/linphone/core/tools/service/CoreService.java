@@ -109,12 +109,8 @@ public class CoreService extends Service {
 
             @Override
             public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
-                if (state == Call.State.End || state == Call.State.Error || state == Call.State.Connected) {
-                    if (mIsVibrating) {
-                        Log.i("[Core Service] Stopping vibrator");
-                        mVibrator.cancel();
-                        mIsVibrating = false;
-                    }
+                if (state == Call.State.End || state == Call.State.Released || state == Call.State.Error || state == Call.State.Connected) {
+                    stopVibration();
                 }
             }
 
@@ -155,12 +151,7 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
-        
-        if (mIsVibrating) {
-            Log.i("[Core Service] Stopping vibrator");
-            mVibrator.cancel();
-            mIsVibrating = false;
-        }
+        stopVibration();
 
         if (AndroidPlatformHelper.isReady()) {
             AndroidPlatformHelper.instance().setServiceRunning(false);
@@ -354,6 +345,14 @@ public class CoreService extends Service {
             }
         } else {
             Log.e("[Core Service] Device doesn't have a vibrator");
+        }
+    }
+
+    private void stopVibration() {
+        if (mIsVibrating) {
+            Log.i("[Core Service] Stopping vibrator");
+            mVibrator.cancel();
+            mIsVibrating = false;
         }
     }
 }
