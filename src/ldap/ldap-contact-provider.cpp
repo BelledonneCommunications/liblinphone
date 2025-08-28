@@ -125,7 +125,6 @@ void LdapContactProvider::fallbackToNextServerUrl() {
 }
 
 void LdapContactProvider::ldapTlsConnection() {
-	std::string srText;
 	void *value = LDAP_OPT_ON;
 	int ldapReturnStatus;
 	int resultStatus;
@@ -204,7 +203,7 @@ void LdapContactProvider::ldapTlsConnection() {
 
 static void onLdapLog(const char *msg) {
 	if (msg) {
-		std::string cppMsg(msg);
+		std::string cppMsg = L_C_TO_STRING(msg);
 		// Remove trailing \n from openldap logs.
 		if (cppMsg.size() != 0 && cppMsg[cppMsg.size() - 1] == '\n') cppMsg.resize(cppMsg.size() - 1);
 		lInfo() << "libldap: " << cppMsg;
@@ -241,7 +240,7 @@ void LdapContactProvider::initializeLdap() {
 		lError() << "[LDAP] Problem initializing debug options LDAP_OPT_DEBUG_LEVEL : " << ret << " ("
 		         << ldap_err2string(ret) << ")";
 	if (mConfig.count("use_tls") > 0 && mConfig["use_tls"][0] == "1") {
-		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
+		std::string caFile = L_C_TO_STRING(linphone_core_get_root_ca(mCore->getCCore()));
 		bool enableVerification = true;
 		if (mConfig.count("verify_server_certificates") > 0) {
 			auto mode = mConfig["verify_server_certificates"][0];
@@ -286,7 +285,7 @@ void LdapContactProvider::initializeLdap() {
 			belle_generic_uri_t *serverUri = belle_generic_uri_parse(
 			    mConfig["server"][mConfigServerIndex].c_str()); // mServer are results of sal. Use the root urls.
 			const char *cHost = belle_generic_uri_get_host(serverUri);
-			std::string hostname = cHost ? cHost : "";
+			std::string hostname = L_C_TO_STRING(cHost);
 			ldap_set_option(mLd, LDAP_OPT_X_TLS_PEER_CN, &hostname[0]);
 			if (serverUri) belle_sip_object_unref(serverUri);
 		}
