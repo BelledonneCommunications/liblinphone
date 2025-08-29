@@ -356,6 +356,16 @@ std::string Address::asStringUriOnly() const {
 	return tmp;
 }
 
+bool Address::equalWithoutGruu(const Address &address) const {
+	auto a = getUriWithoutGruu();
+	auto b = address.getUriWithoutGruu();
+	return (a == b);
+}
+
+bool Address::equalWithoutGruu(const shared_ptr<const Address> address) const {
+	return address && equalWithoutGruu(*address);
+}
+
 bool Address::weakEqual(const Address &address) const {
 	return !!sal_address_weak_equals(mImpl, address.mImpl);
 }

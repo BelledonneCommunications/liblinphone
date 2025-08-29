@@ -1100,9 +1100,8 @@ bool Conference::isMe(const std::shared_ptr<const Address> &addr) const {
 		lError() << *this << ": Unable to known if an invalid address is the me participant";
 		return false;
 	}
-	Address cleanedAddr = addr->getUriWithoutGruu();
-	Address cleanedMeAddr = mMe->getAddress()->getUriWithoutGruu();
-	return cleanedMeAddr == cleanedAddr;
+	auto meAddr = mMe->getAddress();
+	return meAddr->equalWithoutGruu(addr);
 }
 
 // -----------------------------------------------------------------------------

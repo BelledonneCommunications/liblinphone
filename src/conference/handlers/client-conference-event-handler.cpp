@@ -791,7 +791,8 @@ void ClientConferenceEventHandler::requestFullState() {
 }
 
 void ClientConferenceEventHandler::handleDelayMessageSendTimerExpired(const Address address) {
-	if (delayMessageSendTimerStarted(address)) {
+	auto timerStarted = delayMessageSendTimerStarted(address);
+	if (timerStarted) {
 		setDelayTimerExpired(true, address);
 		stopDelayMessageSendTimer(address);
 		auto conference = getConference();

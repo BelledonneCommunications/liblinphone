@@ -380,7 +380,7 @@ bool ClientChatRoom::canSendMessages() const {
 			lInfo() << " - subscription is underway (actually subscription is"
 			        << std::string(subscriptionUnderway ? " " : " not ") << "underway)";
 		} else {
-			lInfo() << " - message delay timer hasn't expired (actually the time has"
+			lInfo() << " - message delay timer hasn't expired (actually the timer has"
 			        << std::string(delayTimerExpired ? " " : " not ") << "expired)";
 		}
 	}

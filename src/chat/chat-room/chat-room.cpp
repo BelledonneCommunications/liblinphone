@@ -328,7 +328,7 @@ std::optional<Address> ChatRoom::getImdnChatRoomPeerAddress(const shared_ptr<Cha
 std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_ptr<Address> peerAddress) {
 	auto chatRoomPeerAddress = getPeerAddress();
 	std::shared_ptr<AbstractChatRoom> chatRoom;
-	if (*peerAddress == chatRoomPeerAddress->getUriWithoutGruu()) {
+	if (chatRoomPeerAddress->equalWithoutGruu(peerAddress)) {
 		chatRoom = getSharedFromThis();
 	} else {
 		shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
