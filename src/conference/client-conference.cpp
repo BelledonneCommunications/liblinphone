@@ -2383,16 +2383,10 @@ int ClientConference::enter() {
 
 		std::string subject = getMe()->isAdmin() ? getUtf8Subject() : std::string();
 
-		auto cCall = linphone_core_invite_address_with_params_2(getCore()->getCCore(), address->toC(), new_params,
-		                                                        L_STRING_TO_C(subject), nullptr);
+		linphone_core_invite_address_with_params_2(getCore()->getCCore(), address->toC(), new_params,
+		                                           L_STRING_TO_C(subject), nullptr);
 
 		linphone_call_params_unref(new_params);
-
-		auto cppCall = Call::toCpp(cCall);
-		cppCall->setConference(getSharedFromThis());
-		auto callSession = cppCall->getActiveSession();
-		callSession->addListener(getSharedFromThis());
-		mFocus->setSession(callSession);
 	}
 	return 0;
 }
