@@ -4841,6 +4841,55 @@ void text_message_crappy_to_header(void) {
 	crappy_to_header(FALSE);
 }
 
+static void basic_message_with_wrong_to_domain(void) {
+	const char *message_template =
+	    "MESSAGE sip:%s@sip.wrongdomain.com:61402;transport=tls SIP/2.0\r\n"
+	    "Via: SIP/2.0/TLS 10.0.0.101:5061;branch=z9hG4bKd4e.1580496edb5eed293e6aa4271efb9757.0\r\n"
+	    "Max-Forwards: 69\r\n"
+	    "From: <sip:lise@sip.wrongdomain.com>;tag=as51cc545f\r\n"
+	    "To: <sip:%s@sip.wrongdomain.com>\r\n"
+	    "Call-ID: 26ea4fd20c36d50d54ea42c65b0a0fd0@10.0.0.102:5060\r\n"
+	    "CSeq: 102 MESSAGE\r\n"
+	    "Content-Type: text/plain;charset=UTF-8\r\n"
+	    "Content-Length: 11\r\n"
+	    "Contact: <sip:lise@10.0.0.102:5061;transport=tls>\r\n"
+	    "\r\n"
+	    "Hello World\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	const char *laure_username = linphone_address_get_username(laure->identity);
+	char *message = bctbx_strdup_printf(message_template, laure_username, laure_username);
+
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(message, strlen(message), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneMessageReceived, 1));
+
+	BC_ASSERT_PTR_NOT_NULL(laure->stat.last_received_chat_message);
+	if (laure->stat.last_received_chat_message != NULL) {
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(laure->stat.last_received_chat_message),
+		                       "Hello World");
+		LinphoneChatRoom *chat_room = linphone_chat_message_get_chat_room(laure->stat.last_received_chat_message);
+
+		const LinphoneAddress *local_addr = linphone_chat_room_get_local_address(chat_room);
+		const char *local_username = linphone_address_get_username(local_addr);
+		BC_ASSERT_STRING_EQUAL(local_username, laure_username);
+		const char *local_domain = linphone_address_get_domain(local_addr);
+		BC_ASSERT_STRING_EQUAL(local_domain, "sip.example.org");
+
+		const LinphoneAddress *peer_addr = linphone_chat_room_get_peer_address(chat_room);
+		char *peer_sip_uri = linphone_address_as_string_uri_only(peer_addr);
+		BC_ASSERT_STRING_EQUAL(peer_sip_uri, "sip:lise@sip.wrongdomain.com");
+		bctbx_free(peer_sip_uri);
+	}
+
+	bctbx_free(message);
+	linphone_core_manager_destroy(laure);
+}
+
 static test_t message_tests[] = {
     TEST_NO_TAG("File transfer content", file_transfer_content),
     TEST_NO_TAG("Message with 2 attachments", message_with_two_attachments),
@@ -4930,6 +4979,7 @@ static test_t message_tests[] = {
     TEST_NO_TAG("Transfer message auto resent after failure", transfer_message_auto_resent_after_failure),
     TEST_NO_TAG("Aggregated messages", received_messages_with_aggregation_enabled),
     TEST_NO_TAG("Text message denied", text_message_denied),
+    TEST_NO_TAG("Message with wrong domain in TO header", basic_message_with_wrong_to_domain),
 #ifdef HAVE_ADVANCED_IM
     TEST_NO_TAG("IsComposing notification", is_composing_notification),
     TEST_NO_TAG("IMDN notifications", imdn_notifications),

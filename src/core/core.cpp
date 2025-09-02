@@ -3183,6 +3183,7 @@ std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::
 	auto account = findAccountByIdentityAddress(localAddress);
 	if (!account) {
 		string toUser = localAddress->getUsername();
+		// Try account matching using local address username & peer address domain if local address domain is an IP
 		if (!toUser.empty() && peerAddress && Utils::isIp(localAddress->getDomain())) {
 			Address localAddressWithPeerDomain(*localAddress);
 			localAddressWithPeerDomain.setDomain(peerAddress->getDomain());
@@ -3192,23 +3193,45 @@ std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::
 				// We have a match for the FROM domain and the TO username.
 				// We may face an IPBPX that sets the TO domain to our IP address, which is
 				// a terribly stupid idea.
-				lWarning() << "Detecting TO header [" << localAddress->asStringUriOnly()
-				           << "] probably ill-choosen, but an account that matches the username on "
+				lWarning() << "TO header [" << localAddress->asStringUriOnly()
+				           << "] was probably ill-choosen, but an account that matches the username on "
 				              "the FROM ["
-				           << peerAddress->asStringUriOnly() << "] domain was found: ["
-				           << account->getAccountParams()->getIdentityAddress()->asStringUriOnly() << "]";
+				           << peerAddress->asStringUriOnly() << "] domain was found ["
+				           << account->getAccountParams()->getIdentityAddress()->asStringUriOnly() << "], using it";
 				return account;
 			} else {
 				account = findAccountByUsername(toUser);
 				if (account) {
-					lWarning() << "Detecting TO header [" << localAddress->asStringUriOnly()
-					           << "] probably ill-choosen, but an account that matches the username "
-					              "was found: ["
-					           << account->getAccountParams()->getIdentityAddress()->asStringUriOnly() << "]";
+					lWarning() << "TO header [" << localAddress->asStringUriOnly()
+					           << "] was probably ill-choosen, but an account that matches the username "
+					              "was found ["
+					           << account->getAccountParams()->getIdentityAddress()->asStringUriOnly() << "], using it";
 					return account;
 				} else {
 					lWarning() << "Failed to find an account matching TO header [" << localAddress->asStringUriOnly()
 					           << "], even by using FROM header [" << peerAddress->asStringUriOnly() << "] domain";
+				}
+			}
+		} else {
+			// In case findAccountByIdentityAddress didn't returned an account, try this
+			// Will be useful for cases where TO address domain doesn't match the account's one
+			account = lookupKnownAccount(localAddress, false);
+			if (account) {
+				lWarning() << "TO header [" << localAddress->asStringUriOnly()
+				           << "] was probably ill-choosen, but an account was found ["
+				           << account->getAccountParams()->getIdentityAddress()->asStringUriOnly() << "], using it";
+				return account;
+			} else {
+				account = findAccountByUsername(toUser);
+				if (account) {
+					lWarning() << "TO header [" << localAddress->asStringUriOnly()
+					           << "] was probably ill-choosen, but an account that matches the username "
+					              "was found ["
+					           << account->getAccountParams()->getIdentityAddress()->asStringUriOnly() << "], using it";
+					return account;
+				} else {
+					lWarning() << "Failed to find an account matching TO header [" << localAddress->asStringUriOnly()
+					           << "]";
 				}
 			}
 		}
