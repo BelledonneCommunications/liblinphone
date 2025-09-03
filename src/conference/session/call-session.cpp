@@ -996,17 +996,17 @@ void CallSessionPrivate::setBroken() {
 
 void CallSessionPrivate::setContactOp() {
 	L_Q();
-	auto contactAddress = getFixedContact();
+	auto contactInfo = chooseContact();
 	// Do not try to set contact address if it is not valid
-	if (contactAddress && contactAddress->isValid()) {
-		q->fillParametersIntoContactAddress(*contactAddress);
+	if (contactInfo.mAddress && contactInfo.mAddress->isValid()) {
+		q->fillParametersIntoContactAddress(*contactInfo.mAddress);
 		if (isInConference()) {
 			// Make the best effort to find the conference linked to the call session on the server side.
 			// Try with both the To or From headers and the guessed contact address
 			auto core = q->getCore();
 			const auto conferenceIdParams = core->createConferenceIdParams();
-			std::shared_ptr<Conference> conference =
-			    core->findConference(ConferenceId(contactAddress, contactAddress, conferenceIdParams), false);
+			std::shared_ptr<Conference> conference = core->findConference(
+			    ConferenceId(contactInfo.mAddress, contactInfo.mAddress, conferenceIdParams), false);
 			// Find server conference based on From or To header as the tchat conference server may give an address to
 			// the conference that doesn't match the identity address or contact address of any of the accounts held by
 			// the core. For example, flexisip tchat servers based on SDK 5.3, will create chatroom with username
@@ -1028,7 +1028,7 @@ void CallSessionPrivate::setContactOp() {
 				// sip:focus@sip.example.org
 				conferenceAddress = guessedConference->getConferenceAddress()->clone()->toSharedPtr();
 				conferenceFound = guessedConference;
-				lInfo() << "The guessed contact address " << *contactAddress
+				lInfo() << "The guessed contact address " << *contactInfo.mAddress
 				        << " doesn't match the actual chatroom conference address " << *conferenceAddress;
 			} else {
 #ifdef HAVE_DB_STORAGE
@@ -1043,22 +1043,23 @@ void CallSessionPrivate::setContactOp() {
 #endif // HAVE_DB_STORAGE
 			}
 			if (conferenceAddress && conferenceAddress->isValid()) {
-				if (contactAddress && contactAddress->isValid()) {
+				if (contactInfo.mAddress && contactInfo.mAddress->isValid()) {
 					// Copy all parameters of the guessed contact address into the conference address. Here, it is
 					// interesting to pass the GRUU parameter on
-					lInfo() << "Copying all parameters of the guessed contact address " << *contactAddress
+					lInfo() << "Copying all parameters of the guessed contact address " << *contactInfo.mAddress
 					        << " to found conference address " << *conferenceAddress;
-					conferenceAddress->merge(*contactAddress);
+					conferenceAddress->merge(*contactInfo.mAddress);
 				}
-				contactAddress = conferenceAddress;
+				contactInfo.mAddress = conferenceAddress;
 			}
 		}
 
-		lInfo() << "Setting contact address for " << *q << " to " << *contactAddress;
-		op->setContactAddress(contactAddress->getImpl());
+		lInfo() << "Setting contact address for " << *q << " to " << *contactInfo.mAddress;
+		op->setContactAddress(contactInfo.mAddress->getImpl(), contactInfo.mMustBePreserved);
 	} else {
 		lWarning() << "Unable to set contact address for " << *q << " to "
-		           << ((contactAddress) ? contactAddress->toString() : std::string("sip:")) << " as it is not valid";
+		           << ((contactInfo.mAddress) ? contactInfo.mAddress->toString() : std::string("sip:"))
+		           << " as it is not valid";
 	}
 }
 
@@ -1141,21 +1142,20 @@ void CallSessionPrivate::createOpTo(const std::shared_ptr<Address> &to) {
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
+CallSessionPrivate::ContactInfo CallSessionPrivate::chooseContact() const {
 	L_Q();
-	std::shared_ptr<Address> result = nullptr;
+	ContactInfo contactInfo;
+	std::shared_ptr<Address> result;
 	const auto &account = getDestAccount();
 	if (op && op->getContactAddress()) {
 		/* If already choosed, don't change it */
 		result = Address::create();
 		result->setImpl(op->getContactAddress());
-		return result;
 	} else if (pingOp && pingOp->getContactAddress()) {
 		/* If the ping OPTIONS request succeeded use the contact guessed from the received, rport */
 		lInfo() << "Contact has been fixed using OPTIONS";
 		result = Address::create();
 		result->setImpl(pingOp->getContactAddress());
-		return result;
 	} else if (account) {
 		shared_ptr<Address> addr = nullptr;
 		const auto &accountContactAddress = account->getContactAddress();
@@ -1171,17 +1171,20 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 			/* If using a account, use the contact address as guessed with the REGISTERs */
 			lInfo() << "Contact " << *addr << " has been fixed using account " << *account;
 			result = addr->clone()->toSharedPtr();
-			return result;
+			contactInfo.mMustBePreserved = true;
 		}
 	}
-	result = Address::toCpp(linphone_core_get_primary_contact_parsed(q->getCore()->getCCore()))->toSharedPtr();
-	if (result) {
-		/* Otherwise use supplied localip */
-		result->setDomain(std::string() /* localip */);
-		result->setPort(-1 /* linphone_core_get_sip_port(core) */);
-		lInfo() << "Contact has not been fixed, stack will do";
+	if (!result) {
+		result = Address::toCpp(linphone_core_get_primary_contact_parsed(q->getCore()->getCCore()))->toSharedPtr();
+		if (result) {
+			/* Otherwise use supplied localip */
+			result->setDomain(std::string() /* localip */);
+			result->setPort(-1 /* linphone_core_get_sip_port(core) */);
+			lInfo() << "No working contact address found, belle-sip will deal with it.";
+		}
 	}
-	return result;
+	contactInfo.mAddress = result;
+	return contactInfo;
 }
 
 // -----------------------------------------------------------------------------
@@ -1250,25 +1253,14 @@ void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 void CallSessionPrivate::refreshContactAddress() {
 	L_Q();
 	if (!op) return;
-	Address contactAddress;
-	const auto &account = getDestAccount();
-	if (account) {
-		const auto &accountOp = account->getOp();
-		const auto &accountContactAddress = account->getContactAddress();
-		if (accountOp) {
-			/* Give a chance to update the contact address if connectivity has changed */
-			contactAddress.setImpl(accountOp->getContactAddress());
-		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && accountContactAddress) {
-			contactAddress = Address(*accountContactAddress);
-		}
+	ContactInfo contactInfo = chooseContact();
 
-		if (contactAddress.isValid()) {
-			q->fillParametersIntoContactAddress(contactAddress);
-		}
+	if (contactInfo.mAddress && contactInfo.mAddress->isValid()) {
+		q->fillParametersIntoContactAddress(*contactInfo.mAddress);
 	}
 
-	if (contactAddress.isValid()) {
-		op->setContactAddress(contactAddress.getImpl());
+	if (contactInfo.mAddress && contactInfo.mAddress->isValid()) {
+		op->setContactAddress(contactInfo.mAddress->getImpl(), contactInfo.mMustBePreserved);
 	} else {
 		op->setContactAddress(nullptr);
 	}

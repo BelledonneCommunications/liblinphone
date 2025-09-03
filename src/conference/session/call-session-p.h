@@ -180,7 +180,11 @@ private:
 	void executePendingActions();
 	void refreshContactAddress();
 
-	std::shared_ptr<Address> getFixedContact() const;
+	struct ContactInfo {
+		std::shared_ptr<Address> mAddress;
+		bool mMustBePreserved = false;
+	};
+	ContactInfo chooseContact() const;
 
 	void repairIfBroken();
 

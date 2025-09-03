@@ -91,9 +91,10 @@ void SalOp::resetErrorInfo() {
 	sal_error_info_reset(&mErrorInfo);
 }
 
-void SalOp::setContactAddress(const SalAddress *value) {
+void SalOp::setContactAddress(const SalAddress *value, bool mustBePreserved) {
 	if (mContactAddress) sal_address_unref(mContactAddress);
 	mContactAddress = value ? sal_address_clone(value) : nullptr;
+	mContactMustBePreserved = mustBePreserved;
 }
 
 void SalOp::assignAddress(SalAddress **address, string &addressStr, const string &value) {
@@ -688,7 +689,8 @@ belle_sip_header_contact_t *SalOp::createContact(bool forceSipInstance) {
 	    BELLE_SIP_PARAMETERS(belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(contactHeader))), "gr");
 
 	// Automatic contact must be disabled if provided with a GRUU contact.
-	if (!hasGruuContact) belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
+	if (!hasGruuContact && !mContactMustBePreserved)
+		belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
 
 	/* Add +sip.instance */
 	if (forceSipInstance || hasGruuContact) {
