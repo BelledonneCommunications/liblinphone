@@ -1906,9 +1906,9 @@ void Core::setConferenceExpirePeriod(long seconds) {
 }
 
 long Core::getConferenceExpirePeriod() const {
-	// Default to 30 minutes
+	// Default to 30 days
 	return (long)linphone_config_get_int64(linphone_core_get_config(getCCore()), "misc", "conference_expire_period",
-	                                       1800);
+	                                       30 * 24 * 3600);
 }
 
 void Core::setAccountDeletionTimeout(unsigned int seconds) {
