@@ -255,6 +255,79 @@ static void one_over_two_http_request_cancelled() {
 	linphone_core_manager_destroy(lcm);
 }
 
+/*
+ * In this test the challenge is not verified.
+ * The purpose of the test is to ensure that liblinphone is able to answer at lest one challenge (MD5 here)
+ * even if proposed for both MD5 and SHA-256.
+ * Two variants are tested: one Www-authenticate with two challenges, or two Www-authenticate with one challenge each.
+ */
+static void digest_with_double_challenge() {
+	int responseCode1 = 0;
+	int gotResponse1 = 0;
+	int responseCode2 = 0;
+	int gotResponse2 = 0;
+	bellesip::HttpServer httpServer;
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
+
+	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_2(linphone_factory_get(), "bob", nullptr, nullptr,
+	                                                           "secret_ha1", "sip.example.org", nullptr, "MD5");
+
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+
+	httpServer.Get("/index.html", [](const httplib::Request &req, httplib::Response &res) {
+		if (req.has_header("Authorization")) {
+			res.status = 200;
+		} else {
+			res.status = 401;
+			std::ostringstream headerValue;
+			/* two headers, with one challenge each */
+			headerValue << "Digest realm=\"" << "sip.example.org" << "\""
+			            << ",nonce=\"abcdefghikkl\",opaque=\"dodo\",algorithm=MD5";
+			res.set_header("WWW-Authenticate", headerValue.str());
+
+			headerValue.str("");
+			headerValue << "Digest realm=\"" << "sip.example.org" << "\""
+			            << ",nonce=\"abcdefghikkl\",opaque=\"dodo\",algorithm=SHA-256";
+			res.set_header("WWW-Authenticate", headerValue.str());
+		}
+	});
+
+	httpServer.Get("/about.html", [](const httplib::Request &req, httplib::Response &res) {
+		if (req.has_header("Authorization")) {
+			res.status = 200;
+		} else {
+			res.status = 401;
+			/* one header with 2 challenges */
+			std::ostringstream headerValue;
+			headerValue << "Digest realm=\"" << "sip.example.org" << "\""
+			            << ",nonce=\"abcdefghikkl\",opaque=\"dodo\",algorithm=MD5, ";
+			headerValue << "Digest realm=\"" << "sip.example.org" << "\""
+			            << ",nonce=\"abcdefghikkl\",opaque=\"dodo\",algorithm=SHA-256";
+			res.set_header("WWW-Authenticate", headerValue.str());
+		}
+	});
+
+	HttpClient &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lcm->lc)->getHttpClient();
+	auto &httpRequest1 = httpClient.createRequest("GET", httpServer.mRootUrl + "/index.html");
+	httpRequest1.execute([&](const HttpResponse &response) {
+		responseCode1 = response.getHttpStatusCode();
+		gotResponse1 = 1;
+	});
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &gotResponse1, 1));
+	BC_ASSERT_EQUAL(responseCode1, 200, int, "%i");
+
+	auto &httpRequest2 = httpClient.createRequest("GET", httpServer.mRootUrl + "/about.html");
+	httpRequest2.execute([&](const HttpResponse &response) {
+		responseCode2 = response.getHttpStatusCode();
+		gotResponse2 = 1;
+	});
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &gotResponse2, 1));
+	BC_ASSERT_EQUAL(responseCode2, 200, int, "%i");
+
+	linphone_core_manager_destroy(lcm);
+}
+
 static test_t http_client_tests[] = {
     {"Http get", http_get},
     {"Bad http uri", http_bad_uri},
@@ -263,7 +336,8 @@ static test_t http_client_tests[] = {
      http_needs_token_refresh_but_expiration_is_not_known},
     //{"Challenged request, credentials comes later", challenged_requested_with_late_credentials},
     {"Http request cancelled", http_request_cancelled},
-    {"One over two http request cancelled", one_over_two_http_request_cancelled}};
+    {"One over two http request cancelled", one_over_two_http_request_cancelled},
+    {"Digest with double challenge", digest_with_double_challenge}};
 
 test_suite_t http_client_test_suite = {"HTTP Client",
                                        before_suite,
