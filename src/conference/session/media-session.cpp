@@ -2472,8 +2472,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 
 						auto &newStream = participantLabel.empty() ? md->streams[static_cast<size_t>(idx)]
 						                                           : addStreamToMd(md, static_cast<int>(idx), oldMd);
+						newStream.setContent(contentAttrValue);
 						if (dev) {
-							newStream.setContent(contentAttrValue);
 							fillConferenceParticipantStream(newStream, oldMd, md, dev, pth, encs, type, s.getMid());
 						} else {
 							SalStreamConfiguration cfg;
@@ -2482,6 +2482,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							newStream.type = type;
 							newStream.rtp_port = 0;
 							newStream.rtcp_port = 0;
+							newStream.label = participantLabel;
 							newStream.disable();
 							lWarning() << *q << ": New stream added at index " << idx
 							           << " as disabled and inactive because no device has been found with label "

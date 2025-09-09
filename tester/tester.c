@@ -5199,6 +5199,31 @@ bool_t call(LinphoneCoreManager *caller_mgr, LinphoneCoreManager *callee_mgr) {
 	return call_with_params(caller_mgr, callee_mgr, NULL, NULL);
 }
 
+void update_call(bctbx_list_t *coreList,
+                 LinphoneCoreManager *m1,
+                 LinphoneCoreManager *m2,
+                 LinphoneCallParams *new_params) {
+	LinphoneCall *m1_call = linphone_core_get_call_by_remote_address2(m1->lc, m2->identity);
+	BC_ASSERT_PTR_NOT_NULL(m1_call);
+	if (m1_call) {
+		stats previous_stats_1 = m1->stat;
+		stats previous_stats_2 = m2->stat;
+		linphone_call_update(m1_call, new_params);
+		BC_ASSERT_TRUE(wait_for_list(coreList, &m1->stat.number_of_LinphoneCallUpdating,
+		                             previous_stats_1.number_of_LinphoneCallUpdating + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coreList, &m2->stat.number_of_LinphoneCallUpdatedByRemote,
+		                             previous_stats_2.number_of_LinphoneCallUpdatedByRemote + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coreList, &m1->stat.number_of_LinphoneCallStreamsRunning,
+		                             previous_stats_1.number_of_LinphoneCallStreamsRunning + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coreList, &m2->stat.number_of_LinphoneCallStreamsRunning,
+		                             previous_stats_2.number_of_LinphoneCallStreamsRunning + 1,
+		                             liblinphone_tester_sip_timeout));
+	}
+}
+
 void end_call(LinphoneCoreManager *m1, LinphoneCoreManager *m2) {
 	int previous_count_1 = m1->stat.number_of_LinphoneCallEnd;
 	int previous_count_2 = m2->stat.number_of_LinphoneCallEnd;

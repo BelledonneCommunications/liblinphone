@@ -852,6 +852,10 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 bool_t call(LinphoneCoreManager *caller_mgr, LinphoneCoreManager *callee_mgr);
 bool_t request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t use_accept_call_update);
 bool_t remove_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee);
+void update_call(bctbx_list_t *coreList,
+                 LinphoneCoreManager *m1,
+                 LinphoneCoreManager *m2,
+                 LinphoneCallParams *new_params);
 void end_call(LinphoneCoreManager *m1, LinphoneCoreManager *m2);
 void disable_all_audio_codecs_except_one(LinphoneCore *lc, const char *mime, int rate);
 void disable_all_video_codecs_except_one(LinphoneCore *lc, const char *mime);
