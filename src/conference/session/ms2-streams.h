@@ -121,7 +121,7 @@ protected:
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	std::shared_ptr<CallStats> mStats = nullptr;
-	int mOutputBandwidth; // Target output bandwidth for the stream.
+	int mOutputBandwidth = 0; // Target output bandwidth for the stream.
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the media to be muted, for example early-media states,
 	                        unrelated to linphone_core_enable_mic().*/
