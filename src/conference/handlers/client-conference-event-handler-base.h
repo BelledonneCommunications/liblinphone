@@ -56,7 +56,6 @@ public:
 protected:
 	virtual void handleDelayMessageSendTimerExpired(const Address address) = 0;
 	std::map<const Address, bool> mDelayTimersExpired;
-	std::map<const Address, BackgroundTask> mDelayMessageSendBgTasks;
 	std::map<const Address, belle_sip_source_t *> mDelayMessageSendTimers;
 };
 

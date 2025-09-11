@@ -42,6 +42,8 @@ public:
 	}
 	BackgroundTask(const std::string &name) : mName(name) {
 	}
+	BackgroundTask(const BackgroundTask &other) = delete;
+	BackgroundTask(BackgroundTask &&other) = delete;
 	virtual ~BackgroundTask() {
 		stop();
 	}

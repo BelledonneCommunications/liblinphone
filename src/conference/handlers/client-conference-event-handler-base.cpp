@@ -58,9 +58,6 @@ void ClientConferenceEventHandlerBase::startDelayMessageSendTimer(const Address 
 		           "timer to delay message sending by "
 		        << delayMessageSendS << "s to ensure that chat messages in chatrooms associated to " << address
 		        << "are sent to all participants";
-		std::string backgroundTaskName("Delay message sending for " + address.toString());
-		mDelayMessageSendBgTasks[address].setName(backgroundTaskName);
-		mDelayMessageSendBgTasks[address].start(getCore());
 		auto onDelayMessageSendTimerCleanup = [this, address]() -> bool {
 			handleDelayMessageSendTimerExpired(address);
 			return true;
@@ -80,12 +77,6 @@ void ClientConferenceEventHandlerBase::stopDelayMessageSendTimer(const Address a
 		}
 	} catch (std::out_of_range &) {
 		lInfo() << "Unable to find delay message sending timer associated to " << address;
-	}
-
-	try {
-		mDelayMessageSendBgTasks.at(address).stop();
-	} catch (std::out_of_range &) {
-		lInfo() << "Unable to find delay message sending background task associated to " << address;
 	}
 }
 
