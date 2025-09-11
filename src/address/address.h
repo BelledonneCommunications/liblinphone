@@ -143,8 +143,6 @@ public:
 	std::string asStringUriOnly() const;
 
 	bool clean();
-	bool equalWithoutGruu(const Address &other) const;
-	bool equalWithoutGruu(const std::shared_ptr<const Address> address) const;
 	bool weakEqual(const Address &other) const;
 	bool weakEqual(const std::shared_ptr<const Address> address) const;
 	bool uriEqual(const Address &other) const;
@@ -163,11 +161,6 @@ public:
 	struct WeakEqual {
 		bool operator()(const Address &address1, const Address &address2) const {
 			return address1.weakEqual(address2);
-		}
-	};
-	struct LessWithoutGruu {
-		bool operator()(const Address &address1, const Address &address2) const {
-			return address1.getUriWithoutGruu() < address2.getUriWithoutGruu();
 		}
 	};
 

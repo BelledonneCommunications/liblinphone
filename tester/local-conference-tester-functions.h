@@ -389,12 +389,6 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
                                  const LinphoneAddress *confAddr,
                                  bool_t enable_video);
 
-void send_text_message_and_check(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
-                                        LinphoneCoreManager *sender_mgr,
-                                        const std::string &msg_text,
-                                        LinphoneAddress *confAddr,
-                                        std::initializer_list<std::reference_wrapper<ClientConference>> members);
-
 void check_muted(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                  const LinphoneParticipantDevice *d,
                  std::list<LinphoneCoreManager *> mutedMgrs);

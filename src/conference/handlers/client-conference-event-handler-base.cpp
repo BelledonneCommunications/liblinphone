@@ -57,36 +57,35 @@ void ClientConferenceEventHandlerBase::startDelayMessageSendTimer(const Address 
 		lInfo() << "The core is configured not to wait for the NOTIFY full state before sending messages, hence start "
 		           "timer to delay message sending by "
 		        << delayMessageSendS << "s to ensure that chat messages in chatrooms associated to " << address
-		        << " are sent to all participants";
+		        << "are sent to all participants";
 		std::string backgroundTaskName("Delay message sending for " + address.toString());
-		BackgroundTask bgTask{backgroundTaskName};
-		bgTask.start(getCore());
-		mDelayMessageSendBgTasks.insert_or_assign(address, bgTask);
+		mDelayMessageSendBgTasks[address].setName(backgroundTaskName);
+		mDelayMessageSendBgTasks[address].start(getCore());
 		auto onDelayMessageSendTimerCleanup = [this, address]() -> bool {
 			handleDelayMessageSendTimerExpired(address);
 			return true;
 		};
 		std::string timerName("delay message sending timeout for " + address.toString());
-		auto timer = getCore()->createTimer(onDelayMessageSendTimerCleanup,
-		                                    static_cast<unsigned int>(delayMessageSendS) * 1000, timerName);
-		mDelayMessageSendTimers.insert_or_assign(address, timer);
+		mDelayMessageSendTimers[address] = getCore()->createTimer(
+		    onDelayMessageSendTimerCleanup, static_cast<unsigned int>(delayMessageSendS) * 1000, timerName);
 	}
 }
 
 void ClientConferenceEventHandlerBase::stopDelayMessageSendTimer(const Address address) {
-	auto timerIt = mDelayMessageSendTimers.find(address);
-	if (timerIt != mDelayMessageSendTimers.end()) {
-		auto &[address, timer] = *timerIt;
-		Core::destroyTimer(timer);
-		timer = nullptr;
-		mDelayMessageSendTimers.erase(timerIt);
+	try {
+		auto &timer = mDelayMessageSendTimers.at(address);
+		if (timer) {
+			Core::destroyTimer(timer);
+			timer = nullptr;
+		}
+	} catch (std::out_of_range &) {
+		lInfo() << "Unable to find delay message sending timer associated to " << address;
 	}
 
-	auto bgTaskIt = mDelayMessageSendBgTasks.find(address);
-	if (bgTaskIt != mDelayMessageSendBgTasks.end()) {
-		auto &[address, bgTask] = *bgTaskIt;
-		bgTask.stop();
-		mDelayMessageSendBgTasks.erase(bgTaskIt);
+	try {
+		mDelayMessageSendBgTasks.at(address).stop();
+	} catch (std::out_of_range &) {
+		lInfo() << "Unable to find delay message sending background task associated to " << address;
 	}
 }
 
@@ -99,7 +98,7 @@ bool ClientConferenceEventHandlerBase::delayTimerExpired(const Address address) 
 }
 
 void ClientConferenceEventHandlerBase::setDelayTimerExpired(bool expired, const Address address) {
-	mDelayTimersExpired.insert_or_assign(address, expired);
+	mDelayTimersExpired[address] = expired;
 }
 
 bool ClientConferenceEventHandlerBase::delayMessageSendTimerStarted(const Address address) const {
