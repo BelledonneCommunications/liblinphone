@@ -482,7 +482,6 @@ class Core;
 	bool_t apply_nat_settings;                                                                                         \
 	bool_t initial_subscribes_sent;                                                                                    \
 	bool_t bl_refresh;                                                                                                 \
-	bool_t preview_finished;                                                                                           \
 	bool_t auto_net_state_mon;                                                                                         \
 	net_state_t sip_network_state;                                                                                     \
 	net_state_t media_network_state;                                                                                   \

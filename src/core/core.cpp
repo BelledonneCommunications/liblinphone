@@ -44,6 +44,9 @@
 #include "json/json.h"
 
 #include "mediastreamer2/mscommon.h"
+#include "mediastreamer2/mseventqueue.h"
+#include "mediastreamer2/msjpegwriter.h"
+#include "mediastreamer2/msqrcodereader.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include <xercesc/util/PlatformUtils.hpp>
@@ -320,7 +323,7 @@ void Core::onStopAsyncBackgroundTaskStopped() {
 	d->bgTask.stop();
 }
 
-// Called by linphone_core_iterate() to check that aynchronous tasks are done.
+// Called by iterate() to check that aynchronous tasks are done.
 // It is used to give a chance to end asynchronous tasks during core stop
 // or to make sure that asynchronous tasks are finished during an aynchronous core stop.
 bool CorePrivate::isShutdownDone() {
@@ -883,6 +886,240 @@ void Core::enterForeground() {
 bool Core::isInBackground() const {
 	L_D();
 	return d->isInBackground;
+}
+
+#ifdef VIDEO_ENABLED
+void Core::videoStreamCallback(void *userdata,
+                               BCTBX_UNUSED(const MSFilter *f),
+                               const unsigned int id,
+                               const void *arg) {
+	switch (id) {
+		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			MSVideoSize size = *(MSVideoSize *)arg;
+			bctbx_message("Camera video preview size changed: %ix%i", size.width, size.height);
+			linphone_core_resize_video_preview(lc, size.width, size.height);
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+void Core::videoStreamPreviewDisplayCallback(void *userdata, const unsigned int id, const void *arg) {
+	switch (id) {
+		case MS_VIDEO_DISPLAY_ERROR_OCCURRED: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			int error_code = *(const int *)arg;
+			linphone_core_notify_preview_display_error_occurred(lc, error_code);
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+void Core::videoFilterCallback(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
+	switch (id) {
+		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
+			linphone_core_notify_snapshot_taken(lc, data->filePath);
+			linphone_core_enable_video_preview(lc, FALSE);
+			break;
+		}
+		case MS_QRCODE_READER_QRCODE_FOUND: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			if (linphone_core_cbs_get_qrcode_found(linphone_core_get_current_callbacks(lc)) != NULL) {
+				MSQrCodeReaderEventData *data = static_cast<MSQrCodeReaderEventData *>(arg);
+				char *result = ms_strdup((const char *)data->data);
+				linphone_core_notify_qrcode_found(lc, result);
+				ms_free(result);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+void Core::videoFilterCallbackNotTurningPreviewOff(void *userdata,
+                                                   BCTBX_UNUSED(MSFilter *f),
+                                                   unsigned int id,
+                                                   void *arg) {
+	switch (id) {
+		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
+			linphone_core_notify_snapshot_taken(lc, data->filePath);
+			break;
+		}
+		default:
+			break;
+	}
+}
+#endif
+
+void Core::toggleVideoPreview(bool enabled) {
+	if (enabled) {
+#ifdef VIDEO_ENABLED
+		LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+		if (lc->previewstream == NULL) {
+			const char *display_filter = linphone_core_get_video_display_filter(lc);
+			MSVideoSize vsize = {0};
+			const LinphoneVideoDefinition *vdef = linphone_core_get_preview_video_definition(lc);
+			if (!vdef || linphone_video_definition_is_undefined(vdef)) {
+				vdef = linphone_core_get_preferred_video_definition(lc);
+			}
+			if (linphone_core_qrcode_video_preview_enabled(lc)) {
+				vsize.width = 720;
+				vsize.height = 1280;
+			} else {
+				vsize.width = (int)linphone_video_definition_get_width(vdef);
+				vsize.height = (int)linphone_video_definition_get_height(vdef);
+			}
+
+			lc->previewstream = video_preview_new(lc->factory);
+			video_preview_set_size(lc->previewstream, vsize);
+			ms_message("[Core] Video preview is enabled, forwarding device rotation [%i] to stream",
+			           lc->device_rotation);
+			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
+			if (display_filter) {
+				video_preview_set_display_filter_name(lc->previewstream, display_filter);
+			}
+			video_preview_set_native_window_id(lc->previewstream, lc->preview_window_id);
+			video_preview_set_fps(lc->previewstream, linphone_core_get_preferred_framerate(lc));
+			if (linphone_core_qrcode_video_preview_enabled(lc)) {
+				video_preview_enable_qrcode(lc->previewstream, TRUE);
+				if (lc->qrcode_rect.w != 0 && lc->qrcode_rect.h != 0) {
+					video_preview_set_decode_rect(lc->previewstream, lc->qrcode_rect);
+				}
+			}
+			video_preview_start(lc->previewstream, lc->video_conf.device);
+			if (video_preview_qrcode_enabled(lc->previewstream)) {
+				ms_filter_add_notify_callback(lc->previewstream->qrcode, Core::videoFilterCallback, lc, FALSE);
+			}
+			video_stream_set_event_callback(lc->previewstream, Core::videoStreamCallback, lc);
+			video_stream_set_display_callback(lc->previewstream, Core::videoStreamPreviewDisplayCallback, lc);
+
+			// video_filter_callback will turn OFF video preview, we don't want that here
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter,
+			                              Core::videoFilterCallbackNotTurningPreviewOff, lc, FALSE);
+		}
+#endif
+	} else {
+#ifdef VIDEO_ENABLED
+		LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+		if (lc->previewstream != NULL) {
+			ms_filter_remove_notify_callback(lc->previewstream->source, Core::videoFilterCallback, lc);
+			video_preview_stop(lc->previewstream);
+			lc->previewstream = NULL;
+		}
+#endif
+	}
+}
+
+void Core::iterate() noexcept {
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+
+	CoreLogContextualizer logContextualizer(lc);
+
+	lc->in_iterate = TRUE;
+
+	uint64_t curtime_ms = ms_get_cur_time_ms(); /*monotonic time*/
+	time_t current_real_time = ms_time(NULL);
+	int64_t diff_time;
+	bool one_second_elapsed = false;
+
+	if (lc->prevtime_ms == 0) {
+		lc->prevtime_ms = curtime_ms;
+	}
+	if ((diff_time = (int64_t)(curtime_ms - lc->prevtime_ms)) >= 1000) {
+		one_second_elapsed = true;
+		if (diff_time > 3000) {
+			/*since monotonic time doesn't increment while machine is sleeping, we don't want to catchup too much*/
+			lc->prevtime_ms = curtime_ms;
+		} else {
+			lc->prevtime_ms += 1000;
+		}
+	}
+
+	if (lc->iterate_thread_id == 0) {
+		lc->iterate_thread_id = bctbx_thread_self();
+	}
+
+	if (lc->ecc != NULL) {
+		LinphoneEcCalibratorStatus ecs = ec_calibrator_get_status(lc->ecc);
+		if (ecs != LinphoneEcCalibratorInProgress) {
+			if (lc->ecc->cb) lc->ecc->cb(lc, ecs, lc->ecc->delay, lc->ecc->cb_data);
+			if (ecs == LinphoneEcCalibratorDone) {
+				int len = linphone_config_get_int(lc->config, "sound", "ec_tail_len", 0);
+				int margin = len / 2;
+
+				linphone_config_set_int(lc->config, "sound", "ec_delay", MAX(lc->ecc->delay - margin, 0));
+			} else if (ecs == LinphoneEcCalibratorFailed) {
+				linphone_config_set_int(lc->config, "sound", "ec_delay", -1); /*use default value from soundcard*/
+			} else if (ecs == LinphoneEcCalibratorDoneNoEcho) {
+				linphone_core_enable_echo_cancellation(lc, FALSE);
+			}
+			ec_calibrator_destroy(lc->ecc);
+			lc->ecc = NULL;
+		}
+	}
+
+	if (lc->sal) lc->sal->iterate();
+	if (lc->msevq) ms_event_queue_pump(lc->msevq);
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring) {
+		lc->in_iterate = FALSE;
+		// Avoid registration before getting remote configuration results
+		return;
+	}
+
+	/* We have to iterate for each call */
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->iterateCalls(current_real_time, one_second_elapsed);
+
+	if (linphone_core_video_preview_enabled(lc)) {
+		if (lc->previewstream == NULL && !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls()) toggleVideoPreview(TRUE);
+#ifdef VIDEO_ENABLED
+		if (lc->previewstream) video_stream_iterate(lc->previewstream);
+#endif
+	} else {
+		if (lc->previewstream != NULL) toggleVideoPreview(FALSE);
+	}
+
+	if (lc->sip_network_state.global_state && lc->netup_time != 0 && (current_real_time - lc->netup_time) >= 2) {
+		/*not do that immediately, take your time.*/
+		linphone_core_send_initial_subscribes(lc);
+	}
+
+	if (one_second_elapsed) {
+		bctbx_list_t *elem = NULL;
+		if (linphone_config_needs_commit(lc->config)) {
+			linphone_core_config_sync(lc);
+		}
+		for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+			auto *list = static_cast<LinphoneFriendList *>(elem->data);
+			std::shared_ptr<FriendList> friendList = FriendList::getSharedFromThis(list);
+			if (!friendList->getDirtyFriendsToUpdate().empty() &&
+			    (friendList->getType() == LinphoneFriendListTypeCardDAV))
+				friendList->updateDirtyFriends();
+		}
+	}
+	/*
+	    if (liblinphone_serialize_logs == TRUE) {
+	        ortp_logv_flush();
+	    }
+	 */
+
+	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
+	Then iterate() needs to be called until synchronous tasks are done
+	Then the stop is finished and the status is changed to LinphoneGlobalOff */
+	if (lc->state == LinphoneGlobalShutdown) {
+		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->isShutdownDone()) {
+			_linphone_core_stop_async_end(lc);
+		}
+	}
+	lc->in_iterate = FALSE;
 }
 
 // ---------------------------------------------------------------------------
@@ -1552,7 +1789,7 @@ void Core::healNetworkConnections() {
 #ifdef __ANDROID__
 	if (linphone_core_wifi_only_enabled(lc)) {
 		// If WiFi only policy enabled, check that we are on a WiFi network, otherwise don't handle the push
-		bool_t isWifiOnlyCompliant =
+		bool isWifiOnlyCompliant =
 		    static_cast<PlatformHelpers *>(lc->platform_helper)->isActiveNetworkWifiOnlyCompliant();
 		if (!isWifiOnlyCompliant) {
 			lError() << "Android Platform Helpers says current network isn't compliant with WiFi only policy, aborting "
@@ -1577,9 +1814,9 @@ void Core::healNetworkConnections() {
 	 * SIP server must be taken immediately, which, thanks to belle-sip transactions automatically
 	 * starts a background task that prevents iOS and Android systems to suspend the process.
 	 */
-	linphone_core_iterate(lc); // First iterate to handle disconnection errors on sockets
-	linphone_core_iterate(lc); // Second iterate required by belle-sip to notify about disconnections
-	linphone_core_iterate(lc); // Third iterate required by refresher to restart a connection/registration if needed.
+	iterate(); // First iterate to handle disconnection errors on sockets
+	iterate(); // Second iterate required by belle-sip to notify about disconnections
+	iterate(); // Third iterate required by refresher to restart a connection/registration if needed.
 
 	/*
 	 * If if any of the connections is already pending a register retry, the following code will request an immediate
@@ -1610,9 +1847,8 @@ void Core::healNetworkConnections() {
 	if (sendKeepAlive) {
 		lInfo() << "Sending keep-alive to ensure sockets aren't broken";
 		getCCore()->sal->sendKeepAlive();
-		linphone_core_iterate(lc); // Let the socket error be caught.
-		linphone_core_iterate(
-		    lc); // Let the socket error be notified to the refreshers, to restart a connection if needed.
+		iterate(); // Let the socket error be caught.
+		iterate(); // Let the socket error be notified to the refreshers, to restart a connection if needed.
 	}
 	/*
 	 * Despite all the things done so far, there can still be the case where some connections are "ready" but in fact
@@ -1627,7 +1863,7 @@ void Core::healNetworkConnections() {
 		 */
 		lc->sal->cleanUnreliableConnections();
 	}
-	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers.
+	iterate(); // Let the disconnections be notified to the refreshers.
 }
 
 int Core::getUnreadChatMessageCount() const {
@@ -2406,9 +2642,9 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 	return num;
 }
 
-bool_t Core::dlopenPlugin(BCTBX_UNUSED(const std::string &plugin_path),
-                          BCTBX_UNUSED(const std::string plugin_file_name)) {
-	bool_t plugin_loaded = FALSE;
+bool Core::dlopenPlugin(BCTBX_UNUSED(const std::string &plugin_path),
+                        BCTBX_UNUSED(const std::string plugin_file_name)) {
+	bool plugin_loaded = FALSE;
 #if defined(HAVE_DLOPEN)
 	void *handle = NULL;
 	void *initroutine = NULL;

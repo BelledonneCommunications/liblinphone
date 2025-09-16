@@ -188,8 +188,6 @@ static LinphoneStatus
 _linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports *tr_config, bool_t applyIt);
 bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const LinphoneCallParams *params);
 
-static void toggle_video_preview(LinphoneCore *lc, bool_t val);
-
 /* relative path where is stored local ring*/
 #define LOCAL_RING_WAV "oldphone-mono.wav"
 #define LOCAL_RING_MKV "notes_of_the_optimistic.mkv"
@@ -818,11 +816,6 @@ void linphone_core_cbs_set_snapshot_taken(LinphoneCoreCbs *cbs, LinphoneCoreCbsS
 void lc_callback_obj_init(LCCallbackObj *obj, LinphoneCoreCbFunc func, void *ud) {
 	obj->_func = func;
 	obj->_user_data = ud;
-}
-
-int lc_callback_obj_invoke(LCCallbackObj *obj, LinphoneCore *lc) {
-	if (obj->_func != NULL) obj->_func(lc, obj->_user_data);
-	return 0;
 }
 
 int linphone_core_get_current_call_duration(const LinphoneCore *lc) {
@@ -4512,179 +4505,8 @@ static void notify_network_reachable_change(LinphoneCore *lc) {
 	linphone_core_notify_network_reachable(lc, lc->sip_network_state.global_state);
 }
 
-static void assign_buddy_info(LinphoneCore *lc, BuddyInfo *info) {
-	LinphoneFriend *lf = linphone_core_get_friend_by_address(lc, info->sip_uri);
-	if (lf != NULL) {
-		linphone_friend_set_info(lf, info);
-		ms_message("%s has a BuddyInfo assigned with image %p", info->sip_uri, info->image_data);
-		linphone_core_notify_buddy_info_updated(lc, lf);
-	} else {
-		ms_warning("Could not any friend with uri %s", info->sip_uri);
-	}
-}
-
-static void analyze_buddy_lookup_results(LinphoneCore *lc, LinphoneProxyConfig *cfg) {
-	bctbx_list_t *elem;
-	SipSetupContext *ctx = linphone_proxy_config_get_sip_setup_context(cfg);
-	for (elem = lc->bl_reqs; elem != NULL; elem = bctbx_list_next(elem)) {
-		BuddyLookupRequest *req = (BuddyLookupRequest *)elem->data;
-		if (req->status == BuddyLookupDone || req->status == BuddyLookupFailure) {
-			if (req->results != NULL) {
-				BuddyInfo *i = (BuddyInfo *)req->results->data;
-				bctbx_list_free(req->results);
-				req->results = NULL;
-				assign_buddy_info(lc, i);
-			}
-			sip_setup_context_buddy_lookup_free(ctx, req);
-			elem->data = NULL;
-		}
-	}
-	/*purge completed requests */
-	while ((elem = bctbx_list_find(lc->bl_reqs, NULL)) != NULL) {
-		lc->bl_reqs = bctbx_list_erase_link(lc->bl_reqs, elem);
-	}
-}
-
-static void linphone_core_grab_buddy_infos(LinphoneCore *lc, LinphoneProxyConfig *cfg) {
-	const bctbx_list_t *elem;
-	SipSetupContext *ctx = linphone_proxy_config_get_sip_setup_context(cfg);
-	for (elem = linphone_core_get_friend_list(lc); elem != NULL; elem = elem->next) {
-		LinphoneFriend *lf = (LinphoneFriend *)elem->data;
-		if (linphone_friend_get_info(lf) == NULL) {
-			if (linphone_core_lookup_known_proxy(lc, linphone_friend_get_uri(lf)) == cfg) {
-				if (linphone_address_get_username(linphone_friend_get_uri(lf)) != NULL) {
-					BuddyLookupRequest *req;
-					char *tmp = linphone_address_as_string_uri_only(linphone_friend_get_uri(lf));
-					req = sip_setup_context_create_buddy_lookup_request(ctx);
-					buddy_lookup_request_set_key(req, tmp);
-					buddy_lookup_request_set_max_results(req, 1);
-					sip_setup_context_buddy_lookup_submit(ctx, req);
-					lc->bl_reqs = bctbx_list_append(lc->bl_reqs, req);
-					ms_free(tmp);
-				}
-			}
-		}
-	}
-}
-
-static void linphone_core_do_plugin_tasks(LinphoneCore *lc) {
-	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-	if (cfg) {
-		if (lc->bl_refresh) {
-			SipSetupContext *ctx = linphone_proxy_config_get_sip_setup_context(cfg);
-			if (ctx && (sip_setup_context_get_capabilities(ctx) & SIP_SETUP_CAP_BUDDY_LOOKUP)) {
-				linphone_core_grab_buddy_infos(lc, cfg);
-				lc->bl_refresh = FALSE;
-			}
-		}
-		if (lc->bl_reqs) analyze_buddy_lookup_results(lc, cfg);
-	}
-}
-
 void linphone_core_iterate(LinphoneCore *lc) {
-	CoreLogContextualizer logContextualizer(lc);
-
-	lc->in_iterate = TRUE;
-
-	uint64_t curtime_ms = ms_get_cur_time_ms(); /*monotonic time*/
-	time_t current_real_time = ms_time(NULL);
-	int64_t diff_time;
-	bool one_second_elapsed = false;
-
-	if (lc->prevtime_ms == 0) {
-		lc->prevtime_ms = curtime_ms;
-	}
-	if ((diff_time = (int64_t)(curtime_ms - lc->prevtime_ms)) >= 1000) {
-		one_second_elapsed = true;
-		if (diff_time > 3000) {
-			/*since monotonic time doesn't increment while machine is sleeping, we don't want to catchup too much*/
-			lc->prevtime_ms = curtime_ms;
-		} else {
-			lc->prevtime_ms += 1000;
-		}
-	}
-
-	if (lc->iterate_thread_id == 0) {
-		lc->iterate_thread_id = bctbx_thread_self();
-	}
-
-	if (lc->ecc != NULL) {
-		LinphoneEcCalibratorStatus ecs = ec_calibrator_get_status(lc->ecc);
-		if (ecs != LinphoneEcCalibratorInProgress) {
-			if (lc->ecc->cb) lc->ecc->cb(lc, ecs, lc->ecc->delay, lc->ecc->cb_data);
-			if (ecs == LinphoneEcCalibratorDone) {
-				int len = linphone_config_get_int(lc->config, "sound", "ec_tail_len", 0);
-				int margin = len / 2;
-
-				linphone_config_set_int(lc->config, "sound", "ec_delay", MAX(lc->ecc->delay - margin, 0));
-			} else if (ecs == LinphoneEcCalibratorFailed) {
-				linphone_config_set_int(lc->config, "sound", "ec_delay", -1); /*use default value from soundcard*/
-			} else if (ecs == LinphoneEcCalibratorDoneNoEcho) {
-				linphone_core_enable_echo_cancellation(lc, FALSE);
-			}
-			ec_calibrator_destroy(lc->ecc);
-			lc->ecc = NULL;
-		}
-	}
-
-	if (lc->preview_finished) {
-		lc->preview_finished = 0;
-		linphone_ringtoneplayer_stop(lc->ringtoneplayer);
-		lc_callback_obj_invoke(&lc->preview_finished_cb, lc);
-	}
-
-	if (lc->sal) lc->sal->iterate();
-	if (lc->msevq) ms_event_queue_pump(lc->msevq);
-	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring) {
-		// Avoid registration before getting remote configuration results
-		lc->in_iterate = FALSE;
-		return;
-	}
-
-	/* We have to iterate for each call */
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->iterateCalls(current_real_time, one_second_elapsed);
-
-	if (linphone_core_video_preview_enabled(lc)) {
-		if (lc->previewstream == NULL && !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls()) toggle_video_preview(lc, TRUE);
-#ifdef VIDEO_ENABLED
-		if (lc->previewstream) video_stream_iterate(lc->previewstream);
-#endif
-	} else {
-		if (lc->previewstream != NULL) toggle_video_preview(lc, FALSE);
-	}
-	linphone_core_do_plugin_tasks(lc);
-
-	if (lc->sip_network_state.global_state && lc->netup_time != 0 && (current_real_time - lc->netup_time) >= 2) {
-		/*not do that immediately, take your time.*/
-		linphone_core_send_initial_subscribes(lc);
-	}
-
-	if (one_second_elapsed) {
-		bctbx_list_t *elem = NULL;
-		if (linphone_config_needs_commit(lc->config)) {
-			linphone_core_config_sync(lc);
-		}
-		for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
-			LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-			std::shared_ptr<FriendList> friendList = FriendList::getSharedFromThis(list);
-			if (!friendList->getDirtyFriendsToUpdate().empty() &&
-			    (friendList->getType() == LinphoneFriendListTypeCardDAV))
-				friendList->updateDirtyFriends();
-		}
-	}
-
-	if (liblinphone_serialize_logs == TRUE) {
-		ortp_logv_flush();
-	}
-	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
-	Then linphone_core_iterate() needs to be called until synchronous tasks are done
-	Then the stop is finished and the status is changed to LinphoneGlobalOff */
-	if (lc->state == LinphoneGlobalShutdown) {
-		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->isShutdownDone()) {
-			_linphone_core_stop_async_end(lc);
-		}
-	}
-	lc->in_iterate = FALSE;
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->iterate();
 }
 
 LinphoneAddress *linphone_core_interpret_url(LinphoneCore *lc, const char *url) {
@@ -6188,10 +6010,17 @@ void linphone_core_set_ssl_config(LinphoneCore *lc, void *ssl_config) {
 	                                       ssl_config);
 }
 
+static void lc_callback_obj_invoke(LCCallbackObj *obj, LinphoneCore *lc) {
+	if (obj->_func != NULL) obj->_func(lc, obj->_user_data);
+}
+
 static void
 notify_end_of_ringtone(BCTBX_UNUSED(LinphoneRingtonePlayer *rp), void *user_data, BCTBX_UNUSED(int status)) {
-	LinphoneCore *lc = (LinphoneCore *)user_data;
-	lc->preview_finished = 1;
+	auto *lc = (LinphoneCore *)user_data;
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->doLater([lc]() {
+		linphone_ringtoneplayer_stop(lc->ringtoneplayer);
+		lc_callback_obj_invoke(&lc->preview_finished_cb, lc);
+	});
 }
 
 LinphoneStatus
@@ -6203,11 +6032,10 @@ linphone_core_preview_ring(LinphoneCore *lc, const char *ring, LinphoneCoreCbFun
 		return -1;
 	}
 	lc_callback_obj_init(&lc->preview_finished_cb, end_of_ringtone, userdata);
-	lc->preview_finished = 0;
 	err = linphone_ringtoneplayer_start_with_cb(lc->factory, lc->ringtoneplayer, ringcard, ring, -1,
 	                                            notify_end_of_ringtone, (void *)lc);
 	if (err) {
-		lc->preview_finished = 1;
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->doLater([lc]() { lc_callback_obj_invoke(&lc->preview_finished_cb, lc); });
 	}
 	return err;
 }
@@ -6593,63 +6421,6 @@ void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height)
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-#ifdef VIDEO_ENABLED
-static void
-video_stream_callback(void *userdata, BCTBX_UNUSED(const MSFilter *f), const unsigned int id, const void *arg) {
-	switch (id) {
-		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
-			LinphoneCore *lc = (LinphoneCore *)userdata;
-			MSVideoSize size = *(MSVideoSize *)arg;
-			bctbx_message("Camera video preview size changed: %ix%i", size.width, size.height);
-			linphone_core_resize_video_preview(lc, size.width, size.height);
-			break;
-		}
-	}
-}
-static void video_stream_preview_display_callback(void *userdata, const unsigned int id, const void *arg) {
-	switch (id) {
-		case MS_VIDEO_DISPLAY_ERROR_OCCURRED: {
-			LinphoneCore *lc = (LinphoneCore *)userdata;
-			int error_code = *(const int *)arg;
-			linphone_core_notify_preview_display_error_occurred(lc, error_code);
-			break;
-		}
-	}
-}
-static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
-	switch (id) {
-		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
-			LinphoneCore *lc = (LinphoneCore *)userdata;
-			MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
-			linphone_core_notify_snapshot_taken(lc, data->filePath);
-			linphone_core_enable_video_preview(lc, FALSE);
-			break;
-		}
-		case MS_QRCODE_READER_QRCODE_FOUND: {
-			LinphoneCore *lc = (LinphoneCore *)userdata;
-			if (linphone_core_cbs_get_qrcode_found(linphone_core_get_current_callbacks(lc)) != NULL) {
-				MSQrCodeReaderEventData *data = static_cast<MSQrCodeReaderEventData *>(arg);
-				char *result = ms_strdup((const char *)data->data);
-				linphone_core_notify_qrcode_found(lc, result);
-				ms_free(result);
-			}
-			break;
-		}
-	}
-}
-static void
-video_filter_callback_not_turning_preview_off(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
-	switch (id) {
-		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
-			LinphoneCore *lc = (LinphoneCore *)userdata;
-			MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
-			linphone_core_notify_snapshot_taken(lc, data->filePath);
-			break;
-		}
-	}
-}
-#endif
-
 LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char *file) {
 	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -6673,7 +6444,7 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 			lc->previewstream->ms.factory = lc->factory;
 			linphone_core_enable_video_preview(lc, TRUE);
 
-			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, video_filter_callback, lc, FALSE);
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, Core::videoFilterCallback, lc, FALSE);
 		}
 
 		if (lc->previewstream) {
@@ -6685,71 +6456,9 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 	return -1;
 }
 
-#ifndef _MSC_VER
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif // _MSC_VER
-static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
-#ifdef VIDEO_ENABLED
-	if (val) {
-		if (lc->previewstream == NULL) {
-			const char *display_filter = linphone_core_get_video_display_filter(lc);
-			MSVideoSize vsize = {0};
-			const LinphoneVideoDefinition *vdef = linphone_core_get_preview_video_definition(lc);
-			if (!vdef || linphone_video_definition_is_undefined(vdef)) {
-				vdef = linphone_core_get_preferred_video_definition(lc);
-			}
-			if (linphone_core_qrcode_video_preview_enabled(lc)) {
-				vsize.width = 720;
-				vsize.height = 1280;
-			} else {
-				vsize.width = (int)linphone_video_definition_get_width(vdef);
-				vsize.height = (int)linphone_video_definition_get_height(vdef);
-			}
-
-			lc->previewstream = video_preview_new(lc->factory);
-			video_preview_set_size(lc->previewstream, vsize);
-			ms_message("[Core] Video preview is enabled, forwarding device rotation [%i] to stream",
-			           lc->device_rotation);
-			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
-			if (display_filter) {
-				video_preview_set_display_filter_name(lc->previewstream, display_filter);
-			}
-			video_preview_set_native_window_id(lc->previewstream, lc->preview_window_id);
-			video_preview_set_fps(lc->previewstream, linphone_core_get_preferred_framerate(lc));
-			if (linphone_core_qrcode_video_preview_enabled(lc)) {
-				video_preview_enable_qrcode(lc->previewstream, TRUE);
-				if (lc->qrcode_rect.w != 0 && lc->qrcode_rect.h != 0) {
-					video_preview_set_decode_rect(lc->previewstream, lc->qrcode_rect);
-				}
-			}
-			video_preview_start(lc->previewstream, lc->video_conf.device);
-			if (video_preview_qrcode_enabled(lc->previewstream)) {
-				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, FALSE);
-			}
-			video_stream_set_event_callback(lc->previewstream, video_stream_callback, lc);
-			video_stream_set_display_callback(lc->previewstream, video_stream_preview_display_callback, lc);
-
-			// video_filter_callback will turn OFF video preview, we don't want that here
-			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter,
-			                              video_filter_callback_not_turning_preview_off, lc, FALSE);
-		}
-	} else {
-		if (lc->previewstream != NULL) {
-			ms_filter_remove_notify_callback(lc->previewstream->source, video_filter_callback, lc);
-			video_preview_stop(lc->previewstream);
-			lc->previewstream = NULL;
-		}
-	}
-#endif
-}
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
-
 static void relaunch_video_preview(LinphoneCore *lc) {
 	if (lc->previewstream) {
-		toggle_video_preview(lc, FALSE);
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->toggleVideoPreview(FALSE);
 	}
 	/* And nothing else, because linphone_core_iterate() will restart the preview stream if necessary.
 	 * This code will need to be revisited when linphone_core_iterate() will no longer be required*/
@@ -7192,7 +6901,7 @@ void *linphone_core_create_native_preview_window_id_2(LinphoneCore *lc, void *co
 	}
 	if (lc->previewstream == NULL && linphone_core_video_preview_enabled(lc) &&
 	    !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls())
-		toggle_video_preview(lc, TRUE);
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->toggleVideoPreview(TRUE);
 	if (lc->previewstream) return video_preview_create_native_window_id(lc->previewstream, context);
 #endif
 	return 0;
@@ -7221,7 +6930,7 @@ void *linphone_core_get_native_preview_window_id(LinphoneCore *lc) {
 		}
 		if (lc->previewstream == NULL && linphone_core_video_preview_enabled(lc) &&
 		    !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls())
-			toggle_video_preview(lc, TRUE);
+			L_GET_CPP_PTR_FROM_C_OBJECT(lc)->toggleVideoPreview(TRUE);
 		if (lc->previewstream) return video_preview_get_native_window_id(lc->previewstream);
 #endif
 	}
