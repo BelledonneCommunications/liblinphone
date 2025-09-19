@@ -37,70 +37,35 @@ ClientConferenceEventHandlerBase::ClientConferenceEventHandlerBase(const std::sh
 ClientConferenceEventHandlerBase::~ClientConferenceEventHandlerBase() {
 	try {
 		getCore()->getPrivate()->unregisterListener(this);
+		stopWaitNotifyTimer();
 	} catch (const std::bad_weak_ptr &) {
 		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
 
 	unsubscribe();
-
-	for (const auto &[address, timer] : mDelayMessageSendTimers) {
-		stopDelayMessageSendTimer(address);
-	}
-}
-
-void ClientConferenceEventHandlerBase::startDelayMessageSendTimer(const Address address) {
-	stopDelayMessageSendTimer(address);
-	bool sendMessagesAfterNotify = !!linphone_core_send_message_after_notify_enabled(getCore()->getCCore());
-	if (!sendMessagesAfterNotify) {
-		setDelayTimerExpired(false, address);
-		int delayMessageSendS = linphone_core_get_message_sending_delay(getCore()->getCCore());
-		lInfo() << "The core is configured not to wait for the NOTIFY full state before sending messages, hence start "
-		           "timer to delay message sending by "
-		        << delayMessageSendS << "s to ensure that chat messages in chatrooms associated to " << address
-		        << "are sent to all participants";
-		auto onDelayMessageSendTimerCleanup = [this, address]() -> bool {
-			handleDelayMessageSendTimerExpired(address);
-			return true;
-		};
-		std::string timerName("delay message sending timeout for " + address.toString());
-		mDelayMessageSendTimers[address] = getCore()->createTimer(
-		    onDelayMessageSendTimerCleanup, static_cast<unsigned int>(delayMessageSendS) * 1000, timerName);
-	}
-}
-
-void ClientConferenceEventHandlerBase::stopDelayMessageSendTimer(const Address address) {
-	try {
-		auto &timer = mDelayMessageSendTimers.at(address);
-		if (timer) {
-			Core::destroyTimer(timer);
-			timer = nullptr;
-		}
-	} catch (std::out_of_range &) {
-		lInfo() << "Unable to find delay message sending timer associated to " << address;
-	}
-}
-
-bool ClientConferenceEventHandlerBase::delayTimerExpired(const Address address) const {
-	try {
-		return mDelayTimersExpired.at(address);
-	} catch (std::out_of_range &) {
-		return false;
-	}
-}
-
-void ClientConferenceEventHandlerBase::setDelayTimerExpired(bool expired, const Address address) {
-	mDelayTimersExpired[address] = expired;
-}
-
-bool ClientConferenceEventHandlerBase::delayMessageSendTimerStarted(const Address address) const {
-	try {
-		return (mDelayMessageSendTimers.at(address) != nullptr);
-	} catch (std::out_of_range &) {
-		return false;
-	}
 }
 
 void ClientConferenceEventHandlerBase::unsubscribe() {
+}
+
+void ClientConferenceEventHandlerBase::startWaitNotifyTimer() {
+	if (mWaitNotifyTimer) return;
+	unsigned int timeout = (unsigned)linphone_core_get_message_sending_delay(getCore()->getCCore());
+	if (timeout == 0) return;
+	mWaitNotifyTimer = getCore()->createTimer(
+	    [this]() -> bool {
+		    stopWaitNotifyTimer();
+		    onNotifyWaitExpired();
+		    return false;
+	    },
+	    timeout * 1000, "Delay for waiting for NOTIFY");
+}
+
+void ClientConferenceEventHandlerBase::stopWaitNotifyTimer() {
+	if (mWaitNotifyTimer) {
+		getCore()->destroyTimer(mWaitNotifyTimer);
+		mWaitNotifyTimer = nullptr;
+	}
 }
 
 LINPHONE_END_NAMESPACE

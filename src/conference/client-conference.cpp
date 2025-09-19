@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -1972,20 +1972,6 @@ std::shared_ptr<ClientConferenceEventHandler> ClientConference::getEventHandler(
 #endif // HAVE_ADVANCED_IM
 }
 
-bool ClientConference::delayTimerExpired() const {
-	bool expired = false;
-#ifdef HAVE_ADVANCED_IM
-	auto handler = getEventHandler();
-	if (handler) {
-		const auto &conferenceAddress = getConferenceAddress();
-		if (conferenceAddress) {
-			expired = handler->delayTimerExpired(*conferenceAddress);
-		}
-	}
-#endif // HAVE_ADVANCED_IM
-	return expired;
-}
-
 bool ClientConference::isSubscriptionUnderWay() const {
 	bool underWay = false;
 #ifdef HAVE_ADVANCED_IM
@@ -1997,6 +1983,10 @@ bool ClientConference::isSubscriptionUnderWay() const {
 	return underWay;
 }
 
+void ClientConference::onSubscriptionUnderwayDone() {
+	sendPendingMessages();
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -2005,11 +1995,7 @@ void ClientConference::multipartNotifyReceived(const std::shared_ptr<Event> &not
 #ifdef HAVE_ADVANCED_IM
 	auto handler = getEventHandler();
 	if (handler) {
-		const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
 		handler->multipartNotifyReceived(notifyLev, content);
-		if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
-			sendPendingMessages();
-		}
 		return;
 	}
 #endif // HAVE_ADVANCED_IM
@@ -2036,11 +2022,7 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 	} else {
 		auto handler = getEventHandler();
 		if (handler) {
-			const auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
 			handler->notifyReceived(notifyLev, content);
-			if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
-				sendPendingMessages();
-			}
 			return;
 		}
 	}
@@ -2053,14 +2035,14 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-#ifdef HAVE_ADVANCED_IM
 void ClientConference::sendPendingMessages() {
+#ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
 		chatRoom->sendPendingMessages();
 	}
-}
 #endif // HAVE_ADVANCED_IM
+}
 
 int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
                                       const LinphoneCallParams *params) {

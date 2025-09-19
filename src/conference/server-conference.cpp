@@ -1407,7 +1407,7 @@ int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 			linphone_call_params_disable_ringing(new_params, supportsMedia());
 			linphone_call_params_enable_tone_indications(new_params, !supportsMedia());
 			linphone_call_params_set_in_conference(new_params, TRUE);
-			linphone_call_params_set_start_time(new_params, mConfParams->getStartTime());
+
 			const auto &account = getAccount();
 			if (account) {
 				linphone_call_params_set_account(new_params, account->toC());

@@ -358,16 +358,14 @@ bool ClientChatRoom::canSendMessages() const {
 	// potentially send it to an incomplete list of devices
 	const auto &chatBackend = chatRoomParams->getChatParams()->getBackend();
 	bool subscriptionUnderway = false;
-	bool delayTimerExpired = false;
 	LinphoneGlobalState coreGlobalState = linphone_core_get_global_state(getCore()->getCCore());
 	bool coreShuttingDown = ((coreGlobalState == LinphoneGlobalOff) || (coreGlobalState == LinphoneGlobalShutdown));
 	const auto conference = getConference();
 	if (conference) {
 		subscriptionUnderway = conference->isSubscriptionUnderWay();
-		delayTimerExpired = conference->delayTimerExpired();
 	}
 	bool sendMessagesAfterNotify = !!linphone_core_send_message_after_notify_enabled(core->getCCore());
-	bool handlerAllowsMessageSending = sendMessagesAfterNotify ? !subscriptionUnderway : delayTimerExpired;
+	bool handlerAllowsMessageSending = sendMessagesAfterNotify ? !subscriptionUnderway : true;
 	// Chat message can be sent only after the subscription has been finalized and the first NOTIFY received
 	bool canMessageBeSent =
 	    (handlerAllowsMessageSending && !coreShuttingDown && (chatBackend == ChatParams::Backend::FlexisipChat) &&
@@ -379,9 +377,6 @@ bool ClientChatRoom::canSendMessages() const {
 		if (sendMessagesAfterNotify) {
 			lInfo() << " - subscription is underway (actually subscription is"
 			        << std::string(subscriptionUnderway ? " " : " not ") << "underway)";
-		} else {
-			lInfo() << " - message delay timer hasn't expired (actually the time has"
-			        << std::string(delayTimerExpired ? " " : " not ") << "expired)";
 		}
 	}
 	return canMessageBeSent;

@@ -272,7 +272,6 @@ public:
 	 */
 	virtual void onStateChanged(BCTBX_UNUSED(ConferenceInterface::State newState)) {
 	}
-
 	/*
 	 * This fonction is called each time a full state notification is receied from the focus.
 	 */

@@ -1980,10 +1980,6 @@ bool Conference::isConferenceStarted() const {
 	return conferenceStarted;
 }
 
-bool Conference::delayTimerExpired() const {
-	return false;
-}
-
 bool Conference::isSubscriptionUnderWay() const {
 	return false;
 }

@@ -69,10 +69,9 @@ public:
 
 	void setInitialSubscriptionUnderWayFlag(bool on);
 	bool getInitialSubscriptionUnderWayFlag() const;
+	void notifySubscriptionUnderwayDone();
 
 	void setManagedByListEventhandler(bool managed);
-
-	virtual void handleDelayMessageSendTimerExpired(const Address address) override;
 
 	static void subscribeStateChangedCb(LinphoneEvent *lev, LinphoneSubscriptionState state);
 
@@ -101,14 +100,13 @@ protected:
 
 private:
 	void unsubscribePrivate();
-	void updateInitialSubcriptionUnderWay(std::shared_ptr<Event> notifyLev);
 	time_t dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const;
 	void fillParticipantAttributes(std::shared_ptr<Participant> &participant,
 	                               xsd::cxx::tree::optional<LinphonePrivate::Xsd::ConferenceInfo::UserRolesType> &roles,
 	                               Xsd::ConferenceInfo::StateType state,
 	                               bool isFullState,
 	                               bool notify) const;
-
+	virtual void onNotifyWaitExpired() override;
 	L_DISABLE_COPY(ClientConferenceEventHandler);
 };
 

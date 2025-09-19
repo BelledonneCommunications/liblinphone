@@ -42,21 +42,33 @@ public:
 	ClientConferenceEventHandlerBase(const std::shared_ptr<Core> &core);
 	virtual ~ClientConferenceEventHandlerBase();
 
-	void startDelayMessageSendTimer(const Address address);
-	void stopDelayMessageSendTimer(const Address address);
-	bool delayMessageSendTimerStarted(const Address address) const;
-	void setDelayTimerExpired(bool expired, const Address address);
-	bool delayTimerExpired(const Address address) const;
-
 	// virtual void publish() = 0;
 	virtual bool subscribe() = 0;
 	virtual void unsubscribe();
 	virtual void invalidateSubscription() = 0;
 
-protected:
-	virtual void handleDelayMessageSendTimerExpired(const Address address) = 0;
-	std::map<const Address, bool> mDelayTimersExpired;
-	std::map<const Address, belle_sip_source_t *> mDelayMessageSendTimers;
+	/*
+	 * HACK
+	 * The below three methods and mWaitNotifyTimer are there to workaround a signaling issue
+	 * we have with Flexisip conference server <= 2.4, that may not send a NOTIFY for
+	 * conference event SUBSCRIBE if there is nothing to notify.
+	 * They should not do this: the NOTIFY is required in any case, at least to set the Subscription-state to active.
+	 *
+	 * The receiving of the NOTIFY is important, because it carries information about users and devices
+	 * which are necessary to forge LIME parts for chatroom's outgoing messages.
+	 * In order to avoid sending incomplete messages (messages for which not all recipients have their lime part),
+	 * we always wait for the initial NOTIFY.
+	 * Because of this Flexisip <= 2.4 bug, we may have cases where the NOTIFY will never happen.
+	 * The purpose of the timer is to workaround this, by simulating the receival of the
+	 * expected empty NOTIFY.
+	 * This code will need to be removed when flexisip 2.5 is in production everywhere.
+	 */
+	void startWaitNotifyTimer();
+	void stopWaitNotifyTimer();
+	virtual void onNotifyWaitExpired() = 0;
+
+private:
+	belle_sip_source_t *mWaitNotifyTimer = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

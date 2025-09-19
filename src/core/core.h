@@ -25,7 +25,7 @@
 #include <list>
 #include <unordered_map>
 
-#include <mediastreamer2/mssndcard.h>
+#include "mediastreamer2/mssndcard.h"
 
 #include "account/account.h"
 #include "c-wrapper/internal/c-sal.h"
