@@ -1980,7 +1980,8 @@ static void multiple_early_media() {
 	}
 
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
-	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, FALSE);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
 	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
@@ -2021,32 +2022,41 @@ static void multiple_early_media() {
 	BC_ASSERT_PTR_NOT_NULL(marie2_call);
 
 	if (pauline_call && marie1_call && marie2_call) {
+		linphone_call_ref(marie1_call);
 
 		/*wait a bit that streams are established*/
-		wait_for_list(lcs, &dummy, 1, liblinphone_tester_sip_timeout);
+		wait_for_list(lcs, &dummy, 1, 8000);
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline), 70, int, "%i");
 		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie1), 70, int, "%i");
 		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie2), 70, int, "%i");
 
-		linphone_call_accept(linphone_core_get_current_call(marie1->lc));
-		BC_ASSERT_TRUE(
-		    wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(
-		    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+		/* Paranoid: we should still be in early media but let's protect against the proxy that could have
+		 * cancel the call if we had been too long*/
+		if (BC_ASSERT_TRUE(linphone_call_get_state(marie1_call) == LinphoneCallStateIncomingEarlyMedia)) {
 
-		/*marie2 should get her call terminated*/
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
+			linphone_call_accept(marie1_call);
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1,
+			                             liblinphone_tester_sip_timeout));
 
-		/*wait a bit that streams are established*/
-		wait_for_list(lcs, &dummy, 1, liblinphone_tester_sip_timeout);
-		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(pauline), 71, int, "%i");
-		BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie1), 71, int, "%i");
+			/*marie2 should get her call terminated*/
+			BC_ASSERT_TRUE(
+			    wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
 
-		/*send an INFO in reverse side to check that dialogs are properly established*/
-		info = linphone_core_create_info_message(marie1->lc);
-		linphone_call_send_info_message(marie1_call, info);
-		linphone_info_message_unref(info);
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, 1, liblinphone_tester_sip_timeout));
+			/*wait a bit that streams are established*/
+			wait_for_list(lcs, &dummy, 1, 5000);
+			BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(pauline), 71, int, "%i");
+			BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_down_bw(marie1), 71, int, "%i");
+
+			/*send an INFO in reverse side to check that dialogs are properly established*/
+			info = linphone_core_create_info_message(marie1->lc);
+			linphone_call_send_info_message(marie1_call, info);
+			linphone_info_message_unref(info);
+			BC_ASSERT_TRUE(
+			    wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, 1, liblinphone_tester_sip_timeout));
+		}
+		linphone_call_unref(marie1_call);
 	}
 
 	end_call(pauline, marie1);

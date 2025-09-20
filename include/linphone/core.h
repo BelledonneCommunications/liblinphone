@@ -122,7 +122,7 @@ LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *co
  * @return a new LinphoneInfoMessage. @notnil
  *
  * The info message can later be filled with information using linphone_info_message_add_header() or
- *linphone_info_message_set_content(), and finally sent with linphone_core_send_info_message().
+ *linphone_info_message_set_content(), and finally sent with linphone_call_send_info_message().
  **/
 LINPHONE_PUBLIC LinphoneInfoMessage *linphone_core_create_info_message(LinphoneCore *core);
 
