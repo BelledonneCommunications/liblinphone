@@ -2905,7 +2905,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
                                                    const char *notified_event,
                                                    const LinphoneContent *body) {
 	std::shared_ptr<Core> core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
-	if (strcmp(notified_event, "Presence") == 0) {
+	if (strcasecmp(notified_event, "presence") == 0) {
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
 			if (linphone_friend_list_get_event(list) != lev) continue;
@@ -2913,7 +2913,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 			ms_message("Notify presence for list %p", list);
 			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
-	} else if (strcmp(notified_event, "conference") == 0 || strcmp(notified_event, "ekt") == 0) {
+	} else if (strcasecmp(notified_event, "conference") == 0 || strcasecmp(notified_event, "ekt") == 0) {
 #ifdef HAVE_ADVANCED_IM
 		const auto ev = Event::getSharedFromThis(lev);
 		const auto resourceAddr = ev->getResource();
@@ -2994,7 +2994,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc,
                                                       LinphoneEvent *lev,
                                                       BCTBX_UNUSED(const char *subscribe_event),
                                                       const LinphoneContent *body) {
-	if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
+	if (strcasecmp(linphone_event_get_name(lev), "conference") == 0) {
 		_linphone_core_conference_subscribe_received(lc, lev, body);
 	}
 }
@@ -3056,7 +3056,7 @@ static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc,
 
 static void
 linphone_core_internal_publish_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphonePublishState state) {
-	if (strcasecmp(linphone_event_get_name(lev), "Presence") == 0) {
+	if (strcasecmp(linphone_event_get_name(lev), "presence") == 0) {
 		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->notifyPublishStateChangedToAccount(Event::toCpp(lev)->getSharedFromThis(),
 		                                                                    state);
 	}
