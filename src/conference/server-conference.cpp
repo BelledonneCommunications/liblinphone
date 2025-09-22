@@ -1532,11 +1532,16 @@ bool ServerConference::dialOutAddresses(const std::list<std::shared_ptr<Address>
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
 		resourceList->setContentEncoding("deflate");
 	}
+
+	bool multipartAllowed = linphone_config_get_bool(getCore()->getCCore()->config, "sip", "multipart-allowed", true);
 	if (!resourceList->isEmpty()) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
+		// If it's a video conference, only add resource list if multipart is allowed
+		if (!mediaSupported || multipartAllowed) {
+			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
+		}
 	}
 
-	if (mOrganizer && mediaSupported) {
+	if (mOrganizer && mediaSupported && multipartAllowed) {
 		const auto organizerUri = mOrganizer->getUri();
 		auto sipfrag = Utils::createSipFragContent(organizerUri.toString());
 		L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);

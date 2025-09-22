@@ -14431,6 +14431,92 @@ static void video_conference_created_by_merging_video_calls_with_active_speaker_
 	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutActiveSpeaker, FALSE);
 }
 
+static void test_server_conference_from_existing_call_and_extra_participant(bool multipartAllowed) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_tcp_rc");
+
+	bctbx_list_t *lcs = NULL;
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "sip", "multipart-allowed", multipartAllowed);
+
+	// Step 1: normal call Marie=>Pauline
+	LinphoneCall *marie_call = linphone_core_invite(marie->lc, linphone_core_get_identity(pauline->lc));
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, liblinphone_tester_sip_timeout));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	linphone_call_accept(pauline_call);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+
+	// Step 2: create a conference with the existing call, while adding laure to the conference
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
+	LinphoneConference *conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_add_participant(conf, marie_call);
+	linphone_conference_add_participant_2(conf, laure->identity);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, liblinphone_tester_sip_timeout));
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, liblinphone_tester_sip_timeout));
+	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	linphone_call_accept(laure_call);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallConnected, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+
+	// Step 3: check the custom header to see if we're using multipart or not
+	LinphoneCallParams const *confInviteParams = linphone_call_get_remote_params(laure_call);
+	const char *customContents = linphone_call_params_get_custom_header(confInviteParams, "Content-Type");
+	if (multipartAllowed) {
+		BC_ASSERT_STRING_NOT_EQUAL(customContents, "application/sdp");
+	} else {
+		BC_ASSERT_STRING_EQUAL(customContents, "application/sdp");
+	}
+
+	// Step 4: end call
+	linphone_core_terminate_all_calls(marie->lc);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, 1, liblinphone_tester_sip_timeout));
+
+	// Step 5: cleanup
+	linphone_conference_params_unref(conf_params);
+	linphone_conference_unref(conf);
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+}
+
+static void test_server_conference_from_existing_call_and_extra_participant_with_multipart(void) {
+	bool multipartAllowed = true;
+	test_server_conference_from_existing_call_and_extra_participant(multipartAllowed);
+}
+
+static void test_server_conference_from_existing_call_and_extra_participant_without_multipart(void) {
+	bool multipartAllowed = false;
+	test_server_conference_from_existing_call_and_extra_participant(multipartAllowed);
+}
+
 static test_t audio_video_conference_basic_tests[] = {
     TEST_NO_TAG("Simple conference", simple_conference), TEST_NO_TAG("Simple CCMP conference", simple_ccmp_conference),
     TEST_NO_TAG("Simple CCMP conference retrieval", simple_ccmp_conference_retrieval),
@@ -14498,7 +14584,11 @@ static test_t audio_video_conference_basic2_tests[] = {
                 conference_with_back_to_back_call_invite_accept_without_ice),
     TEST_NO_TAG("Simple client conference", simple_remote_conference),
     TEST_NO_TAG("Simple client conference with shut down focus", simple_remote_conference_shut_down_focus),
-    TEST_NO_TAG("Eject from 3 participants in client conference", eject_from_3_participants_remote_conference)};
+    TEST_NO_TAG("Eject from 3 participants in client conference", eject_from_3_participants_remote_conference),
+    TEST_NO_TAG("ServerConference from existing call and extra participant with multipart",
+                test_server_conference_from_existing_call_and_extra_participant_with_multipart),
+    TEST_NO_TAG("ServerConference from existing call and extra participant without multipart",
+                test_server_conference_from_existing_call_and_extra_participant_without_multipart)};
 
 static test_t audio_conference_tests[] = {
     TEST_NO_TAG("Conference hosted on local device", audio_conference_hosted_on_local_device),
