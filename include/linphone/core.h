@@ -3436,7 +3436,14 @@ LINPHONE_PUBLIC const char *linphone_core_get_ring(const LinphoneCore *core);
 LINPHONE_PUBLIC void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable);
 
 /**
- * Sets whether to use the native ringing (Android only).
+ * Sets whether to use the platform-dependent ringing.
+ * This property is meaningful for Android platform only.
+ * When set to true, the incoming call's ring tone is played by a
+ * Android MediaPlayer object playing the phone's default ringtone,
+ * and manages vibrator as well.
+ * When set to false, the incoming call's ring tone is played using
+ * liblinphone's internal ring tone player, that is generic for all platforms.
+ *
  * @param core #LinphoneCore object @notnil
  * @param enable True to enable native ringing, false otherwise
  * @ingroup media_parameters
@@ -3454,6 +3461,12 @@ LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCor
 
 /**
  * Returns whether the native ringing is enabled or not.
+ * This property is meaningful for Android platform only.
+ * When set to true, the incoming call's ring tone is played by a
+ * Android MediaPlayer object playing the phone's default ringtone,
+ * and manages vibrator as well.
+ * When set to false, the incoming call's ring tone is played using
+ * liblinphone's internal ring tone player, that is generic for all platforms.
  * @param core #LinphoneCore object @notnil
  * @return True if we use the native ringing, false otherwise
  * @ingroup media_parameters

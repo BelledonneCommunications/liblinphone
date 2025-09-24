@@ -27,6 +27,7 @@
 #include "content/header/header-param.h"
 #include "liblinphone_tester.h"
 #include "linphone/api/c-content.h"
+#include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "tester_utils.h"
 
@@ -323,7 +324,7 @@ static const char *invalid_source_multipart =
 static const char *part21 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
                             "uri=\"sip:toto@nohyphen.com\" version=\"0\" fullState=\"true\"></list>";
 
-void multipart_parsing() {
+static void multipart_parsing() {
 	Content multipartContent;
 	multipartContent.setBodyFromLocale(source_multipart2);
 	ContentType contentType = ContentType("multipart", "related");
@@ -358,6 +359,7 @@ void multipart_parsing() {
 	string originalSubType1("rlmi+xml");
 	string generatedType1 = content1.getContentType().getType();
 	string generatedSubType1 = content1.getContentType().getSubType();
+
 	ms_message("\n\nOriginal type 1 = %s", originalType1.c_str());
 	ms_message("Generated type 1 = %s", generatedType1.c_str());
 	ms_message("\n\nOriginal subtype 1 = %s", originalSubType1.c_str());
@@ -366,13 +368,21 @@ void multipart_parsing() {
 	BC_ASSERT_TRUE(originalSubType1 == generatedSubType1);
 
 	// check custom headers
-	string originalContentId1("<AFqAMY@broadworks>");
-	string generatedContentId1 = content1.getHeader("Content-ID").getValueWithParams();
+	string contentId1 = content1.getHeader("Content-Id").getValue();
+	string contentId2 = content1.getHeader("Content-Id").getValue();
+	string contentId3 = content1.getCustomHeader("Content-Id");
+	string contentId4 = content1.getHeader("Content-ID").getValueWithParams();
 
-	BC_ASSERT_TRUE(originalContentId1 == generatedContentId1);
+	BC_ASSERT_STRING_EQUAL(contentId1.c_str(), "<AFqAMY@broadworks>");
+	BC_ASSERT_STRING_EQUAL(contentId2.c_str(), "<AFqAMY@broadworks>");
+	BC_ASSERT_STRING_EQUAL(contentId3.c_str(), "<AFqAMY@broadworks>");
+	BC_ASSERT_STRING_EQUAL(contentId4.c_str(), "<AFqAMY@broadworks>");
+
+	BC_ASSERT_TRUE(Utils::iequalsIgnoreBrakets(contentId4, "AFqAMY@broadworks"));
+	BC_ASSERT_TRUE(Utils::iequalsIgnoreBrakets(contentId4, "<AFqAMY@broadworks>"));
 }
 
-void invalid_multipart_parsing() {
+static void invalid_multipart_parsing() {
 	Content multipartContent;
 	multipartContent.setBodyFromLocale(invalid_source_multipart);
 	ContentType contentType = ContentType("multipart", "related");
@@ -384,7 +394,7 @@ void invalid_multipart_parsing() {
 	BC_ASSERT_EQUAL((int)contents.size(), 1, int, "%d");
 }
 
-void multipart_to_list() {
+static void multipart_to_list() {
 	Content multipartContent;
 	multipartContent.setBodyFromLocale(source_multipart);
 	multipartContent.setContentType(ContentType("multipart", "related"));
@@ -545,7 +555,7 @@ void multipart_to_list() {
 	BC_ASSERT_TRUE(content4.getContentDisposition() == ContentDisposition::RecipientList);
 }
 
-void list_to_multipart() {
+static void list_to_multipart() {
 	ContentType contentType = ContentType("application", "rlmi+xml");
 	contentType.addParameter("charset", "\"UTF-8\"");
 	Content content1;
@@ -709,13 +719,13 @@ static void content_public_api(void) {
 	linphone_content_unref(content);
 }
 
-test_t contents_tests[] = {TEST_NO_TAG("Multipart to list", multipart_to_list),
-                           TEST_NO_TAG("Multipart parsing", multipart_parsing),
-                           TEST_NO_TAG("Invalid multipart parsing", invalid_multipart_parsing),
-                           TEST_NO_TAG("List to multipart", list_to_multipart),
-                           TEST_NO_TAG("Content type parsing", content_type_parsing),
-                           TEST_NO_TAG("Content header parsing", content_header_parsing),
-                           TEST_NO_TAG("Content C public API", content_public_api)};
+static test_t contents_tests[] = {TEST_NO_TAG("Multipart to list", multipart_to_list),
+                                  TEST_NO_TAG("Multipart parsing", multipart_parsing),
+                                  TEST_NO_TAG("Invalid multipart parsing", invalid_multipart_parsing),
+                                  TEST_NO_TAG("List to multipart", list_to_multipart),
+                                  TEST_NO_TAG("Content type parsing", content_type_parsing),
+                                  TEST_NO_TAG("Content header parsing", content_header_parsing),
+                                  TEST_NO_TAG("Content C public API", content_public_api)};
 
 test_suite_t contents_test_suite = {"Contents",
                                     nullptr,

@@ -154,6 +154,11 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 
 			char token[17];
 			belle_sip_random_token(token, sizeof(token));
+			/* FIXME:
+			 * the content-id value shall be surrounded with angle-quotes.
+			 * The client fix to handle this is made in 5.4.45.
+			 * Do the server change not before 2027.
+			 */
 			content->addHeader("Content-Id", token);
 			content->addHeader("Content-Length", Utils::toString(content->getSize()));
 			contents.push_back(std::move(*content));

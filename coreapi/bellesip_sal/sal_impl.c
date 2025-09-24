@@ -295,7 +295,7 @@ static belle_sip_header_t *sal_body_handler_find_header(const SalBodyHandler *bo
 		const belle_sip_list_t *l = belle_sip_body_handler_get_headers(bsbh);
 		for (; l != NULL; l = l->next) {
 			belle_sip_header_t *header = BELLE_SIP_HEADER(l->data);
-			if (strcmp(belle_sip_header_get_name(header), header_name) == 0) {
+			if (strcasecmp(belle_sip_header_get_name(header), header_name) == 0) {
 				return header;
 			}
 		}

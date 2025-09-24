@@ -318,7 +318,8 @@ void Content::removeHeader(const string &headerName) {
 }
 
 list<Header>::const_iterator Content::findHeader(const string &headerName) const {
-	return findIf(mHeaders, [&headerName](const Header &header) { return header.getName() == headerName; });
+	return findIf(mHeaders,
+	              [&headerName](const Header &header) { return Utils::iequals(header.getName(), headerName); });
 }
 
 const std::string &Content::getCustomHeader(const std::string &headerName) const {

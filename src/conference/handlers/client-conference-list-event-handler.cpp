@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "linphone/api/c-event.h"
 #include "linphone/core.h"
@@ -230,9 +230,9 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 					continue;
 				}
 
-				const string &cid = content.getHeader("Content-Id").getValue();
+				string cid = content.getHeader("Content-Id").getValue();
 				if (cid.empty()) continue;
-
+				cid = Utils::unquote(cid, '<');
 				map<string, std::shared_ptr<Address>>::const_iterator it = addresses.find(cid);
 				if (it == addresses.cend()) continue;
 
@@ -375,8 +375,9 @@ map<string, std::shared_ptr<Address>> ClientConferenceListEventHandler::parseRlm
 
 		std::shared_ptr<Address> peer = Address::create(uri);
 		for (const auto &instance : resource.getInstance()) {
-			const string &cid = string(instance.getId());
+			string cid = string(instance.getId());
 			if (cid.empty()) continue;
+			cid = Utils::unquote(cid, '<');
 
 			addresses.emplace(cid, peer);
 		}

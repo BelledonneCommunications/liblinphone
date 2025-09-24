@@ -62,6 +62,17 @@ bool Utils::iequals(const string &a, const string &b) {
 	return true;
 }
 
+string Utils::unquote(const string &input, int quoteChar) {
+	if (input.size() >= 2 && input[0] == quoteChar) {
+		return input.substr(1, input.size() - 2);
+	}
+	return input;
+}
+
+bool Utils::iequalsIgnoreBrakets(const std::string &a, const std::string &b) {
+	return iequals(unquote(a, '<'), unquote(b, '<'));
+}
+
 // -----------------------------------------------------------------------------
 
 #ifndef __ANDROID__
@@ -728,7 +739,7 @@ bool Utils::isIp(const string &remote) {
 	bool ret = false;
 	int err;
 
-	struct addrinfo hints{};
+	struct addrinfo hints {};
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;

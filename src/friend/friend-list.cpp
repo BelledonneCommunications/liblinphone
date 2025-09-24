@@ -21,8 +21,8 @@
 #include <fstream>
 #include <set>
 
+#include "bctoolbox/defs.h"
 #include "bctoolbox/list.h"
-#include <bctoolbox/defs.h>
 
 #include "friend-list.h"
 
@@ -778,7 +778,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 					while (it != nullptr) {
 						LinphoneContent *content = (LinphoneContent *)it->data;
 						const char *header = linphone_content_get_custom_header(content, "Content-Id");
-						if (header && (std::string(header) == cid)) {
+						if (header && Utils::iequalsIgnoreBrakets(header, cid)) {
 							presencePart = Content::toCpp(content)->getSharedFromThis();
 							break;
 						}

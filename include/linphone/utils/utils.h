@@ -75,7 +75,17 @@ constexpr T *getPtr(T &object) {
 	return &object;
 }
 
+/* case-insensitive equals */
 LINPHONE_PUBLIC bool iequals(const std::string &a, const std::string &b);
+
+/*
+ * Unquote a string if surrounded with a quoting characters such as "", '', or <>
+ * Otherwise returns it as-is.
+ * The function assumes the quoting character if present is the first one,
+ * and also assumes that if present, the last one is also the quoting character.
+ */
+LINPHONE_PUBLIC std::string unquote(const std::string &input, int quoteChar);
+LINPHONE_PUBLIC bool iequalsIgnoreBrakets(const std::string &a, const std::string &b);
 
 LINPHONE_PUBLIC std::string toString(int val);
 LINPHONE_PUBLIC std::string toString(long val);
