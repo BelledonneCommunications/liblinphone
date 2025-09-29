@@ -106,9 +106,7 @@ bctbx_list_t *liblinphone_tester_remove_v6_addr(bctbx_list_t *l) {
 static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
 	int ret;
-	int liblinphone_max_failed_tests_threshold =
-	    2; /* Please adjust this threshold as long as the full tester becomes more and more reliable. Also update
-	          liblinphone_helper value for documentation*/
+	int liblinphone_max_failed_tests_threshold = 0;
 
 #ifdef __linux__
 	/* Hack to tell mediastreamer2 alsa plugin to not detect direct driver interface ('sysdefault' card), because
