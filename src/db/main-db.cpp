@@ -2955,7 +2955,7 @@ void MainDbPrivate::updateSchema() {
 	if (eventsDbVersionInt < makeVersion(1, 0, 21)) {
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_method TINYINT UNSIGNED DEFAULT 0";
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_time" + dbSession.timestampType() +
-		                " NOT NULL DEFAULT " + dbSession.currentTimestamp();
+		                " DEFAULT " + dbSession.currentTimestamp();
 	}
 
 	try {
@@ -2971,84 +2971,111 @@ void MainDbPrivate::updateSchema() {
 		lDebug() << "Caught exception " << e.what() << ": Column 'ccmp_uri' already exists in table 'conference_info'";
 	}
 
-	*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device_clone ("
-	            "  chat_room_participant_id" +
-	                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-	                ","
-	                "  participant_device_sip_address_id" +
-	                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-	                ","
-
-	                " state TINYINT UNSIGNED DEFAULT 0,"
-	                " name VARCHAR(255),"
-	                " joining_method TINYINT UNSIGNED DEFAULT 0,"
-	                " joining_time" +
-	                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() + ") " + charset;
-
-	soci::rowset<soci::row> originalParticipantDeviceRows =
-	    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
-	                         "joining_method, joining_time FROM chat_room_participant_device");
-	for (const auto &row : originalParticipantDeviceRows) {
-		const auto participantId = dbSession.resolveId(row, 0);
-		const auto deviceId = dbSession.resolveId(row, 1);
-		const auto state = row.get<int>(2);
-		const auto name = row.get<string>(3, "");
-		const auto joiningMethod = row.get<int>(4);
-		const auto joiningTime = dbSession.getTime(row, 5);
-		auto joiningTimeDb = dbSession.getTimeWithSociIndicator(joiningTime);
-		*session << "INSERT INTO chat_room_participant_device_clone (chat_room_participant_id, "
-		            "participant_device_sip_address_id, state, name, joining_method, joining_time)"
-		            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceState, "
-		            ":participantDeviceName, :participantDeviceJoiningMethod, :participantDeviceJoiningTime)",
-		    soci::use(participantId), soci::use(deviceId), soci::use(state), soci::use(name), soci::use(joiningMethod),
-		    soci::use(joiningTimeDb.first, joiningTimeDb.second);
-	}
-
-	*session << "DROP TABLE IF EXISTS chat_room_participant_device";
-
-	*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device ("
-	            "  chat_room_participant_id" +
-	                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-	                ","
-	                "  participant_device_sip_address_id" +
-	                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-	                ","
-
-	                " state TINYINT UNSIGNED DEFAULT 0,"
-	                " name VARCHAR(255),"
-	                " joining_method TINYINT UNSIGNED DEFAULT 0,"
-	                " joining_time" +
-	                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() +
-	                ","
-
-	                "  PRIMARY KEY (chat_room_participant_id, participant_device_sip_address_id),"
-
-	                "  FOREIGN KEY (chat_room_participant_id)"
-	                "    REFERENCES chat_room_participant(id)"
-	                "    ON DELETE CASCADE,"
-	                "  FOREIGN KEY (participant_device_sip_address_id)"
-	                "    REFERENCES sip_address(id)"
-	                "    ON DELETE CASCADE"
-	                ") " +
-	                charset;
-
-	soci::rowset<soci::row> participantDeviceRows =
-	    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
-	                         "joining_method, joining_time FROM chat_room_participant_device_clone");
-	for (const auto &row : participantDeviceRows) {
-		const auto participantId = dbSession.resolveId(row, 0);
-		const auto deviceId = dbSession.resolveId(row, 1);
-		const auto state = row.get<int>(2);
-		const auto name = row.get<string>(3, "");
-		const auto joiningMethod = row.get<int>(4);
-		const auto joiningTime = dbSession.getTime(row, 5);
-		auto joiningTimeDb = dbSession.getTimeWithSociIndicator(joiningTime);
+	// Try to insert a participant device with a NULL joining time so that we can test if the 'joining_time' column is
+	// nullable across all database backends
+	try {
+		// Get the highest value of the ID column in the sip_address column and increment by 1 so that the addition of
+		// the fake participant device doesn't affect any of the existing chatrooms or participants.
+		long long testId = 0;
+		*session << "SELECT MAX(id) from sip_address", soci::into(testId);
+		testId++;
+		const int testIntValue = 1;
+		auto nullJoiningTime = Utils::getTimeTAsTm(-1);
+		auto nullSociIndicator = soci::i_null;
+		std::string testDeviceName("test");
+		// We add a device whose address is exactly the same as the one of the participant it is linked to.
 		*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, "
 		            "participant_device_sip_address_id, state, name, joining_method, joining_time)"
 		            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceState, "
 		            ":participantDeviceName, :participantDeviceJoiningMethod, :participantDeviceJoiningTime)",
-		    soci::use(participantId), soci::use(deviceId), soci::use(state), soci::use(name), soci::use(joiningMethod),
-		    soci::use(joiningTimeDb.first, joiningTimeDb.second);
+		    soci::use(testId), soci::use(testId), soci::use(testIntValue), soci::use(testDeviceName),
+		    soci::use(testIntValue), soci::use(nullJoiningTime, nullSociIndicator);
+		*session << "DELETE FROM chat_room_participant_device WHERE chat_room_participant_id = :participantId AND "
+		            "participant_device_sip_address_id = :deviceId",
+		    soci::use(testId), soci::use(testId);
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'joining_time' table 'chat_room_participant_device' is not nullable; making it right now";
+
+		*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device_clone ("
+		            "  chat_room_participant_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                ","
+		                "  participant_device_sip_address_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                ","
+
+		                " state TINYINT UNSIGNED DEFAULT 0,"
+		                " name VARCHAR(255),"
+		                " joining_method TINYINT UNSIGNED DEFAULT 0,"
+		                " joining_time" +
+		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() + ") " + charset;
+
+		soci::rowset<soci::row> originalParticipantDeviceRows =
+		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
+		                         "joining_method, joining_time FROM chat_room_participant_device");
+		for (const auto &row : originalParticipantDeviceRows) {
+			const auto participantId = dbSession.resolveId(row, 0);
+			const auto deviceId = dbSession.resolveId(row, 1);
+			const auto state = row.get<int>(2);
+			const auto name = row.get<string>(3, "");
+			const auto joiningMethod = row.get<int>(4);
+			const auto joiningTime = dbSession.getTime(row, 5);
+			auto joiningTimeDb = dbSession.getTimeWithSociIndicator(joiningTime);
+			*session << "INSERT INTO chat_room_participant_device_clone (chat_room_participant_id, "
+			            "participant_device_sip_address_id, state, name, joining_method, joining_time)"
+			            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceState, "
+			            ":participantDeviceName, :participantDeviceJoiningMethod, :participantDeviceJoiningTime)",
+			    soci::use(participantId), soci::use(deviceId), soci::use(state), soci::use(name),
+			    soci::use(joiningMethod), soci::use(joiningTimeDb.first, joiningTimeDb.second);
+		}
+
+		*session << "DROP TABLE IF EXISTS chat_room_participant_device";
+
+		*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device ("
+		            "  chat_room_participant_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                ","
+		                "  participant_device_sip_address_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                ","
+
+		                " state TINYINT UNSIGNED DEFAULT 0,"
+		                " name VARCHAR(255),"
+		                " joining_method TINYINT UNSIGNED DEFAULT 0,"
+		                " joining_time" +
+		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() +
+		                ","
+
+		                "  PRIMARY KEY (chat_room_participant_id, participant_device_sip_address_id),"
+
+		                "  FOREIGN KEY (chat_room_participant_id)"
+		                "    REFERENCES chat_room_participant(id)"
+		                "    ON DELETE CASCADE,"
+		                "  FOREIGN KEY (participant_device_sip_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+
+		soci::rowset<soci::row> participantDeviceRows =
+		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
+		                         "joining_method, joining_time FROM chat_room_participant_device_clone");
+		for (const auto &row : participantDeviceRows) {
+			const auto participantId = dbSession.resolveId(row, 0);
+			const auto deviceId = dbSession.resolveId(row, 1);
+			const auto state = row.get<int>(2);
+			const auto name = row.get<string>(3, "");
+			const auto joiningMethod = row.get<int>(4);
+			const auto joiningTime = dbSession.getTime(row, 5);
+			auto joiningTimeDb = dbSession.getTimeWithSociIndicator(joiningTime);
+			*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, "
+			            "participant_device_sip_address_id, state, name, joining_method, joining_time)"
+			            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceState, "
+			            ":participantDeviceName, :participantDeviceJoiningMethod, :participantDeviceJoiningTime)",
+			    soci::use(participantId), soci::use(deviceId), soci::use(state), soci::use(name),
+			    soci::use(joiningMethod), soci::use(joiningTimeDb.first, joiningTimeDb.second);
+		}
 	}
 
 	try {
@@ -5613,7 +5640,7 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered() 
 	// Keep chat_room_id at the end of the query !!!
 	const std::string timediffExpression = (getBackend() == MainDb::Backend::Sqlite3)
 	                                           ? "(julianday(time) - julianday(:maxExpireTime)) * 24 * 60 * 60"
-	                                           : "TIMESTAMPDIFF(SECOND, time, :maxExpireTime)";
+	                                           : "TIMESTAMPDIFF(SECOND, :maxExpireTime, time)";
 
 	static const string query =
 	    "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, "
@@ -5692,8 +5719,6 @@ list<shared_ptr<EventLog>> MainDb::getHistory(const ConferenceId &conferenceId, 
 list<shared_ptr<EventLog>>
 MainDb::getHistoryRange(const ConferenceId &conferenceId, int begin, int end, FilterMask mask) const {
 #ifdef HAVE_DB_STORAGE
-	L_D();
-
 	if (begin < 0) begin = 0;
 
 	list<shared_ptr<EventLog>> events;
@@ -5708,10 +5733,14 @@ MainDb::getHistoryRange(const ConferenceId &conferenceId, int begin, int end, Fi
 	                                   mask, "AND");
 	query += " ORDER BY event_id DESC";
 
-	if (end > 0) query += " LIMIT " + Utils::toString(end - begin);
-	else query += " LIMIT " + d->dbSession.noLimitValue();
-
-	if (begin > 0) query += " OFFSET " + Utils::toString(begin);
+	// OFFSET clause can only be used if the LIMIT clause is provided
+	if (end > 0) {
+		query += " LIMIT " + Utils::toString(end - begin);
+		if (begin > 0) {
+			// OFFSET clause can only be used if the LIMIT clause is provided.
+			query += " OFFSET " + Utils::toString(begin);
+		}
+	}
 
 	/*
 	DurationLogger durationLogger(
@@ -6174,7 +6203,8 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 bool MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
                                const shared_ptr<AbstractChatRoom> &chatRoom,
                                long long id,
-                               int unreadMessageCount) const {
+                               int unreadMessageCount,
+                               long long int &offset) const {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	const auto &chatRoomConferenceId = chatRoom->getConferenceId();
@@ -6193,6 +6223,7 @@ bool MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
 			d->cache(chatRoomConferenceId, id);
 			ret = true;
 		}
+		offset--;
 	} catch (std::out_of_range &) {
 		chatRoomToAdd = chatRoom;
 		d->unreadChatMessageCountCache.insert(chatRoomConferenceId, unreadMessageCount);
@@ -6293,7 +6324,7 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 
 	auto creationTimeToAddSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToAdd);
 	soci::session *session = d->dbSession.getBackendSession();
-	lInfo() << "Moving all event of chatroom with ID " << dbChatRoomToRemoveId << " to chatroom with ID "
+	lInfo() << "Moving all events of chatroom with ID " << dbChatRoomToRemoveId << " to chatroom with ID "
 	        << dbChatRoomToAddId;
 	// Move conference event that occurred before the latest chatroom was created.
 	// Events such as chat messages are already stored in both chat rooms
@@ -6341,37 +6372,20 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 
 list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 #ifdef HAVE_DB_STORAGE
-	static const string query =
-	    "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
-	    " creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
-	    " ephemeral_enabled, ephemeral_messages_lifetime,"
-	    " unread_messages_count.message_count, muted, conference_info_id"
-	    " FROM chat_room"
-	    " LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
-	    " FROM conference_chat_message_event, conference_event"
-	    " WHERE conference_chat_message_event.event_id=conference_event.event_id AND "
-	    "conference_chat_message_event.marked_as_read = 0"
-	    " GROUP BY conference_event.chat_room_id) AS unread_messages_count"
-	    " ON unread_messages_count.chat_room_id = chat_room.id"
-	    " , sip_address AS peer_sip_address, sip_address AS local_sip_address"
-	    " WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = "
-	    "local_sip_address.id"
-	    " ORDER BY last_update_time DESC";
-
-	DurationLogger durationLogger("Get chat rooms.");
+	shared_ptr<Core> core = getCore();
+	LinphoneCore *cCore = getCore()->getCCore();
+	int read_chunk_size = linphone_core_get_chat_room_load_chunk_size(cCore);
+	DurationLogger durationLogger("Get chat rooms with chunk size " + Utils::toString(read_chunk_size));
 
 	return L_DB_TRANSACTION {
 		L_D();
 
 		ChatRoomWeakCompareMap chatRoomsMap;
 
-		shared_ptr<Core> core = getCore();
-		LinphoneCore *cCore = getCore()->getCCore();
-		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
-
 		soci::session *session = d->dbSession.getBackendSession();
+		int nbChatRooms = 0;
+		*session << "SELECT COUNT(*) FROM chat_room", soci::into(nbChatRooms);
 
-		soci::rowset<soci::row> chatRoomRows = (session->prepare << query);
 		// SOCI uses a hack for sqlite3:
 		// "sqlite3 type system does not have a date or time field.  Also it does not reliably id other data types.
 		// It has a tendency to see everything as text.
@@ -6400,236 +6414,280 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 		}
 
-		// Because of SOCI limitation, we cannot loops twice on previous query
-		static const string idsQuery = "SELECT id, capabilities FROM chat_room";
-		soci::rowset<soci::row> idsRows = (session->prepare << idsQuery);
-		list<long long> dbChatRoomIds;
-		for (auto &row : idsRows) {
-			int capabilities = row.get<int>(1);
-			shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
-			const auto backend = params->getChatParams()->getBackend();
-			if (backend == ChatParams::Backend::FlexisipChat) {
+		bool serverMode = linphone_core_conference_server_enabled(cCore);
+		long long int offset = 0;
+		vector<long long> dbChatRoomIds;
+		vector<long long> dbFlexisipChatRoomIds;
+		std::string limitString;
+		if (read_chunk_size > 0) {
+			limitString = " LIMIT " + Utils::toString(read_chunk_size);
+			dbChatRoomIds.reserve(static_cast<std::vector<long long>::size_type>(read_chunk_size));
+			dbFlexisipChatRoomIds.reserve(static_cast<std::vector<long long>::size_type>(read_chunk_size));
+		}
+
+		while (nbChatRooms > 0) {
+			std::string offsetLimitString;
+			if (!limitString.empty()) {
+				// OFFSET clause can only be used if the LIMIT clause is provided.
+				offsetLimitString = limitString + " OFFSET " + Utils::toString(offset);
+			}
+			// Because of SOCI limitation, we cannot loops twice on previous query
+			const string idsQuery = "SELECT id, capabilities FROM chat_room" + offsetLimitString;
+			soci::rowset<soci::row> idsRows = (session->prepare << idsQuery);
+			dbChatRoomIds.clear();
+			dbFlexisipChatRoomIds.clear();
+			L_ASSERT(dbChatRoomIds.empty());
+			L_ASSERT(dbFlexisipChatRoomIds.empty());
+			for (auto &row : idsRows) {
 				const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
 				dbChatRoomIds.push_back(dbChatRoomId);
-			}
-		}
-		auto allChatRoomParticipants = selectChatRoomParticipants(dbChatRoomIds);
-		for (auto &chatRoomRow : chatRoomRows) {
-			if (!typeHasBeenSet) {
-				unreadMessageCountType = chatRoomRow.get_properties(12).get_data_type();
-				typeHasBeenSet = true;
-			}
-
-			Address pAddress(chatRoomRow.get<string>(1), true);
-			Address oldPAddress(pAddress);
-			Address lAddress(chatRoomRow.get<string>(2), true);
-			Address oldLAddress(lAddress);
-			bool conferenceIdChanged = (!keepGruu && (pAddress.hasUriParam("gr") || lAddress.hasUriParam("gr")));
-			if (!chatroomDomain.empty()) {
-				if (chatroomDomain.compare(pAddress.getDomain()) != 0) {
-					pAddress.setDomain(chatroomDomain);
-					conferenceIdChanged = true;
+				int capabilities = row.get<int>(1);
+				shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
+				const auto backend = params->getChatParams()->getBackend();
+				if (backend == ChatParams::Backend::FlexisipChat) {
+					dbFlexisipChatRoomIds.push_back(dbChatRoomId);
 				}
-				if (keepGruu) {
-					auto pAddressGr = pAddress.getUriParamValue("gr");
-					if (!chatroomGr.empty() && (pAddressGr.empty() || chatroomGr.compare(pAddressGr) != 0)) {
-						pAddress.setUriParam("gr", chatroomGr);
+			}
+			auto allChatRoomParticipants = selectChatRoomParticipants(dbFlexisipChatRoomIds);
+			const auto chatRoomIdsStr = Utils::join(dbChatRoomIds, ",");
+			const string query =
+			    "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
+			    " creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
+			    " ephemeral_enabled, ephemeral_messages_lifetime,"
+			    " unread_messages_count.message_count, muted, conference_info_id"
+			    " FROM chat_room"
+			    " LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
+			    " FROM conference_chat_message_event, conference_event"
+			    " WHERE conference_chat_message_event.event_id=conference_event.event_id AND "
+			    "conference_chat_message_event.marked_as_read = 0"
+			    " GROUP BY conference_event.chat_room_id) AS unread_messages_count"
+			    " ON unread_messages_count.chat_room_id = chat_room.id"
+			    " , sip_address AS peer_sip_address, sip_address AS local_sip_address"
+			    " WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = "
+			    "local_sip_address.id AND chat_room.id IN (" +
+			    chatRoomIdsStr + ") ORDER BY last_update_time DESC";
+
+			soci::rowset<soci::row> chatRoomRows = (session->prepare << query);
+			for (auto &chatRoomRow : chatRoomRows) {
+				// Decrement the number of chatrooms to be retrieved
+				offset++;
+				nbChatRooms--;
+				if (!typeHasBeenSet) {
+					unreadMessageCountType = chatRoomRow.get_properties(12).get_data_type();
+					typeHasBeenSet = true;
+				}
+
+				std::string pAddressString = chatRoomRow.get<string>(1);
+				std::string lAddressString = chatRoomRow.get<string>(2);
+				Address pAddress(pAddressString, true);
+				Address lAddress;
+				if (pAddressString == lAddressString) {
+					lAddress = pAddress;
+				} else {
+					lAddress = Address(lAddressString, true);
+				}
+				bool conferenceIdChanged = (!keepGruu && (pAddress.hasUriParam("gr") || lAddress.hasUriParam("gr")));
+				if (!chatroomDomain.empty()) {
+					if (chatroomDomain.compare(pAddress.getDomain()) != 0) {
+						pAddress.setDomain(chatroomDomain);
 						conferenceIdChanged = true;
 					}
+					if (keepGruu) {
+						auto pAddressGr = pAddress.getUriParamValue("gr");
+						if (!chatroomGr.empty() && (pAddressGr.empty() || chatroomGr.compare(pAddressGr) != 0)) {
+							pAddress.setUriParam("gr", chatroomGr);
+							conferenceIdChanged = true;
+						}
+					}
 				}
-			}
-			ConferenceId conferenceId(std::move(pAddress), std::move(lAddress), conferenceIdParams);
+				ConferenceId conferenceId(std::move(pAddress), std::move(lAddress), conferenceIdParams);
 
-			const long long &dbChatRoomId = d->dbSession.resolveId(chatRoomRow, 0);
-			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
-			if (chatRoom) {
-				ChatRoomContext context(chatRoom, dbChatRoomId, false, false);
-				chatRoomsMap.insert(std::make_pair(conferenceId, context));
-				continue;
-			}
+				const long long &dbChatRoomId = d->dbSession.resolveId(chatRoomRow, 0);
+				shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
+				if (chatRoom) {
+					ChatRoomContext context(chatRoom, dbChatRoomId, false, false);
+					chatRoomsMap.insert(std::make_pair(conferenceId, context));
+					continue;
+				}
 
-			bool updateFlags = false;
-			time_t creationTime = d->dbSession.getTime(chatRoomRow, 3);
-			time_t lastUpdateTime = d->dbSession.getTime(chatRoomRow, 4);
-			int capabilities = chatRoomRow.get<int>(5);
-			string subject = chatRoomRow.get<string>(6, "");
-			const long long &lastMessageId = d->dbSession.resolveId(chatRoomRow, 9);
-			bool muted = !!chatRoomRow.get<int>(13);
+				bool updateFlags = false;
+				time_t creationTime = d->dbSession.getTime(chatRoomRow, 3);
+				time_t lastUpdateTime = d->dbSession.getTime(chatRoomRow, 4);
+				int capabilities = chatRoomRow.get<int>(5);
+				string subject = chatRoomRow.get<string>(6, "");
+				const long long &lastMessageId = d->dbSession.resolveId(chatRoomRow, 9);
+				bool muted = !!chatRoomRow.get<int>(13);
 
-			shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
-			const auto backend = params->getChatParams()->getBackend();
-			if (backend == ChatParams::Backend::Basic) {
-				chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, params);
-				chatRoom->setUtf8Subject(subject);
-			} else if (backend == ChatParams::Backend::FlexisipChat) {
+				shared_ptr<ConferenceParams> params = ConferenceParams::fromCapabilities(capabilities, core);
+				const auto backend = params->getChatParams()->getBackend();
+				if (backend == ChatParams::Backend::Basic) {
+					chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, params);
+					chatRoom->setUtf8Subject(subject);
+				} else if (backend == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
-				const auto &localAddress = conferenceId.getLocalAddress();
-				unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
-				list<shared_ptr<Participant>> participants = allChatRoomParticipants[dbChatRoomId];
-				const auto meIt =
-				    std::find_if(participants.begin(), participants.end(), [&localAddress](const auto &participant) {
-					    return (participant->getAddress()->weakEqual(*localAddress));
-				    });
-				shared_ptr<Participant> me;
-				if (meIt != participants.end()) {
-					me = *meIt;
-					participants.erase(meIt);
-				}
+					const auto &localAddress = conferenceId.getLocalAddress();
+					unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
 
-				params->setUtf8Subject(subject);
-				params->getChatParams()->setEphemeralLifetime((long)chatRoomRow.get<double>(11));
-				params->getChatParams()->enableEphemeral(!!chatRoomRow.get<int>(10, 0));
-				const auto &conferenceAddress = conferenceId.getPeerAddress();
-				params->setConferenceAddress(conferenceAddress);
+					params->setUtf8Subject(subject);
+					params->getChatParams()->setEphemeralLifetime((long)chatRoomRow.get<double>(11));
+					params->getChatParams()->enableEphemeral(!!chatRoomRow.get<int>(10, 0));
+					const auto &conferenceAddress = conferenceId.getPeerAddress();
+					params->setConferenceAddress(conferenceAddress);
 
-				const long long &conferenceInfoId = d->dbSession.resolveId(chatRoomRow, 14);
-				shared_ptr<ConferenceInfo> confInfo;
-				if (conferenceInfoId > 0) {
-					soci::row conferenceInfoRow;
-					*session << Statements::get(Statements::SelectConferenceInfoFromId), soci::into(conferenceInfoRow),
-					    soci::use(conferenceInfoId);
-					confInfo = d->selectConferenceInfo(conferenceInfoRow);
-				}
+					const long long &conferenceInfoId = d->dbSession.resolveId(chatRoomRow, 14);
+					shared_ptr<ConferenceInfo> confInfo;
+					if (conferenceInfoId > 0) {
+						soci::row conferenceInfoRow;
+						*session << Statements::get(Statements::SelectConferenceInfoFromId),
+						    soci::into(conferenceInfoRow), soci::use(conferenceInfoId);
+						confInfo = d->selectConferenceInfo(conferenceInfoRow);
+					}
+					if (confInfo) {
+						bool audio = confInfo->getCapability(LinphoneStreamTypeAudio);
+						bool video = confInfo->getCapability(LinphoneStreamTypeVideo);
+						params->enableAudio(audio);
+						params->enableVideo(video);
+						params->setDescription(confInfo->getDescription());
+						const auto startTime = confInfo->getDateTime();
+						params->setStartTime(startTime);
+						const auto duration = confInfo->getDuration();
+						if ((startTime >= 0) && (duration > 0)) {
+							// The duration of the conference is stored in minutes in the conference information
+							params->setEndTime(startTime + duration * 60);
+						}
+						params->setEarlierJoiningTime(confInfo->getEarlierJoiningTime());
+						params->setExpiryTime(confInfo->getExpiryTime());
+					}
 
-				if (confInfo) {
-					bool audio = confInfo->getCapability(LinphoneStreamTypeAudio);
-					bool video = confInfo->getCapability(LinphoneStreamTypeAudio);
-					/*
-					if (serverMode && (audio || video)) {
-					    lInfo()
-					        << "Chat room [" << *conferenceAddress
-					        << "] has media capabilities, therefore will be create only if a client wants to join it";
-					    continue;
+					shared_ptr<Participant> me;
+					list<shared_ptr<Participant>> participants;
+					try {
+						participants = allChatRoomParticipants.at(dbChatRoomId);
+						const auto meIt = std::find_if(participants.begin(), participants.end(),
+						                               [&localAddress](const auto &participant) {
+							                               return (participant->getAddress()->weakEqual(*localAddress));
+						                               });
+						if (meIt != participants.end()) {
+							me = *meIt;
+							participants.erase(meIt);
+						}
+					} catch (std::out_of_range &) {
+						if (!confInfo) {
+							lInfo() << "Deleting chatroom with database ID set to " << dbChatRoomId
+							        << " because it has no participants";
+							d->deleteChatRoom(dbChatRoomId);
+							continue;
+						}
 					}
-					*/
-					params->enableAudio(audio);
-					params->enableVideo(video);
-					params->setDescription(confInfo->getDescription());
-					const auto startTime = confInfo->getDateTime();
-					params->setStartTime(startTime);
-					const auto duration = confInfo->getDuration();
-					if ((startTime >= 0) && (duration > 0)) {
-						// The duration of the conference is stored in minutes in the conference information
-						params->setEndTime(startTime + duration * 60);
-					}
-					params->setEarlierJoiningTime(confInfo->getEarlierJoiningTime());
-					params->setExpiryTime(confInfo->getExpiryTime());
-				}
 
-				std::shared_ptr<Conference> conference = nullptr;
-				if (serverMode) {
-					params->enableLocalParticipant(false);
-					conference = (new ServerConference(core, nullptr, params))->toSharedPtr();
-					conference->initFromDb(nullptr, conferenceId, lastNotifyId, false);
-					chatRoom = conference->getChatRoom();
-					conference->setState(ConferenceInterface::State::Created);
-					if (me) {
-						lInfo() << "Deleting me participant " << *me->getAddress()
-						        << " from the list of participants of " << *conference
-						        << " as a server chat room is not expected to have it.";
-						deleteChatRoomParticipant(chatRoom, me->getAddress());
-					}
-				} else {
-					if (!me) {
-						lError() << "Unable to find me (" << *localAddress << ") in: " << conferenceId;
-						continue;
-					}
-					bool hasBeenLeft = !!chatRoomRow.get<int>(8, 0);
-					conference = (new ClientConference(core, nullptr, params))->toSharedPtr();
-					conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
-					chatRoom = conference->getChatRoom();
-					updateFlags = confInfo && !hasBeenLeft;
-					if (hasBeenLeft) {
-						conference->setState(ConferenceInterface::State::Terminated);
-					} else {
+					std::shared_ptr<Conference> conference = nullptr;
+					if (serverMode) {
+						params->enableLocalParticipant(false);
+						conference = (new ServerConference(core, nullptr, params))->toSharedPtr();
+						conference->initFromDb(nullptr, conferenceId, lastNotifyId, false);
+						chatRoom = conference->getChatRoom();
 						conference->setState(ConferenceInterface::State::Created);
-					}
-					if (!params->isGroup()) {
-						auto conferenceIdParams = core->createConferenceIdParams();
-						conferenceIdParams.enableExtractUri(false);
-						// TODO: load previous IDs if any
-						static const string query =
-						    "SELECT sip_address.value FROM one_to_one_chat_room_previous_conference_id, sip_address"
-						    " WHERE chat_room_id = :chatRoomId"
-						    " AND sip_address_id = sip_address.id";
-						soci::rowset<soci::row> previousIdRows = (session->prepare << query, soci::use(dbChatRoomId));
-						for (const auto &previousIdRow : previousIdRows) {
-							ConferenceId previousId = ConferenceId(Address::create(previousIdRow.get<string>(0), true),
-							                                       localAddress, conferenceIdParams);
-							if (previousId != conferenceId) {
-								lInfo() << "Keeping around previous chat room ID [" << previousId
-								        << "] in case BYE is received for exhumed chat room " << *conference << " ["
-								        << conferenceId << "]";
-								auto clientChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
-								clientChatRoom->addConferenceIdToPreviousList(previousId);
+						if (me) {
+							lInfo() << "Deleting me participant " << *me->getAddress()
+							        << " from the list of participants of " << *conference
+							        << " as a server chat room is not expected to have it.";
+							deleteChatRoomParticipant(chatRoom, me->getAddress());
+						}
+					} else {
+						if (!me) {
+							lError() << "Unable to find me (" << *localAddress << ") in: " << conferenceId;
+							continue;
+						}
+						bool hasBeenLeft = !!chatRoomRow.get<int>(8, 0);
+						conference = (new ClientConference(core, nullptr, params))->toSharedPtr();
+						conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
+						chatRoom = conference->getChatRoom();
+						updateFlags = confInfo && !hasBeenLeft;
+						if (hasBeenLeft) {
+							conference->setState(ConferenceInterface::State::Terminated);
+						} else {
+							conference->setState(ConferenceInterface::State::Created);
+						}
+						if (!params->isGroup()) {
+							auto conferenceIdParams = core->createConferenceIdParams();
+							conferenceIdParams.enableExtractUri(false);
+							// TODO: load previous IDs if any
+							static const string query =
+							    "SELECT sip_address.value FROM one_to_one_chat_room_previous_conference_id, sip_address"
+							    " WHERE chat_room_id = :chatRoomId"
+							    " AND sip_address_id = sip_address.id";
+							soci::rowset<soci::row> previousIdRows =
+							    (session->prepare << query, soci::use(dbChatRoomId));
+							for (const auto &previousIdRow : previousIdRows) {
+								ConferenceId previousId =
+								    ConferenceId(Address::create(previousIdRow.get<string>(0), true), localAddress,
+								                 conferenceIdParams);
+								if (previousId != conferenceId) {
+									lInfo() << "Keeping around previous chat room ID [" << previousId
+									        << "] in case BYE is received for exhumed chat room " << *conference << " ["
+									        << conferenceId << "]";
+									auto clientChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
+									clientChatRoom->addConferenceIdToPreviousList(previousId);
+								}
 							}
 						}
 					}
-				}
-				for (auto participant : participants) {
-					participant->setConference(conference);
+
+					std::list<std::shared_ptr<Participant>> invitedParticipants;
+					// Only chatrooms with media capabilities are associated to a conference information
 					if (confInfo) {
-						const auto confInfoParticipant = confInfo->findParticipant(participant->getAddress());
-						if (confInfoParticipant) {
-							participant->setRole(confInfoParticipant->getRole());
-							participant->setSequenceNumber(confInfoParticipant->getSequenceNumber());
+						for (const auto &participantInfo : confInfo->getParticipants()) {
+							auto participant = Participant::create(participantInfo->getAddress());
+							participant->setRole(participantInfo->getRole());
+							participant->setSequenceNumber(participantInfo->getSequenceNumber());
+							invitedParticipants.push_back(participant);
 						}
+						conference->setOrganizer(confInfo->getOrganizerAddress());
+					} else {
+						for (auto participant : participants) {
+							participant->setConference(conference);
+						}
+						conference->setParticipants(std::move(participants));
+						invitedParticipants = conference->getParticipants();
 					}
-				}
-				if (!conference->supportsMedia()) {
-					conference->setParticipants(std::move(participants));
-				}
-
-				std::list<std::shared_ptr<Participant>> invitedParticipants;
-				if (confInfo) {
-					for (const auto &participantInfo : confInfo->getParticipants()) {
-						auto participant = Participant::create(participantInfo->getAddress());
-						participant->setRole(participantInfo->getRole());
-						participant->setSequenceNumber(participantInfo->getSequenceNumber());
-						invitedParticipants.push_back(participant);
-					}
-				} else {
-					invitedParticipants = conference->getParticipants();
-				}
-				conference->setInvitedParticipants(invitedParticipants);
-
-				if (confInfo) {
-					conference->setOrganizer(confInfo->getOrganizerAddress());
-				}
+					conference->setInvitedParticipants(invitedParticipants);
 #else
-				lWarning() << "Advanced IM such as group chat is disabled!";
+					lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
-			} else {
-				lError() << "Unable to retrieve chat room from database because its type is neither Basic nor "
-				            "Conference";
-			}
+				} else {
+					lError() << "Unable to retrieve chat room from database because its type is neither Basic nor "
+					            "Conference";
+				}
 
-			if (!chatRoom) continue; // Not fetched.
+				if (!chatRoom) continue; // Not fetched.
 
-			chatRoom->setCreationTime(creationTime);
-			chatRoom->setLastUpdateTime(lastUpdateTime);
-			chatRoom->setIsEmpty(lastMessageId == 0);
-			chatRoom->setIsMuted(muted, false);
+				chatRoom->setCreationTime(creationTime);
+				chatRoom->setLastUpdateTime(lastUpdateTime);
+				chatRoom->setIsEmpty(lastMessageId == 0);
+				chatRoom->setIsMuted(muted, false);
 
-			int unreadMessagesCount = 0;
-			if (unreadMessageCountType == soci::dt_string)
-				unreadMessagesCount = std::stoi(chatRoomRow.get<string>(12, "0"));
-			else unreadMessagesCount = chatRoomRow.get<int>(12, 0);
+				int unreadMessagesCount = 0;
+				if (unreadMessageCountType == soci::dt_string)
+					unreadMessagesCount = std::stoi(chatRoomRow.get<string>(12, "0"));
+				else unreadMessagesCount = chatRoomRow.get<int>(12, 0);
 
-			lDebug() << "Found chat room in DB: " << conferenceId;
+				lDebug() << "Found chat room in DB: " << conferenceId;
 
-			if (addChatroomToList(chatRoomsMap, chatRoom, dbChatRoomId, unreadMessagesCount)) {
-				ChatRoomContext context(chatRoom, dbChatRoomId, conferenceIdChanged, updateFlags);
-				chatRoomsMap.insert_or_assign(conferenceId, context);
+				if (addChatroomToList(chatRoomsMap, chatRoom, dbChatRoomId, unreadMessagesCount, offset)) {
+					ChatRoomContext context(chatRoom, dbChatRoomId, conferenceIdChanged, updateFlags);
+					chatRoomsMap.insert_or_assign(conferenceId, context);
+				}
 			}
 		}
 
+		std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
 		for (const auto &[conferenceId, context] : chatRoomsMap) {
-			const auto &chatRoom = context.sChatRoom;
-			const auto &dbId = context.sDbId;
 			const auto &conferenceIdChanged = context.sConferenceIdChanged;
 			const auto &updateFlags = context.sUpdateFlags;
+			const auto &chatRoom = context.sChatRoom;
+			chatRooms.push_back(chatRoom);
 			if (updateFlags || conferenceIdChanged) {
+				const auto &dbId = context.sDbId;
 				std::string query("UPDATE chat_room SET ");
 				if (conferenceIdChanged) {
 					// If the conference ID changed, then update the information in the database so that the next time
@@ -6640,8 +6698,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					lInfo() << "Change peer and local address of chatroom [" << chatRoom << "] with ID " << dbId << ":";
 					lInfo() << "- peer: " << *peerAddress;
 					lInfo() << "- local: " << *localAddress;
-					// lInfo() << "- peer: " << oldPAddress << " -> " << *peerAddress;
-					// lInfo() << "- local: " << oldLAddress << " -> " << *localAddress;
 					const long long &peerSipAddressId = d->insertSipAddress(peerAddress);
 					const long long &localSipAddressId = d->insertSipAddress(localAddress);
 					query += "peer_sip_address_id = " + Utils::toString(peerSipAddressId) +
@@ -6666,16 +6722,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 		}
 
 		tr.commit();
-
-		std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
-		for (const auto &[conferenceId, context] : chatRoomsMap) {
-			const auto &chatRoom = context.sChatRoom;
-			chatRooms.push_back(chatRoom);
-			const auto &conference = chatRoom->getConference();
-			if (conference) {
-				core->insertConference(conference);
-			}
-		}
 		return chatRooms;
 	};
 #else
@@ -6752,7 +6798,7 @@ void MainDb::deleteChatRoom(const ConferenceId &conferenceId) {
 #endif
 }
 
-void MainDb::updateChatRoomConferenceId(const ConferenceId oldConferenceId, const ConferenceId &newConferenceId) {
+void MainDb::updateChatRoomConferenceId(const ConferenceId &oldConferenceId, const ConferenceId &newConferenceId) {
 #ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
@@ -6956,47 +7002,46 @@ void MainDb::updateChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 // - join 2 requests into 1
 // - make search from a vector of chat room ids and do only one request.
 list<shared_ptr<Participant>> MainDb::selectChatRoomParticipants(const long long chatRoomId) const {
-	list<long long> ids;
+	vector<long long> ids;
 	ids.push_back(chatRoomId);
 	auto participants = MainDb::selectChatRoomParticipants(ids);
 	return participants.size() > 0 ? participants.begin()->second : list<shared_ptr<Participant>>();
 }
 
 map<long long, list<shared_ptr<Participant>>>
-MainDb::selectChatRoomParticipants(const list<long long> &chatRoomIds) const {
+MainDb::selectChatRoomParticipants(const vector<long long> &chatRoomIds) const {
 	map<long long, list<shared_ptr<Participant>>> allParticipants;
 	map<long long, list<long long>> allParticipantsIds;
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	if (isInitialized() && chatRoomIds.size() > 0) {
-		ostringstream chatRoomIdsStr, participantIdsStr;
-		bool first = true;
-		for (const auto &id : chatRoomIds) {
-			if (first) {
-				chatRoomIdsStr << id;
-				first = false;
-			} else chatRoomIdsStr << "," << id;
-		}
+		const auto chatRoomIdsStr = Utils::join(chatRoomIds, ",");
 		soci::session *session = d->dbSession.getBackendSession();
 		const string participantQuery =
-		    "SELECT chat_room_participant.id, sip_address.value, is_admin, chat_room.id FROM sip_address, chat_room, "
-		    "chat_room_participant WHERE chat_room.id IN(" +
-		    chatRoomIdsStr.str() +
-		    ") AND sip_address.id = "
-		    "chat_room_participant.participant_sip_address_id AND chat_room_participant.chat_room_id = "
-		    "chat_room.id";
+		    "SELECT chat_room_participant.id, sip_address.value, is_admin, chat_room.id, sip_address.id FROM "
+		    "sip_address, chat_room, chat_room_participant WHERE chat_room.id IN (" +
+		    chatRoomIdsStr +
+		    ") AND sip_address.id = chat_room_participant.participant_sip_address_id AND "
+		    "chat_room_participant.chat_room_id = chat_room.id ORDER BY sip_address.id";
 
 		// Fetch participants.
 		const soci::rowset<soci::row> participantRows = (session->prepare << participantQuery);
-		first = true;
+		bool first = true;
 		long long lastId = -1;
 		list<shared_ptr<Participant>> *lastParticipant = nullptr;
 		list<long long> *lastParticipantId = nullptr;
+		long long cachedParticipantAddressId = -1;
+		ostringstream participantIdsStr;
+		std::shared_ptr<Address> cachedParticipantAddress;
 		for (const auto &participantRow : participantRows) {
 			const long long &participantId = d->dbSession.resolveId(participantRow, 0);
 			const long long &chatRoomId = d->dbSession.resolveId(participantRow, 3);
-			shared_ptr<Participant> participant =
-			    Participant::create(Address::create(participantRow.get<string>(1), true));
+			const long long &addressId = d->dbSession.resolveId(participantRow, 4);
+			if (cachedParticipantAddressId != addressId) {
+				cachedParticipantAddressId = addressId;
+				cachedParticipantAddress = Address::create(participantRow.get<string>(1), true);
+			}
+			shared_ptr<Participant> participant = Participant::create(cachedParticipantAddress);
 			participant->setAdmin(!!participantRow.get<int>(2));
 			if (lastId != chatRoomId) {
 				lastId = chatRoomId;
@@ -7014,16 +7059,21 @@ MainDb::selectChatRoomParticipants(const list<long long> &chatRoomIds) const {
 		if (!first) {
 			// Fetch devices.
 			string deviceQuery =
-			    "SELECT sip_address.value, state, name, joining_time, joining_method, chat_room_participant_id FROM "
-			    "chat_room_participant_device, sip_address WHERE chat_room_participant_id IN( " +
+			    "SELECT sip_address.value, state, name, joining_time, joining_method, chat_room_participant_id, "
+			    "sip_address.id FROM chat_room_participant_device, sip_address WHERE chat_room_participant_id IN ( " +
 			    participantIdsStr.str() +
-			    " ) AND "
-			    "participant_device_sip_address_id = sip_address.id";
-			// const soci::rowset<soci::row> deviceRows = (session->prepare << deviceQuery, soci::use(participantIds));
+			    " ) AND participant_device_sip_address_id = sip_address.id ORDER BY sip_address.id";
 			const soci::rowset<soci::row> deviceRows = (session->prepare << deviceQuery);
+			long long cachedDeviceAddressId = -1;
+			std::shared_ptr<Address> cachedDeviceAddress;
 			for (const auto &deviceRow : deviceRows) {
 				const long long &participantId = d->dbSession.resolveId(deviceRow, 5);
-				auto sipAddress = deviceRow.get<string>(0);
+				const long long &addressId = d->dbSession.resolveId(deviceRow, 6);
+				if (cachedDeviceAddressId != addressId) {
+					cachedDeviceAddressId = addressId;
+					cachedDeviceAddress = Address::create(deviceRow.get<string>(0), true);
+				}
+
 				auto state = deviceRow.get<int>(1, 0);
 				auto name = deviceRow.get<string>(2, "");
 				const time_t joiningTime = d->dbSession.getTime(deviceRow, 3);
@@ -7031,7 +7081,6 @@ MainDb::selectChatRoomParticipants(const list<long long> &chatRoomIds) const {
 				auto allParticipantsIdsIt = allParticipantsIds.begin();
 				for (auto participants = allParticipants.begin(); participants != allParticipants.end();
 				     ++participants, ++allParticipantsIdsIt) {
-					// auto &allParticipantsIdsIt = allParticipantsIds[participants->first];
 					auto participantPos =
 					    std::find_if(allParticipantsIdsIt->second.begin(), allParticipantsIdsIt->second.end(),
 					                 [participantId](const long long &id) { return id == participantId; });
@@ -7039,8 +7088,7 @@ MainDb::selectChatRoomParticipants(const list<long long> &chatRoomIds) const {
 						auto participantIt = participants->second.begin();
 						advance(participantIt, distance(allParticipantsIdsIt->second.begin(), participantPos));
 						const auto participant = *participantIt;
-						shared_ptr<ParticipantDevice> device =
-						    participant->addDevice(Address::create(sipAddress, true), name);
+						shared_ptr<ParticipantDevice> device = participant->addDevice(cachedDeviceAddress, name);
 						device->setState(ParticipantDevice::State(static_cast<unsigned int>(state)), false);
 						device->setJoiningMethod(
 						    ParticipantDevice::JoiningMethod(static_cast<unsigned int>(joiningMethod)));

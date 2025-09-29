@@ -21,6 +21,8 @@
 #ifndef _PRIVATE_STRUCTS_H_
 #define _PRIVATE_STRUCTS_H_
 
+#include <memory>
+
 #include <bctoolbox/map.h>
 
 #ifdef HAVE_XML2
@@ -549,5 +551,29 @@ class Core;
 	bool_t auto_iterate_enabled;                                                                                       \
 	bool_t native_ringing_enabled;                                                                                     \
 	bool_t vibrate_on_incoming_call;
+
+template <typename T>
+struct WeakPtrCompare {
+	bool operator() (const std::weak_ptr<T> &lhs, const std::weak_ptr<T> &rhs)const {
+		auto lptr = lhs.lock();
+		auto rptr = rhs.lock();
+
+		// FALSE if the rhs is expired
+		if (!rptr) return false;
+
+		// TRUE if the lhs is expired
+		if (!lptr) return true;
+		return (intptr_t)lptr.get() < (intptr_t)rptr.get();
+	}
+};
+
+template <typename T>
+struct SharedPtrCompare {
+	bool operator() (const std::shared_ptr<T> &lhs, const std::shared_ptr<T> &rhs)const {
+		if (!rhs) return false;
+		if (!lhs) return true;
+		return (intptr_t)lhs.get() < (intptr_t)rhs.get();
+	}
+};
 
 #endif /* _PRIVATE_STRUCTS_H_ */

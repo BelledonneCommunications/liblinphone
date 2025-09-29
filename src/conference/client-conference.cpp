@@ -95,7 +95,7 @@ std::pair<bool, std::shared_ptr<Address>> ClientConference::configure(SalCallOp 
 }
 
 void ClientConference::initFromDb(const std::shared_ptr<Participant> &me,
-                                  const ConferenceId conferenceId,
+                                  const ConferenceId &conferenceId,
                                   const unsigned int lastNotifyId,
                                   bool hasBeenLeft) {
 	const auto &conferenceAddress = mConfParams->getConferenceAddress();

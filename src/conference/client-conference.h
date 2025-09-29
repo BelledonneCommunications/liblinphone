@@ -44,7 +44,7 @@ public:
 	virtual ~ClientConference();
 
 	virtual void initFromDb(const std::shared_ptr<Participant> &me,
-	                        const ConferenceId conferenceId,
+	                        const ConferenceId &conferenceId,
 	                        const unsigned int lastNotifyId,
 	                        bool hasBeenLeft) override;
 	void initWithFocus(const std::shared_ptr<const Address> &focusAddr,

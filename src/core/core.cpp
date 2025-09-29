@@ -248,21 +248,19 @@ void CorePrivate::init() {
 #endif
 }
 
-bool CorePrivate::listenerAlreadyRegistered(CoreListener *listener) const {
-	return (std::find(listeners.cbegin(), listeners.cend(), listener) != listeners.cend());
-}
-
 void CorePrivate::registerListener(CoreListener *listener) {
 	if (!listener) {
 		lError() << __func__ << " : Ignoring attempt to register a null listener";
 		return;
 	}
-	if (listenerAlreadyRegistered(listener)) return;
-	listeners.push_back(listener);
+
+	listeners.insert(listener);
 }
 
 void CorePrivate::unregisterListener(CoreListener *listener) {
-	listeners.remove(listener);
+	if (auto it = listeners.find(listener); it != listeners.end()) {
+		listeners.erase(it);
+	}
 }
 
 void CorePrivate::writeNatPolicyConfigurations() {
@@ -499,8 +497,8 @@ void CorePrivate::uninit() {
 
 	for (const auto &[id, conference] : mConferenceById) {
 		// Terminate audio video conferences just before core is stopped
-		lInfo() << "Terminating conference " << *conference << " with id " << id
-		        << " because the core is shutting down";
+		lDebug() << "Terminating conference " << *conference << " with id " << id
+		         << " because the core is shutting down";
 		conference->terminate();
 	}
 	mConferenceById.clear();
@@ -2230,7 +2228,11 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 		L_ASSERT(conf == nullptr || conf == conference);
 	}
 	if ((conf == nullptr) || (conf != conference)) {
-		lInfo() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
+		if (isStartup) {
+			lDebug() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
+		} else {
+			lInfo() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
+		}
 		d->mConferenceById.insert_or_assign(conferenceId, conference);
 	}
 }

@@ -1121,6 +1121,21 @@ LINPHONE_PUBLIC void linphone_conference_params_set_end_time(LinphoneConferenceP
  */
 LINPHONE_PUBLIC time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params);
 
+/**
+ * Returns how many chat rooms are loaded in one go from the database when starting up the core
+ * @param core #LinphoneCore object @notnil
+ * @return the chunk size of chat room database loading
+ **/
+LINPHONE_PUBLIC int linphone_core_get_chat_room_load_chunk_size(const LinphoneCore *core);
+
+/**
+ * It sets the chunk size of the chat room database loading
+ * @param core #LinphoneCore object @notnil
+ * @param size the chunk size. A 0 or negative number will retrieve all chat room in one SQL query.
+ * @warning this property should be configured according to the specification of the machine.
+ **/
+LINPHONE_PUBLIC void linphone_core_set_chat_room_load_chunk_size(LinphoneCore *core, int size);
+
 #ifdef __cplusplus
 }
 #endif

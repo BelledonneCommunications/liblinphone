@@ -182,22 +182,6 @@ string DbSession::timestampType() const {
 	return "";
 }
 
-string DbSession::noLimitValue() const {
-	L_D();
-
-	switch (d->backend) {
-		case DbSessionPrivate::Backend::Mysql:
-			return "9999999999999999999";
-		case DbSessionPrivate::Backend::Sqlite3:
-			return "-1";
-		case DbSessionPrivate::Backend::None:
-			return "";
-	}
-
-	L_ASSERT(false);
-	return "";
-}
-
 long long DbSession::getLastInsertId() const {
 	long long id = 0;
 

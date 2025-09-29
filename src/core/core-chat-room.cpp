@@ -404,16 +404,25 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::shared_ptr<A
 }
 
 void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
+	L_Q();
 	L_ASSERT(chatRoom);
+	const auto &chatRoomParams = chatRoom->getCurrentParams();
+	// We are looking for a one to one chatroom which isn't basic
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
-	auto it = mChatRoomsById.find(conferenceId);
-	L_ASSERT(it == mChatRoomsById.end() || it->second == chatRoom);
-	if (it == mChatRoomsById.end()) {
-		// Remove chat room from workaround cache.
-		if (linphone_core_get_global_state(getCCore()) != LinphoneGlobalStartup) {
-			lInfo() << "Insert chat room " << chatRoom << " (id " << conferenceId << ") to core map";
+	if (chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::Basic) {
+		auto it = mChatRoomsById.find(conferenceId);
+		L_ASSERT(it == mChatRoomsById.end() || it->second == chatRoom);
+		bool addChatRoom = (it == mChatRoomsById.end());
+		if (addChatRoom) {
+			// Remove chat room from workaround cache.
+			if (linphone_core_get_global_state(getCCore()) != LinphoneGlobalStartup) {
+				lInfo() << "Insert chat room " << chatRoom << " (id " << conferenceId << ") to core map";
+			}
+			mChatRoomsById[conferenceId] = chatRoom;
 		}
-		mChatRoomsById[conferenceId] = chatRoom;
+	} else {
+		const auto &conference = chatRoom->getConference();
+		q->insertConference(conference);
 	}
 }
 
@@ -426,6 +435,7 @@ void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatR
 }
 
 void CorePrivate::loadChatRooms() {
+	L_Q();
 	mChatRoomsById.clear();
 #ifdef HAVE_ADVANCED_IM
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
@@ -434,36 +444,40 @@ void CorePrivate::loadChatRooms() {
 	lInfo() << "Beginning loadChatRooms";
 	std::set<Address, Address::WeakLess> friendAddresses;
 	std::list<pair<shared_ptr<Address>, string>> deviceAddressesAndNames;
+	LinphoneCore *cCore = getCCore();
+	const auto isServer = !!linphone_core_conference_server_enabled(cCore);
+	// Empirical tests show that a read chunk size equal to 100 allows servers to get the best performances.
+	// For applications, the core will read all chatroom informations from the database in one go as their number is
+	// small
+	auto read_chunk_size = (isServer) ? 100 : -1;
+	linphone_core_set_chat_room_load_chunk_size(q->getCCore(), read_chunk_size);
 	for (auto &chatRoom : mainDb->getChatRooms()) {
-		const auto &chatRoomParams = chatRoom->getCurrentParams();
-		// We are looking for a one to one chatroom which isn't basic
-		if (chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::Basic) {
-			insertChatRoom(chatRoom);
-		} else {
-			const auto &conference = chatRoom->getConference();
-			const ConferenceId &conferenceId = conference->getConferenceId();
-			mConferenceById.insert(std::make_pair(conferenceId, conference));
-		}
-
-		// TODO FIXME: Remove later when devices for friends will be notified through presence
-
-		for (const auto &p : chatRoom->getParticipants()) {
-			const auto &pAddress = p->getAddress();
-			auto [it, success] = friendAddresses.insert(*pAddress);
-			if (success) {
-				for (const auto &d : p->getDevices()) {
-					auto gruu = d->getAddress();
-					auto &name = d->getName();
-					deviceAddressesAndNames.push_back(make_pair(gruu, name));
-					// lDebug() << "[Friend] Inserting existing device of participant [" << *pAddress << "] with name ["
-					//          << name << "] and address [" << *gruu << "]";
+		insertChatRoom(chatRoom);
+		if (!isServer) {
+			// TODO FIXME: Remove later when devices for friends will be notified through presence
+			for (const auto &p : chatRoom->getParticipants()) {
+				const auto &pAddress = p->getAddress();
+				auto [it, success] = friendAddresses.insert(*pAddress);
+				if (success) {
+					for (const auto &d : p->getDevices()) {
+						auto gruu = d->getAddress();
+						auto &name = d->getName();
+						deviceAddressesAndNames.push_back(make_pair(gruu, name));
+						// lDebug() << "[Friend] Inserting existing device of participant [" << *pAddress << "] with
+						// name ["
+						//          << name << "] and address [" << *gruu << "]";
+					}
 				}
 			}
 		}
 	}
-	mainDb->insertDevices(deviceAddressesAndNames);
 	lInfo() << "End loadChatRooms";
-	sendDeliveryNotifications();
+	if (!isServer) {
+		if (!deviceAddressesAndNames.empty()) {
+			mainDb->insertDevices(deviceAddressesAndNames);
+		}
+		sendDeliveryNotifications();
+	}
 }
 
 void CorePrivate::handleEphemeralMessages(time_t currentTime) {
@@ -597,7 +611,7 @@ CorePrivate::findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &local
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 shared_ptr<AbstractChatRoom>
-CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const {
+CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId &conferenceId) const {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 	for (const auto &chatRoom : q->getRawChatRoomList(false, true)) {
@@ -623,7 +637,7 @@ CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId confe
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void CorePrivate::updateChatRoomConferenceId(const shared_ptr<AbstractChatRoom> &chatRoom,
-                                             ConferenceId oldConferenceId) {
+                                             const ConferenceId &oldConferenceId) {
 #ifdef HAVE_ADVANCED_IM
 	const ConferenceId &newConferenceId = chatRoom->getConferenceId();
 	lInfo() << "Chat room [" << oldConferenceId << "] has been exhumed into [" << newConferenceId << "]";

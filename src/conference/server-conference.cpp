@@ -77,7 +77,7 @@ ServerConference::~ServerConference() {
 }
 
 void ServerConference::initFromDb(const std::shared_ptr<Participant> &me,
-                                  const ConferenceId conferenceId,
+                                  const ConferenceId &conferenceId,
                                   const unsigned int lastNotifyId,
                                   BCTBX_UNUSED(bool hasBeenLeft)) {
 	if (me) {

@@ -344,8 +344,14 @@ int Participant::getSequenceNumber() const {
 };
 
 void Participant::setRole(Participant::Role role) {
-	lInfo() << "Changing role of " << *this << " from " << Participant::roleToText(mRole) << " to "
-	        << Participant::roleToText(role);
+	const auto core = getCore();
+	if (!core || (linphone_core_get_global_state(core->getCCore()) == LinphoneGlobalStartup)) {
+		lDebug() << "Changing role of " << *this << " from " << Participant::roleToText(mRole) << " to "
+		         << Participant::roleToText(role);
+	} else {
+		lInfo() << "Changing role of " << *this << " from " << Participant::roleToText(mRole) << " to "
+		        << Participant::roleToText(role);
+	}
 	mRole = role;
 }
 

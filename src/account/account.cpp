@@ -150,9 +150,8 @@ LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses(const s
 
 LinphoneAccountAddressComparisonResult Account::isServerConfigChanged(std::shared_ptr<AccountParams> oldParams,
                                                                       std::shared_ptr<AccountParams> newParams) {
-	std::shared_ptr<Address> oldProxy =
-	    oldParams != nullptr && !oldParams->mProxy.empty() ? Address::create(oldParams->mProxy) : nullptr;
-	std::shared_ptr<Address> newProxy = !newParams->mProxy.empty() ? Address::create(newParams->mProxy) : nullptr;
+	std::shared_ptr<Address> oldProxy = oldParams ? oldParams->mProxyAddress : nullptr;
+	std::shared_ptr<Address> newProxy = newParams ? newParams->mProxyAddress : nullptr;
 	LinphoneAccountAddressComparisonResult result_identity;
 	LinphoneAccountAddressComparisonResult result;
 
@@ -612,7 +611,7 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 		// In case of dependent account, force contact of 'master' account, but only after a successful register
 		return mDependency->mContactAddress;
 	}
-	std::shared_ptr<Address> proxy = Address::create(mParams->mProxy);
+	std::shared_ptr<Address> proxy = mParams->mProxyAddress;
 	if (!proxy) return nullptr;
 	const auto host = proxy->getDomain();
 	if (!host.empty()) {

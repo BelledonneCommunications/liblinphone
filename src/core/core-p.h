@@ -59,7 +59,6 @@ public:
 	};
 	CorePrivate();
 	void init();
-	bool listenerAlreadyRegistered(CoreListener *listener) const;
 	void registerListener(CoreListener *listener);
 	void unregisterListener(CoreListener *listener);
 	void uninit();
@@ -150,11 +149,13 @@ public:
 	std::shared_ptr<const Address>
 	getIdentityAddressWithGruu(const std::shared_ptr<const Address> &identityAddress) const;
 
-	void updateChatRoomConferenceId(const std::shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId newConferenceId);
+	void updateChatRoomConferenceId(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                                const ConferenceId &newConferenceId);
 	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &localAddress,
 	                                                                const std::shared_ptr<Address> &participantAddress,
 	                                                                bool encrypted) const;
-	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
+	std::shared_ptr<AbstractChatRoom>
+	findExumedChatRoomFromPreviousConferenceId(const ConferenceId &conferenceId) const;
 
 	void stopChatMessagesAggregationTimer();
 	void deleteConferenceInfo(const std::shared_ptr<Address> &conferenceAddress);
@@ -198,7 +199,7 @@ private:
 	bool isInBackground = false;
 	static int ephemeralMessageTimerExpired(void *data, unsigned int revents);
 
-	std::list<CoreListener *> listeners;
+	std::set<CoreListener *> listeners;
 
 	// This list holds the last reference to a Call object after it reaches the End state. In fact a call is a listener
 	// of the CallSession object which doesn't hold a strong reference to it

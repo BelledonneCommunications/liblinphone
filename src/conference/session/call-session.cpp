@@ -1398,22 +1398,14 @@ CallSession::~CallSession() {
 void CallSession::addListener(std::shared_ptr<CallSessionListener> listener) {
 	L_D();
 	if (listener) {
-		// Avoid adding twice the same listener
-		// This should never happen but just in case....
-		const auto it = std::find_if(d->listeners.cbegin(), d->listeners.cend(),
-		                             [&listener](const auto &l) { return l.lock() == listener; });
-		if (it == d->listeners.cend()) {
-			d->listeners.push_back(listener);
-		}
+		d->listeners.insert(listener);
 	}
 }
 
 void CallSession::removeListener(const std::shared_ptr<CallSessionListener> &listener) {
 	L_D();
 	if (listener) {
-		const auto it = std::find_if(d->listeners.cbegin(), d->listeners.cend(),
-		                             [&listener](const auto &l) { return l.lock() == listener; });
-		if (it != d->listeners.cend()) {
+		if (auto it = d->listeners.find(listener); it != d->listeners.end()) {
 			d->listeners.erase(it);
 		}
 	}

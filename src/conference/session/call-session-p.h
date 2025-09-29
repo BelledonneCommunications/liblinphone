@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <queue>
+#include <set>
 
 #include "object/object-p.h"
 
@@ -126,7 +127,7 @@ public:
 	void updateToFromAssertedIdentity();
 
 protected:
-	std::list<std::weak_ptr<CallSessionListener>> listeners;
+	std::set<std::weak_ptr<CallSessionListener>, WeakPtrCompare<CallSessionListener>> listeners;
 	CallSessionParams *params = nullptr;
 	mutable CallSessionParams *currentParams = nullptr;
 	mutable CallSessionParams *remoteParams = nullptr;

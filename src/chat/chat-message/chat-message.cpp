@@ -381,12 +381,12 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 	_linphone_chat_message_notify_msg_state_changed(msg, (LinphoneChatMessageState)state);
 
-	auto listenersCopy = listeners; // To allow listener to be removed while iterating
+	auto listenersCopy = mListeners; // To allow listener to be removed while iterating
 	for (auto &listener : listenersCopy) {
 		listener->onChatMessageStateChanged(q->getSharedFromThis(), state);
 	}
 	if (state == ChatMessage::State::Displayed) {
-		listeners.clear();
+		mListeners.clear();
 	}
 
 	// 3. Specific case, upon reception do not attempt to store in db before asking the user if he wants to do so or not
@@ -2208,12 +2208,16 @@ void ChatMessage::fileUploadEndBackgroundTask() {
 
 void ChatMessage::addListener(shared_ptr<ChatMessageListener> listener) {
 	L_D();
-	d->listeners.push_back(listener);
+	if (listener) {
+		d->mListeners.insert(listener);
+	}
 }
 
 void ChatMessage::removeListener(shared_ptr<ChatMessageListener> listener) {
 	L_D();
-	d->listeners.remove(listener);
+	if (auto it = d->mListeners.find(listener); it != d->mListeners.end()) {
+		d->mListeners.erase(it);
+	}
 }
 
 belle_sip_source_t *ChatMessage::getResendTimer() const {

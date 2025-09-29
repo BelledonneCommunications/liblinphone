@@ -21,6 +21,8 @@
 #ifndef _L_CHAT_MESSAGE_P_H_
 #define _L_CHAT_MESSAGE_P_H_
 
+#include <set>
+
 #include <belle-sip/types.h>
 
 #include "chat/chat-message/chat-message.h"
@@ -32,6 +34,7 @@
 #include "content/file-transfer-content.h"
 #include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
+#include "private_structs.h"
 #include "sal/sal.h"
 
 // =============================================================================
@@ -332,7 +335,7 @@ private:
 	mutable bool contentsNotLoadedFromDatabase = false;
 	bool isInAggregationQueue = false;
 
-	std::list<std::shared_ptr<ChatMessageListener>> listeners;
+	std::set<std::shared_ptr<ChatMessageListener>, SharedPtrCompare<ChatMessageListener>> mListeners;
 
 	L_DECLARE_PUBLIC(ChatMessage);
 };

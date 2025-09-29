@@ -216,17 +216,15 @@ void ServerConferenceListEventHandler::addHandler(std::shared_ptr<ServerConferen
 	if (!id.isValid()) {
 		// Do not add the evetn handler if the conference ID is not valid as it might be changed later on and therefore
 		// the core ends up in a scenario where 2 entries point to the same handler
-		lError() << "The conference " << conf << " associated to handler " << handler
-		         << " has an invalid conference id " << id;
+		lError() << *conf << " associated to handler " << handler << " has an invalid conference id " << id;
 		return;
 	}
 
-	if (findHandler(id)) {
-		lError() << "Trying to insert an already present handler in the server conference handler list: " << id;
-		return;
+	auto [it, success] = handlers.insert(std::make_pair(id, handler));
+	if (!success) {
+		lError() << "Trying to insert an already present handler  with " << id << " associated to " << *conf
+		         << " in the server conference handler list";
 	}
-
-	handlers[id] = handler;
 }
 
 void ServerConferenceListEventHandler::removeHandler(std::shared_ptr<ServerConferenceEventHandler> handler) {
@@ -259,7 +257,11 @@ ServerConferenceListEventHandler::findHandler(const ConferenceId &conferenceId) 
 		return handler;
 	} catch (const bad_weak_ptr &) {
 	} catch (const out_of_range &) {
-		lInfo() << "Unable to find handler with conference id " << conferenceId;
+		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+			lDebug() << "Unable to find handler with conference id " << conferenceId;
+		} else {
+			lInfo() << "Unable to find handler with conference id " << conferenceId;
+		}
 	}
 	return nullptr;
 }

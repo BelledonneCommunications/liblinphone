@@ -126,18 +126,14 @@ void Conference::initializeFromAccount() {
 }
 
 void Conference::removeListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-	mConfListeners.remove(listener);
+	if (auto it = mConfListeners.find(listener); it != mConfListeners.end()) {
+		mConfListeners.erase(it);
+	}
 }
 
 void Conference::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
 	if (listener) {
-		// Avoid adding twice the same listener.
-		// It may happen when a conference with chat capabilities is rejoined without restarting the core
-		const auto it = std::find_if(mConfListeners.cbegin(), mConfListeners.cend(),
-		                             [&listener](const auto &l) { return l == listener; });
-		if (it == mConfListeners.cend()) {
-			mConfListeners.push_back(listener);
-		}
+		mConfListeners.insert(listener);
 	}
 }
 
@@ -738,7 +734,11 @@ void Conference::setConferenceAddress(const std::shared_ptr<Address> &conference
 
 		mConfParams->setConferenceAddress(conferenceAddress);
 		setState(ConferenceInterface::State::CreationPending);
-		lInfo() << "Conference " << this << " has been given the address " << *mConfParams->getConferenceAddress();
+		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+			lDebug() << "Conference " << this << " has been given the address " << *mConfParams->getConferenceAddress();
+		} else {
+			lInfo() << "Conference " << this << " has been given the address " << *mConfParams->getConferenceAddress();
+		}
 	} else {
 		lDebug() << "Cannot set the conference address of the Conference in state " << state << " to "
 		         << *conferenceAddress;
@@ -1456,7 +1456,11 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 }
 
 void Conference::setOrganizer(const std::shared_ptr<Address> &organizer) const {
-	lInfo() << "Setting organizer of " << *this << " to " << *organizer;
+	if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+		lDebug() << "Setting organizer of " << *this << " to " << *organizer;
+	} else {
+		lInfo() << "Setting organizer of " << *this << " to " << *organizer;
+	}
 	mOrganizer = organizer->clone()->toSharedPtr();
 }
 

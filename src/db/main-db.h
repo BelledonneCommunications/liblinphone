@@ -215,7 +215,7 @@ public:
 	void insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	void deleteChatRoom(const ConferenceId &conferenceId);
 	void updateNotifyId(const std::shared_ptr<AbstractChatRoom> &chatRoom, const unsigned int lastNotify);
-	void updateChatRoomConferenceId(const ConferenceId oldConferenceId, const ConferenceId &newConferenceId);
+	void updateChatRoomConferenceId(const ConferenceId &oldConferenceId, const ConferenceId &newConferenceId);
 	void updateChatRoomLastUpdatedTime(const ConferenceId &conferenceId, time_t lastUpdatedTime);
 	void updateChatRoomMutedState(const ConferenceId &conferenceId, bool isMuted);
 	long long addConferenceParticipantEventToDb(const std::shared_ptr<EventLog> &eventLog,
@@ -236,7 +236,7 @@ public:
 	selectChatRoomParticipants(const std::shared_ptr<AbstractChatRoom> &chatRoom) const;
 	std::list<std::shared_ptr<Participant>> selectChatRoomParticipants(const long long chatRoomId) const;
 	std::map<long long, std::list<std::shared_ptr<Participant>>>
-	selectChatRoomParticipants(const std::list<long long> &chatRoomIds) const;
+	selectChatRoomParticipants(const std::vector<long long> &chatRoomIds) const;
 	void insertChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                               const std::shared_ptr<Participant> &participant);
 	void deleteChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
@@ -332,7 +332,8 @@ private:
 	bool addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
 	                       const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                       long long id,
-	                       int unreadMessageCount) const;
+	                       int unreadMessageCount,
+	                       long long int &offset) const;
 	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> &chatRoom1,
 	                                                 const std::shared_ptr<AbstractChatRoom> &chatRoom2,
 	                                                 long long id1,

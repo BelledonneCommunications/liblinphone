@@ -9993,3 +9993,11 @@ int linphone_core_get_message_sending_delay(const LinphoneCore *core) {
 void linphone_core_set_message_sending_delay(LinphoneCore *core, int duration) {
 	linphone_config_set_int(linphone_core_get_config(core), "misc", "delay_message_send_s", duration);
 }
+
+int linphone_core_get_chat_room_load_chunk_size(const LinphoneCore *core) {
+	return linphone_config_get_int(linphone_core_get_config(core), "chat", "chat_room_load_chunk_size", -1);
+}
+
+void linphone_core_set_chat_room_load_chunk_size(LinphoneCore *core, int size) {
+	linphone_config_set_int(linphone_core_get_config(core), "chat", "chat_room_load_chunk_size", size);
+}

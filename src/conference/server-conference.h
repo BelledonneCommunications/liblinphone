@@ -93,7 +93,7 @@ public:
 	void subscriptionStateChanged(std::shared_ptr<EventSubscribe> event, LinphoneSubscriptionState state);
 
 	virtual void initFromDb(const std::shared_ptr<Participant> &me,
-	                        const ConferenceId conferenceId,
+	                        const ConferenceId &conferenceId,
 	                        const unsigned int lastNotifyId,
 	                        bool hasBeenLeft) override;
 	virtual void init(SalCallOp *op = nullptr, ConferenceListener *confListener = nullptr) override;
