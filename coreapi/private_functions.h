@@ -226,7 +226,6 @@ void linphone_friend_list_subscription_state_changed(LinphoneCore *lc,
                                                      LinphoneSubscriptionState state);
 void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
 LinphoneEvent *linphone_friend_list_get_event(const LinphoneFriendList *list);
-int create_friend_list_from_db(void *data, int argc, char **argv, char **colName);
 
 /**
  * Removes all bodyless friend lists.
@@ -247,7 +246,6 @@ LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(Linp
                                                                             bool_t synchronize);
 void linphone_friend_list_release(LinphoneFriendList *friend_list);
 LinphoneFriendCbs *linphone_friend_cbs_new(void);
-LinphoneFriendListCbs *linphone_friend_list_cbs_new(void);
 void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
 void linphone_friend_notify_presence_received(LinphoneFriend *lf);
 

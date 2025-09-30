@@ -55,9 +55,9 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 FriendList::FriendList(std::shared_ptr<Core> core) : CoreAccessor(core) {
-	if (core) { // Will be nullptr if created from database
-		mSubscriptionsEnabled = linphone_core_is_friend_list_subscription_enabled(core->getCCore());
-	}
+	if (core == nullptr) lFatal() << "Cannot create FriendList without Core.";
+	mSubscriptionsEnabled = linphone_core_is_friend_list_subscription_enabled(core->getCCore());
+	lInfo() << "Created friend list with subscriptions " << (mSubscriptionsEnabled ? "enabled" : "disabled");
 }
 
 FriendList::~FriendList() {
@@ -168,6 +168,7 @@ LinphoneFriendListStatus FriendList::addLocalFriend(const std::shared_ptr<Friend
 
 bool FriendList::databaseStorageEnabled() const {
 	if (isSubscriptionBodyless()) return false; // Do not store list if bodyless subscription is enabled
+	if (mInhibitDbStorage) return false;
 	int storeFriends =
 	    linphone_config_get_int(getCore()->getCCore()->config, "misc", "store_friends", 1); // Legacy setting
 	return storeFriends || mStoreInDb;
@@ -192,6 +193,10 @@ void FriendList::enableDatabaseStorage(bool enable) {
 			f->saveInDb();
 		}
 	}
+}
+
+void FriendList::inhibitDatabaseStorage(bool inhibit) {
+	mInhibitDbStorage = inhibit;
 }
 
 void FriendList::enableSubscriptions(bool enabled) {

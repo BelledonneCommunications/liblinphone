@@ -88,7 +88,6 @@ public:
 	                                                              LinphoneEvent *lev,
 	                                                              LinphoneSubscriptionState state);
 	friend void ::linphone_friend_list_update_subscriptions(LinphoneFriendList *list);
-	friend int ::create_friend_list_from_db(void *data, int argc, char **argv, char **colName);
 
 	// Setters
 	void setDisplayName(const std::string &displayName);
@@ -113,7 +112,11 @@ public:
 	LinphoneFriendListStatus addFriend(const std::shared_ptr<Friend> &lf);
 	LinphoneFriendListStatus addLocalFriend(const std::shared_ptr<Friend> &lf);
 	bool databaseStorageEnabled() const;
+	/* This method enables database storage. If not enabled before, the friend list is immediately serialized to db.*/
 	void enableDatabaseStorage(bool enable);
+	/* This method is to temporarily disable database access, used when constructring the FriendList from the database,
+	 * in order to avoid recursing into the database.*/
+	void inhibitDatabaseStorage(bool inhibit);
 	void enableSubscriptions(bool enabled);
 	void exportFriendsAsVcard4File(const std::string &vcardFile) const;
 	std::shared_ptr<Friend> findFriendByAddress(const std::shared_ptr<const Address> &address) const;
@@ -192,6 +195,7 @@ private:
 	bool mBodylessSubscription = false;
 	LinphoneFriendListType mType = LinphoneFriendListTypeDefault;
 	bool mStoreInDb = false;
+	bool mInhibitDbStorage = false;
 #if VCARD_ENABLED
 	std::shared_ptr<CardDAVContext> mCardDavContext;
 #endif

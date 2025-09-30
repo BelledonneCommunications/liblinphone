@@ -671,7 +671,7 @@ LinphoneFriendCbs *Factory::createFriendCbs() const {
 }
 
 LinphoneFriendListCbs *Factory::createFriendListCbs() const {
-	return linphone_friend_list_cbs_new();
+	return FriendListCbs::createCObject();
 }
 
 LinphoneAccountCreatorCbs *Factory::createAccountCreatorCbs() const {

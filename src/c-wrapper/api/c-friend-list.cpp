@@ -37,10 +37,6 @@
 
 using namespace LinphonePrivate;
 
-LinphoneFriendListCbs *linphone_friend_list_cbs_new(void) {
-	return FriendListCbs::createCObject();
-}
-
 void linphone_friend_list_release(LinphoneFriendList *friend_list) {
 	FriendList::toCpp(friend_list)->release();
 	linphone_friend_list_unref(friend_list);
@@ -141,7 +137,7 @@ void linphone_friend_list_cbs_set_new_sip_address_discovered(LinphoneFriendListC
 }
 
 LinphoneFriendList *linphone_core_create_friend_list(LinphoneCore *lc) {
-	return FriendList::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr);
+	return FriendList::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
 }
 
 LinphoneFriendList *linphone_friend_list_ref(LinphoneFriendList *list) {
