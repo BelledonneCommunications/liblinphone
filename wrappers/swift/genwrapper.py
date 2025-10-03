@@ -36,7 +36,9 @@ import metaname
 
 class SwiftTranslator:
     def __init__(self):
-        self.ignore = []
+        self.ignore = ['linphone_config_get_string',
+                       'linphone_config_get_default_string',
+                       'linphone_config_get_section_param_string']
         self.nameTranslator = metaname.Translator.get('Swift')
         self.langTranslator = AbsApi.Translator.get('Swift')
         self.docTranslator = metadoc.SwiftDocTranslator()
