@@ -50,8 +50,8 @@ Imdn::Imdn(ChatRoom *chatRoom) : chatRoom(chatRoom) {
 }
 
 Imdn::~Imdn() {
-	stopTimer();
 	try { // getCore may no longuer be available when deleting, specially in case of managed enviroment like java
+		stopTimer();
 		chatRoom->getCore()->getPrivate()->unregisterListener(this);
 	} catch (const bad_weak_ptr &) {
 	}
