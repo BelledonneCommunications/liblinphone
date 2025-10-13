@@ -596,9 +596,9 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				media_stream_enable_transfer_mode(&mStream->ms, TRUE);
 			}
 		} else {
-			// If we are a client in a RemoteConference, enable the active speaker mode.
+			// If we are a client in a RemoteConference, enable the active speaker mode for the main video stream.
 			// This mode will listen to any new incoming ssrc in the stream.
-			video_stream_enable_active_speaker_mode(mStream, TRUE);
+			if (isMain()) video_stream_enable_active_speaker_mode(mStream, TRUE);
 		}
 	}
 
