@@ -1908,7 +1908,6 @@ void ClientConference::notifyDisplayedSpeaker(uint32_t csrc) {
 
 		if (csrc != 0) {
 			auto device = findParticipantDeviceBySsrc(csrc, LinphoneStreamTypeVideo);
-
 			if (device) {
 				notifyActiveSpeakerParticipantDevice(device);
 				mLastNotifiedSsrc = csrc;
