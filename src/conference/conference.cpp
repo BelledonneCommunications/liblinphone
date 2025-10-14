@@ -1073,6 +1073,10 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const shared_ptr
 	return nullptr;
 }
 
+void Conference::setActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {
+	mActiveSpeakerDevice = device;
+}
+
 shared_ptr<ParticipantDevice> Conference::getActiveSpeakerParticipantDevice() const {
 	return mActiveSpeakerDevice;
 }
@@ -1449,7 +1453,7 @@ void Conference::notifyStateChanged(ConferenceInterface::State state) {
 }
 
 void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &participantDevice) {
-	mActiveSpeakerDevice = participantDevice;
+	setActiveSpeakerParticipantDevice(participantDevice);
 	for (const auto &l : mConfListeners) {
 		l->onActiveSpeakerParticipantDevice(participantDevice);
 	}

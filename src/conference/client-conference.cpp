@@ -1812,6 +1812,10 @@ void ClientConference::onFullStateReceived() {
 			notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
 		}
 
+		if (!getActiveSpeakerParticipantDevice()) {
+			setActiveSpeakerParticipantDevice(getScreenSharingDevice());
+		}
+
 		if (!getCore()->getCCore()->sal->mediaDisabled()) {
 			if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
 

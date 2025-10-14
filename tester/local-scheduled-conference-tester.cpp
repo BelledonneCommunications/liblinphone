@@ -1932,12 +1932,12 @@ static void create_simple_conference_with_screen_sharing() {
 	                                           {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
-static void create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screensharing() {
+static void create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screen_sharing() {
 	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
 	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
 }
 
-static void create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screensharing() {
+static void create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screen_sharing() {
 	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
 	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
 }
@@ -2060,7 +2060,7 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 
 		std::list<LinphoneCoreManager *> addedMembers;
 		std::list<LinphoneCoreManager *> addedConferenceMgrs{focus.getCMgr()};
-		// The head of the members list enables screensharing whereas the others join the conference without vidoe
+		// The head of the members list enables screen sharing whereas the others join the conference without vidoe
 		// capabilities and then they add it later on
 		for (auto mgr : members) {
 			focus_stat = focus.getStats();
@@ -2178,6 +2178,19 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning,
 			                             mgr_stat.number_of_LinphoneCallStreamsRunning + 1,
 			                             liblinphone_tester_sip_timeout));
+
+			LinphoneConference *pconference = linphone_core_search_conference_2(mgr->lc, confAddr);
+			BC_ASSERT_PTR_NOT_NULL(pconference);
+			if (pconference) {
+				LinphoneParticipantDevice *active_speaker_device =
+				    linphone_conference_get_active_speaker_participant_device(pconference);
+				BC_ASSERT_PTR_NOT_NULL(active_speaker_device);
+				if (active_speaker_device) {
+					BC_ASSERT_TRUE(linphone_address_weak_equal(
+					    linphone_participant_device_get_address(active_speaker_device), members.front()->identity));
+				}
+			}
+
 			if (!is_first_member) {
 				ms_message("%s disables video capabilities", linphone_core_get_identity(mgr->lc));
 				nb_reinvites++;
@@ -2256,10 +2269,10 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 					        const LinphoneAddress *device_address = linphone_participant_device_get_address(d);
 					        bool_t video_available =
 					            linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo);
-					        bool_t is_screensharing =
+					        bool_t is_screen_sharing =
 					            linphone_address_weak_equal(device_address, members.front()->identity);
 					        screen_sharing_ok &=
-					            (((mgr == members.front()) || (mgr == focus.getCMgr())) && is_screensharing)
+					            (((mgr == members.front()) || (mgr == focus.getCMgr())) && is_screen_sharing)
 					                ? video_available
 					                : !video_available;
 					        LinphoneParticipant *participant =
@@ -2267,8 +2280,8 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 					                ? linphone_conference_get_me(conference)
 					                : linphone_conference_find_participant(conference, device_address);
 					        screen_sharing_ok &=
-					            (linphone_participant_device_screen_sharing_enabled(d) == is_screensharing);
-					        if (is_screensharing) {
+					            (linphone_participant_device_screen_sharing_enabled(d) == is_screen_sharing);
+					        if (is_screen_sharing) {
 						        screen_sharing_ok &= (d == screen_sharing_device);
 						        screen_sharing_ok &= (participant == screen_sharing_participant);
 					        } else {
@@ -9230,10 +9243,10 @@ static test_t local_conference_scheduled_conference_audio_only_participant_tests
 static test_t local_conference_scheduled_conference_with_screen_sharing_tests[] = {
     TEST_NO_TAG("Create simple conference with screen sharing",
                 LinphoneTest::create_simple_conference_with_screen_sharing),
-    TEST_NO_TAG("Create simple conference with screen sharing and chat rejoining without screensharing",
-                LinphoneTest::create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screensharing),
-    TEST_NO_TAG("Create simple conference with screen sharing and chat rejoining with screensharing",
-                LinphoneTest::create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screensharing),
+    TEST_NO_TAG("Create simple conference with screen sharing and chat rejoining without screen sharing",
+                LinphoneTest::create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screen_sharing),
+    TEST_NO_TAG("Create simple conference with screen sharing and chat rejoining with screen sharing",
+                LinphoneTest::create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screen_sharing),
     TEST_NO_TAG("Participant joins simple conference with screen sharing",
                 LinphoneTest::participant_joins_simple_conference_with_screen_sharing),
     TEST_NO_TAG("Create simple conference with screen sharing override",
@@ -9252,7 +9265,7 @@ static test_t local_conference_scheduled_conference_with_screen_sharing_tests[] 
                 LinphoneTest::conference_with_two_participant_having_screen_sharing_enabled_since_the_start),
     TEST_NO_TAG("Conference with screen sharing participant only",
                 LinphoneTest::conference_with_screen_sharing_participant_only),
-    TEST_NO_TAG("Create simple conference with participant ask to screenshare without video send component",
+    TEST_NO_TAG("Create simple conference with participant ask to screen share without video send component",
                 LinphoneTest::create_simple_conference_with_screen_sharing_no_video_send_component)};
 
 static test_t local_conference_scheduled_conference_with_chat_tests[] = {
@@ -9302,7 +9315,7 @@ test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
 };
 
 test_suite_t local_conference_test_suite_scheduled_conference_audio_only_participant = {
-    "Local conference tester (Scheduled Conference with Audio only participants)",
+    "Local conference tester (Scheduled Conference with audio only participants)",
     NULL,
     NULL,
     liblinphone_tester_before_each,
@@ -9315,7 +9328,7 @@ test_suite_t local_conference_test_suite_scheduled_conference_audio_only_partici
 };
 
 test_suite_t local_conference_test_suite_scheduled_conference_with_screen_sharing = {
-    "Local conference tester (Scheduled Conference with Screen sharing)",
+    "Local conference tester (Scheduled Conference with screen sharing)",
     NULL,
     NULL,
     liblinphone_tester_before_each,

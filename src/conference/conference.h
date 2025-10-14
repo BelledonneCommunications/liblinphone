@@ -95,6 +95,7 @@ public:
 	std::shared_ptr<ParticipantDevice> findParticipantDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel(const LinphoneStreamType type,
 	                                                                const std::string &label) const;
+	void setActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device);
 	std::shared_ptr<ParticipantDevice> getActiveSpeakerParticipantDevice() const;
 
 	virtual std::shared_ptr<CallSession> getMainSession() const;

@@ -469,7 +469,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 		}
 
 		if (!label.empty() && label.compare(getLabel()) != 0) {
-			lInfo() << "Handling label change - previously it was " << getLabel() << " and now it is " << label;
+			lInfo() << "Handling label change handling basic changes - previously it was " << getLabel()
+			        << " and now it is " << label;
 			// If not Main, reset id with the participantDevice from label to avoid reusing an old window id that
 			// doesn't exist anymore.
 			if (!isMain()) setNativeWindowId(NULL);
