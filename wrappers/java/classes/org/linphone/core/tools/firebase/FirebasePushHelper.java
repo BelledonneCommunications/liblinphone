@@ -63,7 +63,9 @@ public class FirebasePushHelper implements PushNotificationUtils.PushHelperInter
                                         Runnable runnable = new Runnable() {
                                             @Override
                                             public void run() {
-                                                AndroidPlatformHelper.instance().setPushToken(token);
+                                                if (AndroidPlatformHelper.isReady()) {
+                                                    AndroidPlatformHelper.instance().setPushToken(token);
+                                                }
                                             }
                                         };
                                         AndroidPlatformHelper.instance().dispatchOnCoreThread(runnable);

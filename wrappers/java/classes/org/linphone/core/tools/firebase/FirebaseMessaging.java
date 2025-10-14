@@ -57,7 +57,9 @@ public class FirebaseMessaging extends FirebaseMessagingService {
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
-                    AndroidPlatformHelper.instance().setPushToken(token);
+                    if (AndroidPlatformHelper.isReady()) {
+                        AndroidPlatformHelper.instance().setPushToken(token);
+                    }
                 }
             };
             AndroidPlatformHelper.instance().dispatchOnCoreThread(runnable);
@@ -86,27 +88,29 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 @Override
                 public void run() {
                     Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
-                    Core core = AndroidPlatformHelper.instance().getCore();
-                    if (core != null && core.getGlobalState() == GlobalState.On) {
-                        Map<String, String> data = remoteMessage.getData();
-                        String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
-                        String payload = new JSONObject(data).toString();
-                        Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
-                        AndroidPlatformHelper.instance().processPushNotification(callId, payload, false);
-                    } else {
-                        if (core == null) {
-                            Log.w("[Push Notification] No Core found, notifying application directly");
+                    if (AndroidPlatformHelper.isReady()) {
+                        Core core = AndroidPlatformHelper.instance().getCore();
+                        if (core != null && core.getGlobalState() == GlobalState.On) {
+                            Map<String, String> data = remoteMessage.getData();
+                            String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
+                            String payload = new JSONObject(data).toString();
+                            Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
+                            AndroidPlatformHelper.instance().processPushNotification(callId, payload, false);
                         } else {
-                            Log.w("[Push Notification] Core was found but it isn't in GlobalState On yet, notifying application directly");
-                        }
-                        Runnable pushRunnable = new Runnable() {
-                            @Override
-                            public void run() {
-                                storePushRemoteMessage(remoteMessage);
-                                notifyAppPushReceivedWithoutCoreAvailable();
+                            if (core == null) {
+                                Log.w("[Push Notification] No Core found, notifying application directly");
+                            } else {
+                                Log.w("[Push Notification] Core was found but it isn't in GlobalState On yet, notifying application directly");
                             }
-                        };
-                        AndroidDispatcher.dispatchOnUIThread(pushRunnable);
+                            Runnable pushRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    storePushRemoteMessage(remoteMessage);
+                                    notifyAppPushReceivedWithoutCoreAvailable();
+                                }
+                            };
+                            AndroidDispatcher.dispatchOnUIThread(pushRunnable);
+                        }
                     }
                 }
             };
