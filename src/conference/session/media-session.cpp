@@ -2369,6 +2369,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 								SalStreamDescription &newParticipantStream = addStreamToMd(md, foundStreamIdx, oldMd);
 								if (isConferenceLayoutActiveSpeaker || (type == SalAudio)) {
 									newParticipantStream.setContent(participantContent);
+								} else {
+									newParticipantStream.setContent(std::string());
 								}
 								const auto mid(bundleNameStreamPrefix + devLabel);
 								fillConferenceParticipantStream(newParticipantStream, oldMd, md, dev, pth, encs, type,
