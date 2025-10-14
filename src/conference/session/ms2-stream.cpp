@@ -1744,17 +1744,6 @@ float MS2Stream::getCpuUsage() const {
 }
 
 void MS2Stream::finish() {
-	if (mRtpBundle && mOwnsBundle) {
-		rtp_bundle_delete(mRtpBundle);
-		mRtpBundle = nullptr;
-
-		// Also remove bundle from auxiliary sessions if any
-		if (mSessions.auxiliary_sessions != nullptr) {
-			for (const bctbx_list_t *it = mSessions.auxiliary_sessions; it != nullptr; it = it->next) {
-				static_cast<RtpSession *>(it->data)->bundle = nullptr;
-			}
-		}
-	}
 	if (mOrtpEvQueue) {
 		rtp_session_unregister_event_queue(mSessions.rtp_session, mOrtpEvQueue);
 		ortp_ev_queue_flush(mOrtpEvQueue);
@@ -1762,6 +1751,10 @@ void MS2Stream::finish() {
 		mOrtpEvQueue = nullptr;
 	}
 	ms_media_stream_sessions_uninit(&mSessions);
+	if (mRtpBundle && mOwnsBundle) {
+		rtp_bundle_delete(mRtpBundle);
+		mRtpBundle = nullptr;
+	}
 	Stream::finish();
 }
 
