@@ -2914,15 +2914,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		const auto &mdForMainStream = localIsOfferer ? md : refMd;
 		if (mdForMainStream) {
 			const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
-			if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
+			if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex), true);
 			const auto remoteContactAddress = q->getRemoteContactAddress();
 			const auto videoStreamIndex =
 			    (conference || (remoteContactAddress && remoteContactAddress->hasParam(Conference::IsFocusParameter)))
 			        ? mdForMainStream->findIdxStreamWithContent(mainStreamAttrValue)
 			        : mdForMainStream->findIdxBestStream(SalVideo);
-			if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex));
+			if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex), true);
 			const auto textStreamIndex = mdForMainStream->findIdxBestStream(SalText);
-			if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex));
+			if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex), true);
 		}
 		/* Get the transport addresses filled in to the media description. */
 		updateLocalMediaDescriptionFromIce(localIsOfferer);

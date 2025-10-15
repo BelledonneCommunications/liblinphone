@@ -1029,7 +1029,7 @@ void *MS2VideoControl::getNativeWindowId() const {
 // using.
 void *MS2VideoControl::createNativePreviewWindowId(void *context) const {
 	VideoStream *vs = getVideoStream();
-	if (vs) lInfo() << "Create " << this << " / " << vs << " -- " << vs->output2;
+	lInfo() << "Create native window id for stream [" << vs << "]";
 	return vs && !video_stream_local_screen_sharing_enabled(vs)
 	           ? video_stream_create_native_preview_window_id(vs, context)
 	           : nullptr;
@@ -1039,7 +1039,7 @@ void MS2VideoControl::setNativePreviewWindowId(void *w) {
 	VideoStream *vs = getVideoStream();
 	mNativePreviewWindowId = w;
 	if (vs) {
-		lInfo() << this << " / " << vs->output2 << " = " << mNativePreviewWindowId;
+		lInfo() << "Set native window id of stream [" << vs << "] to " << mNativePreviewWindowId;
 		if (!video_stream_local_screen_sharing_enabled(vs)) video_stream_set_native_preview_window_id(vs, w);
 	}
 }
