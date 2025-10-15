@@ -995,10 +995,10 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		    (confState != ConferenceInterface::State::TerminationPending) && mScheduleUpdate &&
 		    ms->getPrivate()->canSoundResourcesBeFreed()) {
 			lInfo() << "Executing scheduled update of the focus session of " << *this;
+			if (confState == ConferenceInterface::State::CreationPending) {
+				setState(ConferenceInterface::State::Created);
+			}
 			if (updateMainSession(!mFullStateUpdate) == 0) {
-				if (confState == ConferenceInterface::State::CreationPending) {
-					setState(ConferenceInterface::State::Created);
-				}
 				mScheduleUpdate = false;
 				mFullStateUpdate = false;
 			} else {
