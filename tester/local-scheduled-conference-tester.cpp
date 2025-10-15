@@ -32,7 +32,7 @@
 
 namespace LinphoneTest {
 
-static void conference_with_media_lost() {
+static void conference_with_media_lost_base(bool_t server_drops) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -73,7 +73,11 @@ static void conference_with_media_lost() {
 		}
 
 		int nortp_timeout = 5;
-		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
+		if (!!server_drops) {
+			linphone_core_set_nortp_timeout(focus.getLc(), nortp_timeout);
+		} else {
+			linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
+		}
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
 
@@ -208,7 +212,7 @@ static void conference_with_media_lost() {
 		BC_ASSERT_EQUAL(focus_calls_nb, 1, size_t, "%zu");
 
 		OrtpNetworkSimulatorParams simparams = {0};
-		simparams.mode = OrtpNetworkSimulatorOutbound;
+		simparams.mode = (!!server_drops) ? OrtpNetworkSimulatorInbound : OrtpNetworkSimulatorOutbound;
 		simparams.enabled = TRUE;
 		simparams.max_bandwidth = 430000; /*we first limit to 430 kbit/s*/
 		simparams.max_buffer_size = (int)simparams.max_bandwidth;
@@ -217,10 +221,29 @@ static void conference_with_media_lost() {
 		linphone_core_set_network_simulator_params(marie.getLc(), &simparams);
 		linphone_core_set_network_simulator_params(focus.getLc(), &simparams);
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallEnd,
-		                             marie_stat.number_of_LinphoneCallEnd + 1, (1200 * nortp_timeout)));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallReleased,
-		                             marie_stat.number_of_LinphoneCallReleased + 1, (1200 * nortp_timeout)));
+		if (!!server_drops) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
+			                             focus_stat.number_of_LinphoneCallEnd + 1, (1200 * nortp_timeout)));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
+			                             focus_stat.number_of_LinphoneCallReleased + 1, (1200 * nortp_timeout)));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallEnd,
+			                             marie_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallReleased,
+			                             marie_stat.number_of_LinphoneCallReleased + 1,
+			                             liblinphone_tester_sip_timeout));
+		} else {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallEnd,
+			                             marie_stat.number_of_LinphoneCallEnd + 1, (1200 * nortp_timeout)));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallReleased,
+			                             marie_stat.number_of_LinphoneCallReleased + 1, (1200 * nortp_timeout)));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
+			                             focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
+			                             focus_stat.number_of_LinphoneCallReleased + 1,
+			                             liblinphone_tester_sip_timeout));
+		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionTerminated,
 		                             marie_stat.number_of_LinphoneSubscriptionTerminated + 1,
@@ -242,10 +265,6 @@ static void conference_with_media_lost() {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, 1,
 		                             liblinphone_tester_sip_timeout));
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
-		                             focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
-		                             focus_stat.number_of_LinphoneCallReleased + 1, liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionTerminated,
 		                             focus_stat.number_of_LinphoneSubscriptionTerminated + 1,
 		                             liblinphone_tester_sip_timeout));
@@ -259,6 +278,14 @@ static void conference_with_media_lost() {
 		ms_free(conference_address_str);
 		bctbx_list_free(coresList);
 	}
+}
+
+static void conference_with_media_lost_on_the_server_side() {
+	conference_with_media_lost_base(TRUE);
+}
+
+static void conference_with_media_lost_on_the_client_side() {
+	conference_with_media_lost_base(FALSE);
 }
 
 #ifndef HAVE_EKT_SERVER_PLUGIN
@@ -9136,7 +9163,10 @@ static void clients_change_layout_multiple_times() {
 static test_t local_conference_scheduled_conference_basic_tests[] = {
     TEST_NO_TAG("Conference joined multiple times", LinphoneTest::conference_joined_multiple_times),
     TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
-    TEST_NO_TAG("Conference with media lost", LinphoneTest::conference_with_media_lost),
+    TEST_NO_TAG("Conference with media lost on the client side",
+                LinphoneTest::conference_with_media_lost_on_the_client_side),
+    TEST_NO_TAG("Conference with media lost on the server side",
+                LinphoneTest::conference_with_media_lost_on_the_server_side),
 #ifndef HAVE_EKT_SERVER_PLUGIN
     TEST_NO_TAG("Encrypted conference on server without e2e support",
                 LinphoneTest::encrypted_conference_on_server_without_e2e_support),
