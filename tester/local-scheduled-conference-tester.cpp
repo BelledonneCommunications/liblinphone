@@ -223,9 +223,11 @@ static void conference_with_media_lost_base(bool_t server_drops) {
 
 		if (!!server_drops) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
-			                             focus_stat.number_of_LinphoneCallEnd + 1, (1200 * nortp_timeout)));
+			                             focus_stat.number_of_LinphoneCallEnd + 1,
+			                             (1000 * nortp_timeout) + liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased,
-			                             focus_stat.number_of_LinphoneCallReleased + 1, (1200 * nortp_timeout)));
+			                             focus_stat.number_of_LinphoneCallReleased + 1,
+			                             (1000 * nortp_timeout) + liblinphone_tester_sip_timeout));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallEnd,
 			                             marie_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
@@ -234,9 +236,11 @@ static void conference_with_media_lost_base(bool_t server_drops) {
 			                             liblinphone_tester_sip_timeout));
 		} else {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallEnd,
-			                             marie_stat.number_of_LinphoneCallEnd + 1, (1200 * nortp_timeout)));
+			                             marie_stat.number_of_LinphoneCallEnd + 1,
+			                             (1000 * nortp_timeout) + liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallReleased,
-			                             marie_stat.number_of_LinphoneCallReleased + 1, (1200 * nortp_timeout)));
+			                             marie_stat.number_of_LinphoneCallReleased + 1,
+			                             (1000 * nortp_timeout) + liblinphone_tester_sip_timeout));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd,
 			                             focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));

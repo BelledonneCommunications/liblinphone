@@ -107,6 +107,7 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params)
 	 * that there could be interaction between streams from different connected participants.
 	 */
 	sg.installSharedService<BandwithControllerService>();
+	sg.installSharedService<BundleService>();
 	mZrtpState = ZrtpState::Off;
 	mStunAllowed = !!linphone_config_get_int(linphone_core_get_config(sg.getCCore()), "rtp", "stun_keepalives", 1);
 }
@@ -138,8 +139,6 @@ void MS2Stream::removeFromBundle() {
 		        << mRtpBundle;
 		rtp_bundle_remove_session(mRtpBundle, mSessions.rtp_session);
 		if (mOwnsBundle) {
-			RtpBundle *bundle = mRtpBundle;
-			getGroup().addPostRenderHook([bundle]() { rtp_bundle_delete(bundle); });
 			mOwnsBundle = false;
 			getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(false);
 		}
@@ -188,7 +187,8 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params) {
 
 RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription &sd) {
 	if (!mRtpBundle) {
-		mRtpBundle = rtp_bundle_new();
+		BundleService *bundleService = getGroup().getSharedService<BundleService>();
+		mRtpBundle = bundleService->getRtpBundle();
 		const auto &mid = sd.getChosenConfiguration().getMid();
 		const auto &mid_rtp_ext_header_id = sd.getChosenConfiguration().getMidRtpExtHeaderId();
 		lInfo() << "Stream " << *this << " with mid '" << mid << "' is the owner of rtp bundle " << mRtpBundle;
@@ -1751,10 +1751,6 @@ void MS2Stream::finish() {
 		mOrtpEvQueue = nullptr;
 	}
 	ms_media_stream_sessions_uninit(&mSessions);
-	if (mRtpBundle && mOwnsBundle) {
-		rtp_bundle_delete(mRtpBundle);
-		mRtpBundle = nullptr;
-	}
 	Stream::finish();
 }
 

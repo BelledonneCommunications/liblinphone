@@ -38,6 +38,21 @@ class MS2VideoMixer;
  */
 class MS2Stream : public Stream, public RtpInterface {
 public:
+	class BundleService : public SharedService {
+	public:
+		void initialize() override {
+			mBundle = rtp_bundle_new();
+		}
+		void destroy() override {
+			rtp_bundle_delete(mBundle);
+		}
+		RtpBundle *getRtpBundle() const {
+			return mBundle;
+		}
+
+	private:
+		RtpBundle *mBundle = nullptr;
+	};
 	enum class ZrtpState { Off = 0, Started = 1, TurnedOff = 2, Restarted = 3 };
 
 	virtual void fillLocalMediaDescription(OfferAnswerContext &ctx) override;

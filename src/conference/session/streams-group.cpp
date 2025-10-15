@@ -591,8 +591,8 @@ void StreamsGroup::computeAndReportBandwidth() {
 		float total_rtp_down_bw = rtp_down_bw + fec_down_bw;
 		float total_rtp_up_bw = rtp_up_bw + fec_up_bw;
 		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | "
-		     << labelStr << "cpu: " << stream->getCpuUsage() << "% |"
-		     << " RTP: [d=" << total_rtp_down_bw << ",u=" << total_rtp_up_bw << "] ";
+		     << labelStr << "cpu: " << stream->getCpuUsage() << "% |" << " RTP: [d=" << total_rtp_down_bw
+		     << ",u=" << total_rtp_up_bw << "] ";
 		if (stream->isFecEnabled()) {
 			ostr << " part of FEC in RTP: [d=" << fec_down_bw << "(" << fec_down_bw / total_rtp_down_bw * 100.f << "%)"
 			     << ",u=" << fec_up_bw << "(" << fec_up_bw / total_rtp_up_bw * 100.f << "%)] ";
@@ -645,10 +645,10 @@ void StreamsGroup::finish() {
 	lInfo() << *this << ": finishing]";
 	stop();                // For the paranoid: normally it should be done already.
 	mIceService->finish(); // finish ICE first, as it has actions on the streams.
+	forEach<Stream>(mem_fn(&Stream::finish));
 	for (auto &ss : mSharedServices)
 		ss.second->checkDestroy();
 	mSharedServices.clear();
-	forEach<Stream>(mem_fn(&Stream::finish));
 	mFinished = true;
 	if (mEncryptionChangedNotificationTask) {
 		getCore().destroyTimer(mEncryptionChangedNotificationTask);
