@@ -5919,6 +5919,69 @@ void early_media_without_sdp_in_200_base(bool_t use_video, bool_t use_ice) {
 	linphone_core_manager_destroy(pauline);
 }
 
+void invite_without_sdp_accept_early_media(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bctbx_list_t *lcs = NULL;
+	LinphoneCall *marie_call;
+	LinphoneCallParams *params = NULL;
+	LinphoneCallLog *marie_call_log;
+	uint64_t connected_time = 0;
+	uint64_t ended_time = 0;
+	int dummy = 0;
+
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	/*
+	    Marie calls Pauline, and after the call has rung, transitions to an early_media session
+	*/
+	linphone_core_enable_sdp_200_ack(marie->lc, TRUE);
+	params = linphone_core_create_call_params(marie->lc, NULL);
+
+	marie_call = linphone_core_invite_address_with_params(marie->lc, pauline->identity, params);
+	marie_call_log = linphone_call_get_call_log(marie_call);
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1, liblinphone_tester_sip_timeout));
+
+	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+
+		/* send a 183 to initiate the early media */
+		linphone_call_accept_early_media_with_params(pauline_call, params);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1,
+		                             liblinphone_tester_sip_timeout));
+
+		linphone_call_accept(pauline_call);
+		BC_ASSERT_TRUE(
+		    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1, liblinphone_tester_sip_timeout));
+		connected_time = ms_get_cur_time_ms();
+		BC_ASSERT_TRUE(
+		    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(
+		    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, liblinphone_tester_sip_timeout));
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		BC_ASSERT_PTR_EQUAL(marie_call, linphone_core_get_current_call(marie->lc));
+		/*just to have a call duration !=0*/
+		wait_for_list(lcs, &dummy, 1, 2000);
+
+		end_call(pauline, marie);
+		ended_time = ms_get_cur_time_ms();
+		BC_ASSERT_LOWER(labs((long)((linphone_call_log_get_duration(marie_call_log) * 1000) -
+		                            (int64_t)(ended_time - connected_time))),
+		                1500, long, "%ld");
+	}
+	bctbx_list_free(lcs);
+	linphone_call_params_unref(params);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void call_with_early_media_and_no_sdp_in_200(void) {
 	early_media_without_sdp_in_200_base(FALSE, FALSE);
 }
@@ -8781,7 +8844,9 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Call with local account identity in request URI and not in to header, enable account strict matching",
                 call_with_correct_local_account_in_request_uri_enable_account_strict_matching),
     TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri),
-    TEST_NO_TAG("Two accounts not sharing same connection", two_accounts_use_different_connections)};
+    TEST_NO_TAG("Two accounts not sharing same connection", two_accounts_use_different_connections),
+    TEST_NO_TAG("Call with accept early media while receiving an INVITE without SDP",
+                invite_without_sdp_accept_early_media)};
 
 static test_t call_not_established_tests[] = {
     TEST_NO_TAG("Early declined call", early_declined_call),

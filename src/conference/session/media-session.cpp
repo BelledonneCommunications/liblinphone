@@ -4577,7 +4577,8 @@ LinphoneStatus MediaSession::acceptEarlyMedia(const MediaSessionParams *msp) {
 	/* If parameters are passed, update the media description */
 	if (msp) {
 		d->setParams(new MediaSessionParams(*msp));
-		d->makeLocalMediaDescription(false, isCapabilityNegotiationEnabled(), false);
+		const bool isOfferer = (d->op->getRemoteMediaDescription() ? false : true);
+		d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
 	d->op->notifyRinging(true, linphone_core_get_tag_100rel_support_level(getCore()->getCCore()));
