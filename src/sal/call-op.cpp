@@ -486,7 +486,7 @@ bool SalCallOp::checkForOrphanDialogOn2xx(belle_sip_dialog_t *dialog) {
 	return false;
 }
 
-void SalCallOp::sendAckBye(const belle_sip_response_event_t *event) {
+void SalCallOp::sendAckBye(const belle_sip_response_event_t *event, const SalErrorInfo *info) {
 	auto dialog = belle_sip_response_event_get_dialog(event);
 	auto clientTransaction = belle_sip_response_event_get_client_transaction(event);
 	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(clientTransaction));
@@ -505,7 +505,7 @@ void SalCallOp::sendAckBye(const belle_sip_response_event_t *event) {
 	} else {
 		lError() << "Failed to generate ACK.";
 	}
-	sendRequest(belle_sip_dialog_create_request(dialog, "BYE"));
+	sendBye(info);
 }
 
 void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_t *event) {
@@ -641,7 +641,16 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 							op->mRoot->mCallbacks.call_ack_being_sent(op, reinterpret_cast<SalCustomHeader *>(ack));
 							belle_sip_dialog_send_ack(op->mDialog, ack);
 							belle_sip_object_unref(ack);
-							op->mState = State::Active;
+							// It may happen that the op state changes during the execution of this method. In fact the
+							// call session state changes and an op might be terminante on one of the callbacks As per
+							// RFC3261, a BYE can only be sent after the ACK:
+							//   o  A UA cannot send a BYE for a call until it has received an ACK for the initial
+							//   INVITE.  This was allowed in RFC 2543 but leads to a potential race condition.
+							if (op->mState == State::Terminating) {
+								op->sendBye(&op->mErrorInfo);
+							} else {
+								op->mState = State::Active;
+							}
 						} else if (code >= 300) {
 							op->setError(response, false);
 						}
@@ -680,7 +689,7 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 					 */
 					if (op->mIsCancelled) {
 						lInfo() << "Receiving 200 Ok while the call was cancelled, sending ACK/BYE.";
-						op->sendAckBye(event);
+						op->sendAckBye(event, &op->mErrorInfo);
 					}
 					break;
 				case State::Terminated:
@@ -693,7 +702,7 @@ void SalCallOp::processResponseCb(void *userCtx, const belle_sip_response_event_
 		case BELLE_SIP_DIALOG_TERMINATED:
 			if (op->mIsCancelled && method == "INVITE" && code == 200) {
 				lInfo() << "Receiving a 200 Ok for a cancelled dialog, sending ACK/BYE.";
-				op->sendAckBye(event);
+				op->sendAckBye(event, &op->mErrorInfo);
 			} else if ((code >= 300) && (code != 491) && ((method == "INVITE") || (method == "BYE")))
 				op->setError(response, true);
 			break;
@@ -1702,6 +1711,19 @@ int SalCallOp::sendDtmf(char dtmf) {
 	return 0;
 }
 
+void SalCallOp::sendBye(const SalErrorInfo *info) {
+	auto request = belle_sip_dialog_create_request(mDialog, "BYE");
+
+	if (info && (info->reason != SalReasonNone)) {
+		auto reasonHeader = makeReasonHeader(info);
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(reasonHeader));
+		if (info->warnings) {
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), createWarningHeader(info, getFromAddress()));
+		}
+	}
+	sendRequest(request);
+}
+
 int SalCallOp::terminate(const SalErrorInfo *info) {
 	SalErrorInfo sei;
 	const SalErrorInfo *pSei = nullptr;
@@ -1722,10 +1744,9 @@ int SalCallOp::terminate(const SalErrorInfo *info) {
 		ret = -1;
 		goto end;
 	}
+
 	switch (dialogState) {
 		case BELLE_SIP_DIALOG_CONFIRMED: {
-			auto request = belle_sip_dialog_create_request(mDialog, "BYE");
-
 			/**
 			 * When the timer is quite short, it is possible that a timer renewal
 			 * is sent before the BYE ACK is received. Here we cancel the timer
@@ -1733,15 +1754,14 @@ int SalCallOp::terminate(const SalErrorInfo *info) {
 			 */
 			haltSessionTimersTimer();
 
-			if (info && (info->reason != SalReasonNone)) {
-				auto reasonHeader = makeReasonHeader(info);
-				belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(reasonHeader));
-				if (info->warnings) {
-					belle_sip_message_add_header(BELLE_SIP_MESSAGE(request),
-					                             createWarningHeader(info, getFromAddress()));
+			if (mState == State::Active) {
+				sendBye(info);
+			} else {
+				if (info) {
+					sal_error_info_set(&mErrorInfo, info->reason, info->protocol, info->protocol_code,
+					                   info->status_string, info->warnings);
 				}
 			}
-			sendRequest(request);
 
 			mState = State::Terminating;
 			break;
