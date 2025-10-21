@@ -1931,9 +1931,11 @@ static void check_incorrect_zrtp_short_code_pause_resume_update_test() {
  * 488 Not Acceptable.
  */
 static void
-call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, LinphoneMediaEncryption enc2, bool_t mandatory) {
+call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, LinphoneMediaEncryption enc2, bool_t mandatory, bool_t enable_ice) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	enable_stun_in_mgr(marie, enable_ice, enable_ice, enable_ice, enable_ice);
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	enable_stun_in_mgr(pauline, enable_ice, enable_ice, enable_ice, enable_ice);
 	LinphoneCall *out_call = NULL;
 
 	if (!linphone_core_media_encryption_supported(marie->lc, enc1)) goto end;
@@ -1944,6 +1946,7 @@ call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, LinphoneMediaEn
 	linphone_core_set_media_encryption(pauline->lc, enc2);
 	linphone_core_set_media_encryption_mandatory(pauline->lc, mandatory);
 
+	ms_message("New call %s from %s to %s. %s's encryption is %s. %s's %s encryption is %s", (!!enable_ice ? "with ICE" : "without ICE"), linphone_core_get_identity(pauline->lc), linphone_core_get_identity(marie->lc), linphone_core_get_identity(marie->lc), linphone_media_encryption_to_string(enc1), linphone_core_get_identity(pauline->lc), (!!mandatory ? "mandatory" : "optional"), linphone_media_encryption_to_string(enc2));
 	out_call = linphone_core_invite_address(pauline->lc, marie->identity);
 	linphone_call_ref(out_call);
 
@@ -1960,24 +1963,31 @@ end:
 
 static void call_declined_encryption_mandatory_both_sides(void) {
 	/* If SRTP wasn't mandatory then the call would not error, so it's a good case to test both mandatory */
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionSRTP, TRUE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionSRTP, TRUE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionSRTP, TRUE, TRUE);
 }
 
 static void zrtp_mandatory_called_by_non_zrtp(void) {
 	/* We do not try with None or SRTP as it will accept the call and then set the media to ZRTP */
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS, FALSE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS, FALSE, TRUE);
 }
 
 static void srtp_mandatory_called_by_non_srtp(void) {
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone, FALSE);
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, FALSE);
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionDTLS, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone, FALSE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, FALSE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionDTLS, FALSE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone, FALSE, TRUE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, FALSE, TRUE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionDTLS, FALSE, TRUE);
 }
 
 static void srtp_dtls_mandatory_called_by_non_srtp_dtls(void) {
 	/* We do not try with SRTP as it will accept the call and then set the media to DTLS */
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone, FALSE);
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionZRTP, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone, FALSE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionZRTP, FALSE, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone, FALSE, TRUE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionZRTP, FALSE, TRUE);
 }
 
 static void zrtp_mandatory_called_by_srtp(void) {

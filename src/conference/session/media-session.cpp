@@ -5045,6 +5045,7 @@ void MediaSession::startIncomingNotification(bool notifyRinging) {
 			linphone_error_info_unref(ei);
 		}
 		d->op->decline(SalReasonNotAcceptable);
+		d->freeResources();
 		return;
 	}
 
