@@ -26,7 +26,6 @@
 #include "linphone/types.h"
 
 #include "core/core-accessor.h"
-#include "core/core.h"
 
 #include <list>
 #include <string>
@@ -34,6 +33,8 @@
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Core;
 
 class CardDavParams : public bellesip::HybridObject<LinphoneCardDavParams, CardDavParams>, public CoreAccessor {
 public:
@@ -106,6 +107,14 @@ public:
 
 	void setUseExactMatchPolicy(bool exactMatch) {
 		mUseExactMatchPolicy = exactMatch;
+	}
+
+	int getConfigIndex() const {
+		return mConfigIndex;
+	}
+
+	void setConfigIndex(int configIndex) {
+		mConfigIndex = configIndex;
 	}
 
 	void writeToConfigFile() const;

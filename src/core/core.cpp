@@ -1968,18 +1968,50 @@ void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, 
 // Remote Contact Directories.
 // -----------------------------------------------------------------------------
 
-const list<shared_ptr<RemoteContactDirectory>> &Core::getRemoteContactDirectories() {
+const Core::RemoteContactDirectorySet &Core::getRemoteContactDirectories() {
 	return getPrivate()->mRemoteContactDirectories;
 }
 
+shared_ptr<RemoteContactDirectory>
+Core::findRemoteContactDirectory(shared_ptr<RemoteContactDirectory> remoteContactDirectory) const {
+	auto &directories = getPrivate()->mRemoteContactDirectories;
+	auto it = directories.find(remoteContactDirectory);
+	if (it == directories.end()) {
+		return nullptr;
+	}
+	return (*it);
+}
+
 void Core::addRemoteContactDirectory(shared_ptr<RemoteContactDirectory> remoteContactDirectory) {
+	auto &directories = getPrivate()->mRemoteContactDirectories;
+	auto [it, success] = directories.insert(remoteContactDirectory);
+	if (success) {
+		lInfo() << "Remote contact directory [" << remoteContactDirectory << "] has been added to the core";
+	} else {
+		auto storedRemoteContactDirectory = (*it);
+		// Sanity check
+		if (it != directories.end()) {
+			removeRemoteContactDirectory(storedRemoteContactDirectory);
+		}
+		auto [itStored, success] = directories.insert(remoteContactDirectory);
+		if (!success) {
+			storedRemoteContactDirectory = (*itStored);
+			lError() << "Remote contact directory [" << remoteContactDirectory << "] with index "
+			         << remoteContactDirectory->getConfigIndex() << " is the same as [" << storedRemoteContactDirectory
+			         << "] with index " << storedRemoteContactDirectory->getConfigIndex()
+			         << ", hence it will not be added to the core list";
+		}
+	}
 	remoteContactDirectory->writeToConfigFile();
-	getPrivate()->mRemoteContactDirectories.push_back(remoteContactDirectory);
 }
 
 void Core::removeRemoteContactDirectory(shared_ptr<RemoteContactDirectory> remoteContactDirectory) {
-	remoteContactDirectory->removeFromConfigFile();
-	getPrivate()->mRemoteContactDirectories.remove(remoteContactDirectory);
+	auto &directories = getPrivate()->mRemoteContactDirectories;
+	if (auto it = directories.find(remoteContactDirectory); it != directories.end()) {
+		lInfo() << "Remote contact directory [" << (*it) << "] has been removed from the core list";
+		directories.erase(it);
+		remoteContactDirectory->removeFromConfigFile();
+	}
 }
 
 void CorePrivate::reloadRemoteContactDirectories() {
@@ -1989,7 +2021,7 @@ void CorePrivate::reloadRemoteContactDirectories() {
 
 	string carddavSection = "carddav_";
 	string ldapSection = "ldap_";
-	list<shared_ptr<RemoteContactDirectory>> paramsList;
+	decltype(mRemoteContactDirectories) paramsList;
 	for (auto itSections = bcSections; itSections; itSections = itSections->next) {
 		string section = static_cast<char *>(itSections->data);
 		if (section.rfind(carddavSection, 0) == 0) {
@@ -1999,7 +2031,7 @@ void CorePrivate::reloadRemoteContactDirectories() {
 					int index = stoi(indexStr);
 					auto params = CardDavParams::create(core, index);
 					auto remoteContactDirectory = RemoteContactDirectory::create(params);
-					paramsList.push_back(remoteContactDirectory);
+					paramsList.insert(remoteContactDirectory);
 				} catch (const invalid_argument &) {
 				} catch (const out_of_range &) {
 				}
@@ -2011,7 +2043,7 @@ void CorePrivate::reloadRemoteContactDirectories() {
 					int index = stoi(indexStr);
 					auto params = LdapParams::create(core, index);
 					auto remoteContactDirectory = RemoteContactDirectory::create(params);
-					paramsList.push_back(remoteContactDirectory);
+					paramsList.insert(remoteContactDirectory);
 				} catch (const invalid_argument &) {
 				} catch (const out_of_range &) {
 				}

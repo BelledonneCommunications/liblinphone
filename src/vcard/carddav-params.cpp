@@ -21,6 +21,7 @@
 #include "carddav-params.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "core/core.h"
 #include "linphone/api/c-address.h"
 #include "linphone/types.h"
 #include "linphone/utils/utils.h"

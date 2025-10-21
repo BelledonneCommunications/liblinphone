@@ -42,6 +42,7 @@
 #include "linphone/types.h"
 #include "object/object.h"
 #include "sal/event-op.h"
+#include "search/remote-contact-directory.h"
 
 // =============================================================================
 
@@ -351,8 +352,13 @@ public:
 
 	void handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, const Content *content);
 
-	const std::list<std::shared_ptr<RemoteContactDirectory>> &getRemoteContactDirectories();
+	typedef std::set<std::shared_ptr<RemoteContactDirectory>,
+	                 RemoteContactDirectory::RemoteContactDirectorySharedPtrLess>
+	    RemoteContactDirectorySet;
+	const RemoteContactDirectorySet &getRemoteContactDirectories();
 
+	std::shared_ptr<RemoteContactDirectory>
+	findRemoteContactDirectory(std::shared_ptr<RemoteContactDirectory> remoteContactDirectory) const;
 	void addRemoteContactDirectory(std::shared_ptr<RemoteContactDirectory> remoteContactDirectory);
 	void removeRemoteContactDirectory(std::shared_ptr<RemoteContactDirectory> remoteContactDirectory);
 

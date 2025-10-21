@@ -617,6 +617,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	search/search-async-data.cpp
 	search/search-request.cpp
 	search/search-result.cpp
+	search/remote-contact-directory.cpp
 	signal-information/signal-information.cpp
 	utils/background-task.cpp
 	utils/custom-params.cpp

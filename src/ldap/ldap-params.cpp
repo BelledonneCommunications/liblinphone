@@ -21,6 +21,7 @@
 #include "ldap-params.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "core/core.h"
 #include "ldap-config-keys.h"
 #include "linphone/api/c-address.h"
 #include "linphone/types.h"
@@ -238,6 +239,14 @@ LinphoneLdapAuthMethod LdapParams::getAuthMethod() const {
 
 LinphoneLdapCertVerificationMode LdapParams::getServerCertificatesVerificationMode() const {
 	return static_cast<LinphoneLdapCertVerificationMode>(atoi(getCustomValue("verify_server_certificates").c_str()));
+}
+
+int LdapParams::getConfigIndex() const {
+	return mConfigIndex;
+}
+
+void LdapParams::setConfigIndex(int configIndex) {
+	mConfigIndex = configIndex;
 }
 
 std::map<std::string, std::vector<std::string>> LdapParams::getConfig() const {

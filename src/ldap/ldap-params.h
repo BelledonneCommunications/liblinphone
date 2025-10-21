@@ -23,7 +23,6 @@
 
 #include "belle-sip/object++.hh"
 #include "core/core-accessor.h"
-#include "core/core.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
 
@@ -34,6 +33,8 @@
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Core;
 
 class LdapParams : public bellesip::HybridObject<LinphoneLdapParams, LdapParams>, public CoreAccessor {
 	friend class Ldap;
@@ -67,6 +68,7 @@ public:
 	void setDebugLevel(LinphoneLdapDebugLevel level);
 	void setAuthMethod(LinphoneLdapAuthMethod authMethod);
 	void setServerCertificatesVerificationMode(LinphoneLdapCertVerificationMode mode);
+	void setConfigIndex(int configIndex);
 
 	// Getters
 	std::string &getCustomValue(const std::string &key);
@@ -90,6 +92,7 @@ public:
 	LinphoneLdapDebugLevel getDebugLevel() const;
 	LinphoneLdapAuthMethod getAuthMethod() const;
 	LinphoneLdapCertVerificationMode getServerCertificatesVerificationMode() const;
+	int getConfigIndex() const;
 
 	std::map<std::string, std::vector<std::string>> getConfig() const;
 

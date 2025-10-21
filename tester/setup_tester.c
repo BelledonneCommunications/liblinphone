@@ -91,6 +91,40 @@ _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, LinphoneAddress *a
 	                                                      LinphoneCallSuccess, FALSE, 1.0));
 }
 
+static LinphoneLdapParams *_create_default_ldap_parameters(LinphoneCoreManager *manager,
+                                                           BCTBX_UNUSED(const char *password),
+                                                           const char *bind_dn,
+                                                           const bool_t test_fallback) {
+	// 1) Create LDAP params and set values
+	LinphoneLdapParams *params = linphone_core_create_ldap_params(manager->lc);
+	// Custom
+	linphone_ldap_params_set_password(params, "secret");
+	linphone_ldap_params_set_bind_dn(params, bind_dn);
+	// Defaults
+	linphone_ldap_params_set_timeout(params, 10);
+	linphone_ldap_params_set_timeout_tls_ms(params, 2999);
+	linphone_ldap_params_set_max_results(params, 50);
+	linphone_ldap_params_set_auth_method(params, LinphoneLdapAuthMethodSimple);
+	linphone_ldap_params_set_base_object(params, "ou=people,dc=bc,dc=com");
+	if (test_fallback)
+		linphone_ldap_params_set_server(
+		    params, "ldap:///,ldap://unknwown.example.org://sipv4-nat64.example.org,ldap://srv-ldap.example.org/");
+	else linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
+	linphone_ldap_params_set_filter(params, "(sn=*%s*)");
+	linphone_ldap_params_set_name_attribute(params, "sn");
+	linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
+	linphone_ldap_params_set_sip_domain(params, "ldap.example.org");
+	linphone_ldap_params_set_server_certificates_verification_mode(params, LinphoneLdapCertVerificationDisabled);
+	linphone_ldap_params_enable_tls(params, TRUE);
+	linphone_ldap_params_enable_sal(params, TRUE);
+	linphone_ldap_params_set_debug_level(params, LinphoneLdapDebugLevelVerbose);
+	linphone_ldap_params_set_enabled(params, TRUE);
+
+	// No error after modifications
+	BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);
+	return params;
+}
+
 static LinphoneLdap *_create_default_ldap_server(LinphoneCoreManager *manager,
                                                  BCTBX_UNUSED(const char *password),
                                                  const char *bind_dn,
@@ -98,33 +132,7 @@ static LinphoneLdap *_create_default_ldap_server(LinphoneCoreManager *manager,
 	LinphoneLdap *ldap = NULL;
 	if (linphone_core_ldap_available(manager->lc)) {
 		// 1) Create LDAP params and set values
-		LinphoneLdapParams *params = linphone_core_create_ldap_params(manager->lc);
-		// Custom
-		linphone_ldap_params_set_password(params, "secret");
-		linphone_ldap_params_set_bind_dn(params, bind_dn);
-		// Defaults
-		linphone_ldap_params_set_timeout(params, 10);
-		linphone_ldap_params_set_timeout_tls_ms(params, 2999);
-		linphone_ldap_params_set_max_results(params, 50);
-		linphone_ldap_params_set_auth_method(params, LinphoneLdapAuthMethodSimple);
-		linphone_ldap_params_set_base_object(params, "ou=people,dc=bc,dc=com");
-		if (test_fallback)
-			linphone_ldap_params_set_server(
-			    params, "ldap:///,ldap://unknwown.example.org://sipv4-nat64.example.org,ldap://srv-ldap.example.org/");
-		else linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
-		linphone_ldap_params_set_filter(params, "(sn=*%s*)");
-		linphone_ldap_params_set_name_attribute(params, "sn");
-		linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
-		linphone_ldap_params_set_sip_domain(params, "ldap.example.org");
-		linphone_ldap_params_set_server_certificates_verification_mode(params, LinphoneLdapCertVerificationDisabled);
-		linphone_ldap_params_enable_tls(params, TRUE);
-		linphone_ldap_params_enable_sal(params, TRUE);
-		linphone_ldap_params_set_debug_level(params, LinphoneLdapDebugLevelVerbose);
-		linphone_ldap_params_set_enabled(params, TRUE);
-
-		// No error after modifications
-		BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);
-
+		LinphoneLdapParams *params = _create_default_ldap_parameters(manager, password, bind_dn, test_fallback);
 		// 2) Create LDAP with parameters and add it to the configuration
 		ldap = linphone_core_create_ldap_with_params(manager->lc, params);
 		linphone_ldap_params_unref(params);
@@ -2503,13 +2511,360 @@ static void search_friend_get_capabilities(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallback, bool filter_ldap_results) {
+static void remote_contact_directory_operations(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	const char *base_bind_dn = "cn=Marie Laroueverte,ou=people,dc=bc,dc=com";
+	size_t max_iterations = 3;
+	size_t expected_remote_contact_directory_list_size = 0;
+	for (size_t iteration = 0; iteration < max_iterations; iteration++) {
+		expected_remote_contact_directory_list_size++;
+		char bind_dn[300];
+		sprintf(bind_dn, "%s%0zu", base_bind_dn, iteration);
+
+		LinphoneLdapParams *ldap_params = _create_default_ldap_parameters(marie, "secret", bind_dn, FALSE);
+		LinphoneRemoteContactDirectory *remote_contact_directory =
+		    linphone_core_create_ldap_remote_contact_directory(marie->lc, ldap_params);
+		linphone_ldap_params_unref(ldap_params);
+		BC_ASSERT_TRUE(linphone_remote_contact_directory_get_type(remote_contact_directory) ==
+		               LinphoneRemoteContactDirectoryTypeLdap);
+		linphone_core_add_remote_contact_directory(marie->lc, remote_contact_directory);
+
+		bctbx_list_t *remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+			                size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		// Add again the same remote contact directory object
+		linphone_core_add_remote_contact_directory(marie->lc, remote_contact_directory);
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+			                size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		// Copy the current remote contact directory object, modify a parameter and verify that the entry has been
+		// modified
+		LinphoneLdapParams *ldap_params2 = linphone_remote_contact_directory_get_ldap_params(remote_contact_directory);
+		char ldap2_server[300];
+		sprintf(ldap2_server, "ldap://ldap%0zu.example.org/", iteration);
+		linphone_ldap_params_set_server(ldap_params2, ldap2_server);
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+			                size_t, "%zu");
+			bool_t global_found = FALSE;
+			for (bctbx_list_t *remote_contact_directories_copy = remote_contact_directories;
+			     remote_contact_directories_copy != NULL;
+			     remote_contact_directories_copy = bctbx_list_next(remote_contact_directories_copy)) {
+				LinphoneRemoteContactDirectory *remote_contact_directory_el =
+				    (LinphoneRemoteContactDirectory *)bctbx_list_get_data(remote_contact_directories_copy);
+				if (linphone_remote_contact_directory_get_type(remote_contact_directory_el) ==
+				    LinphoneRemoteContactDirectoryTypeLdap) {
+					const LinphoneLdapParams *ldap_el_params =
+					    linphone_remote_contact_directory_get_ldap_params(remote_contact_directory_el);
+					bool_t found = (strcmp(linphone_ldap_params_get_server(ldap_el_params), ldap2_server) == 0);
+					if (global_found) {
+						BC_ASSERT_FALSE(found);
+					} else {
+						global_found = found;
+					}
+				}
+			}
+			BC_ASSERT_TRUE(global_found);
+
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		LinphoneLdapParams *ldap_params_stored =
+		    linphone_remote_contact_directory_get_ldap_params(remote_contact_directory);
+		LinphoneLdapParams *ldap_params3 = linphone_ldap_params_clone(ldap_params_stored);
+		BC_ASSERT_PTR_NOT_EQUAL(ldap_params3, ldap_params_stored);
+		LinphoneRemoteContactDirectory *remote_contact_directory2 =
+		    linphone_core_create_ldap_remote_contact_directory(marie->lc, ldap_params3);
+		BC_ASSERT_TRUE(linphone_remote_contact_directory_get_type(remote_contact_directory2) ==
+		               LinphoneRemoteContactDirectoryTypeLdap);
+		linphone_core_add_remote_contact_directory(marie->lc, remote_contact_directory2);
+		linphone_ldap_params_unref(ldap_params3);
+
+		expected_remote_contact_directory_list_size++;
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+			                size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		if (remote_contact_directory) {
+			linphone_remote_contact_directory_unref(remote_contact_directory);
+		}
+
+		if (remote_contact_directory2) {
+			linphone_remote_contact_directory_unref(remote_contact_directory2);
+		}
+
+		LinphoneCardDavParams *carddavParams = linphone_core_create_card_dav_params(marie->lc);
+		bctbx_list_t *fields = bctbx_list_append(NULL, (void *)"FN");
+		fields = bctbx_list_append(fields, (void *)"N");
+		fields = bctbx_list_append(fields, (void *)"IMPP");
+		linphone_card_dav_params_set_user_input_fields(carddavParams, fields);
+		bctbx_list_free(fields);
+		fields = bctbx_list_append(NULL, (void *)"IMPP");
+		linphone_card_dav_params_set_domain_fields(carddavParams, fields);
+		bctbx_list_free(fields);
+		linphone_card_dav_params_set_use_exact_match_policy(carddavParams, FALSE);
+
+		remote_contact_directory = linphone_core_create_card_dav_remote_contact_directory(marie->lc, carddavParams);
+		BC_ASSERT_TRUE(linphone_remote_contact_directory_get_type(remote_contact_directory) ==
+		               LinphoneRemoteContactDirectoryTypeCardDav);
+		linphone_remote_contact_directory_set_server_url(remote_contact_directory,
+		                                                 "http://dav.example.org/test/html/card.php");
+		linphone_remote_contact_directory_set_limit(remote_contact_directory, 0);
+		linphone_remote_contact_directory_set_min_characters(remote_contact_directory, 0);
+		linphone_remote_contact_directory_set_timeout(remote_contact_directory, 5);
+		linphone_core_add_remote_contact_directory(marie->lc, remote_contact_directory);
+		linphone_card_dav_params_unref(carddavParams);
+
+		expected_remote_contact_directory_list_size++;
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+			                size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		if (remote_contact_directory) {
+			linphone_remote_contact_directory_unref(remote_contact_directory);
+		}
+	}
+
+	bctbx_list_t *remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+	if (remote_contact_directories) {
+		BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+		                size_t, "%zu");
+		bctbx_list_t *remote_contact_directories_copy = remote_contact_directories;
+		remote_contact_directories_copy = bctbx_list_next(remote_contact_directories_copy);
+		LinphoneRemoteContactDirectory *remote_contact_directory_el =
+		    (LinphoneRemoteContactDirectory *)bctbx_list_get_data(remote_contact_directories_copy);
+		linphone_core_remove_remote_contact_directory(marie->lc, remote_contact_directory_el);
+		bctbx_list_free_with_data(remote_contact_directories,
+		                          (void (*)(void *))linphone_remote_contact_directory_unref);
+	}
+
+	expected_remote_contact_directory_list_size--;
+	remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+	if (remote_contact_directories) {
+		BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_remote_contact_directory_list_size,
+		                size_t, "%zu");
+		bctbx_list_free_with_data(remote_contact_directories,
+		                          (void (*)(void *))linphone_remote_contact_directory_unref);
+	}
+
+	linphone_core_manager_destroy(marie);
+}
+
+static void ldap_operations(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	const char *base_bind_dn = "cn=Marie Laroueverte,ou=people,dc=bc,dc=com";
+	size_t max_iterations = 3;
+	size_t expected_ldap_list_size = 0;
+	for (size_t iteration = 0; iteration < max_iterations; iteration++) {
+		expected_ldap_list_size++;
+		char bind_dn[300];
+		sprintf(bind_dn, "%s%0zu", base_bind_dn, iteration);
+		LinphoneLdap *ldap = _create_default_ldap_server(marie, "secret", bind_dn, FALSE);
+
+		bctbx_list_t *ldap_list = linphone_core_get_ldap_list(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(ldap_list);
+		if (ldap_list) {
+			BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), expected_ldap_list_size, size_t, "%zu");
+			bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+		}
+
+		bctbx_list_t *remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_ldap_list_size, size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		// Add again the same LDAP object
+		linphone_core_add_ldap(marie->lc, ldap);
+		ldap_list = linphone_core_get_ldap_list(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(ldap_list);
+		if (ldap_list) {
+			BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), expected_ldap_list_size, size_t, "%zu");
+			bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+		}
+
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_ldap_list_size, size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		// Copy the current LDAP object, modify a parameter and verify that the entry has been modified
+		LinphoneLdapParams *ldap_params = linphone_ldap_get_params(ldap);
+		char ldap2_server[300];
+		sprintf(ldap2_server, "ldap://ldap%0zu.example.org/", iteration);
+		linphone_ldap_params_set_server(ldap_params, ldap2_server);
+		ldap_list = linphone_core_get_ldap_list(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(ldap_list);
+		if (ldap_list) {
+			BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), expected_ldap_list_size, size_t, "%zu");
+			bool_t global_found = FALSE;
+			for (bctbx_list_t *ldap_list_copy = ldap_list; ldap_list_copy != NULL;
+			     ldap_list_copy = bctbx_list_next(ldap_list_copy)) {
+				LinphoneLdap *ldap_el = (LinphoneLdap *)bctbx_list_get_data(ldap_list_copy);
+				const LinphoneLdapParams *ldap_el_params = linphone_ldap_get_params(ldap_el);
+				bool_t found = (strcmp(linphone_ldap_params_get_server(ldap_el_params), ldap2_server) == 0);
+				if (global_found) {
+					BC_ASSERT_FALSE(found);
+				} else {
+					global_found = found;
+				}
+			}
+			BC_ASSERT_TRUE(global_found);
+			bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+		}
+
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_ldap_list_size, size_t, "%zu");
+			bool_t global_found = FALSE;
+			for (bctbx_list_t *remote_contact_directories_copy = remote_contact_directories;
+			     remote_contact_directories_copy != NULL;
+			     remote_contact_directories_copy = bctbx_list_next(remote_contact_directories_copy)) {
+				LinphoneRemoteContactDirectory *remote_contact_directory_el =
+				    (LinphoneRemoteContactDirectory *)bctbx_list_get_data(remote_contact_directories_copy);
+				const LinphoneLdapParams *ldap_el_params =
+				    linphone_remote_contact_directory_get_ldap_params(remote_contact_directory_el);
+				bool_t found = (strcmp(linphone_ldap_params_get_server(ldap_el_params), ldap2_server) == 0);
+				if (global_found) {
+					BC_ASSERT_FALSE(found);
+				} else {
+					global_found = found;
+				}
+			}
+			BC_ASSERT_TRUE(global_found);
+
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		LinphoneLdapParams *ldap_params_stored = linphone_ldap_get_params(ldap);
+		LinphoneLdapParams *ldap_params2 = linphone_ldap_params_clone(ldap_params_stored);
+		BC_ASSERT_PTR_NOT_EQUAL(ldap_params2, ldap_params_stored);
+		LinphoneLdap *ldap2 = linphone_ldap_new_with_params(marie->lc, ldap_params2);
+		linphone_core_add_ldap(marie->lc, ldap2);
+		linphone_ldap_params_unref(ldap_params2);
+		linphone_ldap_unref(ldap2);
+
+		expected_ldap_list_size++;
+		ldap_list = linphone_core_get_ldap_list(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(ldap_list);
+		if (ldap_list) {
+			BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), expected_ldap_list_size, size_t, "%zu");
+			bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+		}
+
+		remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+		if (remote_contact_directories) {
+			BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_ldap_list_size, size_t, "%zu");
+			bctbx_list_free_with_data(remote_contact_directories,
+			                          (void (*)(void *))linphone_remote_contact_directory_unref);
+		}
+
+		if (ldap) {
+			linphone_ldap_unref(ldap);
+		}
+	}
+
+	bctbx_list_t *remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+	if (remote_contact_directories) {
+		BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_ldap_list_size, size_t, "%zu");
+		bctbx_list_free_with_data(remote_contact_directories,
+		                          (void (*)(void *))linphone_remote_contact_directory_unref);
+	}
+
+	bctbx_list_t *ldap_list = linphone_core_get_ldap_list(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(ldap_list);
+	if (ldap_list) {
+		BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), expected_ldap_list_size, size_t, "%zu");
+		bctbx_list_t *ldap_list_copy = ldap_list;
+		ldap_list_copy = bctbx_list_next(ldap_list_copy);
+		LinphoneLdap *ldap_el = (LinphoneLdap *)bctbx_list_get_data(ldap_list_copy);
+		LinphoneLdapParams *ldap_params = linphone_ldap_get_params(ldap_el);
+		bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+		LinphoneLdap *ldap2 = linphone_ldap_new_with_params(marie->lc, ldap_params);
+		linphone_core_remove_ldap(marie->lc, ldap2);
+		linphone_ldap_unref(ldap2);
+	}
+
+	expected_ldap_list_size--;
+	remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+	if (remote_contact_directories) {
+		BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), expected_ldap_list_size, size_t, "%zu");
+		bctbx_list_free_with_data(remote_contact_directories,
+		                          (void (*)(void *))linphone_remote_contact_directory_unref);
+	}
+
+	ldap_list = linphone_core_get_ldap_list(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(ldap_list);
+	if (ldap_list) {
+		BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), expected_ldap_list_size, size_t, "%zu");
+		bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+	}
+
+	linphone_core_clear_ldaps(marie->lc);
+	BC_ASSERT_PTR_NULL(linphone_core_get_ldap_list(marie->lc));
+
+	linphone_core_manager_destroy(marie);
+}
+
+static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallback, bool_t filter_ldap_results) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneLdap *ldap = _create_default_ldap_server(marie, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com",
 	                                                 check_ldap_fallback);
+
+	bctbx_list_t *ldap_list = linphone_core_get_ldap_list(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(ldap_list);
+	if (ldap_list) {
+		BC_ASSERT_EQUAL(bctbx_list_size(ldap_list), 1, size_t, "%zu");
+		bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+	}
+
+	bctbx_list_t *remote_contact_directories = linphone_core_get_remote_contact_directories(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(remote_contact_directories);
+	if (remote_contact_directories) {
+		BC_ASSERT_EQUAL(bctbx_list_size(remote_contact_directories), 1, size_t, "%zu");
+		bctbx_list_free_with_data(remote_contact_directories,
+		                          (void (*)(void *))linphone_remote_contact_directory_unref);
+	}
 
 	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	BC_ASSERT_PTR_NOT_NULL(room);
@@ -2522,7 +2877,7 @@ static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallb
 	                                                     LinphoneMagicSearchAggregationNone);
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		if (linphone_core_ldap_available(marie->lc)) {
-			if (filter_ldap_results) {
+			if (!!filter_ldap_results) {
 				BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 9, int, "%d"); // Sorted by display names
 				_check_friend_result_list(marie->lc, resultList, 0, "sip:chloe@ldap.example.org", NULL); // "Chloe"
 				_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org",
@@ -4113,6 +4468,7 @@ static test_t setup_tests[] = {
     TEST_NO_TAG("Custom tones setup", custom_tones_setup),
     TEST_NO_TAG("Custom tones setup before start", custom_tones_setup_before_start),
     TEST_NO_TAG("Appropriate software echo canceller check", echo_canceller_check),
+    TEST_ONE_TAG("LDAP operations", ldap_operations, "LDAP"),
     TEST_ONE_TAG("Return friend list in alphabetical order", search_friend_in_alphabetical_order, "MagicSearch"),
     TEST_ONE_TAG("Search friend without filter and domain", search_friend_without_filter, "MagicSearch"),
     TEST_ONE_TAG(
@@ -4159,6 +4515,7 @@ static test_t setup_tests[] = {
     TEST_TWO_TAGS("Ldap features min characters", ldap_features_min_characters, "MagicSearch", "LDAP"),
     TEST_TWO_TAGS("Ldap features more results", ldap_features_more_results, "MagicSearch", "LDAP"),
     TEST_ONE_TAG("Ldap params edition with check", ldap_params_edition_with_check, "LDAP"),
+    TEST_TWO_TAGS("Remote contact directory operations", remote_contact_directory_operations, "LDAP", "CardDAV"),
     TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
     TEST_NO_TAG("Store friends list in DB", friend_list_db_storage),
     TEST_NO_TAG("Store friends list in DB without setting path to db file", friend_list_db_storage_without_db),

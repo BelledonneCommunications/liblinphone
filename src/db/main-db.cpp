@@ -6200,7 +6200,7 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 // - assign all events preceeding the latest creation time to the kept chatroom
 // - destroy the deleted chatroom from DB
 // This function returns TRUE if a chatroom has replaced an existing one or added otherwise FALSE
-bool MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+bool MainDb::addChatroomToList(ChatRoomContextWeakCompareMap &chatRoomsMap,
                                const shared_ptr<AbstractChatRoom> &chatRoom,
                                long long id,
                                int unreadMessageCount,
@@ -6380,7 +6380,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 	return L_DB_TRANSACTION {
 		L_D();
 
-		ChatRoomWeakCompareMap chatRoomsMap;
+		ChatRoomContextWeakCompareMap chatRoomsMap;
 
 		soci::session *session = d->dbSession.getBackendSession();
 		int nbChatRooms = 0;

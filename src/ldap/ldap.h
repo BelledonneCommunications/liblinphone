@@ -43,7 +43,7 @@ public:
 
 	// Account params configuration
 	void setLdapParams(std::shared_ptr<LdapParams> params);
-	std::shared_ptr<LdapParams> getLdapParams() const;
+	std::shared_ptr<LdapParams> &getLdapParams();
 
 	void setIndex(int index);
 	int getIndex() const;

@@ -21,70 +21,84 @@
 #include "bctoolbox/defs.h"
 
 #include "c-wrapper/internal/c-tools.h"
+#include "ldap/ldap-params.h"
+#include "linphone/api/c-carddav-params.h"
+#include "linphone/api/c-ldap-params.h"
 #include "linphone/api/c-remote-contact-directory.h"
 #include "search/remote-contact-directory.h"
+#include "vcard/carddav-params.h"
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneRemoteContactDirectory *linphone_remote_contact_directory_ref(LinphoneRemoteContactDirectory *params) {
-	RemoteContactDirectory::toCpp(params)->ref();
-	return params;
+LinphoneRemoteContactDirectory *
+linphone_remote_contact_directory_ref(LinphoneRemoteContactDirectory *remote_contact_directory) {
+	RemoteContactDirectory::toCpp(remote_contact_directory)->ref();
+	return remote_contact_directory;
 }
 
-void linphone_remote_contact_directory_unref(LinphoneRemoteContactDirectory *params) {
-	RemoteContactDirectory::toCpp(params)->unref();
+void linphone_remote_contact_directory_unref(LinphoneRemoteContactDirectory *remote_contact_directory) {
+	RemoteContactDirectory::toCpp(remote_contact_directory)->unref();
 }
 
 // =============================================================================
 
 LinphoneRemoteContactDirectoryType
-linphone_remote_contact_directory_get_type(const LinphoneRemoteContactDirectory *params) {
-	return RemoteContactDirectory::toCpp(params)->getType();
+linphone_remote_contact_directory_get_type(const LinphoneRemoteContactDirectory *remote_contact_directory) {
+	return RemoteContactDirectory::toCpp(remote_contact_directory)->getType();
 }
 
 LinphoneCardDavParams *
-linphone_remote_contact_directory_get_card_dav_params(const LinphoneRemoteContactDirectory *params) {
-	auto cardDavParams = RemoteContactDirectory::toCpp(params)->getCardDavParams();
+linphone_remote_contact_directory_get_card_dav_params(LinphoneRemoteContactDirectory *remote_contact_directory) {
+	auto &cardDavParams = RemoteContactDirectory::toCpp(remote_contact_directory)->getCardDavParams();
 	return (cardDavParams) ? cardDavParams->toC() : nullptr;
 }
 
-LinphoneLdapParams *linphone_remote_contact_directory_get_ldap_params(const LinphoneRemoteContactDirectory *params) {
-	auto ldapParams = RemoteContactDirectory::toCpp(params)->getLdapParams();
+LinphoneLdapParams *
+linphone_remote_contact_directory_get_ldap_params(LinphoneRemoteContactDirectory *remote_contact_directory) {
+	auto &ldapParams = RemoteContactDirectory::toCpp(remote_contact_directory)->getLdapParams();
 	return (ldapParams) ? ldapParams->toC() : nullptr;
 }
 
 // =============================================================================
 
-const char *linphone_remote_contact_directory_get_server_url(const LinphoneRemoteContactDirectory *params) {
-	return L_STRING_TO_C(RemoteContactDirectory::toCpp(params)->getServerUrl());
+const char *
+linphone_remote_contact_directory_get_server_url(const LinphoneRemoteContactDirectory *remote_contact_directory) {
+	return L_STRING_TO_C(RemoteContactDirectory::toCpp(remote_contact_directory)->getServerUrl());
 }
 
-void linphone_remote_contact_directory_set_server_url(LinphoneRemoteContactDirectory *params, const char *server_url) {
-	RemoteContactDirectory::toCpp(params)->setServerUrl(L_C_TO_STRING(server_url));
+void linphone_remote_contact_directory_set_server_url(LinphoneRemoteContactDirectory *remote_contact_directory,
+                                                      const char *server_url) {
+	RemoteContactDirectory::toCpp(remote_contact_directory)->setServerUrl(L_C_TO_STRING(server_url));
 }
 
-unsigned int linphone_remote_contact_directory_get_limit(const LinphoneRemoteContactDirectory *params) {
-	return RemoteContactDirectory::toCpp(params)->getLimit();
+unsigned int
+linphone_remote_contact_directory_get_limit(const LinphoneRemoteContactDirectory *remote_contact_directory) {
+	return RemoteContactDirectory::toCpp(remote_contact_directory)->getLimit();
 }
 
-void linphone_remote_contact_directory_set_limit(LinphoneRemoteContactDirectory *params, unsigned int limit) {
-	RemoteContactDirectory::toCpp(params)->setLimit(limit);
+void linphone_remote_contact_directory_set_limit(LinphoneRemoteContactDirectory *remote_contact_directory,
+                                                 unsigned int limit) {
+	RemoteContactDirectory::toCpp(remote_contact_directory)->setLimit(limit);
 }
 
-unsigned int linphone_remote_contact_directory_get_min_characters(const LinphoneRemoteContactDirectory *params) {
-	return RemoteContactDirectory::toCpp(params)->getMinCharactersToStartQuery();
+unsigned int
+linphone_remote_contact_directory_get_min_characters(const LinphoneRemoteContactDirectory *remote_contact_directory) {
+	return RemoteContactDirectory::toCpp(remote_contact_directory)->getMinCharactersToStartQuery();
 }
 
-void linphone_remote_contact_directory_set_min_characters(LinphoneRemoteContactDirectory *params, unsigned int min) {
-	RemoteContactDirectory::toCpp(params)->setMinCharactersToStartQuery(min);
+void linphone_remote_contact_directory_set_min_characters(LinphoneRemoteContactDirectory *remote_contact_directory,
+                                                          unsigned int min) {
+	RemoteContactDirectory::toCpp(remote_contact_directory)->setMinCharactersToStartQuery(min);
 }
 
-unsigned int linphone_remote_contact_directory_get_timeout(const LinphoneRemoteContactDirectory *params) {
-	return RemoteContactDirectory::toCpp(params)->getTimeout();
+unsigned int
+linphone_remote_contact_directory_get_timeout(const LinphoneRemoteContactDirectory *remote_contact_directory) {
+	return RemoteContactDirectory::toCpp(remote_contact_directory)->getTimeout();
 }
 
-void linphone_remote_contact_directory_set_timeout(LinphoneRemoteContactDirectory *params, unsigned int seconds) {
-	RemoteContactDirectory::toCpp(params)->setTimeout(seconds);
+void linphone_remote_contact_directory_set_timeout(LinphoneRemoteContactDirectory *remote_contact_directory,
+                                                   unsigned int seconds) {
+	RemoteContactDirectory::toCpp(remote_contact_directory)->setTimeout(seconds);
 }

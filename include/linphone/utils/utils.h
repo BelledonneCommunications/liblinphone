@@ -214,6 +214,45 @@ std::list<T> bctbxListToList(bctbx_list_t *l) {
 	return cppList;
 }
 
+template <typename T,
+          typename U,
+          typename cmpFunctor = std::function<bool(const std::shared_ptr<T> &, const std::shared_ptr<U> &)>,
+          typename std::enable_if<std::is_same<typename std::remove_const<T>::type,
+                                               typename std::remove_const<U>::type>::value>::type * = nullptr>
+bool isSharedPtrObjectLess(const std::shared_ptr<T> &lhs, const std::shared_ptr<U> &rhs, cmpFunctor cmp = nullptr) {
+	if (!rhs) return false;
+	if (!lhs) return true;
+	bool ret = false;
+	if (cmp == nullptr) {
+		ret = (*lhs < *rhs);
+	} else {
+		ret = cmp(lhs, rhs);
+	}
+	return ret;
+}
+
+template <typename T,
+          typename U,
+          typename cmpFunctor = std::function<bool(const std::shared_ptr<T> &, const std::shared_ptr<U> &)>,
+          typename std::enable_if<std::is_same<typename std::remove_const<T>::type,
+                                               typename std::remove_const<U>::type>::value>::type * = nullptr>
+bool isSharedPtrObjectEqual(const std::shared_ptr<T> &lhs, const std::shared_ptr<U> &rhs, cmpFunctor cmp = nullptr) {
+	if (!lhs && !rhs) {
+		return true;
+	} else if (lhs && !rhs) {
+		return false;
+	} else if (!lhs && rhs) {
+		return false;
+	}
+	bool ret = false;
+	if (cmp == nullptr) {
+		ret = (*lhs == *rhs);
+	} else {
+		ret = cmp(lhs, rhs);
+	}
+	return ret;
+}
+
 LINPHONE_PUBLIC std::tm getTimeTAsTm(time_t t);
 LINPHONE_PUBLIC time_t getTmAsTimeT(const std::tm &t);
 LINPHONE_PUBLIC std::string timeToIso8601(time_t t);

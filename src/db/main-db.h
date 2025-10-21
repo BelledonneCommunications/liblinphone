@@ -326,10 +326,10 @@ protected:
 private:
 	L_DECLARE_PRIVATE(MainDb);
 	L_DISABLE_COPY(MainDb);
-	using ChatRoomWeakCompareMap =
-	    std::unordered_map<ConferenceId, ChatRoomContext, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
+	typedef std::unordered_map<ConferenceId, ChatRoomContext, ConferenceId::WeakHash, ConferenceId::WeakEqual>
+	    ChatRoomContextWeakCompareMap;
 	void initCleanup();
-	bool addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+	bool addChatroomToList(ChatRoomContextWeakCompareMap &chatRoomsMap,
 	                       const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                       long long id,
 	                       int unreadMessageCount,

@@ -294,7 +294,7 @@ void linphone_core_remove_remote_contact_directory(LinphoneCore *core,
 
 bctbx_list_t *linphone_core_get_remote_contact_directories(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
-	return RemoteContactDirectory::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getRemoteContactDirectories());
+	return RemoteContactDirectory::getCListFromCppSet(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getRemoteContactDirectories());
 }
 
 LinphoneCardDavParams *linphone_core_create_card_dav_params(LinphoneCore *core) {
@@ -317,7 +317,6 @@ LinphoneLdap *linphone_core_create_ldap_with_params(LinphoneCore *core, Linphone
 
 void linphone_core_clear_ldaps(LinphoneCore *core) {
 	CoreLogContextualizer logContextualizer(core);
-
 	std::list<std::shared_ptr<RemoteContactDirectory>> toErase;
 	for (auto rdc : L_GET_CPP_PTR_FROM_C_OBJECT(core)->getRemoteContactDirectories()) {
 		if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap) {
@@ -331,7 +330,6 @@ void linphone_core_clear_ldaps(LinphoneCore *core) {
 
 void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ldap) {
 	CoreLogContextualizer logContextualizer(core);
-
 	LinphoneLdapParams *params = linphone_ldap_get_params(ldap);
 	auto ldapParams = LdapParams::toCpp(params)->getSharedFromThis();
 	auto rdc = RemoteContactDirectory::create(ldapParams);
@@ -340,16 +338,10 @@ void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ldap) {
 
 void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap *ldap) {
 	CoreLogContextualizer logContextualizer(core);
-
 	LinphoneLdapParams *params = linphone_ldap_get_params(ldap);
 	auto ldapParams = LdapParams::toCpp(params)->getSharedFromThis();
-	shared_ptr<RemoteContactDirectory> toRemove = nullptr;
-	for (auto rdc : L_GET_CPP_PTR_FROM_C_OBJECT(core)->getRemoteContactDirectories()) {
-		if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap && rdc->getLdapParams() == ldapParams) {
-			toRemove = rdc;
-			break;
-		}
-	}
+	auto remoteContactDirectory = RemoteContactDirectory::create(ldapParams);
+	auto toRemove = L_GET_CPP_PTR_FROM_C_OBJECT(core)->findRemoteContactDirectory(remoteContactDirectory);
 	if (toRemove) {
 		L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeRemoteContactDirectory(toRemove);
 	}

@@ -208,10 +208,15 @@ private:
 	std::list<std::shared_ptr<Call>> calls;
 	std::shared_ptr<Call> currentCall;
 
-	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
-	    mChatRoomsById;
-	std::unordered_map<ConferenceId, std::shared_ptr<Conference>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
-	    mConferenceById;
+	typedef std::
+	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
+	        ChatRoomWeakCompareMap;
+	ChatRoomWeakCompareMap mChatRoomsById;
+
+	typedef std::
+	    unordered_map<ConferenceId, std::shared_ptr<Conference>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
+	        ConferenceWeakCompareMap;
+	ConferenceWeakCompareMap mConferenceById;
 
 	std::unique_ptr<EncryptionEngine> imee;
 
@@ -236,8 +241,7 @@ private:
 	ExtraBackgroundTask bgTask{"Stop core async end"};
 	BackgroundTask coreStartupTask{"Core startup until registration"};
 
-	std::list<std::shared_ptr<RemoteContactDirectory>>
-	    mRemoteContactDirectories; // Persistent list of LDAP & CardDAV configs
+	Core::RemoteContactDirectorySet mRemoteContactDirectories; // Persistent list of LDAP & CardDAV configs
 
 	std::string logLabel;
 	LinphoneCodecPriorityPolicy videoCodecPriorityPolicy = LinphoneCodecPriorityPolicyAuto;

@@ -53,25 +53,20 @@ Ldap::~Ldap() {
 }
 
 void Ldap::setLdapParams(std::shared_ptr<LdapParams> params) {
-	shared_ptr<RemoteContactDirectory> found = nullptr;
 	if (mParams) {
-		for (auto rdc : getCore()->getRemoteContactDirectories()) {
-			if (rdc->getType() == LinphoneRemoteContactDirectoryTypeLdap && rdc->getLdapParams() == mParams) {
-				found = rdc;
-				break;
-			}
+		auto remoteContactDirectory = RemoteContactDirectory::create(mParams);
+		auto found = getCore()->findRemoteContactDirectory(remoteContactDirectory);
+		if (found) {
+			getCore()->removeRemoteContactDirectory(found);
 		}
 	}
 	mParams = params;
 
-	if (found) {
-		getCore()->removeRemoteContactDirectory(found);
-	}
 	auto remoteContactDirectory = RemoteContactDirectory::create(mParams);
 	getCore()->addRemoteContactDirectory(remoteContactDirectory);
 }
 
-std::shared_ptr<LdapParams> Ldap::getLdapParams() const {
+std::shared_ptr<LdapParams> &Ldap::getLdapParams() {
 	return mParams;
 }
 

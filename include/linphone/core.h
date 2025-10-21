@@ -7687,11 +7687,10 @@ LINPHONE_PUBLIC LinphoneLdapParams *linphone_core_create_ldap_params(LinphoneCor
 LINPHONE_PUBLIC LinphoneLdap *linphone_core_create_ldap(LinphoneCore *core);
 
 /**
- * Creates a LDAP search using given parameters and store them in the configuration file.
- *
+ * Creates a LDAP search using given parameters, adds it to the core list and stores them in the configuration file.
  * @param core #LinphoneCore object @notnil
  * @param params #LinphoneLdapParams object @notnil
- * @return #LinphoneLdap with default values set @notnil @tobefreed
+ * @return #LinphoneLdap object @notnil @tobefreed
  * @deprecated 18/11/2024 use linphone_core_create_ldap_remote_contact_directory() instead.
  */
 LINPHONE_PUBLIC LinphoneLdap *linphone_core_create_ldap_with_params(LinphoneCore *core, LinphoneLdapParams *params);
@@ -7707,7 +7706,7 @@ LINPHONE_PUBLIC void linphone_core_clear_ldaps(LinphoneCore *core);
 /**
  * Add or update a LDAP server and save it to the configuration.
  * @param core #LinphoneCore object @notnil
- * @param ldap The LDAP to add/update. @notnil
+ * @param ldap The #LinphoneLdap object to add/update. @notnil
  * @deprecated 18/11/2024 use linphone_core_add_remote_contact_directory() instead.
  **/
 LINPHONE_PUBLIC void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ldap);
@@ -7715,7 +7714,7 @@ LINPHONE_PUBLIC void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap *ld
 /**
  * Remove a LDAP from the configuration.
  * @param core #LinphoneCore object @notnil
- * @param ldap The LDAP to remove. @notnil
+ * @param ldap The #LinphoneLdap object to remove. @notnil
  * @deprecated 18/11/2024 use linphone_core_remove_remote_contact_directory() instead.
  **/
 LINPHONE_PUBLIC void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap *ldap);
