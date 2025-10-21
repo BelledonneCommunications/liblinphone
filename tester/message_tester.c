@@ -2841,6 +2841,37 @@ static void is_composing_notification(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void crappy_composing_message(void) {
+	const char *message_template =
+	    "MESSAGE sip:%s@sip.example.org:61402;transport=tls SIP/2.0\r\n"
+	    "Via: SIP/2.0/TLS 10.0.0.101:5061;branch=z9hG4bKd4e.1580496edb5eed293e6aa4271efb9757.0\r\n"
+	    "Max-Forwards: 69\r\n"
+	    "From: <sip:lise@sip.example.org>;tag=as51cc545f\r\n"
+	    "To: <sip:%s@sip.example.org>\r\n"
+	    "Call-ID: 26ea4fd20c36d50d54ea42c65b0a0fd0@10.0.0.102:5060\r\n"
+	    "CSeq: 102 MESSAGE\r\n"
+	    "Content-Type: application/im-iscomposing+xml\r\n"
+	    "Content-Length: 11\r\n"
+	    "Contact: <sip:lise@10.0.0.102:5061;transport=tls>\r\n"
+	    "\r\n"
+	    "Hello World\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	const char *laure_username = linphone_address_get_username(laure->identity);
+	char *message = bctbx_strdup_printf(message_template, laure_username, laure_username);
+
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(message, strlen(message), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_FALSE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneMessageReceived, 1));
+
+	bctbx_free(message);
+	linphone_core_manager_destroy(laure);
+}
+
 static void imdn_notifications(void) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
@@ -4982,6 +5013,7 @@ static test_t message_tests[] = {
     TEST_NO_TAG("Message with wrong domain in TO header", basic_message_with_wrong_to_domain),
 #ifdef HAVE_ADVANCED_IM
     TEST_NO_TAG("IsComposing notification", is_composing_notification),
+    TEST_NO_TAG("Crappy IsComposing message", crappy_composing_message),
     TEST_NO_TAG("IMDN notifications", imdn_notifications),
     TEST_NO_TAG("IM notification policy", im_notification_policy),
     TEST_NO_TAG("Aggregated IMDNs", aggregated_imdns),

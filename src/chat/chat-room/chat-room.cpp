@@ -749,7 +749,11 @@ void ChatRoom::onImdnReceived(const shared_ptr<ChatMessage> &chatMessage) {
 }
 
 void ChatRoom::onIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, const string &text) {
-	mIsComposingHandler->parse(remoteAddress, text);
+	try {
+		mIsComposingHandler->parse(remoteAddress, text);
+	} catch (std::exception &e) {
+		lError() << "Failed to parse composing XML [" << text << "]: " << e.what();
+	}
 }
 
 void ChatRoom::onIsComposingRefreshNeeded() {
