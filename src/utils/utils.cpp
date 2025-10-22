@@ -712,7 +712,14 @@ string Utils::getFileExtension(const string &filePath) {
 
 string Utils::convertFileToBase64(const string &filePath) {
 	auto file = bctbx_file_open(bctbx_vfs_get_standard(), filePath.c_str(), "r");
+	if (file == nullptr) return "";
+
 	size_t file_size = (size_t)bctbx_file_size(file);
+	if (file_size == 0) {
+		bctbx_file_close(file);
+		return "";
+	}
+
 	unsigned char *buffer = (unsigned char *)bctbx_malloc(file_size);
 	bctbx_file_read(file, buffer, file_size, 0);
 	bctbx_file_close(file);
@@ -732,6 +739,9 @@ string Utils::convertFileToBase64(const string &filePath) {
 	bctbx_free(buffer);
 	bctbx_free(base64Buffer);
 
+	if (b64Size == 0) {
+		return "";
+	}
 	return base64AsString;
 }
 
@@ -739,7 +749,7 @@ bool Utils::isIp(const string &remote) {
 	bool ret = false;
 	int err;
 
-	struct addrinfo hints {};
+	struct addrinfo hints{};
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;

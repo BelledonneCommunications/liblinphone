@@ -400,7 +400,13 @@ const string &Vcard::asVcard4StringWithBase64Picture() const {
 		shared_ptr<belcard::BelCard> clone = shared_ptr<belcard::BelCard>(
 		    belcard::BelCardParser::getInstance(mUseVCard3Grammar)->parseOne(mBelCard->toFoldedString()));
 		const shared_ptr<belcard::BelCardPhoto> clonePhoto = clone->getPhotos().front();
-		clonePhoto->setValue(base64PhotoAsString);
+		if (base64PhotoAsString.empty()) {
+			lWarning() << "[vCard] Failed to convert local file [" << photo
+			           << "] to base64, removing picture from vCard";
+			clone->removePhoto(clonePhoto);
+		} else {
+			clonePhoto->setValue(base64PhotoAsString);
+		}
 
 		vcard4String = clone->toFoldedString();
 		return vcard4String;
