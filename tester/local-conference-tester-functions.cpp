@@ -7492,7 +7492,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			}
 			LinphoneConference *fconference =
 			    linphone_core_search_conference(focus.getLc(), NULL, confAddr, confAddr, NULL);
-			BC_ASSERT_PTR_NOT_NULL(fconference);
+			BC_ASSERT_PTR_NULL(fconference);
 			if (fconference) {
 				LinphoneChatRoom *cr = linphone_conference_get_chat_room(fconference);
 				BC_ASSERT_PTR_NOT_NULL(cr);

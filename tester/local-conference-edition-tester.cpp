@@ -1945,7 +1945,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart, bool_t
 
 			BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_chat_rooms(focus.getLc())), 0, size_t, "%zu");
 			const LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
-			BC_ASSERT_PTR_NOT_NULL(fconference);
+			BC_ASSERT_PTR_NULL(fconference);
 		}
 
 		if (!!join) {

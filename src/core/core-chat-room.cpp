@@ -426,11 +426,13 @@ void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	}
 }
 
-void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
+void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatRoom,
+                                       unsigned int notifyId,
+                                       bool rewriteAllInformations) {
 	const auto chatRoomState = chatRoom->getState();
 	if (mainDb->isInitialized() && ((chatRoomState == ConferenceInterface::State::CreationPending) ||
 	                                (chatRoomState == ConferenceInterface::State::Created))) {
-		mainDb->insertChatRoom(chatRoom, notifyId);
+		mainDb->insertChatRoom(chatRoom, notifyId, rewriteAllInformations);
 	}
 }
 

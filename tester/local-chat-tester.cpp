@@ -2555,6 +2555,28 @@ static void group_chat_room_bulk_notify_to_participant_base(bool_t trigger_full_
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
 		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject2);
 
+		auto &paulineMainDb = L_GET_PRIVATE_FROM_C_OBJECT(pauline.getLc())->mainDb;
+		auto paulineDbChatRooms = paulineMainDb->getChatRooms();
+		BC_ASSERT_EQUAL(paulineDbChatRooms.size(), 1, size_t, "%zu");
+		for (auto chatRoom : paulineDbChatRooms) {
+			BC_ASSERT_STRING_EQUAL(chatRoom->getSubject().c_str(), newSubject2);
+			BC_ASSERT_EQUAL(chatRoom->getParticipants().size(), 2, size_t, "%zu");
+		}
+
+		ms_message("%s restarts its core", pauline.getIdentity().toString().c_str());
+		coresList = bctbx_list_remove(coresList, pauline.getLc());
+		// Restart Pauline
+		pauline.reStart();
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+
+		auto &paulineMainDbAfterRestart = L_GET_PRIVATE_FROM_C_OBJECT(pauline.getLc())->mainDb;
+		auto paulineDbChatRoomsAfterRestart = paulineMainDbAfterRestart->getChatRooms();
+		BC_ASSERT_EQUAL(paulineDbChatRooms.size(), paulineDbChatRoomsAfterRestart.size(), size_t, "%zu");
+		for (auto chatRoom : paulineDbChatRoomsAfterRestart) {
+			BC_ASSERT_STRING_EQUAL(chatRoom->getSubject().c_str(), newSubject2);
+			BC_ASSERT_EQUAL(chatRoom->getParticipants().size(), 2, size_t, "%zu");
+		}
+
 		CoreManagerAssert({focus, marie, pauline, michelle}).waitUntil(std::chrono::seconds(2), [] { return false; });
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
@@ -4056,9 +4078,12 @@ static test_t local_conference_chat_basic_tests[] = {
     TEST_ONE_TAG("Group chat with client restart",
                  LinphoneTest::group_chat_room_with_client_restart,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
-    TEST_NO_TAG("Group chat room bulk notify to participant", LinphoneTest::group_chat_room_bulk_notify_to_participant),
-    TEST_NO_TAG("Group chat room bulk notify full state to participant",
-                LinphoneTest::group_chat_room_bulk_notify_full_state_to_participant),
+    TEST_ONE_TAG("Group chat room bulk notify to participant",
+                 LinphoneTest::group_chat_room_bulk_notify_to_participant,
+                 "LeaksMemory"), /* beacause of coreMgr restart*/
+    TEST_ONE_TAG("Group chat room bulk notify full state to participant",
+                 LinphoneTest::group_chat_room_bulk_notify_full_state_to_participant,
+                 "LeaksMemory"), /* beacause of coreMgr restart*/
     TEST_ONE_TAG("One to one chatroom exhumed while participant is offline",
                  LinphoneTest::one_to_one_chatroom_exhumed_while_offline,
                  "LeaksMemory"), /* because of network up and down*/

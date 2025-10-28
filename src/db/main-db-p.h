@@ -63,7 +63,9 @@ private:
 	long long insertContentType(const std::string &contentType);
 	long long
 	insertOrUpdateImportedBasicChatRoom(long long peerSipAddressId, long long localSipAddressId, const time_t &time);
-	long long insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
+	long long insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                         unsigned int notifyId = 0,
+	                         bool rewriteAllInformations = false);
 	long long insertChatRoomParticipant(long long chatRoomId, long long participantSipAddressId, bool isAdmin);
 	void insertChatRoomParticipantDevice(long long participantId, const std::shared_ptr<ParticipantDevice> &device);
 	void insertChatRoomParticipantDevice(long long participantId,

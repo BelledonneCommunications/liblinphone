@@ -212,7 +212,9 @@ public:
 	// ---------------------------------------------------------------------------
 
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms();
-	void insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
+	void insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                    unsigned int notifyId = 0,
+	                    bool rewriteAllInformations = false);
 	void deleteChatRoom(const ConferenceId &conferenceId);
 	void updateNotifyId(const std::shared_ptr<AbstractChatRoom> &chatRoom, const unsigned int lastNotify);
 	void updateChatRoomConferenceId(const ConferenceId &oldConferenceId, const ConferenceId &newConferenceId);
