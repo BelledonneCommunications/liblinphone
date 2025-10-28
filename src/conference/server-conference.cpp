@@ -1958,7 +1958,18 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 				} else {
 					lInfo() << "Already found " << *participantDevice << " in " << *this
 					        << " that should be associated to " << *session << " but it is already to "
-					        << *deviceSession << ". Terminating the later.";
+					        << *deviceSession << ". Terminating the latter.";
+					// The conference server already has an active session for the device but the device created a new
+					// one, maybe following a crash or a network issue on its side. The conference server therefore has
+					// to detach the old session from the mixer session, remove the old participant device as many
+					// informations may have changed (for example callID, from and to tags, stream SSRC and labels) and
+					// terminate the session. The call state changed should not be called on the session termination as
+					// there is no need to check if the conference is terminated and kick off this process if needed,
+					// hence remove the conference as session listener
+					deviceSession->removeListener(getSharedFromThis());
+					mMixerSession->unjoinStreamsGroup(
+					    dynamic_pointer_cast<MediaSession>(deviceSession)->getStreamsGroup());
+					removeParticipantDevice(deviceSession);
 					deviceSession->terminate();
 				}
 			}
@@ -2023,7 +2034,6 @@ bool ServerConference::addParticipant(std::shared_ptr<Call> call) {
 					const_cast<MediaSessionParams *>(call->getParams())->enableVideo(false);
 				}
 
-				//				auto success = Conference::addParticipant(call);
 				auto success = addParticipantAndDevice(call);
 
 				const auto &participant = findParticipant(session->getRemoteAddress());
