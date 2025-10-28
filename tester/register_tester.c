@@ -266,7 +266,7 @@ static void simple_register_with_custom_refresh_period(void) {
 
 	int min_refresh = 20; // %
 	int max_refresh = 50; // %
-	int expires = 10;     // s;
+	int expires = 20;     // s;
 	linphone_core_set_refresh_window(lcm->lc, min_refresh, max_refresh);
 	stats *counters = &lcm->stat;
 	LinphoneAccountParams *account_params = linphone_core_create_account_params(lcm->lc);

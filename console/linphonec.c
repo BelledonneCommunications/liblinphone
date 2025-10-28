@@ -105,7 +105,10 @@ static char **linephonec_readline_completion(const char *text, int start, int en
 
 /* These are callback for linphone core */
 static void linphonec_prompt_for_auth(LinphoneCore *lc, const char *realm, const char *username, const char *domain);
-static void linphonec_display_refer(LinphoneCore *lc, const char *refer_to);
+static void linphonec_display_refer(LinphoneCore *lc,
+                                    const LinphoneAddress *refer_to,
+                                    const LinphoneHeaders *headers,
+                                    const LinphoneContent *ct);
 static void linphonec_transfer_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState new_call_state);
 
 static void linphonec_notify_presence_received(LinphoneCore *lc, LinphoneFriend *fid);
@@ -188,8 +191,13 @@ LinphoneCall *linphonec_get_call(int id) {
 /*
  * Linphone core callback
  */
-static void linphonec_display_refer(BCTBX_UNUSED(LinphoneCore *lc), const char *refer_to) {
-	linphonec_out("Receiving out of call refer to %s\n", refer_to);
+static void linphonec_display_refer(BCTBX_UNUSED(LinphoneCore *lc),
+                                    const LinphoneAddress *refer_to,
+                                    BCTBX_UNUSED(const LinphoneHeaders *headers),
+                                    BCTBX_UNUSED(const LinphoneContent *ct)) {
+	char *tmp = linphone_address_as_string(refer_to);
+	linphonec_out("Receiving out of call refer to %s\n", tmp);
+	bctbx_free(tmp);
 }
 
 /*
