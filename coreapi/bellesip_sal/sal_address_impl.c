@@ -166,10 +166,7 @@ void sal_address_clean(SalAddress *addr) {
 }
 
 char *sal_address_as_string(const SalAddress *addr) {
-	char tmp[1024] = {0};
-	size_t off = 0;
-	belle_sip_object_marshal((belle_sip_object_t *)addr, tmp, sizeof(tmp), &off);
-	return ms_strdup(tmp);
+	return belle_sip_object_to_string(addr);
 }
 
 bool_t sal_address_is_sip(const SalAddress *addr) {
@@ -182,8 +179,6 @@ char *sal_address_as_string_uri_only(const SalAddress *addr) {
 	belle_sip_header_address_t *header_addr = BELLE_SIP_HEADER_ADDRESS(address_uri);
 	belle_sip_uri_t *sip_uri = belle_sip_header_address_get_uri(header_addr);
 	belle_generic_uri_t *absolute_uri = belle_sip_header_address_get_absolute_uri(header_addr);
-	char tmp[1024] = {0};
-	size_t off = 0;
 	belle_sip_object_t *uri;
 
 	if (sip_uri) {
@@ -194,9 +189,10 @@ char *sal_address_as_string_uri_only(const SalAddress *addr) {
 		ms_error("Cannot generate string for addr [%p] with null uri", addr);
 		return NULL;
 	}
-	belle_sip_object_marshal(uri, tmp, sizeof(tmp), &off);
+	char *tmp = belle_sip_object_to_string(uri);
 	char *uri_string = ms_strdup(tmp);
 	sal_address_unref(address_uri);
+	belle_sip_free(tmp);
 	return uri_string;
 }
 
