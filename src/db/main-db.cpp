@@ -6439,6 +6439,10 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 		}
 
 		bool serverMode = linphone_core_conference_server_enabled(cCore);
+		// The offset needs to be incremented when the processing of the data retrieved for a chatroom starts.
+		// It has to be decremented when a chatroom is deleted from the database at start up. This could happen because it is found out it is just a duplicated of another one  (local or peer address has different gr parameters in their addresses for example) or it is cleaned up from the database as it has no participants.
+		// As we retrieve chatrooms by chunks, we must be able to cope with a changing chatroom list size.
+		// For instance, let's say the chunk size is set to 10. During the first iteration we process the first 10 chatrooms and there is no need to trim down the list. The second time round, a second set of 10 chatrooms is read from the database; it has an offset of 10 with respect to the first one (basically chatrooms at position 11 to 20 have been retrieved). Now it happens that one chatroom has to be deleted while processing the entry. Such action moves up the position of the following chatrooms in the database leading to the end of the iteration to have processed all chatroom up to position 19. The next offset to use is therefore 19 (i.e. <starting_offset> + <processed_chatroom_in_iteration> - <deleted_chatrooms> where <starting_offset> is 10, <processed_chatroom_in_iteration> is 10, <deleted_chatrooms> is 1)
 		long long int offset = 0;
 		vector<long long> dbChatRoomIds;
 		vector<long long> dbFlexisipChatRoomIds;
@@ -6471,6 +6475,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 				if (backend == ChatParams::Backend::FlexisipChat) {
 					dbFlexisipChatRoomIds.push_back(dbChatRoomId);
 				}
+			}
+			if (dbChatRoomIds.empty()) {
+				lFatal() << "An empty list of chatroom IDs has been retrieved";
 			}
 			auto allChatRoomParticipants = selectChatRoomParticipants(dbFlexisipChatRoomIds);
 			const auto chatRoomIdsStr = Utils::join(dbChatRoomIds, ",");
@@ -6600,6 +6607,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 							lInfo() << "Deleting chatroom with database ID set to " << dbChatRoomId
 							        << " because it has no participants";
 							d->deleteChatRoom(dbChatRoomId);
+							offset--;
 							continue;
 						}
 					}
