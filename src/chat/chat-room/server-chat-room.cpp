@@ -100,6 +100,7 @@ LinphoneReason ServerChatRoom::onSipMessageReceived(SalOp *op, const SalMessage 
 	// Check that the message is coming from a participant of the chat room
 	std::shared_ptr<Address> fromAddr = Address::create(op->getFrom());
 	if (!getConference()->findParticipant(fromAddr)) {
+		lError() << "Unable to find participant with " << *fromAddr << " in " << *this;
 		return LinphoneReasonForbidden;
 	}
 

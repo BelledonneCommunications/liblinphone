@@ -49,6 +49,8 @@ public:
 	bool canHandleMultipart() const override;
 
 	CapabilitiesMask getCapabilities() const override;
+	AbstractChatRoom::SecurityLevel
+	getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const;
 	ChatRoom::SecurityLevel getSecurityLevel() const override;
 	bool hasBeenLeft() const override;
 	bool isReadOnly() const override;

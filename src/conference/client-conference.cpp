@@ -1406,7 +1406,8 @@ void ClientConference::onParticipantDeviceAdded(
 			shared_ptr<Participant> participant;
 			if (isMe(addr)) participant = getMe();
 			else participant = findParticipant(addr);
-			ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevelExcept(device);
+			ChatRoom::SecurityLevel currentSecurityLevel =
+			    dynamic_pointer_cast<ClientChatRoom>(chatRoom)->getSecurityLevelExcept(device);
 			securityEvent =
 			    encryptionEngine->onDeviceAdded(event->getDeviceAddress(), participant, chatRoom, currentSecurityLevel);
 		}
@@ -1685,49 +1686,6 @@ void ClientConference::onSecurityEvent(BCTBX_UNUSED(const shared_ptr<ConferenceS
 		_linphone_chat_room_notify_security_event(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 	}
 #endif // HAVE_ADVANCED_IM
-}
-
-AbstractChatRoom::SecurityLevel
-ClientConference::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const {
-	auto encryptionEngine = getCore()->getEncryptionEngine();
-	if (!encryptionEngine) {
-		lWarning() << *this << ": Asking participant security level but there is no encryption engine enabled";
-		return AbstractChatRoom::SecurityLevel::ClearText;
-	}
-
-	if (!getCurrentParams()->getChatParams()->isEncrypted()) {
-		lDebug() << *this << ": Chatroom SecurityLevel = ClearText";
-		return AbstractChatRoom::SecurityLevel::ClearText;
-	}
-
-	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
-	if (getParticipants().size() == 0 && getMe()->getDevices().size() == 0) {
-		lDebug() << *this << ": Chatroom SecurityLevel = Encrypted";
-		return AbstractChatRoom::SecurityLevel::Encrypted;
-	}
-
-	// populate a list of all devices in the chatroom
-	// first step, all participants, including me
-	auto participants = getParticipants();
-	participants.push_back(getMe());
-
-	std::list<std::string> allDevices{};
-	for (const auto &participant : participants) {
-		for (const auto &device : participant->getDevices()) {
-			allDevices.push_back(device->getAddress()->asStringUriOnly());
-		}
-	}
-	if (ignoredDevice != nullptr) {
-		allDevices.remove(ignoredDevice->getAddress()->asStringUriOnly());
-	}
-	allDevices.remove(getConferenceId().getLocalAddress()->asStringUriOnly()); // remove local device from the list
-
-	if (allDevices.empty()) {
-		return AbstractChatRoom::SecurityLevel::Safe;
-	}
-	auto level = encryptionEngine->getSecurityLevel(allDevices);
-	lDebug() << *this << ": Chatroom SecurityLevel = " << level;
-	return level;
 }
 
 void ClientConference::onFirstNotifyReceived(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
@@ -2083,6 +2041,9 @@ int ClientConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 	for (const auto &address : addresses) {
 		auto participant = Participant::create(Address::create(address->getUri()));
 		participant->setRole(Participant::Role::Speaker);
+		// Initialize the participant list to the list of invited participants. It will be overridden once the NOTIFY
+		// full state is received
+		mParticipants.push_back(participant);
 		mInvitedParticipants.push_back(participant);
 		invitees.push_back(Conference::createParticipantAddressForResourceList(participant));
 	}
@@ -2523,10 +2484,6 @@ AudioStream *ClientConference::getAudioStream() {
 	auto ms = static_pointer_cast<MediaSession>(session);
 	MS2AudioStream *stream = ms->getStreamsGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
 	return stream ? (AudioStream *)stream->getMediaStream() : nullptr;
-}
-
-bool ClientConference::hasBeenLeft() const {
-	return (mState == State::TerminationPending) || (mState == State::Terminated) || (mState == State::Deleted);
 }
 
 void ClientConference::handleRefer(SalReferOp *op,

@@ -37,45 +37,91 @@ ConferenceContext::ConferenceContext(const std::shared_ptr<ConferenceParams> &pa
 
 bool ConferenceContext::operator==(const ConferenceContext &other) const {
 	if (mLocalAddress.isValid() &&
-	    (mLocalAddress.toStringUriOnlyOrdered(false) != other.getLocalAddress().toStringUriOnlyOrdered(false)))
+	    (mLocalAddress.toStringUriOnlyOrdered(false) != other.getLocalAddress().toStringUriOnlyOrdered(false))) {
+		lDebug() << "Conference context equalily failed because of local address mismatch; this "
+		         << mLocalAddress.toStringUriOnlyOrdered(false) << " other "
+		         << other.getLocalAddress().toStringUriOnlyOrdered(false);
 		return false;
+	}
 	if (mRemoteAddress.isValid() &&
-	    (mRemoteAddress.toStringUriOnlyOrdered(false) != other.getRemoteAddress().toStringUriOnlyOrdered(false)))
+	    (mRemoteAddress.toStringUriOnlyOrdered(false) != other.getRemoteAddress().toStringUriOnlyOrdered(false))) {
+		lDebug() << "Conference context equalily failed because of remote address mismatch; this "
+		         << mRemoteAddress.toStringUriOnlyOrdered(false) << " other "
+		         << other.getRemoteAddress().toStringUriOnlyOrdered(false);
 		return false;
+	}
 
 	// Check parameters only if pointer provided as argument is not null
 	if (mParams) {
 		const auto &otherParams = other.getParams();
-		if (mParams->audioEnabled() != otherParams->audioEnabled()) return false;
-		if (mParams->videoEnabled() != otherParams->videoEnabled()) return false;
-		if (mParams->chatEnabled() != otherParams->chatEnabled()) return false;
-		if (mParams->getSecurityLevel() != otherParams->getSecurityLevel()) return false;
-
-		const auto &thisSubject = mParams->getUtf8Subject();
-		const auto &otherSubject = otherParams->getUtf8Subject();
+		if (mParams->audioEnabled() != otherParams->audioEnabled()) {
+			lDebug() << "Conference context equalily failed because of chat capabilities mismatch; this "
+			         << mParams->audioEnabled() << " other " << otherParams->audioEnabled();
+			return false;
+		}
+		if (mParams->videoEnabled() != otherParams->videoEnabled()) {
+			lDebug() << "Conference context equalily failed because of video capabilities mismatch; this "
+			         << mParams->videoEnabled() << " other " << otherParams->videoEnabled();
+			return false;
+		}
+		if (mParams->chatEnabled() != otherParams->chatEnabled()) {
+			lDebug() << "Conference context equalily failed because of chat capabilities mismatch; this "
+			         << mParams->chatEnabled() << " other " << otherParams->chatEnabled();
+			return false;
+		}
+		if (mParams->getSecurityLevel() != otherParams->getSecurityLevel()) {
+			lDebug() << "Conference context equalily failed because of security level mismatch; this "
+			         << static_cast<int>(mParams->getSecurityLevel()) << " other "
+			         << static_cast<int>(otherParams->getSecurityLevel());
+			return false;
+		}
 
 		bool checkSubject = false;
-
 		if (mParams->audioEnabled() || mParams->videoEnabled()) {
 			checkSubject = true;
-			if (mParams->localParticipantEnabled() != otherParams->localParticipantEnabled()) return false;
+			if (mParams->localParticipantEnabled() != otherParams->localParticipantEnabled()) {
+				lDebug() << "Conference context equalily failed because of local participant flag mismatch; this "
+				         << mParams->localParticipantEnabled() << " other " << otherParams->localParticipantEnabled();
+				return false;
+			}
 		}
 
 		if (mParams->chatEnabled()) {
 			const auto &thisBackend = mParams->getChatParams()->getBackend();
-			if (thisBackend != otherParams->getChatParams()->getBackend()) return false;
+			if (thisBackend != otherParams->getChatParams()->getBackend()) {
+				lDebug() << "Conference context equalily failed because of backend mismatch; this "
+				         << static_cast<int>(thisBackend) << " other "
+				         << static_cast<int>(otherParams->getChatParams()->getBackend());
+				return false;
+			}
 
-			if (mParams->isGroup() != otherParams->isGroup()) return false;
+			if (mParams->isGroup() != otherParams->isGroup()) {
+				lDebug() << "Conference context equalily failed because of group flag mismatch; this "
+				         << mParams->isGroup() << " other " << otherParams->isGroup();
+				return false;
+			}
 
-			if (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::Basic)) return false;
+			if (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::Basic)) {
+				lDebug() << "Conference context equalily failed because a basic chat room must have a basic backend";
+				return false;
+			}
 
-			if (mParams->getChatParams()->isEncrypted() != otherParams->getChatParams()->isEncrypted()) return false;
+			if (mParams->getChatParams()->isEncrypted() != otherParams->getChatParams()->isEncrypted()) {
+				lDebug() << "Conference context equalily failed because of encryption flag mismatch; this "
+				         << mParams->getChatParams()->isEncrypted() << " other "
+				         << otherParams->getChatParams()->isEncrypted();
+				return false;
+			}
 
 			// Subject doesn't make any sense for basic chat room and one to one chats
 			checkSubject = (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::FlexisipChat));
 		}
 
+		const auto &thisSubject = mParams->getUtf8Subject();
+		const auto &otherSubject = otherParams->getUtf8Subject();
 		if (checkSubject && !thisSubject.empty() && (thisSubject.compare(otherSubject) != 0)) {
+			lDebug() << "Conference context equalily failed because of subject mismatch; this " << thisSubject
+			         << " other " << otherSubject;
 			return false;
 		}
 	}
@@ -83,7 +129,11 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 	// Check participants only if list provided as argument is not empty
 	if (!mParticipants.empty()) {
 		const auto &otherParticipants = other.getParticipants();
-		if (mParticipants.size() != otherParticipants.size()) return false;
+		if (mParticipants.size() != otherParticipants.size()) {
+			lDebug() << "Conference context equalily failed because of participant number mismatch; this "
+			         << mParticipants.size() << " other " << otherParticipants.size();
+			return false;
+		}
 		for (const auto &participant : mParticipants) {
 			bool found = false;
 			for (const auto &otherParticipant : otherParticipants) {
@@ -93,6 +143,8 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 				}
 			}
 			if (!found) {
+				lDebug() << "Conference context equalily failed because of " << *participant
+				         << " is missing from the list";
 				return false;
 			}
 		}

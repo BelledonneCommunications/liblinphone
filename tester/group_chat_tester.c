@@ -1012,8 +1012,7 @@ static void group_chat_room_creation_core_restart(void) {
 	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), initialSubject);
-	// Chat room is no longer caching participants
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_chat_room_get_participants(marieCr)), 0, size_t, "%zu");
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_chat_room_get_participants(marieCr)), 2, size_t, "%zu");
 
 	const LinphoneAddress *localAddr = linphone_chat_room_get_local_address(marieCr);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(localAddr, marieAddr));

@@ -1187,11 +1187,21 @@ LinphoneStatus ServerConferenceEventHandler::subscribeReceived(const shared_ptr<
 			    linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
 			                            "full_state_trigger_due_to_missing_updates", 10);
 			bool forceFullState = static_cast<int>(lastNotify - evLastNotify) > fullStateTrigger;
-			// FIXME: Temporary workaround until chatrooms and conference will be one single class with different
-			// capabilities. Every subscribe sent for a conference will be answered by a notify full state as events are
+			// Every subscribe sent for a conference will be answered by a notify full state as events are
 			// not stored in the database
-			const auto &conference = conf->getCore()->findConference(conf->getConferenceId(), false);
-			if ((conference && !conference->isChatOnly()) || forceFullState) {
+			bool conferenceHasNotChatCapability = (conf && !conf->getCurrentParams()->chatEnabled());
+			if (conferenceHasNotChatCapability || forceFullState) {
+				if (forceFullState) {
+					lInfo() << "Sending a NOTIFY full state for " << *conf << " to " << *pAddress
+					        << " because the gap between the last notify ID [" << lastNotify
+					        << "] and the client's last notify ID [" << evLastNotify
+					        << "] is greater that the maximum allowed interval for multipart NOTIFYs ["
+					        << fullStateTrigger << "]";
+				} else if (conferenceHasNotChatCapability) {
+					lInfo() << "Sending a NOTIFY full state for " << *conf << " to " << *pAddress
+					        << " because the audio video conferences hasn't chat capabilitiy therefore events are not "
+					           "stored in the database";
+				}
 				notifyFullState(createNotifyFullState(ev), device);
 			} else {
 				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);

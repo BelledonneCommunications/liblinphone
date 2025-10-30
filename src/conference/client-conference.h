@@ -174,8 +174,6 @@ public:
 	void setConferenceId(const ConferenceId &conferenceId);
 	void confirmJoining(SalCallOp *op);
 	void attachCall(const std::shared_ptr<CallSession> &session);
-	AbstractChatRoom::SecurityLevel
-	getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const;
 
 	void createFocus(const std::shared_ptr<const Address> &focusAddr,
 	                 const std::shared_ptr<CallSession> focusSession = nullptr);
@@ -220,8 +218,6 @@ private:
 	std::list<Address> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 
 	virtual std::pair<bool, std::shared_ptr<Address>> configure(SalCallOp *op) override;
-
-	bool hasBeenLeft() const;
 
 	virtual void createEventHandler(ConferenceListener *confListener = nullptr,
 	                                bool addToListEventHandler = false) override;

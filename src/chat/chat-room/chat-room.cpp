@@ -334,6 +334,8 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 		shared_ptr<ConferenceParams> params = ConferenceParams::create(getCore());
 		params->setAccount(getCurrentParams()->getAccount());
 		params->setChatDefaults();
+		params->enableAudio(false);
+		params->enableVideo(false);
 		params->setGroup(false);
 		const auto &backend = getCurrentParams()->getChatParams()->getBackend();
 		params->getChatParams()->setBackend(backend);
@@ -350,8 +352,10 @@ std::shared_ptr<AbstractChatRoom> ChatRoom::getImdnChatRoom(const std::shared_pt
 			securityLevel = ConferenceParams::SecurityLevel::None;
 		}
 		params->setSecurityLevel(securityLevel);
-		chatRoom = getCore()->getPrivate()->searchChatRoom(params, getLocalAddress(), nullptr, {peerAddress});
+		auto localAddress = getLocalAddress();
+		chatRoom = getCore()->getPrivate()->searchChatRoom(params, localAddress, nullptr, {peerAddress});
 		if (!chatRoom) {
+			lInfo() << "Unable to find an " << (isEncrypted ? "encrypted" : "unencrypted") << " one-on-one chatroom between " << *peerAddress << " and " << *localAddress << " hence creating a new one";
 			chatRoom = getCore()->getPrivate()->createChatRoom(params, peerAddress);
 		}
 	}

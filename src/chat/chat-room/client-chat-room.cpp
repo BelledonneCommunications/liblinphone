@@ -129,12 +129,57 @@ ClientChatRoom::CapabilitiesMask ClientChatRoom::getCapabilities() const {
 	return capabilities;
 }
 
+AbstractChatRoom::SecurityLevel
+ClientChatRoom::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const {
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (!encryptionEngine) {
+		lWarning() << *this << ": Asking participant security level but there is no encryption engine enabled";
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
+	if (!getCurrentParams()->getChatParams()->isEncrypted()) {
+		lDebug() << *this << ": Chatroom SecurityLevel = ClearText";
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
+	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
+	if (conference->getParticipantDevices().size() == 0 && getMe()->getDevices().size() == 0) {
+		lDebug() << *this << ": Chatroom SecurityLevel = Encrypted";
+		return AbstractChatRoom::SecurityLevel::Encrypted;
+	}
+
+	// populate a list of all devices in the chatroom
+	// first step, all participants, including me
+	auto participants = getParticipants();
+	participants.push_back(getMe());
+
+	std::list<std::string> allDevices{};
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			allDevices.push_back(device->getAddress()->asStringUriOnly());
+		}
+	}
+	if (ignoredDevice != nullptr) {
+		allDevices.remove(ignoredDevice->getAddress()->asStringUriOnly());
+	}
+	allDevices.remove(getConferenceId().getLocalAddress()->asStringUriOnly()); // remove local device from the list
+
+	if (allDevices.empty()) {
+		return AbstractChatRoom::SecurityLevel::Safe;
+	}
+	auto level = encryptionEngine->getSecurityLevel(allDevices);
+	lDebug() << *this << ": Chatroom SecurityLevel = " << level;
+	return level;
+}
+
 ChatRoom::SecurityLevel ClientChatRoom::getSecurityLevel() const {
-	return static_pointer_cast<ClientConference>(getConference())->getSecurityLevelExcept(nullptr);
+	return getSecurityLevelExcept(nullptr);
 }
 
 bool ClientChatRoom::hasBeenLeft() const {
-	return static_pointer_cast<ClientConference>(getConference())->hasBeenLeft();
+	auto state = getState();
+	return (state == ConferenceInterface::State::TerminationPending) ||
+	       (state == ConferenceInterface::State::Terminated) || (state == ConferenceInterface::State::Deleted);
 }
 
 bool ClientChatRoom::isReadOnly() const {
