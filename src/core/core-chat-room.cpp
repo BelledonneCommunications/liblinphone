@@ -569,7 +569,18 @@ void CorePrivate::sendDeliveryNotifications() {
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
 		auto chatMessages = mainDb->findChatMessagesToBeNotifiedAsDelivered();
 		for (const auto &chatMessage : chatMessages) {
-			chatMessage->getChatRoom()->sendDeliveryNotifications(chatMessage);
+			auto chatRoom = chatMessage->getChatRoom();
+			if (chatRoom) {
+				const auto account = chatRoom->getAccount();
+				if (account) {
+					chatRoom->sendDeliveryNotifications(chatMessage);
+				} else {
+					// If the chatroom is not linked to an existing account, then invalidate the message IMDNs
+					lInfo() << "Invalidate ChatMessage [" << chatMessage << "]'s IMDN because " << *chatRoom
+					        << " has no account associated to";
+					mainDb->invalidateChatMessageImdn(chatMessage);
+				}
+			}
 		}
 	}
 }

@@ -57,7 +57,7 @@ LINPHONE_PUBLIC LinphoneRemoteContactDirectoryType
 linphone_remote_contact_directory_get_type(const LinphoneRemoteContactDirectory *remote_contact_directory);
 
 /**
- * Gets the CardDAV remote_contact_directory if linphone_remote_contact_directory_get_type() returns CardDAV.
+ * Gets the CardDAV remote contact directory if linphone_remote_contact_directory_get_type() returns CardDAV.
  * @param remote_contact_directory The #LinphoneRemoteContactDirectory object. @notnil
  * @return the #LinphoneCardDavParams or NULL if not of CardDAV type. @maybenil
  */
