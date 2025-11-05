@@ -1736,7 +1736,7 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 			auto callLog = call->getLog();
 			if (callLog) {
 				const auto &id = callLog->getCallId();
-				if (id == callId) {
+				if (id == callId && call->getState() != CallSession::State::PushIncomingReceived) {
 					lInfo() << "Call with matching Call-ID found, no need for a background task";
 					found = true;
 					break;
