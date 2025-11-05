@@ -9194,8 +9194,8 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	LinphoneAccount *conference_account = linphone_conference_params_get_account(params2);
 	LinphoneAccount *default_account = linphone_core_get_default_account(lc);
 	if (!conference_account) {
-		lWarning() << "The application didn't explicitely specified the account to use to create a conference, "
-		              "therefore the core is going to use the default account";
+		lInfo() << "The application didn't explicitely specified the account to use to create a conference, "
+		           "therefore the core is going to use the default account";
 		conference_account = linphone_core_get_default_account(lc);
 		linphone_conference_params_set_account(params2, conference_account);
 	}
@@ -9278,7 +9278,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 }
 
 LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core) {
-	return linphone_core_create_conference_scheduler_2(core, NULL);
+	return linphone_core_create_conference_scheduler_2(core, linphone_core_get_default_account(core));
 }
 
 LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_2(LinphoneCore *core, LinphoneAccount *account) {

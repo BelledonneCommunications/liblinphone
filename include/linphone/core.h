@@ -4921,19 +4921,18 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(
 /**
  * Create a conference scheduler that can be used to schedule conferences on a client conference service and then send
  * conference information invitation as an ICS object through chat.
+ * The default account (see linphone_core_get_default_account() ) is used to determine which kind of conference
+ * scheduler is created.
  * @param core The #LinphoneCore. @notnil
  * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
- * @deprecated 23/07/2024 Use linphone_core_create_conference_scheduler_2() or
- * linphone_core_create_conference_scheduler_with_type() instead.
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConferenceScheduler *
-linphone_core_create_conference_scheduler(LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core);
 
 /**
  * Create a conference scheduler that can be used to create client conferences for now or later and then send conference
  * info as an ICS through chat.
- * A SipConferenceScheduler is created if the #LinphoneAccount has not defined the URL of the CCMP server, other it will
- * create a CCMPConferenceServer
+ * A SIP-based implementation is created if the #LinphoneAccount has not defined the URL of a CCMP server, other it will
+ * create a implementation relying on CCMP protocol.
  * @param core The #LinphoneCore. @notnil
  * @param account The #LinphoneAccount to use in the #LinphoneConferenceScheduler. @maybenil
  * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
