@@ -58,7 +58,6 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &toDeviceId = message->getToAddress()->asStringUriOnly();
-	const Content *internalContent;
 
 	// Check if chatroom is encrypted or not
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
@@ -69,8 +68,12 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 		return ChatMessageModifier::Result::Skipped;
 	}
 
-	if (!message->getInternalContent().isEmpty()) internalContent = &(message->getInternalContent());
-	else internalContent = message->getContents().front().get();
+	const Content *internalContent = nullptr;
+	if (!message->getInternalContent().isEmpty()) {
+		internalContent = &(message->getInternalContent());
+	} else if (!message->getContents().empty()) {
+		internalContent = message->getContents().front().get();
+	}
 
 	// Check if the message is encrypted
 	if (!internalContent || !isMessageEncrypted(*internalContent)) {

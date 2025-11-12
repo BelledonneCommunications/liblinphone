@@ -496,9 +496,18 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 		return ChatMessageModifier::Result::Skipped;
 	}
 
-	const Content *internalContent;
-	if (!message->getInternalContent().isEmpty()) internalContent = &(message->getInternalContent());
-	else internalContent = message->getContents().front().get();
+	const Content *internalContent = nullptr;
+	if (!message->getInternalContent().isEmpty()) {
+		internalContent = &(message->getInternalContent());
+	} else if (!message->getContents().empty()) {
+		internalContent = message->getContents().front().get();
+	}
+
+	if (internalContent == nullptr) {
+		lError() << "[LIME] Couldn't find a valid content in the message";
+		errorCode = 400; // Bad request
+		return ChatMessageModifier::Result::Error;
+	}
 
 	// Check if the message is encrypted and unwrap the multipart
 	if (!isMessageEncrypted(*internalContent)) {
