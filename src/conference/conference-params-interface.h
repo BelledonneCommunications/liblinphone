@@ -90,14 +90,14 @@ public:
 	 * @param start conference start time as the number of seconds between the desired start time and the 1st of January
 	 * 1970 or 0 for immediate start
 	 */
-	virtual void setStartTime(const time_t &start) = 0;
+	virtual void setStartTime(time_t start) = 0;
 
 	/*
 	 * Set conference end time
 	 * @param end conference end time as the number of seconds between the desired end time and the 1st of January 1970
 	 * or 0 for undefined end
 	 */
-	virtual void setEndTime(const time_t &end) = 0;
+	virtual void setEndTime(time_t end) = 0;
 
 	/*
 	 * Set participant list type

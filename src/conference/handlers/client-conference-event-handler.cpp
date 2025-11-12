@@ -987,18 +987,17 @@ unsigned int ClientConferenceEventHandler::getLastNotify() const {
 }
 
 time_t ClientConferenceEventHandler::dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const {
-	tm timeStruct;
-	timeStruct.tm_year = (xsdTime.year() - 1900), timeStruct.tm_mon = (xsdTime.month() - 1),
-	timeStruct.tm_mday = xsdTime.day(), timeStruct.tm_hour = xsdTime.hours(), timeStruct.tm_min = xsdTime.minutes(),
+	tm timeStruct = {0};
+	timeStruct.tm_year = (xsdTime.year() - 1900);
+	timeStruct.tm_mon = (xsdTime.month() - 1);
+	timeStruct.tm_mday = xsdTime.day();
+	timeStruct.tm_hour = xsdTime.hours();
+	timeStruct.tm_min = xsdTime.minutes();
 	timeStruct.tm_sec = static_cast<int>(xsdTime.seconds());
 	if (xsdTime.zone_present()) {
 		timeStruct.tm_hour += xsdTime.zone_hours();
 		timeStruct.tm_min += xsdTime.zone_minutes();
 	}
-#ifdef __linux__
-	timeStruct.tm_zone = nullptr;
-	timeStruct.tm_gmtoff = 0;
-#endif
 	return Utils::getTmAsTimeT(timeStruct);
 }
 

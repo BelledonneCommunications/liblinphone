@@ -284,7 +284,7 @@ tm Utils::getTimeTAsTm(time_t t) {
 #endif
 }
 
-time_t Utils::getTmAsTimeT(const tm &t) {
+time_t Utils::getTmAsTimeT(tm t) {
 	tm tCopy = t;
 	time_t result;
 	time_t offset = 0;
@@ -328,7 +328,7 @@ std::string Utils::getTimeAsString(const std::string &format, time_t t) {
 
 time_t Utils::getTimeFromString(const std::string &format, const std::string &s) {
 #ifdef _WIN32
-	std::tm t = {};
+	std::tm t = {0};
 	std::istringstream ss(s);
 	ss >> std::get_time(&t, format.c_str()); // get_time doesn't manage timezones (before c++20)
 	time_t timestamp = getTmAsTimeT(t); //  std::tm has no timezone data on Windows. getTmAsTimeT()==_mkgmtime() are in

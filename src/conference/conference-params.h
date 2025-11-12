@@ -131,21 +131,21 @@ public:
 	void setAccount(const std::shared_ptr<Account> &a);
 	std::shared_ptr<Account> getAccount() const;
 
-	void setExpiryTime(const time_t &expiryTime) {
+	void setExpiryTime(time_t expiryTime) {
 		mExpiryTime = expiryTime;
 	};
 	time_t getExpiryTime() const {
 		return mExpiryTime;
 	};
 
-	void setEarlierJoiningTime(const time_t &joinTime) {
+	void setEarlierJoiningTime(time_t joinTime) {
 		mEarlierJoiningTime = joinTime;
 	};
 	time_t getEarlierJoiningTime() const {
 		return mEarlierJoiningTime;
 	};
 
-	virtual void setStartTime(const time_t &start) override {
+	virtual void setStartTime(time_t start) override {
 		mStartTime = start;
 	};
 	time_t getStartTime() const {
@@ -155,7 +155,7 @@ public:
 		return Utils::timeToIso8601(getStartTime());
 	}
 
-	virtual void setEndTime(const time_t &end) override {
+	virtual void setEndTime(time_t end) override {
 		mEndTime = end;
 	};
 	time_t getEndTime() const {

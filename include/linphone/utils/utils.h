@@ -254,7 +254,7 @@ bool isSharedPtrObjectEqual(const std::shared_ptr<T> &lhs, const std::shared_ptr
 }
 
 LINPHONE_PUBLIC std::tm getTimeTAsTm(time_t t);
-LINPHONE_PUBLIC time_t getTmAsTimeT(const std::tm &t);
+LINPHONE_PUBLIC time_t getTmAsTimeT(std::tm t);
 LINPHONE_PUBLIC std::string timeToIso8601(time_t t);
 LINPHONE_PUBLIC time_t iso8601ToTime(const std::string &iso8601DateTime);
 LINPHONE_PUBLIC std::string getTimeAsString(const std::string &format, time_t t);
