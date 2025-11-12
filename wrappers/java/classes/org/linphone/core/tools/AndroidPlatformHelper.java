@@ -1504,21 +1504,32 @@ public class AndroidPlatformHelper {
         mAudioHelper.restorePreviousAudioRoute();
     }
 
+    public void onAudioFocusLostFromCoreThread(){
+        if (mCore == null) return;
+        boolean pauseCallsWhenAudioFocusIsLost = mCore.getConfig().getBool("audio", "android_pause_calls_when_audio_focus_lost", true);
+        if (pauseCallsWhenAudioFocusIsLost) {
+            if (mCore.isInConference()) {
+                Log.i("[Platform Helper] App has lost audio focus, leaving conference");
+                leaveConference(mCore.getNativePointer());
+            } else {
+                Log.i("[Platform Helper] App has lost audio focus, pausing all calls");
+                pauseAllCalls(mCore.getNativePointer());
+            }
+            mAudioHelper.releaseCallAudioFocus();
+        } else {
+            Log.w("[Platform Helper] Audio focus lost but keeping calls running");
+        }
+    }
+
     public void onAudioFocusLost() {
         if (mCore != null) {
-            boolean pauseCallsWhenAudioFocusIsLost = mCore.getConfig().getBool("audio", "android_pause_calls_when_audio_focus_lost", true);
-            if (pauseCallsWhenAudioFocusIsLost) {
-                if (mCore.isInConference()) {
-                    Log.i("[Platform Helper] App has lost audio focus, leaving conference");
-                    leaveConference(mCore.getNativePointer());
-                } else {
-                    Log.i("[Platform Helper] App has lost audio focus, pausing all calls");
-                    pauseAllCalls(mCore.getNativePointer());
+            Runnable focusLostRunnable = new Runnable(){
+                @Override
+                public void run() {
+                    onAudioFocusLostFromCoreThread();
                 }
-                mAudioHelper.releaseCallAudioFocus();
-            } else {
-                Log.w("[Platform Helper] Audio focus lost but keeping calls running");
-            }
+            };
+            dispatchOnCoreThread(focusLostRunnable);
         }
     }
 
