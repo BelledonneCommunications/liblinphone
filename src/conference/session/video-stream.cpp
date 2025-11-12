@@ -549,8 +549,6 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 		video_stream_enable_local_screen_sharing(mStream, screensharingEnabledInService);
 	}
 
-	LinphoneVideoDefinition *max_vdef = nullptr;
-
 	if (conference) {
 		if (!label.empty() && label.compare(getLabel()) != 0) {
 			lInfo() << "Handling label change - previously it was " << getLabel() << " and now it is " << label;
@@ -560,19 +558,6 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 			updateWindowId(participantDevice, label, isMe, contentIsThumbnail, false);
 
 			video_stream_set_label(mStream, L_STRING_TO_C(label));
-		}
-		const char *str =
-		    linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_conference_size", nullptr);
-		if (str != NULL && str[0] != 0) {
-			max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
-			if (max_vdef == NULL) {
-				lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
-			} else {
-				MSVideoSize max;
-				max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
-				max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
-				video_stream_set_sent_video_size_max(mStream, max);
-			}
 		}
 	}
 
@@ -604,18 +589,14 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	}
 
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCCore());
+	MSVideoSize vsize = {0, 0}; // For setting to max size if no preferred.
 	if (vdef) {
-		MSVideoSize vsize;
-		// If max size is set and preferred size is superior then use max size
-		if (max_vdef != nullptr && max_vdef->width < vdef->width && max_vdef->height < vdef->height) {
-			vsize.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
-			vsize.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
-		} else {
-			vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
-			vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
-		}
-		video_stream_set_sent_video_size(mStream, vsize);
+		vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
+		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
 	}
+
+	setSentSize(vsize, false);
+
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 	updateWindowId(participantDevice, label, isMe, contentIsThumbnail);
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
@@ -974,6 +955,37 @@ void MS2VideoStream::setVideoSource(const std::shared_ptr<const VideoSourceDescr
 
 std::shared_ptr<const VideoSourceDescriptor> MS2VideoStream::getVideoSource() const {
 	return mVideoSourceDescriptor;
+}
+
+void MS2VideoStream::setSentSize(MSVideoSize preferredSize, bool updateGraph) {
+	auto videoStream = getVideoStream();
+	const auto *current_vconf = videoStream->vconf_list;
+
+	LinphoneVideoDefinition *max_vdef = nullptr;
+	MSVideoSize max;
+	const auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+	if (conference) {
+		// Max only in conference
+		const char *str =
+		    linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_conference_size", nullptr);
+		if (str != NULL && str[0] != 0) {
+			max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
+			max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
+			max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
+			video_stream_set_sent_video_size_max(mStream, max); // Update max size
+		}
+	}
+	// If max size is set and preferred size is superior then use max size
+	if (max_vdef != nullptr && (preferredSize.width == 0 || preferredSize.height == 0 ||
+	                            (max.width < preferredSize.width && max.height < preferredSize.height))) {
+		preferredSize = max;
+	}
+	// Check if new config
+	if (!current_vconf || current_vconf->vsize.width != preferredSize.width ||
+	    current_vconf->vsize.height != preferredSize.height) {
+		video_stream_set_sent_video_size(videoStream, preferredSize);
+		if (updateGraph) video_stream_change_camera(videoStream, getVideoDevice());
+	}
 }
 
 MS2VideoStream::~MS2VideoStream() {

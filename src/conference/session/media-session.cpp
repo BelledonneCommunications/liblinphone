@@ -5301,6 +5301,17 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		} else {
 			// Done directly by linphone_core_set_video_device().
 		}
+#ifdef VIDEO_ENABLED
+		MS2VideoStream *vs = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+		if (vs) {
+			const LinphoneVideoDefinition *def = linphone_core_get_preferred_video_definition(getCore()->getCCore());
+			if (def) {
+				const MSVideoSize preferredSize = {static_cast<int>(linphone_video_definition_get_width(def)),
+				                                   static_cast<int>(linphone_video_definition_get_height(def))};
+				vs->setSentSize(preferredSize, true);
+			}
+		}
+#endif
 	}
 	return result;
 }

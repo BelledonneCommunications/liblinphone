@@ -4252,6 +4252,39 @@ static void video_call_preview_window_id(void) {
 	video_call_window_id(FALSE);
 }
 
+static void video_call_with_preferred_definitions(void) {
+	const bool manual_test = false; // Set it to true to let more time to see something
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+
+	// Format note: NoWebcam filter doesn't manage scaling without keeping ratio.
+	// We must use a CIF format and not VGA because nowebcamCIF.jpg is used.
+
+	ms_message("[VCWPD] Start resolution to CIF");
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "CIF");
+	linphone_core_set_preferred_video_definition_by_name(pauline->lc, "CIF");
+	video_call_base_2(marie, pauline, FALSE, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	auto marieCall = linphone_core_get_current_call(marie->lc);
+	if (marieCall) {
+		const LinphoneCallParams *marieCurrentParams = linphone_call_get_current_params(marieCall);
+		MSVideoSize currentSize = linphone_call_params_get_sent_video_size(marieCurrentParams);
+		BC_ASSERT_EQUAL(currentSize.height, MS_VIDEO_SIZE_CIF_H, int, "%d");
+		BC_ASSERT_EQUAL(currentSize.width, MS_VIDEO_SIZE_CIF_W, int, "%d");
+		ms_message("[VCWPD] Changing resolution to QCIF");
+		linphone_core_set_preferred_video_definition_by_name(marie->lc, "QCIF");
+		linphone_call_update(marieCall, NULL);
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+		marieCurrentParams = linphone_call_get_current_params(marieCall);
+		currentSize = linphone_call_params_get_sent_video_size(marieCurrentParams);
+		BC_ASSERT_EQUAL(currentSize.height, MS_VIDEO_SIZE_QCIF_H, int, "%d");
+		BC_ASSERT_EQUAL(currentSize.width, MS_VIDEO_SIZE_QCIF_W, int, "%d");
+	}
+	end_call(marie, pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
@@ -4343,6 +4376,7 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("Video call memory", video_call_memory, "skip"),
     TEST_NO_TAG("Video call native window id", video_call_native_window_id),
     TEST_NO_TAG("Video call preview window id", video_call_preview_window_id),
+    TEST_NO_TAG("Video call with preferred definitions", video_call_with_preferred_definitions),
 
 };
 
