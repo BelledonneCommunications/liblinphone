@@ -61,9 +61,8 @@ NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionM
 }
 
 NatPolicy::NatPolicy(const NatPolicy &other)
-    : HybridObject<LinphoneNatPolicy, NatPolicy>(other), std::enable_shared_from_this<LinphonePrivate::NatPolicy>(
-                                                             other),
-      CoreAccessor(other.getCore()) {
+    : HybridObject<LinphoneNatPolicy, NatPolicy>(other),
+      std::enable_shared_from_this<LinphonePrivate::NatPolicy>(other), CoreAccessor(other.getCore()) {
 	mStunServer = other.mStunServer;
 	mStunServerUsername = other.mStunServerUsername;
 	mRef = other.mRef;
@@ -212,9 +211,17 @@ void NatPolicy::stunServerResolved(belle_sip_resolver_results_t *results) {
 	}
 	const struct addrinfo *ais =
 	    mResolverResults ? belle_sip_resolver_results_get_addrinfos(mResolverResults) : nullptr;
-	for (auto &p : mResolverResultsFunctions)
+	/*
+	 * - Make a copy of the notify functions to invoke, to prevent a risk that the map is being
+	 * modified while being iterated.
+	 * - Protect against a possible deletion of the NatPolicy object while invoking the notify functions.
+	 */
+	ref();
+	auto copyOfResultFunctions = mResolverResultsFunctions;
+	for (auto &p : copyOfResultFunctions)
 		p.second(ais);
 	mResolverResultsFunctions.clear();
+	unref();
 }
 
 bool NatPolicy::resolveStunServer() {
