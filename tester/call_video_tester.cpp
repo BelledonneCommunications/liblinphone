@@ -2144,10 +2144,12 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	LinphoneCall *callee_call = NULL, *caller_call = NULL;
 	LinphoneVideoActivationPolicy *vpol;
 	bctbx_list_t *lcs = NULL;
-	char *video_recording_file = bc_tester_file((generateRandomFilename("video_entry_phone_record_") + ".mkv").c_str());
+	char *video_recording_file;
 	bool_t ok;
 	VideoStream *caller_vstream;
 	VideoStream *callee_vstream;
+	MSMediaPlayer *player;
+	bool usingH264 = false;
 
 	vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
@@ -2171,8 +2173,6 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	linphone_core_set_video_activation_policy(callee_mgr->lc, vpol);
 	linphone_video_activation_policy_unref(vpol);
 
-	remove(video_recording_file);
-
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
 	LinphonePayloadType *type = linphone_core_get_payload_type(caller_mgr->lc, "h264", -1, -1);
@@ -2192,7 +2192,12 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 			linphone_core_set_upload_bandwidth(callee_mgr->lc, 512);
 			linphone_core_set_upload_bandwidth(caller_mgr->lc, 512);
 		}
+		usingH264 = true;
 	}
+
+	video_recording_file = bc_tester_file(
+	    (generateRandomFilename("video_entry_phone_record_") + std::string(usingH264 ? ".mkv" : ".smff")).c_str());
+	remove(video_recording_file);
 
 	linphone_core_set_video_device(caller_mgr->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(callee_mgr->lc, liblinphone_tester_mire_id);
@@ -2231,7 +2236,6 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	linphone_call_params_set_video_direction(early_media_params, callee_video_direction);
 	linphone_call_params_set_record_file(early_media_params, video_recording_file);
 	linphone_call_accept_early_media_with_params(callee_call, early_media_params);
-	linphone_call_start_recording(callee_call);
 	linphone_call_params_unref(early_media_params);
 
 	BC_ASSERT_TRUE(
@@ -2294,6 +2298,14 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 		BC_ASSERT_PTR_NULL(callee_vstream->source);
 	}
 
+	/* wait a bit, and start recording */
+	wait_for_until(callee_mgr->lc, caller_mgr->lc, NULL, 0, 2000);
+	linphone_call_start_recording(callee_call);
+	/* the start of the video record shall trigger a RTCP FIR */
+	caller_vstream = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
+	BC_ASSERT_TRUE(wait_for(callee_mgr->lc, caller_mgr->lc, &caller_vstream->ms_video_stat.counter_rcvd_fir, 1));
+	wait_for_until(callee_mgr->lc, caller_mgr->lc, NULL, 0, 2000);
+
 	callee_call = linphone_core_get_current_call(callee_mgr->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(callee_call)) goto end;
 	in_call_params = linphone_core_create_call_params(callee_mgr->lc, callee_call);
@@ -2302,10 +2314,10 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	linphone_call_update(callee_call, in_call_params);
 	linphone_call_params_unref(in_call_params);
 
-	ok =
-	    wait_for_until(callee_mgr->lc, caller_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallStreamsRunning, 2,
-	                   2000) &&
-	    wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallStreamsRunning, 2, 2000);
+	ok = wait_for_until(callee_mgr->lc, caller_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallStreamsRunning, 2,
+	                    10000) &&
+	     wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallStreamsRunning, 2,
+	                    10000);
 	BC_ASSERT_TRUE(ok);
 	if (!ok) goto end;
 	callee_call = linphone_core_get_current_call(callee_mgr->lc);
@@ -2313,6 +2325,12 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionRecvOnly, LinphoneMediaDirectionSendOnly);
 
 	end_call(caller_mgr, callee_mgr);
+
+	player = ms_media_player_new(linphone_core_get_ms_factory(caller_mgr->lc), NULL, NULL, NULL);
+	BC_ASSERT_TRUE(ms_media_player_open(player, video_recording_file));
+	BC_ASSERT_TRUE(ms_media_player_has_video_track(player));
+	ms_media_player_close(player);
+	ms_media_player_free(player);
 
 end:
 	linphone_core_manager_destroy(callee_mgr);
