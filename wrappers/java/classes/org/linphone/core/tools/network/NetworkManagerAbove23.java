@@ -46,11 +46,13 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
     private Network mNetworkAvailable;
     private Network mLastNetworkAvailable;
     private boolean mWifiOnly;
+    private boolean mIgnoreBackgroundRestriction;
 
-    public NetworkManagerAbove23(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+    public NetworkManagerAbove23(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly, boolean ignoreBackgroundRestriction) {
         mHelper = helper;
         mConnectivityManager = cm;
         mWifiOnly = wifiOnly;
+        mIgnoreBackgroundRestriction = ignoreBackgroundRestriction;
         mNetworkAvailable = null;
         mLastNetworkAvailable = null;
         mNetworkCallback = new ConnectivityManager.NetworkCallback() {

@@ -138,6 +138,7 @@ public class AndroidPlatformHelper {
     private Map<Long, TextureView> mParticipantTextureView;
     private BroadcastReceiver mDozeReceiver;
     private boolean mWifiOnly;
+    private boolean mIgnoreNetworkBackgroundRestriction;
     private boolean mUsingHttpProxy;
     private NetworkManagerInterface mNetworkManager;
     private Handler mHandler;
@@ -205,11 +206,12 @@ public class AndroidPlatformHelper {
 
     private native void setSignalInfo(long nativePtr, int type, int unit, int value, String details);
 
-    public AndroidPlatformHelper(long nativePtr, Object ctx_obj, Core core, boolean wifiOnly) {
+    public AndroidPlatformHelper(long nativePtr, Object ctx_obj, Core core, boolean wifiOnly, boolean ignoreNetworkBackgroundRestriction) {
         mNativePtr = nativePtr;
         mContext = ((Context) ctx_obj).getApplicationContext();
         mCore = core;
         mWifiOnly = wifiOnly;
+        mIgnoreNetworkBackgroundRestriction = ignoreNetworkBackgroundRestriction;
         mDnsServersList = new ArrayList<String>();
         mResources = mContext.getResources();
         mServiceRunning = false;
@@ -1207,15 +1209,15 @@ public class AndroidPlatformHelper {
     private NetworkManagerInterface createNetworkManager() {
         NetworkManagerInterface networkManager = null;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            networkManager = new NetworkManager(this, mConnectivityManager, mWifiOnly);
+            networkManager = new NetworkManager(this, mConnectivityManager, mWifiOnly, mIgnoreNetworkBackgroundRestriction);
         } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            networkManager = new NetworkManagerAbove21(this, mConnectivityManager, mWifiOnly);
+            networkManager = new NetworkManagerAbove21(this, mConnectivityManager, mWifiOnly, mIgnoreNetworkBackgroundRestriction);
         } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            networkManager = new NetworkManagerAbove23(this, mConnectivityManager, mWifiOnly);
+            networkManager = new NetworkManagerAbove23(this, mConnectivityManager, mWifiOnly, mIgnoreNetworkBackgroundRestriction);
         } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            networkManager = new NetworkManagerAbove24(this, mConnectivityManager, mWifiOnly);
+            networkManager = new NetworkManagerAbove24(this, mConnectivityManager, mWifiOnly, mIgnoreNetworkBackgroundRestriction);
         } else {
-            networkManager = new NetworkManagerAbove26(this, mConnectivityManager, mWifiOnly);
+            networkManager = new NetworkManagerAbove26(this, mConnectivityManager, mWifiOnly, mIgnoreNetworkBackgroundRestriction);
         }
         return networkManager;
     }

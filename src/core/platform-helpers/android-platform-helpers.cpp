@@ -187,9 +187,14 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
 	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE, FALSE);
 
-	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Lorg/linphone/core/Core;Z)V");
-	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jobject)javaCore,
-	                             (jboolean)linphone_core_wifi_only_enabled(getCore()->getCCore()));
+	LinphoneCore *cCore = getCore()->getCCore();
+	jboolean ignoreNetworkBackgroundRestriction = !!linphone_config_get_int(
+	    linphone_core_get_config(cCore), "net", "android_ignore_network_background_restriction", 0);
+	jboolean wifiOnly = (jboolean)linphone_core_wifi_only_enabled(cCore);
+
+	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Lorg/linphone/core/Core;ZZ)V");
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jobject)javaCore, wifiOnly,
+	                             ignoreNetworkBackgroundRestriction);
 	if (!mJavaHelper) {
 		lError() << "[Android Platform Helper] Could not instanciate AndroidPlatformHelper object.";
 		return;

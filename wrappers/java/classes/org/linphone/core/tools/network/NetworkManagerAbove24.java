@@ -48,11 +48,13 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
     private Network mNetworkAvailable;
     private Network mLastNetworkAvailable;
     private boolean mWifiOnly;
+    private boolean mIgnoreBackgroundRestriction;
 
-    public NetworkManagerAbove24(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+    public NetworkManagerAbove24(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly, boolean ignoreBackgroundRestriction) {
         mHelper = helper;
         mConnectivityManager = cm;
         mWifiOnly = wifiOnly;
+        mIgnoreBackgroundRestriction = ignoreBackgroundRestriction;
         mNetworkAvailable = null;
         mLastNetworkAvailable = null;
         mNetworkCallback = new ConnectivityManager.NetworkCallback() {
@@ -210,15 +212,22 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 
     public boolean isCurrentlyConnected(Context context) {
         int restrictBackgroundStatus = mConnectivityManager.getRestrictBackgroundStatus();
-        if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
-            // Device is restricting metered network activity while application is running on background.
-            // In this state, application should not try to use the network while running on background, because it would be denied.
-            Log.w("[Platform Helper] [Network Manager 24] Device is restricting metered network activity while application is running on background");
-            if (mConnectivityManager.isActiveNetworkMetered() && mHelper.isInBackground()) {
-                Log.w("[Platform Helper] [Network Manager 24] Device is in background, returning false");
-                return false;
+        Log.i("[Platform Helper] [Network Manager 24] Restrict background status is [" + restrictBackgroundStatusToString(restrictBackgroundStatus) + "]");
+
+        if (mIgnoreBackgroundRestriction) {
+            Log.w("[Platform Helper] [Network Manager 24] Network background restriction check disabled");
+        } else {
+            if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
+                // Device is restricting metered network activity while application is running on background.
+                // In this state, application should not try to use the network while running on background, because it would be denied.
+                Log.w("[Platform Helper] [Network Manager 24] Device is restricting metered network activity while application is running on background");
+                if (mConnectivityManager.isActiveNetworkMetered() && mHelper.isInBackground()) {
+                    Log.w("[Platform Helper] [Network Manager 24] Device is in background, returning false");
+                    return false;
+                }
             }
         }
+
         return mNetworkAvailable != null;
     }
 
@@ -299,5 +308,16 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 
         activeNetworkDnsServers.addAll(dnsServers);
         mHelper.updateDnsServers(activeNetworkDnsServers);
+    }
+
+    private String restrictBackgroundStatusToString(int restrictBackgroundStatus) {
+        if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
+            return "ENABLED";
+        } else if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED) {
+            return "WHITELISTED";
+        } else if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED) {
+            return "DISABLED";
+        }
+        return "UNEXPECTED (" + restrictBackgroundStatus + ")";
     }
 }

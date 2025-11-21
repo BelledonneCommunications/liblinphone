@@ -41,11 +41,13 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
     private IntentFilter mNetworkIntentFilter;
     private ConnectivityManager mConnectivityManager;
     private boolean mWifiOnly;
+    private boolean mIgnoreBackgroundRestriction;
 
-    public NetworkManager(AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+    public NetworkManager(AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly, boolean ignoreBackgroundRestriction) {
+        mHelper = helper;
         mConnectivityManager = cm;
         mWifiOnly = wifiOnly;
-        mHelper = helper;
+        mIgnoreBackgroundRestriction = ignoreBackgroundRestriction;
     }
 
     @Override
