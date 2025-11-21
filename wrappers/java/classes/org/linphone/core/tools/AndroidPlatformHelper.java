@@ -1751,9 +1751,9 @@ public class AndroidPlatformHelper {
         mServiceRunning = running;
         
         if (running) {
-            Log.i("[Platform Helper] CoreService is now running");
+            Log.i("[Platform Helper] Core Service is now running");
         } else {
-            Log.i("[Platform Helper] CoreService is no longer running");
+            Log.i("[Platform Helper] Core Service is no longer running");
         }
     }
 
@@ -1762,9 +1762,9 @@ public class AndroidPlatformHelper {
         mServiceRunningInForeground = foreground;
         
         if (mServiceRunningInForeground) {
-            Log.i("[Platform Helper] CoreService is now running in foreground");
+            Log.i("[Platform Helper] Core Service is now running in foreground");
         } else {
-            Log.i("[Platform Helper] CoreService is no longer running in foreground");
+            Log.i("[Platform Helper] Core Service is no longer running in foreground");
         }
     }
 

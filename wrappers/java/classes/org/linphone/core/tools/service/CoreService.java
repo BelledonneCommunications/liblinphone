@@ -95,6 +95,7 @@ public class CoreService extends Service {
                 // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
                 if (call != null) {
                     if (!mIsInForegroundMode) {
+                        Log.i("[Core Service] Service isn't running as foreground yet, starting it now");
                         boolean isVideoEnabled = call.getCurrentParams().isVideoEnabled();
                         startForeground(isVideoEnabled);
                     }
@@ -118,6 +119,7 @@ public class CoreService extends Service {
             public void onLastCallEnded(Core core) {
                 Log.i("[Core Service] Last call ended");
                 if (mIsInForegroundMode) {
+                    Log.i("[Core Service] Service was running as foreground, stopping it");
                     stopForeground();
                 }
             }
@@ -154,6 +156,7 @@ public class CoreService extends Service {
         stopVibration();
 
         if (AndroidPlatformHelper.isReady()) {
+            AndroidPlatformHelper.instance().setServiceRunningAsForeground(false);
             AndroidPlatformHelper.instance().setServiceRunning(false);
         }
         if (mIsListenerAdded) {
@@ -179,7 +182,6 @@ public class CoreService extends Service {
                         core.removeListener(mListener);
                         mIsListenerAdded = false;
                     }
-                    AndroidPlatformHelper.instance().setServiceRunningAsForeground(false);
                 } else {
                     Log.w("[Core Service] AndroidPlatformHelper isn't available anymore...");
                 }
@@ -215,6 +217,7 @@ public class CoreService extends Service {
                                 call = core.getCalls()[0];
                             }
                             if (call != null) {
+                                Log.i("[Core Service] Starting service as foreground now");
                                 boolean isVideoEnabled = call.getCurrentParams().isVideoEnabled();
                                 startForeground(isVideoEnabled);
 
@@ -225,6 +228,8 @@ public class CoreService extends Service {
                             } else {
                                 Log.w("[Core Service] Couldn't find current call...");
                             }
+                        } else {
+                            Log.w("[Core Service] No call in Core...");
                         }
                     } else {
                         Log.e("[Core Service] AndroidPlatformHelper instance found but Core is null!");
@@ -286,8 +291,10 @@ public class CoreService extends Service {
      */
     public void showForegroundServiceNotification(boolean isVideoCall) {
         if (mServiceNotification == null) {
+            Log.i("[Core Service] Service notification wasn't created yet, doing it now");
             createServiceNotification();
         }
+        Log.i("[Core Service] Start service as foreground using notification");
         DeviceUtils.startCallForegroundService(this, SERVICE_NOTIF_ID, mServiceNotification, isVideoCall);
     }
 
@@ -295,6 +302,7 @@ public class CoreService extends Service {
      * This method is called when the service should be stopped as foreground.
      */
     public void hideForegroundServiceNotification() {
+        Log.i("[Core Service] Stopping service as foreground");
         stopForeground(true); // True to remove the notification
     }
 
@@ -315,8 +323,8 @@ public class CoreService extends Service {
         }
 
         Log.i("[Core Service] Stopping service as foreground");
-        hideForegroundServiceNotification();
         mIsInForegroundMode = false;
+        hideForegroundServiceNotification();
 
         if (AndroidPlatformHelper.isReady()) {
             AndroidPlatformHelper.instance().setServiceRunningAsForeground(mIsInForegroundMode);
