@@ -43,9 +43,11 @@
 #include "chat/chat-room/client-chat-room.h"
 #include "chat/chat-room/server-chat-room.h"
 #endif
+#include "conference/client-conference.h"
 #include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
+#include "conference/server-conference.h"
 #include "core/core-p.h"
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
@@ -6451,7 +6453,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 			}
 		}
 
-		bool serverMode = linphone_core_conference_server_enabled(cCore);
 		// The offset needs to be incremented when the processing of the data retrieved for a chatroom starts.
 		// It has to be decremented when a chatroom is deleted from the database at start up. This could happen because
 		// it is found out it is just a duplicated of another one  (local or peer address has different gr parameters in
@@ -6578,6 +6579,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					chatRoom->setUtf8Subject(subject);
 				} else if (backend == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
+					bool serverMode = linphone_core_conference_server_enabled(cCore);
 					const auto &localAddress = conferenceId.getLocalAddress();
 					unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
 

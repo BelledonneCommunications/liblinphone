@@ -160,9 +160,9 @@ public:
 	virtual void onEphemeralMessageEnabled(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 	virtual void onEphemeralLifetimeChanged(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	std::shared_ptr<ClientConferenceEventHandler> mEventHandler;
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 	void requestFullState();
 	void sendPendingMessages();

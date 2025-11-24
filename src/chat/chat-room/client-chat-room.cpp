@@ -22,16 +22,17 @@
 
 #include <bctoolbox/defs.h>
 
-#include "linphone/utils/utils.h"
+#include "client-chat-room.h"
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "client-chat-room.h"
 #include "conference/client-conference.h"
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/handlers/client-conference-event-handler.h"
 #include "conference/handlers/client-conference-list-event-handler.h"
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/participant-device.h"
 #include "conference/participant-info.h"
 #include "conference/participant.h"
@@ -41,6 +42,7 @@
 #include "core/core-p.h"
 #include "factory/factory.h"
 #include "linphone/api/c-chat-room.h"
+#include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "sal/refer-op.h"
 
@@ -70,11 +72,13 @@ void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatM
 void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteContact) {
 	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
 	conference->onConferenceCreated(remoteContact);
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (remoteContact->hasParam(Conference::IsFocusParameter) &&
 	    !getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
 		mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
 		conference->subscribe(true, false);
 	}
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ClientChatRoom::handleMessageRejected(const std::shared_ptr<ChatMessage> &chatMessage) {

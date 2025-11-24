@@ -22,7 +22,6 @@
 #define _L_LOCAL_CONFERENCE_H_
 
 #include <list>
-#include <queue>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -30,7 +29,6 @@
 
 #include "conference/conference.h"
 #include "conference/session/media-session.h"
-#include "content/content-manager.h"
 
 // =============================================================================
 
@@ -250,9 +248,9 @@ protected:
 private:
 	L_DISABLE_COPY(ServerConference);
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	std::shared_ptr<ServerConferenceEventHandler> mEventHandler;
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
 

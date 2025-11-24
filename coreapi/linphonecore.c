@@ -92,15 +92,19 @@
 #include "logging-private.h"
 #include "private.h"
 #include "quality_reporting.h"
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/handlers/client-conference-event-handler.h"
 #include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/handlers/server-conference-list-event-handler.h"
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
+#ifdef HAVE_XERCESC
 #include "conference/ccmp-conference-scheduler.h"
+#endif // HAVE_XERCESC
 #include "conference/conference-info.h"
 #include "conference/conference-scheduler.h"
+#ifdef HAVE_DB_STORAGE
 #include "conference/db-conference-scheduler.h"
+#endif // HAVE_DB_STORAGE
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
@@ -2914,7 +2918,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcasecmp(notified_event, "conference") == 0 || strcasecmp(notified_event, "ekt") == 0) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		const auto ev = Event::getSharedFromThis(lev);
 		const auto resourceAddr = ev->getResource();
 		const auto resourceAddrUri = resourceAddr->asStringUriOnly();
@@ -2948,7 +2952,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 		}
 #else
 		lWarning() << "Unable to handle NOTIFY because advanced IM such as group chat is disabled!";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	} else if (Utils::iequals(notified_event, "message-summary")) {
 		core->handleIncomingMessageWaitingIndication(Event::getSharedFromThis(lev),
 		                                             body ? Content::toCpp(body) : nullptr);
@@ -2961,7 +2965,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 #endif // _MSC_VER
 static void
 _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (body && linphone_event_get_custom_header(lev, "Content-Disposition") &&
 	    strcasecmp(linphone_event_get_custom_header(lev, "Content-Disposition"), "recipient-list") == 0) {
 		// List subscription
@@ -2981,10 +2985,10 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 		lError() << "Denying subscription because no conference with id " << conferenceId << " has been found";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 	}
-#else  // !HAVE_ADVANCED_IM
+#else  // !defined(HAVE_ADVANCED_IM) || !defined(HAVE_XERCESC)
 	linphone_event_deny_subscription(lev, LinphoneReasonNotAcceptable);
 	lWarning() << "Denying subscription because advanced IM such as group chat is disabled!";
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -3006,7 +3010,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc,
 static void _linphone_core_conference_subscription_state_changed(LinphoneCore *lc,
                                                                  LinphoneEvent *lev,
                                                                  LinphoneSubscriptionState state) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::getSharedFromThis(lev));
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
@@ -3035,10 +3039,10 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 			           << conferenceId << " has been found";
 		}
 	}
-#else
+#else  // !defined(HAVE_ADVANCED_IM) || !defined(HAVE_XERCESC)
 	lWarning() << "Unable to handle subscripton state changed to " << linphone_subscription_state_to_string(state)
 	           << " because advanced IM such as group chat is disabled!";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -9304,7 +9308,12 @@ LinphoneConferenceScheduler *linphone_core_create_conference_scheduler_with_type
 			return NULL;
 #endif // HAVE_DB_STORAGE
 		case LinphoneConferenceSchedulerTypeCCMP:
+#ifdef HAVE_XERCESC
 			return (new LinphonePrivate::CCMPConferenceScheduler(cppCore, cppAccount))->toC();
+#else
+			ms_error("Could not create a CCMP conference scheduler because XERCES libraries have not been compiled");
+			return NULL;
+#endif // HAVE_XERCESC
 		case LinphoneConferenceSchedulerTypeSIP:
 			return (new LinphonePrivate::SIPConferenceScheduler(cppCore, cppAccount))->toC();
 	}
@@ -9894,12 +9903,12 @@ int linphone_core_get_conference_max_thumbnails(const LinphoneCore *core) {
 }
 
 const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(const LinphoneCore *core, const char *xml_body) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (const auto ei = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createEktInfoFromXml(xml_body)) {
 		ei->ref();
 		return ei->toC();
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	return nullptr;
 }
 
@@ -9910,14 +9919,14 @@ char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const Lin
 char *linphone_core_create_xml_from_ekt_info_2(const LinphoneCore *core,
                                                const LinphoneEktInfo *ekt_info,
                                                const LinphoneAccount *account) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	const auto ei = EktInfo::toCpp(ekt_info)->getSharedFromThis();
 	const auto cppAccount = account ? Account::toCpp(account)->getSharedFromThis() : nullptr;
 	const string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createXmlFromEktInfo(ei, cppAccount);
 	return bctbx_strdup(xmlBody.c_str());
 #else
 	return nullptr;
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 LinphoneAccountManagerServices *linphone_core_create_account_manager_services(LinphoneCore *core) {

@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
-#define _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
+#ifndef _L_SERVER_CONFERENCE_EVENT_HANDLER_H_
+#define _L_SERVER_CONFERENCE_EVENT_HANDLER_H_
 
 #include <memory>
 #include <string>
@@ -34,8 +34,10 @@
 #include "conference/conference-id.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
+#ifdef HAVE_XERCESC
 #include "xml/conference-info-linphone-extension.h"
 #include "xml/conference-info.h"
+#endif // HAVE_XERCESC
 
 #include "content/content.h"
 
@@ -262,4 +264,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
+#endif // ifndef _L_SERVER_CONFERENCE_EVENT_HANDLER_H_

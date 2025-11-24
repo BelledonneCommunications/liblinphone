@@ -22,14 +22,14 @@
 
 #include <bctoolbox/defs.h>
 
+#include "server-chat-room.h"
+
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/cpim/message/cpim-message.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
-#include "conference/handlers/server-conference-event-handler.h"
-#include "conference/handlers/server-conference-list-event-handler.h"
 #include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/server-conference.h"
@@ -45,7 +45,6 @@
 #include "linphone/wrapper_utils.h"
 #include "logger/logger.h"
 #include "sal/refer-op.h"
-#include "server-chat-room.h"
 #include "sip-tools/sip-headers.h"
 
 using namespace std;

@@ -18,17 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_CLIENT_GROUP_CHAT_ROOM_H_
-#define _L_CLIENT_GROUP_CHAT_ROOM_H_
+#ifndef _L_CLIENT_CHAT_ROOM_H_
+#define _L_CLIENT_CHAT_ROOM_H_
 
 #include "chat/chat-room/chat-room.h"
-#include "conference/client-conference.h"
+#include "conference/conference-listener.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientConferenceEventHandler;
+class ClientConference;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientChatRoom : public ConferenceListener, public ChatRoom {
@@ -139,4 +140,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_CLIENT_GROUP_CHAT_ROOM_H_
+#endif // ifndef _L_CLIENT_CHAT_ROOM_H_

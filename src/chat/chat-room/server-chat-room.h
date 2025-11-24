@@ -18,15 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_SERVER_GROUP_CHAT_ROOM_H_
-#define _L_SERVER_GROUP_CHAT_ROOM_H_
+#ifndef _L_SERVER_CHAT_ROOM_H_
+#define _L_SERVER_CHAT_ROOM_H_
+
+#include <queue>
 
 #include "chat/chat-room/chat-room.h"
-#include "conference/server-conference.h"
+#include "content/content-manager.h"
+#include "content/content-type.h"
+#include "content/content.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class SalCallOp;
+class ServerConference;
 
 class ServerChatRoom : public ChatRoom {
 	friend ServerConference;
@@ -185,4 +190,4 @@ std::ostream &operator<<(std::ostream &stream, const ServerChatRoom *chatRoom);
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_SERVER_GROUP_CHAT_ROOM_H_
+#endif // ifndef _L_SERVER_CHAT_ROOM_H_

@@ -35,6 +35,7 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room.h"
+#include "conference/client-conference.h"
 #include "conference/conference-id-params.h"
 #include "conference/conference.h"
 #include "conference/server-conference.h"

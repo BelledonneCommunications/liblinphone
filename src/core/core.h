@@ -428,11 +428,11 @@ public:
 	// ---------------------------------------------------------------------------
 	// XML Parsing/Composing.
 	// ---------------------------------------------------------------------------
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	std::shared_ptr<EktInfo> createEktInfoFromXml(const std::string &xmlBody) const;
 	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei,
 	                                 const std::shared_ptr<const Account> &account) const;
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 	// ---------------------------------------------------------------------------
 	// Account

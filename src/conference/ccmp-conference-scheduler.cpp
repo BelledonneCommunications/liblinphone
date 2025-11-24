@@ -24,7 +24,6 @@
 #include "belle-sip/http-message.h"
 
 #include "conference/conference.h"
-#include "conference/handlers/server-conference-event-handler.h"
 #include "conference/participant-info.h"
 #include "core/core.h"
 #include "http/http-client.h"

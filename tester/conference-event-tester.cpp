@@ -29,8 +29,10 @@
 #include "conference/client-conference.h"
 #include "conference/conference-listener.h"
 #include "conference/conference.h"
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/handlers/client-conference-event-handler.h"
 #include "conference/handlers/server-conference-event-handler.h"
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/participant.h"
 #include "conference/server-conference.h"
 #include "liblinphone_tester.h"

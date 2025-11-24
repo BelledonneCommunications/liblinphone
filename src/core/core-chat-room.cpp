@@ -30,6 +30,7 @@
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/chat-room/basic-chat-room.h"
 #include "chat/chat-room/chat-room.h"
+#include "conference/client-conference.h"
 #include "conference/conference-context.h"
 #include "conference/participant-info.h"
 #include "conference/participant.h"
@@ -44,8 +45,10 @@
 
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-chat-room.h"
+#ifdef HAVE_XERCESC
 #include "conference/handlers/client-conference-list-event-handler.h"
-#endif
+#endif // HAVE_XERCESC
+#endif // HAVE_ADVANCED_IM
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
@@ -439,9 +442,9 @@ void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatR
 void CorePrivate::loadChatRooms() {
 	L_Q();
 	mChatRoomsById.clear();
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (!mainDb->isInitialized()) return;
 	lInfo() << "Beginning loadChatRooms";
 	std::set<Address, Address::WeakLess> friendAddresses;

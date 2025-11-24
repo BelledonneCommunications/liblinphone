@@ -587,9 +587,9 @@ void liblinphone_tester_add_suites(void) {
 #endif
 	liblinphone_tester_add_suite_with_default_time(&stun_test_suite, 259);
 	liblinphone_tester_add_suite_with_default_time(&event_test_suite, 70);
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	liblinphone_tester_add_suite_with_default_time(&conference_event_test_suite, 32);
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	liblinphone_tester_add_suite_with_default_time(&contents_test_suite, 0);
 	liblinphone_tester_add_suite_with_default_time(&flexisip_test_suite, 495);
 	liblinphone_tester_add_suite_with_default_time(&remote_provisioning_test_suite, 11);

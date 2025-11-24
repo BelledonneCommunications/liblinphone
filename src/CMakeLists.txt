@@ -186,7 +186,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-info.h
 	conference/conference-scheduler.h
 	conference/sip-conference-scheduler.h
-	conference/ccmp-conference-scheduler.h
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
@@ -322,12 +321,19 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	vcard/carddav-params.h
 	vcard/vcard.h
 	vcard/vcard-context.h
-	xml/patch-ops.h
-	xml/conference-info.h
-	xml/xcon-conference-info.h
-	xml/xcon-ccmp.h
 	http/http-client.h
 )
+
+if(ENABLE_XERCESC)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+		conference/ccmp-conference-scheduler.h
+		xml/patch-ops.h
+		xml/conference-info.h
+		xml/xcon-conference-info.h
+		xml/xcon-ccmp.h
+	)
+endif()
+
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
@@ -335,20 +341,26 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/server-chat-room.h
 		conference/encryption/client-ekt-manager.h
 		conference/encryption/ekt-info.h
-		conference/handlers/server-conference-event-handler.h
-		conference/handlers/server-conference-list-event-handler.h
-		conference/handlers/client-conference-event-handler-base.h
-		conference/handlers/client-conference-event-handler.h
-		conference/handlers/client-conference-list-event-handler.h
-		xml/conference-info-linphone-extension.h
-		xml/ekt-linphone-extension.h
-		xml/imdn.h
-		xml/is-composing.h
-		xml/linphone-imdn.h
-		xml/resource-lists.h
-		xml/rlmi.h
-		xml/xml.h
 	)
+
+	if(ENABLE_XERCESC)
+		list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+			conference/handlers/server-conference-event-handler.h
+			conference/handlers/server-conference-list-event-handler.h
+			conference/handlers/client-conference-event-handler-base.h
+			conference/handlers/client-conference-event-handler.h
+			conference/handlers/client-conference-list-event-handler.h
+			xml/conference-info-linphone-extension.h
+			xml/ekt-linphone-extension.h
+			xml/imdn.h
+			xml/is-composing.h
+			xml/linphone-imdn.h
+			xml/resource-lists.h
+			xml/rlmi.h
+			xml/xml.h
+		)
+	endif()
+
 endif()
 
 if(ENABLE_LDAP)
@@ -509,7 +521,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-context.cpp
 	conference/conference-interface.cpp
 	conference/sip-conference-scheduler.cpp
-	conference/ccmp-conference-scheduler.cpp
 	conference/notify-conference-listener.cpp
 	conference/server-conference.cpp
 	conference/params/call-session-params.cpp
@@ -631,12 +642,18 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	vcard/carddav-params.cpp
 	vcard/vcard.cpp
 	vcard/vcard-context.cpp
-	xml/patch-ops.cpp
-	xml/conference-info.cpp
-	xml/xcon-conference-info.cpp
-	xml/xcon-ccmp.cpp
 	http/http-client.cpp
 )
+
+if(ENABLE_XERCESC)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		conference/ccmp-conference-scheduler.cpp
+		xml/patch-ops.cpp
+		xml/conference-info.cpp
+		xml/xcon-conference-info.cpp
+		xml/xcon-ccmp.cpp
+	)
+endif()
 
 if(ENABLE_LDAP)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
@@ -680,19 +697,6 @@ if(ENABLE_ADVANCED_IM)
 		chat/modifier/cpim-chat-message-modifier.cpp
 		conference/encryption/client-ekt-manager.cpp
 		conference/encryption/ekt-info.cpp
-		conference/handlers/server-conference-event-handler.cpp
-		conference/handlers/server-conference-list-event-handler.cpp
-		conference/handlers/client-conference-event-handler-base.cpp
-		conference/handlers/client-conference-event-handler.cpp
-		conference/handlers/client-conference-list-event-handler.cpp
-		xml/conference-info-linphone-extension.cpp
-		xml/ekt-linphone-extension.cpp
-		xml/imdn.cpp
-		xml/is-composing.cpp
-		xml/linphone-imdn.cpp
-		xml/resource-lists.cpp
-		xml/rlmi.cpp
-		xml/xml.cpp
 		chat/cpim/header/cpim-core-headers.cpp
 		chat/cpim/header/cpim-generic-header.cpp
 		chat/cpim/header/cpim-header.cpp
@@ -701,6 +705,23 @@ if(ENABLE_ADVANCED_IM)
 	)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-server-engine.h)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-server-engine.cpp)
+	if(ENABLE_XERCESC)
+		list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+			conference/handlers/server-conference-event-handler.cpp
+			conference/handlers/server-conference-list-event-handler.cpp
+			conference/handlers/client-conference-event-handler-base.cpp
+			conference/handlers/client-conference-event-handler.cpp
+			conference/handlers/client-conference-list-event-handler.cpp
+			xml/conference-info-linphone-extension.cpp
+			xml/ekt-linphone-extension.cpp
+			xml/imdn.cpp
+			xml/is-composing.cpp
+			xml/linphone-imdn.cpp
+			xml/resource-lists.cpp
+			xml/rlmi.cpp
+			xml/xml.cpp
+		)
+	endif()
 endif()
 
 if (ENABLE_DB_STORAGE)

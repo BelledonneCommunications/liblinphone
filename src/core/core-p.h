@@ -168,10 +168,10 @@ public:
 	void doLater(const std::function<void()> &something);
 	belle_sip_main_loop_t *getMainLoop();
 	std::unique_ptr<MainDb> mainDb;
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	std::unique_ptr<ClientConferenceListEventHandler> clientListEventHandler;
 	std::unique_ptr<ServerConferenceListEventHandler> serverListEventHandler;
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	AuthStack &getAuthStack() {
 		return authStack;
 	}

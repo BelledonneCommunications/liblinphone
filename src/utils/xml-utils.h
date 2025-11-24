@@ -25,7 +25,9 @@
 
 #include "http/http-client.h"
 #include "linphone/types.h"
+#ifdef HAVE_XERCESC
 #include "xml/conference-info.h"
+#endif // HAVE_XERCESC
 
 // =============================================================================
 
@@ -35,8 +37,10 @@ class Core;
 class Address;
 
 namespace XmlUtils {
+#ifdef HAVE_XERCESC
 LinphoneMediaDirection mediaStatusToMediaDirection(Xsd::ConferenceInfo::MediaStatusType status);
 Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
+#endif // HAVE_XERCESC
 bool sendCcmpRequest(const std::shared_ptr<Core> &core,
                      const std::string &ccmpServerUrl,
                      const std::shared_ptr<const Address> &from,

@@ -31,6 +31,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+#ifdef HAVE_XERCESC
 using namespace Xsd::ConferenceInfo;
 
 MediaStatusType XmlUtils::mediaDirectionToMediaStatus(LinphoneMediaDirection direction) {
@@ -49,6 +50,21 @@ MediaStatusType XmlUtils::mediaDirectionToMediaStatus(LinphoneMediaDirection dir
 	}
 	return MediaStatusType::sendrecv;
 }
+
+LinphoneMediaDirection XmlUtils::mediaStatusToMediaDirection(MediaStatusType status) {
+	switch (status) {
+		case MediaStatusType::inactive:
+			return LinphoneMediaDirectionInactive;
+		case MediaStatusType::sendonly:
+			return LinphoneMediaDirectionSendOnly;
+		case MediaStatusType::recvonly:
+			return LinphoneMediaDirectionRecvOnly;
+		case MediaStatusType::sendrecv:
+			return LinphoneMediaDirectionSendRecv;
+	}
+	return LinphoneMediaDirectionSendRecv;
+}
+#endif // HAVE_XERCESC
 
 bool XmlUtils::sendCcmpRequest(const std::shared_ptr<Core> &core,
                                const std::string &ccmpServerUrl,
@@ -72,20 +88,6 @@ bool XmlUtils::sendCcmpRequest(const std::shared_ptr<Core> &core,
 	}
 
 	return true;
-}
-
-LinphoneMediaDirection XmlUtils::mediaStatusToMediaDirection(MediaStatusType status) {
-	switch (status) {
-		case MediaStatusType::inactive:
-			return LinphoneMediaDirectionInactive;
-		case MediaStatusType::sendonly:
-			return LinphoneMediaDirectionSendOnly;
-		case MediaStatusType::recvonly:
-			return LinphoneMediaDirectionRecvOnly;
-		case MediaStatusType::sendrecv:
-			return LinphoneMediaDirectionSendRecv;
-	}
-	return LinphoneMediaDirectionSendRecv;
 }
 
 LINPHONE_END_NAMESPACE

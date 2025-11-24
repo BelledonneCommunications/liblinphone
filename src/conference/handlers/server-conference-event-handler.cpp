@@ -27,6 +27,7 @@
 #include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
+#include "conference/server-conference.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"

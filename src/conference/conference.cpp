@@ -43,8 +43,10 @@
 
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/server-chat-room.h"
+#ifdef HAVE_XERCESC
 #include "xml/resource-lists.h"
-#endif
+#endif // HAVE_XERCESC
+#endif // HAVE_ADVANCED_IM
 
 #include "linphone/utils/utils.h"
 

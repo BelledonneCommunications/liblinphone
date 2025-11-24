@@ -28,7 +28,9 @@
 #include "core/core-p.h"
 #include "core/core.h"
 #include "linphone/api/c-account.h"
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "xml/ekt-linphone-extension.h"
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 // =============================================================================
 
@@ -356,7 +358,8 @@ void ClientEktManager::manageParticipantsRequiringKeyAndPublish(list<string> &to
 	}
 }
 
-void ClientEktManager::notifyReceived(const Content &content) {
+void ClientEktManager::notifyReceived(BCTBX_UNUSED(const Content &content)) {
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	const auto &core = mClientConf.lock()->getCore();
 	auto ei = core->createEktInfoFromXml(content.getBodyAsUtf8String());
 
@@ -402,15 +405,17 @@ void ClientEktManager::notifyReceived(const Content &content) {
 			}
 		}
 	}
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
-void ClientEktManager::sendPublish(const shared_ptr<EktInfo> &ei) {
+void ClientEktManager::sendPublish(BCTBX_UNUSED(const shared_ptr<EktInfo> &ei)) {
 	auto sharedClientConf = mClientConf.lock();
 	if (!sharedClientConf) {
 		lWarning() << __func__ << " : Ignoring the attempt to send an EKT PUBLISH from a null ClientConference";
 		return;
 	}
 
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	auto core = sharedClientConf->getCore();
 	auto account = sharedClientConf->getAccount();
 
@@ -434,6 +439,7 @@ void ClientEktManager::sendPublish(const shared_ptr<EktInfo> &ei) {
 		mEventPublish->addCallbacks(cbs);
 	}
 	mEventPublish->send(content);
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ClientEktManager::publishCipheredEkt(const shared_ptr<EktInfo> &ei,

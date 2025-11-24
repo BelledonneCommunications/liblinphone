@@ -35,9 +35,9 @@
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "private.h"
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "xml/resource-lists.h"
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 #ifdef __APPLE__
 #include "utils/time-utils.h"
@@ -493,7 +493,7 @@ std::string Utils::getSipFragAddress(const Content &content) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 std::string Utils::getResourceLists(const std::list<Address> &addresses) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 	for (const auto &addr : addresses) {
@@ -513,7 +513,7 @@ std::string Utils::getResourceLists(const std::list<Address> &addresses) {
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return "";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -564,7 +564,7 @@ Utils::parseResourceLists(std::optional<std::reference_wrapper<const Content>> c
 #endif // _MSC_VER
 ConferenceInfo::participant_list_t Utils::parseResourceLists(const Content &content) {
 	ConferenceInfo::participant_list_t resources;
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if ((content.getContentType() == ContentType::ResourceLists) &&
 	    ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList)) ||
 	     (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory)))) {
@@ -591,7 +591,7 @@ ConferenceInfo::participant_list_t Utils::parseResourceLists(const Content &cont
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return resources;
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop

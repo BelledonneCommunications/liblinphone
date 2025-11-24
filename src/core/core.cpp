@@ -48,9 +48,9 @@
 #include "mediastreamer2/msjpegwriter.h"
 #include "mediastreamer2/msqrcodereader.h"
 
-#ifdef HAVE_ADVANCED_IM
+#ifdef HAVE_XERCESC
 #include <xercesc/util/PlatformUtils.hpp>
-#endif
+#endif // HAVE_XERCESC
 
 #include "account/mwi/message-waiting-indication.h"
 #ifdef HAVE_LIME_X3DH
@@ -60,8 +60,10 @@
 #include "conference/conference-context.h"
 #include "conference/conference-id-params.h"
 #include "conference/conference.h"
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/handlers/server-conference-list-event-handler.h"
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-info.h"
 #include "conference/participant.h"
@@ -88,9 +90,9 @@
 #include "search/remote-contact-directory.h"
 #include "vcard/carddav-params.h"
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "xml/ekt-linphone-extension.h"
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
@@ -123,9 +125,9 @@
 // =============================================================================
 
 using namespace std;
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 using namespace LinphonePrivate::Xsd::PublishLinphoneExtension;
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -145,10 +147,10 @@ void CorePrivate::init() {
 
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
 	getToneManager(); // Forces instanciation of the ToneManager.
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	clientListEventHandler = makeUnique<ClientConferenceListEventHandler>(q->getSharedFromThis());
 	serverListEventHandler = makeUnique<ServerConferenceListEventHandler>(q->getSharedFromThis());
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	if (q->limeX3dhAvailable()) {
@@ -520,10 +522,10 @@ void CorePrivate::uninit() {
 
 	q->mPublishByEtag.clear();
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	clientListEventHandler.reset();
 	serverListEventHandler.reset();
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 	Address::clearSipAddressesCache();
 
@@ -816,16 +818,16 @@ void CorePrivate::reorderVideoCodecList() {
 Core::Core() : Object(*new CorePrivate) {
 	L_D();
 	d->imee.reset();
-#ifdef HAVE_ADVANCED_IM
+#ifdef HAVE_XERCESC
 	xercesc::XMLPlatformUtils::Initialize();
-#endif
+#endif // HAVE_XERCESC
 }
 
 Core::~Core() {
 	lInfo() << "Destroying core: " << this;
-#ifdef HAVE_ADVANCED_IM
+#ifdef HAVE_XERCESC
 	xercesc::XMLPlatformUtils::Terminate();
-#endif
+#endif // HAVE_XERCESC
 	resetAccounts();
 }
 
@@ -3333,7 +3335,7 @@ void Core::stopHttpClient() {
 	d->httpClient.reset();
 }
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 shared_ptr<EktInfo> Core::createEktInfoFromXml(const std::string &xmlBody) const {
 	istringstream data(xmlBody);
 	unique_ptr<CryptoType> crypto;
@@ -3408,7 +3410,7 @@ string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei, const sha
 	serializeCrypto(xmlBody, crypto, map);
 	return xmlBody.str();
 }
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 ConferenceIdParams Core::createConferenceIdParams() const {
 	return ConferenceIdParams(getSharedFromThis());

@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
-#define _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
+#ifndef _L_SERVER_CONFERENCE_LIST_EVENT_HANDLER_H_
+#define _L_SERVER_CONFERENCE_LIST_EVENT_HANDLER_H_
 
 #include <unordered_map>
 
@@ -55,4 +55,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
+#endif // ifndef _L_SERVER_CONFERENCE_LIST_EVENT_HANDLER_H_

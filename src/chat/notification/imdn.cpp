@@ -20,6 +20,8 @@
 
 #include <bctoolbox/defs.h>
 
+#include "imdn.h"
+
 #include "linphone/utils/algorithm.h"
 
 #include "chat/chat-message/imdn-message-p.h"
@@ -29,11 +31,11 @@
 
 #ifdef HAVE_ADVANCED_IM
 #include "chat/encryption/encryption-engine.h"
+#ifdef HAVE_XERCESC
 #include "xml/imdn.h"
 #include "xml/linphone-imdn.h"
-#endif
-
-#include "imdn.h"
+#endif // HAVE_XERCESC
+#endif // HAVE_ADVANCED_IM
 
 // =============================================================================
 
@@ -167,7 +169,7 @@ void Imdn::onGlobalStateChanged(LinphoneGlobalState state) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 string Imdn::createXml(const string &id, time_t timestamp, Imdn::Type imdnType, LinphoneReason reason) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	char *datetime = linphone_timestamp_to_rfc3339_string(timestamp);
 	Xsd::Imdn::Imdn imdn(id, datetime);
 	ms_free(datetime);
@@ -204,7 +206,7 @@ string Imdn::createXml(const string &id, time_t timestamp, Imdn::Type imdnType, 
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return "";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -215,7 +217,7 @@ string Imdn::createXml(const string &id, time_t timestamp, Imdn::Type imdnType, 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	list<string> messagesIds;
 	list<unique_ptr<Xsd::Imdn::Imdn>> imdns;
 
@@ -312,7 +314,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 	}
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -323,7 +325,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 bool Imdn::isError(const shared_ptr<ChatMessage> &chatMessage) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
 		if (content->getContentType() != ContentType::Imdn) continue;
 
@@ -346,7 +348,7 @@ bool Imdn::isError(const shared_ptr<ChatMessage> &chatMessage) {
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return false;
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop

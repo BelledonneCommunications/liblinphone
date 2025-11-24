@@ -28,9 +28,9 @@
 #include "chat/notification/is-composing.h"
 #include "logger/logger.h"
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "xml/is-composing.h"
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 // =============================================================================
 
@@ -63,7 +63,7 @@ IsComposing::~IsComposing() {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 string IsComposing::createXml(bool isComposing) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	Xsd::IsComposing::IsComposing node(isComposing ? "active" : "idle");
 	if (isComposing)
 		node.setRefresh(static_cast<unsigned long long>(
@@ -77,7 +77,7 @@ string IsComposing::createXml(bool isComposing) {
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return "";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -88,7 +88,7 @@ string IsComposing::createXml(bool isComposing) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void IsComposing::parse(const std::shared_ptr<Address> &remoteAddr, const string &text) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	istringstream data(text);
 	unique_ptr<Xsd::IsComposing::IsComposing> node(
 	    Xsd::IsComposing::parseIsComposing(data, Xsd::XmlSchema::Flags::dont_validate));
@@ -105,7 +105,7 @@ void IsComposing::parse(const std::shared_ptr<Address> &remoteAddr, const string
 	}
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
-#endif
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop

@@ -26,6 +26,7 @@
 
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
+#include "chat/chat-room/client-chat-room.h"
 #include "client-conference.h"
 #include "conference-params.h"
 #include "conference/participant-info.h"
@@ -41,10 +42,10 @@
 #include "session/media-session-p.h"
 #include "session/media-session.h"
 #include "session/ms2-streams.h"
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "handlers/client-conference-event-handler.h"
 #include "handlers/client-conference-list-event-handler.h"
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 // =============================================================================
 
@@ -66,9 +67,9 @@ ClientConference::~ClientConference() {
 		delete mJoiningParams;
 	}
 
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	mEventHandler.reset();
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ClientConference::createFocus(const std::shared_ptr<const Address> &focusAddr,
@@ -227,7 +228,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 
 void ClientConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confListener),
                                           BCTBX_UNUSED(bool addToListEventHandler)) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
 	                                                  "conference_event_log_enabled", TRUE);
 	if (eventLogEnabled) {
@@ -243,13 +244,13 @@ void ClientConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confL
 			mEventHandler->subscribe(conferenceId);
 		}
 	} else {
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		lInfo() << "Unable to send SUBSCRIBE to finalize creation of " << *this
 		        << " because conference event package (RFC 4575) is disabled or the SDK was not compiled with "
-		           "ENABLE_ADVANCED_IM flag set to on";
-#ifdef HAVE_ADVANCED_IM
+		           "ENABLE_ADVANCED_IM and ENABLE_XERCESC flags set to on";
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ClientConference::initializeHandlers(ConferenceListener *confListener, bool addToListEventHandler) {
@@ -815,15 +816,15 @@ bool ClientConference::transferToFocus(std::shared_ptr<Call> call) {
 		// Add the participant to the list of the participants of the conference if the core does not support RFC4575
 		// (Conference Event Package) or the macro HAVE_ADVANCED_IM is not defined. In such a scenario, we make the best
 		// effort to ensure the client has a list of participant as up to date as possible
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
 		                                                  "conference_event_log_enabled", TRUE);
 		if (!eventLogEnabled) {
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 			mParticipants.push_back(participant);
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		lInfo() << *this << ": Transfering " << *call << " to focus " << *referToAddr;
 		updateParticipantInConferenceInfo(participant);
 		if (call->transfer(referToAddr->toString()) == 0) {
@@ -875,7 +876,7 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		list<std::shared_ptr<Call>>::iterator it;
 		switch (state) {
 			case CallSession::State::StreamsRunning: {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 				// Handle session reconnection if network dropped only for a short period of time
 				if (mEventHandler && mEventHandler->needToSubscribe()) {
 					const auto &conferenceId = getConferenceId();
@@ -886,7 +887,7 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 				if (mClientEktManager) {
 					mClientEktManager->subscribe();
 				}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 				updateParticipantInConferenceInfo(getMe());
 				for (const auto &device : getParticipantDevices()) {
 					device->updateStreamAvailabilities();
@@ -1237,11 +1238,11 @@ void ClientConference::onStateChanged(ConferenceInterface::State state) {
 			}
 			break;
 		case ConferenceInterface::State::TerminationPending:
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 			if (mEventHandler) {
 				mEventHandler->unsubscribe();
 			}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 			resetLastNotify();
 			if (session) {
 				// Do not terminate focus call when terminating the client conference
@@ -1590,6 +1591,7 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 #ifdef HAVE_ADVANCED_IM
 	auto chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
+#ifdef HAVE_XERCESC
 		if (mEventHandler) {
 			mEventHandler->unsubscribe();
 		}
@@ -1598,6 +1600,7 @@ void ClientConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr
 		if (getCore()->getPrivate()->clientListEventHandler) {
 			getCore()->getPrivate()->clientListEventHandler->removeHandler(mEventHandler);
 		}
+#endif // HAVE_XERCESC
 
 		// No need to notify such event during the core startup.
 		// This method might be called from MainDb::getChatRooms() when the core has corrupted DB and there are two
@@ -1946,7 +1949,7 @@ void ClientConference::notifyLouderSpeaker(uint32_t ssrc) {
 }
 
 std::shared_ptr<ClientConferenceEventHandler> ClientConference::getEventHandler() const {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	auto handler = getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId());
 	if (!handler) {
 		handler = mEventHandler;
@@ -1954,17 +1957,17 @@ std::shared_ptr<ClientConferenceEventHandler> ClientConference::getEventHandler(
 	return handler;
 #else
 	return nullptr;
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 bool ClientConference::isSubscriptionUnderWay() const {
 	bool underWay = false;
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	auto handler = getEventHandler();
 	if (handler) {
 		underWay = handler->getInitialSubscriptionUnderWayFlag();
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	return underWay;
 }
 
@@ -1977,13 +1980,13 @@ void ClientConference::onSubscriptionUnderwayDone() {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void ClientConference::multipartNotifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	auto handler = getEventHandler();
 	if (handler) {
 		handler->multipartNotifyReceived(notifyLev, content);
 		return;
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	lInfo()
 	    << *this
 	    << ": Unable to handle multi part NOTIFY because conference event package (RFC 4575) is disabled or the SDK "
@@ -2005,11 +2008,13 @@ void ClientConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, c
 			return;
 		}
 	} else {
+#ifdef HAVE_XERCESC
 		auto handler = getEventHandler();
 		if (handler) {
 			handler->notifyReceived(notifyLev, content);
 			return;
 		}
+#endif // HAVE_XERCESC
 	}
 #endif // HAVE_ADVANCED_IM
 	lInfo() << *this
@@ -2400,9 +2405,11 @@ void ClientConference::leave() {
 		}
 #ifdef HAVE_ADVANCED_IM
 	} else if (mConfParams->chatEnabled()) {
+#ifdef HAVE_XERCESC
 		if (mEventHandler) {
 			mEventHandler->unsubscribe();
 		}
+#endif // HAVE_XERCESC
 		shared_ptr<CallSession> session = mFocus->getSession();
 		if (session) {
 			session->terminate();
@@ -2765,23 +2772,23 @@ void ClientConference::onCallSessionSetReleased(const shared_ptr<CallSession> &s
 }
 
 void ClientConference::requestFullState() {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (mEventHandler) {
 		mEventHandler->requestFullState();
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ClientConference::unsubscribe() {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (mEventHandler) {
 		mEventHandler->unsubscribe(); // Required for next subscribe to be sent
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ClientConference::subscribe(BCTBX_UNUSED(bool addToListEventHandler), BCTBX_UNUSED(bool unsubscribeFirst)) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (mEventHandler) {
 		if (unsubscribeFirst) {
 			mEventHandler->unsubscribe(); // Required for next subscribe to be sent
@@ -2790,7 +2797,7 @@ void ClientConference::subscribe(BCTBX_UNUSED(bool addToListEventHandler), BCTBX
 		initializeHandlers(this, addToListEventHandler);
 	}
 	mEventHandler->subscribe(getConferenceId());
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 #ifdef HAVE_ADVANCED_IM

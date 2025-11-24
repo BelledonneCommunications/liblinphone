@@ -145,6 +145,7 @@ endif()
 if(ENABLE_XERCESC)
 	bc_find_package(XercesC XercesC::XercesC xerces-c REQUIRED)
 	set(LIBXSD_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/libxsd")
+	set(HAVE_XERCESC 1)
 endif()
 
 if(ENABLE_ADVANCED_IM)

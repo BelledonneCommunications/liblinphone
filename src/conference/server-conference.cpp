@@ -41,9 +41,11 @@
 #include "server-conference.h"
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/server-chat-room.h"
+#ifdef HAVE_XERCESC
 #include "conference/handlers/server-conference-list-event-handler.h"
 #include "handlers/server-conference-event-handler.h"
-#endif
+#endif // HAVE_XERCESC
+#endif // HAVE_ADVANCED_IM
 
 // TODO: Remove me later.
 #include "private.h"
@@ -146,10 +148,10 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		conferenceAddress->setUriParam(Conference::ConfIdParameter, confId);
 
 		bool_t eventLogEnabled = FALSE;
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		eventLogEnabled =
 		    linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		if (!eventLogEnabled) {
 			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams()));
 		}
@@ -196,7 +198,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 
 void ServerConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confListener),
                                           BCTBX_UNUSED(bool addToListEventHandler)) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	LinphoneCore *lc = getCore()->getCCore();
 	bool eventLogEnabled =
 	    !!linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
@@ -208,12 +210,12 @@ void ServerConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confL
 		}
 		addListener(mEventHandler);
 	} else {
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		lInfo() << "Unable to add listener to local conference as conference event package (RFC 4575) is disabled or "
-		           "the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
-#ifdef HAVE_ADVANCED_IM
+		           "the SDK was not compiled with ENABLE_ADVANCED_IM and ENABLE_XERCESC flags set to on";
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 bool ServerConference::validateNewParameters(const ConferenceParams &newConfParams) const {
@@ -1078,7 +1080,9 @@ void ServerConference::finalizeCreation() {
 #ifdef HAVE_ADVANCED_IM
 				if (chatRoom) {
 					auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
+#ifdef HAVE_XERCESC
 					getCore()->getPrivate()->serverListEventHandler->addHandler(mEventHandler);
+#endif // HAVE_XERCESC
 					serverGroupChatRoom->setJoiningPendingAfterCreation(true);
 					getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 				}
@@ -1115,6 +1119,7 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 		inviteDevice(device);
 	}
 
+#ifdef HAVE_XERCESC
 	if (mEventHandler) {
 		if (mEventHandler->subscribeReceived(event) == 0) {
 			if (device && chatEnabled) {
@@ -1141,11 +1146,12 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 			}
 		}
 	} else {
+#endif // HAVE_XERCESC
 #endif // HAVE_ADVANCED_IM
 		event->deny(LinphoneReasonNotAcceptable);
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 
 #ifdef HAVE_ADVANCED_IM
 	if (chatEnabled && chatRoom) {
@@ -1160,18 +1166,18 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void ServerConference::subscriptionStateChanged(shared_ptr<EventSubscribe> event, LinphoneSubscriptionState state) {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (mEventHandler) {
 		mEventHandler->subscriptionStateChanged(event, state);
 	} else {
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		lInfo()
 		    << *this
 		    << ": Unable to handle subscription state change because conference event package (RFC 4575) is disabled "
 		       "or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
@@ -2682,20 +2688,20 @@ void ServerConference::cleanup() {
 		mMixerSession.reset();
 	}
 	try {
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		if (isChatOnly() && getCore()->getPrivate()->serverListEventHandler) {
 			getCore()->getPrivate()->serverListEventHandler->removeHandler(mEventHandler);
 		}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		getCore()->getPrivate()->unregisterListener(this);
 	} catch (const bad_weak_ptr &) {
 		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (mEventHandler) {
 		mEventHandler.reset();
 	}
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 
 void ServerConference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
@@ -3017,9 +3023,9 @@ int ServerConference::terminate() {
 
 		const auto zeroDevices = (noDevices == 0);
 		if (zeroDevices
-#ifdef HAVE_ADVANCED_IM
+#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		    || !mEventHandler
-#endif // HAVE_ADVANCED_IM
+#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 		) {
 			setState(ConferenceInterface::State::Terminated);
 		}

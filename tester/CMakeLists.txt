@@ -361,13 +361,15 @@ if(ENABLE_LIME_X3DH)
 endif()
 
 if(ENABLE_FLEXIAPI)
-	list(APPEND SOURCE_FILES_CXX account_creator_flexiapi_tester.cpp)
-	list(APPEND SOURCE_FILES_CXX flexiapiclient-tester.cpp)
+	list(APPEND SOURCE_FILES_CXX account_creator_flexiapi_tester.cpp
+			 flexiapiclient-tester.cpp)
 endif()
 
 if(ENABLE_ADVANCED_IM)
-	list(APPEND SOURCE_FILES_CXX 	conference-event-tester.cpp
-									cpim-tester.cpp
+	if(ENABLE_XERCESC)
+		list(APPEND SOURCE_FILES_CXX 	conference-event-tester.cpp)
+	endif()
+	list(APPEND SOURCE_FILES_CXX cpim-tester.cpp
 									ics-tester.cpp)
 endif()
 

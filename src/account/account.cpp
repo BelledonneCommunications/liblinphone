@@ -47,7 +47,9 @@
 #include "private.h"
 #include "utils/custom-params.h"
 #include "utils/xml-utils.h"
+#ifdef HAVE_XERCESC
 #include "xml/xcon-ccmp.h"
+#endif // HAVE_XERCESC
 
 // =============================================================================
 
@@ -55,8 +57,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+#ifdef HAVE_XERCESC
 using namespace Xsd::XconCcmp;
 using namespace Xsd::XconConferenceInfo;
+#endif // HAVE_XERCESC
 
 Account::Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params)
     : CoreAccessor(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr) {
@@ -1804,10 +1808,11 @@ void Account::handleCCMPResponseConferenceInformation(const HttpResponse &respon
 }
 
 void Account::updateConferenceInfoListWithCcmp() const {
+#ifdef HAVE_XERCESC
 	const auto ccmpServerUrl = mParams->getCcmpServerUrl();
 	if (ccmpServerUrl.empty()) {
-		lError() << "Unable to get the list of conferences on an unknown CCMP server where account [" << this
-		         << "] is a participant";
+		lError() << "Unable to get the list of conferences on an unknown CCMP server where " << *this
+		         << " is a participant";
 		return;
 	}
 
@@ -1817,8 +1822,7 @@ void Account::updateConferenceInfoListWithCcmp() const {
 	std::string identityXconUserId = Utils::getXconId(identity);
 	if (identityXconUserId.empty()) {
 		lError() << "Aborting creation of body of POST to request the list of conferences on the CCMP server "
-		         << ccmpServerUrl << " where account [" << this
-		         << "] is a participant because its CCMP User ID is unknwon";
+		         << ccmpServerUrl << " where " << *this << " is a participant because its CCMP User ID is unknwon";
 		return;
 	}
 	requestBody.setConfUserID(identityXconUserId);
@@ -1839,10 +1843,15 @@ void Account::updateConferenceInfoListWithCcmp() const {
 		lError() << "An error occurred when requesting informations list linked to " << *this << " to server "
 		         << ccmpServerUrl;
 	}
+#else
+	lError() << "Unable to get the list of conferences linked to " << *this
+	         << " from the CCMP server because XERCES compilation has been disabled";
+#endif // HAVE_XERCESC
 }
 
-void Account::handleResponseConferenceList(void *ctx, const HttpResponse &event) {
+void Account::handleResponseConferenceList(void *ctx, BCTBX_UNUSED(const HttpResponse &event)) {
 	auto account = static_cast<Account *>(ctx);
+#ifdef HAVE_XERCESC
 	int code = event.getHttpStatusCode();
 	std::shared_ptr<Address> conferenceAddress;
 	if (code >= 200 && code < 300) {
@@ -1916,6 +1925,10 @@ void Account::handleResponseConferenceList(void *ctx, const HttpResponse &event)
 			}
 		}
 	}
+#else
+	lError() << "Unable to process the list of conferences linked to Accout [" << account
+	         << "] from the CCMP server because XERCES compilation has been disabled";
+#endif // HAVE_XERCESC
 }
 
 void Account::handleIoErrorConferenceList(void *ctx, const HttpResponse &event) {
@@ -1936,8 +1949,9 @@ void Account::handleTimeoutConferenceList(void *ctx, const HttpResponse &event) 
 	        << ccmpServerUrl << ": " << content;
 }
 
-void Account::handleResponseConferenceInformation(void *ctx, const HttpResponse &event) {
+void Account::handleResponseConferenceInformation(void *ctx, BCTBX_UNUSED(const HttpResponse &event)) {
 	auto account = static_cast<Account *>(ctx);
+#ifdef HAVE_XERCESC
 	int code = event.getHttpStatusCode();
 	std::shared_ptr<Address> conferenceAddress;
 	if (code >= 200 && code < 300) {
@@ -2098,6 +2112,10 @@ void Account::handleResponseConferenceInformation(void *ctx, const HttpResponse 
 		}
 	}
 	account->ccmpConferenceInformationResponseReceived();
+#else
+	lError() << "Unable to handle CCMP server response in Account [" << account
+	         << "] because XERCES compilation has been disabled";
+#endif // HAVE_XERCESC
 }
 
 void Account::handleIoErrorConferenceInformation(void *ctx, const HttpResponse &event) {

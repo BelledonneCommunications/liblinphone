@@ -36,6 +36,9 @@
 #include "chat/chat-room/client-chat-room.h"
 #endif // HAVE_ADVANCED_IM
 #include "chat/modifier/cpim-chat-message-modifier.h"
+#include "conference/client-conference.h"
+#include "conference/conference-params.h"
+#include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
 #include "content/content-manager.h"

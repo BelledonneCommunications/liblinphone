@@ -28,6 +28,7 @@
 #include "chat/chat-room/chat-room.h"
 #include "chat/chat-room/client-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
+#include "conference/conference-params.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
 #include "content/content-manager.h"
