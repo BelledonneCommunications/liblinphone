@@ -160,7 +160,6 @@ const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedE
 			encEnumList.push_back(encEnum);
 		}
 	}
-
 	if (encList) {
 		bctbx_list_free(encList);
 	}

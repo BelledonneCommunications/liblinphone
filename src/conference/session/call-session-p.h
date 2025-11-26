@@ -93,7 +93,7 @@ public:
 
 	void init();
 
-	void accept(const CallSessionParams *params);
+	void accept(const CallSessionParams *csp);
 	void acceptOrTerminateReplacedSessionInIncomingNotification();
 	virtual LinphoneStatus
 	acceptUpdate(const CallSessionParams *csp, CallSession::State nextState, const std::string &stateInfo);
@@ -128,7 +128,7 @@ public:
 
 protected:
 	std::set<std::weak_ptr<CallSessionListener>, WeakPtrCompare<CallSessionListener>> listeners;
-	CallSessionParams *params = nullptr;
+	CallSessionParams *mParams = nullptr;
 	mutable CallSessionParams *currentParams = nullptr;
 	mutable CallSessionParams *remoteParams = nullptr;
 	mutable std::shared_ptr<Address> diversionAddress;

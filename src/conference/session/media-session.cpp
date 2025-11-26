@@ -210,7 +210,7 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 			bundleOwnerRejected = !isThereAnActiveOwner;
 		}
 	}
-	auto securityCheckFailure = incompatibleSecurity(finalMd);
+	auto securityCheckFailure = incompatibleSecurity(finalMd, remoteMd);
 	auto reject = ((finalMd->isEmpty() && !(localIsOfferer ? localMd->isEmpty() : remoteMd->isEmpty())) ||
 	               securityCheckFailure || bundleOwnerRejected);
 	if (reject) {
@@ -742,10 +742,20 @@ void MediaSessionPrivate::updated(bool isUpdate) {
 	CallSessionPrivate::updated(isUpdate);
 }
 
-bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
+bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &finalMd,
+                                               const std::shared_ptr<SalMediaDescription> &remoteMd) const {
 	L_Q();
 	if (isEncryptionMandatory()) {
 		const auto negotiatedEncryption = getNegotiatedMediaEncryption();
+		// zrtp-hash attribute is not mandatory, therefore the value returned by SalMediaDescription::hasZrtp() may be
+		// misleading
+		if ((state != CallSession::State::Idle) && getParams()->mandatoryMediaEncryptionEnabled() &&
+		    !remoteMd->hasSrtp() && (!remoteMd->hasZrtp() && (negotiatedEncryption != LinphoneMediaEncryptionZRTP)) &&
+		    !remoteMd->hasDtls()) {
+			lError() << "Remote offered no encryption but the local core can only support encrypted calls";
+			return true;
+		}
+
 		const bool acceptAnyEncryption = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()),
 		                                                           "rtp", "accept_any_encryption", 0);
 		// Verify that the negotiated encryption is not None if accepting any encryption
@@ -756,10 +766,30 @@ bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDes
 				return true;
 			}
 		} else {
-			if ((negotiatedEncryption == LinphoneMediaEncryptionSRTP) && !md->hasSrtp()) {
+			LinphoneCore *lc = q->getCore()->getCCore();
+			bool encryptionMandatory = !!linphone_core_is_media_encryption_mandatory(lc);
+			if ((negotiatedEncryption == LinphoneMediaEncryptionSRTP) && !finalMd->hasSrtp()) {
 				lError() << "Negotiated encryption is " << linphone_media_encryption_to_string(negotiatedEncryption)
 				         << " however media description has no stream has been negotiated with it";
 				return true;
+			} else if (encryptionMandatory) {
+				const auto encryption = linphone_core_get_media_encryption(lc);
+				if (remoteMd->hasZrtp() && (encryption != LinphoneMediaEncryptionZRTP)) {
+					lError() << "Remote offered " << linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)
+					         << " encryption but the local core can only handle "
+					         << linphone_media_encryption_to_string(encryption);
+					return true;
+				} else if (remoteMd->hasDtls() && (encryption != LinphoneMediaEncryptionDTLS)) {
+					lError() << "Remote offered " << linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)
+					         << " encryption but the local core can only handle "
+					         << linphone_media_encryption_to_string(encryption);
+					return true;
+				} else if (remoteMd->hasSrtp() && (encryption != LinphoneMediaEncryptionSRTP)) {
+					lError() << "Remote offered " << linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)
+					         << " encryption but the local core can only handle "
+					         << linphone_media_encryption_to_string(encryption);
+					return true;
+				}
 			}
 		}
 	}
@@ -795,7 +825,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			lInfo() << "Applying default policy for offering SDP on CallSession [" << q << "]";
 			setParams(new MediaSessionParams());
 			// Yes we init parameters as if we were in the case of an outgoing call, because it is a resume with no SDP.
-			params->initDefault(q->getCore(), LinphoneCallOutgoing);
+			mParams->initDefault(q->getCore(), LinphoneCallOutgoing);
 		}
 
 		// Reenable all streams if we are the offerer
@@ -918,7 +948,7 @@ void MediaSessionPrivate::setMicrophoneMuted(bool muted) {
 	AudioControlInterface *i = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (i) i->enableMic(!muted);
 	// update local params as well:
-	if (params) getParams()->enableMic(!muted);
+	if (mParams) getParams()->enableMic(!muted);
 }
 
 // -----------------------------------------------------------------------------
@@ -1098,7 +1128,7 @@ void MediaSessionPrivate::fixCallParams(std::shared_ptr<SalMediaDescription> &rm
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	bool isInRemoteConference = conference && !isInLocalConference;
 
-	/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() &
+	/*params.getPrivate()->enableImplicitRtcpFb(mParams.getPrivate()->implicitRtcpFbEnabled() &
 	 * sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
 	if (rcp) {
@@ -3082,7 +3112,7 @@ void MediaSessionPrivate::setupEncryptionKeys(std::shared_ptr<SalMediaDescriptio
 						// Generate new crypto keys
 						newStreamActualCfgCrypto = generateNewCryptoKeys();
 					} else if (oldStreamActualCfg.hasSrtp()) {
-						if ((state == CallSession::State::IncomingReceived) && params) {
+						if ((state == CallSession::State::IncomingReceived) && mParams) {
 							// Attempt to reuse the keys generated during the first offer answer execution that allowed
 							// the remote to ring
 							lInfo() << "Merging already created crypto suites with the ones of the call parameters";
@@ -3777,7 +3807,7 @@ LinphoneStatus MediaSessionPrivate::pause() {
 			}
 		}
 
-		params->getPrivate()->setInConference(false);
+		mParams->getPrivate()->setInConference(false);
 		q->updateContactAddressInOp();
 
 		if (conference) {
@@ -4282,7 +4312,7 @@ LinphoneStatus MediaSessionPrivate::accept(const MediaSessionParams *msp, BCTBX_
 	// compatible set of parameters. The second offer answer negotiation is more thorough as the set of parameters to
 	// accept the call is known. In this case, if the encryption is mandatory a new local media description must be
 	// generated in order to populate the crypto keys with the set actually ued in the call
-	if ((state == CallSession::State::IncomingReceived) && params) {
+	if ((state == CallSession::State::IncomingReceived) && mParams) {
 		makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false, false);
 	}
 
@@ -4627,7 +4657,7 @@ void MediaSession::configure(LinphoneCallDir direction,
 	// Create parameters before calling CallSession::configure to avoid being erased by the CallSession object
 	if ((direction == LinphoneCallIncoming) && !getParams()) {
 		d->setParams(new MediaSessionParams());
-		d->params->initDefault(getCore(), direction);
+		d->mParams->initDefault(getCore(), direction);
 	}
 
 	CallSession::configure(direction, account, op, from, to);
@@ -4646,7 +4676,7 @@ void MediaSession::configure(LinphoneCallDir direction,
 	}
 
 	// At this point, the account is set if found
-	const auto &selectedAccount = d->params->getAccount();
+	const auto &selectedAccount = d->mParams->getAccount();
 	const auto &accountParams = selectedAccount ? selectedAccount->getAccountParams() : nullptr;
 
 	if (direction == LinphoneCallOutgoing) {
@@ -4686,7 +4716,7 @@ void MediaSession::configure(LinphoneCallDir direction, const std::string &calli
 	// Create parameters before calling CallSession::configure to avoid being erased by the CallSession object
 	if (!getParams()) {
 		d->setParams(new MediaSessionParams());
-		d->params->initDefault(getCore(), direction);
+		d->mParams->initDefault(getCore(), direction);
 	}
 
 	CallSession::configure(direction, callid);
@@ -5022,7 +5052,8 @@ void MediaSession::startIncomingNotification(bool notifyRinging) {
 	// In such a case, the conference is not created at all since the organizer will not be able to take part to it The
 	// following lines should not trigger when creating a conference
 	std::shared_ptr<SalMediaDescription> &finalMd = d->op->getFinalMediaDescription();
-	auto securityCheckFailure = d->incompatibleSecurity(finalMd);
+	const std::shared_ptr<SalMediaDescription> &remoteMd = d->op->getRemoteMediaDescription();
+	auto securityCheckFailure = d->incompatibleSecurity(finalMd, remoteMd);
 	auto conference = getLocalConference();
 	const auto remoteParams = d->getRemoteParams();
 	if (finalMd && (finalMd->isEmpty() || securityCheckFailure) && !conference &&
@@ -5656,7 +5687,7 @@ void *MediaSession::createNativeVideoWindowId(const std::string label,
 
 const CallSessionParams *MediaSession::getParams() const {
 	L_D();
-	return d->params;
+	return d->mParams;
 }
 
 float MediaSession::getPlayVolume() const {

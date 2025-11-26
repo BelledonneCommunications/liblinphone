@@ -340,8 +340,8 @@ bool CallSessionPrivate::startPing() {
 
 void CallSessionPrivate::setParams(CallSessionParams *csp) {
 	if (csp) csp->assertNoReuse();
-	if (params) delete params;
-	params = csp;
+	if (mParams) delete mParams;
+	mParams = csp;
 }
 
 void CallSessionPrivate::createOp() {
@@ -349,15 +349,15 @@ void CallSessionPrivate::createOp() {
 }
 
 bool CallSessionPrivate::isInConference() const {
-	return params->getPrivate()->getInConference();
+	return mParams->getPrivate()->getInConference();
 }
 
 const std::string CallSessionPrivate::getConferenceId() const {
-	return params->getPrivate()->getConferenceId();
+	return mParams->getPrivate()->getConferenceId();
 }
 
 void CallSessionPrivate::setConferenceId(const std::string id) {
-	params->getPrivate()->setConferenceId(id);
+	mParams->getPrivate()->setConferenceId(id);
 }
 
 // -----------------------------------------------------------------------------
@@ -717,9 +717,9 @@ void CallSessionPrivate::accept(const CallSessionParams *csp) {
 	/* Try to be best-effort in giving real local or routable contact address */
 	setContactOp();
 	if (csp) setParams(new CallSessionParams(*csp));
-	if (params) {
+	if (mParams) {
 		op->enableCapabilityNegotiation(q->isCapabilityNegotiationEnabled());
-		op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
+		op->setSentCustomHeaders(mParams->getPrivate()->getCustomHeaders());
 	}
 
 	op->accept();
@@ -908,7 +908,7 @@ LinphoneStatus CallSessionPrivate::startUpdate(const CallSession::UpdateMethod m
 	/* Give a chance to update the contact address if connectivity has changed */
 	refreshContactAddress();
 	// Update custom headers
-	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
+	op->setSentCustomHeaders(mParams->getPrivate()->getCustomHeaders());
 	q->updateContactAddressInOp();
 
 	bool noUserConsent = q->getParams()->getPrivate()->getNoUserConsent();
@@ -955,8 +955,8 @@ void CallSessionPrivate::setDestAccount(const shared_ptr<Account> &destAccount) 
 	} else {
 		lInfo() << "Do not set or unset account for " << *q;
 	}
-	if (params) {
-		params->setAccount(account);
+	if (mParams) {
+		mParams->setAccount(account);
 	}
 	if (currentParams) {
 		currentParams->setAccount(account);
@@ -1132,7 +1132,8 @@ void CallSessionPrivate::createOpTo(const std::shared_ptr<Address> &to) {
 
 	op = new SalCallOp(core->sal.get(), q->isCapabilityNegotiationEnabled());
 	op->setUserPointer(q);
-	if (params->getPrivate()->getReferer()) op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
+	if (mParams->getPrivate()->getReferer())
+		op->setReferrer(mParams->getPrivate()->getReferer()->getPrivate()->getOp());
 	linphone_configure_op_with_account(core, op, to->toC(), q->getParams()->getPrivate()->getCustomHeaders(), false,
 	                                   toC(getDestAccount()));
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
@@ -1196,7 +1197,7 @@ void CallSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 		// Reset retry function as we need to recover from a network loss
 		op->resetRetryFunction();
 	}
-	q->update(params, CallSession::UpdateMethod::Invite);
+	q->update(mParams, CallSession::UpdateMethod::Invite);
 }
 
 void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
@@ -1364,11 +1365,11 @@ void CallSessionPrivate::repairIfBroken() {
 
 // =============================================================================
 
-CallSession::CallSession(const shared_ptr<Core> &core, const CallSessionParams *params)
+CallSession::CallSession(const shared_ptr<Core> &core, const CallSessionParams *mParams)
     : Object(*new CallSessionPrivate), CoreAccessor(core) {
 	L_D();
 	getCore()->getPrivate()->registerListener(d);
-	if (params) d->setParams(new CallSessionParams(*params));
+	if (mParams) d->setParams(new CallSessionParams(*mParams));
 	d->init();
 	lInfo() << "New CallSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version()
 	        << ")";
@@ -1387,7 +1388,7 @@ CallSession::~CallSession() {
 	} catch (const bad_weak_ptr &) {
 	}
 	if (d->currentParams) delete d->currentParams;
-	if (d->params) delete d->params;
+	if (d->mParams) delete d->mParams;
 	if (d->remoteParams) delete d->remoteParams;
 	if (d->ei) linphone_error_info_unref(d->ei);
 	if (d->op) d->op->release();
@@ -1468,11 +1469,11 @@ void CallSession::configure(LinphoneCallDir direction,
 	}
 
 	if (direction == LinphoneCallOutgoing) {
-		if (d->params->getPrivate()->getReferer()) d->referer = d->params->getPrivate()->getReferer();
+		if (d->mParams->getPrivate()->getReferer()) d->referer = d->mParams->getPrivate()->getReferer();
 		d->startPing();
 	} else if (!getParams() && (direction == LinphoneCallIncoming)) {
 		d->setParams(new CallSessionParams());
-		d->params->initDefault(getCore(), LinphoneCallIncoming);
+		d->mParams->initDefault(getCore(), LinphoneCallIncoming);
 	}
 
 	assignAccount(account);
@@ -1492,7 +1493,7 @@ void CallSession::configure(LinphoneCallDir direction, const string &callid) {
 
 	if (!getParams()) {
 		d->setParams(new CallSessionParams());
-		d->params->initDefault(getCore(), LinphoneCallIncoming);
+		d->mParams->initDefault(getCore(), LinphoneCallIncoming);
 	}
 }
 
@@ -1804,8 +1805,8 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 		d->op->addLocalBody(*content);
 	}
 
-	// If a custom Content has been set in the call params, create a multipart body for the INVITE
-	for (auto &c : d->params->getCustomContents()) {
+	// If a custom Content has been set in the call mParams, create a multipart body for the INVITE
+	for (auto &c : d->mParams->getCustomContents()) {
 		d->op->addLocalBody(*c);
 	}
 
@@ -1892,12 +1893,12 @@ LinphoneStatus CallSession::update(const CallSessionParams *csp,
 	if (!d->isUpdateAllowed(nextState)) return -1;
 	d->setState(nextState, "Updating call");
 	if (d->currentParams == csp)
-		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
+		lWarning() << "CallSession::update() is given the current mParams, this is probably not what you intend to do!";
 	if (csp) d->setParams(new CallSessionParams(*csp));
 
 	list<Content> contentList;
 	if (content) contentList.push_back(*content);
-	for (auto &c : d->params->getCustomContents()) {
+	for (auto &c : d->mParams->getCustomContents()) {
 		contentList.push_back(*c);
 	}
 
@@ -2026,7 +2027,7 @@ const std::shared_ptr<Address> CallSession::getRemoteAddress() const {
 const string &CallSession::getRemoteContact() const {
 	L_D();
 	if (d->op) {
-		/* sal_op_get_remote_contact preserves header params */
+		/* sal_op_get_remote_contact preserves header mParams */
 		return d->op->getRemoteContact();
 	}
 	return Utils::getEmptyConstRefObject<string>();
@@ -2055,7 +2056,7 @@ const CallSessionParams *CallSession::getRemoteParams() {
 	if (d->op) {
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {
-			/* Instanciate a remote_params only if a SIP message was received before (custom headers indicates this) */
+			/* Instanciate a remote_mParams only if a SIP message was received before (custom headers indicates this) */
 			if (!d->remoteParams) d->remoteParams = new CallSessionParams();
 			d->remoteParams->getPrivate()->setCustomHeaders(ch);
 		}
@@ -2171,7 +2172,7 @@ CallSessionParams *CallSession::getCurrentParams() const {
 
 const CallSessionParams *CallSession::getParams() const {
 	L_D();
-	return d->params;
+	return d->mParams;
 }
 
 void CallSession::fillParametersIntoContactAddress(Address &contactAddress) const {

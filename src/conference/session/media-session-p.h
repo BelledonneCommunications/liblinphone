@@ -100,7 +100,7 @@ public:
 		return static_cast<MediaSessionParams *>(currentParams);
 	}
 	MediaSessionParams *getParams() const {
-		return static_cast<MediaSessionParams *>(params);
+		return static_cast<MediaSessionParams *>(mParams);
 	}
 	MediaSessionParams *getRemoteParams() const {
 		if (remoteParams) remoteParams->prohibitReuse();
@@ -366,7 +366,8 @@ private:
 	bool tryEnterConference();
 	void fillRtpParameters(SalStreamDescription &stream) const;
 	void fillVideoRptParameters(SalStreamDescription &newStream) const;
-	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
+	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &finalMd,
+	                          const std::shared_ptr<SalMediaDescription> &remoteMd) const;
 	SalStreamDescription &addStreamToMd(std::shared_ptr<SalMediaDescription> md,
 	                                    int streamIdx,
 	                                    const std::shared_ptr<SalMediaDescription> &oldMd);
