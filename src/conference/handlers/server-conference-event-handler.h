@@ -256,6 +256,7 @@ private:
 	                                   const LinphoneMediaDirection textDirection,
 	                                   Xsd::ConferenceInfo::ConferenceDescriptionType &confDescr);
 
+	void fillParticipantFields(const std::shared_ptr<Participant> &participant, Xsd::ConferenceInfo::UserType &user);
 	Xsd::XmlSchema::DateTime timeTToDateTime(const time_t &unixTime) const;
 
 	std::shared_ptr<Conference> getConference() const;

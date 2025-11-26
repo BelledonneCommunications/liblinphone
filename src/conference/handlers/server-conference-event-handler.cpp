@@ -248,12 +248,7 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyFullState(con
 		user.setEndpoint(endpoints);
 		const auto &participantAddress = participant->getAddress();
 		user.setEntity(participantAddress->asStringUriOnly());
-		bool isOrganizer = organizer && organizer->weakEqual(*participantAddress);
-		if (isOrganizer) {
-			user.getRoles()->getEntry().push_back("organizer");
-		}
-		user.getRoles()->getEntry().push_back(participant->isAdmin() ? "admin" : "participant");
-		user.getRoles()->getEntry().push_back(Participant::roleToText(participant->getRole()));
+		fillParticipantFields(participant, user);
 		user.setState(StateType::full);
 
 		for (const auto &device : participant->getDevices()) {
@@ -605,6 +600,24 @@ std::shared_ptr<Content> ServerConferenceEventHandler::createNotifyMultipart(int
 	return Content::create(multipart);
 }
 
+void ServerConferenceEventHandler::fillParticipantFields(const std::shared_ptr<Participant> &participant,
+                                                         UserType &user) {
+	UserRolesType roles;
+	user.setRoles(roles);
+	user.getRoles()->getEntry().push_back((participant && participant->isAdmin()) ? "admin" : "participant");
+	if (participant) {
+		user.getRoles()->getEntry().push_back(Participant::roleToText(participant->getRole()));
+		auto conf = getConference();
+		if (conf) {
+			const auto organizer = conf->getOrganizer();
+			bool isOrganizer = organizer && organizer->weakEqual(*participant->getAddress());
+			if (isOrganizer) {
+				user.getRoles()->getEntry().push_back("organizer");
+			}
+		}
+	}
+}
+
 string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::shared_ptr<Address> &pAddress) {
 	auto conf = getConference();
 	if (!conf) {
@@ -617,10 +630,11 @@ string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::sha
 	UsersType users;
 	confInfo.setUsers(users);
 	UserType user = UserType();
-	UserRolesType roles;
+	user.setEntity(pAddress->asStringUriOnly());
 
 	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
+		fillParticipantFields(participant, user);
 		for (const auto &device : participant->getDevices()) {
 			const string &gruu = device->getAddress()->asStringUriOnly();
 			EndpointType endpoint = EndpointType();
@@ -640,13 +654,6 @@ string ServerConferenceEventHandler::createNotifyParticipantAdded(const std::sha
 			endpoint.setState(StateType::full);
 			user.getEndpoint().push_back(endpoint);
 		}
-	}
-
-	user.setRoles(roles);
-	user.setEntity(pAddress->asStringUriOnly());
-	user.getRoles()->getEntry().push_back((participant && participant->isAdmin()) ? "admin" : "participant");
-	if (participant) {
-		user.getRoles()->getEntry().push_back(Participant::roleToText(participant->getRole()));
 	}
 	user.setState(StateType::full);
 
@@ -669,10 +676,12 @@ string ServerConferenceEventHandler::createNotifyParticipantAdminStatusChanged(c
 	confInfo.setUsers(users);
 
 	UserType user = UserType();
+	user.setEntity(pAddress->asStringUriOnly());
+
 	UserRolesType roles;
 	user.setRoles(roles);
-	user.setEntity(pAddress->asStringUriOnly());
 	user.getRoles()->getEntry().push_back(isAdmin ? "admin" : "participant");
+
 	user.setState(StateType::partial);
 	confInfo.getUsers()->getUser().push_back(user);
 

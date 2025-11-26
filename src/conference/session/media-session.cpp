@@ -2458,10 +2458,6 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 						if (participantLabel.empty()) {
 							lError() << "Reference stream at index " << idx << " of type "
 							         << sal_stream_type_to_string(type) << " has no label";
-							if (md->streams.size() <= static_cast<size_t>(idx)) {
-								SalStreamDescription stream;
-								md->streams.push_back(stream);
-							}
 						} else {
 							dev = conference->findParticipantDeviceByLabel(sal_stream_type_to_linphone(type),
 							                                               participantLabel);
@@ -2472,8 +2468,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							}
 						}
 
-						auto &newStream = participantLabel.empty() ? md->streams[static_cast<size_t>(idx)]
-						                                           : addStreamToMd(md, static_cast<int>(idx), oldMd);
+						auto &newStream = addStreamToMd(md, static_cast<int>(idx), oldMd);
 						newStream.setContent(contentAttrValue);
 						if (dev) {
 							fillConferenceParticipantStream(newStream, oldMd, md, dev, pth, encs, type, s.getMid());

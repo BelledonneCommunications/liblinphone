@@ -674,8 +674,8 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						}
 
 						const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
-
 						if (!name.empty()) device->setName(name);
+
 						// TODO FIXME: Remove later when devices for friends will be notified through presence
 						lInfo() << "[Friend] Inserting new device with name [" << name << "] and address ["
 						        << gruu->asStringUriOnly() << "]";

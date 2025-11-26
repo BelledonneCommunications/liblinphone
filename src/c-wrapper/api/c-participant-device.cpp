@@ -69,7 +69,8 @@ linphone_participant_device_get_security_level(const LinphoneParticipantDevice *
 }
 
 const char *linphone_participant_device_get_name(const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getName().c_str();
+	auto &name = ParticipantDevice::toCpp(participant_device)->getName();
+	return name.empty() ? NULL : name.c_str();
 }
 
 bool_t linphone_participant_device_is_in_conference(const LinphoneParticipantDevice *participant_device) {
@@ -218,7 +219,8 @@ void *linphone_participant_device_get_native_video_window_id(const LinphoneParti
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
 }
 
-void *linphone_participant_device_create_native_video_window_id_2(LinphoneParticipantDevice *participant_device, void *context) {
+void *linphone_participant_device_create_native_video_window_id_2(LinphoneParticipantDevice *participant_device,
+                                                                  void *context) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->createWindowId(context);
 }
 
