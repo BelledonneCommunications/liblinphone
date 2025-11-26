@@ -75,11 +75,11 @@ const string &AudioDevice::getDriverName() const {
 	return mDriverName;
 }
 
-const AudioDevice::Capabilities &AudioDevice::getCapabilities() const {
+AudioDevice::Capabilities AudioDevice::getCapabilities() const {
 	return mCapabilities;
 }
 
-const AudioDevice::Type &AudioDevice::getType() const {
+AudioDevice::Type AudioDevice::getType() const {
 	MSSndCardDeviceType type = ms_snd_card_get_device_type(mSoundCard);
 	switch (type) {
 		case MS_SND_CARD_DEVICE_TYPE_MICROPHONE:

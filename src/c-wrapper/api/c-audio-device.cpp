@@ -55,7 +55,7 @@ LinphoneAudioDeviceType linphone_audio_device_get_type(const LinphoneAudioDevice
 
 bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audioDevice,
                                             const LinphoneAudioDeviceCapabilities capability) {
-	return static_cast<bool_t>(linphone_audio_device_get_capabilities(audioDevice) & capability);
+	return !!(linphone_audio_device_get_capabilities(audioDevice) & capability);
 }
 
 bool_t linphone_audio_device_get_follows_system_routing_policy(const LinphoneAudioDevice *audio_device) {
