@@ -83,14 +83,13 @@ private:
 
 	void notifyIncomingCall(const std::shared_ptr<CallSession> &session);
 	void notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &session);
-	void notifyToneIndication(LinphoneReason reason);
+	void notifyToneIndication(const std::shared_ptr<CallSession> &session, LinphoneReason reason);
 	void destroyRingStream();
 
 	// start
 	void startRingbackTone();
 	void startRingtone();
-	void startErrorTone(LinphoneReason reason);
-	void startNamedTone(LinphoneToneID toneId);
+	void startNamedTone(const std::shared_ptr<CallSession> &session, LinphoneToneID toneId);
 
 	// stop
 	void stopRingbackTone();
@@ -98,7 +97,7 @@ private:
 	void stopRingtone();
 
 	void scheduleRingStreamDestruction();
-	void updateRingingSessions(const std::shared_ptr<CallSession> &callSession, CallSession::State state);
+	void updateRingingSessions(const std::shared_ptr<CallSession> &session, CallSession::State state);
 
 	Core &getCore() const {
 		return mCore;

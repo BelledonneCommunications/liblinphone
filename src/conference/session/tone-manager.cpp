@@ -149,10 +149,8 @@ void ToneManager::stopRingtone() {
 	}
 }
 
-void ToneManager::startNamedTone(LinphoneToneID toneId) {
-	auto call = getCore().getCurrentCall();
-	if (!call) return;
-	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
+void ToneManager::startNamedTone(const shared_ptr<CallSession> &session, LinphoneToneID toneId) {
+	const shared_ptr<MediaSession> &mediaSession = dynamic_pointer_cast<MediaSession>(session);
 	if (!mediaSession->toneIndicationsEnabled()) return;
 
 	lInfo() << "[ToneManager] " << __func__;
@@ -514,7 +512,6 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 	shared_ptr<Call> currentCall = getCore().getCurrentCall();
 	LinphoneCore *lc = getCore().getCCore();
 	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(session);
-
 	if (mSessionRinging && mSessionRinging != session) {
 		// Already a session in ringing state.
 		return;
@@ -522,8 +519,8 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 
 	if (shouldPlayWaitingTone(session)) {
 		/* already in a call or in a local conference. A tone indication will be used. */
-		if (mediaSession->toneIndicationsEnabled()) {
-			startNamedTone(LinphoneToneCallWaiting);
+		if (mediaSession && mediaSession->toneIndicationsEnabled()) {
+			startNamedTone(session, LinphoneToneCallWaiting);
 			/* Set up the way this incoming call notification has to be stopped */
 			mSessionRingingStopFunction = [this]() { this->stopTone(); };
 		}
@@ -566,10 +563,8 @@ void ToneManager::notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &
 	}
 }
 
-void ToneManager::notifyToneIndication(LinphoneReason reason) {
-	auto call = getCore().getCurrentCall();
-	if (!call) return;
-	shared_ptr<MediaSession> mediaSession = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
+void ToneManager::notifyToneIndication(const shared_ptr<CallSession> &session, LinphoneReason reason) {
+	const shared_ptr<MediaSession> &mediaSession = dynamic_pointer_cast<MediaSession>(session);
 	if (!mediaSession->toneIndicationsEnabled()) return;
 
 	LinphoneCore *lc = getCore().getCCore();
@@ -578,29 +573,29 @@ void ToneManager::notifyToneIndication(LinphoneReason reason) {
 	switch (reason) {
 		case LinphoneReasonUnknown:
 		case LinphoneReasonNone:
-			startNamedTone(LinphoneToneCallEnd);
+			startNamedTone(session, LinphoneToneCallEnd);
 			break;
 		case LinphoneReasonNotAnswered:
 			if (!getPlatformHelpers(lc)->isPlayingSoundAllowed()) {
 				lWarning() << "[ToneManager] Platform Helper says playsing sound isn't allowed by platform, do not "
 				              "play call not answered tone";
 			} else {
-				startNamedTone(LinphoneToneCallNotAnswered);
+				startNamedTone(session, LinphoneToneCallNotAnswered);
 			}
 			break;
 		case LinphoneReasonBusy:
-			startNamedTone(LinphoneToneBusy);
+			startNamedTone(session, LinphoneToneBusy);
 			break;
 		case LinphoneReasonTransferred:
 		case LinphoneReasonIOError:
 		case LinphoneReasonServerTimeout:
-			startNamedTone(LinphoneToneCallLost);
+			startNamedTone(session, LinphoneToneCallLost);
 			break;
 		case LinphoneReasonSasCheckRequired:
-			startNamedTone(LinphoneToneSasCheckRequired);
+			startNamedTone(session, LinphoneToneSasCheckRequired);
 			break;
 		default:
-			startNamedTone(LinphoneToneUndefined);
+			startNamedTone(session, LinphoneToneUndefined);
 			break;
 	}
 }
@@ -731,7 +726,7 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 			if (session->pausedByApp() && (getCore().getCallCount() == 1) &&
 			    !linphone_core_is_in_conference(getCore().getCCore()) && mSessionPaused == nullptr) {
 				mSessionPaused = session;
-				startNamedTone(LinphoneToneCallOnHold);
+				startNamedTone(session, LinphoneToneCallOnHold);
 			}
 		} break;
 		case CallSession::State::End:
@@ -744,7 +739,7 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 			    (pState != CallSession::State::IncomingReceived && pState != CallSession::State::IncomingEarlyMedia &&
 			     pState != CallSession::State::PushIncomingReceived && reason != LinphoneReasonBusy &&
 			     reason != LinphoneReasonDoNotDisturb)) {
-				notifyToneIndication(reason);
+				notifyToneIndication(session, reason);
 			}
 		} break;
 		default:
@@ -752,13 +747,13 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 	}
 }
 
-void ToneManager::notifySecurityAlert(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
+void ToneManager::notifySecurityAlert(const std::shared_ptr<CallSession> &session) {
 	if (!linphone_core_security_alert_enabled(getCore().getCCore())) return;
-	notifyToneIndication(LinphoneReasonSasCheckRequired);
+	notifyToneIndication(session, LinphoneReasonSasCheckRequired);
 	if (mSecurityAlertTimer) stopSecurityAlert();
 	mSecurityAlertTimer = getCore().createTimer(
-	    [this]() -> bool {
-		    notifyToneIndication(LinphoneReasonSasCheckRequired);
+	    [this, session]() -> bool {
+		    notifyToneIndication(session, LinphoneReasonSasCheckRequired);
 		    return true;
 	    },
 	    30000, "Security alert");

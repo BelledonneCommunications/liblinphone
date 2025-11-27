@@ -9699,6 +9699,53 @@ static void group_chat_room_message_sync_between_devices_with_same_identity(void
 	linphone_core_manager_destroy(pauline);
 }
 
+static void group_chat_room_creation_failure_while_on_a_call(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	const LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	int oldStartNamedToneCount = marie_tone_mgr_stats->number_of_startNamedTone;
+	bctbx_list_t *participantsAddresses = NULL;
+	LinphoneAddress *inexistent_user =
+	    linphone_address_new("sip:djvbjdkbgjqfbgvjfbgvgfjlvbfjlbflkdnqlbkqf@sip.example.org");
+	linphone_address_set_domain(inexistent_user, linphone_address_get_domain(marie->identity));
+	participantsAddresses = bctbx_list_append(participantsAddresses, inexistent_user);
+	LinphoneConferenceParams *marie_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_enable_chat(marie_params, TRUE);
+	linphone_conference_params_enable_group(marie_params, FALSE);
+	linphone_conference_params_set_subject(marie_params, "Test");
+	LinphoneChatParams *marie_chat_params = linphone_conference_params_get_chat_params(marie_params);
+	linphone_chat_params_set_backend(marie_chat_params, LinphoneChatRoomBackendFlexisipChat);
+	LinphoneChatRoom *marieCr = linphone_core_create_chat_room_7(marie->lc, marie_params, participantsAddresses);
+	linphone_address_unref(inexistent_user);
+	bctbx_list_free(participantsAddresses);
+	participantsAddresses = NULL;
+	linphone_conference_params_unref(marie_params);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreationFailed, 1,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_EQUAL(marie_tone_mgr_stats->number_of_startNamedTone, oldStartNamedToneCount, int, "%d");
+
+	end_call(marie, pauline);
+
+	linphone_chat_room_unref(marieCr);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t group_chat_tests[] = {
     TEST_NO_TAG("Chat room params", group_chat_room_params),
     TEST_ONE_TAG("Core restarts as soon as chat room is created", group_chat_room_creation_core_restart, "LeaksMemory"),
@@ -9847,7 +9894,10 @@ test_t group_chat4_tests[] = {
                 group_chat_with_imdn_sent_only_to_sender_with_participant_offline),
     TEST_NO_TAG("Group chat with IMDN sent only to sender after the number of participants goes above threshold",
                 group_chat_with_imdn_sent_only_to_sender_after_participant_number_goes_above_threshold),
-    TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2)};
+    TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2),
+    TEST_NO_TAG("Chatroom creation failure while a core is on a call",
+                group_chat_room_creation_failure_while_on_a_call),
+};
 
 test_suite_t group_chat_test_suite = {"Group Chat",
                                       NULL,
