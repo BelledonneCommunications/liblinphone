@@ -850,7 +850,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		std::shared_ptr<SalMediaDescription> &prevResultDesc = resultDesc;
 		if (isUpdate && prevResultDesc && cmd) {
 			int diff = cmd->equal(*prevResultDesc);
-			if (diff & (SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED | SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED)) {
+			if (diff & SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED) {
 				lWarning() << "Cannot accept this update, it is changing parameters that require user approval";
 				sal_error_info_set(&sei, SalReasonUnknown, "SIP", 504,
 				                   "Cannot change the session parameters without prompting the user", nullptr);

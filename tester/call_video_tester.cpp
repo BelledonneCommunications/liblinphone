@@ -3230,6 +3230,125 @@ static void asymmetrical_video_call_with_flexfec_starts_with_video() {
 	asymmetrical_video_call(true, true);
 }
 
+static void asymmetrical_video_call_with_recording() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	// asymmetrical video policy
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, FALSE);
+	vpol->accept_media_direction = LinphoneMediaDirectionRecvOnly;
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
+
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+
+	// Enable record aware
+	linphone_core_enable_record_aware(marie->lc, TRUE);
+	linphone_core_enable_record_aware(pauline->lc, TRUE);
+
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionSRTP);
+
+	char *record_file = bc_tester_file((generateRandomFilename("callrecord") + ".mkv").c_str());
+	LinphoneCallParams *marie_call_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_set_record_file(marie_call_params, record_file);
+
+	// Marie calls Pauline
+	BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_call_params, NULL));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	if (pauline_call && marie_call) {
+		LinphoneCallParams *pauline_call_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+		linphone_call_params_enable_video(pauline_call_params, TRUE);
+		linphone_call_params_set_video_direction(pauline_call_params, LinphoneMediaDirectionSendRecv);
+		linphone_call_update(pauline_call, pauline_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdating, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+
+		const LinphoneCallParams *updated_pauline_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(updated_pauline_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(updated_pauline_call_params) ==
+		               linphone_call_params_video_enabled(pauline_call_params));
+
+		const LinphoneCallParams *marie_call_current_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(marie_call_current_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_current_params) ==
+		               linphone_call_params_video_enabled(pauline_call_params));
+
+		linphone_call_params_unref(pauline_call_params);
+
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_current_params),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(marie_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_pauline_call_params),
+		                LinphoneMediaDirectionSendOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(pauline_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+
+		// Marie starts a recording
+		linphone_call_start_recording(marie_call);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+
+		int dummy = 0;
+		wait_for(marie->lc, pauline->lc, &dummy, 1000);
+
+		linphone_call_stop_recording(marie_call);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 4));
+
+		BC_ASSERT_EQUAL(bctbx_file_exist(record_file), 0, int, "%d");
+	}
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	remove(record_file);
+	bc_free(record_file);
+
+	linphone_call_params_unref(marie_call_params);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void call_with_early_media_and_no_sdp_in_200_with_video(void) {
 	early_media_without_sdp_in_200_base(TRUE, FALSE);
 }
@@ -4365,6 +4484,7 @@ static test_t call_video_tests[] = {
     TEST_NO_TAG("Asymmetrical video call with callee enabled video first",
                 asymmetrical_video_call_with_callee_enabled_video_first),
     TEST_NO_TAG("Asymmetrical video call 2", asymmetrical_video_call_2),
+    TEST_NO_TAG("Asymmetrical video call with recording", asymmetrical_video_call_with_recording),
     TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video",
                 call_with_early_media_and_no_sdp_in_200_with_video),
     TEST_NO_TAG("Video call with fallback to Static Picture when no fps",

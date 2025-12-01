@@ -1067,7 +1067,9 @@ int SalOp::replyWithErrorInfo(const SalErrorInfo *info, const SalAddress *redire
 		}
 	}
 	auto transaction = BELLE_SIP_TRANSACTION(mPendingServerTransaction);
-	if (!transaction) transaction = BELLE_SIP_TRANSACTION(mPendingUpdateServerTransaction);
+	// Also check if the mPendingServerTransaction is waiting for a response or not
+	if (!transaction || !belle_sip_transaction_state_is_transient(belle_sip_transaction_get_state(transaction)))
+		transaction = BELLE_SIP_TRANSACTION(mPendingUpdateServerTransaction);
 	if (!transaction) {
 		lError() << __func__ << "(): no pending transaction to decline";
 		return -1;
