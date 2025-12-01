@@ -286,23 +286,28 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
                                                          const std::list<std::shared_ptr<Address>> &participants) {
 	L_Q();
 	if (!params) {
-		lWarning() << "Trying to create chat room with null parameters";
+		lWarning() << "Unable to create chat room with null parameters";
 		return nullptr;
 	}
 	if (!params->chatEnabled()) {
-		lWarning() << "Trying to create chat room when the chat capability is disabled in the conference parameters";
+		lWarning() << "Unable to create a chat room when the chat capability is disabled in the conference parameters";
 		return nullptr;
 	}
 	if (params->audioEnabled() || params->videoEnabled()) {
-		lWarning() << "Trying to create chat room with audio video capabilities; removing them";
+		lWarning() << "Trying to create a chat room with audio video capabilities; removing them";
+	}
+	if (params->getConferenceAddress()) {
+		lWarning() << "Unable to create a chat room when its address " << *params->getConferenceAddress()
+		           << " is already known";
+		return nullptr;
 	}
 	if (!params->isValid()) {
-		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
+		lWarning() << "Unable to create chat room with invalid parameters " << params->toString();
 		return nullptr;
 	}
 	if (!linphone_factory_is_chatroom_backend_available(
 	        linphone_factory_get(), static_cast<LinphoneChatRoomBackend>(params->getChatParams()->getBackend()))) {
-		lWarning() << "Tying to create chat room with unavailable backend";
+		lWarning() << "Unable to create chat room with unavailable backend";
 		return nullptr;
 	}
 
@@ -339,8 +344,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<Confer
 		}
 
 		chatRoomParameters->getChatParams()->enableEphemeral(
-		    (params->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) &&
-		    (params->getChatParams()->getEphemeralLifetime() > 0));
+		    (chatRoomParameters->getChatParams()->getEphemeralMode() ==
+		     AbstractChatRoom::EphemeralMode::AdminManaged) &&
+		    (chatRoomParameters->getChatParams()->getEphemeralLifetime() > 0));
 		ConferenceId conferenceId(nullptr, localAddr, q->createConferenceIdParams());
 		chatRoom = createClientChatRoom(conferenceFactoryUri, conferenceId, nullptr, chatRoomParameters);
 		if (!chatRoom) {

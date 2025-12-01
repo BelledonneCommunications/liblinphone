@@ -4129,9 +4129,9 @@ static test_t local_conference_chat_advanced_tests[] = {
 static test_t local_conference_chat_error_tests[] = {
     TEST_NO_TAG("Group chat with INVITE session error", LinphoneTest::group_chat_room_with_invite_error),
     TEST_NO_TAG("Group chat with SUBSCRIBE session error", LinphoneTest::group_chat_room_with_subscribe_error),
-    TEST_NO_TAG("Group chat Add participant with invalid address",
+    TEST_NO_TAG("Group chat add participant with invalid address",
                 LinphoneTest::group_chat_room_add_participant_with_invalid_address),
-    TEST_NO_TAG("Group chat Only participant with invalid address",
+    TEST_NO_TAG("Group chat only participant with invalid address",
                 LinphoneTest::group_chat_room_with_only_participant_with_invalid_address),
     TEST_ONE_TAG("Group chat with INVITE session error when updating subject",
                  LinphoneTest::group_chat_room_with_invite_error_when_updating_subject,

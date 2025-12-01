@@ -730,6 +730,7 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 	shared_ptr<CallSession> newDeviceSession = deviceSession;
 	const auto &deviceAddress = device->getAddress();
 	auto rejectSession = false;
+	SalReason reason = SalReasonNone;
 	if (serverGroupChatRoom && (!deviceSession || (deviceSession->getPrivate()->getOp() != op))) {
 		newDeviceSession = participant->createSession(*getSharedFromThis(), nullptr, true);
 		newDeviceSession->addListener(getSharedFromThis());
@@ -753,6 +754,7 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		// the conference
 		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing) &&
 		                ParticipantDevice::isLeavingState(deviceState);
+		reason = SalReasonDeclined;
 
 		if (rejectSession) {
 			lInfo() << "Device " << *deviceAddress << " is trying to establish a session in chatroom " << *addr
@@ -779,19 +781,26 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		}
 	}
 
+	if (!newDeviceSession) {
+		lError() << "No session can be associated to " << *deviceAddress << " in " << *this
+		         << ", therefore rejecting op [" << op << "]";
+		rejectSession = true;
+		reason = SalReasonNotAcceptable;
+	}
+
 	// Changes are only allowed from admin participants
 	if (participant->isAdmin()) {
 		if (joiningPendingAfterCreation) {
 			if (!initializeParticipants(participant, op)) {
-				op->decline(SalReasonNotAcceptable, "");
+				reason = SalReasonNotAcceptable;
+				op->decline(reason, "");
 				requestDeletion();
 			}
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
 			 * that will later populate the chatroom*/
 		} else if (rejectSession) {
-			lInfo() << "Reject session because admin device " << *deviceAddress
-			        << " has already an established session";
-			op->decline(SalReasonDeclined, "");
+			lInfo() << "Decline op [" << op << "] linked to admin device " << *deviceAddress;
+			op->decline(reason, "");
 		} else {
 			/* after creation, only changes to the subject and ephemeral settings are allowed*/
 			handleSubjectChange(op);
@@ -800,8 +809,8 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		}
 	} else {
 		if (rejectSession) {
-			lInfo() << "Reject session because device " << *deviceAddress << " has already an established session";
-			op->decline(SalReasonDeclined, "");
+			lInfo() << "Decline op [" << op << "] linked to device " << *deviceAddress;
+			op->decline(reason, "");
 		} else {
 			/*it is a non-admin participant that reconnected to the chatroom*/
 			acceptSession(newDeviceSession);
@@ -3779,6 +3788,10 @@ void ServerConference::declineSession(const shared_ptr<CallSession> &session, Li
 }
 
 void ServerConference::acceptSession(const shared_ptr<CallSession> &session) {
+	if (!session) {
+		lError() << "Unable to accept null call session linked to " << *this;
+		return;
+	}
 	if (session->getState() == CallSession::State::UpdatedByRemote) session->acceptUpdate();
 	else session->accept();
 }

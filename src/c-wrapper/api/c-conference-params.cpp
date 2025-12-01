@@ -215,7 +215,13 @@ void linphone_conference_params_set_conference_factory_address(LinphoneConferenc
 
 const LinphoneAddress *
 linphone_conference_params_get_conference_factory_address(const LinphoneConferenceParams *params) {
-	auto conferenceAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
+	auto conferenceFactoryAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
+	if (conferenceFactoryAddress) return conferenceFactoryAddress->toC();
+	else return NULL;
+}
+
+const LinphoneAddress *linphone_conference_params_get_conference_address(const LinphoneConferenceParams *params) {
+	auto conferenceAddress = ConferenceParams::toCpp(params)->getConferenceAddress();
 	if (conferenceAddress) return conferenceAddress->toC();
 	else return NULL;
 }

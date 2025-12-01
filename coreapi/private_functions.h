@@ -1134,6 +1134,14 @@ LINPHONE_PUBLIC int linphone_core_get_chat_room_load_chunk_size(const LinphoneCo
  **/
 LINPHONE_PUBLIC void linphone_core_set_chat_room_load_chunk_size(LinphoneCore *core, int size);
 
+/**
+ * Get the conference address of the conference that has been set.
+ * @param params The #LinphoneConferenceParams object. @notnil
+ * @return the conference address. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *
+linphone_conference_params_get_conference_address(const LinphoneConferenceParams *params);
+
 #ifdef __cplusplus
 }
 #endif

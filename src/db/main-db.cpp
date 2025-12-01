@@ -6628,11 +6628,14 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						}
 					} catch (std::out_of_range &) {
 						if (serverMode) {
-							lInfo() << "Deleting chatroom with database ID set to " << dbChatRoomId
-							        << " because it has no participants";
+							lInfo() << "Deleting chatroom [" << *conferenceAddress << "] with database ID set to "
+							        << dbChatRoomId << " because it has no participants";
 							d->deleteChatRoom(dbChatRoomId);
 							offset--;
 							continue;
+						} else {
+							lWarning() << "Chatroom [" << *conferenceAddress << "] with database ID set to "
+							           << dbChatRoomId << " has no participants";
 						}
 					}
 

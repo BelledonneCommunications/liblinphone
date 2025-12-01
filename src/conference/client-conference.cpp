@@ -1059,7 +1059,6 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 					}
 
 					const auto isLocalExhume = clientGroupChatRoom && clientGroupChatRoom->isLocalExhumePending();
-
 					if (found) {
 						/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change
 						 * it's state */

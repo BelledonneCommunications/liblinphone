@@ -240,8 +240,7 @@ ServerChatRoom::CapabilitiesMask ServerChatRoom::getCapabilities() const {
 void ServerChatRoom::unSubscribeRegistrationForParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &identAddress)) {
 	auto p = mRegistrationSubscriptions.find(identAddress->toString());
 	if (p == mRegistrationSubscriptions.end()) {
-		lError() << "Conference " << *getConference()->getConferenceAddress() << " no active subscription for "
-		         << identAddress;
+		lError() << *this << " no active subscription for " << identAddress;
 		return;
 	}
 	mRegistrationSubscriptions.erase(p);
@@ -421,15 +420,14 @@ void ServerChatRoom::dispatchQueuedMessages() {
 			if (!msgQueue.empty()) {
 				if (!getCurrentParams()->isGroup() && (device->getState() == ParticipantDevice::State::Left)) {
 					// Happens only with protocol < 1.1
-					lInfo() << "There is a message to transmit to a participant in left state in a one to one "
-					           "chatroom, so inviting first.";
+					lInfo() << "There is a message to transmit to a participant in left state in one to one " << *this
+					        << ", so inviting first.";
 					static_pointer_cast<ServerConference>(getConference())->inviteDevice(device);
 					continue;
 				}
 				if (device->getState() != ParticipantDevice::State::Present) continue;
 				size_t nbMessages = msgQueue.size();
-				lInfo() << "Conference " << *getConference()->getConferenceAddress() << ": Dispatching " << nbMessages
-				        << " queued message(s) for '" << uri << "'";
+				lInfo() << *this << ": Dispatching " << nbMessages << " queued message(s) for '" << uri << "'";
 				while (!msgQueue.empty()) {
 					shared_ptr<ServerChatRoom::Message> msg = msgQueue.front();
 					sendMessage(msg, device->getAddress());
@@ -457,6 +455,10 @@ void ServerChatRoom::copyMessageHeaders(const shared_ptr<ServerChatRoom::Message
 }
 
 void ServerChatRoom::handleEphemeralSettingsChange(const shared_ptr<CallSession> &session) {
+	if (!session) {
+		lError() << "Unable to change ephemeral settings in " << *this << " because the provide call session is null";
+		return;
+	}
 	if (getCurrentParams()->getChatParams()->ephemeralAllowed()) {
 		const auto op = session->getPrivate()->getOp();
 		string ephemeralLifeTime =
@@ -471,7 +473,7 @@ void ServerChatRoom::handleEphemeralSettingsChange(const shared_ptr<CallSession>
 
 void ServerChatRoom::setEphemeralModeForDevice(AbstractChatRoom::EphemeralMode mode,
                                                const shared_ptr<CallSession> &session) {
-	lInfo() << "Conference " << *getConference()->getConferenceAddress() << ": New mode is: " << mode;
+	lInfo() << *this << ": New mode is: " << mode;
 	getCurrentParams()->getChatParams()->setEphemeralMode(mode);
 
 	const auto device = getConference()->findParticipantDevice(session);
@@ -489,7 +491,7 @@ void ServerChatRoom::setEphemeralModeForDevice(AbstractChatRoom::EphemeralMode m
 }
 
 void ServerChatRoom::setEphemeralLifetimeForDevice(long lifetime, const shared_ptr<CallSession> &session) {
-	lInfo() << "Conference " << *getConference()->getConferenceAddress() << ": New ephemeral time: " << lifetime;
+	lInfo() << *this << ": New ephemeral time: " << lifetime;
 	getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
 
 	const auto device = getConference()->findParticipantDevice(session);

@@ -9186,6 +9186,16 @@ static void linphone_core_set_conference(LinphoneCore *lc, LinphoneConference *c
 LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc,
                                                                 const LinphoneConferenceParams *params) {
 	CoreLogContextualizer logContextualizer(lc);
+
+	const LinphoneAddress *conference_address = linphone_conference_params_get_conference_address(params);
+	if (conference_address) {
+		char *conference_address_str = linphone_address_as_string(conference_address);
+		ms_message("Unable to create a conference because its address %s is already known - are you reusing "
+		           "ConferenceParams from an already existing conference ?",
+		           conference_address_str);
+		ms_free(conference_address_str);
+		return NULL;
+	}
 	const char *conf_method_name = nullptr;
 	LinphoneConference *conf = nullptr;
 	bool serverMode = params && !linphone_conference_params_local_participant_enabled(params);
