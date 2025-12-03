@@ -76,7 +76,7 @@ void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteCon
 	if (remoteContact->hasParam(Conference::IsFocusParameter) &&
 	    !getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
 		mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
-		conference->subscribe(true, false);
+		conference->subscribe(false, false);
 	}
 #endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
@@ -323,8 +323,8 @@ void ClientChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage)
 		auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
 		if (it == mPendingCreationMessages.end()) addPendingMessage(chatMessage);
 	} else if (state == ConferenceInterface::State::Created) {
-		auto encryptionEngine = getCore()->getEncryptionEngine();
 		if (getCurrentParams()->getChatParams()->isEncrypted()) {
+			auto encryptionEngine = getCore()->getEncryptionEngine();
 			if (!encryptionEngine) {
 				lError() << *conference << ": Unable to send message [" << chatMessage
 				         << "] because the encryption engine of the encrypted chat room has not been found";

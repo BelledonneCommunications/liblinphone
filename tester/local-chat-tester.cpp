@@ -3686,11 +3686,6 @@ static void group_chat_room_with_duplications() {
 
 		for (auto chatRoom : laure.getCore().getChatRooms()) {
 			LinphoneChatRoom *cr = chatRoom->toC();
-			LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
-			setup_chat_room_callbacks(cbs);
-			linphone_chat_room_add_callbacks(cr, cbs);
-			linphone_chat_room_cbs_unref(cbs);
-
 			std::string msg_text = std::string("I am back in chatroom ") + chatRoom->getConferenceAddress()->toString();
 			LinphoneChatMessage *msg = ClientConference::sendTextMsg(cr, msg_text);
 
@@ -3859,12 +3854,8 @@ static void group_chat_room_with_duplications() {
 			LinphoneAddress *laureLocalAddress =
 			    linphone_account_get_contact_address(linphone_core_get_default_account(laure.getLc()));
 			LinphoneChatRoom *laureCr = laure.searchChatRoom(laureLocalAddress, conferenceAddress->toC());
-			LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
-			setup_chat_room_callbacks(cbs);
-			linphone_chat_room_add_callbacks(laureCr, cbs);
-			linphone_chat_room_cbs_unref(cbs);
 			ms_message("%s is deleting chatroom %s", linphone_core_get_identity(laure.getLc()),
-			           chatRoom->getConferenceAddress()->toString().c_str());
+			           conferenceAddress->toString().c_str());
 			linphone_core_manager_delete_chat_room(laure.getCMgr(), laureCr, coresList);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participants_removed,
@@ -4062,6 +4053,14 @@ static void short_ephemeral_lifetime_messages_test(void) {
 	}
 }
 
+static void group_chat_room_with_client_removed_and_reinvinted(void) {
+	group_chat_room_with_client_removed_and_reinvinted_base(false, false);
+}
+
+static void group_chat_room_with_client_removed_and_reinvinted_after_database_corruption(void) {
+	group_chat_room_with_client_removed_and_reinvinted_base(false, true);
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_chat_basic_tests[] = {
@@ -4123,8 +4122,11 @@ static test_t local_conference_chat_advanced_tests[] = {
                  "LeaksMemory"), /* because of network up and down */
     TEST_ONE_TAG("Multi domain chatroom",
                  LinphoneTest::multidomain_group_chat_room,
-                 "LeaksMemory") /* because of coreMgr restart*/
-};
+                 "LeaksMemory"), /* because of coreMgr restart*/
+    TEST_NO_TAG("Group chat with client removed and then reinvited",
+                LinphoneTest::group_chat_room_with_client_removed_and_reinvinted),
+    TEST_NO_TAG("Group chat with client removed and then reinvited after database corruption",
+                LinphoneTest::group_chat_room_with_client_removed_and_reinvinted_after_database_corruption)};
 
 static test_t local_conference_chat_error_tests[] = {
     TEST_NO_TAG("Group chat with INVITE session error", LinphoneTest::group_chat_room_with_invite_error),

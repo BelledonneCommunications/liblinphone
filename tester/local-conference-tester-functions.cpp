@@ -7496,14 +7496,6 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 			if (fconference) {
 				LinphoneChatRoom *cr = linphone_conference_get_chat_room(fconference);
 				BC_ASSERT_PTR_NOT_NULL(cr);
-				if (cr) {
-					LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
-					setup_chat_room_callbacks(cbs);
-					linphone_chat_room_add_callbacks(cr, cbs);
-					linphone_chat_room_cbs_set_user_data(
-					    cbs, ((LinphoneCoreManager *)linphone_core_get_user_data(focus.getLc()))->user_info);
-					linphone_chat_room_cbs_unref(cbs);
-				}
 			}
 		}
 

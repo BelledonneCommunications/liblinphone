@@ -467,7 +467,6 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
 			const long long &dbConferenceInfoId = selectConferenceInfoId(peerSipAddressNoGruuId);
 			const long long conferenceInfoId = (dbConferenceInfoId <= 0) ? 0 : dbConferenceInfoId;
-
 			const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
 
 			if (chatRoomId >= 0) {

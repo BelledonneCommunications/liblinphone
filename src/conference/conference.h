@@ -348,6 +348,7 @@ public:
 	void setMicrophoneMuted(bool muted);
 	float getRecordVolume() const;
 
+	bool supportsConferenceEventPackage() const;
 	virtual bool isSubscriptionUnderWay() const;
 
 	virtual std::shared_ptr<Player> getPlayer() const;

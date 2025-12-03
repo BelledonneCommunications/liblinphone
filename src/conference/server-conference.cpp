@@ -147,11 +147,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 		belle_sip_random_token(confId, sizeof(confId));
 		conferenceAddress->setUriParam(Conference::ConfIdParameter, confId);
 
-		bool_t eventLogEnabled = FALSE;
-#if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
-		eventLogEnabled =
-		    linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
-#endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
+		auto eventLogEnabled = supportsConferenceEventPackage();
 		if (!eventLogEnabled) {
 			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams()));
 		}
@@ -199,9 +195,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 void ServerConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confListener),
                                           BCTBX_UNUSED(bool addToListEventHandler)) {
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
-	LinphoneCore *lc = getCore()->getCCore();
-	bool eventLogEnabled =
-	    !!linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
+	auto eventLogEnabled = supportsConferenceEventPackage();
 	if (eventLogEnabled) {
 		mEventHandler = std::make_shared<ServerConferenceEventHandler>(getSharedFromThis(), confListener);
 		const auto chatEnabled = mConfParams->chatEnabled();
@@ -2767,12 +2761,7 @@ void ServerConference::checkIfTerminated() {
 			setState(ConferenceInterface::State::Terminated);
 		} else {
 			setState(ConferenceInterface::State::TerminationPending);
-			bool_t eventLogEnabled = FALSE;
-#ifdef HAVE_ADVANCED_IM
-			LinphoneCore *lc = getCore()->getCCore();
-			eventLogEnabled =
-			    linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
-#endif // HAVE_ADVANCED_IM
+			auto eventLogEnabled = supportsConferenceEventPackage();
 			if (!eventLogEnabled) {
 				setState(ConferenceInterface::State::Terminated);
 			}

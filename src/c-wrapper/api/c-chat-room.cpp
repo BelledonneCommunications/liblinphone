@@ -514,12 +514,9 @@ bool_t linphone_chat_room_has_capability(const LinphoneChatRoom *chat_room, int 
 
 const LinphoneAddress *linphone_chat_room_get_conference_address(const LinphoneChatRoom *chat_room) {
 	ChatRoomLogContextualizer logContextualizer(chat_room);
-	std::shared_ptr<Conference> conference = AbstractChatRoom::toCpp(chat_room)->getConference();
-	if (conference) {
-		const auto &confAddress = conference->getConferenceAddress();
-		if (confAddress && confAddress->isValid()) {
-			return confAddress->toC();
-		}
+	const auto &confAddress = AbstractChatRoom::toCpp(chat_room)->getConferenceAddress();
+	if (confAddress && confAddress->isValid()) {
+		return confAddress->toC();
 	}
 	return NULL;
 }
@@ -563,7 +560,10 @@ LinphoneChatRoomSecurityLevel linphone_chat_room_get_security_level(LinphoneChat
 
 void linphone_chat_room_leave(LinphoneChatRoom *chat_room) {
 	ChatRoomLogContextualizer logContextualizer(chat_room);
-	AbstractChatRoom::toCpp(chat_room)->getConference()->leave();
+	const auto &conference = AbstractChatRoom::toCpp(chat_room)->getConference();
+	if (conference) {
+		conference->leave();
+	}
 }
 
 void linphone_chat_room_remove_participant(LinphoneChatRoom *chat_room, LinphoneParticipant *participant) {

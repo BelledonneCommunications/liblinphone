@@ -87,9 +87,9 @@ void ChatRoom::notifyStateChanged() {
 	const auto cCore = getCore()->getCCore();
 	// Do not output this log while Core is starting up, a lot of them may happen
 	if (cCore->state == LinphoneGlobalStartup) {
-		lDebug() << "Chat room [" << getConferenceId() << "] state changed to: " << Utils::toString(state);
+		lDebug() << *this << " state changed to: " << Utils::toString(state);
 	} else {
-		lInfo() << "Chat room [" << getConferenceId() << "] state changed to: " << Utils::toString(state);
+		lInfo() << *this << " state changed to: " << Utils::toString(state);
 	}
 	LinphoneChatRoomState chatRoomCState =
 	    linphone_conference_state_to_chat_room_state(static_cast<LinphoneConferenceState>(state));

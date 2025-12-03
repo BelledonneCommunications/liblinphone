@@ -229,8 +229,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 void ClientConference::createEventHandler(BCTBX_UNUSED(ConferenceListener *confListener),
                                           BCTBX_UNUSED(bool addToListEventHandler)) {
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
-	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
-	                                                  "conference_event_log_enabled", TRUE);
+	auto eventLogEnabled = supportsConferenceEventPackage();
 	if (eventLogEnabled) {
 		if (!mEventHandler) {
 			mEventHandler =
@@ -421,6 +420,7 @@ void ClientConference::attachCall(const shared_ptr<CallSession> &session) {
 	setMainSession(session);
 	if (getConferenceAddress()) {
 		setState(ConferenceInterface::State::CreationPending);
+		mFullStateReceived = (getLastNotify() != 0);
 		session->addListener(getSharedFromThis());
 		initializeHandlers(this, false);
 	} else {
@@ -817,8 +817,7 @@ bool ClientConference::transferToFocus(std::shared_ptr<Call> call) {
 		// (Conference Event Package) or the macro HAVE_ADVANCED_IM is not defined. In such a scenario, we make the best
 		// effort to ensure the client has a list of participant as up to date as possible
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
-		bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
-		                                                  "conference_event_log_enabled", TRUE);
+		auto eventLogEnabled = supportsConferenceEventPackage();
 		if (!eventLogEnabled) {
 #endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 			mParticipants.push_back(participant);
@@ -856,21 +855,33 @@ void ClientConference::reset() {
 }
 
 void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_UNUSED(const std::string &message)) {
+	auto session = getMainSession();
+	// Take a ref as conference may be deleted when the call goes to states PausedByRemote or End
+	shared_ptr<Conference> ref = getSharedFromThis();
+	std::shared_ptr<Address> focusContactAddress;
+	std::shared_ptr<Call> call = nullptr;
 	if (supportsMedia()) {
-		auto session = getMainSession();
-		std::shared_ptr<Address> focusContactAddress;
-		std::shared_ptr<Call> call = nullptr;
-
-		// Take a ref as conference may be deleted when the call goes to states PausedByRemote or End
-		shared_ptr<Conference> ref = getSharedFromThis();
-		SalCallOp *op = nullptr;
-
 		if (session) {
 			focusContactAddress = session->getRemoteContactAddress();
-			op = session->getPrivate()->getOp();
+			SalCallOp *op = session->getPrivate()->getOp();
 			call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
 		}
+		if (!call && (state == CallSession::State::IncomingReceived)) {
+			lWarning() << *this
+			           << " supports media but it has been asked to join without. This is not expected and it may be "
+			              "due to a corruption in the database where a conference information has been attached to "
+			           << *this << " by mistake.";
+			lInfo() << "Deleting " << *this
+			        << " from the list of conferences held by the core, its conference information and remove media "
+			           "support";
+			getCore()->getPrivate()->mainDb->deleteConferenceInfo(getConferenceAddress());
+			mConfParams->enableAudio(false);
+			mConfParams->enableVideo(false);
+			getCore()->deleteConference(ref);
+		}
+	}
 
+	if (supportsMedia()) {
 		const bool isFocusFound =
 		    focusContactAddress ? focusContactAddress->hasParam(Conference::IsFocusParameter) : false;
 		list<std::shared_ptr<Call>>::iterator it;
@@ -1009,7 +1020,6 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 		}
 	} else if (isChatOnly()) {
 #ifdef HAVE_ADVANCED_IM
-		auto session = mFocus->getSession();
 		auto chatRoom = getChatRoom();
 		auto clientGroupChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
 		switch (state) {
@@ -1560,8 +1570,7 @@ void ClientConference::onConferenceCreated(BCTBX_UNUSED(const std::shared_ptr<Ad
 		setConferenceId(newConferenceId);
 	}
 	setConferenceAddress(addr);
-	lInfo() << *this << ": Conference [" << conferenceId << "] has been created with address "
-	        << *getConferenceAddress();
+	lInfo() << *this << " has been created";
 
 	mFocus->setAddress(addr);
 	mFocus->clearDevices();
@@ -2792,10 +2801,10 @@ void ClientConference::subscribe(BCTBX_UNUSED(bool addToListEventHandler), BCTBX
 		if (unsubscribeFirst) {
 			mEventHandler->unsubscribe(); // Required for next subscribe to be sent
 		}
+		mEventHandler->subscribe(getConferenceId());
 	} else {
 		initializeHandlers(this, addToListEventHandler);
 	}
-	mEventHandler->subscribe(getConferenceId());
 #endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 

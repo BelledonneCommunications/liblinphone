@@ -603,6 +603,12 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 	const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
 	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 
+	const std::shared_ptr<Address> conferenceAddress = Address::create();
+	conferenceAddress->setImpl(remote ? op->getRemoteContactAddress() : op->getContactAddress());
+	if (conferenceAddress && conferenceAddress->isValid()) {
+		info->setUri(conferenceAddress);
+	}
+
 	if (sipfrag) {
 		auto organizerStr = Utils::getSipFragAddress(sipfrag.value());
 		auto organizer = Address::create(organizerStr);
@@ -618,12 +624,6 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 		for (const auto &invitee : invitees) {
 			info->addParticipant(invitee);
 		}
-	}
-
-	const std::shared_ptr<Address> conferenceAddress = Address::create();
-	conferenceAddress->setImpl(remote ? op->getRemoteContactAddress() : op->getContactAddress());
-	if (conferenceAddress && conferenceAddress->isValid()) {
-		info->setUri(conferenceAddress);
 	}
 
 	auto &md = remote ? op->getRemoteMediaDescription() : op->getLocalMediaDescription();

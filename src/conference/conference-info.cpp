@@ -448,7 +448,7 @@ const ConferenceInfo::State &ConferenceInfo::getState() const {
 
 void ConferenceInfo::setState(const ConferenceInfo::State &state) {
 	if (mState != state) {
-		lInfo() << "[Conference Info] [" << this << "] moving from state " << mState << " to state " << state;
+		lInfo() << *this << " moving from state " << mState << " to state " << state;
 		mState = state;
 	}
 }

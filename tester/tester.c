@@ -4664,6 +4664,13 @@ void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, BCTBX_UN
 				LinphoneConference *conference = linphone_core_search_conference_2(lc, uri);
 				if (conference) {
 					create_conference_cb(conference);
+					LinphoneChatRoom *chat_room = linphone_conference_get_chat_room(conference);
+					if (chat_room) {
+						LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+						setup_chat_room_callbacks(cbs);
+						linphone_chat_room_add_callbacks(chat_room, cbs);
+						linphone_chat_room_cbs_unref(cbs);
+					}
 				}
 			}
 			if (infos) {

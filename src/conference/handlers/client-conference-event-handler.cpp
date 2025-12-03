@@ -817,16 +817,35 @@ void ClientConferenceEventHandler::subscribeStateChangedCb(LinphoneEvent *lev, L
 }
 
 bool ClientConferenceEventHandler::subscribe() {
-	if (!needToSubscribe()) return false; // Already subscribed or application did not request subscription
+	auto conference = getConference();
+	if (!conference) {
+		lError() << "Unable to subscribe as conference linked to the ClientConferenceEventHandler [" << this
+		         << "] has not been set yet";
+		return false; // Conference has not been set
+	}
+
+	if (!needToSubscribe()) {
+		lError()
+		    << "Unable to subscribe to " << *conference
+		    << "  because either there is an active subscription to it or the application didn't request to subscribe";
+		return false; // Already subscribed or application did not request subscription
+	}
 
 	const auto localAddress = getConferenceId().getLocalAddress();
-	if (!localAddress) return false; // Unknown local address
+	if (!localAddress) {
+		lError() << "Unable to subscribe to " << *conference << "  because the local address is unknown";
+		return false; // Unknown local address
+	}
 
-	auto conference = getConference();
-	if (!conference) return false; // Conference has not been set
 	auto account = conference->getAccount();
-	if (!account ||
-	    ((account->getState() != LinphoneRegistrationRefreshing) && (account->getState() != LinphoneRegistrationOk))) {
+	if (!account) {
+		lError() << "Unable to subscribe to " << *conference << "  because no account is linked to the conference";
+		return false;
+	} else if ((account->getState() != LinphoneRegistrationRefreshing) &&
+	           (account->getState() != LinphoneRegistrationOk)) {
+		lError() << "Unable to subscribe to " << *conference << "  because " << *account
+		         << " has not registered yet (its state is "
+		         << linphone_registration_state_to_string(account->getState()) << ")";
 		return false;
 	}
 
@@ -845,7 +864,7 @@ bool ClientConferenceEventHandler::subscribe() {
 		ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
 		ev->setInternal(true);
 		ev->setProperty("event-handler-private", this);
-		lInfo() << *localAddress << " is subscribing to " << conference << " with last notify: " << lastNotifyStr;
+		lInfo() << *localAddress << " is subscribing to " << *conference << " with last notify: " << lastNotifyStr;
 		startWaitNotifyTimer();
 		return (ev->send(nullptr) == 0);
 	} catch (const bad_weak_ptr &) {
