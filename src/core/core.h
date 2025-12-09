@@ -96,19 +96,23 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class Conference;
 	friend class ConferenceScheduler;
 	friend class SIPConferenceScheduler;
-	friend class ClientChatRoom;
 	friend class Imdn;
+#ifdef HAVE_ADVANCED_IM
+	friend class ServerChatRoom;
+	friend class ClientChatRoom;
+#ifdef HAVE_XERCESC
 	friend class ServerConferenceEventHandler;
+	friend class ClientConferenceEventHandlerBase;
+	friend class ClientConferenceEventHandler;
+	friend class ClientConferenceListEventHandler;
+#endif // HAVE_XERCESC
+#endif // HAVE_ADVANCED_IM
 	friend class ServerConference;
 	friend class MainDb;
 	friend class MainDbEventKey;
 	friend class MS2Stream;
 	friend class MediaSessionPrivate;
 	friend class ClientConference;
-	friend class ClientConferenceEventHandlerBase;
-	friend class ClientConferenceEventHandler;
-	friend class ClientConferenceListEventHandler;
-	friend class ServerChatRoom;
 	friend class CallSessionPrivate;
 	friend class ToneManager;
 	friend class EventLog;
