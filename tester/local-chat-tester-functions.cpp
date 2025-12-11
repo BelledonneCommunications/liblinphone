@@ -209,6 +209,24 @@ bool checkChatroom(Focus &focus, const ConfCoreManager &core, const time_t baseJ
 	return true;
 }
 
+static const std::string message_begin("Network came back so I can chat again on chatroom ");
+static void send_message_on_network_reachable(LinphoneCore *lc, bool_t reachable) {
+	if (reachable) {
+		const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(lc);
+		for (const bctbx_list_t *chat_room_it = chat_rooms; chat_room_it != NULL; chat_room_it = chat_room_it->next) {
+			LinphoneChatRoom *chat_room = static_cast<LinphoneChatRoom *>(bctbx_list_get_data(chat_room_it));
+			BC_ASSERT_PTR_NOT_NULL(chat_room);
+			if (chat_room) {
+				std::string msg_text = message_begin +
+				                       AbstractChatRoom::toCpp(chat_room)->getConferenceAddress()->toString() +
+				                       std::string(" Cheers, ") + linphone_core_get_identity(lc);
+				LinphoneChatMessage *msg = ClientConference::sendTextMsg(chat_room, msg_text);
+				linphone_chat_message_unref(msg);
+			}
+		}
+	}
+}
+
 void group_chat_room_with_client_restart_base(bool encrypted) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -538,6 +556,84 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).waitUntil(std::chrono::seconds(2), [] {
 			return false;
 		});
+
+		ms_message("%s is turning its network off and sends a message immediately after the network comes up",
+		           linphone_core_get_identity(marie.getLc()));
+		linphone_core_set_network_reachable(marie.getLc(), FALSE);
+
+		// wait a bit longer to detect side effect if any
+		CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).waitUntil(chrono::seconds(2), [] {
+			return false;
+		});
+
+		// wait until the chatroom is loaded
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe}).wait([&marie] {
+			return marie.getCore().getChatRooms().size() == 1;
+		}));
+
+		const LinphoneAccount *marie_default_account = linphone_core_get_default_account(marie.getLc());
+		BC_ASSERT_FALSE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe})
+		                    .waitUntil(chrono::seconds(2), [marie_default_account] {
+			                    LinphoneRegistrationState account_state =
+			                        linphone_account_get_state(marie_default_account);
+			                    return (account_state != LinphoneRegistrationNone);
+		                    }));
+
+		BC_ASSERT_FALSE(linphone_core_is_network_reachable(marie.getLc()));
+
+		LinphoneCoreCbs *marie_core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		linphone_core_cbs_set_network_reachable(marie_core_cbs, send_message_on_network_reachable);
+		linphone_core_add_callbacks(marie.getLc(), marie_core_cbs);
+		linphone_core_cbs_unref(marie_core_cbs);
+
+		initialMarieStats = marie.getStats();
+		linphone_core_set_network_reachable(marie.getLc(), TRUE);
+
+		for (auto chatRoom : marie.getCore().getChatRooms()) {
+			std::shared_ptr<ChatMessage> msg = chatRoom->getLastChatMessageInHistory();
+			std::string msgText(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(msg)));
+			size_t pos = msgText.find(message_begin);
+			BC_ASSERT_EQUAL(pos, 0, size_t, "%0zu");
+			ChatMessage::State expected_msg_state = ChatMessage::State::Delivered;
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe})
+			                   .waitUntil(chrono::seconds(10),
+			                              [msg, expected_msg_state] { return msg->getState() == expected_msg_state; }));
+		}
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe})
+		                   .waitUntil(chrono::seconds(10), [marie_default_account] {
+			                   LinphoneRegistrationState account_state =
+			                       linphone_account_get_state(marie_default_account);
+			                   return (account_state == LinphoneRegistrationOk);
+		                   }));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
+		                             initialMarieStats.number_of_LinphoneSubscriptionActive + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		for (auto chatRoom : marie.getCore().getChatRooms()) {
+			std::shared_ptr<ChatMessage> msg = chatRoom->getLastChatMessageInHistory();
+			std::string msgText(linphone_chat_message_get_utf8_text(L_GET_C_BACK_PTR(msg)));
+			size_t pos = msgText.find(message_begin);
+			BC_ASSERT_EQUAL(pos, 0, size_t, "%0zu");
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, laure, berthe})
+			                   .waitUntil(chrono::seconds(10),
+			                              [msg] { return msg->getState() == ChatMessage::State::Delivered; }));
+		}
+
+		const std::initializer_list<std::reference_wrapper<ConfCoreManager>> cores4{michelle, michelle2, laure, berthe};
+		for (const ConfCoreManager &core : cores4) {
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle, michelle2, berthe, laure})
+			                   .waitUntil(chrono::seconds(10), [&core] {
+				                   LinphoneChatMessage *lastMsg = core.getStats().last_received_chat_message;
+				                   bool ret = false;
+				                   if (lastMsg) {
+					                   std::string msgText(linphone_chat_message_get_utf8_text(lastMsg));
+					                   ret = (msgText.find(message_begin) == 0);
+				                   }
+				                   return ret;
+			                   }));
+		}
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {

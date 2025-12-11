@@ -251,7 +251,7 @@ void ClientChatRoom::onLocallyExhumedConference(const std::shared_ptr<Address> &
 	onExhumedConference(oldConfId, newConfId);
 
 	setState(ConferenceInterface::State::Created);
-	conference->subscribe(true);
+	conference->subscribe(false);
 
 	lInfo() << "Found " << mPendingExhumeMessages.size() << " messages waiting for exhume";
 	for (auto &chatMessage : mPendingExhumeMessages) {
@@ -295,7 +295,7 @@ void ClientChatRoom::onRemotelyExhumedConference(SalCallOp *op) {
 	conference->confirmJoining(op);
 
 	setState(ConferenceInterface::State::Created);
-	conference->subscribe(true);
+	conference->subscribe(false);
 }
 
 void ClientChatRoom::removeConferenceIdFromPreviousList(const ConferenceId &confId) {

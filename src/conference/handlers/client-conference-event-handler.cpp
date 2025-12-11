@@ -827,23 +827,23 @@ bool ClientConferenceEventHandler::subscribe() {
 	if (!needToSubscribe()) {
 		lError()
 		    << "Unable to subscribe to " << *conference
-		    << "  because either there is an active subscription to it or the application didn't request to subscribe";
+		    << " because either there is an active subscription to it or the application didn't request to subscribe";
 		return false; // Already subscribed or application did not request subscription
 	}
 
 	const auto localAddress = getConferenceId().getLocalAddress();
 	if (!localAddress) {
-		lError() << "Unable to subscribe to " << *conference << "  because the local address is unknown";
+		lError() << "Unable to subscribe to " << *conference << " because the local address is unknown";
 		return false; // Unknown local address
 	}
 
 	auto account = conference->getAccount();
 	if (!account) {
-		lError() << "Unable to subscribe to " << *conference << "  because no account is linked to the conference";
+		lError() << "Unable to subscribe to " << *conference << " because no account is linked to the conference";
 		return false;
 	} else if ((account->getState() != LinphoneRegistrationRefreshing) &&
 	           (account->getState() != LinphoneRegistrationOk)) {
-		lError() << "Unable to subscribe to " << *conference << "  because " << *account
+		lError() << "Unable to subscribe to " << *conference << " because " << *account
 		         << " has not registered yet (its state is "
 		         << linphone_registration_state_to_string(account->getState()) << ")";
 		return false;
