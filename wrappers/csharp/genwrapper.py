@@ -86,7 +86,7 @@ class CsharpTranslator:
 			if arg is not method.args[0] or not static:
 				methodElems['params'] += ', '
 			if arg.type.name == 'string':
-				methodElems['params'] += '[MarshalAs(UnmanagedType.LPUTF8Str)]'
+				methodElems['params'] += '[MarshalAs(LinphoneWrapper.ByteStringMarshalling)]'
 			methodElems['params'] += arg.translate(self.langTranslator)
 
 		methodDict = {}
@@ -299,7 +299,7 @@ class CsharpTranslator:
 
 			listenerDict['delegate']['params_public'] += normalType + " " + argName
 			if arg.type.name == 'string':
-				listenerDict['delegate']['params_private'] += '[MarshalAs(UnmanagedType.LPUTF8Str)]'
+				listenerDict['delegate']['params_private'] += '[MarshalAs(LinphoneWrapper.ByteStringMarshalling)]'
 			listenerDict['delegate']['params_private'] += dllImportType + " " + argName
 
 		listenerDict['delegate']["c_name_setter"] = c_name_setter

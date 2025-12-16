@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using ObjCRuntime;
 #endif
 
+
 namespace Linphone
 {
 #region Wrapper specifics
@@ -35,6 +36,11 @@ namespace Linphone
 	public class LinphoneWrapper
 	{
 		public const string VERSION = "{{version}}";
+#if WINDOWS_UWP
+		public const UnmanagedType ByteStringMarshalling = UnmanagedType.LPStr;
+#else
+		public const UnmanagedType ByteStringMarshalling = UnmanagedType.LPUTF8Str;
+#endif		
 
 #if IOS
 		public const string BELLE_SIP_LIB_NAME = "__Internal";
@@ -240,11 +246,11 @@ namespace Linphone
 		/* This is a ugly hack because Marshall.PtrToStringUTF8() and its converse fonction
 		are not available in any version of .NET Framework */
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		[return: MarshalAs(UnmanagedType.LPUTF8Str)]
+		[return: MarshalAs(LinphoneWrapper.ByteStringMarshalling)]
 		internal protected static extern String linphone_pointer_to_string(IntPtr ptr);
 		
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		internal protected static extern IntPtr linphone_string_to_pointer([MarshalAs(UnmanagedType.LPUTF8Str)] String str);
+		internal protected static extern IntPtr linphone_string_to_pointer([MarshalAs(LinphoneWrapper.ByteStringMarshalling)] String str);
 
 		internal static IEnumerable<string> MarshalStringArray(IntPtr listPtr)
 		{
@@ -503,7 +509,9 @@ namespace Linphone
 			Java.Lang.JavaSystem.LoadLibrary("mediastreamer2");
 			Java.Lang.JavaSystem.LoadLibrary("linphone");
 #endif
+#if !WINDOWS_UWP
 			LinphoneWrapper.forceUtf8();
+#endif
 		}
 
 		{{/isLinphoneFactory}}
