@@ -1607,12 +1607,7 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomPartic
 	return info;
 }
 
-#ifndef _MSC_VER
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif // _MSC_VER
 void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::SecurityLevel &level) const {
-#ifdef HAVE_DB_STORAGE
 	const auto state = getState();
 	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -1620,6 +1615,7 @@ void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::Sec
 		if (info) {
 			info->setSecurityLevel(level);
 
+#ifdef HAVE_DB_STORAGE
 			// Store into DB after the start incoming notification in order to have a valid conference address being the
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -1628,20 +1624,12 @@ void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::Sec
 				        << " because its security level has been changed to " << level;
 				mainDb->insertConferenceInfo(info);
 			}
+#endif // HAVE_DB_STORAGE
 		}
 	}
-#endif // HAVE_DB_STORAGE
 }
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
 
-#ifndef _MSC_VER
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif // _MSC_VER
 void Conference::updateSubjectInConferenceInfo(const std::string &subject) const {
-#ifdef HAVE_DB_STORAGE
 	const auto state = getState();
 	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -1649,6 +1637,7 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 		if (info) {
 			info->setUtf8Subject(subject);
 
+#ifdef HAVE_DB_STORAGE
 			// Store into DB after the start incoming notification in order to have a valid conference address being the
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -1657,20 +1646,12 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 				        << subject;
 				mainDb->insertConferenceInfo(info);
 			}
+#endif // HAVE_DB_STORAGE
 		}
 	}
-#endif // HAVE_DB_STORAGE
 }
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
 
-#ifndef _MSC_VER
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif // _MSC_VER
 void Conference::updateParticipantRoleInConferenceInfo(const std::shared_ptr<Participant> &participant) const {
-#ifdef HAVE_DB_STORAGE
 	const auto state = getState();
 	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -1685,6 +1666,7 @@ void Conference::updateParticipantRoleInConferenceInfo(const std::shared_ptr<Par
 
 				info->updateParticipant(newParticipantInfo);
 
+#ifdef HAVE_DB_STORAGE
 				// Store into DB after the start incoming notification in order to have a valid conference address being
 				// the contact address of the call
 				auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -1693,17 +1675,14 @@ void Conference::updateParticipantRoleInConferenceInfo(const std::shared_ptr<Par
 					        << *address << " changed to " << newRole;
 					mainDb->insertConferenceInfo(info);
 				}
+#endif // HAVE_DB_STORAGE
 			} else {
 				lError() << "Unable to update role of participant " << *address << " to " << newRole
 				         << " because it cannot be found in the conference info linked to " << *this;
 			}
 		}
 	}
-#endif // HAVE_DB_STORAGE
 }
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
 
 bool Conference::updateParticipantInfoInConferenceInfo(std::shared_ptr<ConferenceInfo> &info,
                                                        const std::shared_ptr<Participant> &participant) const {
@@ -1741,13 +1720,12 @@ void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Partici
 		return;
 	}
 
-#ifdef HAVE_DB_STORAGE
 	const auto state = getState();
 	if ((state == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
 		if (info) {
-			bool update = updateParticipantInfoInConferenceInfo(info, participant);
-
+			[[maybe_unused]] bool update = updateParticipantInfoInConferenceInfo(info, participant);
+#ifdef HAVE_DB_STORAGE
 			// Store into DB after the start incoming notification in order to have a valid conference address being
 			// the contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -1756,9 +1734,9 @@ void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Partici
 				        << *participantAddress << " has been added or has modified its informations";
 				mainDb->insertConferenceInfo(info);
 			}
+#endif // HAVE_DB_STORAGE
 		}
 	}
-#endif // HAVE_DB_STORAGE
 }
 
 bool Conference::updateMinatureRequestedFlag() const {

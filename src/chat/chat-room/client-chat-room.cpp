@@ -151,11 +151,15 @@ void ClientChatRoom::deleteFromDb() {
 }
 
 list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast) const {
-	return getCore()->getPrivate()->mainDb->getHistory(
-	    getConferenceId(), nLast,
-	    getCurrentParams()->isGroup() ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
-	                                                        MainDb::Filter::ConferenceInfoNoDeviceFilter})
-	                                  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+	try {
+		return getCore()->getPrivate()->mainDb->getHistory(
+		    getConferenceId(), nLast,
+		    getCurrentParams()->isGroup() ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
+									MainDb::Filter::ConferenceInfoNoDeviceFilter})
+						  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+	} catch (const bad_weak_ptr &) {
+	}
+	return list<shared_ptr<EventLog>>();
 }
 
 list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast, HistoryFilterMask filters) const {
@@ -163,11 +167,15 @@ list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast, HistoryFilterMa
 }
 
 list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end) const {
-	return getCore()->getPrivate()->mainDb->getHistoryRange(
-	    getConferenceId(), begin, end,
-	    getCurrentParams()->isGroup() ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
-	                                                        MainDb::Filter::ConferenceInfoNoDeviceFilter})
-	                                  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+	try {
+		return getCore()->getPrivate()->mainDb->getHistoryRange(
+		    getConferenceId(), begin, end,
+		    getCurrentParams()->isGroup() ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
+									MainDb::Filter::ConferenceInfoNoDeviceFilter})
+						  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+	} catch (const bad_weak_ptr &) {
+	}
+	return list<shared_ptr<EventLog>>();
 }
 
 list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end, HistoryFilterMask filters) const {
@@ -175,11 +183,15 @@ list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end, H
 }
 
 int ClientChatRoom::getHistorySize() const {
-	return getCore()->getPrivate()->mainDb->getHistorySize(
-	    getConferenceId(), getCurrentParams()->isGroup()
-	                           ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
-	                                                 MainDb::Filter::ConferenceInfoNoDeviceFilter})
-	                           : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+	try {
+		return getCore()->getPrivate()->mainDb->getHistorySize(
+		    getConferenceId(), getCurrentParams()->isGroup()
+					   ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
+								 MainDb::Filter::ConferenceInfoNoDeviceFilter})
+					   : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+	} catch (const bad_weak_ptr &) {
+	}
+	return 0;
 }
 
 int ClientChatRoom::getHistorySize(HistoryFilterMask filters) const {

@@ -177,8 +177,9 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 				updateConferenceInformation();
 			}
 		} else {
+				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
+			[[maybe_unused]] const auto &conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
-			const auto &conferenceInfo = createOrGetConferenceInfo();
 			if (conferenceInfo) {
 				auto &mainDb = core->getPrivate()->mainDb;
 				if (mainDb) {
@@ -378,7 +379,7 @@ bool ServerConference::updateConferenceInformation(SalCallOp *op) {
 }
 
 void ServerConference::updateConferenceInformation() {
-	const auto &conferenceInfo = createConferenceInfoWithCustomParticipantList(mOrganizer, mInvitedParticipants);
+	const auto &conferenceInfo = createConferenceInfo();
 	auto infoState = ConferenceInfo::State::New;
 	if (mInvitedParticipants.empty()) {
 		infoState = ConferenceInfo::State::Cancelled;
@@ -932,7 +933,6 @@ void ServerConference::confirmCreation() {
 #endif // HAVE_ADVANCED_IM
 
 		const auto &conferenceInfo = createOrGetConferenceInfo();
-
 #ifdef HAVE_DB_STORAGE
 		// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
 		// doesn't have any of the codecs the server supports
@@ -1061,7 +1061,9 @@ void ServerConference::finalizeCreation() {
 				} else {
 					session->redirect(addr);
 				}
-				const auto &conferenceInfo = createOrGetConferenceInfo();
+
+				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
+				[[maybe_unused]] const auto &conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
 				// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
 				// doesn't have any of the codecs the server supports
@@ -1304,9 +1306,10 @@ ServerConference::notifyParticipantDeviceStateChanged(time_t creationTime,
 			time_t newExpiryTime = deviceTimeOfJoining + expiry;
 			if (newExpiryTime > actualExpiryTime) {
 				mConfParams->setExpiryTime(newExpiryTime);
+				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
+				[[maybe_unused]] auto conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
 				if (mainDb) {
-					auto conferenceInfo = createOrGetConferenceInfo();
 					conferenceInfo->setExpiryTime(newExpiryTime);
 					mainDb->insertConferenceInfo(conferenceInfo);
 				}

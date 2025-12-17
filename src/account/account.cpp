@@ -938,7 +938,13 @@ int Account::getUnreadChatMessageCount() const {
 		return -1;
 	}
 
-	return getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
+	int count = 0;
+	try {
+		count = getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
+	} catch (const std::bad_weak_ptr &) {
+		lError() << "Unable to retrieve the number of unread messages for " << *this << " because the core has already been destroyed";
+	}
+	return count;
 }
 
 void Account::unsubscribeFromChatRooms() {

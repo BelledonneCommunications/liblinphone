@@ -48,7 +48,11 @@ void CoreAccessor::setCore(const std::shared_ptr<Core> &core) {
 }
 
 CoreLogContextualizer::CoreLogContextualizer(const LinphoneCore *core) {
-	pushTag(core ? L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLabel() : "");
+	try {
+		pushTag(core ? L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLabel() : "");
+	} catch (...) {
+	}
+
 }
 
 CoreLogContextualizer::CoreLogContextualizer(const CoreAccessor *coreAccessor) {

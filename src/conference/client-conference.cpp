@@ -146,7 +146,9 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 
 	initializeFromAccount();
 
+#if defined(HAVE_ADVANCED_IM) || defined(HAVE_XERCESC)
 	const auto &core = getCore();
+#endif // defined(HAVE_ADVANCED_IM) || defined(HAVE_XERCESC)
 	std::shared_ptr<Address> organizerAddress = nullptr;
 	auto conferenceAddress = mFocus ? mFocus->getAddress() : nullptr;
 	std::shared_ptr<ConferenceInfo> conferenceInfo = nullptr;
