@@ -1514,6 +1514,10 @@ std::shared_ptr<Event> Account::getMwiEvent() const {
 }
 
 void Account::subscribeToMessageWaitingIndication() {
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn) {
+		lError() << "Core is not started, cannot send SUBSCRIBE for MWI";
+		return;
+	}
 	std::shared_ptr<const Address> mwiServerAddress = mParams->getMwiServerAddress();
 	if (mwiServerAddress) {
 		int expires = linphone_config_get_int(getCore()->getCCore()->config, "sip", "mwi_expires", 86400);
