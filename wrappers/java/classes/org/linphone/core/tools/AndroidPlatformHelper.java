@@ -111,7 +111,7 @@ public class AndroidPlatformHelper {
     private static final int AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED = 20; // 20ms
     private static final int AUTO_ITERATE_TIMER_RESET_AFTER = 20000; // 20s
 
-    private static AndroidPlatformHelper sInstance;
+    private static volatile AndroidPlatformHelper sInstance;
 
     public static boolean isReady() {
         return sInstance != null;
