@@ -683,14 +683,10 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 						// For chat rooms, the session is handled by the participant
 						if (isMe && mainSession && conference->supportsMedia()) {
-							if (accountContactAddress) {
-								if (*gruu == *accountContactAddress) {
-									device->setSession(mainSession);
-								}
-							} else {
-								lError() << "The account " << account << " linked to conference " << *conference
-								         << " has no contact address, therefore the core is not able to assign the "
-								            "main session to any participant device";
+							const auto sessionCallLog = mainSession->getLog();
+							auto sessionCallId = sessionCallLog->getCallId();
+							if (device->getCallId() == sessionCallId) {
+								device->setSession(mainSession);
 							}
 						}
 

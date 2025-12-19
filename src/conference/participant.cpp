@@ -179,7 +179,7 @@ Participant::findDevice(const LinphoneStreamType type, const std::string &label,
 	for (const auto &device : devices) {
 		const auto &deviceLabel = device->getStreamLabel(type);
 		const auto &thumbnailLabel = device->getThumbnailStreamLabel();
-		if (!label.empty() && ((!deviceLabel.empty() && deviceLabel.compare(label) == 0) ||
+		if (!label.empty() && ((!deviceLabel.empty() && (deviceLabel == label)) ||
 		                       ((type == LinphoneStreamTypeVideo) && (thumbnailLabel == label)))) {
 			return device;
 		}

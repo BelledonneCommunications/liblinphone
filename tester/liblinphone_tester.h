@@ -956,6 +956,7 @@ void _call_with_ice_base(LinphoneCoreManager *pauline,
                          bool_t random_ports,
                          bool_t forced_relay,
                          bool_t quick_cancel);
+bool_t liblinphone_tester_call_check_video_source_filter(LinphoneCall *call, MSFilterId filter_id, int expected_counter);
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec);
 void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted);
 

@@ -59,6 +59,10 @@ void _linphone_call_set_endpoint(LinphoneCall *call, MSAudioEndpoint *endpoint) 
 	Call::toCpp(call)->setEndpoint(endpoint);
 }
 
+MediaStream *linphone_call_get_stream_by_idx(LinphoneCall *call, int idx) {
+	return Call::toCpp(call)->getMediaStream(idx);
+}
+
 MediaStream *linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type) {
 	return Call::toCpp(call)->getMediaStream(type);
 }

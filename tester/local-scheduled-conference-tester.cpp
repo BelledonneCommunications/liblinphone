@@ -111,11 +111,15 @@ static void conference_with_media_lost_base(bool_t server_drops) {
 
 		const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
 		for (auto mgr : members) {
+			LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			if (mgr == marie.getCMgr()) {
 				linphone_call_params_enable_screen_sharing(new_params, TRUE);
+				linphone_video_source_descriptor_set_screen_sharing(descriptor, LinphoneVideoSourceScreenSharingWindow, NULL);
+			} else {
+				linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_mire_id);
 			}
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
@@ -123,9 +127,11 @@ static void conference_with_media_lost_base(bool_t server_drops) {
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
+				linphone_call_set_video_source(pcall, descriptor);
 				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 			}
+			linphone_video_source_descriptor_unref(descriptor);
 		}
 
 		focus_stat = focus.getStats();
@@ -2203,12 +2209,12 @@ static void create_simple_conference_with_screen_sharing() {
 
 static void create_simple_conference_with_screen_sharing_and_chat_rejoining_without_screen_sharing() {
 	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
-	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
+	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE);
 }
 
 static void create_simple_conference_with_screen_sharing_and_chat_rejoining_with_screen_sharing() {
 	create_conference_with_screen_sharing_chat_base(ms_time(NULL), -1, LinphoneConferenceSecurityLevelNone,
-	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE);
+	                                                LinphoneConferenceLayoutActiveSpeaker, FALSE, TRUE);
 }
 
 static void create_simple_conference_with_screen_sharing_override() {
@@ -2440,6 +2446,15 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 				linphone_call_params_enable_screen_sharing(new_params, is_first_member);
 				linphone_call_update(mgr_call, new_params);
 				linphone_call_params_unref(new_params);
+
+				LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
+				if (is_first_member) {
+					linphone_video_source_descriptor_set_screen_sharing(descriptor, LinphoneVideoSourceScreenSharingArea, NULL);
+				} else {
+					linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_static_image_id);
+				}
+				linphone_call_set_video_source(mgr_call, descriptor);
+				linphone_video_source_descriptor_unref(descriptor);
 			}
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating,
@@ -2485,7 +2500,7 @@ static void participant_joins_simple_conference_with_screen_sharing() {
 			                             liblinphone_tester_sip_timeout));
 
 			if (is_first_member) {
-				BC_ASSERT_TRUE(check_screen_sharing_sdp(focus.getCMgr(), mgr, true));
+				BC_ASSERT_TRUE(check_screen_sharing_call(focus.getCMgr(), mgr, true));
 				BC_ASSERT_TRUE(wait_for_list(coresList,
 				                             &focus.getStats().number_of_participant_devices_screen_sharing_enabled,
 				                             focus_stat2.number_of_participant_devices_screen_sharing_enabled + 1,
@@ -2818,12 +2833,17 @@ static void conference_with_screen_sharing_enabled_since_the_start() {
 
 		const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
 		for (auto mgr : members) {
+			LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			if (mgr == laure.getCMgr()) {
 				linphone_call_params_enable_screen_sharing(new_params, TRUE);
-			} else if (mgr == pauline.getCMgr()) {
+				linphone_video_source_descriptor_set_screen_sharing(descriptor, LinphoneVideoSourceScreenSharingDisplay, NULL);
+			} else {
+				linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_mire_id);
+			}
+			if (mgr == pauline.getCMgr()) {
 				linphone_call_params_enable_mic(new_params, FALSE);
 			}
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
@@ -2832,9 +2852,11 @@ static void conference_with_screen_sharing_enabled_since_the_start() {
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
+				linphone_call_set_video_source(pcall, descriptor);
 				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 			}
+			linphone_video_source_descriptor_unref(descriptor);
 		}
 
 		int idx = 1;
@@ -3264,14 +3286,19 @@ static void conference_with_two_participant_having_screen_sharing_enabled_since_
 
 		const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
 		for (auto mgr : members) {
+			LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			if (mgr == laure.getCMgr()) {
 				linphone_call_params_enable_screen_sharing(new_params, TRUE);
+				linphone_video_source_descriptor_set_screen_sharing(descriptor, LinphoneVideoSourceScreenSharingArea, NULL);
 			} else if (mgr == pauline.getCMgr()) {
 				linphone_call_params_enable_screen_sharing(new_params, TRUE);
 				linphone_call_params_enable_mic(new_params, FALSE);
+				linphone_video_source_descriptor_set_screen_sharing(descriptor, LinphoneVideoSourceScreenSharingWindow, NULL);
+			} else {
+				linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_mire_id);
 			}
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
@@ -3279,9 +3306,11 @@ static void conference_with_two_participant_having_screen_sharing_enabled_since_
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
+				linphone_call_set_video_source(pcall, descriptor);
 				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 			}
+			linphone_video_source_descriptor_unref(descriptor);
 		}
 
 		int idx = 1;
@@ -3685,11 +3714,15 @@ static void conference_with_screen_sharing_participant_only() {
 
 		const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
 		for (auto mgr : members) {
+			LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
 			if (mgr == marie.getCMgr()) {
 				linphone_call_params_enable_screen_sharing(new_params, TRUE);
+				linphone_video_source_descriptor_set_screen_sharing(descriptor, LinphoneVideoSourceScreenSharingDisplay, NULL);
+			} else {
+				linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_mire_id);
 			}
 			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
@@ -3697,9 +3730,11 @@ static void conference_with_screen_sharing_participant_only() {
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
+				linphone_call_set_video_source(pcall, descriptor);
 				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 			}
+			linphone_video_source_descriptor_unref(descriptor);
 		}
 
 		int idx = 1;
@@ -9106,6 +9141,7 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 		ms_message("%s is restarting its core", linphone_core_get_identity(focus.getLc()));
 		// Restart flexisip
 		focus.reStart();
+		auto focusDeletedCount = focus.getStats().number_of_LinphoneConferenceStateDeleted;
 		coresList = bctbx_list_append(coresList, focus.getLc());
 
 		// Verify that the conference didn't expire yet
@@ -9147,7 +9183,6 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallOutgoingInit,
 		                              focus_stat.number_of_LinphoneCallOutgoingInit + 1, 500));
-		auto focusDeletedCount = focus.getStats().number_of_LinphoneConferenceStateDeleted;
 		for (auto mgr : members) {
 			BC_ASSERT_FALSE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallIncomingReceived, 1, 500));
 		}
@@ -9189,8 +9224,8 @@ static void create_conference_with_chat_with_server_restarted_before_conference_
 		BC_ASSERT_EQUAL(bctbx_list_size(calls), 0, size_t, "%zu");
 
 		// Let some time for the focus to clean its conferences.
-		wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, focusDeletedCount + 1,
-		              500);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, focusDeletedCount + 1,
+		                             liblinphone_tester_sip_timeout));
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NULL(fconference);
 

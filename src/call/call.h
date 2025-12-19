@@ -241,6 +241,7 @@ public:
 	unsigned int getTextStartCount() const;
 	// don't make new code relying on this method.
 	MediaStream *getMediaStream(LinphoneStreamType type) const;
+	MediaStream *getMediaStream(int idx) const;
 	int getMediaStreamIndex(LinphoneStreamType type) const;
 	size_t getMediaStreamsNb(LinphoneStreamType type) const;
 	SalCallOp *getOp() const;

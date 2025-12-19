@@ -51,7 +51,7 @@ struct _ZrtpAlgoRes {
 
 #endif
 
-bool_t check_screen_sharing_sdp(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled);
+bool_t check_screen_sharing_call(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled);
 bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_enabled);
 bool_t check_ice(LinphoneCoreManager *caller, LinphoneCoreManager *callee, LinphoneIceState state);
 bool_t check_ice_sdp(LinphoneCall *call);

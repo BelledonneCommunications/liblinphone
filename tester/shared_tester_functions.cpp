@@ -1122,12 +1122,89 @@ bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_e
 	return ret ? TRUE : FALSE;
 }
 
-bool_t check_screen_sharing_sdp(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled) {
+bool_t check_screen_sharing_call(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled) {
 	bool_t ret = TRUE;
 	LinphoneCall *mgr1_call = linphone_core_get_call_by_remote_address2(mgr1->lc, mgr2->identity);
-	ret &= check_screen_sharing_call_sdp(mgr1_call, screen_sharing_enabled);
+	BC_ASSERT_PTR_NOT_NULL(mgr1_call);
+	bool_t function_ret = check_screen_sharing_call_sdp(mgr1_call, screen_sharing_enabled);
+	BC_ASSERT_TRUE(function_ret);
+	ret &= function_ret;
 	LinphoneCall *mgr2_call = linphone_core_get_call_by_remote_address2(mgr2->lc, mgr1->identity);
-	ret &= check_screen_sharing_call_sdp(mgr2_call, screen_sharing_enabled);
+	BC_ASSERT_PTR_NOT_NULL(mgr2_call);
+	function_ret = check_screen_sharing_call_sdp(mgr2_call, screen_sharing_enabled);
+	BC_ASSERT_TRUE(function_ret);
+	ret &= function_ret;
+
+	bool_t mgr1_is_conference_server = linphone_core_conference_server_enabled(mgr1->lc);
+	LinphoneCall *client_call = NULL;
+	LinphoneCoreManager *client = NULL;
+	if (!!mgr1_is_conference_server) {
+		client = mgr2;
+		client_call = mgr2_call;
+	} else {
+		client = mgr1;
+		client_call = mgr1_call;
+	}
+
+	const LinphoneCallParams *lparams = linphone_call_get_params(client_call);
+	const LinphoneCallParams *cparams = linphone_call_get_current_params(client_call);
+	bool_t video_enabled = linphone_call_params_video_enabled(cparams);
+
+	int stream_count = linphone_call_get_stream_count(client_call);
+	BC_ASSERT_GREATER_STRICT(stream_count, 0, int, "%0d");
+	if (stream_count > 0) {
+		int expected_camera_filter_counter = 0;
+		int expected_itc_source_filter_counter = 0;
+		int expected_screen_sharing_filter_counter = 0;
+		if (!!video_enabled) {
+			LinphoneMediaDirection video_direction = linphone_call_params_get_video_direction(cparams);
+			bool_t camera_enabled = linphone_call_params_camera_enabled(cparams) && ((video_direction == LinphoneMediaDirectionSendRecv) || (video_direction == LinphoneMediaDirectionSendOnly));
+			if (!!screen_sharing_enabled) {
+				expected_screen_sharing_filter_counter = 1;
+				if (camera_enabled) {
+					expected_camera_filter_counter = 1;
+				}
+			} else if ((video_direction == LinphoneMediaDirectionSendRecv) || ((linphone_call_params_get_conference_video_layout(lparams) == LinphoneConferenceLayoutActiveSpeaker) && (video_direction == LinphoneMediaDirectionSendOnly))) {
+				expected_camera_filter_counter = 1;
+				if (camera_enabled) {
+					expected_itc_source_filter_counter = 1;
+				}
+			}
+		}
+
+		MSFilterId camera_filter_id = (strcmp(linphone_core_get_video_device(client->lc), liblinphone_tester_static_image_id) == 0) ? MS_STATIC_IMAGE_ID : MS_MIRE_ID;
+		function_ret = liblinphone_tester_call_check_video_source_filter(client_call, camera_filter_id, expected_camera_filter_counter);
+		BC_ASSERT_TRUE(function_ret);
+		ret &= function_ret;
+
+		function_ret = liblinphone_tester_call_check_video_source_filter(client_call, MS_ITC_SOURCE_ID, expected_itc_source_filter_counter);
+		BC_ASSERT_TRUE(function_ret);
+		ret &= function_ret;
+
+		function_ret = liblinphone_tester_call_check_video_source_filter(client_call, MS_SCREEN_SHARING_ID, expected_screen_sharing_filter_counter);
+		BC_ASSERT_TRUE(function_ret);
+		ret &= function_ret;
+	} else {
+		ret = FALSE;
+	}
+
+	if (!!video_enabled) {
+		const LinphoneVideoSourceDescriptor *descriptor = linphone_call_get_video_source(client_call);
+		BC_ASSERT_PTR_NOT_NULL(descriptor);
+		if (descriptor) {
+			LinphoneVideoSourceType video_source_type = linphone_video_source_descriptor_get_type(descriptor);
+			if (!!screen_sharing_enabled) {
+				BC_ASSERT_EQUAL(video_source_type, LinphoneVideoSourceScreenSharing, int, "%i");
+				ret &= (video_source_type == LinphoneVideoSourceScreenSharing);
+			} else {
+				BC_ASSERT_NOT_EQUAL(video_source_type, LinphoneVideoSourceScreenSharing, int, "%i");
+				ret &= (video_source_type != LinphoneVideoSourceScreenSharing);
+			}
+		} else {
+			ret &= !screen_sharing_enabled;
+		}
+	}
+
 	return ret;
 }
 

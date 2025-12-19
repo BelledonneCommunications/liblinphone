@@ -1838,6 +1838,9 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 		bool useThumbnailStream = (isVideoStream && q->requestThumbnail(dev));
 		const auto &label = (useThumbnailStream) ? dev->getThumbnailStreamLabel()
 		                                         : dev->getStreamLabel(sal_stream_type_to_linphone(type));
+		const auto &content = newStream.getContent();
+		lInfo() << "Fill parameters of stream of type " << sal_stream_type_to_string(type) << " for " << *dev
+		        << " (label " << label << " and content " << content << ") on local offer of " << *q;
 		std::list<OrtpPayloadType *> alreadyAssignedPayloads;
 		if (oldMd) {
 			const auto &previousParticipantStream = oldMd->findStreamWithLabel(type, label);
@@ -1854,7 +1857,6 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 			}
 			newStream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			newStream.name = std::string(sal_stream_type_to_string(type)) + " " + dev->getAddress()->toString();
-			const auto &content = newStream.getContent();
 
 			const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 			const bool isInLocalConference = getParams()->getPrivate()->getInConference();
@@ -1924,8 +1926,6 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 			cfg.replacePayloads(l);
 			newStream.addActualConfiguration(cfg);
 			fillRtpParameters(newStream);
-			lInfo() << "Add stream of type " << sal_stream_type_to_string(type) << " for " << *dev << " (label "
-			        << label << " and content " << content << ") on local offer of " << *q;
 			success = true;
 		}
 		PayloadTypeHandler::clearPayloadList(l);
@@ -2239,7 +2239,13 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 				// this media session is part of an ad hoc meeting, then the conference server will not request the
 				// client thumbnail stream because the latter offered it
 				const auto &refMd = (isConferenceServer) ? op->getRemoteMediaDescription() : oldMd;
-				const auto &foundStreamIdx = refMd ? refMd->findIdxStreamWithContent(content, deviceLabel) : -1;
+				int foundStreamIdx = -1;
+				if (refMd) {
+					foundStreamIdx = refMd->findIdxStreamWithContent(content, deviceLabel);
+					if (foundStreamIdx == -1) {
+						foundStreamIdx = refMd->findIdxStreamWithContent(content, std::string());
+					}
+				}
 				const auto addStream =
 				    ((foundStreamIdx != -1) ||
 				     (localIsOfferer && !isConferenceServer && (deviceState == ParticipantDevice::State::Joining)) ||
@@ -2264,13 +2270,15 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 					if (!l.empty()) {
 						newStream.name = "Thumbnail " + std::string(sal_stream_type_to_string(type)) + " " +
 						                 participantDevice->getAddress()->toString();
-						const auto mediaDirection =
-						    (type == SalVideo) ? getParams()->getVideoDirection() : getParams()->getAudioDirection();
 						auto dir = SalStreamInactive;
 						if (add) {
+							const auto mediaDirection = (type == SalVideo) ? getParams()->getVideoDirection()
+							                                               : getParams()->getAudioDirection();
 							if (isInLocalConference) {
-								if ((mediaDirection == LinphoneMediaDirectionRecvOnly) ||
-								    (mediaDirection == LinphoneMediaDirectionSendRecv)) {
+								// The client hasn't enabled its camera if the device's thumbnail streams not found in
+								// the reference media description
+								if ((foundStreamIdx != -1) && ((mediaDirection == LinphoneMediaDirectionRecvOnly) ||
+								                               (mediaDirection == LinphoneMediaDirectionSendRecv))) {
 									dir = SalStreamRecvOnly;
 								} else {
 									dir = SalStreamInactive;
@@ -2394,8 +2402,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 								lInfo() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress()
 								        << " remote address " << *q->getRemoteAddress() << "] in " << *conference
 								        << " is adding a stream of type "
-								        << std::string(sal_stream_type_to_string(type)) << " for participant device "
-								        << *devAddress;
+								        << std::string(sal_stream_type_to_string(type)) << " for " << *dev
+								        << " (label: " << devLabel << ")";
 								SalStreamDescription &newParticipantStream = addStreamToMd(md, foundStreamIdx, oldMd);
 								if (isConferenceLayoutActiveSpeaker || (type == SalAudio)) {
 									newParticipantStream.setContent(participantContent);
@@ -2498,6 +2506,10 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							}
 						}
 
+						lInfo() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress()
+						        << " remote address " << *q->getRemoteAddress() << "] in " << *conference
+						        << " is adding a stream of type " << std::string(sal_stream_type_to_string(type))
+						        << " for device with label " << participantLabel;
 						auto &newStream = addStreamToMd(md, static_cast<int>(idx), oldMd);
 						newStream.setContent(contentAttrValue);
 						if (dev) {
@@ -2912,6 +2924,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	                                                  "conference_event_log_enabled", TRUE);
 	bool addDeviceLabels = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "misc",
 	                                                 "add_device_stream_label_to_sdp", 1);
+
 	if (addDeviceLabels && conferenceCreated && eventLogEnabled && participantDevice &&
 	    ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) ||
 	     (deviceState == ParticipantDevice::State::OnHold)) &&

@@ -589,6 +589,7 @@ void linphone_tunnel_enable_logs_with_handler(LinphoneTunnel *tunnel, bool_t ena
 LINPHONE_PUBLIC int linphone_core_get_calls_nb(const LinphoneCore *lc);
 
 void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
+LINPHONE_PUBLIC MediaStream *linphone_call_get_stream_by_idx(LinphoneCall *call, int idx);
 void linphone_call_update_biggest_desc(LinphoneCall *call, LinphonePrivate::SalMediaDescription *md);
 void linphone_call_make_local_media_description_with_params(LinphoneCore *lc,
                                                             LinphoneCall *call,

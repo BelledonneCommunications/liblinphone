@@ -75,6 +75,17 @@ std::shared_ptr<MediaSession> Call::getMediaSession() const {
 	return static_pointer_cast<MediaSession>(getActiveSession());
 }
 
+MediaStream *Call::getMediaStream(int idx) const {
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup &sg = ms->getStreamsGroup();
+	auto lambda = [](Stream *s, size_t idx) { return s->getIndex() == idx; };
+	auto s = sg.lookupStreamInterface<MS2Stream>(lambda, static_cast<size_t>(idx));
+	if (!s) {
+		return nullptr;
+	}
+	return s->getMediaStream();
+}
+
 MediaStream *Call::getMediaStream(LinphoneStreamType type) const {
 	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
 	StreamsGroup &sg = ms->getStreamsGroup();
@@ -93,7 +104,6 @@ MediaStream *Call::getMediaStream(LinphoneStreamType type) const {
 			break;
 	}
 	if (!s) {
-		// lError() << "CallPrivate::getMediaStream() : no stream with type " << type;
 		return nullptr;
 	}
 	return s->getMediaStream();

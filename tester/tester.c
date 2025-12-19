@@ -6248,3 +6248,24 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 		BC_ASSERT_EQUAL(chat_enabled1, chat_enabled2, int, "%d");
 	}
 }
+
+bool_t liblinphone_tester_call_check_video_source_filter(LinphoneCall *call, MSFilterId filter_id, int expected_counter) {
+	int counter = 0;
+	int stream_count = linphone_call_get_stream_count(call);
+	for (int idx = 0; idx < stream_count; idx++) {
+		MediaStream *stream = linphone_call_get_stream_by_idx(call, idx);
+		BC_ASSERT_PTR_NOT_NULL(stream);
+		if (stream && (stream->type == MSVideo)) {
+			VideoStream *vs = (VideoStream *)stream;
+			MSFilter *source = vs->source;
+			if (source) {
+				MSFilterId source_filter_id = ms_filter_get_id(source);
+				if (source_filter_id == filter_id) {
+					counter++;
+				}
+			}
+		}
+	}
+	BC_ASSERT_EQUAL(counter, expected_counter, int, "%0d");
+	return (counter == expected_counter);
+}

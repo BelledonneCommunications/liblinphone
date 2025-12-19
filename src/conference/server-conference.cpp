@@ -2778,6 +2778,12 @@ void ServerConference::enableScreenSharing(const std::shared_ptr<LinphonePrivate
 	if (mConfParams->videoEnabled()) {
 		const auto &device = findParticipantDevice(session);
 		if (device) {
+			auto participant = device->getParticipant();
+			auto role = participant->getRole();
+			if (role != Participant::Role::Speaker) {
+				lError() << *device << " is associated to " << *participant << " whose role is " << Utils::toString(role) << " and therefore it cannot share its screen";
+				return;
+			}
 			const auto screenSharingDevice = getScreenSharingDevice();
 			auto mediaSession = static_pointer_cast<LinphonePrivate::MediaSession>(session);
 			bool isScreenSharingNegotiated = mediaSession->isScreenSharingNegotiated();
@@ -2787,7 +2793,7 @@ void ServerConference::enableScreenSharing(const std::shared_ptr<LinphonePrivate
 			    !screenSharingDevice) {
 				bool changed = device->enableScreenSharing(isScreenSharingNegotiated);
 				lInfo() << "Screen sharing is " << std::string(isScreenSharingNegotiated ? "enabled" : "disabled")
-				        << " for device " << *device->getAddress() << " in " << *this;
+				        << " for " << *device << " in " << *this;
 				mMixerSession->enableScreenSharing(isScreenSharingNegotiated, &mediaSession->getStreamsGroup());
 				if (changed && notify) {
 					// Detect media changes to avoid having to send 2 NOTIFYs:
@@ -3298,25 +3304,34 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 								// participant list and copy subscription event. Otherwise, notify that it has been
 								// added
 								if (otherDevice && (otherDevice != device)) {
-									time_t creationTime = time(nullptr);
-									device->setTimeOfDisconnection(creationTime);
-									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Booted);
-									const auto reason("Reason: SIP;text=address changed");
-									device->setDisconnectionReason(reason);
-									// As the device changed address, notify that the current device has been
-									// removed
-									notifyParticipantDeviceRemoved(creationTime, false, participant, device);
-
+									// This is required because if the call starts before the registration
+									// process, the device address may have an unresolved address whereas the
+									// subscription may have started after the device is fully registered, hence
+									// the full device address is known. In such a case, the server will see two
+									// devices linked to a same participant: one whose address is the contact address
+									// of the INVITE session (normally an IP address and a port) and the other one with
+									// the SUBSCRIBE message contact address. The subscription ends up with the latter
+									// whereas all media releated informations are with the former device. The server
+									// figures it out that the two devices are the same once it receives a reINVITE with
+									// the registered contact address. Here, it has been taken the decision to keep the
+									// device with the up-to-date media informations because the other device may be from
+									// a leftover session, for instance if the client crashes and quickly rejoins the conference.
 									if (!device->getConferenceSubscribeEvent() &&
 									    otherDevice->getConferenceSubscribeEvent()) {
-										// Move subscription event pointer to device.
-										// This is required because if the call starts before the registration
-										// process, the device address may have an unresolved address whereas the
-										// subscription may have started after the device is fully registered, hence
-										// the full device address is known.
+										// Move subscription event pointer to new device.
 										device->setConferenceSubscribeEvent(otherDevice->getConferenceSubscribeEvent());
 										otherDevice->setConferenceSubscribeEvent(nullptr);
 									}
+
+									time_t creationTime = time(nullptr);
+									otherDevice->setTimeOfDisconnection(creationTime);
+									otherDevice->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Booted);
+									const auto reason("Reason: SIP;text=address changed");
+									otherDevice->setDisconnectionReason(reason);
+									// As the device changed address, notify that the current device has been
+									// removed
+									notifyParticipantDeviceRemoved(creationTime, false, participant, otherDevice);
+
 									// Delete device having the same address
 									// First remove device from the device list to avoid sending a participant
 									// device removed

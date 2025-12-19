@@ -379,7 +379,6 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	bool isMe = false;
 	bool isConferenceScreenSharing = false; // Used to check display mode for SendRecv stream (aka isMain())
 	MS2VideoStream *auxStream = nullptr;
-
 	const auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 	if (conference) {
 		auto screenSharingDevice = conference->getScreenSharingDevice();
@@ -400,12 +399,18 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	auto participantDevice = getMediaSession().getParticipantDevice(LinphoneStreamTypeVideo, label);
 	if (!participantDevice) {
 		if (conference && conference->getMe()) {
-			participantDevice = conference->getMe()->findDevice(LinphoneStreamTypeVideo, label, false);
-			// is Me. Q : Me is always local? (multi account)
-			isScreenSharing = (participantDevice && participantDevice->screenSharingEnabled());
+			auto me = conference->getMe();
+			// Search the me device by the media session as its label may not be known yet
+			participantDevice = me->findDevice(getMediaSession().getSharedFromThis(), false);
+			if (!participantDevice) {
+				participantDevice = me->findDevice(LinphoneStreamTypeVideo, label, false);
+			}
 			isMe = !!participantDevice; // Just for safety. In normal case, if no device have been found in MediaSession
 			                            // then it should be in getMe().
 			if (isMe) {
+				// The ParticipantDevice class members are set and reset by the SUBSCRIBE/NOTIFY dialog which is independent from the INVITE session.
+				// It cannot therefore be used to know whether a local device is screen sharing or not.
+				isScreenSharing = ctx.remoteMediaDescription->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute).has_value();
 				// Get auxiliary stream
 				if (contentIsThumbnail) { // Get Main Stream
 					auxStream = dynamic_cast<MS2VideoStream *>(getGroup().lookupMainStream(SalVideo));
@@ -666,8 +671,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 		} else {
 			// Set io from video source
 			if (!videoMixer) {
-				auto videoSource = getVideoSource();
 				io.output.type = MSResourceDefault;
+				auto videoSource = getVideoSource();
 				if (videoSource && isScreenSharing &&
 				    videoSource->getType() == VideoSourceDescriptor::Type::ScreenSharing) {
 					io.input.type = MSResourceScreenSharing;
