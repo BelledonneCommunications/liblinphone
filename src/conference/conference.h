@@ -281,6 +281,7 @@ public:
 	void resetCachedScreenSharingDevice();
 	std::shared_ptr<ParticipantDevice> getCachedScreenSharingDevice() const;
 
+	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 	void updateSubjectInConferenceInfo(const std::string &subject) const;
 	void updateParticipantInConferenceInfo(const std::shared_ptr<Participant> &participant) const;
 	bool updateParticipantInfoInConferenceInfo(std::shared_ptr<ConferenceInfo> &info,
@@ -353,8 +354,6 @@ public:
 
 	virtual std::shared_ptr<Player> getPlayer() const;
 
-	virtual const std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
-
 	bool isChatOnly() const;
 	bool supportsMedia() const;
 
@@ -401,11 +400,12 @@ protected:
 	std::string mUsername = "";
 
 	long long mConferenceInfoId = -1;
+	mutable std::shared_ptr<ConferenceInfo> mConferenceInfo;
 
 	ConferenceInterface::State mState = ConferenceInterface::State::None;
 	std::map<uint32_t, bool> mPendingParticipantsMutes;
 
-	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
+	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const = 0;
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfoWithCustomParticipantList(
 	    const std::shared_ptr<Address> &organizer,
 	    const std::list<std::shared_ptr<Participant>> &invitedParticipants) const;
@@ -451,7 +451,6 @@ protected:
 	std::unique_ptr<LogContextualizer> getLogContextualizer() override;
 
 private:
-	mutable std::shared_ptr<ConferenceInfo> mConferenceInfo;
 	std::shared_ptr<AbstractChatRoom> mChatRoom = nullptr;
 
 	L_DISABLE_COPY(Conference);

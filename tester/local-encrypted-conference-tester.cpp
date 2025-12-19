@@ -931,12 +931,12 @@ static void create_encrypted_conference_with_chat() {
 
 static void create_encrypted_conference_with_chat_and_cores_restart() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, TRUE, TRUE, TRUE, 1, FALSE, TRUE, FALSE,
-	                                 (ms_time(NULL) - 45), FALSE);
+	                                 (ms_time(NULL) - 15), FALSE);
 }
 
 static void create_encrypted_conference_with_chat_network_drops_and_participant_rejoining() {
 	create_conference_with_chat_base(LinphoneConferenceSecurityLevelEndToEnd, FALSE, FALSE, FALSE, -1, TRUE, TRUE, TRUE,
-	                                 (ms_time(NULL) - 45), TRUE);
+	                                 ms_time(NULL), TRUE);
 }
 
 static void scheduling_failure_check(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state) {

@@ -1521,11 +1521,15 @@ static void secure_one_to_one_chat_room_with_subscribe_not_replied(void) {
 }
 
 static void secure_group_chat_room_with_client_removed_and_reinvinted(void) {
-	group_chat_room_with_client_removed_and_reinvinted_base(true, false);
+	group_chat_room_with_client_removed_and_reinvinted_base(true, false, false);
 }
 
 static void secure_group_chat_room_with_client_removed_and_reinvinted_after_database_corruption(void) {
-	group_chat_room_with_client_removed_and_reinvinted_base(true, true);
+	group_chat_room_with_client_removed_and_reinvinted_base(true, true, false);
+}
+
+static void secure_group_chat_room_with_client_removed_and_reinvinted_after_database_corruption_and_core_restart(void) {
+	group_chat_room_with_client_removed_and_reinvinted_base(true, true, true);
 }
 
 } // namespace LinphoneTest
@@ -1569,7 +1573,12 @@ static test_t local_conference_secure_chat_tests[] = {
     TEST_NO_TAG("Secure group chat with client removed and then reinvited",
                 LinphoneTest::secure_group_chat_room_with_client_removed_and_reinvinted),
     TEST_NO_TAG("Secure group chat with client removed and then reinvited after database corruption",
-                LinphoneTest::secure_group_chat_room_with_client_removed_and_reinvinted_after_database_corruption)};
+                LinphoneTest::secure_group_chat_room_with_client_removed_and_reinvinted_after_database_corruption),
+    TEST_ONE_TAG(
+        "Secure group chat with client removed and then reinvited after database corruption and core restart",
+        LinphoneTest::
+            secure_group_chat_room_with_client_removed_and_reinvinted_after_database_corruption_and_core_restart,
+        "LeaksMemory" /*due to core restart*/)};
 
 test_suite_t local_conference_test_suite_secure_chat = {
     "Local conference tester (Secure Chat)",

@@ -2269,6 +2269,7 @@ static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_
 
 	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionInactive, callee_video_direction);
 	callee_call = linphone_core_get_call_by_remote_address2(callee_mgr->lc, caller_mgr->identity);
+	if (!BC_ASSERT_PTR_NOT_NULL(callee_call)) goto end;
 	in_call_params = linphone_core_create_call_params(callee_mgr->lc, callee_call);
 	linphone_call_params_set_audio_direction(in_call_params, LinphoneMediaDirectionSendRecv);
 	linphone_call_params_set_video_direction(in_call_params, callee_video_direction);

@@ -177,8 +177,8 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 				updateConferenceInformation();
 			}
 		} else {
-				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
-			[[maybe_unused]] const auto &conferenceInfo = createOrGetConferenceInfo();
+			// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
+			[[maybe_unused]] auto conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
 			if (conferenceInfo) {
 				auto &mainDb = core->getPrivate()->mainDb;
@@ -1062,7 +1062,8 @@ void ServerConference::finalizeCreation() {
 					session->redirect(addr);
 				}
 
-				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
+				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class
+				// member
 				[[maybe_unused]] const auto &conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
 				// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
@@ -1306,7 +1307,8 @@ ServerConference::notifyParticipantDeviceStateChanged(time_t creationTime,
 			time_t newExpiryTime = deviceTimeOfJoining + expiry;
 			if (newExpiryTime > actualExpiryTime) {
 				mConfParams->setExpiryTime(newExpiryTime);
-				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class member
+				// createOrGetConferenceInfo assign a conference information to the mConferenceInfo Conference class
+				// member
 				[[maybe_unused]] auto conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
 				if (mainDb) {

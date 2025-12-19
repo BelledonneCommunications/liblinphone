@@ -1655,7 +1655,9 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 	}
 }
 
-void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted, bool corrupt_database) {
+void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted,
+                                                             bool corrupt_database,
+                                                             bool restart_core_after_corruption) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 
@@ -1749,16 +1751,56 @@ void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted, boo
 				info->setOrganizer(Address::toCpp(marie.getCMgr()->identity)->getSharedFromThis());
 				info->setUri(chatRoom->getConferenceAddress());
 				info->setCapability(LinphoneStreamTypeAudio, true);
-				info->setCapability(LinphoneStreamTypeVideo, false);
-				info->setCapability(LinphoneStreamTypeText, true);
+				info->setCapability(LinphoneStreamTypeVideo, true);
+				info->setCapability(LinphoneStreamTypeText, false);
 				L_GET_PRIVATE_FROM_C_OBJECT(laure.getLc())->mainDb->insertConferenceInfo(info);
 				L_GET_PRIVATE_FROM_C_OBJECT(laure.getLc())
 				    ->mainDb->insertChatRoom(chatRoom, chatRoom->getConference()->getLastNotify(), true);
 			}
+
+			if (restart_core_after_corruption) {
+				coresList = bctbx_list_remove(coresList, laure.getLc());
+				// Restart Laure
+				ms_message("%s is restarting its core just after its database has been corrupted",
+				           linphone_core_get_identity(laure.getLc()));
+				laure.reStart();
+				coresList = bctbx_list_append(coresList, laure.getLc());
+
+				if (encrypted) {
+					BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
+				}
+
+				BC_ASSERT_EQUAL(laure.getCore().getChatRooms().size(), 1, size_t, "%zu");
+				for (auto chatRoom : laure.getCore().getChatRooms()) {
+					BC_ASSERT_FALSE(linphone_chat_room_has_been_left(chatRoom->toC()));
+					BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom->toC()), 2, int, "%d");
+					BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(chatRoom->toC()), msg_cnt, int, "%0d");
+				}
+				laureCr = linphone_core_search_chat_room(laure.getLc(), NULL, NULL, confAddr, NULL);
+				BC_ASSERT_PTR_NOT_NULL(laureCr);
+				if (corrupt_database) {
+					LinphoneConference *conference = linphone_core_search_conference_2(laure.getLc(), confAddr);
+					BC_ASSERT_PTR_NOT_NULL(conference);
+					if (conference) {
+						const LinphoneConferenceParams *conference_params =
+						    linphone_conference_get_current_params(conference);
+						BC_ASSERT_FALSE(linphone_conference_params_audio_enabled(conference_params));
+						BC_ASSERT_FALSE(linphone_conference_params_video_enabled(conference_params));
+						BC_ASSERT_TRUE(linphone_conference_params_chat_enabled(conference_params));
+						BC_ASSERT_EQUAL(linphone_conference_get_state(conference), LinphoneConferenceStateCreated, int,
+						                "%i");
+					}
+					BC_ASSERT_PTR_EQUAL(laureCr, linphone_conference_get_chat_room(conference));
+					if (laureCr) {
+						BC_ASSERT_FALSE(linphone_chat_room_has_been_left(laureCr));
+					}
+				}
+			}
 		}
 
 		for (ClientConference &core : cores) {
-			BC_ASSERT_EQUAL(core.getCore().getChatRooms().size(), 1, size_t, "%zu");
+			size_t expected_chatrooms = 1;
+			BC_ASSERT_EQUAL(core.getCore().getChatRooms().size(), expected_chatrooms, size_t, "%zu");
 			for (auto chatRoom : core.getCore().getChatRooms()) {
 				std::string msg_text = std::string("Testing if the chat service is up and running. Chatroom ") +
 				                       chatRoom->getConferenceAddress()->toString() + std::string(" client ") +
@@ -1818,10 +1860,20 @@ void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted, boo
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
 		}
 
-		size_t expected_chatrooms = (!!corrupt_database) ? 0 : 1;
+		size_t expected_chatrooms = 1;
 		BC_ASSERT_EQUAL(laure.getCore().getChatRooms().size(), expected_chatrooms, size_t, "%zu");
 		for (auto chatRoom : laure.getCore().getChatRooms()) {
-			BC_ASSERT_TRUE(linphone_chat_room_has_been_left(chatRoom->toC()));
+			LinphoneChatRoomState state = LinphoneChatRoomStateNone;
+			if (!corrupt_database || restart_core_after_corruption) {
+				BC_ASSERT_TRUE(linphone_chat_room_has_been_left(chatRoom->toC()));
+				state = LinphoneChatRoomStateTerminated;
+			} else {
+				// At restart, the core figures out the database has been corrupted, therefore it tries to fix it by
+				// removing the has_been_left flag and deleting the conference information
+				BC_ASSERT_FALSE(linphone_chat_room_has_been_left(chatRoom->toC()));
+				state = LinphoneChatRoomStateCreated;
+			}
+			BC_ASSERT_EQUAL(linphone_chat_room_get_state(chatRoom->toC()), state, int, "%i");
 			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom->toC()), 2, int, "%d");
 			BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(chatRoom->toC()), msg_cnt, int, "%0d");
 		}
@@ -1833,11 +1885,23 @@ void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted, boo
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
 				const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(conference);
-				BC_ASSERT_TRUE(linphone_conference_params_audio_enabled(conference_params));
+				BC_ASSERT_FALSE(linphone_conference_params_audio_enabled(conference_params));
 				BC_ASSERT_FALSE(linphone_conference_params_video_enabled(conference_params));
 				BC_ASSERT_TRUE(linphone_conference_params_chat_enabled(conference_params));
+				LinphoneConferenceState state = (restart_core_after_corruption) ? LinphoneConferenceStateTerminated
+				                                                                : LinphoneConferenceStateCreated;
+				BC_ASSERT_EQUAL(linphone_conference_get_state(conference), state, int, "%i");
 			}
 			BC_ASSERT_PTR_EQUAL(laureCr, linphone_conference_get_chat_room(conference));
+			if (laureCr) {
+				if (restart_core_after_corruption) {
+					BC_ASSERT_TRUE(linphone_chat_room_has_been_left(laureCr));
+				} else {
+					// At restart, the core figures out the database has been corrupted, therefore it tries to fix it by
+					// removing the has_been_left flag and deleting the conference information
+					BC_ASSERT_FALSE(linphone_chat_room_has_been_left(laureCr));
+				}
+			}
 		}
 
 		initialMarieStats = marie.getStats();
@@ -1861,14 +1925,6 @@ void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted, boo
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneChatRoomStateCreated,
 		                             initialLaureStats.number_of_LinphoneChatRoomStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
-		if (corrupt_database) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateCreationPending,
-			                             initialLaureStats.number_of_LinphoneConferenceStateCreationPending + 1,
-			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateCreated,
-			                             initialLaureStats.number_of_LinphoneConferenceStateCreated + 1,
-			                             liblinphone_tester_sip_timeout));
-		}
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participants_added,
 		                             initialMarieStats.number_of_participants_added + 1,
 		                             liblinphone_tester_sip_timeout));

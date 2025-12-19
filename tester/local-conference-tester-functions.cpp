@@ -188,7 +188,9 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
                                         time_t end_time) {
 	if (end_time > 0) {
 		long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus->lc);
-		if (focus_cleanup_window > 0) {
+		long max_cleanup_window = 20;
+		bool cleanup_period_too_big = (focus_cleanup_window > max_cleanup_window);
+		if ((focus_cleanup_window > 0) && !cleanup_period_too_big) {
 			// The conference information is only deleted by the cleanup timer. Hence even if the end time went by, the
 			// conference information might not be deleted
 			CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(focus_cleanup_window), [] { return false; });
@@ -208,18 +210,32 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 			ms_message("Conference information in %s's database for conference %s is %p",
 			           linphone_core_get_identity(mgr->lc), conferenceAddressString, info);
 
-			if ((mgr == focus) && (time_left == 1) && (focus_cleanup_window > 0)) {
+			bool_t is_focus = (mgr == focus);
+			if (is_focus && cleanup_period_too_big) {
+				ms_message("Do not check conference information on the focus core because the cleanup period %0ld is "
+				           "larger than the maximum allowed for this check: %0ld",
+				           focus_cleanup_window, max_cleanup_window);
+				continue;
+			}
+
+			if (is_focus && (time_left == 0) && (focus_cleanup_window > 0)) {
 				ms_message("Wait for 1 more second before checking the existence of conference information in %s's "
 				           "database for conference %s because the time left is %0ld second(s) and deletion might "
 				           "happen within milliseconds",
 				           linphone_core_get_identity(mgr->lc), conferenceAddressString, time_left);
-				CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(1), [] { return false; });
+				CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(1), [&mgr, &confAddr] {
+					LinphoneConferenceInfo *info =
+					    linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+					return (info == NULL);
+				});
 			}
-			if ((mgr == focus) && (time_left <= 0) && (focus_cleanup_window > 0)) {
+
+			if (is_focus && (time_left <= 0) && (focus_cleanup_window > 0)) {
 				BC_ASSERT_PTR_NULL(info);
 			} else {
 				BC_ASSERT_PTR_NOT_NULL(info);
 			}
+
 			if (info) {
 				linphone_conference_info_unref(info);
 			}

@@ -298,6 +298,21 @@ void ClientConference::updateAndSaveConferenceInformations() {
 	}
 }
 
+std::shared_ptr<ConferenceInfo> ClientConference::createOrGetConferenceInfo() const {
+	// Do not create conference infos if the conference doesn't have audio or video capabilities
+	// Pure chatrooms do not need a conference information
+	mConferenceInfo = nullptr;
+
+	auto mainSession = getMainSession();
+	bool canCreateConferenceInformations =
+	    !isChatOnly() && mainSession && !CallSession::isEarlyState(mainSession->getState());
+	if (!canCreateConferenceInformations) {
+		return mConferenceInfo;
+	}
+
+	return Conference::createOrGetConferenceInfo();
+}
+
 std::shared_ptr<ConferenceInfo> ClientConference::createConferenceInfo() const {
 	const auto organizer = getOrganizer();
 	return createConferenceInfoWithCustomParticipantList(organizer, getFullParticipantList());
@@ -1360,6 +1375,7 @@ void ClientConference::onSubjectChanged(BCTBX_UNUSED(const std::shared_ptr<Confe
 	        << " because the core has been notified that the subject has been changed to " << getSubject();
 	updateAndSaveConferenceInformations();
 
+#ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
 		if (event->getFullState()) return;
@@ -1368,6 +1384,7 @@ void ClientConference::onSubjectChanged(BCTBX_UNUSED(const std::shared_ptr<Confe
 		_linphone_chat_room_notify_subject_changed(cr, L_GET_C_BACK_PTR(event));
 		linphone_core_notify_chat_room_subject_changed(getCore()->getCCore(), cr);
 	}
+#endif // HAVE_ADVANCED_IM
 }
 
 void ClientConference::onParticipantDeviceAdded(
@@ -1448,11 +1465,13 @@ void ClientConference::onParticipantDeviceRemoved(const std::shared_ptr<Conferen
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
 		chatRoom->addEvent(event);
 		_linphone_chat_room_notify_participant_device_removed(chatRoom->toC(), L_GET_C_BACK_PTR(event));
 	}
+#endif // HAVE_ADVANCED_IM
 }
 
 void ClientConference::onParticipantDeviceStateChanged(
@@ -1497,6 +1516,7 @@ void ClientConference::onParticipantDeviceStateChanged(
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
 		if (event->getFullState()) return;
@@ -1505,6 +1525,7 @@ void ClientConference::onParticipantDeviceStateChanged(
 		_linphone_chat_room_notify_participant_device_state_changed(chatRoom->toC(), L_GET_C_BACK_PTR(event),
 		                                                            (LinphoneParticipantDeviceState)device->getState());
 	}
+#endif // HAVE_ADVANCED_IM
 }
 
 void ClientConference::onParticipantDeviceMediaAvailabilityChanged(
@@ -1531,6 +1552,7 @@ void ClientConference::onParticipantDeviceMediaAvailabilityChanged(
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	const auto &chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
 		if (event->getFullState()) return;
@@ -1538,6 +1560,7 @@ void ClientConference::onParticipantDeviceMediaAvailabilityChanged(
 		_linphone_chat_room_notify_participant_device_media_availability_changed(chatRoom->toC(),
 		                                                                         L_GET_C_BACK_PTR(event));
 	}
+#endif // HAVE_ADVANCED_IM
 }
 
 void ClientConference::onAvailableMediaChanged(

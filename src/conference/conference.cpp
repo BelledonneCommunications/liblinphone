@@ -1470,11 +1470,23 @@ void Conference::setOrganizer(const std::shared_ptr<Address> &organizer) const {
 	mOrganizer = organizer->clone()->toSharedPtr();
 }
 
-const std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
+const std::shared_ptr<ParticipantDevice> Conference::getFocusOwnerDevice() const {
+	std::shared_ptr<ParticipantDevice> focusOwnerDevice = nullptr;
+	const auto devices = getParticipantDevices();
+	const auto deviceIt = std::find_if(devices.cbegin(), devices.cend(), [](const auto &device) {
+		return (device->getJoiningMethod() == ParticipantDevice::JoiningMethod::FocusOwner);
+	});
+	if (deviceIt != devices.cend()) {
+		focusOwnerDevice = (*deviceIt);
+	}
+	return focusOwnerDevice;
+}
+
+std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
 	// Do not create conference infos if the conference doesn't have audio or video capabilities
 	// Pure chatrooms do not need a conference information
 	mConferenceInfo = nullptr;
-	if (!mConfParams->audioEnabled() && !mConfParams->videoEnabled()) return mConferenceInfo;
+	if (isChatOnly()) return mConferenceInfo;
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
@@ -1489,22 +1501,6 @@ const std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() co
 		mConferenceInfo = createConferenceInfo();
 	}
 	return mConferenceInfo;
-}
-
-std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
-	return nullptr;
-}
-
-const std::shared_ptr<ParticipantDevice> Conference::getFocusOwnerDevice() const {
-	std::shared_ptr<ParticipantDevice> focusOwnerDevice = nullptr;
-	const auto devices = getParticipantDevices();
-	const auto deviceIt = std::find_if(devices.cbegin(), devices.cend(), [](const auto &device) {
-		return (device->getJoiningMethod() == ParticipantDevice::JoiningMethod::FocusOwner);
-	});
-	if (deviceIt != devices.cend()) {
-		focusOwnerDevice = (*deviceIt);
-	}
-	return focusOwnerDevice;
 }
 
 const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() const {

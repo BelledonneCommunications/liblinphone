@@ -6596,21 +6596,31 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						    soci::into(conferenceInfoRow), soci::use(conferenceInfoId);
 						confInfo = d->selectConferenceInfo(conferenceInfoRow);
 					}
+					bool removeHasBeenLeftFlag = false;
 					if (confInfo) {
-						bool audio = confInfo->getCapability(LinphoneStreamTypeAudio);
-						bool video = confInfo->getCapability(LinphoneStreamTypeVideo);
-						params->enableAudio(audio);
-						params->enableVideo(video);
-						params->setDescription(confInfo->getDescription());
-						const auto startTime = confInfo->getDateTime();
-						params->setStartTime(startTime);
-						const auto duration = confInfo->getDuration();
-						if ((startTime >= 0) && (duration > 0)) {
-							// The duration of the conference is stored in minutes in the conference information
-							params->setEndTime(startTime + duration * 60);
+						if (confInfo->getCapability(LinphoneStreamTypeText)) {
+							bool audio = confInfo->getCapability(LinphoneStreamTypeAudio);
+							bool video = confInfo->getCapability(LinphoneStreamTypeVideo);
+							params->enableAudio(audio);
+							params->enableVideo(video);
+							params->setDescription(confInfo->getDescription());
+							const auto startTime = confInfo->getDateTime();
+							params->setStartTime(startTime);
+							const auto duration = confInfo->getDuration();
+							if ((startTime >= 0) && (duration > 0)) {
+								// The duration of the conference is stored in minutes in the conference information
+								params->setEndTime(startTime + duration * 60);
+							}
+							params->setEarlierJoiningTime(confInfo->getEarlierJoiningTime());
+							params->setExpiryTime(confInfo->getExpiryTime());
+						} else {
+							lInfo() << "Chatroom [" << *conferenceAddress
+							        << "] is associated to a conference information with databse ID "
+							        << conferenceInfoId << " that doesn't have chat capabilities.";
+							deleteConferenceInfo(conferenceInfoId, false);
+							removeHasBeenLeftFlag = true;
+							confInfo = nullptr;
 						}
-						params->setEarlierJoiningTime(confInfo->getEarlierJoiningTime());
-						params->setExpiryTime(confInfo->getExpiryTime());
 					}
 
 					shared_ptr<Participant> me;
@@ -6657,10 +6667,16 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 							continue;
 						}
 						bool hasBeenLeft = !!chatRoomRow.get<int>(8, 0);
+						if (removeHasBeenLeftFlag) {
+							updateFlags = true;
+							hasBeenLeft = false;
+						} else if (confInfo && !hasBeenLeft) {
+							updateFlags = true;
+							hasBeenLeft = true;
+						}
 						conference = (new ClientConference(core, nullptr, params))->toSharedPtr();
 						conference->initFromDb(me, conferenceId, lastNotifyId, hasBeenLeft);
 						chatRoom = conference->getChatRoom();
-						updateFlags = confInfo && !hasBeenLeft;
 						if (hasBeenLeft) {
 							conference->setState(ConferenceInterface::State::Terminated);
 						} else {
@@ -6762,16 +6778,16 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					         ", local_sip_address_id = " + Utils::toString(localSipAddressId) + " ";
 				}
 				if (updateFlags) {
+					const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
 					// If we end up here, it means that there was a problem with a media conference supporting chat
 					// capabilities. The core might have lost the connection while the conference was ongoing therefore
 					// the database could not be updated to reflect the termination of the conference.
 					lInfo() << "Updating flags of chatroom [" << chatRoom << "] with ID " << dbId
 					        << ": setting it as terminated and reset the last notify ID to 0";
-					query += "flags = 1, last_notify_id = 0 ";
+					query += "flags = " + Utils::toString(flags) + ", last_notify_id = 0 ";
 					auto chatConference = chatRoom->getConference();
 					if (chatConference) {
 						chatConference->resetLastNotify();
-						chatConference->setState(ConferenceInterface::State::Terminated);
 					}
 				}
 				query += "WHERE id = :chatRoomId";
@@ -7631,18 +7647,20 @@ void MainDb::insertExpiredConference(const std::shared_ptr<Address> &uri) {
 #endif
 }
 
-void MainDb::deleteConferenceInfo(long long dbConferenceId) {
+void MainDb::deleteConferenceInfo(long long dbConferenceId, bool doCleanup) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
-	long long peerId;
 	soci::session *session = d->dbSession.getBackendSession();
-	std::string peerIdQuery =
-	    "SELECT uri_sip_address_id FROM conference_info WHERE (conference_info.id = :conferenceInfoId)";
-	*session << peerIdQuery, soci::use(dbConferenceId), soci::into(peerId);
-	if (session->got_data()) {
-		long long chatRoomId = d->selectChatRoomId(peerId);
-		if (chatRoomId >= 0) {
-			d->deleteChatRoom(chatRoomId);
+	if (doCleanup) {
+		long long peerId;
+		std::string peerIdQuery =
+		    "SELECT uri_sip_address_id FROM conference_info WHERE (conference_info.id = :conferenceInfoId)";
+		*session << peerIdQuery, soci::use(dbConferenceId), soci::into(peerId);
+		if (session->got_data()) {
+			long long chatRoomId = d->selectChatRoomId(peerId);
+			if (chatRoomId >= 0) {
+				d->deleteChatRoom(chatRoomId);
+			}
 		}
 	}
 
