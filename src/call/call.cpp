@@ -1518,7 +1518,7 @@ std::shared_ptr<Event> Call::createNotify(const std::string &eventName) {
 		return nullptr;
 	}
 	SalSubscribeOp *op = new SalSubscribeOp(callOp, eventName);
-	return (new EventSubscribe(getCore()->getSharedFromThis(), LinphoneSubscriptionIncoming, eventName, op))
+	return (new EventSubscribe(getCore()->getSharedFromThis(), op, LinphoneSubscriptionIncoming, eventName))
 	    ->toSharedPtr();
 }
 

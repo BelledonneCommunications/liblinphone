@@ -115,7 +115,7 @@ const string &Event::getName() const {
 	return mName;
 }
 
-const std::shared_ptr<Address> Event::getFrom() const {
+std::shared_ptr<Address> Event::getFrom() const {
 	return cacheFrom();
 }
 
@@ -123,7 +123,7 @@ void Event::setFrom(const std::shared_ptr<Address> &fromAddress) {
 	mFromAddress = fromAddress->clone()->toSharedPtr();
 }
 
-const std::shared_ptr<Address> Event::getTo() const {
+std::shared_ptr<Address> Event::getTo() const {
 	return cacheTo();
 }
 

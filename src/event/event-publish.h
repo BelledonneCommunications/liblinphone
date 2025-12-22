@@ -33,11 +33,13 @@ class LINPHONE_PUBLIC EventPublish : public Event {
 public:
 	EventPublish(const std::shared_ptr<Core> &core);
 	EventPublish(const std::shared_ptr<Core> &core, LinphonePrivate::SalPublishOp *op, const std::string &name);
+	// Use specified Account to create the EventPublish.
 	EventPublish(const std::shared_ptr<Core> &core,
 	             const std::shared_ptr<Account> &account,
 	             const std::shared_ptr<const Address> &resource,
 	             const std::string &event,
 	             int expires);
+	// Determine account automatically
 	EventPublish(const std::shared_ptr<Core> &core,
 	             const std::shared_ptr<const Address> &resource,
 	             const std::string &event,

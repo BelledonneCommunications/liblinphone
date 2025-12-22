@@ -31,26 +31,23 @@ class Account;
 
 class LINPHONE_PUBLIC EventSubscribe : public Event {
 public:
-	EventSubscribe(const std::shared_ptr<Core> &core,
-	               LinphoneSubscriptionDir dir,
-	               const std::string &name,
-	               LinphonePrivate::SalSubscribeOp *op);
-	EventSubscribe(const std::shared_ptr<Core> &core,
-	               LinphoneSubscriptionDir dir,
-	               const std::string &name,
-	               int expires);
+	// Create from incoming SUBSCRIBE or subscription-less incoming NOTIFY
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               SalSubscribeOp *op,
 	               LinphoneSubscriptionDir dir,
 	               const std::string &name,
-	               bool isOutOfDialog);
+	               bool isOutOfDialog = false);
+
+	// Out of dialog, subscription-less outgoing NOTIFY
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               const std::shared_ptr<const Address> &resource,
 	               const std::string &event);
+	// Outgoing SUBSCRIBE with account automatically guessed
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               const std::shared_ptr<const Address> &resource,
 	               const std::string &event,
 	               int expires);
+	// Outgoing SUBSCRIBE with specified account
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               const std::shared_ptr<const Address> &resource,
 	               const std::shared_ptr<Account> &account,
@@ -81,6 +78,12 @@ public:
 	void unpublish() override;
 
 	void terminate() override;
+
+protected:
+	EventSubscribe(const std::shared_ptr<Core> &core,
+	               LinphoneSubscriptionDir dir,
+	               const std::string &name,
+	               int expires);
 
 private:
 	LinphoneSubscriptionDir mDir = LinphoneSubscriptionInvalidDir;

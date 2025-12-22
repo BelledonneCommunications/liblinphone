@@ -82,17 +82,10 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
 	if ((!resource || !resource->isValid()) && account) resource = account->getAccountParams()->getIdentityAddress();
 
 	setExpires(expires);
-	if (!account) {
-		auto coreAccount = core->lookupKnownAccount(resource, true);
-		linphone_configure_op_with_account(
-		    core->getCCore(), mOp, resource->toC(), nullptr,
-		    !!linphone_config_get_int(core->getCCore()->config, "sip", "publish_msg_with_contact", 0),
-		    coreAccount->toC());
-	} else {
-		linphone_configure_op_with_account(
-		    core->getCCore(), mOp, resource->toC(), nullptr,
-		    !!linphone_config_get_int(core->getCCore()->config, "sip", "publish_msg_with_contact", 0), account->toC());
-	}
+	linphone_configure_op_with_account(
+	    core->getCCore(), mOp, resource->toC(), nullptr,
+	    !!linphone_config_get_int(core->getCCore()->config, "sip", "publish_msg_with_contact", 0),
+	    bellesip::toC(account));
 
 	mOp->setManualRefresherMode(
 	    !linphone_config_get_int(core->getCCore()->config, "sip", "refresh_generic_publish", 1));
@@ -102,7 +95,7 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
                            const std::shared_ptr<const Address> &resource,
                            const string &event,
                            int expires)
-    : EventPublish(core, nullptr, resource, event, expires) {
+    : EventPublish(core, core->lookupKnownAccount(resource, true), resource, event, expires) {
 }
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,

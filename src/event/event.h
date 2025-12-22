@@ -75,10 +75,10 @@ public:
 
 	const std::string &getName() const;
 
-	const std::shared_ptr<Address> getFrom() const;
+	std::shared_ptr<Address> getFrom() const;
 	void setFrom(const std::shared_ptr<Address> &fromAddress);
 
-	const std::shared_ptr<Address> getTo() const;
+	std::shared_ptr<Address> getTo() const;
 	void setTo(const std::shared_ptr<Address> &toAddress);
 
 	const std::string &getCallId() const;

@@ -71,7 +71,7 @@ LinphoneEvent *_linphone_core_create_publish(
 LinphoneEvent *
 linphone_core_create_publish(LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires) {
 	CoreLogContextualizer logContextualizer(lc);
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NULL, Address::toCpp(resource)->getSharedFromThis(),
+	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
 	                         L_C_TO_STRING(event), expires))
 	    ->toC();
 }
