@@ -104,7 +104,7 @@ void _linphone_proxy_config_destroy(LinphoneProxyConfig *cfg) {
 }
 
 void _linphone_proxy_config_release(LinphoneProxyConfig *cfg) {
-	Account::toCpp(cfg->account)->releaseOps();
+	Account::toCpp(cfg->account)->release();
 	belle_sip_object_unref(cfg);
 }
 

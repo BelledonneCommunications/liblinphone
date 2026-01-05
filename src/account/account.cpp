@@ -85,7 +85,7 @@ Account::~Account() {
 	if (mPresenceModel) linphone_presence_model_unref(mPresenceModel);
 
 	setConfig(nullptr);
-	releaseOps();
+	release();
 }
 
 Account *Account::clone() const {
@@ -323,7 +323,11 @@ void Account::triggerDeletion() {
 
 void Account::cancelDeletion() {
 	if (mDeletionTimer) {
-		Core::destroyTimer(mDeletionTimer);
+		try {
+			getCore()->destroyTimer(mDeletionTimer);
+		} catch (...) {
+			// ignored, this should not happen.
+		}
 		mDeletionTimer = nullptr;
 	}
 }
@@ -942,7 +946,8 @@ int Account::getUnreadChatMessageCount() const {
 	try {
 		count = getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
 	} catch (const std::bad_weak_ptr &) {
-		lError() << "Unable to retrieve the number of unread messages for " << *this << " because the core has already been destroyed";
+		lError() << "Unable to retrieve the number of unread messages for " << *this
+		         << " because the core has already been destroyed";
 	}
 	return count;
 }
@@ -1466,7 +1471,7 @@ bool Account::check() {
 	return true;
 }
 
-void Account::releaseOps() {
+void Account::release() {
 	if (mOp) {
 		mOp->release();
 		mOp = nullptr;
@@ -1476,6 +1481,7 @@ void Account::releaseOps() {
 		mPresencePublishEvent->terminate();
 		mPresencePublishEvent = nullptr;
 	}
+	cancelDeletion();
 }
 
 void Account::resolveDependencies() {

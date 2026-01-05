@@ -20,9 +20,9 @@
 
 #include <algorithm>
 
-#include <bctoolbox/defs.h>
-#include <bctoolbox/list.h>
-#include <bctoolbox/regex.h>
+#include "bctoolbox/defs.h"
+#include "bctoolbox/list.h"
+#include "bctoolbox/regex.h"
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
@@ -30,6 +30,7 @@
 #include "conference/conference-params.h"
 #include "conference/conference.h"
 #include "conference/participant.h"
+#include "core/core-p.h"
 #include "friend/friend-list.h"
 #include "friend/friend.h"
 #include "linphone/api/c-account-params.h"
@@ -66,18 +67,34 @@ LINPHONE_BEGIN_NAMESPACE
 static const std::regex charactersToEscape(R"([\.\^\$\+\(\)\[\]\{\}\|\?\*])");
 
 MagicSearch::MagicSearch(const shared_ptr<Core> &core) : CoreAccessor(core) {
+	L_GET_PRIVATE(core)->registerListener(this);
+}
+
+void MagicSearch::onGlobalStateChanged(LinphoneGlobalState state) {
+	if (state == LinphoneGlobalShutdown) {
+		destroyIterateTimer();
+	}
 }
 
 MagicSearch::~MagicSearch() {
-	resetSearchCache();
-	if (mIteration) {
-		Core::destroyTimer(mIteration);
-		mIteration = nullptr;
+	try {
+		L_GET_PRIVATE(getCore())->unregisterListener(this);
+		destroyIterateTimer();
+	} catch (...) {
+		// The core is gone already, nothing to do.
 	}
+	resetSearchCache();
 }
 
 MagicSearch *MagicSearch::clone() const {
 	return nullptr;
+}
+
+void MagicSearch::destroyIterateTimer() {
+	if (mIteration) {
+		getCore()->destroyTimer(mIteration);
+		mIteration = nullptr;
+	}
 }
 
 void MagicSearch::setMinWeight(const unsigned int weight) {
@@ -171,8 +188,7 @@ bool MagicSearch::iterate(void) {
 		} else mState = STATE_END;
 	}
 	if (mState == STATE_END && mIteration) {
-		Core::destroyTimer(mIteration);
-		mIteration = NULL;
+		destroyIterateTimer();
 		continueLoop = false;
 	}
 	return continueLoop;

@@ -282,7 +282,7 @@ void StreamsGroup::stop() {
 
 	lInfo() << *this << ": stopping";
 	if (mBandwidthReportTimer) {
-		Core::destroyTimer(mBandwidthReportTimer);
+		getCore().destroyTimer(mBandwidthReportTimer);
 		mBandwidthReportTimer = nullptr;
 	}
 	for (auto &stream : mStreams) {

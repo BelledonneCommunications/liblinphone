@@ -52,7 +52,8 @@ typedef void (*MagicSearchCallback)(std::list<std::shared_ptr<Friend>> friends, 
 class LINPHONE_PUBLIC MagicSearch : public bellesip::HybridObject<LinphoneMagicSearch, MagicSearch>,
                                     public UserDataAccessor,
                                     public CallbacksHolder<MagicSearchCbs>,
-                                    public CoreAccessor {
+                                    public CoreAccessor,
+                                    protected CoreListener {
 public:
 	friend class SearchAsyncData;
 
@@ -379,7 +380,10 @@ public:
 	 */
 	bool iterate(void);
 
+	virtual void onGlobalStateChanged(LinphoneGlobalState state) override;
+
 private:
+	void destroyIterateTimer();
 	void setupRegex(const std::string &filter);
 
 	int mState = 0;

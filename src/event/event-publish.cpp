@@ -213,6 +213,7 @@ void EventPublish::unpublish() {
 void EventPublish::terminate() {
 	// if event was already terminated (including on error), we should not terminate it again
 	// otherwise it will be unreffed twice.
+	stopTimeoutHandling();
 	if (mPublishState == LinphonePublishError || mPublishState == LinphonePublishCleared) {
 		return;
 	}
@@ -245,7 +246,11 @@ void EventPublish::startTimeoutHandling() {
 void EventPublish::stopTimeoutHandling() {
 	if (mTimer) {
 		lInfo() << "stopTimeoutHandling()";
-		Core::destroyTimer(mTimer);
+		try {
+			getCore()->destroyTimer(mTimer);
+		} catch (...) {
+			// ignored.
+		}
 		mTimer = nullptr;
 	}
 }

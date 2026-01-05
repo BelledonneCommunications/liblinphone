@@ -676,7 +676,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 void MS2AudioStream::stop() {
 	if (mMediaLostCheckTimer) {
-		Core::destroyTimer(mMediaLostCheckTimer);
+		getCore().destroyTimer(mMediaLostCheckTimer);
 		mMediaLostCheckTimer = nullptr;
 	}
 	MS2Stream::stop();
