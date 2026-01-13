@@ -304,7 +304,7 @@ namespace Linphone
 		internal protected void CleanStringArrayPtrs(IntPtr l)
 		{
 			IntPtr elem;
-			for (elem = l; elem != null; elem = bctbx_list_next(elem)){
+			for (elem = l; elem != IntPtr.Zero; elem = bctbx_list_next(elem)){
 				bctbx_free(bctbx_list_get_data(elem));
 			}
 			bctbx_list_free(l);
