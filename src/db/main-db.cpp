@@ -1317,7 +1317,7 @@ long long MainDbPrivate::findExpiredConferenceId(const std::shared_ptr<Address> 
 	soci::session *session = dbSession.getBackendSession();
 	const long long &uriSipAddressId = insertSipAddress(uri);
 	long long id;
-	*session << "SELECT id FROM expired_conferences WHERE (expired_conferences.uri_sip_address_id == "
+	*session << "SELECT id FROM expired_conferences WHERE (expired_conferences.uri_sip_address_id = "
 	            ":uriSipAddressId)",
 	    soci::use(uriSipAddressId), soci::into(id);
 	return session->got_data() ? id : -1;
