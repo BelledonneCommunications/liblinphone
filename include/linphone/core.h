@@ -4297,6 +4297,8 @@ LINPHONE_PUBLIC void *linphone_core_create_native_video_window_id(const Linphone
 /**
  * Get the native window handle of the video window.
  * see #linphone_core_set_native_video_window_id for details about `window_id`
+ * If the window ID has been set to #LINPHONE_VIDEO_DISPLAY_AUTO and a call is in progress, it will return the window
+ * in use.
  *
  * There is a special case for Qt :
  ** linphone_core_get_native_video_window_id() returns a #QQuickFramebufferObject::Renderer.
@@ -4311,32 +4313,40 @@ LINPHONE_PUBLIC void *linphone_core_get_native_video_window_id(const LinphoneCor
 /**
  * @ingroup media_parameters
  * For MacOS, Linux, Windows: core will create its own window
+ * @internal
+ *	Must be the same value as #MS_FILTER_VIDEO_AUTO
+ * @endinternal
  */
-#define LINPHONE_VIDEO_DISPLAY_AUTO (void *)(0)
+#define LINPHONE_VIDEO_DISPLAY_AUTO (void *)(-1)
 
 /**
  * @ingroup media_parameters
  * For MacOS, Linux, Windows: do nothing
+ * @internal
+ *	Must be the same value as #MS_FILTER_VIDEO_NONE
+ * @endinternal
  */
-#define LINPHONE_VIDEO_DISPLAY_NONE (void *)(-1)
+#define LINPHONE_VIDEO_DISPLAY_NONE (void *)(0)
 
 /**
  * @ingroup media_parameters
  * Set the native video window id where the video is to be displayed.
  *
- * On Desktop platforms(MacOS, Linux, Windows), the display filter is "MSOGL" by default. That means :
- ** If `window_id` is not set or set to #LINPHONE_VIDEO_DISPLAY_NONE, then the core will not create its own window,
- *unless the special id #LINPHONE_VIDEO_DISPLAY_AUTO is given.
- ** This is currently only supported for Linux X11 (Window type), Windows UWP (SwapChainPanel type) and Windows Win32
- *(HWND type).
+ * On Desktop platforms(MacOS, Linux, Windows):
+ ** - By default, the value of `window_id` is set to #LINPHONE_VIDEO_DISPLAY_AUTO for historical reasons.
+ ** - By default, the display filter is "MSOGL". That means :
+ *** If `window_id` is NULL or set to #LINPHONE_VIDEO_DISPLAY_NONE, then the core will not create its own window,
+ *** unless the special id #LINPHONE_VIDEO_DISPLAY_AUTO is given.
+ *** This is currently only supported for Linux X11 (Window type), Windows UWP (SwapChainPanel type) and Windows Win32
+ ***(HWND type).
  **
  ** The C# Wrapper on Windows for UWP takes directly a #SwapChainPanel without Marshalling.
  ** On other platforms, `window_id` is a #MSOglContextInfo defined in msogl.h of mediastreamer2
  ** There is a special case for Qt :
  *** The "MSQOGL" filter must be selected by using linphone_core_set_video_display_filter().
- *** Setting window id is only used to stop rendering by passing #LINPHONE_VIDEO_DISPLAY_NONE.
+ *** Rendering is stopped by passing #LINPHONE_VIDEO_DISPLAY_NONE or #LINPHONE_VIDEO_DISPLAY_AUTO.
  *** linphone_core_get_native_video_window_id() returns a #QQuickFramebufferObject::Renderer and
- *linphone_core_create_native_video_window_id_2() creates one.
+ *** linphone_core_create_native_video_window_id_2() creates one.
  *** After a creation, linphone_core_set_native_video_window_id() must be called with the new object.
  *
  * On mobile operating systems, #LINPHONE_VIDEO_DISPLAY_AUTO is not supported and `window_id` depends of the platform :
@@ -4380,7 +4390,10 @@ LINPHONE_PUBLIC void *linphone_core_create_native_preview_window_id(LinphoneCore
 
 /**
  * Get the native window handle of the video preview window.
- * see linphone_core_set_native_video_window_id() for details about `window_id`
+ * see linphone_core_set_native_video_window_id() for details about `window_id`.
+ * If the window ID has been set to #LINPHONE_VIDEO_DISPLAY_AUTO, it will return the window in use.
+ * In automatic mode, when no call is in progress, a preview will be activated before the identifier is sent back.
+ *
  *
  * There is a special case for Qt :
  ** linphone_core_get_native_preview_window_id() returns a #QQuickFramebufferObject::Renderer.

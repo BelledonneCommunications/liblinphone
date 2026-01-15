@@ -344,8 +344,8 @@ public:
 protected:
 	Core &mCore;
 	bool mCameraEnabled = true;
-	void *mNativeWindowId = nullptr;
-	void *mNativePreviewWindowId = nullptr;
+	void *mNativeWindowId = LINPHONE_VIDEO_DISPLAY_NONE;
+	void *mNativePreviewWindowId = LINPHONE_VIDEO_DISPLAY_NONE;
 	bool mScreenSharingEnabled = false; // Swap window ID between normal and preview.
 
 private:

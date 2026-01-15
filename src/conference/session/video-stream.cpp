@@ -327,15 +327,16 @@ void MS2VideoStream::updateWindowId(const std::shared_ptr<ParticipantDevice> &pa
                                     bool isMe,
                                     bool isThumbnail,
                                     bool fallbackToCore) {
-	void *windowId = nullptr;
-	if (mNativeWindowId) {
+	void *windowId = LINPHONE_VIDEO_DISPLAY_NONE;
+	// if LINPHONE_VIDEO_DISPLAY_NONE, we check other values and override it if needed.
+	if (mNativeWindowId != LINPHONE_VIDEO_DISPLAY_NONE) {
 		windowId = mNativeWindowId;
 	} else if (isMe && isThumbnail) { // Preview thumbnail is always set by core.
 		windowId = getCCore()->preview_window_id;
 	} else if (!label.empty()) {
 		if (participantDevice) windowId = participantDevice->getWindowId();
 		else windowId = getMediaSession().getParticipantWindowId(label);
-	} else if (fallbackToCore && getCCore()->video_window_id) {
+	} else if (fallbackToCore) {
 		windowId = getCCore()->video_window_id;
 	} else {
 		lWarning() << " Video stream " << mStream << " does not set native window id";
@@ -408,9 +409,12 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 			isMe = !!participantDevice; // Just for safety. In normal case, if no device have been found in MediaSession
 			                            // then it should be in getMe().
 			if (isMe) {
-				// The ParticipantDevice class members are set and reset by the SUBSCRIBE/NOTIFY dialog which is independent from the INVITE session.
-				// It cannot therefore be used to know whether a local device is screen sharing or not.
-				isScreenSharing = ctx.remoteMediaDescription->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute).has_value();
+				// The ParticipantDevice class members are set and reset by the SUBSCRIBE/NOTIFY dialog which is
+				// independent from the INVITE session. It cannot therefore be used to know whether a local device is
+				// screen sharing or not.
+				isScreenSharing = ctx.remoteMediaDescription
+				                      ->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute)
+				                      .has_value();
 				// Get auxiliary stream
 				if (contentIsThumbnail) { // Get Main Stream
 					auxStream = dynamic_cast<MS2VideoStream *>(getGroup().lookupMainStream(SalVideo));
@@ -476,9 +480,9 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 		if (!label.empty() && label.compare(getLabel()) != 0) {
 			lInfo() << "Handling label change handling basic changes - previously it was " << getLabel()
 			        << " and now it is " << label;
-			// If not Main, reset id with the participantDevice from label to avoid reusing an old window id that
-			// doesn't exist anymore.
-			if (!isMain()) setNativeWindowId(NULL);
+			// If not Main, remove previous id with the participantDevice from label to avoid reusing an old window id
+			// that doesn't exist anymore.
+			if (!isMain()) setNativeWindowId(LINPHONE_VIDEO_DISPLAY_NONE);
 			updateWindowId(participantDevice, label, isMe, contentIsThumbnail, false);
 			video_stream_set_label(mStream, L_STRING_TO_C(label));
 		}
@@ -557,9 +561,9 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	if (conference) {
 		if (!label.empty() && label.compare(getLabel()) != 0) {
 			lInfo() << "Handling label change - previously it was " << getLabel() << " and now it is " << label;
-			// If not Main, reset id with the participantDevice from label to avoid reusing an old window id that
-			// doesn't exist anymore.
-			if (!isMain()) setNativeWindowId(NULL);
+			// If not Main, remove previous id with the participantDevice from label to avoid reusing an old window id
+			// that doesn't exist anymore.
+			if (!isMain()) setNativeWindowId(LINPHONE_VIDEO_DISPLAY_NONE);
 			updateWindowId(participantDevice, label, isMe, contentIsThumbnail, false);
 
 			video_stream_set_label(mStream, L_STRING_TO_C(label));
@@ -1031,7 +1035,7 @@ void MS2VideoControl::setNativeWindowId(void *w) {
 
 void *MS2VideoControl::getNativeWindowId() const {
 	VideoStream *vs = getVideoStream();
-	if (mNativeWindowId) {
+	if (mNativeWindowId != LINPHONE_VIDEO_DISPLAY_AUTO) {
 		return mNativeWindowId;
 	}
 	/* It was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only) */
@@ -1063,7 +1067,7 @@ void MS2VideoControl::setNativePreviewWindowId(void *w) {
 
 void *MS2VideoControl::getNativePreviewWindowId() const {
 	VideoStream *vs = getVideoStream();
-	if (mNativePreviewWindowId) {
+	if (mNativePreviewWindowId != LINPHONE_VIDEO_DISPLAY_AUTO) {
 		return mNativePreviewWindowId;
 	}
 	/* It was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only) */

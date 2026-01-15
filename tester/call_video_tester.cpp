@@ -4168,6 +4168,9 @@ static void video_call_memory() {
 	linphone_core_manager_destroy(pauline);
 }
 
+// is_exact:
+//	- TRUE = check if window_id must be the same as expected_id.
+//	- FALSE = check if the window_id is not NONE nor AUTO (useful if expected_id is not known (like a random id))
 static int check_window_id(const void *window_id, const void *expected_id, const bool is_exact) {
 	int result;
 	if (is_exact) {

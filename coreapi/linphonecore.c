@@ -3321,6 +3321,11 @@ static void linphone_core_init(LinphoneCore *lc,
 	lc->config = linphone_config_ref(config);
 	lc->data = userdata;
 	lc->video_policy = linphone_factory_create_video_activation_policy(lfactory);
+#if __ANDROID__ || TARGET_OS_IPHONE
+	lc->video_window_id = LINPHONE_VIDEO_DISPLAY_NONE; // AUTO is not supported on mobiles.
+#else
+	lc->video_window_id = LINPHONE_VIDEO_DISPLAY_AUTO; // Historically, we set the default to Auto and not None/NULL.
+#endif
 
 	// We need the Sal on the Android platform helper init
 	lc->sal = std::make_shared<LinphonePrivate::Sal>(nullptr);
@@ -6860,8 +6865,7 @@ void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
 
 void *linphone_core_get_native_video_window_id(const LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
-	if (lc->video_window_id) {
-		/* case where the video id was previously set by the app*/
+	if (lc->video_window_id != LINPHONE_VIDEO_DISPLAY_AUTO) {
 		return lc->video_window_id;
 	} else {
 #ifdef VIDEO_ENABLED
@@ -6875,7 +6879,7 @@ void *linphone_core_get_native_video_window_id(const LinphoneCore *lc) {
 		}
 #endif
 	}
-	return 0;
+	return LINPHONE_VIDEO_DISPLAY_AUTO;
 }
 
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
@@ -6920,8 +6924,7 @@ void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
 
 void *linphone_core_get_native_preview_window_id(LinphoneCore *lc) {
 	CoreLogContextualizer logContextualizer(lc);
-	if (lc->preview_window_id) {
-		/*case where the id was set by the app previously*/
+	if (lc->preview_window_id != LINPHONE_VIDEO_DISPLAY_AUTO) {
 		return lc->preview_window_id;
 	} else {
 		/*case where we want the id automatically created by mediastreamer2 (desktop versions only)*/
@@ -6938,7 +6941,7 @@ void *linphone_core_get_native_preview_window_id(LinphoneCore *lc) {
 		if (lc->previewstream) return video_preview_get_native_window_id(lc->previewstream);
 #endif
 	}
-	return 0;
+	return LINPHONE_VIDEO_DISPLAY_AUTO;
 }
 
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {

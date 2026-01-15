@@ -56,6 +56,8 @@ This changelog file was started on October 2019. Previous changes were more or l
 - AccountCreator object is deprecated (use LinphoneAccountManagerServices as a replacement)
 - Allow LinphoneCoreCbs' s authentication_requested() callack to be invoked during remote provisioning.
 - Disable peer to peer presence by default (linphone_friend_subscribes_enabled() is FALSE, and linphone_friend_get_inc_subscribe_policy() returns LinphoneSPDeny).
+- Swap values between LINPHONE_VIDEO_DISPLAY_NONE and LINPHONE_VIDEO_DISPLAY_AUTO to match with NULL value.
+- LINPHONE_VIDEO_DISPLAY_AUTO is defined as default for native ids.
 
 ### Fixed
 - Added _utf8() getter and setters for subject of conference and chatrooms.
