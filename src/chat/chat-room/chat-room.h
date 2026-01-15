@@ -177,6 +177,7 @@ public:
 	void setIsEmpty(const bool empty) override;
 
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	virtual void deletePendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	std::shared_ptr<ChatMessage> createChatMessage(ChatMessage::Direction direction);
 	std::list<std::shared_ptr<ImdnMessage>>

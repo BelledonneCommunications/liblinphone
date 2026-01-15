@@ -69,6 +69,11 @@ void ClientChatRoom::addPendingMessage(const std::shared_ptr<ChatMessage> &chatM
 	if (it == mPendingCreationMessages.end()) mPendingCreationMessages.push_back(chatMessage);
 }
 
+void ClientChatRoom::deletePendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
+	auto it = std::find(mPendingCreationMessages.begin(), mPendingCreationMessages.end(), chatMessage);
+	if (it != mPendingCreationMessages.end()) mPendingCreationMessages.erase(it);
+}
+
 void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteContact) {
 	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
 	conference->onConferenceCreated(remoteContact);
@@ -155,8 +160,8 @@ list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast) const {
 		return getCore()->getPrivate()->mainDb->getHistory(
 		    getConferenceId(), nLast,
 		    getCurrentParams()->isGroup() ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
-									MainDb::Filter::ConferenceInfoNoDeviceFilter})
-						  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+		                                                        MainDb::Filter::ConferenceInfoNoDeviceFilter})
+		                                  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
 	} catch (const bad_weak_ptr &) {
 	}
 	return list<shared_ptr<EventLog>>();
@@ -171,8 +176,8 @@ list<shared_ptr<EventLog>> ClientChatRoom::getHistoryRange(int begin, int end) c
 		return getCore()->getPrivate()->mainDb->getHistoryRange(
 		    getConferenceId(), begin, end,
 		    getCurrentParams()->isGroup() ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
-									MainDb::Filter::ConferenceInfoNoDeviceFilter})
-						  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+		                                                        MainDb::Filter::ConferenceInfoNoDeviceFilter})
+		                                  : MainDb::Filter::ConferenceChatMessageSecurityFilter);
 	} catch (const bad_weak_ptr &) {
 	}
 	return list<shared_ptr<EventLog>>();
@@ -186,9 +191,9 @@ int ClientChatRoom::getHistorySize() const {
 	try {
 		return getCore()->getPrivate()->mainDb->getHistorySize(
 		    getConferenceId(), getCurrentParams()->isGroup()
-					   ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
-								 MainDb::Filter::ConferenceInfoNoDeviceFilter})
-					   : MainDb::Filter::ConferenceChatMessageSecurityFilter);
+		                           ? MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter,
+		                                                 MainDb::Filter::ConferenceInfoNoDeviceFilter})
+		                           : MainDb::Filter::ConferenceChatMessageSecurityFilter);
 	} catch (const bad_weak_ptr &) {
 	}
 	return 0;
@@ -400,16 +405,20 @@ bool ClientChatRoom::canSendMessages() const {
 
 void ClientChatRoom::sendPendingMessages() {
 	const auto &conference = getConference();
-	// Now that chat room has been inserted in database, we can send any pending message
-	for (const auto &message : mPendingCreationMessages) {
-		lInfo() << "Found message [" << message << "] waiting for chat room " << *conference
-		        << " to be created, sending it now";
-		// First we need to update from & to address of the message,
+	// This loop is done with iterators and a while statement because sendChatMessage may delete an item of the
+	// mPendingCreationMessages list
+	auto it = mPendingCreationMessages.begin();
+	while (it != mPendingCreationMessages.end()) {
+		// Retrieve the message from the iterator
+		auto message = (*it);
+		// Increment the iterator in case the list is modified when sending the message
+		it++;
+		lInfo() << "Found message [" << message << "] waiting to be sent in " << *conference;
+		// First we need to update from and to address of the message,
 		// as it was created at a time where the remote address of the chat room may not have been known
 		message->getPrivate()->setChatRoom(getSharedFromThis());
 		sendChatMessage(message);
 	}
-	clearPendingCreationMessages();
 }
 
 void ClientChatRoom::sendEphemeralUpdate() {

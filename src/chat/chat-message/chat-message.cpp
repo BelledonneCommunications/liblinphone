@@ -1328,6 +1328,9 @@ void ChatMessagePrivate::send() {
 		return;
 	}
 
+	// Message can be sent right now, hence remove the reference from the list of pending message should it exist
+	chatRoom->deletePendingMessage(ref);
+
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
 	} else {
