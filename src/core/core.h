@@ -274,7 +274,13 @@ public:
 	                                             const std::shared_ptr<const Address> &remoteAddress,
 	                                             const std::list<std::shared_ptr<Address>> &participants) const;
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<const Address> &conferenceAddress) const;
-	std::shared_ptr<Conference> searchConference(const std::string identifier) const;
+	std::shared_ptr<Conference> searchConference(const std::string &identifier) const;
+	/*
+	 * Returns the conference where the local participant is in, if any or nullptr otherwise.
+	 * This functions always returns nullptr in conference server mode, because the there is no
+	 * notion of local participant in conference server mode.
+	 */
+	std::shared_ptr<Conference> getCurrentLocalConference() const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.

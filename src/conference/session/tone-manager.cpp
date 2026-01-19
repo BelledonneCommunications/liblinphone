@@ -333,11 +333,12 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 	AudioStream *stream = nullptr;
 	RingStream *ringStream;
 	MSFilter *audioResource = nullptr;
+	shared_ptr<Conference> conference;
 	float tmp;
 	if (call) {
 		stream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-	} else if (linphone_core_is_in_conference(lc)) {
-		stream = linphone_conference_get_audio_stream(lc->conf_ctx);
+	} else if ((conference = getCore().getCurrentLocalConference()) != nullptr) {
+		stream = linphone_conference_get_audio_stream(conference->toC());
 	}
 	if (stream) {
 		if (rtype == ToneGenerator) audioResource = stream->dtmfgen;
@@ -480,9 +481,8 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 
 bool ToneManager::shouldPlayWaitingTone(const std::shared_ptr<CallSession> &session) {
 	shared_ptr<Call> currentCall = getCore().getCurrentCall();
-	LinphoneCore *lc = getCore().getCCore();
 
-	if (linphone_core_is_in_conference(lc)) return true;
+	if (getCore().getCurrentLocalConference() != nullptr) return true;
 	if (currentCall != nullptr && currentCall->getActiveSession() != session) {
 		switch (currentCall->getActiveSession()->getState()) {
 			case CallSession::State::OutgoingInit:
@@ -553,7 +553,7 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 void ToneManager::notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &session) {
 	auto currentCall = getCore().getCurrentCall();
 	if ((currentCall != nullptr && currentCall->getActiveSession() != session) ||
-	    linphone_core_is_in_conference(getCore().getCCore())) {
+	    getCore().getCurrentLocalConference() != nullptr) {
 		lInfo() << "Will not play ringback tone, audio is already used in a call or conference.";
 		return;
 	}
@@ -602,7 +602,7 @@ void ToneManager::notifyToneIndication(const shared_ptr<CallSession> &session, L
 
 bool ToneManager::inCallOrConference() const {
 	shared_ptr<Call> currentCall = getCore().getCurrentCall();
-	return currentCall != nullptr || linphone_core_is_in_conference(getCore().getCCore());
+	return currentCall != nullptr || getCore().getCurrentLocalConference() != nullptr;
 }
 
 /*
@@ -724,7 +724,7 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 			break;
 		case CallSession::State::Pausing: {
 			if (session->pausedByApp() && (getCore().getCallCount() == 1) &&
-			    !linphone_core_is_in_conference(getCore().getCCore()) && mSessionPaused == nullptr) {
+			    getCore().getCurrentLocalConference() == nullptr && mSessionPaused == nullptr) {
 				mSessionPaused = session;
 				startNamedTone(session, LinphoneToneCallOnHold);
 			}

@@ -766,14 +766,13 @@ void Call::onVideoDisplayErrorOccurred(BCTBX_UNUSED(const std::shared_ptr<CallSe
 }
 
 bool Call::areSoundResourcesAvailable(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
-	LinphoneCore *lc = getCore()->getCCore();
 	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
+	shared_ptr<Conference> currentConference = getCore()->getCurrentLocalConference();
 	// If core is in a conference, then check if the call is in the same conference
 	// If the core left the conference or it is not hosting any conference, then check that there is no active call or
 	// the active one is the current one.
-	bool soundResourcesFree = linphone_core_is_in_conference(lc)
-	                              ? (getConference() && (linphone_core_get_conference(lc) == getConference()->toC()))
-	                              : (!currentCall || (currentCall == getSharedFromThis()));
+	bool soundResourcesFree = currentConference ? (getConference() && (currentConference == getConference()))
+	                                            : (!currentCall || (currentCall == getSharedFromThis()));
 	return soundResourcesFree;
 }
 

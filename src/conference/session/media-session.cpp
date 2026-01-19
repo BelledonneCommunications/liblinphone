@@ -4206,13 +4206,13 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 	// in
 	bool isThisNotCurrentMediaSession = currentCall && (currentCall->getActiveSession() != q->getSharedFromThis());
 
-	bool isCoreInLocalConference = linphone_core_is_in_conference(q->getCore()->getCCore());
 	const auto callConference = q->getCore()->findConference(q->getSharedFromThis(), false);
-	auto coreConference = linphone_core_get_conference(q->getCore()->getCCore());
+	auto coreConference = q->getCore()->getCurrentLocalConference();
+	bool isCoreInLocalConference = coreConference != nullptr;
 	// If the core in a conference, request to empty sound resources only if the call is in a different conference or
 	// the call is not part of a conference
 	bool isThisNotCurrentConference =
-	    isCoreInLocalConference && (!callConference || (callConference->toC() != coreConference));
+	    isCoreInLocalConference && (!callConference || (callConference != coreConference));
 
 	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {

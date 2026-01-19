@@ -2781,7 +2781,8 @@ void ServerConference::enableScreenSharing(const std::shared_ptr<LinphonePrivate
 			auto participant = device->getParticipant();
 			auto role = participant->getRole();
 			if (role != Participant::Role::Speaker) {
-				lError() << *device << " is associated to " << *participant << " whose role is " << Utils::toString(role) << " and therefore it cannot share its screen";
+				lError() << *device << " is associated to " << *participant << " whose role is "
+				         << Utils::toString(role) << " and therefore it cannot share its screen";
 				return;
 			}
 			const auto screenSharingDevice = getScreenSharingDevice();
@@ -3067,7 +3068,7 @@ int ServerConference::enter() {
 		const auto &meAddress = mMe->getAddress();
 		lInfo() << *meAddress << " is rejoining " << *this;
 		setOrganizer(meAddress);
-
+		L_GET_PRIVATE(getCore())->setCurrentLocalConference(getSharedFromThis());
 		addLocalEndpoint();
 	}
 	return 0;
@@ -3077,6 +3078,7 @@ void ServerConference::leave() {
 	if (isIn() && supportsMedia()) {
 		lInfo() << *getMe()->getAddress() << " is leaving " << *this;
 		removeLocalEndpoint();
+		L_GET_PRIVATE(getCore())->setCurrentLocalConference(nullptr);
 	}
 }
 
@@ -3314,8 +3316,9 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 									// whereas all media releated informations are with the former device. The server
 									// figures it out that the two devices are the same once it receives a reINVITE with
 									// the registered contact address. Here, it has been taken the decision to keep the
-									// device with the up-to-date media informations because the other device may be from
-									// a leftover session, for instance if the client crashes and quickly rejoins the conference.
+									// device with the up-to-date media informations because the other device may be
+									// from a leftover session, for instance if the client crashes and quickly rejoins
+									// the conference.
 									if (!device->getConferenceSubscribeEvent() &&
 									    otherDevice->getConferenceSubscribeEvent()) {
 										// Move subscription event pointer to new device.
