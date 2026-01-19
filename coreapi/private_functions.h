@@ -288,7 +288,8 @@ static MS2_INLINE void set_string(char **dest, const char *src, bool_t lowercase
 void linphone_process_authentication(LinphoneCore *lc, LinphonePrivate::SalOp *op);
 void linphone_authentication_ok(LinphoneCore *lc, LinphonePrivate::SalOp *op);
 void linphone_subscription_new(LinphoneCore *lc, LinphonePrivate::SalSubscribeOp *op, const char *from);
-void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presence);
+void linphone_core_set_presence_model_with_publish_toggle(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish);
+void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish);
 void linphone_notify_parse_presence(const char *content_type,
                                     const char *content_subtype,
                                     const char *body,

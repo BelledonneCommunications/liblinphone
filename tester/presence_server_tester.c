@@ -701,6 +701,46 @@ static void test_presence_list_without_compression(void) {
 	test_presence_list_base(FALSE);
 }
 
+static void consolidated_presence_account_publish_disabled(void) {
+	LinphoneCoreManager *marie = linphone_core_presence_manager_new("marie_rc");
+
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *marie_account_params = linphone_account_get_params(marie_account);
+	LinphoneAccountParams *new_params = linphone_account_params_clone(marie_account_params);
+	linphone_account_params_enable_publish(new_params, FALSE);
+	linphone_account_set_params(marie_account, new_params);
+	linphone_account_params_unref(new_params);
+
+	stats marie_stat = marie->stat;
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceBusy);
+
+	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, marie_stat.number_of_LinphonePublishOk + 1));
+
+	marie_account = linphone_core_get_default_account(marie->lc);
+	marie_account_params = linphone_account_get_params(marie_account);
+	BC_ASSERT_FALSE(linphone_account_params_publish_enabled(marie_account_params));
+
+	marie_stat = marie->stat;
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOffline);
+
+	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishCleared, marie_stat.number_of_LinphonePublishCleared + 1));
+
+	marie_account = linphone_core_get_default_account(marie->lc);
+	marie_account_params = linphone_account_get_params(marie_account);
+	BC_ASSERT_FALSE(linphone_account_params_publish_enabled(marie_account_params));
+
+	marie_stat = marie->stat;
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOnline);
+
+	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, marie_stat.number_of_LinphonePublishOk + 1));
+
+	marie_account = linphone_core_get_default_account(marie->lc);
+	marie_account_params = linphone_account_get_params(marie_account);
+	BC_ASSERT_FALSE(linphone_account_params_publish_enabled(marie_account_params));
+
+	linphone_core_manager_destroy(marie);
+}
+
 static void test_presence_list_same_friend_two_addresses(void) {
 	LinphoneCoreManager *laure = linphone_core_presence_manager_new("laure_tcp_rc");
 	linphone_core_set_user_agent(laure->lc, "bypass", NULL);
@@ -1661,12 +1701,19 @@ static void publish_with_expire_timestamp_refresh_base(bool_t refresh_timestamps
 	linphone_config_set_bool(marie_config, "sip", "update_presence_model_timestamp_before_publish_expires_refresh",
 	                         refresh_timestamps);
 
+	LinphoneCoreCbs *callbacks = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_publish_state_changed(callbacks, linphone_publish_state_changed);
+	_linphone_core_add_callbacks(marie->lc, callbacks, TRUE);
+	linphone_core_cbs_unref(callbacks);
+
 	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
 	const LinphoneAccountParams *marie_account_params = linphone_account_get_params(marie_account);
 	LinphoneAccountParams *new_params = linphone_account_params_clone(marie_account_params);
 	linphone_account_params_set_publish_expires(new_params, 10);
+	linphone_account_params_enable_publish(new_params, TRUE);
 	linphone_account_set_params(marie_account, new_params);
 	linphone_account_params_unref(new_params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 1));
 
 	const char *rls_uri = "sip:rls@sip.example.org";
 
@@ -1704,11 +1751,6 @@ static void publish_with_expire_timestamp_refresh_base(bool_t refresh_timestamps
 	linphone_friend_list_add_friend(pauline_lfl, pauline_marie_friend);
 	linphone_friend_list_update_subscriptions(pauline_lfl);
 	linphone_friend_list_unref(pauline_lfl);
-
-	LinphoneCoreCbs *callbacks = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_publish_state_changed(callbacks, linphone_publish_state_changed);
-	_linphone_core_add_callbacks(marie->lc, callbacks, TRUE);
-	linphone_core_cbs_unref(callbacks);
 
 	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOnline);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 2));
@@ -2613,6 +2655,7 @@ test_t presence_server_tests[] = {
     TEST_NO_TAG("Disabled presence", subscribe_presence_disabled),
     TEST_NO_TAG("Presence list", test_presence_list),
     TEST_NO_TAG("Presence list without compression", test_presence_list_without_compression),
+    TEST_NO_TAG("Consolidated presence with account with PUBLISH messages disabled", consolidated_presence_account_publish_disabled),
     TEST_NO_TAG("Presence list with two SIP addresses for same friend", test_presence_list_same_friend_two_addresses),
     TEST_NO_TAG("Presence list, subscription expiration for unknown contact",
                 test_presence_list_subscription_expire_for_unknown),

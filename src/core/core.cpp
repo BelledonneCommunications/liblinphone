@@ -3245,13 +3245,15 @@ void Core::notifyPublishStateChangedToAccount(const std::shared_ptr<Event> event
 	}
 }
 
-int Core::sendPublish(LinphonePresenceModel *presence) {
+int Core::setPresenceModelAndSendPublish(LinphonePresenceModel *presence, bool sendPublish) {
 	auto &accounts = mAccounts.mList;
 	for (const auto &account : accounts) {
 		const auto &params = account->getAccountParams();
 		if (params->getPublishEnabled()) {
 			account->setPresenceModel(presence);
-			account->sendPublish();
+			if (sendPublish) {
+				account->sendPublish();
+			}
 		}
 	}
 	return 0;

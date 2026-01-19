@@ -1661,8 +1661,9 @@ void Account::triggerUpdate() {
 		getCore()->doLater([account]() {
 			// Avoid updating if the core is not running
 			if (const auto *cCore = account->getCCore();
-			    cCore != nullptr && linphone_core_get_global_state(cCore) == LinphoneGlobalOn)
+			    cCore != nullptr && linphone_core_get_global_state(cCore) == LinphoneGlobalOn) {
 				account->update();
+			}
 		});
 	} catch (const bad_weak_ptr &) {
 		// Core pointer is null

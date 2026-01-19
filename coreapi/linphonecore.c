@@ -5247,9 +5247,9 @@ LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, 
 	return call ? call->toC() : NULL;
 }
 
-int linphone_core_send_publish(LinphoneCore *lc, LinphonePresenceModel *presence) {
+int linphone_core_send_publish(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish) {
 	CoreLogContextualizer logContextualizer(lc);
-	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->sendPublish(presence);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setPresenceModelAndSendPublish(presence, !!send_publish);
 }
 
 void linphone_core_set_inc_timeout(LinphoneCore *lc, int seconds) {
@@ -5443,20 +5443,24 @@ end:
 	linphone_presence_model_unref(presence);
 }
 
-void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presence) {
+void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish) {
 	CoreLogContextualizer logContextualizer(lc);
 	linphone_core_notify_all_friends(lc, presence);
-	linphone_core_send_publish(lc, presence);
+	linphone_core_send_publish(lc, presence, send_publish);
 }
 
-void linphone_core_set_presence_model(LinphoneCore *lc, LinphonePresenceModel *presence) {
+void linphone_core_set_presence_model_with_publish_toggle(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish) {
 	CoreLogContextualizer logContextualizer(lc);
-	linphone_core_send_presence(lc, presence);
+	linphone_core_send_presence(lc, presence, send_publish);
 	if (lc->presence_model != NULL) {
 		linphone_presence_model_unref(lc->presence_model);
 		lc->presence_model = NULL;
 	}
 	if (presence) lc->presence_model = linphone_presence_model_ref(presence);
+}
+
+void linphone_core_set_presence_model(LinphoneCore *lc, LinphonePresenceModel *presence) {
+	linphone_core_set_presence_model_with_publish_toggle(lc, presence, TRUE);
 }
 
 LinphoneOnlineStatus linphone_core_get_presence_info(const LinphoneCore *lc) {
@@ -5528,13 +5532,9 @@ void linphone_core_set_consolidated_presence(LinphoneCore *lc, LinphoneConsolida
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) return;
 
 	if (presence == LinphoneConsolidatedPresenceOffline) {
-		for (auto cppAccount : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
-			if (cppAccount->getAccountParams()->getPublishEnabled()) {
-				/* Unpublish when going offline before changing the presence model. */
-				auto new_params = cppAccount->getAccountParams()->clone()->toSharedPtr();
-				new_params->setPublishEnabled(false);
-				cppAccount->setAccountParams(new_params);
-			}
+		for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
+			/* Unpublish when going offline before changing the presence model. */
+			account->unpublish();
 		}
 	}
 	model = linphone_presence_model_new();
@@ -5560,16 +5560,14 @@ void linphone_core_set_consolidated_presence(LinphoneCore *lc, LinphoneConsolida
 		linphone_presence_model_add_activity(model, activity);
 		linphone_presence_activity_unref(activity);
 	}
-	linphone_core_set_presence_model(lc, model);
+	linphone_core_set_presence_model_with_publish_toggle(lc, model, FALSE);
 	linphone_presence_model_unref(model);
 
 	if (presence != LinphoneConsolidatedPresenceOffline) {
 		for (auto account : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getAccounts()) {
-			if (!account->getAccountParams()->getPublishEnabled()) {
+			if (account->getAccountParams()->getPublishEnabled()) {
 				/* When going online or busy, publish after changing the presence model. */
-				auto newParams = account->getAccountParams()->clone()->toSharedPtr();
-				newParams->setPublishEnabled(true);
-				account->setAccountParams(newParams);
+				account->sendPublish();
 			}
 		}
 	}
