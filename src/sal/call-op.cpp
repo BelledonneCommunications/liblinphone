@@ -1869,7 +1869,7 @@ void SalCallOp::notifyLastResponse(SalCallOp *newCallOp) {
 }
 
 int SalCallOp::notifyReferState(SalCallOp *newCallOp) {
-	if (belle_sip_dialog_get_state(mDialog) == BELLE_SIP_DIALOG_TERMINATED) return 0;
+	if (!mDialog || (belle_sip_dialog_get_state(mDialog) == BELLE_SIP_DIALOG_TERMINATED)) return 0;
 
 	auto state = newCallOp->mDialog ? belle_sip_dialog_get_state(newCallOp->mDialog) : BELLE_SIP_DIALOG_NULL;
 	switch (state) {

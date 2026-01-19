@@ -671,6 +671,14 @@ int MediaSessionPrivate::resumeAfterFailedTransfer() {
 	return BELLE_SIP_STOP;
 }
 
+int MediaSessionPrivate::resumeAfterFailedTransfer(void *userData, unsigned int) {
+	MediaSession *session = static_cast<MediaSession *>(userData);
+	if (!session) {
+		return -1;
+	}
+	return session->getPrivate()->resumeAfterFailedTransfer();
+}
+
 void MediaSessionPrivate::resumed() {
 	auto logContext = getLogContextualizer();
 	acceptUpdate(nullptr, CallSession::State::StreamsRunning, "Connected (streams running)");
@@ -4463,15 +4471,6 @@ int MediaSessionPrivate::sendDtmf() {
 }
 
 // -----------------------------------------------------------------------------
-
-int MediaSessionPrivate::resumeAfterFailedTransfer(void *userData, unsigned int) {
-	MediaSession *session = static_cast<MediaSession *>(userData);
-	if (!session) {
-		return -1;
-	}
-	return session->getPrivate()->resumeAfterFailedTransfer();
-}
-
 void MediaSessionPrivate::stunAuthRequestedCb(const char *realm,
                                               BCTBX_UNUSED(const char *nonce),
                                               const char **username,

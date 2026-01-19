@@ -1868,7 +1868,11 @@ LinphoneStatus CallSession::terminate(const LinphoneErrorInfo *ei) {
 LinphoneStatus CallSession::transfer(const shared_ptr<CallSession> &dest) {
 	L_D();
 	int result = d->op->referWithReplaces(dest->getPrivate()->op);
-	d->setTransferState(CallSession::State::OutgoingInit);
+	if (result == 0) {
+		d->setTransferState(CallSession::State::OutgoingInit);
+	} else {
+		addPendingAction([this, dest] { return this->transfer(dest); });
+	}
 	return result;
 }
 
@@ -1878,9 +1882,13 @@ LinphoneStatus CallSession::transfer(const Address &address) {
 		lError() << "Received invalid address " << address << " to transfer the call to";
 		return -1;
 	}
-	d->op->refer(address.toString().c_str());
-	d->setTransferState(CallSession::State::OutgoingInit);
-	return 0;
+	int result = d->op->refer(address.toString().c_str());
+	if (result == 0) {
+		d->setTransferState(CallSession::State::OutgoingInit);
+	} else {
+		addPendingAction([this, address] { return this->transfer(address); });
+	}
+	return result;
 }
 
 LinphoneStatus CallSession::update(const CallSessionParams *csp,
