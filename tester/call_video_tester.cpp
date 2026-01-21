@@ -4296,10 +4296,10 @@ static void video_call_window_id(const char *video_device_type, bool test_native
 			linphone_call_params_unref(p);
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived,
 			                        old_stat.number_of_LinphoneCallIncomingReceived + 1));
-			auto c1 = linphone_core_get_current_call(marie->lc);
-			auto params = linphone_core_create_call_params(marie->lc, c1);
+			auto marie_call = linphone_core_get_current_call(marie->lc);
+			auto params = linphone_core_create_call_params(marie->lc, marie_call);
 			linphone_call_params_enable_audio(params, FALSE);
-			linphone_call_accept_early_media_with_params(c1, params);
+			linphone_call_accept_early_media_with_params(marie_call, params);
 			linphone_call_params_unref(params);
 			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 200);
 			ms_message("[VCWI] Checking ID is still %s while being in early media", mode.c_str());
@@ -4307,42 +4307,45 @@ static void video_call_window_id(const char *video_device_type, bool test_native
 			check_window_id(test_native ? linphone_core_get_native_video_window_id(marie->lc)
 			                            : linphone_core_get_native_preview_window_id(marie->lc),
 			                id, loop != 2);
+			/*
+			 * Protection against premature termination of the call, due to Xvfb failure causing process hang
+			 */
+			marie_call = linphone_core_get_current_call(marie->lc);
+			if (BC_ASSERT_PTR_NOT_NULL(marie_call)) {
+				linphone_call_accept(marie_call);
 
-			auto marie_call = linphone_core_get_current_call(marie->lc);
-			linphone_call_accept(marie_call);
+				wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
 
-			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+				ms_message("[VCWI] Checking IDs are still %s while being in call", mode.c_str());
+				check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
+				                            : linphone_core_get_native_preview_window_id(marie->lc),
+				                id, loop != 2);
 
-			ms_message("[VCWI] Checking IDs are still %s while being in call", mode.c_str());
-			check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
-			                            : linphone_core_get_native_preview_window_id(marie->lc),
-			                id, loop != 2);
+				ms_message("[VCWI] Setting IDs to %s from %s while being in call", interMode.c_str(), mode.c_str());
 
-			ms_message("[VCWI] Setting IDs to %s from %s while being in call", interMode.c_str(), mode.c_str());
+				if (test_native) linphone_core_set_native_video_window_id(marie->lc, interId);
+				else linphone_core_set_native_preview_window_id(marie->lc, interId);
 
-			if (test_native) linphone_core_set_native_video_window_id(marie->lc, interId);
-			else linphone_core_set_native_preview_window_id(marie->lc, interId);
+				wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
 
-			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+				ms_message("[VCWI] Checking IDs are %s while being in call after setting", interMode.c_str());
+				// if AUTO, we get a window ID.
+				if (!check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
+				                                 : linphone_core_get_native_preview_window_id(marie->lc),
+				                     interId, interIndex != 2)) {
+					linphone_core_set_native_preview_window_id(marie->lc, interId);
+				}
 
-			ms_message("[VCWI] Checking IDs are %s while being in call after setting", interMode.c_str());
-			// if AUTO, we get a window ID.
-			if (!check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
-			                                 : linphone_core_get_native_preview_window_id(marie->lc),
-			                     interId, interIndex != 2)) {
-				linphone_core_set_native_preview_window_id(marie->lc, interId);
+				ms_message("[VCWI] Resetting IDs to %s from %s while being in call", mode.c_str(), interMode.c_str());
+				if (test_native) linphone_core_set_native_video_window_id(marie->lc, id);
+				else linphone_core_set_native_preview_window_id(marie->lc, id);
+				wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
+				ms_message("[VCWI] Checking IDs are %s while being in call after reset", mode.c_str());
+				// if AUTO, we get a window ID
+				check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
+				                            : linphone_core_get_native_preview_window_id(marie->lc),
+				                id, loop != 2);
 			}
-
-			ms_message("[VCWI] Resetting IDs to %s from %s while being in call", mode.c_str(), interMode.c_str());
-			if (test_native) linphone_core_set_native_video_window_id(marie->lc, id);
-			else linphone_core_set_native_preview_window_id(marie->lc, id);
-			wait_for_until(marie->lc, pauline->lc, NULL, 0, manual_test ? 5000 : 100);
-			ms_message("[VCWI] Checking IDs are %s while being in call after reset", mode.c_str());
-			// if AUTO, we get a window ID
-			check_window_id(test_native ? linphone_call_get_native_video_window_id(marie_call)
-			                            : linphone_core_get_native_preview_window_id(marie->lc),
-			                id, loop != 2);
-
 			end_call(marie, pauline);
 
 			ms_message("[VCWI] Checking IDs are still %s after call", mode.c_str());
