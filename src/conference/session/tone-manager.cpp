@@ -335,10 +335,13 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 	MSFilter *audioResource = nullptr;
 	shared_ptr<Conference> conference;
 	float tmp;
-	if (call) {
-		stream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-	} else if ((conference = getCore().getCurrentLocalConference()) != nullptr) {
+
+	if ((conference = getCore().getCurrentLocalConference()) != nullptr) {
+		lInfo() << "[ToneManager] using audio from local conference.";
 		stream = linphone_conference_get_audio_stream(conference->toC());
+	} else if (call) {
+		lInfo() << "[ToneManager] using audio from current call.";
+		stream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
 	}
 	if (stream) {
 		if (rtype == ToneGenerator) audioResource = stream->dtmfgen;

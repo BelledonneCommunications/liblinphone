@@ -66,7 +66,7 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack,
                                                 bool_t use_video_policy_for_re_invite_sdp_200,
                                                 bool_t resume_in_audio_send_only_video_inactive_first,
                                                 bool_t with_call_accept) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline, *call_marie;
@@ -202,7 +202,7 @@ static void call_paused_updated_resumed_with_no_sdp_ack_using_video_policy_and_a
 }
 
 static void _call_paused_resumed_with_video_enabled(LinphoneMediaDirection video_direction) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline, *call_marie;
@@ -498,7 +498,7 @@ bool_t remove_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee) {
 }
 
 static void call_with_video_added(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
@@ -521,7 +521,7 @@ end:
 }
 
 static void call_with_video_added_2(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
@@ -551,7 +551,7 @@ end:
 }
 
 static void call_with_video_added_random_ports(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
@@ -581,7 +581,7 @@ static void call_with_several_video_switches(void) {
 }
 
 static void call_with_declined_video_base(bool_t using_policy) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *marie_call;
@@ -646,7 +646,7 @@ static void call_with_declined_video(void) {
 }
 
 static void call_with_declined_video_despite_policy(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *marie_call;
@@ -920,7 +920,7 @@ static void video_call_base(LinphoneCoreManager *pauline,
 }
 
 static void video_call(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	video_call_base(marie, pauline, FALSE, LinphoneMediaEncryptionNone, TRUE, TRUE);
@@ -937,7 +937,7 @@ static void video_call_dummy_codec(void) {
 		linphone_core_manager_destroy(pauline);
 		return;
 	}
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	lp = linphone_core_get_config(marie->lc);
 	linphone_config_set_bool(lp, "video", "fallback_to_dummy_codec", FALSE);
 	linphone_config_set_bool(lp, "video", "dont_check_codecs", TRUE);
@@ -1018,7 +1018,7 @@ static void video_call_dummy_codec(void) {
 
 static void video_call_without_rtcp(void) {
 	LpConfig *lp;
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1034,7 +1034,7 @@ static void video_call_without_rtcp(void) {
 }
 
 static void video_call_disable_implicit_AVPF_on_callee(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LpConfig *callee_lp;
@@ -1058,7 +1058,7 @@ static void video_call_disable_implicit_AVPF_on_callee(void) {
 }
 
 static void video_call_disable_implicit_AVPF_on_caller(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LpConfig *caller_lp;
@@ -1078,7 +1078,7 @@ static void video_call_disable_implicit_AVPF_on_caller(void) {
 }
 
 static void video_call_AVPF_to_implicit_AVPF(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1091,7 +1091,7 @@ static void video_call_AVPF_to_implicit_AVPF(void) {
 }
 
 static void video_call_implicit_AVPF_to_AVPF(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1104,7 +1104,7 @@ static void video_call_implicit_AVPF_to_AVPF(void) {
 }
 
 static void video_call_using_policy_AVPF_implicit_caller_and_callee(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	video_call_base_3(caller, callee, FALSE, LinphoneMediaEncryptionNone, TRUE, TRUE);
@@ -1114,7 +1114,7 @@ static void video_call_using_policy_AVPF_implicit_caller_and_callee(void) {
 }
 
 static void video_call_established_by_reinvite_with_implicit_avpf(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *caller_call, *callee_call;
@@ -1226,7 +1226,7 @@ static void video_call_base_avpf(LinphoneCoreManager *caller,
 }
 
 static void video_call_avpf(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1236,7 +1236,7 @@ static void video_call_avpf(void) {
 }
 
 static void video_call_zrtp(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	if (linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionZRTP)) {
@@ -1247,7 +1247,7 @@ static void video_call_zrtp(void) {
 }
 
 static void video_call_dtls(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	if (linphone_core_media_encryption_supported(pauline->lc, LinphoneMediaEncryptionDTLS)) {
@@ -1258,7 +1258,7 @@ static void video_call_dtls(void) {
 }
 
 static void video_call_using_policy(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	video_call_base(pauline, marie, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
@@ -1267,7 +1267,7 @@ static void video_call_using_policy(void) {
 }
 
 static void video_call_using_policy_with_callee_video_disabled(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	video_call_base(marie, pauline, TRUE, LinphoneMediaEncryptionNone, FALSE, TRUE);
@@ -1276,7 +1276,7 @@ static void video_call_using_policy_with_callee_video_disabled(void) {
 }
 
 static void video_call_using_policy_with_caller_video_disabled(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	video_call_base(marie, pauline, TRUE, LinphoneMediaEncryptionNone, TRUE, FALSE);
@@ -1285,7 +1285,7 @@ static void video_call_using_policy_with_caller_video_disabled(void) {
 }
 
 static void video_call_no_sdp(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_sdp_200_ack(pauline->lc, TRUE);
@@ -1295,7 +1295,7 @@ static void video_call_no_sdp(void) {
 }
 
 static void call_with_ice_video_to_novideo(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1328,7 +1328,7 @@ static void _call_with_ice_video(LinphoneVideoActivationPolicy *caller_policy,
                                  bool_t video_removed_by_caller,
                                  bool_t video_removed_by_callee,
                                  bool_t video_only) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	unsigned int nb_audio_starts = 1, nb_video_starts = 0;
@@ -1587,7 +1587,7 @@ static void call_with_ice_video_added_7(void) {
 }
 
 static void call_with_ice_video_and_rtt(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
@@ -1660,7 +1660,7 @@ static void call_with_ice_video_only(void) {
 }
 
 static void video_call_with_early_media_no_matching_audio_codecs(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *out_call, *pauline_call;
@@ -1732,7 +1732,7 @@ end:
 }
 
 static void video_call_limited_bandwidth(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1869,7 +1869,7 @@ static void accept_call_in_send_base(bool_t caller_has_ice) {
 	bctbx_list_t *lcs = NULL;
 	;
 
-	marie = linphone_core_manager_new("marie_rc");
+	marie = linphone_core_manager_new("marie_tls_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	if (caller_has_ice) {
 		linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
@@ -1899,7 +1899,7 @@ static void two_accepted_call_in_send_only(void) {
 	LinphoneCoreManager *pauline, *marie, *laure;
 	bctbx_list_t *lcs = NULL;
 
-	marie = linphone_core_manager_new("marie_rc");
+	marie = linphone_core_manager_new("marie_tls_rc");
 	linphone_core_set_use_files(marie->lc, TRUE);
 	linphone_core_set_media_resource_mode(marie->lc, LinphoneMediaResourceModeShared);
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -2067,7 +2067,7 @@ static void multiple_early_media() {
 	linphone_core_manager_destroy(pauline);
 }
 static void video_call_ice_params(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -2079,7 +2079,7 @@ static void video_call_ice_params(void) {
 }
 
 static void audio_call_with_ice_with_video_policy_enabled(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -2135,7 +2135,7 @@ end:
 }
 
 static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_direction) {
-	LinphoneCoreManager *callee_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee_mgr = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller_mgr =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *early_media_params = NULL;
@@ -2357,7 +2357,7 @@ static void video_call_recording_vp8_test(void) {
 }
 
 static void video_call_snapshot(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
@@ -2406,7 +2406,7 @@ static void video_call_snapshot(void) {
 }
 
 static void video_call_snapshots(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
@@ -2475,7 +2475,7 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 	bctbx_list_t *lcs = NULL;
 	bool_t calls_ok;
 
-	marie = linphone_core_manager_new("marie_rc");
+	marie = linphone_core_manager_new("marie_tls_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
@@ -2588,7 +2588,7 @@ static void srtp_video_call_with_re_invite_inactive_followed_by_re_invite_no_sdp
 
 static void incoming_reinvite_with_invalid_ack_sdp(void) {
 	LinphoneCoreManager *caller = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCall *inc_call;
 
 	if (g_display_filter != "") {
@@ -2636,7 +2636,7 @@ static void incoming_reinvite_with_invalid_ack_sdp(void) {
 
 static void outgoing_reinvite_with_invalid_ack_sdp(void) {
 	LinphoneCoreManager *caller = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCall *out_call;
 
 	if (g_display_filter != "") {
@@ -2683,7 +2683,7 @@ static void outgoing_reinvite_with_invalid_ack_sdp(void) {
 }
 
 static void video_call_with_no_audio_and_no_video_codec(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *out_call;
@@ -2742,7 +2742,7 @@ static void video_call_with_no_audio_and_no_video_codec(void) {
 }
 
 static void video_call_with_auto_video_accept_disabled_on_one_end(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -2826,7 +2826,7 @@ static void enable_rtp_bundle(LinphoneCore *lc, bool_t enable) {
 }
 
 static void asymmetrical_video_call(bool_t with_call_params, bool_t with_flexfec) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *pauline_call_params = linphone_core_create_call_params(pauline->lc, NULL);
@@ -2996,7 +2996,7 @@ static void asymmetrical_video_call(bool_t with_call_params, bool_t with_flexfec
 }
 
 static void asymmetrical_video_call_with_callee_enabled_video_first() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *marie_call_params = linphone_core_create_call_params(marie->lc, NULL);
@@ -3109,7 +3109,7 @@ static void asymmetrical_video_call_with_callee_enabled_video_first() {
 }
 
 static void asymmetrical_video_call_2(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *pauline_call_params = linphone_core_create_call_params(pauline->lc, NULL);
@@ -3232,7 +3232,7 @@ static void asymmetrical_video_call_with_flexfec_starts_with_video() {
 }
 
 static void asymmetrical_video_call_with_recording() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -3362,7 +3362,7 @@ static void camera_not_working(LinphoneCall *call, const char *camera_name) {
 }
 
 static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
-	LinphoneCoreManager *caller = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *caller = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *callee =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -3435,7 +3435,7 @@ static void call_paused_resumed_with_automatic_video_accept(void) {
 }
 
 static void video_call_with_mire_and_analyse(void) {
-	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -3522,7 +3522,7 @@ static void on_eof(LinphonePlayer *player) {
  * TODO: make the same test with opus + H264.
  */
 static void call_with_video_mkv_file_player(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphonePlayer *player;
@@ -3628,7 +3628,7 @@ end:
 }
 
 static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_tcp_rc");
@@ -3751,7 +3751,7 @@ static void video_call_with_video_forwarding_forwardee_ends_first(void) {
 }
 
 static void video_call_set_image_as_video_source(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -3844,7 +3844,7 @@ static void on_call_state_change(BCTBX_UNUSED(LinphoneCore *core),
 }
 
 static void call_with_video_recvonly(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	const LinphoneCallParams *remote_params;
@@ -3912,7 +3912,7 @@ static void disable_all_audio_codecs(LinphoneCore *lc) {
 }
 
 static void video_call_without_audio_disable_video(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -4039,7 +4039,7 @@ static void video_call_without_audio_disable_video(void) {
 }
 
 static void call_with_video_requested_and_terminate(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -4102,7 +4102,7 @@ static void call_with_video_requested_and_terminate(void) {
 }
 
 static void video_call_memory() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -4187,7 +4187,7 @@ static int check_window_id(const void *window_id, const void *expected_id, const
 // Id => call => Id => InterId => Id => endCall => Id
 static void video_call_window_id(const char *video_device_type, bool test_native) {
 	const bool manual_test = false; // Set it to true to let more time to see something
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -4380,7 +4380,7 @@ static void video_call_preview_window_id(void) {
 
 static void video_call_with_preferred_definitions(void) {
 	const bool manual_test = false; // Set it to true to let more time to see something
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_tls_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
