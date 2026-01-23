@@ -162,11 +162,43 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	L_Q();
 
 	const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(q->getChatRoom());
-	if (!chatRoom) return;
+	if (!chatRoom) {
+		lDebug() << "Ignoring transition of participant " << *participantAddress << " of message [" << q
+		         << "] to state " << Utils::toString(newState) << " because the message has no chatroom associated";
+		return;
+	}
 
-	const shared_ptr<ChatMessage> &sharedMessage = q->getSharedFromThis();
+	const auto &account = chatRoom->getAccount();
 	const bool isBasicChatRoom =
 	    (chatRoom->getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+	std::shared_ptr<Address> localAddress = nullptr;
+	if (account) {
+		if (isBasicChatRoom) {
+			localAddress = account->getAccountParams()->getIdentityAddress();
+		} else {
+			localAddress = account->getContactAddress();
+		}
+	}
+
+	// Do not move the participant to the NotDelivered state if:
+	// - this core hasn't sent the message and the participant that goes into the NotDelivered state is the sender
+	// - this core is the sender and the participant that moved into the NotDelivered state is the sender
+	// Allow to move to the NotDelivered state the other devices linked to the sender's account and if the message has
+	// not been sent yet.
+	const auto &from = q->getFromAddress();
+	const auto &messageState = q->getState();
+	lInfo() << __func__ << " DEBUG DEBUG message state " << Utils::toString(messageState);
+	if ((newState == ChatMessage::State::NotDelivered) &&
+	    ((messageState == ChatMessage::State::Delivered) || (messageState == ChatMessage::State::DeliveredToUser) ||
+	     (messageState == ChatMessage::State::Displayed)) &&
+	    participantAddress->weakEqual(*from) && ((*localAddress == *from) || !localAddress->weakEqual(*from))) {
+		lInfo() << "Ignoring transition of the sender of message [" << q << "] " << *participantAddress << " to state "
+		        << Utils::toString(newState)
+		        << "; it may happen that one of its devices wasn't able to receive the message";
+		return;
+	}
+
+	shared_ptr<ChatMessage> sharedMessage = q->getSharedFromThis();
 	ChatMessage::State currentState = q->getParticipantState(participantAddress);
 	const auto &conferenceAddress = chatRoom->getConferenceAddress();
 	const auto conferenceAddressStr = conferenceAddress ? conferenceAddress->toString() : std::string("sip:");
