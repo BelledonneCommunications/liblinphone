@@ -419,15 +419,15 @@ void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	// We are looking for a one to one chatroom which isn't basic
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	if (chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::Basic) {
-		auto it = mChatRoomsById.find(conferenceId);
-		L_ASSERT(it == mChatRoomsById.end() || it->second == chatRoom);
-		bool addChatRoom = (it == mChatRoomsById.end());
+		auto it = mBasicChatRoomsById.find(conferenceId);
+		L_ASSERT(it == mBasicChatRoomsById.end() || it->second == chatRoom);
+		bool addChatRoom = (it == mBasicChatRoomsById.end());
 		if (addChatRoom) {
 			// Remove chat room from workaround cache.
 			if (linphone_core_get_global_state(getCCore()) != LinphoneGlobalStartup) {
 				lInfo() << "Insert chat room " << chatRoom << " (id " << conferenceId << ") to core map";
 			}
-			mChatRoomsById[conferenceId] = chatRoom;
+			mBasicChatRoomsById[conferenceId] = chatRoom;
 		}
 	} else {
 		const auto &conference = chatRoom->getConference();
@@ -447,7 +447,7 @@ void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatR
 
 void CorePrivate::loadChatRooms() {
 	L_Q();
-	mChatRoomsById.clear();
+	mBasicChatRoomsById.clear();
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 	if (clientListEventHandler) clientListEventHandler->clearHandlers();
 #endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
@@ -715,7 +715,7 @@ std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList(bool inclu
 	}
 
 	if (includeBasic) {
-		for (const auto &chatRoomPair : d->mChatRoomsById) {
+		for (const auto &chatRoomPair : d->mBasicChatRoomsById) {
 			const auto &chatRoom = chatRoomPair.second;
 			if (chatRoom) {
 				chatRooms.push_back(chatRoom);
@@ -864,7 +864,7 @@ void Core::deleteChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	if (chatRoomInCoreMap) {
 		CorePrivate *d = core->getPrivate();
 		d->mConferenceById.erase(conferenceId);
-		d->mChatRoomsById.erase(conferenceId);
+		d->mBasicChatRoomsById.erase(conferenceId);
 		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
 	} else {
 		lError() << "Unable to delete chat room [" << chatRoom << "] with conference ID " << conferenceId
@@ -980,8 +980,8 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 				auto basicChatRoom = dynamic_pointer_cast<BasicChatRoom>(chatRoom);
 				basicChatRoom->setConferenceId(conferenceId);
 
-				d->mChatRoomsById.erase(oldConfId);
-				d->mChatRoomsById[conferenceId] = chatRoom;
+				d->mBasicChatRoomsById.erase(oldConfId);
+				d->mBasicChatRoomsById[conferenceId] = chatRoom;
 
 				updateChatRoomList();
 			}

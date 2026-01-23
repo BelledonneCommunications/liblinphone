@@ -29,7 +29,7 @@ ConferenceContext::ConferenceContext(const std::shared_ptr<ConferenceParams> &pa
                                      const std::shared_ptr<const Address> &localAddress,
                                      const std::shared_ptr<const Address> &remoteAddress,
                                      const std::list<std::shared_ptr<Address>> &participants) {
-	mParams = params;
+	mConferenceParams = params;
 	mParticipants = participants;
 	mLocalAddress = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
 	mRemoteAddress = (remoteAddress) ? remoteAddress->getUriWithoutGruu() : Address();
@@ -52,42 +52,42 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 	}
 
 	// Check parameters only if pointer provided as argument is not null
-	if (mParams) {
-		const auto &otherParams = other.getParams();
-		if (mParams->audioEnabled() != otherParams->audioEnabled()) {
+	if (mConferenceParams) {
+		const auto &otherParams = other.getConferenceParams();
+		if (mConferenceParams->audioEnabled() != otherParams->audioEnabled()) {
 			lDebug() << "Conference context equalily failed because of chat capabilities mismatch; this "
-			         << mParams->audioEnabled() << " other " << otherParams->audioEnabled();
+			         << mConferenceParams->audioEnabled() << " other " << otherParams->audioEnabled();
 			return false;
 		}
-		if (mParams->videoEnabled() != otherParams->videoEnabled()) {
+		if (mConferenceParams->videoEnabled() != otherParams->videoEnabled()) {
 			lDebug() << "Conference context equalily failed because of video capabilities mismatch; this "
-			         << mParams->videoEnabled() << " other " << otherParams->videoEnabled();
+			         << mConferenceParams->videoEnabled() << " other " << otherParams->videoEnabled();
 			return false;
 		}
-		if (mParams->chatEnabled() != otherParams->chatEnabled()) {
+		if (mConferenceParams->chatEnabled() != otherParams->chatEnabled()) {
 			lDebug() << "Conference context equalily failed because of chat capabilities mismatch; this "
-			         << mParams->chatEnabled() << " other " << otherParams->chatEnabled();
+			         << mConferenceParams->chatEnabled() << " other " << otherParams->chatEnabled();
 			return false;
 		}
-		if (mParams->getSecurityLevel() != otherParams->getSecurityLevel()) {
+		if (mConferenceParams->getSecurityLevel() != otherParams->getSecurityLevel()) {
 			lDebug() << "Conference context equalily failed because of security level mismatch; this "
-			         << static_cast<int>(mParams->getSecurityLevel()) << " other "
+			         << static_cast<int>(mConferenceParams->getSecurityLevel()) << " other "
 			         << static_cast<int>(otherParams->getSecurityLevel());
 			return false;
 		}
 
 		bool checkSubject = false;
-		if (mParams->audioEnabled() || mParams->videoEnabled()) {
+		if (mConferenceParams->audioEnabled() || mConferenceParams->videoEnabled()) {
 			checkSubject = true;
-			if (mParams->localParticipantEnabled() != otherParams->localParticipantEnabled()) {
+			if (mConferenceParams->localParticipantEnabled() != otherParams->localParticipantEnabled()) {
 				lDebug() << "Conference context equalily failed because of local participant flag mismatch; this "
-				         << mParams->localParticipantEnabled() << " other " << otherParams->localParticipantEnabled();
+				         << mConferenceParams->localParticipantEnabled() << " other " << otherParams->localParticipantEnabled();
 				return false;
 			}
 		}
 
-		if (mParams->chatEnabled()) {
-			const auto &thisBackend = mParams->getChatParams()->getBackend();
+		if (mConferenceParams->chatEnabled()) {
+			const auto &thisBackend = mConferenceParams->getChatParams()->getBackend();
 			if (thisBackend != otherParams->getChatParams()->getBackend()) {
 				lDebug() << "Conference context equalily failed because of backend mismatch; this "
 				         << static_cast<int>(thisBackend) << " other "
@@ -95,29 +95,29 @@ bool ConferenceContext::operator==(const ConferenceContext &other) const {
 				return false;
 			}
 
-			if (mParams->isGroup() != otherParams->isGroup()) {
+			if (mConferenceParams->isGroup() != otherParams->isGroup()) {
 				lDebug() << "Conference context equalily failed because of group flag mismatch; this "
-				         << mParams->isGroup() << " other " << otherParams->isGroup();
+				         << mConferenceParams->isGroup() << " other " << otherParams->isGroup();
 				return false;
 			}
 
-			if (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::Basic)) {
+			if (mConferenceParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::Basic)) {
 				lDebug() << "Conference context equalily failed because a basic chat room must have a basic backend";
 				return false;
 			}
 
-			if (mParams->getChatParams()->isEncrypted() != otherParams->getChatParams()->isEncrypted()) {
+			if (mConferenceParams->getChatParams()->isEncrypted() != otherParams->getChatParams()->isEncrypted()) {
 				lDebug() << "Conference context equalily failed because of encryption flag mismatch; this "
-				         << mParams->getChatParams()->isEncrypted() << " other "
+				         << mConferenceParams->getChatParams()->isEncrypted() << " other "
 				         << otherParams->getChatParams()->isEncrypted();
 				return false;
 			}
 
 			// Subject doesn't make any sense for basic chat room and one to one chats
-			checkSubject = (mParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::FlexisipChat));
+			checkSubject = (mConferenceParams->isGroup() && (thisBackend == LinphonePrivate::ChatParams::Backend::FlexisipChat));
 		}
 
-		const auto &thisSubject = mParams->getUtf8Subject();
+		const auto &thisSubject = mConferenceParams->getUtf8Subject();
 		const auto &otherSubject = otherParams->getUtf8Subject();
 		if (checkSubject && !thisSubject.empty() && (thisSubject.compare(otherSubject) != 0)) {
 			lDebug() << "Conference context equalily failed because of subject mismatch; this " << thisSubject

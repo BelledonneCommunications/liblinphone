@@ -834,6 +834,77 @@ static void call_outbound_with_multiple_proxy(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void simple_call_to_an_account_configured_on_the_core(void) {
+	LinphoneCoreManager *marie_dual_proxy = linphone_core_manager_new("marie_dual_proxy_rc");
+	enable_stun_in_mgr(marie_dual_proxy, TRUE, TRUE, TRUE, TRUE);
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_early_rc");
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+
+	LinphoneAccount *marie_dual_proxy_secondary_account = NULL;
+	const LinphoneAccount *marie_dual_proxy_default_account = linphone_core_get_default_account(marie_dual_proxy->lc);
+	const bctbx_list_t *accounts = linphone_core_get_account_list(marie_dual_proxy->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)account_it->data;
+		if (account != marie_dual_proxy_default_account) {
+			marie_dual_proxy_secondary_account = account;
+		}
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(marie_dual_proxy_secondary_account);
+	if (!marie_dual_proxy_secondary_account) {
+		goto end;
+	}
+
+	const LinphoneAccountParams *marie_dual_proxy_secondary_account_params = linphone_account_get_params(marie_dual_proxy_secondary_account);
+	const LinphoneAddress *marie_dual_proxy_secondary_account_identity =
+	    linphone_account_params_get_identity_address(marie_dual_proxy_secondary_account_params);
+
+	const LinphoneAccountParams *marie_dual_proxy_default_account_params = linphone_account_get_params(marie_dual_proxy_default_account);
+	const LinphoneAddress *marie_dual_proxy_default_account_identity =
+	    linphone_account_params_get_identity_address(marie_dual_proxy_default_account_params);
+
+	BC_ASSERT_FALSE(linphone_address_weak_equal(marie_dual_proxy_default_account_identity, marie_dual_proxy_secondary_account_identity));
+
+	LinphoneAccount *marie_default_account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *marie_default_account_params = linphone_account_get_params(marie_default_account);
+	const LinphoneAddress *marie_default_account_identity =
+	    linphone_account_params_get_identity_address(marie_default_account_params);
+
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marie_dual_proxy_default_account_identity, marie_default_account_identity));
+
+	LinphoneCallParams *params = linphone_core_create_call_params(marie_dual_proxy->lc, NULL);
+	char *marie_dual_proxy_secondary_account_identity_str = linphone_address_as_string(marie_dual_proxy_secondary_account_identity);
+	linphone_call_params_set_from_header(params, marie_dual_proxy_secondary_account_identity_str);
+	ms_free(marie_dual_proxy_secondary_account_identity_str);
+
+	BC_ASSERT_TRUE(call_with_caller_params(marie_dual_proxy, marie, params));
+	linphone_call_params_unref(params);
+
+	LinphoneCall *marie_dual_proxy_call = linphone_core_get_current_call(marie_dual_proxy->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_dual_proxy_call);
+	if (marie_dual_proxy_call) {
+		const LinphoneCallParams *marie_call_parameters = linphone_call_get_params(marie_dual_proxy_call);
+		const LinphoneAccount *marie_call_account = linphone_call_params_get_account(marie_call_parameters);
+		const LinphoneAccountParams *marie_call_account_params = linphone_account_get_params(marie_call_account);
+		const LinphoneAddress *marie_call_account_identity =
+		    linphone_account_params_get_identity_address(marie_call_account_params);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marie_call_account_identity, marie_dual_proxy_secondary_account_identity));
+	}
+
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (marie_call) {
+		const LinphoneAddress *marie_call_remote_contact_address =
+		    linphone_call_get_remote_contact_address(marie_call);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marie_call_remote_contact_address, marie_dual_proxy_secondary_account_identity));
+	}
+	end_call(marie_dual_proxy, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(marie_dual_proxy);
+}
+
 static void call_outbound_using_secondary_account(void) {
 	// Caller
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dual_proxy_rc");
@@ -8902,6 +8973,7 @@ static test_t call_tests[] = {
     TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
     TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
     TEST_NO_TAG("Outbound call using different proxies", call_outbound_using_different_proxies),
+    TEST_NO_TAG("Simple call to an account configured on the core", simple_call_to_an_account_configured_on_the_core),
     TEST_ONE_TAG("Outbound call using secondary account", call_outbound_using_secondary_account, "LimeX3DH"),
     TEST_NO_TAG("Audio call recording", audio_call_recording_test),
     TEST_NO_TAG("Multiple answers to a call", multiple_answers_call),

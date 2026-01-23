@@ -42,8 +42,8 @@ public:
 	ConferenceContext(const ConferenceContext &other) = delete;
 	virtual ~ConferenceContext() = default;
 
-	inline const std::shared_ptr<const ConferenceParams> getParams() const {
-		return mParams;
+	inline const std::shared_ptr<const ConferenceParams> getConferenceParams() const {
+		return mConferenceParams;
 	}
 	inline const std::list<std::shared_ptr<Address>> &getParticipants() const {
 		return mParticipants;
@@ -58,7 +58,7 @@ public:
 	bool operator==(const ConferenceContext &other) const;
 
 private:
-	std::shared_ptr<const ConferenceParams> mParams;
+	std::shared_ptr<const ConferenceParams> mConferenceParams;
 	std::list<std::shared_ptr<Address>> mParticipants;
 	Address mLocalAddress;
 	Address mRemoteAddress;

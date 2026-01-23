@@ -216,7 +216,7 @@ private:
 	typedef std::
 	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
 	        ChatRoomWeakCompareMap;
-	ChatRoomWeakCompareMap mChatRoomsById;
+	ChatRoomWeakCompareMap mBasicChatRoomsById;
 
 	typedef std::
 	    unordered_map<ConferenceId, std::shared_ptr<Conference>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
