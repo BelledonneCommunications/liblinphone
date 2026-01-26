@@ -88,7 +88,7 @@ unsigned int _bctbx_log_mask_to_linphone_log_mask(unsigned int mask) {
 	auto &tmap = _linphone_log_level_to_bctbx_log_level_map;
 	for (auto it = tmap.cbegin(); it != tmap.cend(); it++) {
 		if (mask & it->second) {
-			mask &= ~it->second;
+			mask &= (unsigned int)~it->second;
 			res |= it->first;
 		}
 	}
@@ -112,7 +112,7 @@ unsigned int _linphone_log_mask_to_bctbx_log_mask(unsigned int mask) {
 	auto &tmap = _linphone_log_level_to_bctbx_log_level_map;
 	for (auto it = tmap.cbegin(); it != tmap.cend(); it++) {
 		if (mask & it->first) {
-			mask &= ~it->first;
+			mask &= (unsigned int)~it->first;
 			res |= it->second;
 		}
 	}
