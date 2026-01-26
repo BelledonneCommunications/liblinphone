@@ -561,6 +561,52 @@ static void supported_tags_handled_by_account_empty_list_test(void) {
 	supported_tags_handled_by_account_test(true);
 }
 
+static void account_no_unnecessary_register_on_push_token_reception(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+
+	BC_ASSERT_FALSE(linphone_core_push_notification_enabled(marie->lc));
+	BC_ASSERT_FALSE(linphone_account_params_get_push_notification_allowed(linphone_account_get_params(marie_account)));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1,
+	                              liblinphone_tester_sip_timeout));
+
+	int previousStats = marie->stat.number_of_LinphoneRegistrationOk;
+	// Mimic the reception of a voip push token
+	LinphoneAccountParams *marie_account_params =
+	    linphone_account_params_clone(linphone_account_get_params(marie_account));
+	linphone_push_notification_config_set_voip_token(
+	    linphone_account_params_get_push_notification_config(marie_account_params), "dummytoken:voip");
+	linphone_account_set_params(marie_account, marie_account_params);
+	linphone_account_params_unref(marie_account_params);
+
+	// Push are disabled, so receiving push token should not trigger a new registration
+	BC_ASSERT_FALSE(
+	    wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, previousStats + 1, 3000));
+
+	linphone_core_set_push_notification_enabled(marie->lc, true);
+	marie_account_params = linphone_account_params_clone(linphone_account_get_params(marie_account));
+	linphone_account_params_set_push_notification_allowed(marie_account_params, true);
+	linphone_push_notification_config_set_voip_token(
+	    linphone_account_params_get_push_notification_config(marie_account_params), "");
+	linphone_account_set_params(marie_account, marie_account_params);
+	linphone_account_params_unref(marie_account_params);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, previousStats + 1,
+	                              liblinphone_tester_sip_timeout));
+	previousStats = marie->stat.number_of_LinphoneRegistrationOk;
+	// Mimic the reception of a voip push token
+	marie_account_params = linphone_account_params_clone(linphone_account_get_params(marie_account));
+	linphone_push_notification_config_set_voip_token(
+	    linphone_account_params_get_push_notification_config(marie_account_params), "dummytoken2:voip");
+	linphone_account_set_params(marie_account, marie_account_params);
+	linphone_account_params_unref(marie_account_params);
+
+	// Push are now enabled, so receiving push token should trigger a new registration
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, previousStats + 1,
+	                              liblinphone_tester_sip_timeout));
+	linphone_core_manager_destroy(marie);
+}
+
 static test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
     TEST_NO_TAG("Simple account creation with removal", simple_account_creation_with_removal),
@@ -579,6 +625,8 @@ static test_t account_tests[] = {
     TEST_NO_TAG("Supported tags handled by account (without gruu)",
                 supported_tags_handled_by_account_without_gruu_test),
     TEST_NO_TAG("Supported tags handled by account (empty list)", supported_tags_handled_by_account_empty_list_test),
+    TEST_NO_TAG("Receiving a push token doesn't trigger a new register if push are disabled",
+                account_no_unnecessary_register_on_push_token_reception),
 };
 
 test_suite_t account_test_suite = {"Account",

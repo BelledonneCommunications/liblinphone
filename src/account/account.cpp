@@ -254,8 +254,14 @@ void Account::applyParamsChanges() {
 	    mOldParams->mContactUriParameters != mParams->mContactUriParameters ||
 	    mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed ||
 	    mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed ||
-	    !(mOldParams->mPushNotificationConfig->isEqual(*mParams->mPushNotificationConfig)) || customContactChanged()) {
+	    customContactChanged()) {
 		mRegisterChanged = true;
+	}
+
+	// PushNotificationConfig changes should only trigger a register if push notifications are allowed
+	if (mOldParams != nullptr && !(mOldParams->mPushNotificationConfig->isEqual(*mParams->mPushNotificationConfig))) {
+		mRegisterChanged =
+		    mRegisterChanged || mParams->mPushNotificationAllowed || mParams->mRemotePushNotificationAllowed;
 	}
 
 	if (mOldParams == nullptr ||
