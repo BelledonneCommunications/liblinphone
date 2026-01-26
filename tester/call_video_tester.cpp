@@ -1186,12 +1186,16 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
 
+		// Wait a little for the streams and the recorder to be correctly set up. It happens a few ms after the call
+		// moves to the StreamsRunning state
+		wait_for_until(caller->lc, callee->lc, NULL, 0, 500);
+
 		liblinphone_tester_set_next_video_frame_decoded_cb(caller_call);
 		liblinphone_tester_set_next_video_frame_decoded_cb(callee_call);
 
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &callee->stat.number_of_IframeDecoded, 1));
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &caller->stat.number_of_IframeDecoded, 1));
-		wait_for_until(caller->lc, callee->lc, NULL, 0, 3000);
+		wait_for_until(caller->lc, callee->lc, NULL, 0, 2500);
 
 		vstream = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
 		BC_ASSERT_TRUE(media_stream_avpf_enabled((MediaStream *)vstream));
