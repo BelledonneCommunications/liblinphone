@@ -7669,6 +7669,30 @@ void MainDb::deleteConferenceInfo(long long dbConferenceId, bool doCleanup) {
 #endif
 }
 
+void MainDb::invalidateConferenceInfoCacheIfNeeded(const std::shared_ptr<ConferenceInfo> &info) {
+#ifdef HAVE_DB_STORAGE
+	if (isInitialized()) {
+		L_DB_TRANSACTION {
+			L_D();
+			auto uri = info->getUri();
+			if (uri) {
+				auto prunedAddress = uri->getUriWithoutGruu();
+				const long long &uriSipAddressId = d->selectSipAddressId(prunedAddress, false);
+				const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
+				auto it = d->storageIdToConferenceInfo.find(dbConferenceId);
+				if (it != d->storageIdToConferenceInfo.cend()) {
+					shared_ptr<ConferenceInfo> cachedInfo = it->second.lock();
+					if (cachedInfo && (cachedInfo == info)) {
+						d->storageIdToConferenceInfo.erase(dbConferenceId);
+					}
+				}
+				tr.commit();
+			}
+		};
+	}
+#endif
+}
+
 void MainDb::deleteConferenceInfo(const std::shared_ptr<Address> &address) {
 #ifdef HAVE_DB_STORAGE
 	if (isInitialized()) {

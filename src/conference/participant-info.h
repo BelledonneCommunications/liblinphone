@@ -88,7 +88,7 @@ inline std::ostream &operator<<(std::ostream &ostr, const ParticipantInfo &parti
 	const auto addressString = (address ? address->toString() : std::string("sip:"));
 	const auto &ccmpUri = participantInfo.getCcmpUri();
 	const auto ccmpUriString = ccmpUri.empty() ? std::string("xcon:") : ccmpUri;
-	ostr << "ParticipantInfo [" << (void *)&participantInfo << "]  (address: " << addressString
+	ostr << "ParticipantInfo [" << (void *)&participantInfo << "] (address: " << addressString
 	     << " - CCMP uri: " << ccmpUriString << ")";
 	return ostr;
 }

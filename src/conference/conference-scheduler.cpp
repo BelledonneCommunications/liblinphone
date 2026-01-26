@@ -132,6 +132,11 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	}
 
 	const auto &organizer = clone->getOrganizerAddress();
+	if (!organizer || !organizer->isValid()) {
+		lWarning() << "[Conference Scheduler] [" << this << "] Unable to determine the address of the organizer!";
+		return;
+	}
+
 	const auto &conferenceAddress = clone->getUri();
 	const std::string conferenceAddressStr = (conferenceAddress ? conferenceAddress->toString() : std::string("sip:"));
 	const auto &participants = clone->getParticipants();
@@ -153,6 +158,10 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 #ifdef HAVE_DB_STORAGE
 	if (isUpdate) {
 		auto &mainDb = getCore()->getPrivate()->mainDb;
+		// It may happen that the application modifies the conference info stored in the main DB cache. Doing so makes
+		// impossible for the SDK to figure out changes. By invalidating the main DB cache, the SDK has to read the
+		// information from the database and update the main DB cache.
+		mainDb->invalidateConferenceInfoCacheIfNeeded(info);
 		auto confInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
 		if (confInfo) {
 			lInfo() << "[Conference Scheduler] [" << this

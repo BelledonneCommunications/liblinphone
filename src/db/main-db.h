@@ -266,6 +266,7 @@ public:
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri);
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromCcmpUri(const std::string &uri);
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
+	void invalidateConferenceInfoCacheIfNeeded(const std::shared_ptr<ConferenceInfo> &info);
 	void deleteConferenceInfo(long long dbConferenceId, bool doCleanup = true);
 	void deleteConferenceInfo(const std::shared_ptr<Address> &address);
 	void deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);

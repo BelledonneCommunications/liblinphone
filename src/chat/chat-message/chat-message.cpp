@@ -187,7 +187,6 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	// not been sent yet.
 	const auto &from = q->getFromAddress();
 	const auto &messageState = q->getState();
-	lInfo() << __func__ << " DEBUG DEBUG message state " << Utils::toString(messageState);
 	if ((newState == ChatMessage::State::NotDelivered) &&
 	    ((messageState == ChatMessage::State::Delivered) || (messageState == ChatMessage::State::DeliveredToUser) ||
 	     (messageState == ChatMessage::State::Displayed)) &&
