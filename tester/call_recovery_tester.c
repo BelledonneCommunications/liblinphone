@@ -204,12 +204,14 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 	wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_NetworkReachableTrue, 2);
 	bool_t callerSupportsReplaces = sal_has_supported_tag(linphone_core_get_sal(callerMgr->lc), "replaces");
 	if (!!callerSupportsReplaces) {
-		BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
+		BC_ASSERT_TRUE(
+		    wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
 		char *repared_callid = bctbx_strdup(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)));
 
 		BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingRinging, 2));
 		BC_ASSERT_EQUAL(number_of_call_log_updated, 2, int, "%d");
-		BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
+		BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)),
+		                       repared_callid);
 
 		incoming_call = linphone_core_get_current_call(pauline->lc);
 		remote_params = linphone_call_get_remote_params(incoming_call);
@@ -225,13 +227,15 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 
 		liblinphone_tester_check_rtcp(callerMgr, pauline);
 		/*to make sure the call is only "repaired one time"*/
-		BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
+		BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)),
+		                       repared_callid);
 
 		bctbx_free(repared_callid);
 
 		linphone_call_terminate(incoming_call);
 	} else {
-		BC_ASSERT_FALSE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
+		BC_ASSERT_FALSE(
+		    wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingProgress, 2));
 	}
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallReleased, 1));
@@ -242,17 +246,28 @@ end:
 	linphone_core_cbs_unref(core_cbs);
 	linphone_core_manager_destroy(pauline);
 }
+
 static void recovered_call_on_network_switch_in_early_state_1(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	recovered_call_on_network_switch_in_early_state(marie);
 	linphone_core_manager_destroy(marie);
 }
+
 static void recovered_call_on_network_switch_in_early_state_without_replaces_support(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	linphone_core_remove_supported_tag(marie->lc, "replaces");
 	recovered_call_on_network_switch_in_early_state(marie);
 	linphone_core_manager_destroy(marie);
 }
+
+static void recovered_call_on_network_switch_in_early_state_1_no_database(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	linphone_core_enable_database(marie->lc, false);
+	linphone_core_manager_start(marie, TRUE);
+	recovered_call_on_network_switch_in_early_state(marie);
+	linphone_core_manager_destroy(marie);
+}
+
 static void recovered_call_on_network_switch_in_early_state_1_udp(void) {
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
 	recovered_call_on_network_switch_in_early_state(laure);
@@ -1102,6 +1117,9 @@ static test_t call_recovery_tests[] = {
                  "CallRecovery"),
     TEST_ONE_TAG("Recovered call on network family switch in early state 1",
                  recovered_call_on_network_family_switch_in_early_state,
+                 "CallRecovery"),
+    TEST_ONE_TAG("Recovered call on network switch in early state 1 with no database",
+                 recovered_call_on_network_switch_in_early_state_1_no_database,
                  "CallRecovery"),
     TEST_ONE_TAG("Recovered call on network switch in early state 1 (udp caller)",
                  recovered_call_on_network_switch_in_early_state_1_udp,

@@ -5451,7 +5451,9 @@ void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presen
 	linphone_core_send_publish(lc, presence, send_publish);
 }
 
-void linphone_core_set_presence_model_with_publish_toggle(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish) {
+void linphone_core_set_presence_model_with_publish_toggle(LinphoneCore *lc,
+                                                          LinphonePresenceModel *presence,
+                                                          bool_t send_publish) {
 	CoreLogContextualizer logContextualizer(lc);
 	linphone_core_send_presence(lc, presence, send_publish);
 	if (lc->presence_model != NULL) {
@@ -9742,7 +9744,7 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t, bctbx_list_t *capabilities) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	if (mainDb == NULL) return NULL;
+	if (mainDb == NULL || !mainDb->isInitialized()) return NULL;
 	std::list<LinphoneStreamType> capabilityList;
 	if (capabilities) {
 		for (bctbx_list_t *capability = capabilities; capability != NULL; capability = capability->next) {
