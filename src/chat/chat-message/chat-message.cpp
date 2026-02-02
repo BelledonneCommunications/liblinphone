@@ -985,7 +985,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 	// In secured chat rooms, the authenticatedFromAddress is already the decrypted CPIM From Address
 	// In plain text basic chat rooms, the authenticatedFromAddress must be set here as the SIP From Address
 	// In plain text group chat rooms the sender authentication is disabled
-	const auto &chatRoomParams = q->getChatRoom()->getCurrentParams();
+	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	if (!chatRoomParams->getChatParams()->isEncrypted()) {
 		const bool isBasicChatRoom = (chatRoomParams->getChatParams()->getBackend() == ChatParams::Backend::Basic);
 		if (isBasicChatRoom) {
@@ -1113,7 +1113,6 @@ LinphoneReason ChatMessagePrivate::receive() {
 			return reason;
 		}
 
-		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 		LinphoneChatRoom *cr = chatRoom->toC();
 
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
@@ -1160,9 +1159,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 		if (direction == ChatMessage::Direction::Outgoing) {
 			toBeStored = true;
 		} else {
-			_linphone_chat_room_notify_chat_message_should_be_stored(
-			    static_pointer_cast<ChatRoom>(q->getChatRoom())->getCChatRoom(),
-			    L_GET_C_BACK_PTR(q->getSharedFromThis()));
+			_linphone_chat_room_notify_chat_message_should_be_stored(chatRoom->toC(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
 		}
 
 		if (toBeStored) {
@@ -1483,7 +1480,7 @@ void ChatMessagePrivate::send() {
 				lInfo() << "Encryption has been prevented, skipping this modifier";
 			}
 		}
-	} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+	} else if (q->getCore()->conferenceServerEnabled()) {
 		if (!encryptionPrevented) {
 			EncryptionChatMessageModifier ecmm;
 			ChatMessageModifier::Result result = ecmm.encode(ref, errorCode);
@@ -1592,7 +1589,7 @@ void ChatMessagePrivate::storeInDb() {
 	L_Q();
 
 	// TODO: store message in the future
-	if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) return;
+	if (q->getCore()->conferenceServerEnabled()) return;
 
 	if (q->isValid()) {
 		updateInDb();

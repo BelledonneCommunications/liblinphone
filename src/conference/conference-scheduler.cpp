@@ -144,8 +144,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator](const auto &p) {
 		                               return (creator->weakEqual(*p->getAddress()));
 	                               }) != participants.cend());
-	if (!creator->weakEqual(*organizer) && !participantFound &&
-	    !linphone_core_conference_server_enabled(getCore()->getCCore())) {
+	if (!creator->weakEqual(*organizer) && !participantFound && !getCore()->conferenceServerEnabled()) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Address " << *creator
 		           << " is trying to modify the conference information but he/she is neither an invited participant "
 		              "nor the organizer ("
@@ -212,7 +211,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		}
 	}
 
-	if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+	if (getCore()->conferenceServerEnabled()) {
 		const auto &startTime = clone->getDateTime();
 		time_t earlierJoiningTime = ms_time(NULL);
 		if (startTime >= 0) {

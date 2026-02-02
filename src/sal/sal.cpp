@@ -117,27 +117,11 @@ void Sal::processRequestEventCb(void *userCtx, const belle_sip_request_event_t *
 			auto subscribeTransaction = belle_sip_dialog_get_last_transaction(dialog);
 			op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(subscribeTransaction));
 		}
-		if (!op || (op->mState == SalOp::State::Terminated)) {
-			if (!op) lWarning() << "Receiving request for null op, ignored";
-			evh = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Expires");
-			string eventHeaderValue = "";
-			int expires = -1;
-			if (evh) {
-				eventHeaderValue = belle_sip_header_get_unparsed_value(evh);
-				expires = std::stoi(eventHeaderValue);
-			}
-			if ((method == "BYE") ||
-			    ((method == "SUBSCRIBE") && op && (op->mState == SalOp::State::Terminated) && (expires == 0))) {
-				// does not make sense to not answer to a BYE request
-				//  If method is SUBSCRIBE with Expires field set to 0 (i.e. an unsubscribe) and it is terminated, we
-				//  send a 200OK because the dialog is freed elsewhere
-				auto response = belle_sip_response_create_from_request(request, 200);
-				belle_sip_provider_send_response(sal->mProvider, response);
-			} else {
-				auto response = belle_sip_response_create_from_request(request, 481); // Call leg does not exist.
-				belle_sip_provider_send_response(sal->mProvider, response);
-			}
-			if (!op) return;
+		if (!op) {
+			lWarning() << "Receiving request for null op ignored";
+			auto response = belle_sip_response_create_from_request(request, 481); // Call leg does not exist.
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
 		}
 	} else {
 		// Handle the case where we are receiving a request with to tag but it is not belonging to any dialog

@@ -3140,20 +3140,32 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 	                             initialPaulineStats.number_of_chat_room_participants_removed + 1,
 	                             liblinphone_tester_sip_timeout));
 
-	if (offline_when_removed && !offline_when_reinvited) {
-		wait_for_list(coresList, 0, 1, 20000); /* see large comment below, also applicable for BYE */
-		linphone_core_manager_configure(laure);
-		linphone_config_set_string(linphone_core_get_config(laure->lc), "misc", "uuid", savedLaureUuid);
-		bctbx_free(savedLaureUuid);
-		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, laure);
-		bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
-		bctbx_list_free(tmpCoresManagerList);
-		linphone_core_manager_start(laure, TRUE);
-		laureIdentity = linphone_core_get_identity(laure->lc);
-		coresList = bctbx_list_concat(coresList, tmpCoresList);
-		coresManagerList = bctbx_list_append(coresManagerList, laure);
-	}
 	if (!offline_when_reinvited) {
+		if (offline_when_removed) {
+			wait_for_list(coresList, 0, 1, 20000); /* see large comment below, also applicable for BYE */
+			linphone_core_manager_configure(laure);
+			linphone_config_set_string(linphone_core_get_config(laure->lc), "misc", "uuid", savedLaureUuid);
+			bctbx_free(savedLaureUuid);
+			bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, laure);
+			bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+			bctbx_list_free(tmpCoresManagerList);
+			setup_mgr_for_conference(laure, NULL);
+			linphone_core_manager_start(laure, TRUE);
+			laureIdentity = linphone_core_get_identity(laure->lc);
+			coresList = bctbx_list_concat(coresList, tmpCoresList);
+			coresManagerList = bctbx_list_append(coresManagerList, laure);
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneSubscriptionActive, 1,
+			     liblinphone_tester_sip_timeout));
+
+			initialLaureStats = laure->stat;
+
+			// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the client turns its network on before the transaction expires, preventing it to move to the Release state on the server side
+			ms_message("%s toggles its network", linphone_core_get_identity(laure->lc));
+			linphone_core_set_network_reachable(laure->lc, FALSE);
+			linphone_core_set_network_reachable(laure->lc, TRUE);
+		}
+
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateTerminated,
 		                             initialLaureStats.number_of_LinphoneChatRoomStateTerminated + 1,
 		                             liblinphone_tester_sip_timeout));
@@ -7045,6 +7057,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 				linphone_core_cbs_set_chat_room_exhumed(cbs, linphone_tester_chat_room_exhumed);
 				linphone_core_add_callbacks(pauline->lc, cbs);
+				setup_mgr_for_conference(pauline, NULL);
 				linphone_core_manager_start(pauline, TRUE);
 				coresList = bctbx_list_append(coresList, pauline->lc);
 
@@ -7062,8 +7075,23 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				BC_ASSERT_FALSE(
 				    wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateTerminated, 1, 5000));
 
-				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int,
-				                "%d");
+				stats initialPaulineStats = pauline->stat;
+				// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the client turns its network on before the transaction expires, preventing it to move to the Release state on the server side
+				ms_message("%s toggles its network", linphone_core_get_identity(pauline->lc));
+				linphone_core_set_network_reachable(pauline->lc, FALSE);
+				linphone_core_set_network_reachable(pauline->lc, TRUE);
+
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneSubscriptionActive,
+							     initialPaulineStats.number_of_LinphoneSubscriptionActive + 1,
+							     liblinphone_tester_sip_timeout));
+
+				paulineOneToOneCr = linphone_core_get_chat_room(pauline->lc, exhumedConfAddr);
+				int part_counter = 0;
+				do {
+					part_counter++;
+					wait_for_list(coresList, NULL, 0, 100);
+				} while ((part_counter < 100) && (linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr) == 0));
+				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int, "%d");
 			} else {
 				// Pauline goes back online
 				ms_message("%s comes back online", linphone_core_get_identity(pauline->lc));
@@ -7793,6 +7821,9 @@ static void group_chat_room_subscription_denied(void) {
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	setup_mgr_for_conference(marie, NULL);
+	setup_mgr_for_conference(laure, NULL);
+	setup_mgr_for_conference(pauline, NULL);
 	LinphoneAddress *paulineAddress = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddress));
@@ -7834,7 +7865,18 @@ static void group_chat_room_subscription_denied(void) {
 	                             initialLaureStats.number_of_chat_room_participants_removed + 1,
 	                             liblinphone_tester_sip_timeout));
 
+	initialPaulineStats = pauline->stat;
+
 	// Reconnect pauline
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneSubscriptionError,
+	                             initialPaulineStats.number_of_LinphoneSubscriptionError + 1,
+	                             liblinphone_tester_sip_timeout));
+
+	// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the client turns its network on before the transaction expires, preventing it to move to the Release state on the server side
+	ms_message("%s toggles its network", linphone_core_get_identity(pauline->lc));
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateTerminated,

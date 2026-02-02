@@ -113,11 +113,13 @@ void SalSubscribeOp::handleNotify(belle_sip_request_t *request, const char *even
 		lInfo() << "Outgoing subscription terminated by remote [" << getTo() << "]";
 	}
 	if (mState == State::Terminated || mState == State::Terminating) {
+		lWarning() << "Receiving NOTIFY request for terminated op [" << this << "]";
+		auto response = createResponseFromRequest(request, 481);
+		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
 		return;
 	}
 	ref();
 	mRoot->mCallbacks.notify(this, subscribeStatus, eventName, bodyHandler);
-	/* if it is terminated, 481 has been responded already in sal.cpp */
 	auto response = createResponseFromRequest(request, 200);
 	belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
 

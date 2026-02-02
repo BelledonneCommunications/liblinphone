@@ -144,6 +144,10 @@ public:
 	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	                                                 const std::shared_ptr<const Address> &localAddr,
 	                                                 const std::shared_ptr<const Address> &remoteAddr,
+	                                                 const std::list<std::shared_ptr<Address>> &participants, bool logIfNotFound = true) const;
+	std::shared_ptr<AbstractChatRoom> searchBasicChatRoom(const std::shared_ptr<ConferenceParams> &params,
+	                                                 const std::shared_ptr<const Address> &localAddress,
+	                                                 const std::shared_ptr<const Address> &remoteAddress,
 	                                                 const std::list<std::shared_ptr<Address>> &participants) const;
 
 	std::shared_ptr<const Address> getDefaultLocalAddress(const std::shared_ptr<const Address> peerAddress,
@@ -157,7 +161,7 @@ public:
 	                                                                const std::shared_ptr<Address> &participantAddress,
 	                                                                bool encrypted) const;
 	std::shared_ptr<AbstractChatRoom>
-	findExumedChatRoomFromPreviousConferenceId(const ConferenceId &conferenceId) const;
+	findExhumedChatRoomFromPreviousConferenceId(const ConferenceId &conferenceId) const;
 
 	void stopChatMessagesAggregationTimer();
 	void deleteConferenceInfo(const std::shared_ptr<Address> &conferenceAddress);
@@ -213,10 +217,7 @@ private:
 	std::shared_ptr<Call> currentCall;
 	std::weak_ptr<Conference> currentLocalConference; /* set to the active client-mixed conference*/
 
-	typedef std::
-	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
-	        ChatRoomWeakCompareMap;
-	ChatRoomWeakCompareMap mBasicChatRoomsById;
+	Core::ChatRoomWeakCompareMap mBasicChatRoomsById;
 
 	typedef std::
 	    unordered_map<ConferenceId, std::shared_ptr<Conference>, ConferenceId::WeakHash, ConferenceId::WeakEqual>

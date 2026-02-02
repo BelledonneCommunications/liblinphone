@@ -234,6 +234,7 @@ void liblinphone_tester_disable_leak_detector(int disabled);
 extern void liblinphone_tester_clear_accounts(void);
 
 extern const char *flexisip_tester_dns_server;
+extern const char *mysql_username_password_string;
 extern bctbx_list_t *flexisip_tester_dns_ip_addresses;
 extern const char *ccmp_server_url;
 extern const char *test_domain;
@@ -790,6 +791,7 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *ev, LinphoneSubscriptionState state);
 void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state);
 void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *content);
+void linphone_notify_sent_2(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *content);
 void linphone_notify_received(LinphoneCore *lc,
                               LinphoneEvent *lev,
                               const char *eventname,

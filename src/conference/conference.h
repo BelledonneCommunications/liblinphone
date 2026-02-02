@@ -365,6 +365,10 @@ public:
 
 	void setConferenceId(const ConferenceId &conferenceId);
 
+	inline long getCreationDurationMs() const {
+		return mCreationDurationMs;
+	}
+
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
 	                    std::shared_ptr<CallSessionListener> callSessionListener,
@@ -419,6 +423,7 @@ protected:
 	bool updateMinatureRequestedFlag() const;
 
 	mutable bool thumbnailsRequested = true;
+	mutable long mCreationDurationMs = 0;
 
 	void fillInvitedParticipantList(const ConferenceInfo::participant_list_t infos);
 	void fillInvitedParticipantList(SalCallOp *op, const std::shared_ptr<Address> &organizer, bool cancelling);
@@ -429,8 +434,8 @@ protected:
 	std::list<std::shared_ptr<Participant>> getInvitedParticipants() const;
 	void removeInvitedParticipant(const std::shared_ptr<Address> &address);
 
-	std::shared_ptr<Participant> createParticipant(std::shared_ptr<Call> call);
-	std::shared_ptr<Participant> createParticipant(std::shared_ptr<const Address> participantAddress);
+	virtual std::shared_ptr<Participant> createParticipant(std::shared_ptr<Call> call);
+	virtual std::shared_ptr<Participant> createParticipant(std::shared_ptr<const Address> participantAddress);
 	virtual std::shared_ptr<ParticipantDevice> createParticipantDevice(std::shared_ptr<Participant> participant,
 	                                                                   std::shared_ptr<Call> call);
 

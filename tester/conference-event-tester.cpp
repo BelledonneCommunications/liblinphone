@@ -19,22 +19,28 @@
  */
 
 #include <map>
+#include <random>
 #include <string>
+
+#include <soci/soci.h>
 
 #include "bctoolbox/defs.h"
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "chat/chat-room/chat-params.h"
 #include "conference/client-conference.h"
 #include "conference/conference-listener.h"
 #include "conference/conference.h"
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/handlers/client-conference-event-handler.h"
 #include "conference/handlers/server-conference-event-handler.h"
+#include "conference/handlers/server-conference-list-event-handler.h"
 #endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 #include "conference/participant.h"
 #include "conference/server-conference.h"
+#include "core/core-p.h"
 #include "liblinphone_tester.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
@@ -47,7 +53,10 @@
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
 #include "tools/private-access.h"
+#ifdef HAVE_XERCESC
 #include "xml/conference-info.h"
+#include "xml/resource-lists.h"
+#endif // HAVE_XERCESC
 
 using namespace LinphonePrivate;
 using namespace std;
@@ -868,14 +877,29 @@ void ConferenceEventTester::onParticipantDeviceRemoved(const shared_ptr<Conferen
 
 class ServerConferenceTester : public ServerConference {
 public:
-	ServerConferenceTester(const std::shared_ptr<Core> &core, std::shared_ptr<CallSessionListener> listener)
-	    : ServerConference(core, listener, ConferenceParams::create(core)) {
+	ServerConferenceTester(const std::shared_ptr<Core> &core,
+	                       std::shared_ptr<CallSessionListener> listener,
+	                       const std::shared_ptr<ConferenceParams> params)
+	    : ServerConference(core, listener, params) {
 		getCurrentParams()->setAccount(core->getDefaultAccount());
 		getCurrentParams()->enableLocalParticipant(false);
-		getCurrentParams()->enableAudio(true);
-		getCurrentParams()->enableChat(false);
 	}
 	virtual ~ServerConferenceTester() = default;
+
+	virtual std::shared_ptr<Participant> createParticipant(std::shared_ptr<Call> call) override {
+		;
+		auto session = call->getActiveSession();
+		const std::shared_ptr<Address> &remoteAddress = call->getRemoteAddress();
+		auto participant = Participant::create(getSharedFromThis(), remoteAddress);
+		participant->addDevice(remoteAddress, remoteAddress->toString());
+		return participant;
+	}
+
+	virtual std::shared_ptr<Participant> createParticipant(std::shared_ptr<const Address> participantAddress) override {
+		shared_ptr<Participant> participant = Participant::create(getSharedFromThis(), participantAddress);
+		participant->addDevice(participantAddress, participantAddress->toString());
+		return participant;
+	}
 
 	/* ConferenceInterface */
 
@@ -1519,7 +1543,11 @@ void send_added_notify_through_address() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_conference_server(pauline->lc, TRUE);
-	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
+	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr());
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2105,7 +2133,11 @@ void send_removed_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_conference_server(pauline->lc, TRUE);
-	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
+	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr());
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2153,7 +2185,11 @@ void send_admined_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_conference_server(pauline->lc, TRUE);
-	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
+	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr());
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2201,7 +2237,11 @@ void send_unadmined_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_conference_server(pauline->lc, TRUE);
-	shared_ptr<ServerConferenceTester> localConf = make_shared<ServerConferenceTester>(pauline->lc->cppPtr, nullptr);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
+	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr());
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2247,8 +2287,11 @@ void send_subject_changed_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_conference_server(pauline->lc, TRUE);
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
 	shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
-	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr());
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr());
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2302,7 +2345,11 @@ void send_device_added_notify() {
 	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
 	linphone_core_cbs_unref(cbs);
 
-	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr();
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
+	shared_ptr<Conference> localConf =
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr();
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2399,7 +2446,11 @@ void send_device_removed_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_enable_conference_server(pauline->lc, TRUE);
-	shared_ptr<Conference> localConf = (new ServerConferenceTester(pauline->lc->cppPtr, nullptr))->toSharedPtr();
+	auto params = ConferenceParams::create(pauline->lc->cppPtr);
+	params->enableAudio(true);
+	params->enableChat(false);
+	shared_ptr<Conference> localConf =
+	    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr();
 	localConf->init();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
@@ -2468,15 +2519,15 @@ void one_to_one_keyword() {
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
-	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
-	linphone_address_unref(cBobAddr);
 
 	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 
 	// Create basic chat room with OneToOne capability to ensure that one to one is added to notify
 	pauline->lc->cppPtr->getOrCreateBasicChatRoom(addr, addr);
 
+	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
+	linphone_address_unref(cBobAddr);
 	localConf->Conference::addParticipant(bobAddr);
 	ServerConferenceEventHandler *localHandler =
 	    (L_ATTR_GET(dynamic_pointer_cast<ServerConference>(localConf).get(), mEventHandler)).get();
@@ -2494,6 +2545,383 @@ void one_to_one_keyword() {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
+#ifndef _WIN32
+std::string generate_random_alphanum_string(size_t length) {
+	const std::string characterSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	std::random_device random_device;
+	std::mt19937 generator(random_device());
+
+	std::string random_string(characterSet);
+	std::shuffle(random_string.begin(), random_string.end(), generator);
+
+	return random_string.substr(0, length);
+}
+
+// This test verifies a server functionality hence not applicable to Windows machines
+char *list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(
+    const char *source_db, size_t nbServerChatRooms, size_t nbClientChatRooms, bool save, const char *backend) {
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	char core_db[256];
+	const char *db_basename = "server_chatroom";
+	char *rwDbPath = NULL;
+	linphone_config_set_string(linphone_core_get_config(pauline->lc), "storage", "backend", backend);
+	std::string random_mysql_db_name;
+	std::string soci_connection_string = std::string(backend) + std::string("://");
+	bool sqlite3_backend = (strcmp(backend, "sqlite3") == 0);
+	bool mysql_backend = (strcmp(backend, "mysql") == 0);
+	if (sqlite3_backend) {
+		if (source_db) {
+			char random_db_filename[50];
+			belle_sip_random_token(random_db_filename, sizeof(random_db_filename));
+			sprintf(core_db, "%s_%s.db", db_basename, random_db_filename);
+			rwDbPath = bc_tester_file(core_db);
+			BC_ASSERT_FALSE(liblinphone_tester_copy_file(source_db, rwDbPath));
+			linphone_config_set_string(linphone_core_get_config(pauline->lc), "storage", "uri", rwDbPath);
+		} else {
+			rwDbPath = ms_strdup(pauline->database_path);
+		}
+	} else if (mysql_backend) {
+		char base_mysql_db_connection_string[500];
+		const char *dns_server = flexisip_tester_dns_server;
+		if (flexisip_tester_dns_ip_addresses) {
+			dns_server = reinterpret_cast<const char *>(bctbx_list_get_data(flexisip_tester_dns_ip_addresses));
+		}
+		sprintf(base_mysql_db_connection_string, "%s host='%s'", mysql_username_password_string, dns_server);
+		random_mysql_db_name = generate_random_alphanum_string(50);
+		char db_connection_string[700];
+		sprintf(db_connection_string, "db='%s' %s", random_mysql_db_name.c_str(), base_mysql_db_connection_string);
+		linphone_config_set_string(linphone_core_get_config(pauline->lc), "storage", "uri", db_connection_string);
+		soci_connection_string.append(base_mysql_db_connection_string);
+		soci::session sociSession(soci_connection_string);
+		std::string query = std::string("CREATE OR REPLACE DATABASE ") + random_mysql_db_name;
+		sociSession << query;
+	}
+
+	linphone_core_enable_conference_server(pauline->lc, TRUE);
+	linphone_core_manager_start(pauline, true);
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "full_state_trigger_due_to_missing_updates",
+	                        20);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_notify_sent(cbs, linphone_notify_sent_2);
+	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
+	linphone_core_cbs_unref(cbs);
+
+	auto content = Content::create();
+	content->setContentType(ContentType::ResourceLists);
+
+	size_t chatRoomRate = nbServerChatRooms / nbClientChatRooms;
+
+	LinphoneAccount *default_account = linphone_core_get_default_account(pauline->lc);
+	auto identityAddress =
+	    Address::toCpp(linphone_account_params_get_identity_address(linphone_account_get_params(default_account)))
+	        ->getSharedFromThis();
+	// Ensure that all the Xerces objects are destroyed before XMLPlatformUtils::Terminate() is called by the core
+	// destructor
+	{
+		Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
+		Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
+
+		auto lastNotify = 20;
+		if (!source_db) {
+			char confId[100];
+			for (size_t idx = 0; idx < nbServerChatRooms; idx++) {
+				auto params = ConferenceParams::create(pauline->lc->cppPtr);
+				params->enableAudio(false);
+				params->enableChat(true);
+				params->setGroup(true);
+				params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
+				auto uri = identityAddress->clone()->toSharedPtr();
+				uri->setUriParam("conf-id", belle_sip_random_token(confId, sizeof(confId)));
+				ms_message("%s is creating chatroom with address %s", linphone_core_get_identity(pauline->lc),
+				           uri->toString().c_str());
+				params->setSubject(uri->toString());
+				params->setConferenceAddress(uri);
+				shared_ptr<ServerConferenceTester> localConf = dynamic_pointer_cast<ServerConferenceTester>(
+				    (new ServerConferenceTester(pauline->lc->cppPtr, nullptr, params))->toSharedPtr());
+				localConf->initFromDb(nullptr, ConferenceId(uri, uri, pauline->lc->cppPtr->createConferenceIdParams()),
+				                      lastNotify, false);
+				std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
+				    std::make_shared<ConferenceListenerInterfaceTester>();
+				localConf->addListener(confListener);
+
+				localConf->setState(ConferenceInterface::State::Created);
+				L_GET_PRIVATE_FROM_C_OBJECT(pauline->lc)
+				    ->insertChatRoomWithDb(localConf->getChatRoom(), lastNotify, true);
+
+				std::list<std::shared_ptr<Participant>> participants;
+				for (const auto &participantAddress : {bobUri, aliceUri, frankUri}) {
+					auto address = Address::create(participantAddress, true);
+					auto participant = localConf->createParticipant(address);
+					participants.push_back(participant);
+					time_t creationTime = ms_time(nullptr);
+					L_GET_PRIVATE_FROM_C_OBJECT(pauline->lc)
+					    ->mainDb->addEvent(localConf->notifyParticipantAdded(creationTime, false, participant));
+					for (auto &device : participant->getDevices()) {
+						L_GET_PRIVATE_FROM_C_OBJECT(pauline->lc)
+						    ->mainDb->addEvent(
+						        localConf->notifyParticipantDeviceAdded(creationTime, false, participant, device));
+					}
+				}
+				localConf->setParticipants(std::move(participants));
+
+				for (auto &device : localConf->getParticipantDevices()) {
+					device->setState(ParticipantDevice::State::Present);
+				}
+			}
+		}
+
+		const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(pauline->lc);
+		BC_ASSERT_EQUAL(nbServerChatRooms, bctbx_list_size(chat_rooms), size_t, "%zu");
+		BC_ASSERT_GREATER_STRICT(nbServerChatRooms, nbClientChatRooms, size_t, "%zu");
+		BC_ASSERT_GREATER_STRICT(chatRoomRate, 0, size_t, "%zu");
+		int clientChatRoomCount = 0;
+		int idx = 0;
+		for (const bctbx_list_t *it = chat_rooms; it; it = bctbx_list_next(it)) {
+			LinphoneChatRoom *chat_room = reinterpret_cast<LinphoneChatRoom *>(bctbx_list_get_data(it));
+			if ((idx % chatRoomRate) == (chatRoomRate - 1)) {
+				auto uri = Address::toCpp(linphone_chat_room_get_conference_address(chat_room))->getSharedFromThis();
+				Address addr = uri->getUri();
+				auto clientLastNotify = lastNotify;
+				if ((clientChatRoomCount % 10) == 0) {
+					clientLastNotify = 0;
+				}
+				addr.setUriParam("Last-Notify", Utils::toString(clientLastNotify));
+				Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
+				l.getEntry().push_back(entry);
+				clientChatRoomCount++;
+			}
+			idx++;
+		}
+		rl.getList().push_back(l);
+
+		Xsd::XmlSchema::NamespaceInfomap map;
+		stringstream xmlBody;
+		serializeResourceLists(xmlBody, rl, map);
+		content->setBodyFromUtf8(xmlBody.str());
+	}
+
+	stats initial_pauline_stats = pauline->stat;
+
+	auto op = new SalSubscribeOp(pauline->lc->sal.get());
+	SalAddress *toAddr = sal_address_new(linphone_core_get_identity(pauline->lc));
+	op->setToAddress(toAddr);
+	LinphoneAddress *cBobAddr = linphone_core_interpret_url(pauline->lc, bobUri);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
+	linphone_address_unref(cBobAddr);
+	op->setFromAddress(bobAddr->getImpl());
+	op->overrideRemoteContact(bobAddr->toString().c_str());
+	op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(default_account)));
+	SalAddress *contactAddr = sal_address_clone(Account::toCpp(default_account)->getContactAddress()->getImpl());
+	op->setContactAddress(contactAddr);
+
+	SalCustomHeader *recvCustomHeaders = nullptr;
+	recvCustomHeaders = sal_custom_header_append(
+	    recvCustomHeaders, "Accept", "multipart/related, application/conference-info+xml, application/rlmi+xml");
+	recvCustomHeaders = sal_custom_header_append(recvCustomHeaders, "Require", "recipient-list-subscribe");
+	recvCustomHeaders = sal_custom_header_append(recvCustomHeaders, "Content-Disposition", "recipient-list");
+	op->setRecvCustomHeaders(recvCustomHeaders);
+
+	ms_message("%s is about to receive a SUBSCRIBE message with content type %s and body %s",
+	           linphone_core_get_identity(pauline->lc), content->getContentType().getMediaType().c_str(),
+	           content->getBodyAsUtf8String().c_str());
+	LinphoneEvent *lev =
+	    linphone_event_new_subscribe_with_op(pauline->lc, op, LinphoneSubscriptionIncoming, "conference");
+	linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
+
+	// Empirical performance target
+	long expectedSubscribeDurationMs = (source_db) ? 102 : 2.5 * chatRoomRate + 300;
+	long expectedSearchDurationMs =
+	    nbServerChatRooms / 3000; // Performance target: search of an unexisting chatroom should be carried out at a
+	                              // processing speed of 3000 chatrooms/ms
+#ifdef ENABLE_SANITIZER
+	expectedSubscribeDurationMs = 30 * expectedSubscribeDurationMs;
+	expectedSearchDurationMs = 30 * expectedSearchDurationMs;
+#else
+#if __APPLE__
+	expectedSubscribeDurationMs = 10 * expectedSubscribeDurationMs;
+	expectedSearchDurationMs = 10 * expectedSearchDurationMs;
+#endif
+#endif
+#ifndef __arm__
+	float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
+	float bogomips = liblinphone_tester_get_cpu_bogomips();
+	if (bogomips != 0) {
+		expectedSubscribeDurationMs = (long)(((float)expectedSubscribeDurationMs) * referenceBogomips / bogomips);
+		expectedSearchDurationMs = (long)(((float)expectedSearchDurationMs) * referenceBogomips / bogomips);
+		bctbx_message("Adjusted expected duration with current bogomips (%f): chatroom list subscribe %li ms and "
+		              "chatroom search %li ms",
+		              bogomips, expectedSubscribeDurationMs, expectedSearchDurationMs);
+	}
+#endif
+
+	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
+	auto &serverListEventHandler = L_GET_PRIVATE_FROM_C_OBJECT(pauline->lc)->serverListEventHandler;
+	serverListEventHandler->subscribeReceived(
+	    dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis()), content->toC());
+	content = nullptr;
+	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+	long subscribeMs = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_NotifySent,
+	                              (initial_pauline_stats.number_of_NotifySent + 1), expectedSubscribeDurationMs));
+
+	BC_ASSERT_LOWER(subscribeMs, expectedSubscribeDurationMs, long, "%li");
+	bctbx_message("Parsing a SUBSCRIBE with a recipient list of %0zu chatrooms out of %0zu loaded into the core RAM "
+	              "took %0li ms (maximum allowed %li)",
+	              nbClientChatRooms, nbServerChatRooms, subscribeMs, expectedSubscribeDurationMs);
+
+	char newConfId[50];
+	auto conferenceAddress = identityAddress->clone()->toSharedPtr();
+	conferenceAddress->setUriParam("conf-id", belle_sip_random_token(newConfId, sizeof(newConfId)));
+	ms_message("%s is searching for chatroom with address %s", linphone_core_get_identity(pauline->lc),
+	           conferenceAddress->toString().c_str());
+
+	start = chrono::high_resolution_clock::now();
+	auto unexistingChatRoom = pauline->lc->cppPtr->findChatRoom(
+	    ConferenceId(conferenceAddress, conferenceAddress, pauline->lc->cppPtr->createConferenceIdParams()));
+	end = chrono::high_resolution_clock::now();
+	long searchMs = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
+	BC_ASSERT_LOWER(searchMs, expectedSearchDurationMs, long, "%li");
+	BC_ASSERT_TRUE(unexistingChatRoom == nullptr);
+	bctbx_message("Search of a yet-to-be-created chatroom with address %s in a core with %0zu chatrooms loaded into "
+	              "RAM took %0li ms (maximum allowed %li)",
+	              conferenceAddress->toString().c_str(), nbServerChatRooms, searchMs, expectedSearchDurationMs);
+
+	void *user_data = linphone_event_get_user_data(lev);
+	BC_ASSERT_PTR_NULL(user_data);
+
+	wait_for_until(pauline->lc, NULL, NULL, 5, 3000);
+
+	linphone_event_terminate(lev);
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneSubscriptionTerminated,
+	                              (initial_pauline_stats.number_of_LinphoneSubscriptionTerminated + 1),
+	                              liblinphone_tester_sip_timeout));
+	linphone_event_unref(lev);
+
+	sal_address_unref(toAddr);
+	sal_address_unref(contactAddr);
+	if (recvCustomHeaders) sal_custom_header_free(recvCustomHeaders);
+
+	wait_for_until(pauline->lc, NULL, NULL, 5, 3000);
+
+	char *savedDbPath = NULL;
+	if (sqlite3_backend) {
+		if (save) {
+			char random_db_filename[50];
+			belle_sip_random_token(random_db_filename, sizeof(random_db_filename));
+			char saved_db[256];
+			sprintf(saved_db, "%s_saved_%s.db", db_basename, random_db_filename);
+			savedDbPath = bc_tester_file(saved_db);
+			BC_ASSERT_FALSE(liblinphone_tester_copy_file(rwDbPath, savedDbPath));
+		}
+	}
+	bc_free(rwDbPath);
+
+	linphone_core_manager_destroy(pauline);
+
+	if (mysql_backend) {
+		soci::session sociSession(soci_connection_string);
+		std::string query = std::string("DROP DATABASE IF EXISTS ") + random_mysql_db_name;
+		sociSession << query;
+	}
+	delete op;
+
+	return savedDbPath;
+}
+
+void list_subscribe_with_100_chatrooms_out_of_1k_sqlite3() {
+	BC_ASSERT_PTR_NULL(
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, 1000, 100, false, "sqlite3"));
+}
+
+/*void list_subscribe_with_100_chatrooms_out_of_1k_mysql() {
+    BC_ASSERT_PTR_NULL(list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, 1000, 100, false,
+"mysql"));
+}*/
+
+void list_subscribe_with_100_chatrooms_out_of_1k_and_database_reload() {
+	int nbServerChatRooms = 1000;
+	const char *backend = "sqlite3";
+	char *saved_db =
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, nbServerChatRooms, 100, true, backend);
+	BC_ASSERT_PTR_NOT_NULL(saved_db);
+	BC_ASSERT_PTR_NULL(list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(saved_db, nbServerChatRooms,
+	                                                                                      100, false, backend));
+	bc_free(saved_db);
+}
+
+void list_subscribe_with_100_chatrooms_out_of_30k_sqlite3() {
+	BC_ASSERT_PTR_NULL(
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, 30000, 100, false, "sqlite3"));
+}
+
+/*void list_subscribe_with_100_chatrooms_out_of_30k_mysql() {
+    BC_ASSERT_PTR_NULL(list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, 30000, 100, false,
+"mysql"));
+}*/
+
+void list_subscribe_with_100_chatrooms_out_of_30k_and_database_reload() {
+	int nbServerChatRooms = 30000;
+	const char *backend = "sqlite3";
+	char *saved_db =
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, nbServerChatRooms, 100, true, backend);
+	BC_ASSERT_PTR_NOT_NULL(saved_db);
+	BC_ASSERT_PTR_NULL(list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(saved_db, nbServerChatRooms,
+	                                                                                      100, false, backend));
+	bc_free(saved_db);
+}
+
+void list_subscribe_with_100_chatrooms_from_existing_database_1k() {
+	// Chatroom participant devices in the database are all in the Joining state, therefore the conference server send a
+	// NOTIFY full state for all chatrooms
+	char *dbPath = bc_tester_res("db/server_1k_chatrooms.db");
+	BC_ASSERT_PTR_NULL(
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 1000, 100, false, "sqlite3"));
+	bc_free(dbPath);
+}
+
+void list_subscribe_with_100_chatrooms_from_existing_database_30k() {
+	// Chatroom participant devices in the database are all in the Joining state, therefore the conference server send a
+	// NOTIFY full state for all chatrooms
+	char *dbPath = bc_tester_res("db/server_30k_chatrooms.db");
+	BC_ASSERT_PTR_NULL(
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 30000, 100, false, "sqlite3"));
+	bc_free(dbPath);
+}
+
+void list_subscribe_with_100_chatrooms_out_of_100k_sqlite3() {
+	BC_ASSERT_PTR_NULL(
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, 100000, 100, false, "sqlite3"));
+}
+
+/*void list_subscribe_with_100_chatrooms_out_of_100k_mysql() {
+    BC_ASSERT_PTR_NULL(list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, 100000, 100, false,
+"mysql"));
+}*/
+
+void list_subscribe_with_100_chatrooms_out_of_100k_and_database_reload() {
+	int nbServerChatRooms = 100000;
+	const char *backend = "sqlite3";
+	char *saved_db =
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(NULL, nbServerChatRooms, 100, true, backend);
+	BC_ASSERT_PTR_NOT_NULL(saved_db);
+	BC_ASSERT_PTR_NULL(list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(saved_db, nbServerChatRooms,
+	                                                                                      100, false, backend));
+	bc_free(saved_db);
+}
+
+void list_subscribe_with_100_chatrooms_from_existing_database_100k() {
+	// Chatroom participant devices in the database are all in the Joining state, therefore the conference server send a
+	// NOTIFY full state for all chatrooms
+	char *dbPath = bc_tester_res("db/server_100k_chatrooms.db");
+	BC_ASSERT_PTR_NULL(
+	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 100000, 100, false, "sqlite3"));
+	bc_free(dbPath);
+}
+#endif // _WIN32
 
 test_t conference_event_tests[] = {
     TEST_NO_TAG("First notify parsing", first_notify_parsing),
@@ -2514,6 +2942,40 @@ test_t conference_event_tests[] = {
     TEST_NO_TAG("Send subject changed notify", send_subject_changed_notify),
     TEST_NO_TAG("Send device added notify", send_device_added_notify),
     TEST_NO_TAG("Send device removed notify", send_device_removed_notify),
+#ifndef _WIN32
+    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 1k (SQLite3)",
+                 list_subscribe_with_100_chatrooms_out_of_1k_sqlite3,
+                 "Performance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 30k (SQLite3)",
+                 list_subscribe_with_100_chatrooms_out_of_30k_sqlite3,
+                 "Performance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 100k (SQLite3)",
+                 list_subscribe_with_100_chatrooms_out_of_100k_sqlite3,
+                 "NightlyPerformance"),
+    //    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 1k (MySQL)",
+    //    list_subscribe_with_100_chatrooms_out_of_1k_mysql, "Performance"), TEST_ONE_TAG("List subscribe
+    //    with 100 chatrooms out of 30k (MySQL)", list_subscribe_with_100_chatrooms_out_of_30k_mysql, "Performance"
+    //    ), TEST_ONE_TAG("List subscribe with 100 chatrooms out of 100k (MySQL)",
+    //    list_subscribe_with_100_chatrooms_out_of_100k_mysql, "NightlyPerformance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 1k and database reload",
+                 list_subscribe_with_100_chatrooms_out_of_1k_and_database_reload,
+                 "Performance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 30k and database reload",
+                 list_subscribe_with_100_chatrooms_out_of_30k_and_database_reload,
+                 "Performance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms out of 100k and database reload",
+                 list_subscribe_with_100_chatrooms_out_of_100k_and_database_reload,
+                 "NightlyPerformance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms from existing database (1k chatrooms)",
+                 list_subscribe_with_100_chatrooms_from_existing_database_1k,
+                 "Performance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms from existing database (30k chatrooms)",
+                 list_subscribe_with_100_chatrooms_from_existing_database_30k,
+                 "Performance"),
+    TEST_ONE_TAG("List subscribe with 100 chatrooms from existing database (100k chatrooms)",
+                 list_subscribe_with_100_chatrooms_from_existing_database_100k,
+                 "Performance"),
+#endif // _WIN32
     TEST_NO_TAG("one-to-one keyword", one_to_one_keyword)};
 
 test_suite_t conference_event_test_suite = {"Conference event",

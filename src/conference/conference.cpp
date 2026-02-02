@@ -1094,16 +1094,16 @@ std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() c
 // -----------------------------------------------------------------------------
 
 bool Conference::isMe(const std::shared_ptr<const Address> &addr) const {
+	if (!addr || !addr->isValid()) {
+		lError() << *this << ": Unable to known if an invalid address is the me participant";
+		return false;
+	}
 	if (!mMe) {
 		// Cannot know if it is the me participant if it is not defined.
 		// This may happen when a server chat room is retrieved from the database. The me participant is not defined as
 		// it has already been created. The server is therefore a passive component whose task is to dispatch MESSAGE
 		// request or handle participants.
-		lDebug() << *this << ": Unable to known if the me participant is not defined";
-		return false;
-	}
-	if (!addr || !addr->isValid()) {
-		lError() << *this << ": Unable to known if an invalid address is the me participant";
+		lDebug() << *this << ": Unable to known if " << *addr << " is the me participant as it is not defined";
 		return false;
 	}
 	Address cleanedAddr = addr->getUriWithoutGruu();

@@ -386,8 +386,10 @@ static void get_chat_rooms() {
 }
 
 static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
-	long expectedDurationMs;
-	long ms;
+	long expectedLoadDurationMs;
+	long loadMs;
+	long expectedSearchDurationMs;
+	long searchMs;
 	/*
 	 * This test makes a performance assertion.
 	 * It is then quite unreliable: for example it may be to slower if the database read requires disk access and disk
@@ -396,7 +398,8 @@ static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
 	 * problem.
 	 */
 	for (int attempts = 0; attempts < 8; attempts++) {
-		expectedDurationMs = 600;
+		expectedLoadDurationMs = 600;
+		expectedSearchDurationMs = 600;
 #ifndef _WIN32
 		int current_priority = getpriority(PRIO_PROCESS, 0);
 		int err = setpriority(PRIO_PROCESS, 0, -20);
@@ -409,23 +412,42 @@ static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
 		chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 		MainDbProvider provider("db/chatrooms.db", keep_gruu);
 		chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
-		ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
+		loadMs = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 #ifdef ENABLE_SANITIZER
-		expectedDurationMs = 3000;
+		expectedLoadDurationMs = 3000;
+		expectedSearchDurationMs = 1;
 #else
 #if __APPLE__
-		expectedDurationMs = 1000;
+		expectedLoadDurationMs = 1000;
+		expectedSearchDurationMs = 3;
 #endif
 #endif
 #ifndef __arm__
 		float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
 		float bogomips = liblinphone_tester_get_cpu_bogomips();
 		if (bogomips != 0) {
-			expectedDurationMs = (long)(((float)expectedDurationMs) * referenceBogomips / bogomips);
-			bctbx_message("Adjusted expected duration with current bogomips (%f): %li ms", bogomips,
-			              expectedDurationMs);
+			expectedLoadDurationMs = (long)(((float)expectedLoadDurationMs) * referenceBogomips / bogomips);
+			expectedSearchDurationMs = (long)(((float)expectedSearchDurationMs) * referenceBogomips / bogomips);
+			bctbx_message("Adjusted expected duration with current bogomips (%f): chatroom load %li ms and chatroom "
+			              "search %li ms",
+			              bogomips, expectedLoadDurationMs, expectedSearchDurationMs);
 		}
 #endif
+
+		LinphoneAddress *local_address = linphone_address_new("sip:notfound@sip.example.org");
+		LinphoneAddress *conference_address =
+		    linphone_address_new("sip:conference_server_not_found@sip.example.org;gr=urn:uuid:459797d6-40f9-0072-a3ad-"
+		                         "e9237e042437;conf-id=abcdef");
+
+		start = chrono::high_resolution_clock::now();
+		LinphoneChatRoom *chatRoom = linphone_core_search_chat_room_2(provider.getCoreManager()->lc, NULL,
+		                                                              local_address, conference_address, NULL);
+		end = chrono::high_resolution_clock::now();
+		searchMs = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+		BC_ASSERT_PTR_NULL(chatRoom);
+		linphone_address_unref(local_address);
+		linphone_address_unref(conference_address);
 #ifndef _WIN32
 		err = setpriority(PRIO_PROCESS, 0, current_priority);
 		if (err != 0) {
@@ -433,11 +455,12 @@ static void load_a_lot_of_chatrooms_base(bool_t keep_gruu) {
 			           strerror(errno));
 		}
 #endif
-		if (ms <= expectedDurationMs) break;
+		if ((loadMs <= expectedLoadDurationMs) && (searchMs <= expectedSearchDurationMs)) break;
 		bctbx_sleep_ms(1000); // perhaps disk I/O was already too busy, retry one more time a bit later.
 	}
-	ms_message("load_a_lot_of_chatrooms(): Last duration time:  %li", ms);
-	BC_ASSERT_LOWER(ms, expectedDurationMs, long, "%li");
+	ms_message("load_a_lot_of_chatrooms(): Last duration time:  load %li search %li", loadMs, searchMs);
+	BC_ASSERT_LOWER(loadMs, expectedLoadDurationMs, long, "%li");
+	BC_ASSERT_LOWER(searchMs, expectedSearchDurationMs, long, "%li");
 }
 
 static void load_a_lot_of_chatrooms(void) {

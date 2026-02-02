@@ -241,6 +241,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		focus.registerAsParticipantDevice(laure);
 		focus.registerAsParticipantDevice(berthe);
 
+		linphone_core_enable_gruu_in_conference_address(focus.getLc(), TRUE);
 		linphone_core_set_add_admin_information_to_contact(marie.getLc(), TRUE);
 		linphone_core_set_add_admin_information_to_contact(laure.getLc(), TRUE);
 
@@ -328,6 +329,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		};
 
 		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		linphone_core_enable_gruu_in_conference_address(michelle2.getLc(), TRUE);
 		stats initialMichelle2Stats = michelle2.getStats();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {

@@ -1106,6 +1106,17 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 						// Or received 603 Declined, the chat room has been left on the server side but
 						// remains local.
 						setState(ConferenceInterface::State::Terminated);
+					} else if (reason == LinphoneReasonNoMatch) {
+						// The session has been broken on the server side if the client receives a 481 Call/transaction
+						// does not exist. The server may have rebooted hence the client will recreate a session to
+						// properly exit the chatroom
+						lInfo() << "Received a BYE response with reason " << linphone_reason_to_string(reason)
+						        << " when leaving " << *this
+						        << ". Try to create a new session to make sure the server really takes the client out "
+						           "of the chatroom";
+						auto session = createSession();
+						session->startInvite(nullptr, "", nullptr);
+						setMainSession(session);
 					} else {
 						// Go to state TerminationFailed and then back to Created since it has not been terminated
 						setState(ConferenceInterface::State::TerminationFailed);
@@ -1592,7 +1603,7 @@ void ClientConference::onConferenceCreated(BCTBX_UNUSED(const std::shared_ptr<Ad
 #ifdef HAVE_ADVANCED_IM
 	const auto &conferenceId = getConferenceId();
 	const ConferenceId newConferenceId(addr, conferenceId.getLocalAddress(), getCore()->createConferenceIdParams());
-	if (!getCore()->getPrivate()->findExumedChatRoomFromPreviousConferenceId(newConferenceId)) {
+	if (!getCore()->getPrivate()->findExhumedChatRoomFromPreviousConferenceId(newConferenceId)) {
 		setConferenceId(newConferenceId);
 	}
 	setConferenceAddress(addr);

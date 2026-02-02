@@ -123,6 +123,9 @@ CorePrivate::createServerChatRoom(BCTBX_UNUSED(const std::shared_ptr<const Addre
 	L_Q();
 	if (!params || !params->isValid()) {
 		lWarning() << "Invalid chat room parameters given for server group chat room creation";
+		if (op) {
+			op->decline(SalReasonNotAcceptable);
+		}
 		return nullptr;
 	}
 
@@ -169,6 +172,9 @@ CorePrivate::createClientChatRoom(const std::shared_ptr<const Address> &conferen
 	L_Q();
 	if (!params || !params->isValid()) {
 		lWarning() << "Invalid chat room parameters given for client group chat room creation";
+		if (op) {
+			op->decline(SalReasonNotAcceptable);
+		}
 		return nullptr;
 	}
 	auto conference = dynamic_pointer_cast<ClientConference>(
@@ -257,19 +263,97 @@ std::shared_ptr<AbstractChatRoom>
 CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
                             const std::shared_ptr<const Address> &localAddress,
                             const std::shared_ptr<const Address> &remoteAddress,
+                            const std::list<std::shared_ptr<Address>> &participants, bool logIfNotFound) const {
+	L_Q();
+
+	const auto &conference = q->searchConference(params, localAddress, remoteAddress, participants, logIfNotFound);
+	if (conference) {
+		if (auto chatRoom = conference->getChatRoom()) {
+			return chatRoom;
+		}
+	}
+	if (q->conferenceServerEnabled()) {
+		// Conference servers do not support basic chatrooms
+		return nullptr;
+	}
+	return searchBasicChatRoom(params, localAddress, remoteAddress, participants);
+}
+
+/*
+ * This function searches a basic chatroom that matches the arguments provided. It is therefore not applicable to conference servers. The application is free to provide the argument it wishes, however the execution time depends on which of the are given.
+ * If both the peer and local addresses are provided, then the search can be carried out directly on the basic chatroom map mBasicChatRoomsById as its key is a ConferenceId object. This is the fastest way to look for a basic chatroom and compare against a participant list and/or parameters should they be given.
+ * If either the peer or the local address is given, then the search will take longer as all items in the map must have their address checked against the provided one. The initial raw search may lead to find more than one basic chatroom and the participant list and/or parameters can help to get down to one item only.
+ * The slowest way of finding a basic chatroom is by not giving neither the local nor the peer address as every basic chatroom will be matched against the participant list and/or the parameters
+ * If multiple matches occur with the provided arguments, only one will be returned.
+ */
+std::shared_ptr<AbstractChatRoom>
+CorePrivate::searchBasicChatRoom(const std::shared_ptr<ConferenceParams> &params,
+                            const std::shared_ptr<const Address> &localAddress,
+                            const std::shared_ptr<const Address> &remoteAddress,
                             const std::list<std::shared_ptr<Address>> &participants) const {
 	L_Q();
-	ConferenceContext referenceConferenceContext(params, localAddress, remoteAddress, participants);
-	const auto &chatRooms = q->getRawChatRoomList();
-	const auto it = std::find_if(chatRooms.begin(), chatRooms.end(), [&](const auto &chatRoom) {
-		ConferenceContext conferenceContext(chatRoom->getCurrentParams(), chatRoom->getLocalAddress(),
-		                                    chatRoom->getPeerAddress(), chatRoom->getParticipantAddresses());
-		return (referenceConferenceContext == conferenceContext);
-	});
+	Core::ChatRoomWeakCompareMap resultChatRooms;
+
+	if (remoteAddress && localAddress) {
+		ConferenceId conferenceId(remoteAddress, localAddress, q->createConferenceIdParams());
+		try {
+			resultChatRooms.insert(std::make_pair(conferenceId, mBasicChatRoomsById.at(conferenceId)));
+		} catch (const out_of_range &) {
+		}
+	} else if (remoteAddress) {
+		auto remoteAddressWithoutGruu = remoteAddress->getUriWithoutGruu();
+		/* TODO with C++20
+		resultChatRooms = mBasicChatRoomsById | std::views::filter([&remoteAddressWithoutGruu](auto &chatRoom) {
+		    return remoteAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+		chatRoom->getPeerAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false);
+		});
+		*/
+		for (const auto &[id, chatRoom] : mBasicChatRoomsById) {
+			if (remoteAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+			    chatRoom->getPeerAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false)) {
+				resultChatRooms.insert(std::make_pair(id, chatRoom));
+			}
+		}
+	} else if (localAddress) {
+		auto localAddressWithoutGruu = localAddress->getUriWithoutGruu();
+		/* TODO with C++20
+		resultChatRooms = mBasicChatRoomsById | std::views::filter([&localAddressWithoutGruu](auto &chatRoom) {
+		    return localAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+		chatRoom->getLocalAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false);
+		});
+		*/
+		for (const auto &[id, chatRoom] : mBasicChatRoomsById) {
+			if (localAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+			    chatRoom->getLocalAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false)) {
+				resultChatRooms.insert(std::make_pair(id, chatRoom));
+			}
+		}
+	} else {
+		resultChatRooms = mBasicChatRoomsById;
+	}
 
 	std::shared_ptr<AbstractChatRoom> chatRoom;
-	if (it != chatRooms.cend()) {
-		chatRoom = *it;
+	if (!resultChatRooms.empty()) {
+		if (params || !participants.empty()) {
+			ConferenceContext referenceConferenceContext(params, participants);
+			const auto it = std::find_if(resultChatRooms.begin(), resultChatRooms.end(),
+			                             [&referenceConferenceContext](const auto &chatRoomIdPair) {
+				                             auto &chatRoom = chatRoomIdPair.second;
+				                             ConferenceContext conferenceContext(chatRoom->getCurrentParams(),
+				                                                                 chatRoom->getParticipantAddresses());
+				                             return (referenceConferenceContext == conferenceContext);
+			                             });
+
+			if (it != resultChatRooms.cend()) {
+				chatRoom = it->second;
+			}
+		} else {
+			auto resultSize = resultChatRooms.size();
+			if (resultSize > 1) {
+				lError() << resultSize << " basic chatrooms have been found but only one will be return by the search function.";
+			}
+			chatRoom = resultChatRooms.begin()->second;
+		}
 	}
 	return chatRoom;
 }
@@ -455,8 +539,7 @@ void CorePrivate::loadChatRooms() {
 	lInfo() << "Beginning loadChatRooms";
 	std::set<Address, Address::WeakLess> friendAddresses;
 	std::list<pair<shared_ptr<Address>, string>> deviceAddressesAndNames;
-	LinphoneCore *cCore = getCCore();
-	const auto isServer = !!linphone_core_conference_server_enabled(cCore);
+	const auto isServer = q->conferenceServerEnabled();
 	// Empirical tests show that a read chunk size equal to 100 allows servers to get the best performances.
 	// For applications, the core will read all chatroom informations from the database in one go as their number is
 	// small
@@ -603,24 +686,24 @@ CorePrivate::findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &local
                                            const std::shared_ptr<Address> &participantAddress,
                                            bool encrypted) const {
 #ifdef HAVE_ADVANCED_IM
-	L_Q();
-
 	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << *localAddress << "] and participant ["
 	        << *participantAddress << "]";
-	for (const auto &chatRoom : q->getRawChatRoomList(false, true)) {
-		const std::shared_ptr<Address> &curLocalAddress = chatRoom->getLocalAddress();
-		const auto &chatRoomParams = chatRoom->getCurrentParams();
-		if ((chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
-		    !chatRoomParams->isGroup() && (encrypted == chatRoomParams->getChatParams()->isEncrypted())) {
-			if (chatRoom->getParticipants().size() > 0 && localAddress->weakEqual(*curLocalAddress) &&
-			    participantAddress->weakEqual(*chatRoom->getParticipants().front()->getAddress())) {
-				return chatRoom;
+	for (const auto &[id, conference] : mConferenceById) {
+		if (auto chatRoom = conference->getChatRoom()) {
+			const std::shared_ptr<Address> &curLocalAddress = chatRoom->getLocalAddress();
+			const auto &chatRoomParams = chatRoom->getCurrentParams();
+			if ((chatRoomParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) &&
+			    !chatRoomParams->isGroup() && (encrypted == chatRoomParams->getChatParams()->isEncrypted())) {
+				if (chatRoom->getParticipants().size() > 0 && localAddress->weakEqual(*curLocalAddress) &&
+				    participantAddress->weakEqual(*chatRoom->getParticipants().front()->getAddress())) {
+					return chatRoom;
+				}
 			}
 		}
 	}
 
-	lInfo() << "Unable to find exhumable 1-1 chat room with local address [" << localAddress->toString()
-	        << "] and participant [" << participantAddress->toString() << "]";
+	lInfo() << "Unable to find exhumable 1-1 chat room with local address [" << *localAddress << "] and participant ["
+	        << *participantAddress << "]";
 #endif
 	return nullptr;
 }
@@ -633,18 +716,15 @@ CorePrivate::findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &local
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 shared_ptr<AbstractChatRoom>
-CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId &conferenceId) const {
+CorePrivate::findExhumedChatRoomFromPreviousConferenceId(const ConferenceId &conferenceId) const {
 #ifdef HAVE_ADVANCED_IM
-	L_Q();
-	for (const auto &chatRoom : q->getRawChatRoomList(false, true)) {
-		const shared_ptr<ClientChatRoom> &clientGroupChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
-		// Check it isn't a ServerChatRoom
-		if (clientGroupChatRoom) {
-			const list<ConferenceId> &previousIds = clientGroupChatRoom->getPreviousConferenceIds();
-			auto prevIdIt = find(previousIds.begin(), previousIds.end(), conferenceId);
-			if (prevIdIt != previousIds.cend()) {
-				return chatRoom;
-			}
+	for (const auto &[id, conference] : mConferenceById) {
+		if (auto chatRoom = conference->getChatRoom()) {
+				const list<ConferenceId> &previousIds = chatRoom->getPreviousConferenceIds();
+				auto prevIdIt = find(previousIds.begin(), previousIds.end(), conferenceId);
+				if (prevIdIt != previousIds.cend()) {
+					return chatRoom;
+				}
 		}
 	}
 #endif
@@ -702,25 +782,20 @@ std::shared_ptr<const Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(co
 }
 
 // -----------------------------------------------------------------------------
-std::list<std::shared_ptr<AbstractChatRoom>> Core::getRawChatRoomList(bool includeBasic, bool includeConference) const {
+Core::ChatRoomWeakCompareMap Core::getRawChatRoomList(bool includeBasic, bool includeConference) const {
 	L_D();
-	std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
+	Core::ChatRoomWeakCompareMap chatRooms;
 	if (includeConference) {
 		for (const auto &[id, conference] : d->mConferenceById) {
 			const auto &chatRoom = conference->getChatRoom();
 			if (chatRoom) {
-				chatRooms.push_back(chatRoom);
+				chatRooms.insert(std::make_pair(id, chatRoom));
 			}
 		}
 	}
 
 	if (includeBasic) {
-		for (const auto &chatRoomPair : d->mBasicChatRoomsById) {
-			const auto &chatRoom = chatRoomPair.second;
-			if (chatRoom) {
-				chatRooms.push_back(chatRoom);
-			}
-		}
+		chatRooms.insert(d->mBasicChatRoomsById.begin(), d->mBasicChatRoomsById.end());
 	}
 	return chatRooms;
 }
@@ -744,7 +819,7 @@ void Core::updateChatRoomList() const {
 
 	list<shared_ptr<AbstractChatRoom>> rooms;
 
-	for (const auto &chatRoom : getRawChatRoomList()) {
+	for (const auto &[id, chatRoom] : getRawChatRoomList()) {
 		const auto &chatRoomParams = chatRoom->getCurrentParams();
 
 		if (hideChatRoomsWithMedia) {
@@ -786,15 +861,16 @@ const bctbx_list_t *Core::getChatRoomsCList() const {
 
 shared_ptr<AbstractChatRoom> Core::findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
-	auto chatRoom = d->searchChatRoom(nullptr, conferenceId.getLocalAddress(), conferenceId.getPeerAddress(), {});
+	auto chatRoom =
+	    d->searchChatRoom(nullptr, conferenceId.getLocalAddress(), conferenceId.getPeerAddress(), {}, false);
 	if (chatRoom) {
-		lDebug() << "Found chat room in RAM for conference ID " << conferenceId << ".";
+		lDebug() << "Found " << *chatRoom << " in RAM for conference ID " << conferenceId << ".";
 		return chatRoom;
 	}
 
-	auto alreadyExhumedOneToOne = d->findExumedChatRoomFromPreviousConferenceId(conferenceId);
+	auto alreadyExhumedOneToOne = d->findExhumedChatRoomFromPreviousConferenceId(conferenceId);
 	if (alreadyExhumedOneToOne) {
-		lWarning() << "Found conference id as already exhumed chat room with new conference ID "
+		lWarning() << "Found conference id as already exhumed " << *alreadyExhumedOneToOne << " with new conference ID "
 		           << alreadyExhumedOneToOne->getConferenceId() << ".";
 		return alreadyExhumedOneToOne;
 	}
@@ -804,7 +880,7 @@ shared_ptr<AbstractChatRoom> Core::findChatRoom(const ConferenceId &conferenceId
 
 list<shared_ptr<AbstractChatRoom>> Core::findChatRooms(const std::shared_ptr<Address> &peerAddress) const {
 	list<shared_ptr<AbstractChatRoom>> output;
-	for (const auto &chatRoom : getRawChatRoomList()) {
+	for (const auto &[id, chatRoom] : getRawChatRoomList()) {
 		if (*chatRoom->getPeerAddress() == *peerAddress) {
 			output.push_front(chatRoom);
 		}
@@ -825,7 +901,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom(const ConferenceId &
 	chatRoom = d->createBasicChatRoom(conferenceId, params);
 	d->insertChatRoom(chatRoom);
 	d->insertChatRoomWithDb(chatRoom);
-	lInfo() << "Basic chat room [" << chatRoom << "] with id " << conferenceId << " has been successfully created";
+	lInfo() << "Basic " << *chatRoom << " with id " << conferenceId << " has been successfully created";
 	return chatRoom;
 }
 
@@ -898,7 +974,7 @@ void CorePrivate::stopChatMessagesAggregationTimer() {
 		chatMessagesAggregationTimer = nullptr;
 	}
 
-	for (const auto &chatRoom : q->getRawChatRoomList()) {
+	for (const auto &[id, chatRoom] : q->getRawChatRoomList()) {
 		chatRoom->notifyAggregatedChatMessages();
 	}
 
@@ -953,7 +1029,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	Address peerAddress;
 	Address localAddress;
 
-	if (linphone_core_conference_server_enabled(cCore)) {
+	if (conferenceServerEnabled()) {
 		localAddress = peerAddress = Address(op->getToAddress());
 	} else {
 		peerAddress = Address(op->getFromAddress());
@@ -988,7 +1064,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 		}
 
 		reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
-	} else if (!linphone_core_conference_server_enabled(cCore)) {
+	} else if (!conferenceServerEnabled()) {
 		const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
 		/* Client mode but check that it is really for basic chatroom before creating it.*/
 		if (session_mode && strcasecmp(session_mode, "true") == 0) {

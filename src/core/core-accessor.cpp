@@ -52,7 +52,6 @@ CoreLogContextualizer::CoreLogContextualizer(const LinphoneCore *core) {
 		pushTag(core ? L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLabel() : "");
 	} catch (...) {
 	}
-
 }
 
 CoreLogContextualizer::CoreLogContextualizer(const CoreAccessor *coreAccessor) {

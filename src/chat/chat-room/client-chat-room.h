@@ -109,13 +109,6 @@ public:
 	void onExhumedConference(const ConferenceId &oldConfId, const ConferenceId &newConfId);
 	void onLocallyExhumedConference(const std::shared_ptr<Address> &remoteContact);
 	void onRemotelyExhumedConference(SalCallOp *op);
-	void removeConferenceIdFromPreviousList(const ConferenceId &confId);
-	void addConferenceIdToPreviousList(const ConferenceId &confId) {
-		mPreviousConferenceIds.push_back(confId);
-	}
-	const std::list<ConferenceId> &getPreviousConferenceIds() const {
-		return mPreviousConferenceIds;
-	};
 	void addExhumeMessage(const std::shared_ptr<ChatMessage> msg);
 	bool isLocalExhumePending() const {
 		return mLocalExhumePending;
@@ -137,7 +130,6 @@ private:
 	// 1-1 exhume related
 	bool mLocalExhumePending = false;
 	std::list<std::shared_ptr<ChatMessage>> mPendingExhumeMessages;
-	std::list<ConferenceId> mPreviousConferenceIds;
 
 	L_DISABLE_COPY(ClientChatRoom);
 };

@@ -9513,9 +9513,9 @@ LinphoneConference *linphone_core_get_conference(LinphoneCore *lc) {
 }
 
 void linphone_core_enable_conference_server(LinphoneCore *lc, bool_t enable) {
+	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
 #ifdef HAVE_LIME_X3DH
 	// We need to change the encryption engine if it has been instanciated before.
-	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
 	bool enabled = core->limeX3dhEnabled();
 
 	if (enabled) {
@@ -9524,6 +9524,7 @@ void linphone_core_enable_conference_server(LinphoneCore *lc, bool_t enable) {
 #endif
 
 	linphone_config_set_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", enable);
+	core->enableConferenceServer(!!enable);
 
 #ifdef HAVE_LIME_X3DH
 	if (enabled) {
@@ -9573,8 +9574,8 @@ bool_t _linphone_core_is_conference_creation(const LinphoneCore *lc, const Linph
 }
 
 bool_t linphone_core_conference_server_enabled(const LinphoneCore *lc) {
-	return linphone_config_get_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", FALSE) ? TRUE
-	                                                                                                         : FALSE;
+	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	return core->conferenceServerEnabled();
 }
 
 void linphone_core_set_conference_participant_list_type(LinphoneCore *lc, LinphoneConferenceParticipantListType type) {
@@ -9991,10 +9992,11 @@ bool_t linphone_core_baudot_enabled(const LinphoneCore *lc) {
 
 void linphone_core_enable_gruu_in_conference_address(LinphoneCore *lc, bool_t enabled) {
 	linphone_config_set_int(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", enabled);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableGruuInConferenceAddress(!!enabled);
 }
 
 bool_t linphone_core_gruu_in_conference_address_enabled(const LinphoneCore *lc) {
-	return !!linphone_config_get_bool(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", TRUE);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->gruuInConferenceAddressEnabled();
 }
 
 void linphone_core_set_add_admin_information_to_contact(LinphoneCore *lc, bool_t enabled) {

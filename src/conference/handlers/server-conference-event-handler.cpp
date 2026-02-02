@@ -1124,10 +1124,7 @@ void ServerConferenceEventHandler::notifyParticipantDevice(const shared_ptr<Cont
 	cbs->setUserData(this);
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
-
 	ev->notify(content);
-	LinphoneContent *cContent = content->isEmpty() ? nullptr : content->toC();
-	linphone_core_notify_notify_sent(conf->getCore()->getCCore(), ev->toC(), cContent);
 }
 
 // -----------------------------------------------------------------------------

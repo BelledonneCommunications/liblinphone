@@ -156,13 +156,11 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 	 * we cannot afford to call Address:toString() for nothing when logs are disabled */
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
 		if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_MESSAGE)) {
-			lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << *gruu << " to "
-			        << *this;
+			lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with " << *gruu << " to " << *this;
 		}
 	} else {
 		if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG)) {
-			lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << *gruu << " to "
-			         << *this;
+			lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with " << *gruu << " to " << *this;
 		}
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
@@ -216,7 +214,7 @@ shared_ptr<ParticipantDevice> Participant::findDevice(const std::shared_ptr<cons
 	}
 
 	if (logFailure) {
-		lInfo() << "Unable to find device with address " << *gruu << " among those belonging to " << *this;
+		lInfo() << "Unable to find device with " << *gruu << " among those belonging to " << *this;
 	}
 	return nullptr;
 }

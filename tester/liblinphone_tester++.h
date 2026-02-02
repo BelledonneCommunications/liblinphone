@@ -168,11 +168,11 @@ public:
 	void setupMgrForConference(const char *conferenceVersion = nullptr) {
 		setup_mgr_for_conference(mMgr.get(), conferenceVersion);
 	}
-	BorrowedMut<LinphoneChatRoom> searchChatRoom(const LinphoneAddress *localAddr,
+	LinphoneChatRoom* searchChatRoom(const LinphoneAddress *localAddr,
 	                                             const LinphoneAddress *remoteAddr,
 	                                             const bctbx_list_t *participants = nullptr,
 	                                             const LinphoneChatRoomParams *params = nullptr) {
-		return borrowed_mut(linphone_core_search_chat_room(mMgr->lc, params, localAddr, remoteAddr, participants));
+		return linphone_core_search_chat_room(mMgr->lc, params, localAddr, remoteAddr, participants);
 	}
 	LinphoneAccount *getDefaultAccount() const {
 		return linphone_core_get_default_account(mMgr->lc);

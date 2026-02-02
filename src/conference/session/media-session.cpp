@@ -907,7 +907,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		    ConferenceId(localAddress, localAddress, q->getCore()->createConferenceIdParams()), false);
 		// If the media session is in a conference, the remote media description is empty and audio video capabilities
 		// are disabled, then just call end the update
-		if ((((!!linphone_core_conference_server_enabled(q->getCore()->getCCore())) && conference) ||
+		if (((q->getCore()->conferenceServerEnabled() && conference) ||
 		     (remoteContactAddress && remoteContactAddress->hasParam(Conference::IsFocusParameter))) &&
 		    !audioEnabled && !videoEnabled) {
 			updated(isUpdate);
@@ -1207,7 +1207,7 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams() {
 		/* It is implicit to receive an INVITE without SDP, in this case WE choose the media parameters according to
 		 * policy */
 		setCompatibleIncomingCallParams(md);
-	} else if (((!!linphone_core_conference_server_enabled(q->getCore()->getCCore())) && conference) ||
+	} else if ((q->getCore()->conferenceServerEnabled() && conference) ||
 	           (remoteContactAddress && remoteContactAddress->hasParam(Conference::IsFocusParameter))) {
 		// We enter here when creating a group chat only conference
 		lInfo() << "CallSession [" << q
@@ -2241,12 +2241,12 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 					content = MediaSessionPrivate::ThumbnailVideoContentAttribute;
 					deviceLabel = participantDevice->getThumbnailStreamLabel();
 				}
-				bool isConferenceServer = !!linphone_core_conference_server_enabled(q->getCore()->getCCore());
+				bool conferenceServerEnabled = q->getCore()->conferenceServerEnabled();
 				// A conference server is a passive element, therefore it must not add any stream that has not requested
 				// by the client For this reason it always looks at the remote media description, if there is one. If
 				// this media session is part of an ad hoc meeting, then the conference server will not request the
 				// client thumbnail stream because the latter offered it
-				const auto &refMd = (isConferenceServer) ? op->getRemoteMediaDescription() : oldMd;
+				const auto &refMd = (conferenceServerEnabled) ? op->getRemoteMediaDescription() : oldMd;
 				int foundStreamIdx = -1;
 				if (refMd) {
 					foundStreamIdx = refMd->findIdxStreamWithContent(content, deviceLabel);
@@ -2256,7 +2256,7 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 				}
 				const auto addStream =
 				    ((foundStreamIdx != -1) ||
-				     (localIsOfferer && !isConferenceServer && (deviceState == ParticipantDevice::State::Joining)) ||
+				     (localIsOfferer && !conferenceServerEnabled && (deviceState == ParticipantDevice::State::Joining)) ||
 				     (deviceState == ParticipantDevice::State::Present) ||
 				     (deviceState == ParticipantDevice::State::OnHold));
 				if (addStream) {
@@ -2356,7 +2356,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 		const auto &currentConfParams = conference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams->videoEnabled();
 		bool isVideoStream = (type == SalVideo);
-		bool isConferenceServer = linphone_core_conference_server_enabled(q->getCore()->getCCore());
+		bool conferenceServerEnabled = q->getCore()->conferenceServerEnabled();
 		const auto &remoteContactAddress = q->getRemoteContactAddress();
 
 		// Add additional video streams if required
@@ -2371,7 +2371,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 			}
 			const auto &confLayout = parameters->getConferenceVideoLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-			if (localIsOfferer && !isConferenceServer) {
+			if (localIsOfferer && !conferenceServerEnabled) {
 				bool request = true;
 				if (isVideoStream) {
 					request = conference->areThumbnailsRequested(false);
@@ -2450,7 +2450,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 						              "been disabled";
 					}
 				}
-			} else if (isConferenceServer ||
+			} else if (conferenceServerEnabled ||
 			           (remoteContactAddress && remoteContactAddress->hasParam(Conference::IsFocusParameter))) {
 				// The conference server is a passive element, therefore it should always look at the client offer to
 				// know the participant stream order.
@@ -2476,7 +2476,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 				//        Yes        |  RecvOnly | SendOnly  |
 				// ------------------|-----------|-----------|
 				const auto thumbnailDirection =
-				    (localIsOfferer ^ isConferenceServer) ? SalStreamRecvOnly : SalStreamSendOnly;
+				    (localIsOfferer ^ conferenceServerEnabled) ? SalStreamRecvOnly : SalStreamSendOnly;
 				auto beginIt = refMd->streams.cbegin();
 				for (auto sIt = beginIt; sIt != refMd->streams.end(); sIt++) {
 					const auto &s = *sIt;
@@ -5731,7 +5731,7 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 			const auto screenSharingStream =
 			    md->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
 			if (screenSharingStream.has_value()) {
-				bool isServer = linphone_core_conference_server_enabled(getCore()->getCCore());
+				bool isServer = getCore()->conferenceServerEnabled();
 				SalStreamDir screenSharingDirectionStreamDir = (*screenSharingStream)->getDirection();
 				screenSharingEnabled =
 				    (screenSharingDirectionStreamDir == ((isServer) ? SalStreamSendOnly : SalStreamRecvOnly)) ||
@@ -6273,7 +6273,7 @@ LinphoneMediaDirection MediaSession::getDirectionOfStream(const std::string &con
 	// Look at the local description in all the other scenarions (remote conferece on a server or call)
 	const auto &op = d->getOp();
 	if (op) {
-		bool isServer = linphone_core_conference_server_enabled(getCore()->getCCore());
+		bool isServer = getCore()->conferenceServerEnabled();
 		const auto &offer = (isServer) ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
 		if (offer) {
 			// Look for the index of the stream containing the requested attribute in the offered SDP
@@ -6311,7 +6311,7 @@ bool MediaSession::isScreenSharingNegotiated() const {
 	L_D();
 	const auto &isInConference = d->isInConference();
 	bool sdpScreenSharingAccepted = false;
-	bool isServer = linphone_core_conference_server_enabled(getCore()->getCCore());
+	bool isServer = getCore()->conferenceServerEnabled();
 	// If the session is in a local conference and the core is not a conference server, it means that the conference is
 	// hosted on a device. No reINVITE is sent for the local participant that starts screen sharing
 	if (!isServer && isInConference) {

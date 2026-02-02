@@ -164,11 +164,9 @@ void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo>
 		}
 		mParticipants.push_back(newInfo);
 		if (logActivity) {
-			lInfo() << *participantInfo << " has been added to " << *this
-			        << " with role " << newInfo->getRole();
+			lInfo() << *participantInfo << " has been added to " << *this << " with role " << newInfo->getRole();
 		} else {
-			lDebug() << *participantInfo << " has been added to " << *this
-			         << " with role " << newInfo->getRole();
+			lDebug() << *participantInfo << " has been added to " << *this << " with role " << newInfo->getRole();
 		}
 	} else {
 		lInfo() << *participantInfo << " is already in the list of " << *this;

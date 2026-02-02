@@ -110,6 +110,7 @@ const MSAudioDiffParams audio_cmp_params = {10, 200};
  * first. */
 const char *flexisip_tester_dns_server = "fs-test-9.linphone.org";
 // const char *flexisip_tester_dns_server = "fs-test-sandbox-2.linphone.org";
+const char *mysql_username_password_string = "user='belledonne' password='cOmmu2015nicatiOns'";
 
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char *ccmp_server_url = "http://sip.example.org:3333/xml/";
@@ -4069,6 +4070,13 @@ void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneCo
 	else mgr->stat.number_of_NotifySent++;
 
 	linphone_event_set_user_data(lev, (void *)linphone_content_copy(content));
+}
+
+void linphone_notify_sent_2(LinphoneCore *lc, LinphoneEvent *lev, BCTBX_UNUSED(const LinphoneContent *content)) {
+	LinphoneCoreManager *mgr;
+	mgr = get_manager(lc);
+	if (strcmp(linphone_event_get_name(lev), "ekt") == 0) mgr->stat.number_of_NotifyEktSent++;
+	else mgr->stat.number_of_NotifySent++;
 }
 
 void linphone_notify_received(LinphoneCore *lc,

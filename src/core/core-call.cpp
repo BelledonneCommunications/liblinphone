@@ -240,7 +240,7 @@ bool Core::areSoundResourcesLocked() const {
 	L_D();
 	for (const auto &call : d->calls) {
 		// Do not check if sound resources are locked by call if it is in a conference
-		if (!call->getConference() || linphone_core_conference_server_enabled(getCCore())) {
+		if (!call->getConference() || conferenceServerEnabled()) {
 			switch (call->getState()) {
 				case CallSession::State::OutgoingInit:
 				case CallSession::State::OutgoingProgress:

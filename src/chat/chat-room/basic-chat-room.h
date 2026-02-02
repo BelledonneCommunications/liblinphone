@@ -63,6 +63,8 @@ public:
 
 	bool canSendMessages() const override;
 
+	void addConferenceIdToPreviousList(const ConferenceId &confId) = delete;
+
 protected:
 	explicit BasicChatRoom(const std::shared_ptr<Core> &core,
 	                       const ConferenceId &conferenceId,

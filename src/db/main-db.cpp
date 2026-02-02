@@ -1548,9 +1548,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent(const Confe
                                                                      EventLog::Type type,
                                                                      const soci::row &row) const {
 
-	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	std::shared_ptr<Address> participantAddress = Address::create(row.get<string>(12));
-
 	std::shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 	    type, getConferenceEventCreationTimeFromRow(row), conferenceId, participantAddress);
 	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
@@ -1560,10 +1558,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent(const Confe
 shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent(const ConferenceId &conferenceId,
                                                                            EventLog::Type type,
                                                                            const soci::row &row) const {
-	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	std::shared_ptr<Address> participantAddress = Address::create(row.get<string>(12));
 	std::shared_ptr<Address> deviceAddress = Address::create(row.get<string>(11));
-
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 	    type, getConferenceEventCreationTimeFromRow(row), conferenceId, participantAddress, deviceAddress);
 	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
@@ -2307,7 +2303,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 		return conferenceInfo;
 	}
 
-	bool serverMode = linphone_core_conference_server_enabled(q->getCore()->getCCore());
+	bool serverMode = q->getCore()->conferenceServerEnabled();
 	bool updateConferenceAddress = false;
 	bool updateJoiningWindow = false;
 	conferenceInfo = ConferenceInfo::create();
@@ -5045,7 +5041,6 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages(const ConferenceId &
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 		for (const auto &row : rows) {
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
-
 			if (event) chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
 		}
 
@@ -6258,14 +6253,12 @@ bool MainDb::addChatroomToList(ChatRoomContextWeakCompareMap &chatRoomsMap,
 			ret = false;
 		} else {
 			chatRoomToRemove = storedChatRoom;
-			d->cache(chatRoomConferenceId, id);
 			ret = true;
 		}
 		offset--;
 	} catch (std::out_of_range &) {
 		chatRoomToAdd = chatRoom;
 		d->unreadChatMessageCountCache.insert(chatRoomConferenceId, unreadMessageCount);
-		d->cache(chatRoomConferenceId, id);
 		ret = true;
 	}
 	if (chatRoomToRemove && chatRoomToRemove->getConference()) {
@@ -6578,7 +6571,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					chatRoom->setUtf8Subject(subject);
 				} else if (backend == ChatParams::Backend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
-					bool serverMode = linphone_core_conference_server_enabled(cCore);
+					bool serverMode = core->conferenceServerEnabled();
 					const auto &localAddress = conferenceId.getLocalAddress();
 					unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
 
@@ -6756,17 +6749,17 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 
 		std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
 		for (const auto &[conferenceId, context] : chatRoomsMap) {
-			const auto &conferenceIdChanged = context.sConferenceIdChanged;
-			const auto &updateFlags = context.sUpdateFlags;
 			const auto &chatRoom = context.sChatRoom;
 			chatRooms.push_back(chatRoom);
+			const auto &dbId = context.sDbId;
+			d->cache(conferenceId, dbId);
+			const auto &conferenceIdChanged = context.sConferenceIdChanged;
+			const auto &updateFlags = context.sUpdateFlags;
 			if (updateFlags || conferenceIdChanged) {
-				const auto &dbId = context.sDbId;
 				std::string query("UPDATE chat_room SET ");
 				if (conferenceIdChanged) {
 					// If the conference ID changed, then update the information in the database so that the next time
 					// around everything will be alright
-					const auto &conferenceId = chatRoom->getConferenceId();
 					const auto &peerAddress = conferenceId.getPeerAddress();
 					const auto &localAddress = conferenceId.getLocalAddress();
 					lInfo() << "Change peer and local address of chatroom [" << chatRoom << "] with ID " << dbId << ":";
@@ -6856,9 +6849,10 @@ void MainDb::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom,
                             unsigned int notifyId,
                             bool rewriteAllInformations) {
 #ifdef HAVE_DB_STORAGE
+	if (isInitialized()) {
 	L_DB_TRANSACTION {
 		L_D();
-		if (rewriteAllInformations) {
+		if (rewriteAllInformations && (d->selectChatRoomId(chatRoom->getConferenceId()) >= 0)) {
 			auto participants = chatRoom->getParticipants();
 			for (const auto &participant : participants) {
 				deleteChatRoomParticipant(chatRoom, participant->getAddress());
@@ -6877,6 +6871,7 @@ void MainDb::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom,
 		d->insertChatRoom(chatRoom, notifyId, rewriteAllInformations);
 		tr.commit();
 	};
+	}
 #endif
 }
 
@@ -6970,7 +6965,7 @@ void MainDb::updateNotifyId(const shared_ptr<AbstractChatRoom> &chatRoom, const 
 std::shared_ptr<Address> MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress(
     const shared_ptr<AbstractChatRoom> &chatRoom, const std::shared_ptr<Address> &presentParticipantAddr) {
 #ifdef HAVE_DB_STORAGE
-	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
+	L_ASSERT(chatRoom->getCore()->conferenceServerEnabled());
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 	L_ASSERT(chatRoom->getConference()->getParticipantCount() == 1);
 
@@ -7038,7 +7033,7 @@ std::shared_ptr<Address> MainDb::findOneToOneConferenceChatRoomAddress(const std
 
 void MainDb::insertOneToOneConferenceChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom, bool encrypted) {
 #ifdef HAVE_DB_STORAGE
-	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
+	L_ASSERT(chatRoom->getCore()->conferenceServerEnabled());
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 
 	L_DB_TRANSACTION {

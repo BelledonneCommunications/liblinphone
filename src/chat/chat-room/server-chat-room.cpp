@@ -97,6 +97,7 @@ void ServerChatRoom::confirmRecreation(SalCallOp *op) {
 // -----------------------------------------------------------------------------
 
 LinphoneReason ServerChatRoom::onSipMessageReceived(SalOp *op, const SalMessage *message) {
+	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	// Check that the message is coming from a participant of the chat room
 	std::shared_ptr<Address> fromAddr = Address::create(op->getFrom());
 	if (!getConference()->findParticipant(fromAddr)) {
@@ -111,6 +112,8 @@ LinphoneReason ServerChatRoom::onSipMessageReceived(SalOp *op, const SalMessage 
 	    make_shared<ServerChatRoom::Message>(op->getFrom(), contentType, contentBody, op->getRecvCustomHeaders());
 	queueMessage(msg);
 	dispatchQueuedMessages();
+	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+	mLastMessageProcessingDurationMs = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 	return LinphoneReasonNone;
 }
 
@@ -152,13 +155,13 @@ void ServerChatRoom::finalizeCreation() {
 void ServerChatRoom::notifyParticipantDeviceRegistration(const std::shared_ptr<const Address> &participantDevice) {
 	shared_ptr<Participant> participant = getConference()->findInvitedParticipant(participantDevice);
 	if (!participant) {
-		lError() << this << ": " << *participantDevice << " is not part of the chatroom.";
+		lError() << *this << ": " << *participantDevice << " is not part of the chatroom.";
 		return;
 	}
 	shared_ptr<ParticipantDevice> pd = participant->findDevice(participantDevice);
 	if (!pd) {
 		/* A device that does not have the required capabilities may be notified. */
-		lInfo() << this << ": device " << *participantDevice << " is not part of any participant of the chatroom.";
+		lInfo() << *this << ": device " << *participantDevice << " is not part of any participant of the chatroom.";
 		return;
 	}
 	static_pointer_cast<ServerConference>(getConference())->updateParticipantDeviceSession(pd, true);

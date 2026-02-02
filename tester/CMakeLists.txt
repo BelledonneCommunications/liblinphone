@@ -135,6 +135,9 @@ set(DB_FILES
 	db/chatroom_conference.db
 	db/chatroom_duplicates.db
 	db/server_chatroom_duplicates.db
+	db/server_1k_chatrooms.db
+	db/server_30k_chatrooms.db
+	db/server_100k_chatrooms.db
 )
 
 set(RC_FILES
@@ -434,6 +437,26 @@ set(LINPHONETESTER_RESOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/tester_hosts"
 	"${CMAKE_CURRENT_SOURCE_DIR}/local_tester_hosts"
 )
+
+set(nbKChatRooms 1;30;100)
+foreach(K_CHATROOM 1 30 100)
+	set(DB_FILE "server_${K_CHATROOM}k_chatrooms.db")
+	set(DB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/db/${DB_FILE}")
+	set(DB_URL "https://download.linphone.org/files/liblinphone_tester_db/${DB_FILE}")
+	if(EXISTS "${DB_PATH}")
+		message(STATUS "Deleting database ${DB_FILE}")
+		FILE(REMOVE "${DB_FILE}")
+	endif()
+	message(STATUS "Downloading database ${DB_FILE} from ${DB_URL}")
+	FILE(DOWNLOAD "${DB_URL}" "${DB_PATH}"
+		STATUS DOWNLOAD_STATUS
+	)
+	list(GET DOWNLOAD_STATUS 0 DOWNLOAD_EXIT_CODE)
+	if(NOT ${DOWNLOAD_EXIT_CODE} EQUAL 0)
+		list(GET DOWNLOAD_STATUS 1 DOWNLOAD_ERROR_MESSAGE)
+		message(FATAL_ERROR "${DB_FILE} has not been successfully downloaded (error: ${DOWNLOAD_ERROR_MESSAGE})")
+	endif()
+endforeach()
 
 # TODO: Remove me later!
 list(REMOVE_ITEM STRICT_OPTIONS_CPP "-Wconversion" "-Werror=conversion" "-Wcast-align" "-Werror=cast-align")

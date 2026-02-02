@@ -184,7 +184,11 @@ LinphoneStatus EventSubscribe::notify(const std::shared_ptr<const Content> &body
 	const LinphoneContent *cBody = (body && !body->isEmpty()) ? body->toC() : nullptr;
 	body_handler = sal_body_handler_from_content(cBody, false);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
-	return subscribeOp->notify(body_handler);
+	auto ret = subscribeOp->notify(body_handler);
+	if (ret == 0) {
+		linphone_core_notify_notify_sent(getCore()->getCCore(), toC(), cBody);
+	}
+	return ret;
 }
 
 void EventSubscribe::notifyNotifyResponse() {

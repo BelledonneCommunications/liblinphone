@@ -160,6 +160,9 @@ void CorePrivate::init() {
 		}
 	}
 
+	q->enableConferenceServer(!!linphone_config_get_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", FALSE));
+	q->enableGruuInConferenceAddress(!!linphone_config_get_int(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", TRUE));
+
 	if (linphone_factory_is_database_storage_available(linphone_factory_get()) &&
 	    !!linphone_core_database_enabled(lc)) {
 		AbstractDb::Backend backend;
@@ -484,7 +487,7 @@ void CorePrivate::uninit() {
 			for (const auto &participant : cr->getParticipants()) {
 				for (std::shared_ptr<ParticipantDevice> device : participant->getDevices()) {
 					// to make sure no more messages are received after Core:uninit because key components like DB are
-					// no longuer available. So it's no more possible to handle any singnaling messages properly.
+					// no longer available. So it's no more possible to handle any singnaling messages properly.
 					if (device->getSession()) device->getSession()->clearListeners();
 				}
 			}
@@ -1202,7 +1205,7 @@ void Core::enableLimeX3dh(bool enable) {
 	}
 
 	if (d->imee == nullptr) {
-		if (!linphone_core_conference_server_enabled(getCCore())) {
+		if (!conferenceServerEnabled()) {
 #ifdef HAVE_LIME_X3DH
 			LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 			if (strcmp(linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""), "") != 0) {
@@ -1281,7 +1284,7 @@ std::string Core::getX3dhServerUrl() const {
 bool Core::limeX3dhEnabled() const {
 #ifdef HAVE_LIME_X3DH
 	L_D();
-	bool isServer = linphone_core_conference_server_enabled(getCCore());
+	bool isServer = conferenceServerEnabled();
 	if (d->imee && ((!isServer && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3dh) ||
 	                (isServer && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3dhServer)))
 		return true;
@@ -2230,7 +2233,8 @@ std::shared_ptr<Conference> Core::findConference(const ConferenceId &conferenceI
 		lInfo() << "Found " << *conference << " in RAM with conference ID " << conferenceId << ".";
 		return conference;
 	} catch (const out_of_range &) {
-		if (logIfNotFound) {
+		bool isStartup = (linphone_core_get_global_state(getCCore()) == LinphoneGlobalStartup);
+		if (logIfNotFound && !isStartup) {
 			lInfo() << "Unable to find conference with conference ID " << conferenceId << " in RAM.";
 		}
 	}
@@ -2268,7 +2272,9 @@ void Core::insertConference(const shared_ptr<Conference> conference) {
 	}
 	if ((conf == nullptr) || (conf != conference)) {
 		if (isStartup) {
-			lDebug() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
+			if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG)) {
+				lDebug() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
+			}
 		} else {
 			lInfo() << "Insert " << *conference << " in RAM with conference ID " << conferenceId << ".";
 		}
@@ -2290,25 +2296,80 @@ void Core::deleteConference(const shared_ptr<const Conference> &conference) {
 	deleteConference(conferenceId);
 }
 
+/*
+ * This function searches a conference that matches the arguments provided. It is not mandatory for the application to provide every argument, nonetheless the execution time depends on which of the are given.
+ * If both the peer and local addresses are provided, then the search can be carried out directly on the conference map mConferenceById as its key is a ConferenceId object. This is the fastest way to look for a conference and compare against a participant list and/or parameters should they be given.
+ * If either the peer or the local address is given, then the search will take longer as all items in the map must have their address checked against the provided one. The initial raw search may lead to find more than one conference and the participant list and/or parameters can help to get down to one item only.
+ * The slowest way of finding a conference is by not giving neither the local nor the peer address as every conference will be matched against the participant list and/or the parameters
+ * If multiple matches occur with the provided arguments, only one will be returned.
+ */
 std::shared_ptr<Conference> Core::searchConference(const std::shared_ptr<ConferenceParams> &params,
                                                    const std::shared_ptr<const Address> &localAddress,
                                                    const std::shared_ptr<const Address> &remoteAddress,
-                                                   const std::list<std::shared_ptr<Address>> &participants) const {
+                                                   const std::list<std::shared_ptr<Address>> &participants, bool logIfNotFound) const {
 	L_D();
-	ConferenceContext referenceConferenceContext(params, localAddress, remoteAddress, participants);
-	const auto it = std::find_if(
-	    d->mConferenceById.begin(), d->mConferenceById.end(), [&referenceConferenceContext](const auto &p) {
-		    // p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
-		    const auto &conference = p.second;
-		    const ConferenceId &conferenceId = conference->getConferenceId();
-		    ConferenceContext conferenceContext(conference->getCurrentParams(), conferenceId.getLocalAddress(),
-		                                        conferenceId.getPeerAddress(), conference->getParticipantAddresses());
-		    return (referenceConferenceContext == conferenceContext);
-	    });
+	decltype(d->mConferenceById) resultConferences;
+
+	if (remoteAddress && localAddress) {
+		ConferenceId conferenceId(remoteAddress, localAddress, createConferenceIdParams());
+		auto foundConference = findConference(conferenceId, logIfNotFound);
+		if (foundConference) {
+			resultConferences.insert(std::make_pair(conferenceId, foundConference));
+		}
+	} else if (remoteAddress) {
+		auto remoteAddressWithoutGruu = remoteAddress->getUriWithoutGruu();
+		/* TODO with C++20
+		resultConferences = d->mConferenceById | std::views::filter([&remoteAddressWithoutGruu](auto &conference) {
+		    return remoteAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+		conference->getConferenceId().getPeerAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false);
+		});
+		*/
+		for (const auto &[id, conference] : d->mConferenceById) {
+			if (remoteAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+			    conference->getConferenceId().getPeerAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false)) {
+				resultConferences.insert(std::make_pair(id, conference));
+			}
+		}
+	} else if (localAddress) {
+		auto localAddressWithoutGruu = localAddress->getUriWithoutGruu();
+		/* TODO with C++20
+		resultConferences = d->mConferenceById | std::views::filter([&localAddressWithoutGruu](auto &conference) {
+		    return localAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+		conference->getConferenceId().getLocalAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false);
+		});
+		*/
+		for (const auto &[id, conference] : d->mConferenceById) {
+			if (localAddressWithoutGruu.toStringUriOnlyOrdered(false) ==
+			    conference->getConferenceId().getLocalAddress()->getUriWithoutGruu().toStringUriOnlyOrdered(false)) {
+				resultConferences.insert(std::make_pair(id, conference));
+			}
+		}
+	} else {
+		resultConferences = d->mConferenceById;
+	}
 
 	std::shared_ptr<Conference> conference;
-	if (it != d->mConferenceById.cend()) {
-		conference = it->second;
+	if (!resultConferences.empty()) {
+		if (params || !participants.empty()) {
+			ConferenceContext referenceConferenceContext(params, participants);
+			const auto it = std::find_if(resultConferences.begin(), resultConferences.end(),
+			                             [&referenceConferenceContext](auto &conferenceIdPair) {
+				                             auto conference = conferenceIdPair.second;
+				                             ConferenceContext conferenceContext(conference->getCurrentParams(),
+				                                                                 conference->getParticipantAddresses());
+				                             return (referenceConferenceContext == conferenceContext);
+			                             });
+
+			if (it != resultConferences.cend()) {
+				conference = it->second;
+			}
+		} else {
+			auto resultSize = resultConferences.size();
+			if (resultSize > 1) {
+				lError() << resultSize << " conferences have been found but only one will be return by the search function.";
+			}
+			conference = resultConferences.begin()->second;
+		}
 	}
 
 	return conference;
@@ -3522,6 +3583,22 @@ std::shared_ptr<Account> Core::guessLocalAccountFromMalformedMessage(const std::
 	}
 
 	return nullptr;
+}
+
+void Core::enableGruuInConferenceAddress(bool enable) {
+	mGruuInConferenceAddress = enable;
+}
+
+bool Core::gruuInConferenceAddressEnabled() const {
+	return mGruuInConferenceAddress;
+}
+
+void Core::enableConferenceServer(bool enable) {
+	mIsConferenceServer = enable;
+}
+
+bool Core::conferenceServerEnabled() const {
+	return mIsConferenceServer;
 }
 
 Address Core::getPrimaryContactAddress() const {

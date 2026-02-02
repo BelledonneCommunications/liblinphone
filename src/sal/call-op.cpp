@@ -1034,7 +1034,11 @@ void SalCallOp::processRequestEventCb(void *userCtx, const belle_sip_request_eve
 					lInfo() << "Ignored received ack since a new client transaction has been started since";
 				}
 			} else if (method == "BYE") {
-				op->callTerminated(serverTransaction, 200, request);
+				int statusCode = 200;
+				if ((op->mState == State::Terminated) || (op->mState == State::Terminating)) {
+					statusCode = 481;
+				}
+				op->callTerminated(serverTransaction, statusCode, request);
 				// Call end not notified by dialog deletion because transaction can end before dialog
 			} else if ((method == "INVITE") || (isUpdate = (method == "UPDATE"))) {
 				if ((op->mState == State::Terminated) || (op->mState == State::Terminating)) {

@@ -35,8 +35,6 @@ class ConferenceContext {
 public:
 	ConferenceContext() = delete;
 	ConferenceContext(const std::shared_ptr<ConferenceParams> &params,
-	                  const std::shared_ptr<const Address> &localAddress,
-	                  const std::shared_ptr<const Address> &remoteAddress,
 	                  const std::list<std::shared_ptr<Address>> &participants);
 	ConferenceContext(ConferenceContext &&other) = delete;
 	ConferenceContext(const ConferenceContext &other) = delete;
@@ -48,20 +46,12 @@ public:
 	inline const std::list<std::shared_ptr<Address>> &getParticipants() const {
 		return mParticipants;
 	}
-	inline const Address &getLocalAddress() const {
-		return mLocalAddress;
-	}
-	inline const Address &getRemoteAddress() const {
-		return mRemoteAddress;
-	}
 
 	bool operator==(const ConferenceContext &other) const;
 
 private:
 	std::shared_ptr<const ConferenceParams> mConferenceParams;
 	std::list<std::shared_ptr<Address>> mParticipants;
-	Address mLocalAddress;
-	Address mRemoteAddress;
 };
 
 LINPHONE_END_NAMESPACE

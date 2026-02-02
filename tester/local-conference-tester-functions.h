@@ -131,7 +131,8 @@ private:
 /* Core manager acting as a focus*/
 class Focus : public ConfCoreManager {
 public:
-	Focus(std::string rc) : ConfCoreManager(rc, [this](bool) { configureFocus(); }) {
+	Focus(std::string rc, std::string source_db = {})
+	    : ConfCoreManager(rc, [this, source_db](bool) { configureFocus(source_db); }) {
 	}
 	~Focus() {
 		CoreManagerAssert({*this}).waitUntil(chrono::seconds(1), [] { return false; });
@@ -175,7 +176,7 @@ public:
 		return *Address::toCpp(factory_uri);
 	}
 
-	void configureFocus() {
+	void configureFocus(std::string source_db = {}) {
 		linphone_core_enable_gruu_in_conference_address(getLc(), FALSE);
 		linphone_core_enable_conference_server(getLc(), TRUE);
 		linphone_core_set_conference_availability_before_start(getLc(), 0);
@@ -187,6 +188,17 @@ public:
 		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		linphone_core_enable_rtp_bundle(getLc(), TRUE);
 		linphone_core_set_conference_cleanup_period(getLc(), 1);
+		if (!source_db.empty()) {
+			const char *db_basename = "focus_";
+			char random_db_filename[50];
+			belle_sip_random_token(random_db_filename, sizeof(random_db_filename));
+			char core_db[256];
+			sprintf(core_db, "%s_%s.db", db_basename, random_db_filename);
+			char *rwDbPath = bc_tester_file(core_db);
+			BC_ASSERT_FALSE(liblinphone_tester_copy_file(source_db.c_str(), rwDbPath));
+			linphone_config_set_string(linphone_core_get_config(getLc()), "storage", "uri", rwDbPath);
+			ms_free(rwDbPath);
+		}
 
 		const bctbx_list_t *accounts = linphone_core_get_account_list(getLc());
 		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
@@ -354,7 +366,8 @@ void create_conference_with_screen_sharing_chat_base(time_t start_time,
                                                      int duration,
                                                      LinphoneConferenceSecurityLevel security_level,
                                                      LinphoneConferenceLayout layout,
-                                                     bool_t rejoin_with_screen_sharing, bool_t enable_camera);
+                                                     bool_t rejoin_with_screen_sharing,
+                                                     bool_t enable_camera);
 
 void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_level,
                                       bool_t server_restart,

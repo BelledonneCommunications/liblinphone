@@ -30,7 +30,7 @@ class Conference;
 
 class LINPHONE_PUBLIC NotifyConferenceListener : public ConferenceListenerInterface {
 public:
-	NotifyConferenceListener(Conference *conference) : conf(conference){};
+	NotifyConferenceListener(Conference *conference) : conf(conference) {};
 	virtual ~NotifyConferenceListener() = default;
 
 	/*
