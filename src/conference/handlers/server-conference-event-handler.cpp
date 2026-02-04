@@ -1124,7 +1124,9 @@ void ServerConferenceEventHandler::notifyParticipantDevice(const shared_ptr<Cont
 	cbs->setUserData(this);
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
-	ev->notify(content);
+	if (ev->notify(content) == 0) {
+		lError() << "NOTIFY in " << *ev << " couldn't be sent";
+	}
 }
 
 // -----------------------------------------------------------------------------

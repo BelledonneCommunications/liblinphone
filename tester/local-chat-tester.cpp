@@ -687,8 +687,8 @@ static void group_chat_room_with_client_removed_added() {
 		stats initialMichelle2Stats = michelle2.getStats();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		focus.registerAsParticipantDevice(michelle2);
-		// Notify chat room that a participant has registered
 
+		// Notify chat room that a participant has registered
 		bctbx_list_t *devices = NULL;
 		const LinphoneAddress *deviceAddr = linphone_account_get_contact_address(michelle.getDefaultAccount());
 		LinphoneParticipantDeviceIdentity *identity =

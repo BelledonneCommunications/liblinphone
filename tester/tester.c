@@ -4684,13 +4684,15 @@ void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, BCTBX_UN
 			if (infos) {
 				bctbx_list_free_with_data(infos, (bctbx_list_free_func)linphone_conference_info_unref);
 			}
-			const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(lc);
-			for (const bctbx_list_t *it = chat_rooms; it; it = bctbx_list_next(it)) {
-				LinphoneChatRoom *chat_room = (LinphoneChatRoom *)it->data;
-				LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
-				setup_chat_room_callbacks(cbs);
-				linphone_chat_room_add_callbacks(chat_room, cbs);
-				linphone_chat_room_cbs_unref(cbs);
+			if (!linphone_core_conference_server_enabled(lc)) {
+				const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(lc);
+				for (const bctbx_list_t *it = chat_rooms; it; it = bctbx_list_next(it)) {
+					LinphoneChatRoom *chat_room = (LinphoneChatRoom *)it->data;
+					LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+					setup_chat_room_callbacks(cbs);
+					linphone_chat_room_add_callbacks(chat_room, cbs);
+					linphone_chat_room_cbs_unref(cbs);
+				}
 			}
 		} break;
 		case LinphoneGlobalReady:
@@ -6257,7 +6259,8 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 	}
 }
 
-bool_t liblinphone_tester_call_check_video_source_filter(LinphoneCall *call, MSFilterId filter_id, int expected_counter) {
+bool_t
+liblinphone_tester_call_check_video_source_filter(LinphoneCall *call, MSFilterId filter_id, int expected_counter) {
 	int counter = 0;
 	int stream_count = linphone_call_get_stream_count(call);
 	for (int idx = 0; idx < stream_count; idx++) {

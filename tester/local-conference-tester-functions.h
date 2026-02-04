@@ -213,6 +213,7 @@ public:
 			BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
 		}
 
+		linphone_core_cbs_set_global_state_changed(cbs, server_core_global_state_changed);
 		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
 		linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
@@ -226,16 +227,37 @@ private:
 		switch (state) {
 			case LinphoneChatRoomStateInstantiated: {
 				LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
-				linphone_chat_room_cbs_set_participant_registration_subscription_requested(
-				    cbs, chat_room_participant_registration_subscription_requested);
 				setup_chat_room_callbacks(cbs);
+				if (linphone_core_get_global_state(core) == LinphoneGlobalOn) {
+					linphone_chat_room_cbs_set_participant_registration_subscription_requested(
+					    cbs, chat_room_participant_registration_subscription_requested);
+					linphone_chat_room_cbs_set_user_data(cbs, focus);
+				}
 				linphone_chat_room_add_callbacks(cr, cbs);
-				linphone_chat_room_cbs_set_user_data(cbs, focus);
 				linphone_chat_room_cbs_unref(cbs);
 				break;
 			}
 			default:
 				break;
+		}
+	}
+
+	static void server_core_global_state_changed(LinphoneCore *core,
+	                                             LinphoneGlobalState gstate,
+	                                             BCTBX_UNUSED(const char *message)) {
+		if (gstate == LinphoneGlobalOn) {
+			Focus *focus = (Focus *)(((LinphoneCoreManager *)linphone_core_get_user_data(core))->user_info);
+			// Restore chatroom callbacks
+			const bctbx_list_t *chat_rooms = linphone_core_get_chat_rooms(core);
+			for (const bctbx_list_t *it = chat_rooms; it; it = bctbx_list_next(it)) {
+				LinphoneChatRoom *chat_room = (LinphoneChatRoom *)it->data;
+				LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+				linphone_chat_room_cbs_set_participant_registration_subscription_requested(
+				    cbs, Focus::chat_room_participant_registration_subscription_requested);
+				linphone_chat_room_add_callbacks(chat_room, cbs);
+				linphone_chat_room_cbs_set_user_data(cbs, focus);
+				linphone_chat_room_cbs_unref(cbs);
+			}
 		}
 	}
 
@@ -287,7 +309,7 @@ private:
 		}
 	}
 
-	std::multimap<Address, std::reference_wrapper<ClientConference>> mParticipantDevices;
+	std::multimap<Address, std::reference_wrapper<ClientConference>> mParticipantDevices{};
 };
 
 // Chat rooms

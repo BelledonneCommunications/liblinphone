@@ -1423,7 +1423,8 @@ void Conference::setState(ConferenceInterface::State state) {
 				// Do not notify conference state changes when the core is starting up to avoid the application from
 				// being overwhelmed by the notifications The core must be notified of state changes when shutting down
 				// to free the last reference to the conference it holds
-				if ((coreState == LinphoneGlobalOn) || (coreState == LinphoneGlobalShutdown)) {
+				if (getCore()->conferenceServerEnabled() || (coreState == LinphoneGlobalOn) ||
+				    (coreState == LinphoneGlobalShutdown)) {
 					notifyStateChanged(mState);
 				}
 			}

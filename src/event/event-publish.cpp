@@ -131,7 +131,8 @@ LinphoneStatus EventPublish::refresh() {
 LinphoneStatus EventPublish::accept() {
 	int err;
 	if (mPublishState != LinphonePublishIncomingReceived && mPublishState != LinphonePublishRefreshing) {
-		ms_error("EventPublish::accept(): cannot accept publish if subscription wasn't just received.");
+		lError() << *this << ": cannot accept publish if subscription wasn't just received - its state is "
+		         << linphone_publish_state_to_string(mPublishState) << ".";
 		return -1;
 	}
 	fillOpFields();
@@ -147,7 +148,8 @@ LinphoneStatus EventPublish::accept() {
 LinphoneStatus EventPublish::deny(LinphoneReason reason) {
 	int err;
 	if (mPublishState != LinphonePublishIncomingReceived && mPublishState != LinphonePublishRefreshing) {
-		ms_error("EventPublish::deny(): cannot deny publish if publish wasn't just received.");
+		lError() << *this << ": cannot deny publish if publish wasn't just received - its state is "
+		         << linphone_publish_state_to_string(mPublishState) << ".";
 		return -1;
 	}
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
@@ -170,8 +172,8 @@ LinphonePublishState EventPublish::getState() const {
 
 void EventPublish::setState(LinphonePublishState state) {
 	if (mPublishState != state) {
-		ms_message("Event [%p] moving from [%s] to publish state [%s]", this,
-		           linphone_publish_state_to_string(mPublishState), linphone_publish_state_to_string(state));
+		lInfo() << *this << ": moving from [" << linphone_publish_state_to_string(mPublishState)
+		        << "] to publish state [" << linphone_publish_state_to_string(state) << "]";
 		mPublishState = state;
 
 		ref();
@@ -235,7 +237,7 @@ void EventPublish::startTimeoutHandling() {
 	if (mExpires > 0) {
 		mTimer = getCore()->createTimer(
 		    [this]() {
-			    lInfo() << "Publish event [" << this << "] has expired";
+			    lInfo() << *this << ": PUBLISH has expired";
 			    terminate();
 			    return true;
 		    },
@@ -245,7 +247,7 @@ void EventPublish::startTimeoutHandling() {
 
 void EventPublish::stopTimeoutHandling() {
 	if (mTimer) {
-		lInfo() << "stopTimeoutHandling()";
+		lInfo() << *this << ": stopTimeoutHandling()";
 		try {
 			getCore()->destroyTimer(mTimer);
 		} catch (...) {

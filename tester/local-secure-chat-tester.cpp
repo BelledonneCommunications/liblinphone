@@ -960,6 +960,82 @@ static void secure_one_to_one_chat_room_send_message_after_restart(void) {
 			msg = NULL;
 		}
 
+		ms_message("%s adds a new device", linphone_core_get_identity(pauline.getLc()));
+		ClientConference pauline2("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		stats initialPauline2Stats = pauline2.getStats();
+		coresList = bctbx_list_append(coresList, pauline2.getLc());
+		focus.registerAsParticipantDevice(pauline2);
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline2.getLc()));
+
+		// Notify chat room that a participant has registered
+		bctbx_list_t *devices = NULL;
+		const LinphoneAddress *deviceAddr = linphone_account_get_contact_address(pauline.getDefaultAccount());
+		LinphoneParticipantDeviceIdentity *identity =
+		    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
+		bctbx_list_t *specs = linphone_core_get_linphone_specs_list(pauline.getLc());
+		linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
+		bctbx_list_free_with_data(specs, ms_free);
+		devices = bctbx_list_append(devices, identity);
+
+		deviceAddr = linphone_account_get_contact_address(pauline2.getDefaultAccount());
+		identity = linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
+		specs = linphone_core_get_linphone_specs_list(pauline2.getLc());
+		linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
+		bctbx_list_free_with_data(specs, ms_free);
+		devices = bctbx_list_append(devices, identity);
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			linphone_chat_room_set_participant_devices(chatRoom->toC(), pauline.getCMgr()->identity, devices);
+		}
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
+
+		LinphoneChatRoom *pauline2Cr = check_creation_chat_room_client_side(
+		    coresList, pauline2.getCMgr(), &initialPauline2Stats, confAddr, initialSubject, 1, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(pauline2Cr);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2.getStats().number_of_LinphoneChatRoomStateCreated,
+		                             initialPauline2Stats.number_of_LinphoneChatRoomStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_chat_room_participant_devices_added,
+		                             initialMarieStats.number_of_chat_room_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+		                             initialPaulineStats.number_of_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom->toC()), 2, int, "%d");
+		}
+
+		msg = ClientConference::sendTextMsg(marieCr, "You bought a new phone....");
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([msg] {
+			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDeliveredToUser);
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([paulineCr] {
+			return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
+		}));
+
+		linphone_chat_room_mark_as_read(paulineCr);
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([pauline2Cr] {
+			return linphone_chat_room_get_unread_messages_count(pauline2Cr) == 1;
+		}));
+
+		linphone_chat_room_mark_as_read(pauline2Cr);
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([msg] {
+			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDisplayed);
+		}));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDisplayed,
+		                             initialMarieStats.number_of_LinphoneMessageDisplayed + 3,
+		                             liblinphone_tester_sip_timeout));
+
+		linphone_chat_message_unref(msg);
+		msg = NULL;
+
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
