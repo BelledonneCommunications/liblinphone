@@ -48,7 +48,7 @@
  *
  * The account set with linphone_core_set_default_proxy_config() will be used as default
  * for outgoing calls & chat messages unless specified otherwise.
- * @ingroup proxies
+ * @ingroup group_proxies
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  **/
 typedef struct _LinphoneProxyConfig LinphoneProxyConfig;
@@ -56,26 +56,26 @@ typedef struct _LinphoneProxyConfig LinphoneProxyConfig;
 /**
  * @brief The object used to configure an account on a server via XML-RPC,
  * see @link https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Override%20account%20creator%20request/
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef struct _LinphoneAccountCreator LinphoneAccountCreator;
 
 /**
  * @brief An object to define a LinphoneAccountCreator service.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  * @donotwrap
  **/
 typedef struct _LinphoneAccountCreatorService LinphoneAccountCreatorService;
 
 /**
  * @brief An object to handle the responses callbacks for handling the #LinphoneAccountCreator operations.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef struct _LinphoneAccountCreatorCbs LinphoneAccountCreatorCbs;
 
 /**
  * @brief Enum describing phone number checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorPhoneNumberStatus {
 	LinphoneAccountCreatorPhoneNumberStatusOk = 0x1,                 /**< Phone number ok */
@@ -87,13 +87,13 @@ typedef enum _LinphoneAccountCreatorPhoneNumberStatus {
 
 /**
  * @brief A mask of #LinphoneAccountCreatorPhoneNumberStatus values.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  */
 typedef unsigned int LinphoneAccountCreatorPhoneNumberStatusMask;
 
 /**
  * @brief Enum describing backend used in the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorBackend {
 	LinphoneAccountCreatorBackendXMLRPC = 0,   /**< XMLRPC Backend */
@@ -102,7 +102,7 @@ typedef enum _LinphoneAccountCreatorBackend {
 
 /**
  * @brief Enum describing username checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorUsernameStatus {
 	LinphoneAccountCreatorUsernameStatusOk = 0,                /**< Username ok */
@@ -114,7 +114,7 @@ typedef enum _LinphoneAccountCreatorUsernameStatus {
 
 /**
  * @brief Enum describing email checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorEmailStatus {
 	LinphoneAccountCreatorEmailStatusOk = 0,               /**< Email ok */
@@ -124,7 +124,7 @@ typedef enum _LinphoneAccountCreatorEmailStatus {
 
 /**
  * @brief Enum describing password checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorPasswordStatus {
 	LinphoneAccountCreatorPasswordStatusOk = 0,                /**< Password ok */
@@ -136,7 +136,7 @@ typedef enum _LinphoneAccountCreatorPasswordStatus {
 
 /**
  * @brief Enum describing language checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorLanguageStatus {
 	LinphoneAccountCreatorLanguageStatusOk = 0 /**< Language ok */
@@ -144,7 +144,7 @@ typedef enum _LinphoneAccountCreatorLanguageStatus {
 
 /**
  * @brief Enum describing algorithm checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorAlgoStatus {
 	LinphoneAccountCreatorAlgoStatusOk = 0,          /**< Algorithm ok */
@@ -153,7 +153,7 @@ typedef enum _LinphoneAccountCreatorAlgoStatus {
 
 /**
  * @brief Enum describing activation code checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorActivationCodeStatus {
 	LinphoneAccountCreatorActivationCodeStatusOk = 0,               /**< Activation code ok */
@@ -164,7 +164,7 @@ typedef enum _LinphoneAccountCreatorActivationCodeStatus {
 
 /**
  * @brief Enum describing domain checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorDomainStatus {
 	LinphoneAccountCreatorDomainOk = 0,     /**< Domain ok */
@@ -173,7 +173,7 @@ typedef enum _LinphoneAccountCreatorDomainStatus {
 
 /**
  * @brief Enum describing transport checking, used by the #LinphoneAccountCreator.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  **/
 typedef enum _LinphoneAccountCreatorTransportStatus {
 	LinphoneAccountCreatorTransportOk = 0,         /**< Transport ok */
@@ -182,7 +182,7 @@ typedef enum _LinphoneAccountCreatorTransportStatus {
 
 /**
  * @brief Enum describing the status of server request, used by the #LinphoneAccountCreator.
- * @ingroup account_creator_request
+ * @ingroup group_account_creator_request
  **/
 typedef enum _LinphoneAccountCreatorStatus {
 	/** Request status **/
@@ -231,7 +231,7 @@ typedef enum _LinphoneAccountCreatorStatus {
 
 /**
  * @brief Enum representing the direction of a call.
- * @ingroup call_logs
+ * @ingroup group_call_logs
  **/
 typedef enum _LinphoneCallDir {
 	LinphoneCallOutgoing = 0, /**< outgoing calls*/
@@ -239,7 +239,7 @@ typedef enum _LinphoneCallDir {
 } LinphoneCallDir;
 
 /**
- * @ingroup call_misc
+ * @ingroup group_call_misc
  */
 typedef enum _LinphoneSupportLevel {
 	LinphoneSupportLevelNoSupport = 0, /**< No support for the feature */
@@ -249,7 +249,7 @@ typedef enum _LinphoneSupportLevel {
 
 /**
  * @brief Enum representing the status of a call.
- * @ingroup call_logs
+ * @ingroup group_call_logs
  **/
 typedef enum _LinphoneCallStatus {
 	LinphoneCallSuccess = 0,  /**< The call was sucessful */
@@ -264,7 +264,7 @@ typedef enum _LinphoneCallStatus {
 
 /**
  * @brief Enum representing the state of a recording.
- * @ingroup call_control
+ * @ingroup group_call_control
  **/
 typedef enum _LinphoneRecorderState {
 	LinphoneRecorderClosed, /**< No file is opened for recording. */
@@ -274,7 +274,7 @@ typedef enum _LinphoneRecorderState {
 
 /**
  * @brief Enum representing the type of a video source.
- * @ingroup call_control
+ * @ingroup group_call_control
  **/
 typedef enum _LinphoneVideoSourceType {
 	LinphoneVideoSourceUnknown,
@@ -286,7 +286,7 @@ typedef enum _LinphoneVideoSourceType {
 
 /**
  * @brief Enum representing the sub type of the screen sharing.
- * @ingroup call_control
+ * @ingroup group_call_control
  **/
 typedef enum _LinphoneVideoSourceScreenSharingType {
 	LinphoneVideoSourceScreenSharingDisplay, /**< The screen sharing is done from a display. */
@@ -309,19 +309,19 @@ typedef enum _LinphoneVideoSourceScreenSharingType {
  * #LinphoneCore is destroyed.
  *
  * Thanks to the vCard plugin, you can also store more information like phone numbers, organization, etc...
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef struct _LinphoneFriend LinphoneFriend;
 
 /**
  * @brief An object to handle the callbacks for #LinphoneFriend.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef struct _LinphoneFriendCbs LinphoneFriendCbs;
 
 /**
  * @brief Enum describing the capabilities of a #LinphoneFriend, populated through presence subscribe/notify process.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef enum _LinphoneFriendCapability {
 	LinphoneFriendCapabilityNone = 0, /**< No capabilities populated */
@@ -337,13 +337,13 @@ typedef enum _LinphoneFriendCapability {
  * @brief This object representing a list of #LinphoneFriend.
  *
  * You can use it to store contacts locally or synchronize them through CardDAV protocol.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef struct _LinphoneFriendList LinphoneFriendList;
 
 /**
  * @brief The types of FriendList
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef enum _LinphoneFriendListType {
 	LinphoneFriendListTypeDefault = -1,        /**< Default value, used when no other type applies */
@@ -355,13 +355,13 @@ typedef enum _LinphoneFriendListType {
 
 /**
  * @brief An object to handle the callbacks for #LinphoneFriend synchronization.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef struct _LinphoneFriendListCbs LinphoneFriendListCbs;
 
 /**
  * @brief Enum describing the status of a LinphoneFriendList operation.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef enum _LinphoneFriendListStatus {
 	LinphoneFriendListOK = 0,                /**< Operation went fine */
@@ -371,7 +371,7 @@ typedef enum _LinphoneFriendListStatus {
 
 /**
  * @brief Enum describing the status of a CardDAV synchronization.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef enum _LinphoneFriendListSyncStatus {
 	LinphoneFriendListSyncStarted = 0,    /**< Synchronization started */
@@ -399,7 +399,7 @@ typedef enum _LinphoneFriendListSyncStatus {
  *default one.
  *
  * It is also possible to use only one (either default or factory) or even none.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef struct _LpConfig LinphoneConfig;
 
@@ -413,7 +413,7 @@ typedef struct _LpConfig LinphoneConfig;
  *is disabled.
  *
  * It is notified via the configuring_status() callback in #LinphoneCoreCbs.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef enum _LinphoneConfiguringState {
 	LinphoneConfiguringSuccessful = 0,
@@ -425,7 +425,7 @@ typedef enum _LinphoneConfiguringState {
  * @brief Describes the global state of the #LinphoneCore object.
  *
  * It is notified via the global_state_changed() callback in #LinphoneCoreCbs.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef enum _LinphoneGlobalState {
 	/** State in which we're in after linphone_core_stop(). Do not call any method while in this state except for
@@ -448,7 +448,7 @@ typedef enum _LinphoneGlobalState {
  * @brief Describes proxy registration states.
  *
  * It is notified via the registration_state_changed() callback in #LinphoneCoreCbs.
- * @ingroup proxies
+ * @ingroup group_proxies
  **/
 typedef enum _LinphoneRegistrationState {
 	LinphoneRegistrationNone = 0,      /**< Initial state for registrations */
@@ -480,7 +480,7 @@ typedef enum _LinphoneRegistrationState {
  *
  * Once you don't need it anymore, call linphone_core_stop() and release the reference on it so it can gracefully
  * shutdown.
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef struct _LinphoneCore LinphoneCore;
 
@@ -490,7 +490,7 @@ typedef struct _LinphoneCore LinphoneCore;
  *
  * It is also used to configure a few behaviors before creating the #LinphoneCore, like the logs verbosity or
  * collection.
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef struct _LinphoneFactory LinphoneFactory;
 
@@ -502,7 +502,7 @@ typedef struct _LinphoneFactory LinphoneFactory;
  * You can use linphone_core_remove_callbacks() to remove it but that isn't mandatory.
  *
  * The same applies to all listeners in our API.
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef struct _LinphoneCoreCbs LinphoneCoreCbs;
 
@@ -519,7 +519,7 @@ typedef struct _LinphoneCoreCbs LinphoneCoreCbs;
  *
  * Once configuration is complete, use linphone_core_set_transports() to apply it.
  * This will be saved in configuration file so you don't have to do it each time the #LinphoneCore starts.
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef struct _LinphoneTransports LinphoneTransports;
 
@@ -531,7 +531,7 @@ typedef struct _LinphoneTransports LinphoneTransports;
  *video during calls.
  *
  * Even if disabled, you'll still be able to add it later while the call is running.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef struct _LinphoneVideoActivationPolicy LinphoneVideoActivationPolicy;
 
@@ -540,7 +540,7 @@ typedef struct _LinphoneVideoActivationPolicy LinphoneVideoActivationPolicy;
  *
  * It is mostly used to configure the default video size sent by your camera during a video call with
  * linphone_core_set_preferred_video_definition() method.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  */
 typedef struct _LinphoneVideoDefinition LinphoneVideoDefinition;
 
@@ -550,7 +550,7 @@ typedef struct _LinphoneVideoDefinition LinphoneVideoDefinition;
 
 /**
  * @brief Enum describing Ip family.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef enum _LinphoneAddressFamily {
 	LinphoneAddressFamilyInet = 0,   /**< IpV4 */
@@ -560,7 +560,7 @@ typedef enum _LinphoneAddressFamily {
 
 /**
  * @brief Enum describing the authentication methods.
- * @ingroup network_parameters
+ * @ingroup group_network_parameters
  **/
 typedef enum _LinphoneAuthMethod {
 	LinphoneAuthHttpDigest = 0, /**< Digest authentication requested */
@@ -571,7 +571,7 @@ typedef enum _LinphoneAuthMethod {
 
 /**
  * @brief Enum describing RTP AVPF activation modes.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneAVPFMode {
 	LinphoneAVPFDefault = -1, /**< Use default value defined at upper level */
@@ -584,7 +584,7 @@ typedef enum _LinphoneAVPFMode {
  * 'busy' means the user is open for communication but involved in an other activity,
  * 'do not disturb' means the user is not open for communication, and 'offline' means
  * that no presence information is available.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef enum _LinphoneConsolidatedPresence {
 	LinphoneConsolidatedPresenceOnline = 0,
@@ -608,7 +608,7 @@ LINPHONE_DEPRECATED typedef LinphoneContactSearchID ContactSearchID;
 
 /**
  * @brief Enum describing the result of the echo canceller calibration process.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneEcCalibratorStatus {
 	LinphoneEcCalibratorInProgress = 0, /**< The echo canceller calibration process is on going */
@@ -625,13 +625,13 @@ typedef enum _LinphoneEcCalibratorStatus {
  * All #LinphoneErrorInfo object returned by the liblinphone API are readonly and transcients. For safety they must be
  *used immediately after obtaining them. Any other function call to the liblinphone may change their content or
  *invalidate the pointer.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef struct _LinphoneErrorInfo LinphoneErrorInfo;
 
 /**
  * @brief Policy to use to pass through firewalls.
- * @ingroup network_parameters
+ * @ingroup group_network_parameters
  * @deprecated 03/02/2017 Use #LinphoneNatPolicy instead.
  * @donotwrap
  **/
@@ -645,7 +645,7 @@ typedef enum _LinphoneFirewallPolicy {
 
 /**
  * @brief Enum describing ICE states.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef enum _LinphoneIceState {
 	LinphoneIceStateNotActivated = 0,   /**< ICE has not been activated for this call or stream*/
@@ -661,14 +661,14 @@ typedef enum _LinphoneIceState {
  * @brief IM encryption engine.
  *
  * @see https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Instant%20Messaging%20Encryption%20Engine/
- * @ingroup misc
+ * @ingroup group_misc
  * @donotwrap
  */
 typedef struct _LinphoneImEncryptionEngine LinphoneImEncryptionEngine;
 
 /**
  * @brief An object to handle the callbacks for the handling a #LinphoneImEncryptionEngine object.
- * @ingroup misc
+ * @ingroup group_misc
  * @donotwrap
  */
 typedef struct _LinphoneImEncryptionEngineCbs LinphoneImEncryptionEngineCbs;
@@ -677,13 +677,13 @@ typedef struct _LinphoneImEncryptionEngineCbs LinphoneImEncryptionEngineCbs;
  * @brief Policy to use to send/receive instant messaging composing/delivery/display notifications.
  *
  * The sending of this information is done as in the RFCs 3994 (is_composing) and 5438 (imdn delivered/displayed).
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef struct _LinphoneImNotifPolicy LinphoneImNotifPolicy;
 
 /**
  * @brief Object representing an informational message sent or received by the core.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef struct _LinphoneInfoMessage LinphoneInfoMessage;
 
@@ -692,7 +692,7 @@ typedef struct _LinphoneLDAPContactProvider LinphoneLDAPContactProvider;
 typedef struct _LinphoneLDAPContactSearch LinphoneLDAPContactSearch;
 
 /**
- * @ingroup network_parameters
+ * @ingroup group_network_parameters
  */
 typedef enum _LinphoneLimeState {
 	LinphoneLimeDisabled = 0,  /**< Lime is not used at all */
@@ -702,7 +702,7 @@ typedef enum _LinphoneLimeState {
 
 /**
  * @brief Session Timers refresher
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef enum _LinphoneSessionExpiresRefresher {
 	LinphoneSessionExpiresRefresherUnspecified = 0,
@@ -712,7 +712,7 @@ typedef enum _LinphoneSessionExpiresRefresher {
 
 /**
  * @brief Whether or not to keep a file with the logs.
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef enum _LinphoneLogCollectionState {
 	LinphoneLogCollectionDisabled = 0,
@@ -722,7 +722,7 @@ typedef enum _LinphoneLogCollectionState {
 
 /**
  * @brief Used to notify if log collection upload have been successfully delivered or not.
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 typedef enum _LinphoneCoreLogCollectionUploadState {
 	LinphoneCoreLogCollectionUploadStateInProgress = 0, /**< Delivery in progress */
@@ -733,7 +733,7 @@ typedef enum _LinphoneCoreLogCollectionUploadState {
 
 /**
  * @brief Indicates for a given media the stream direction.
- * @ingroup call_control
+ * @ingroup group_call_control
  */
 typedef enum _LinphoneMediaDirection {
 	LinphoneMediaDirectionInvalid = -1, /**< Default value, shouldn't be used */
@@ -745,7 +745,7 @@ typedef enum _LinphoneMediaDirection {
 
 /**
  * @brief Media resource usage.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneMediaResourceMode {
 	LinphoneMediaResourceModeExclusive = 0, /**< Media resources are not shared */
@@ -754,7 +754,7 @@ typedef enum _LinphoneMediaResourceMode {
 
 /**
  * @brief Enum describing type of media encryption types.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneMediaEncryption {
 	LinphoneMediaEncryptionNone = 0, /**< No media encryption is used */
@@ -765,7 +765,7 @@ typedef enum _LinphoneMediaEncryption {
 
 /**
  * @brief Enum describing type of SRTP encryption suite
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneSrtpSuite {
 	LinphoneSrtpSuiteAESCM128HMACSHA180 = 0,
@@ -781,7 +781,7 @@ typedef enum _LinphoneSrtpSuite {
 
 /**
  * @brief Enum describing the ZRTP SAS validation status of a peer URI.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneZrtpPeerStatus {
 	LinphoneZrtpPeerStatusUnknown = 0, /**< Peer URI unkown or never validated/invalidated the SAS */
@@ -791,7 +791,7 @@ typedef enum _LinphoneZrtpPeerStatus {
 
 /**
  * @brief Enum describing the ZRTP key exchange algorithns
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 typedef enum _LinphoneZrtpKeyAgreement {
 	LinphoneZrtpKeyAgreementInvalid = 0,
@@ -825,7 +825,7 @@ typedef enum _LinphoneZrtpKeyAgreement {
 
 /**
  * @brief Policy to use to pass through NATs/firewalls.
- * @ingroup network_parameters
+ * @ingroup group_network_parameters
  */
 typedef struct _LinphoneNatPolicy LinphoneNatPolicy;
 
@@ -854,19 +854,19 @@ typedef enum _LinphoneOnlineStatus {
 
 /**
  * @brief Player interface.
- * @ingroup call_control
+ * @ingroup group_call_control
  **/
 typedef struct _LinphonePlayer LinphonePlayer;
 
 /**
  * @brief An object to handle the callbacks for the handling a #LinphonePlayer objects.
- * @ingroup call_control
+ * @ingroup group_call_control
  */
 typedef struct _LinphonePlayerCbs LinphonePlayerCbs;
 
 /**
  * @brief The state of a #LinphonePlayer.
- * @ingroup call_control
+ * @ingroup group_call_control
  */
 typedef enum LinphonePlayerState {
 	LinphonePlayerClosed = 0, /**< No file is opened for playing. */
@@ -876,13 +876,13 @@ typedef enum LinphonePlayerState {
 
 /**
  * @brief Presence activity type holding information about a presence activity.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef struct _LinphonePresenceActivity LinphonePresenceActivity;
 
 /**
  * @brief Activities as defined in section 3.2 of RFC 4480
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef enum LinphonePresenceActivityType {
 	/** The person has a calendar appointment, without specifying exactly of what type. This activity is
@@ -978,7 +978,7 @@ typedef enum LinphonePresenceActivityType {
 
 /**
  * @brief Basic status as defined in section 4.1.4 of RFC 3863
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef enum LinphonePresenceBasicStatus {
 	/** This value means that the associated contact element, if any, is ready to accept communication. */
@@ -990,30 +990,30 @@ typedef enum LinphonePresenceBasicStatus {
 
 /**
  * @brief Presence model type holding information about the presence of a person.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef struct _LinphonePresenceModel LinphonePresenceModel;
 
 /**
  * @brief Presence note type holding information about a presence note.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef struct _LinphonePresenceNote LinphonePresenceNote;
 
 /**
  * @brief Presence person holding information about a presence person.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef struct _LinphonePresencePerson LinphonePresencePerson;
 
 /**
  * @brief Presence service type holding information about a presence service.
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef struct _LinphonePresenceService LinphonePresenceService;
 
 /**
- * @ingroup call_control
+ * @ingroup group_call_control
  * Defines privacy policy to apply as described by rfc3323
  **/
 typedef enum _LinphonePrivacy {
@@ -1064,13 +1064,13 @@ typedef enum _LinphonePrivacy {
 
 /**
  * @brief A mask of #LinphonePrivacy values
- * @ingroup call_control
+ * @ingroup group_call_control
  */
 typedef unsigned int LinphonePrivacyMask;
 
 /**
  * @brief Enum for publish states.
- * @ingroup event_api
+ * @ingroup group_event_api
  **/
 typedef enum _LinphonePublishState {
 	LinphonePublishNone = 0,             /**< Initial state, do not use */
@@ -1090,7 +1090,7 @@ typedef enum _LinphonePublishState {
  * @see linphone_call_get_reason()
  * @see linphone_proxy_config_get_error()
  * @see linphone_error_info_get_reason()
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef enum _LinphoneReason {
 	LinphoneReasonNone = 0,               /**< No reason has been set by the core */
@@ -1155,7 +1155,7 @@ typedef struct _LinphoneSoundDaemon LinphoneSoundDaemon;
 
 /**
  * @brief Enum describing the stream types.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef enum _LinphoneStreamType {
 	LinphoneStreamTypeAudio = 0,
@@ -1167,7 +1167,7 @@ typedef enum _LinphoneStreamType {
 /**
  * @brief Enum controlling behavior for incoming subscription request.
  * Use by linphone_friend_set_inc_subscribe_policy()
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  */
 typedef enum _LinphoneSubscribePolicy {
 	/**
@@ -1182,7 +1182,7 @@ typedef enum _LinphoneSubscribePolicy {
 
 /**
  * @brief Enum for subscription direction (incoming or outgoing).
- * @ingroup event_api
+ * @ingroup group_event_api
  **/
 typedef enum _LinphoneSubscriptionDir {
 	LinphoneSubscriptionIncoming = 0,  /**< Incoming subscription. */
@@ -1193,7 +1193,7 @@ typedef enum _LinphoneSubscriptionDir {
 /**
  * @brief Enum for subscription states.
  * #LinphoneSubscriptionTerminated and #LinphoneSubscriptionError are final states.
- * @ingroup event_api
+ * @ingroup group_event_api
  **/
 typedef enum _LinphoneSubscriptionState {
 	LinphoneSubscriptionNone = 0,             /**< Initial state, should not be used */
@@ -1210,7 +1210,7 @@ typedef enum _LinphoneSubscriptionState {
 
 /**
  * @brief Enum listing frequent telephony tones.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef enum _LinphoneToneID {
 	LinphoneToneUndefined = 0,       /**< Not a tone */
@@ -1225,7 +1225,7 @@ typedef enum _LinphoneToneID {
 
 /**
  * @brief Enum describing transport type for LinphoneAddress.
- * @ingroup linphone_address
+ * @ingroup group_linphone_address
  **/
 typedef enum _LinphoneTransportType {
 	LinphoneTransportUdp = 0,
@@ -1237,19 +1237,19 @@ typedef enum _LinphoneTransportType {
 
 /**
  * @brief Linphone tunnel object.
- * @ingroup tunnel
+ * @ingroup group_tunnel
  */
 typedef struct _LinphoneTunnel LinphoneTunnel;
 
 /**
  * @brief Tunnel settings.
- * @ingroup tunnel
+ * @ingroup group_tunnel
  */
 typedef struct _LinphoneTunnelConfig LinphoneTunnelConfig;
 
 /**
  * @brief Enum describing the tunnel modes.
- * @ingroup tunnel
+ * @ingroup group_tunnel
  **/
 typedef enum _LinphoneTunnelMode {
 	LinphoneTunnelModeDisable = 0, /**< The tunnel is disabled */
@@ -1259,7 +1259,7 @@ typedef enum _LinphoneTunnelMode {
 
 /**
  * @brief Enum describing uPnP states.
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 typedef enum _LinphoneUpnpState {
 	LinphoneUpnpStateIdle = 0,         /**< uPnP is not activate */
@@ -1274,13 +1274,13 @@ typedef enum _LinphoneUpnpState {
 
 /**
  * @brief Object storing contact information using vCard 4.0 format.
- * @ingroup carddav_vcard
+ * @ingroup group_carddav_vcard
  */
 typedef struct _LinphoneVcard LinphoneVcard;
 
 /**
  * @brief Enum describing the result of a version update check.
- * @ingroup misc
+ * @ingroup group_misc
  */
 typedef enum _LinphoneVersionUpdateCheckResult {
 	LinphoneVersionUpdateCheckUpToDate = 0,
@@ -1308,7 +1308,7 @@ typedef enum _LinphoneWaitingState {
 
 /**
  * @brief Enum describing the types of argument for LinphoneXmlRpcRequest.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef enum _LinphoneXmlRpcArgType {
 	LinphoneXmlRpcArgNone = 0,
@@ -1319,25 +1319,25 @@ typedef enum _LinphoneXmlRpcArgType {
 
 /**
  * @brief The #LinphoneXmlRpcRequest object representing a XML-RPC request to be sent.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef struct _LinphoneXmlRpcRequest LinphoneXmlRpcRequest;
 
 /**
  * @brief An object to handle the callbacks for handling the #LinphoneXmlRpcRequest operations.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef struct _LinphoneXmlRpcRequestCbs LinphoneXmlRpcRequestCbs;
 
 /**
  * @brief The #LinphoneXmlRpcSession object used to send XML-RPC requests and handle their responses.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef struct _LinphoneXmlRpcSession LinphoneXmlRpcSession;
 
 /**
  * @brief Enum describing the status of a LinphoneXmlRpcRequest.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef enum _LinphoneXmlRpcStatus {
 	LinphoneXmlRpcStatusPending = 0,
@@ -1349,7 +1349,7 @@ typedef struct _LsdPlayer LsdPlayer;
 
 /**
  * @brief Structure describing a range of integers
- * @ingroup misc
+ * @ingroup group_misc
  */
 typedef struct _LinphoneRange LinphoneRange;
 
@@ -1357,20 +1357,20 @@ typedef struct _LinphoneRange LinphoneRange;
  * @brief Status code returned by some functions to
  * notify whether the execution has been successfully
  * done or not.
- * @ingroup misc
+ * @ingroup group_misc
  */
 typedef int LinphoneStatus;
 
 /**
  * @brief Object representing a chain of protocol headers.
  * It provides read/write access to the headers of the underlying protocol.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 typedef struct _LinphoneHeaders LinphoneHeaders;
 
 /**
  * @brief Enum describing the search categories for Magic Search
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef enum _LinphoneMagicSearchSource {
 	LinphoneMagicSearchSourceNone = 0, /**< no Source specified. If requested in search, the list should be empty */
@@ -1389,7 +1389,7 @@ typedef enum _LinphoneMagicSearchSource {
 
 /**
  * @brief Enum describing the type of #RemoteContactDirectory (currently CardDAV or LDAP).
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef enum _LinphoneRemoteContactDirectoryType {
 	LinphoneRemoteContactDirectoryTypeCardDav = 0, /**< Remote contact directory will use #CardDavParams */
@@ -1398,7 +1398,7 @@ typedef enum _LinphoneRemoteContactDirectoryType {
 
 /**
  * @brief Enum describing how to merge #LinphoneSearchResult from #LinphoneMagicSearch
- * @ingroup buddy_list
+ * @ingroup group_buddy_list
  **/
 typedef enum _LinphoneMagicSearchAggregation {
 	LinphoneMagicSearchAggregationNone =
@@ -1409,7 +1409,7 @@ typedef enum _LinphoneMagicSearchAggregation {
 
 /**
  * @brief Enum describing the different contexts for the #LinphoneMessageWaitingIndicationSummary.
- * @ingroup account
+ * @ingroup group_account
  */
 typedef enum _LinphoneMessageWaitingIndicationContextClass {
 	LinphoneMessageWaitingIndicationVoice = 0,
@@ -1422,19 +1422,19 @@ typedef enum _LinphoneMessageWaitingIndicationContextClass {
 
 /**
  * Object representing a Message Waiting Indication.
- * @ingroup account
+ * @ingroup group_account
  */
 typedef struct _LinphoneMessageWaitingIndication LinphoneMessageWaitingIndication;
 
 /**
  * Object representing the summary for a context in a Message Waiting Indication.
- * @ingroup account
+ * @ingroup group_account
  */
 typedef struct _LinphoneMessageWaitingIndicationSummary LinphoneMessageWaitingIndicationSummary;
 
 /**
  * #LinphoneBaudotMode enum represents the Baudot mode to use for the call.
- * @ingroup call_control
+ * @ingroup group_call_control
  */
 typedef enum _LinphoneBaudotMode {
 	LinphoneBaudotModeVoice,            /**< Send and receive audio. */
@@ -1445,7 +1445,7 @@ typedef enum _LinphoneBaudotMode {
 
 /**
  * #LinphoneBaudotStandard enum represents the Baudot standard to use to send Baudot tones in the call.
- * @ingroup call_control
+ * @ingroup group_call_control
  */
 typedef enum _LinphoneBaudotStandard {
 	LinphoneBaudotStandardUs,     /**< Send 45.45 baud US Baudot tones. */

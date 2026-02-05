@@ -24,7 +24,7 @@
 #include "linphone/api/c-types.h"
 
 /**
- * @addtogroup chatroom
+ * @addtogroup group_chatroom
  * @{
  */
 

@@ -24,7 +24,7 @@
 
 /**
  * #LinphoneParticipantRole is used to define a role of a participant within a conference
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneParticipantRole {
 	LinphoneParticipantRoleSpeaker = 0,  /**< participant is a speaker in the conference */

@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup call_logs
+ * @addtogroup group_call_logs
  * @{
  */
 

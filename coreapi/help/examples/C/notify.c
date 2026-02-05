@@ -20,8 +20,8 @@
  */
 
 /**
- * @defgroup notify_tutorials Generic subscribe/notify example
- * @ingroup tutorials
+ * @defgroup group_notify_tutorials Generic subscribe/notify example
+ * @ingroup group_tutorials
  *This program is a _very_ simple usage example of liblinphone.
  *It demonstrates how to listen to a SIP subscription.
  *It then sends notify requests back periodically.

@@ -25,7 +25,7 @@
 
 /**
  * #LinphoneSecurityEventType is used to indicate the type of security event.
- * @ingroup events
+ * @ingroup group_events
  */
 
 typedef enum _SecurityEventType {

@@ -34,7 +34,7 @@ extern "C" {
 typedef enum { LinphoneConferenceClassLocal, LinphoneConferenceClassRemote } LinphoneConferenceClass;
 
 /**
- * @addtogroup conference
+ * @addtogroup group_conference
  * @{
  */
 
@@ -309,7 +309,7 @@ LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *conference
  * Retrieves the user pointer that was given to linphone_conference_set_user_data()
  * @param conference #LinphoneConference object @notnil
  * @return The user data associated with the #LinphoneConference object. @maybenil
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference *conference);
 
@@ -317,7 +317,7 @@ LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference
  * Associate a user pointer to the linphone conference.
  * @param conference #LinphoneConference object @notnil
  * @param user_data The user data to associate with the #LinphoneConference object. @maybenil
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 LINPHONE_PUBLIC void linphone_conference_set_user_data(LinphoneConference *conference, void *user_data);
 

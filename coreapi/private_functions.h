@@ -288,7 +288,9 @@ static MS2_INLINE void set_string(char **dest, const char *src, bool_t lowercase
 void linphone_process_authentication(LinphoneCore *lc, LinphonePrivate::SalOp *op);
 void linphone_authentication_ok(LinphoneCore *lc, LinphonePrivate::SalOp *op);
 void linphone_subscription_new(LinphoneCore *lc, LinphonePrivate::SalSubscribeOp *op, const char *from);
-void linphone_core_set_presence_model_with_publish_toggle(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish);
+void linphone_core_set_presence_model_with_publish_toggle(LinphoneCore *lc,
+                                                          LinphonePresenceModel *presence,
+                                                          bool_t send_publish);
 void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presence, bool_t send_publish);
 void linphone_notify_parse_presence(const char *content_type,
                                     const char *content_subtype,
@@ -740,7 +742,7 @@ bctbx_list_t *linphone_remote_provisioning_split_headers(bctbx_list_t *headers);
  *(check linphone_core_set_provisioning_uri()).
  * @param core the #LinphoneCore object @notnil
  * @return the list a "<header name>:<value>". \bctbx_list{char *} @notnil @tobefreed
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 bctbx_list_t *linphone_core_get_provisioning_headers(const LinphoneCore *lc);
 
@@ -751,7 +753,7 @@ bctbx_list_t *linphone_core_get_provisioning_headers(const LinphoneCore *lc);
  * Enable or disable the UPDATE method support
  * @param[in] lc #LinphoneCore object
  * @param[in] value Enable or disable it
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *lc, int value);
 

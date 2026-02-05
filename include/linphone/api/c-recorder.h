@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup call-control
+ * @addtogroup group_call_control
  * @{
  */
 

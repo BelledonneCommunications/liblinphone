@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 /**
- * @addtogroup alert
+ * @addtogroup group_alert
  * @{
  */
 

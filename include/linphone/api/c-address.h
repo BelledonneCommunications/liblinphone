@@ -30,7 +30,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup linphone_address
+ * @addtogroup group_linphone_address
  * @{
  */
 

@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup conference
+ * @addtogroup group_conference
  * @{
  */
 
@@ -57,17 +57,16 @@ linphone_conference_scheduler_get_core(const LinphoneConferenceScheduler *confer
 
 /**
  * Set the #LinphoneAccount to use for the conference scheduler
- *
+ * @warning The #LinphoneConferenceScheduler doesn't keep a reference to the account, therefore the application must
+ * guarantee that the #LinphoneAccount has been added to the list held by the core prior to calling this function.
  * @param conference_scheduler The #LinphoneConferenceScheduler object. @notnil
- * @param account The #LinphoneAccount to use, or NULL if none has been selected. The LinphoneConferenceScheduler keeps
- *a reference to it and removes the previous one, if any. @maybenil
+ * @param account The #LinphoneAccount to use, or NULL if none has been selected. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_conference_scheduler_set_account(LinphoneConferenceScheduler *conference_scheduler,
                                                                LinphoneAccount *account);
 
 /**
  * Get the #LinphoneAccount that is used for the conference scheduler
- *
  * @param conference_scheduler The #LinphoneConferenceScheduler object. @notnil
  * @return The selected #LinphoneAccount for the call, or NULL if none has been selected. @maybenil
  **/

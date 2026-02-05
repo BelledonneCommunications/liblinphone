@@ -24,7 +24,7 @@
 // =============================================================================
 /**
  * #LinphoneChatRoomState is used to indicate the current state of a chat room.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatRoomState {
 	LinphoneChatRoomStateNone = 0,               /**< Initial state */
@@ -40,7 +40,7 @@ typedef enum _LinphoneChatRoomState {
 
 /**
  * #LinphoneChatRoomCapabilities is used to indicate the capabilities of a chat room.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatRoomCapabilities {
 	LinphoneChatRoomCapabilitiesNone = 0,              /**< No capabilities. */
@@ -57,7 +57,7 @@ typedef enum _LinphoneChatRoomCapabilities {
 
 /**
  * #LinphoneChatRoomBackend is used to indicate the backend implementation of a chat room.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatRoomBackend {
 	LinphoneChatRoomBackendBasic = 1 << 0,       /**< Basic (client-to-client) chat room. */
@@ -66,7 +66,7 @@ typedef enum _LinphoneChatRoomBackend {
 
 /**
  * #LinphoneChatRoomEncryptionBackend is used to indicate the encryption engine used by a chat room.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatRoomEncryptionBackend {
 	LinphoneChatRoomEncryptionBackendNone = 0,     /**< No encryption. */
@@ -75,7 +75,7 @@ typedef enum _LinphoneChatRoomEncryptionBackend {
 
 /**
  * #LinphoneChatRoomEphemeralMode is used to the ephemeral message mode used by a chat room.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatRoomEphemeralMode {
 	LinphoneChatRoomEphemeralModeDeviceManaged = 0, /**< Each device manages its own ephemeral settings. */
@@ -85,7 +85,7 @@ typedef enum _LinphoneChatRoomEphemeralMode {
 
 /**
  * #LinphoneChatRoomHistoryFilter is used to determine which filter to apply to history functions.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  **/
 typedef enum _LinphoneChatRoomHistoryFilter {
 	LinphoneChatRoomHistoryFilterNone = 0x0,                   /**< No filter. */

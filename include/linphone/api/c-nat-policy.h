@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup network_parameters
+ * @addtogroup group_network_parameters
  * @{
  */
 

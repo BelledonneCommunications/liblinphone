@@ -35,7 +35,7 @@ extern "C" {
 typedef LinphoneAccountCreatorStatus (*LinphoneAccountCreatorRequestFunc)(LinphoneAccountCreator *creator);
 
 /**
- * @addtogroup account_creator_request
+ * @addtogroup group_account_creator_request
  * @{
  */
 

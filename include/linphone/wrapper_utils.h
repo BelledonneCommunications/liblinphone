@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup wrapper
+ * @addtogroup group_wrapper
  * @{
  */
 

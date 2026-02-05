@@ -31,7 +31,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup call_control
+ * @addtogroup group_call_control
  * @{
  */
 

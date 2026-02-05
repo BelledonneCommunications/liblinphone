@@ -20,8 +20,8 @@
  */
 
 /**
- * @defgroup registration_tutorials Basic registration
- * @ingroup tutorials
+ * @defgroup group_registration_tutorials Basic registration
+ * @ingroup group_tutorials
  *This program is a _very_ simple usage example of liblinphone.
  *Desmonstrating how to  initiate a SIP registration from a sip uri identity passed from the command line.
  *first argument must be like sip:jehan@sip.linphone.org , second must be password .

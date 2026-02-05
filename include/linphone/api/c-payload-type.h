@@ -24,7 +24,7 @@
 #include "linphone/types.h"
 
 /**
- * @addtogroup media_parameters
+ * @addtogroup group_media_parameters
  * @{
  **/
 

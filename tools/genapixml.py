@@ -559,13 +559,13 @@ class Project:
 		internal = node.find("./detaileddescription/internal")
 		if internal is not None:
 			return None
-		
+
 		# The doc must be parsed here since the XML tree is to be modified in below code
 		briefDoc = self.docparser.parse_description(node.find('./briefdescription'))
 		detailedDoc = self.docparser.parse_description(node.find('./detaileddescription'))
-		
-		missingDocWarning = ''
+
 		name = node.find('./name').text
+		missingDocWarning = ''
 		t = ''.join(node.find('./type').itertext())
 		returnarg = CArgument(t, enums = self.enums, structs = self.__structs)
 		returndesc = node.find("./detaileddescription/para/simplesect[@kind='return']")

@@ -31,7 +31,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup authentication
+ * @addtogroup group_authentication
  * @{
  */
 

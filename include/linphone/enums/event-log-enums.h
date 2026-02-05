@@ -29,7 +29,7 @@
 
 /**
  * #LinphoneEventLogType is used to indicate the type of an event. Useful for cast.
- * @ingroup events
+ * @ingroup group_events
  */
 typedef enum _EventLogType {
 	LinphoneEventLogTypeNone = 0,                  /**< No defined event */

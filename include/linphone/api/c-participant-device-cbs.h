@@ -31,7 +31,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup conference
+ * @addtogroup group_conference
  * @{
  */
 /**
@@ -115,7 +115,7 @@ linphone_participant_device_cbs_get_screen_sharing_changed(const LinphonePartici
  */
 LINPHONE_PUBLIC void
 linphone_participant_device_cbs_set_screen_sharing_changed(LinphoneParticipantDeviceCbs *cbs,
-                                                      LinphoneParticipantDeviceCbsScreenSharingChangedCb cb);
+                                                           LinphoneParticipantDeviceCbsScreenSharingChangedCb cb);
 
 /**
  * Get the participant device conference state changed callback.

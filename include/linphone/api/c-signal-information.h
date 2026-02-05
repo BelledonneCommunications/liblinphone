@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 /**
- * @addtogroup signalInformation
+ * @addtogroup group_signalInformation
  * @{
  */
 

@@ -20,8 +20,8 @@
  */
 
 /**
- * @defgroup chatroom_tuto Chat room and messaging
- * @ingroup tutorials
+ * @defgroup group_chatroom_tuto Chat room and messaging
+ * @ingroup group_tutorials
  *This program is a _very_ simple usage example of liblinphone,
  *desmonstrating how to send/receive  SIP MESSAGE from a sip uri identity passed from the command line.
  *<br>Argument must be like sip:jehan@sip.linphone.org .

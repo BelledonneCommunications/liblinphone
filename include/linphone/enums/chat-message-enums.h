@@ -25,7 +25,7 @@
 
 /**
  * #LinphoneChatMessageState is used to notify if messages have been successfully delivered or not.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatMessageState {
 	LinphoneChatMessageStateIdle = 0,         /**< Initial state */
@@ -46,7 +46,7 @@ typedef enum _LinphoneChatMessageState {
 
 /**
  * #LinphoneChatMessageDirection is used to indicate if a message is outgoing or incoming.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatMessageDirection {
 	LinphoneChatMessageDirectionIncoming = 0, /**< Incoming message */

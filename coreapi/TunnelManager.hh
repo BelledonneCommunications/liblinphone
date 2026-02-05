@@ -22,7 +22,7 @@
 
 namespace belledonnecomm {
 /**
- * @addtogroup tunnel_client
+ * @addtogroup group_tunnel_client
  * @{
  **/
 struct DualSocket {

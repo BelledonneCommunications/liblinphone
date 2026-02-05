@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup event_api
+ * @addtogroup group_event_api
  * @{
  **/
 

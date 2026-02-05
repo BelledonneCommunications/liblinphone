@@ -76,7 +76,7 @@ const char *linphone_call_state_to_string(LinphoneCallState cs) {
 }
 
 /**
- * @ingroup call_control
+ * @ingroup group_call_control
  * @return string value of LinphonePrivacy enum
  **/
 const char *linphone_privacy_to_string(LinphonePrivacy privacy) {

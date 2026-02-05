@@ -81,22 +81,22 @@
 **/
 
 /**
- * @defgroup initializing Initializing
+ * @defgroup group_initializing Initializing
  * @brief Initializing liblinphone.
 **/
 
 /**
- * @defgroup account Accounts
+ * @defgroup group_account Accounts
  * @brief Management of SIP accounts, including various SIP service settings.
 **/
 
 /**
- * @defgroup logging Logging
+ * @defgroup group_logging Logging
  * @brief Logging service of Linphone.
  */
 
 /**
- * @defgroup call_control Call control
+ * @defgroup group_call_control Call control
  * @brief Placing and receiving calls.
  *
  * The #LinphoneCall object represents an incoming or outgoing call managed by the #LinphoneCore.
@@ -104,7 +104,7 @@
 **/
 
 /**
- * @defgroup call_misc Call misc
+ * @defgroup group_call_misc Call misc
  * @brief Obtaining information about a running call: sound volumes, quality indicators.
  *
  * When a call is running, it is possible to retrieve in real time current measured volumes and quality indicator.
@@ -112,7 +112,7 @@
 **/
 
 /**
- * @defgroup media_parameters Media parameters
+ * @defgroup group_media_parameters Media parameters
  * @brief Controlling media parameters.
  *
  * <b>Multicast</b>
@@ -124,81 +124,88 @@
 **/
 
 /**
- * @defgroup network_parameters Network parameters
+ * @defgroup group_network_parameters Network parameters
  * @brief Controlling network parameters (ports, mtu...).
 **/
 
 /**
- * @defgroup authentication Authentication
+ * @defgroup group_authentication Authentication
  * @brief Managing authentication: userid and passwords.
 **/
 
 /**
- * @defgroup chatroom Chatroom
+ * @defgroup group_chatroom Chatroom
  * @brief Instant messaging
  *
 **/
 
 /**
- * @defgroup call_logs Call logs
+ * @defgroup group_call_logs Call logs
  * @brief Managing call logs.
 **/
 
 /**
- * @defgroup alert Alert
+ * @defgroup group_alert Alert
  * @brief Managing Alerts.
 **/
 
 /**
- * @defgroup dictionary Dictionary
+ * @defgroup group_dictionary Dictionary
  * @brief Managing Dictionary.
 **/
 
 /**
- * @defgroup linphone_address Linphone address
+ * @defgroup group_linphone_address Linphone address
  * @brief SIP address parser API.
 
  * This api is useful for manipulating SIP addresses ('from' or 'to' headers or SIP URIs).
 **/
 
 /**
- * @defgroup conference Conferencing
+ * @defgroup group_conference Conferencing
  * @brief Making a audio/video conferences.
  *
  *
 **/
 
 /**
- * @defgroup contacts Contacts
+ * @defgroup group_signalInformation Signal Information
+ * @brief Providing information about the network signal
+ *
+ *
+**/
+
+/**
+ * @defgroup group_contacts Contacts
  * @brief Create, manage and search contacts.
  *
  *
 **/
 
 /**
- * @defgroup ekt_api Ekt
+ * @defgroup group_ekt_api Ekt
  * @brief Managing Ekt
  */
 
 /**
- * @defgroup event_api Event api
+ * @defgroup group_event_api Event api
  * @brief Managing generic subscriptions and publishes.
  *
  * The LinphoneEvent api allows application to control subscriptions, receive notifications and make publish to peers, in a generic manner.
  */
 
 /**
- * @defgroup ldap LDAP server interaction
+ * @defgroup group_ldap LDAP server interaction
  * @brief Making LDAP searches to lookup contacts.
 **/
 
 /**
- * @defgroup misc Misc
+ * @defgroup group_misc Misc
  * @brief Miscenalleous: logs, version strings, config storage.
 **/
 
 /**
- * @defgroup wrapper
+ * @defgroup group_wrapper
  * @brief Wrapper utilities.
  *
  * These functions are used by automatic API wrapper generators and should not
@@ -206,7 +213,7 @@
  */
 
 /**
- * @defgroup IOS
+ * @defgroup group_IOS
  * @brief iOS specific functions
  *
  * These functions handle specific aspects of iOS, mainly CallKit integration.

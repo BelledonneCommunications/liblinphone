@@ -30,7 +30,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup chatroom
+ * @addtogroup group_chatroom
  * @{
  */
 

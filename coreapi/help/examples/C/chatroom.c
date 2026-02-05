@@ -20,8 +20,8 @@
  */
 
 /**
- * @defgroup chatroom_tuto Chat room and messaging
- * @ingroup tutorials
+ * @defgroup group_chatroom_tuto Chat room and messaging
+ * @ingroup group_tutorials
  *This program is a _very_ simple usage example of liblinphone,
  *desmonstrating how to send/receive  SIP MESSAGE from a sip uri identity passed from the command line.
  *<br>Argument must be like sip:jehan@sip.linphone.org .
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	signal(SIGINT, stop);
-//#define DEBUG_LOGS
+// #define DEBUG_LOGS
 #ifdef DEBUG_LOGS
 	linphone_core_enable_logs(NULL); /*enable liblinphone logs.*/
 #endif

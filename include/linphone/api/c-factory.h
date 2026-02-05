@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup initializing
+ * @addtogroup group_initializing
  * @{
  */
 
@@ -335,7 +335,7 @@ LINPHONE_PUBLIC LinphoneEktInfo *linphone_factory_create_ekt_info(const Linphone
  * Create an empty #LinphoneVcard.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return a new #LinphoneVcard. @notnil
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 LINPHONE_PUBLIC LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory);
 
@@ -481,7 +481,7 @@ LINPHONE_PUBLIC void linphone_factory_set_liblinphone_plugins_dir(LinphoneFactor
  * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
  *shared core. @maybenil
  * @return The config path @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context);
 
@@ -489,7 +489,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *fac
  * Test if config dir has been set.
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if config dir has been set.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_config_dir_set(const LinphoneFactory *factory);
 
@@ -507,7 +507,7 @@ LINPHONE_PUBLIC void linphone_factory_set_config_dir(LinphoneFactory *factory, c
  * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
  *shared core. @maybenil
  * @return The data path @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context);
 
@@ -515,7 +515,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *facto
  * Test if data dir has been set.
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if data dir has been set.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_data_dir_set(const LinphoneFactory *factory);
 
@@ -533,7 +533,7 @@ LINPHONE_PUBLIC void linphone_factory_set_data_dir(LinphoneFactory *factory, con
  * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
  *shared core. @maybenil
  * @return The download path @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
 
@@ -541,7 +541,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *f
  * Test if download dir has been set.
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if download dir has been set.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_download_dir_set(const LinphoneFactory *factory);
 
@@ -559,7 +559,7 @@ LINPHONE_PUBLIC void linphone_factory_set_download_dir(LinphoneFactory *factory,
  * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
  *shared core. @maybenil
  * @return The cache path @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_factory_get_cache_dir(LinphoneFactory *factory, void *context);
 
@@ -567,7 +567,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_cache_dir(LinphoneFactory *fact
  * Test if cache dir has been set.
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if cache dir has been set.
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_cache_dir_set(const LinphoneFactory *factory);
 

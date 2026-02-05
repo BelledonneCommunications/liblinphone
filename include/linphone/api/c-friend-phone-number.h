@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup buddy_list
+ * @addtogroup group_buddy_list
  * @{
  */
 

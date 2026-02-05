@@ -33,7 +33,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup call_misc
+ * @addtogroup group_call_misc
  * @{
  */
 
@@ -51,14 +51,14 @@ extern "C" {
  * Increment refcount.
  * @param stats #LinphoneCallStats object @notnil
  * @return the same #LinphoneCallStats object @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_stats_ref(LinphoneCallStats *stats);
 
 /**
  * Decrement refcount and possibly free the object.
  * @param stats #LinphoneCallStats object @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC void linphone_call_stats_unref(LinphoneCallStats *stats);
 
@@ -66,7 +66,7 @@ LINPHONE_PUBLIC void linphone_call_stats_unref(LinphoneCallStats *stats);
  * Gets the user data in the #LinphoneCallStats object
  * @param[in] stats the #LinphoneCallStats
  * @return the user data. @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC void *linphone_call_stats_get_user_data(const LinphoneCallStats *stats);
 
@@ -74,7 +74,7 @@ LINPHONE_PUBLIC void *linphone_call_stats_get_user_data(const LinphoneCallStats 
  * Sets the user data in the #LinphoneCallStats object
  * @param[in] stats the #LinphoneCallStats object
  * @param[in] data the user data. @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC void linphone_call_stats_set_user_data(LinphoneCallStats *stats, void *data);
 
@@ -345,7 +345,6 @@ LINPHONE_PUBLIC int64_t linphone_call_stats_get_rtp_cum_packet_loss(const Linpho
  * @return The RTP incoming packets discarded because the queue exceeds its max size
  */
 LINPHONE_PUBLIC uint64_t linphone_call_stats_get_rtp_discarded(const LinphoneCallStats *stats);
-
 
 /**
  * @}

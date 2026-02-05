@@ -30,7 +30,7 @@ extern "C" {
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup events
+ * @addtogroup group_events
  * @{
  */
 

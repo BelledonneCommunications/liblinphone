@@ -25,7 +25,7 @@
 /**
  * TODO move to encryption engine object when available
  * #LinphoneChatRoomSecurityLevel is used to indicate the encryption security level of a chat room.
- * @ingroup chatroom
+ * @ingroup group_chatroom
  */
 typedef enum _LinphoneChatRoomSecurityLevel {
 	LinphoneChatRoomSecurityLevelUnsafe = 0,    /**< Security failure */

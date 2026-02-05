@@ -23,7 +23,7 @@
 #include "linphone/api/c-types.h"
 
 /**
- * @addtogroup misc
+ * @addtogroup group_misc
  * @{
  */
 

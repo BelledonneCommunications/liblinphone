@@ -24,7 +24,7 @@
 // =============================================================================
 /**
  * #LinphoneConferenceState is used to indicate the current state of a conference.
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceState {
 	LinphoneConferenceStateNone = 0,               /**< Initial state. */
@@ -41,7 +41,7 @@ typedef enum _LinphoneConferenceState {
 
 /**
  * #LinphoneConferenceLayout is used to indicate the layout used by the conference.
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceLayout {
 	LinphoneConferenceLayoutGrid = 0,          /**< Grid - each participant is given an equal sized image size */
@@ -53,7 +53,7 @@ typedef enum _LinphoneConferenceLayout {
  * @brief Mode of joining conference
  * @warning It is only valid at the creation of the conferece
  *
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceJoiningMode {
 	LinphoneConferenceJoiningModeDialIn = 0,  /**< Participants must dial the conference server */
@@ -67,7 +67,7 @@ conference
  * When participant list is open, other people can join the conference upon invitation of a participant
 no more participants can be added other than those declared when creating the conference
  *
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceParticipantListType {
 	LinphoneConferenceParticipantListTypeClosed =
@@ -79,7 +79,7 @@ typedef enum _LinphoneConferenceParticipantListType {
 /**
  * @brief Conference minimum security level
  *
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceSecurityLevel {
 	LinphoneConferenceSecurityLevelNone = 0,         /**< No security */
@@ -91,7 +91,7 @@ typedef enum _LinphoneConferenceSecurityLevel {
  * @brief Describes conference scheduler possible states.
  *
  * It is notified via the conference_scheduler_state_changed callback in #LinphoneConferenceSchedulerCbs.
- * @ingroup conference
+ * @ingroup group_conference
  **/
 typedef enum _LinphoneConferenceSchedulerState {
 	LinphoneConferenceSchedulerStateIdle = 0,  /**< Default state of a freshly created #LinphoneConferenceScheduler */
@@ -105,7 +105,7 @@ typedef enum _LinphoneConferenceSchedulerState {
 // enumeration items
 /**
  * #LinphoneConferenceInfoState is used to list all states of a conference info object
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceInfoState {
 	LinphoneConferenceInfoStateNew = 0,       /**< New conference */
@@ -117,7 +117,7 @@ typedef enum _LinphoneConferenceInfoState {
 // enumeration items
 /**
  * #LinphoneConferenceSchedulerType is used to know which conference scheduler type the core is using
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneConferenceSchedulerType {
 	LinphoneConferenceSchedulerTypeSIP = 0,  /**< SIP conference scheduler type */

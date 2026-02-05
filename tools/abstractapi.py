@@ -279,7 +279,7 @@ class Enumerator(DocumentableObject):
 		self.value = None
 	
 	def value_from_string(self, stringValue):
-		m = re.match('^\s*1\s*<<\s*([0-9]+)$', stringValue)
+		m = re.match('^\\s*1\\s*<<\\s*([0-9]+)$', stringValue)
 		if m is not None:
 			self.value = Flag(int(m.group(1)))
 		else:
@@ -495,7 +495,7 @@ class CParser:
 	def __init__(self, cProject, classBlAppend=[]):
 		self.cBaseType = ['void', 'bool_t', 'char', 'short', 'int', 'long', 'size_t', 'time_t', 'float', 'double', 'LinphoneStatus']
 		self.cListType = 'bctbx_list_t'
-		self.regexFixedSizeInteger = '^(u?)int(\d?\d)_t$'
+		self.regexFixedSizeInteger = '^(u?)int(\\d?\\d)_t$'
 		self.methodBl = ['ref', 'unref', 'new', 'destroy', 'getCurrentCallbacks', 'setUserData', 'getUserData']
 		self.functionBl = [
 					   'linphone_factory_create_core', # manually wrapped

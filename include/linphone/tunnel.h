@@ -40,7 +40,7 @@
 #include "linphone/types.h"
 
 /**
- * @addtogroup tunnel
+ * @addtogroup group_tunnel
  * @{
  **/
 

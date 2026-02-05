@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup account
+ * @addtogroup group_account
  * @{
  */
 

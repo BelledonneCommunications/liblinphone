@@ -553,7 +553,7 @@ SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type) {
 /**
  * Set the name of the mediastreamer2 filter to be used for rendering video.
  * This is for advanced users of the library, mainly to workaround hardware/driver bugs.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 void linphone_core_set_video_display_filter(LinphoneCore *lc, const char *filter_name) {
 	linphone_config_set_string(lc->config, "video", "displaytype", filter_name);

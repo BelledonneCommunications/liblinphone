@@ -26,7 +26,7 @@
 // do not modify the integer value of the enumeration items
 /**
  * #LinphoneParticipantDeviceState is used to list all states a participant device can be in
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneParticipantDeviceState {
 	LinphoneParticipantDeviceStateJoining = 0, /**< an INVITE has been sent */
@@ -48,7 +48,7 @@ typedef enum _LinphoneParticipantDeviceState {
 /**
  * #LinphoneParticipantDeviceJoiningMethod is used to indicate how a participant joined a conference or if it is the
  * focus.
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneParticipantDeviceJoiningMethod {
 	LinphoneParticipantDeviceJoiningMethodDialedIn = 0,  /**< device called the conference */
@@ -58,7 +58,7 @@ typedef enum _LinphoneParticipantDeviceJoiningMethod {
 
 /**
  * #LinphoneParticipantDeviceDisconnectionMethod is used to indicate how a participant left a conference.
- * @ingroup conference
+ * @ingroup group_conference
  */
 typedef enum _LinphoneParticipantDeviceDisconnectionMethod {
 	LinphoneParticipantDeviceDisconnectionMethodBooted = 0,   /**< an admin removes the device from a conference */

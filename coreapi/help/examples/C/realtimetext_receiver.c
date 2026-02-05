@@ -20,8 +20,8 @@
  */
 
 /**
- * @defgroup real_time_text Real Time Text Receiver
- * @ingroup tutorials
+ * @defgroup group_real_time_text Real Time Text Receiver
+ * @ingroup group_tutorials
  This program is able to receive chat message in real time on port 5060. Use realtimetext_sender to generate chat
  message usage: ./realtimetext_receiver
 

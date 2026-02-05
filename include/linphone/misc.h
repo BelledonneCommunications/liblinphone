@@ -30,33 +30,33 @@ extern "C" {
 /**
  * Lowest volume measurement that can be returned by linphone_call_get_play_volume() or
  *linphone_call_get_record_volume(), corresponding to pure silence.
- * @ingroup call_misc
+ * @ingroup group_call_misc
  **/
 #define LINPHONE_VOLUME_DB_LOWEST (-120) /* WARNING: keep this in sync with mediastreamer2/msvolume.h */
 
 /**
  * Disable a sip transport
  * Use with #LinphoneSipTransports
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 #define LC_SIP_TRANSPORT_DISABLED 0
 /**
  * Randomly chose a sip port for this transport
  * Use with #LinphoneSipTransports
- * @ingroup initializing
+ * @ingroup group_initializing
  */
 #define LC_SIP_TRANSPORT_RANDOM (-1)
 
 /**
  * Don't create any server socket for this transport, ie don't bind on any port.
  * Use with #LinphoneSipTransports
- * @ingroup initializing
+ * @ingroup group_initializing
  **/
 #define LC_SIP_TRANSPORT_DONTBIND (-2)
 
 /**
  * Function returning a human readable value for LinphoneStreamType.
- * @ingroup initializing
+ * @ingroup group_initializing
  * @param type the #LinphoneStreamType
  * @return a string representation of the #LinphoneStreamType @notnil
  **/
@@ -66,7 +66,7 @@ LINPHONE_PUBLIC const char *linphone_stream_type_to_string(const LinphoneStreamT
  * Human readable version of the #LinphoneRegistrationState
  * @param state #LinphoneRegistrationState the value for which we want a string representation
  * @return a string representation of the #LinphoneRegistrationState @notnil
- * @ingroup proxies
+ * @ingroup group_proxies
  */
 LINPHONE_PUBLIC const char *linphone_registration_state_to_string(LinphoneRegistrationState state);
 
@@ -74,7 +74,7 @@ LINPHONE_PUBLIC const char *linphone_registration_state_to_string(LinphoneRegist
  * Convert enum member to string.
  * @param media_encryption the #LinphoneMediaEncryption to convert
  * @return a string representation of the #LinphoneMediaEncryption @notnil
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEncryption media_encryption);
 
@@ -82,7 +82,7 @@ LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEnc
  * Convert enum member to string.
  * @param media_direction the #LinphoneMediaDirection to convert
  * @return a string representation of the #LinphoneMediaDirection @notnil
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 LINPHONE_PUBLIC const char *linphone_media_direction_to_string(LinphoneMediaDirection media_direction);
 
@@ -90,7 +90,7 @@ LINPHONE_PUBLIC const char *linphone_media_direction_to_string(LinphoneMediaDire
  * Convert string to enum member.
  * @param value string representation of the #LinphoneMediaEncryption to convert @notnil
  * @return integer value of the media_encryption in enum #LinphoneMediaEncryption or -1 if it is not found
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  **/
 LINPHONE_PUBLIC int linphone_media_encryption_from_string(const char *value);
 
@@ -117,7 +117,7 @@ LINPHONE_PUBLIC const char *linphone_conference_layout_to_string(const LinphoneC
  * Converts a #LinphoneConfiguringState enum to a string.
  * @param state #LinphoneConfiguringState the value for which we want a string representation
  * @return a string representation of the #LinphoneConfiguringState @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_configuring_state_to_string(LinphoneConfiguringState state);
 
@@ -132,7 +132,7 @@ LINPHONE_PUBLIC const char *linphone_chat_message_state_to_string(const Linphone
  * Converts a #LinphoneReason enum to a string.
  * @param error A #LinphoneReason
  * @return The string representation of the specified #LinphoneReason @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_reason_to_string(LinphoneReason error);
 
@@ -167,13 +167,13 @@ LINPHONE_PUBLIC bool_t linphone_recorder_matroska_supported(void);
  * Converts a #LinphoneTransportType enum to a lowercase string.
  * @param transport a #LinphoneTransportType to convert to string
  * @return the string representation of the #LinphoneTransportType @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC const char *linphone_transport_to_string(LinphoneTransportType transport);
 
 /**
  * Converts a lowercase string to a #LinphoneTransportType enum.
- * @ingroup misc
+ * @ingroup group_misc
  * @param transport the transport to parse. @notnil
  * @return #LinphoneTransportType matching input, or #LinphoneTransportUdp if nothing is found
  **/
@@ -183,7 +183,7 @@ LINPHONE_PUBLIC LinphoneTransportType linphone_transport_parse(const char *trans
  * Check whether an error code is in Retry-After field.
  * @param error An error code
  * @return TRUE if it is in Retry-After field
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int error);
 
@@ -191,7 +191,7 @@ LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int error);
  * Converts an error code to a LinphoneReason.
  * @param error An error code
  * @return The #LinphoneReason corresponding to the specified error code
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC LinphoneReason linphone_error_code_to_reason(int error);
 
@@ -199,7 +199,7 @@ LINPHONE_PUBLIC LinphoneReason linphone_error_code_to_reason(int error);
  * Converts a #LinphoneReason to an error code.
  * @param reason A #LinphoneReason
  * @return The error code corresponding to the specified #LinphoneReason
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC int linphone_reason_to_error_code(LinphoneReason reason);
 
@@ -207,14 +207,14 @@ LINPHONE_PUBLIC int linphone_reason_to_error_code(LinphoneReason reason);
  * Increment refcount.
  * @param range #LinphoneRange object @notnil
  * @return the same #LinphoneRange object @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC LinphoneRange *linphone_range_ref(LinphoneRange *range);
 
 /**
  * Decrement refcount and possibly free the object.
  * @param range #LinphoneRange object @notnil
- * @ingroup misc
+ * @ingroup group_misc
  **/
 LINPHONE_PUBLIC void linphone_range_unref(LinphoneRange *range);
 
@@ -222,7 +222,7 @@ LINPHONE_PUBLIC void linphone_range_unref(LinphoneRange *range);
  * Gets the user data in the #LinphoneRange object
  * @param range the #LinphoneRange @notnil
  * @return the user data. @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC void *linphone_range_get_user_data(const LinphoneRange *range);
 
@@ -230,7 +230,7 @@ LINPHONE_PUBLIC void *linphone_range_get_user_data(const LinphoneRange *range);
  * Sets the user data in the #LinphoneRange object
  * @param range the #LinphoneRange object @notnil
  * @param user_data the user data @maybenil
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC void linphone_range_set_user_data(LinphoneRange *range, void *user_data);
 
@@ -238,7 +238,7 @@ LINPHONE_PUBLIC void linphone_range_set_user_data(LinphoneRange *range, void *us
  * Gets the lower value of the range
  * @param range a #LinphoneRange @notnil
  * @return The lower value
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC int linphone_range_get_min(const LinphoneRange *range);
 
@@ -246,7 +246,7 @@ LINPHONE_PUBLIC int linphone_range_get_min(const LinphoneRange *range);
  * Gets the higher value of the range
  * @param range a #LinphoneRange @notnil
  * @return The higher value
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC int linphone_range_get_max(const LinphoneRange *range);
 
@@ -254,7 +254,7 @@ LINPHONE_PUBLIC int linphone_range_get_max(const LinphoneRange *range);
  * Sets the lower value of the range
  * @param range a #LinphoneRange @notnil
  * @param min the value to set
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC void linphone_range_set_min(LinphoneRange *range, int min);
 
@@ -262,7 +262,7 @@ LINPHONE_PUBLIC void linphone_range_set_min(LinphoneRange *range, int min);
  * Sets the higher value of the range
  * @param range a #LinphoneRange @notnil
  * @param max the value to set
- * @ingroup misc
+ * @ingroup group_misc
  */
 LINPHONE_PUBLIC void linphone_range_set_max(LinphoneRange *range, int max);
 

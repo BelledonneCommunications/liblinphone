@@ -27,7 +27,7 @@
 
 /**
  * @brief All kinds of alerts
- * @ingroup alert
+ * @ingroup group_alert
  */
 typedef enum _LinphoneAlertTypes {
 
@@ -104,7 +104,7 @@ typedef enum _LinphoneAlertTypes {
 
 /**
  * All signal types that a device can use.
- * @ingroup signalInformation
+ * @ingroup group_signalInformation
  */
 typedef enum _LinphoneSignalType {
 	LinphoneSignalTypeWifi = 0,
@@ -113,7 +113,7 @@ typedef enum _LinphoneSignalType {
 } LinphoneSignalType;
 /**
  * All signal units that a device can use.
- * @ingroup signalInformation
+ * @ingroup group_signalInformation
  */
 typedef enum _LinphoneSignalStrengthUnit {
 	LinphoneSignalStrengthUnitRssi = 0,
@@ -124,7 +124,7 @@ typedef enum _LinphoneSignalStrengthUnit {
  * Codec priority policies.
  * This enum represents different policies for managing offered codec lists during calls, as well as the offer-answer
  * logic. Currently, policies can be applied only for video codecs.
- * @ingroup media_parameters
+ * @ingroup group_media_parameters
  */
 typedef enum _LinphoneCodecPriorityPolicy {
 	LinphoneCodecPriorityPolicyBasic =
@@ -141,7 +141,7 @@ typedef enum _LinphoneCodecPriorityPolicy {
  * validation was made with the remote(s) end(s). A #LinphoneSecurityLevelEndToEndEncryptedAndVerified level means it's
  * end-to-end encrypted and SAS validation was made. An #LinphoneSecurityLevelUnsafe level means end-to-end-encrypted
  * but it's likely a man-in-the-middle exists between you and one device.
- * @ingroup misc
+ * @ingroup group_misc
  */
 typedef enum _LinphoneSecurityLevel {
 	LinphoneSecurityLevelUnsafe = 0,                       /**< Security failure */
@@ -154,7 +154,7 @@ typedef enum _LinphoneSecurityLevel {
 /**
  * List of all supported #LinphoneAccountManagerServicesRequest requests,
  * allowing to know which one triggered either a callback from the #LinphoneAccountManagerServicesRequestCbs.
- * @ingroup account_creator
+ * @ingroup group_account_creator
  */
 typedef enum _LinphoneAccountManagerServicesRequestType {
 	LinphoneAccountManagerServicesRequestTypeSendAccountCreationTokenByPush =
@@ -190,7 +190,7 @@ typedef enum _LinphoneAccountManagerServicesRequestType {
 
 /**
  * @brief Enum representing the file format of a recording.
- * @ingroup call_control
+ * @ingroup group_call_control
  **/
 typedef enum _LinphoneMediaFileFormat {
 	LinphoneMediaFileFormatUnknown,

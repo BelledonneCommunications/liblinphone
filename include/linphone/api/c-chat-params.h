@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup conference
+ * @addtogroup group_conference
  * @{
  */
 
