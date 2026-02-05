@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2026 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -39,6 +39,11 @@ MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session) {
 	ms_conf_params.mode = static_cast<MSConferenceMode>(
 	    linphone_config_get_int(config, "sound", "conference_mode",
 	                            MSConferenceModeMixer)); // this core setting is also used in MS2AudioStream::render
+	/*
+	 * The usage of csrc is FALSE by default, as it is proven that popular SIP servers (at least Freeswitch) do not
+	 * support it (Feb, 2026)
+	 */
+	ms_conf_params.csrc_usage_allowed = linphone_config_get_bool(config, "rtp", "csrc_usage_allowed", FALSE);
 	ms_conf_params.user_data = this;
 	mConference = ms_audio_conference_new(&ms_conf_params, mSession.getCCore()->factory);
 }

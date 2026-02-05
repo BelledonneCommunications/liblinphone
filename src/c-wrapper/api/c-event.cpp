@@ -42,7 +42,7 @@ using namespace LinphonePrivate;
 // Log function.
 // =============================================================================
 
-void log_bad_cast(const char *function_name) {
+static void log_bad_cast(const char *function_name) {
 	lError() << function_name << " - the LinphoneEvent is not of the correct derived type";
 }
 
