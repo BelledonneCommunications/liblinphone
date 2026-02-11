@@ -350,6 +350,7 @@ LINPHONE_PUBLIC const char *sal_get_uuid(const Sal *ctx);
 
 LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal *h, SalOpSDPHandling handling_method);
 
+/* simulate transport errors. 0: normal, -1: socket error, positive value: discard silently */
 LINPHONE_PUBLIC void sal_set_send_error(Sal *sal, int value);
 LINPHONE_PUBLIC void sal_set_recv_error(Sal *sal, int value);
 LINPHONE_PUBLIC void sal_set_client_bind_port(Sal *sal, int port);

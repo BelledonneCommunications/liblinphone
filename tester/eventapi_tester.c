@@ -564,6 +564,154 @@ static void subscribe_not_timely_responded(void) {
 	bctbx_list_free(lcs);
 }
 
+static void on_notify_response(LinphoneEvent *lev) {
+	int *flag = (int *)linphone_event_get_user_data(lev);
+	(*flag)++;
+}
+
+static void subscribe_terminated_before_receiving_2nd_notify(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneContent *content;
+	LinphoneEvent *lev;
+	LinphoneEventCbs *lev_cbs = NULL;
+	int expires = 30;
+	int notify_response_done = 0;
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "somexml");
+	linphone_content_set_buffer(content, (const uint8_t *)subscribe_content, strlen(subscribe_content));
+
+	lev = linphone_core_create_subscribe(marie->lc, pauline->identity, "dodo", expires);
+	linphone_event_add_custom_header(lev, "My-Header", "pouet");
+	linphone_event_add_custom_header(lev, "My-Header2", "pimpon");
+	linphone_event_send_subscribe(lev, content);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1,
+	                             liblinphone_tester_sip_timeout));
+
+	if (BC_ASSERT_PTR_NOT_NULL(pauline->lev)) {
+		lev_cbs = linphone_factory_create_event_cbs(linphone_factory_get());
+		linphone_event_cbs_set_notify_response(lev_cbs, on_notify_response);
+		linphone_event_set_user_data(pauline->lev, &notify_response_done);
+		linphone_event_add_callbacks(pauline->lev, lev_cbs);
+	}
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
+
+	/*make sure marie receives first notification before terminating*/
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyReceived, 1, liblinphone_tester_sip_timeout));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &notify_response_done, 1, liblinphone_tester_sip_timeout));
+
+	/* now pauline is no longer scheduled (simulating a very big latency in the network) */
+	lcs = bctbx_list_remove(lcs, pauline->lc);
+	/*marie terminates the subscription */
+	linphone_event_terminate(lev);
+	wait_for_list(lcs, NULL, 0, 1000);
+
+	/* But the unsubscribe isn't actually received by marie, that continues to generate a NOTIFY */
+	bctbx_message("test: sending notify");
+	if (pauline->lev) linphone_event_notify(pauline->lev, content);
+	wait_for_list(lcs, NULL, 0, 1000);
+
+	/* now see what happens, we want to make sure that marie's LinphoneEvent
+	 does not ressucitate */
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	wait_for_list(lcs, NULL, 0, 3000);
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneSubscriptionActive, 1, int, "%i");
+
+	linphone_event_unref(lev);
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+
+	if (lev_cbs) linphone_event_cbs_unref(lev_cbs);
+	linphone_content_unref(content);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
+
+static void
+subscribe_received(LinphoneCore *lc, LinphoneEvent *ev, const char *evtype, const LinphoneContent *content) {
+	(void)evtype;
+	(void)content;
+	sal_set_send_error(linphone_core_get_sal(lc), 1); // trash the 200 Ok silently */
+	linphone_event_accept_subscription(ev);
+	sal_set_send_error(linphone_core_get_sal(lc), 0); // back to normal.
+}
+
+static void subscribe_terminated_before_receiving_1st_notify(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneContent *content;
+	LinphoneEvent *lev;
+	int expires = 30;
+	LinphoneCoreCbs *cbs;
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "somexml");
+	linphone_content_set_buffer(content, (const uint8_t *)subscribe_content, strlen(subscribe_content));
+
+	lev = linphone_core_create_subscribe(marie->lc, pauline->identity, "dodo", expires);
+	linphone_event_add_custom_header(lev, "My-Header", "pouet");
+	linphone_event_add_custom_header(lev, "My-Header2", "pimpon");
+	linphone_event_send_subscribe(lev, content);
+
+	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscribe_received(cbs, subscribe_received);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	pauline->subscribe_policy = DoNothingWithSubscription;
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1,
+	                             liblinphone_tester_sip_timeout));
+
+	/* now marie is no longer scheduled (simulating a very big latency in the network) */
+	lcs = bctbx_list_remove(lcs, marie->lc);
+	/* Pauline sends a NOTIFY  */
+	linphone_event_notify(pauline->lev, content);
+	/* the NOTIFY is not received yet by Marie (not scheduled */
+	/* marie terminates the subscription */
+	linphone_event_terminate(lev);
+	linphone_event_unref(lev);
+	wait_for_list(lcs, NULL, 0, 3000);
+
+	/* now see what happens, we want to make sure that marie's LinphoneEvent
+	 does not ressucitate because of the incoming NOTIFY.
+	 Instead, it should be replied with 481.*/
+	lcs = bctbx_list_append(lcs, marie->lc);
+	wait_for_list(lcs, NULL, 0, 3000);
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneSubscriptionActive, 0, int, "%i");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneSubscriptionActive, 1, int, "%i");
+	BC_ASSERT_EQUAL(marie->stat.number_of_NotifyReceived, 0, int, "%i");
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+
+	linphone_content_unref(content);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
+
 static void publish_test_with_args(bool_t refresh, int expires) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -659,11 +807,6 @@ static void publish_expired(void) {
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(pauline);
 	bctbx_list_free(lcs);
-}
-
-static void on_notify_response(LinphoneEvent *lev) {
-	int *flag = (int *)linphone_event_get_user_data(lev);
-	*flag = 1;
 }
 
 static void out_of_dialog_notify(void) {
@@ -778,7 +921,7 @@ static void subscribe_notify_not_handled(void) {
 	bctbx_list_free(lcs);
 }
 
-test_t event_tests[] = {
+static test_t event_tests[] = {
     TEST_ONE_TAG("Subscribe declined", subscribe_test_declined, "presence"),
     TEST_ONE_TAG("Subscribe terminated by subscriber", subscribe_test_terminated_by_subscriber, "presence"),
     TEST_ONE_TAG("Subscribe with custom headers", subscribe_test_with_custom_header, "presence"),
@@ -802,7 +945,10 @@ test_t event_tests[] = {
     TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
     TEST_ONE_TAG("Publish without automatic refresh", publish_no_auto_test, "presence"),
     TEST_ONE_TAG("Publish expired", publish_expired, "presence"),
-    TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence")};
+    TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence"),
+    TEST_NO_TAG("Subscription terminated, late incoming NOTIFY", subscribe_terminated_before_receiving_2nd_notify),
+    TEST_NO_TAG("Subscription terminated, late first incoming NOTIFY",
+                subscribe_terminated_before_receiving_1st_notify)};
 
 test_suite_t event_test_suite = {"Event",
                                  NULL,

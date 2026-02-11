@@ -112,16 +112,21 @@ void SalSubscribeOp::handleNotify(belle_sip_request_t *request, const char *even
 		subscribeStatus = SalSubscribeTerminated;
 		lInfo() << "Outgoing subscription terminated by remote [" << getTo() << "]";
 	}
-
+	if (mState == State::Terminated || mState == State::Terminating) {
+		return;
+	}
 	ref();
 	mRoot->mCallbacks.notify(this, subscribeStatus, eventName, bodyHandler);
+	/* if it is terminated, 481 has been responded already in sal.cpp */
 	auto response = createResponseFromRequest(request, 200);
 	belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+
 	unref();
 }
 
 void SalSubscribeOp::subscribeProcessRequestEventCb(void *userCtx, const belle_sip_request_event_t *event) {
 	auto op = static_cast<SalSubscribeOp *>(userCtx);
+
 	auto serverTransaction =
 	    belle_sip_provider_create_server_transaction(op->mRoot->mProvider, belle_sip_request_event_get_request(event));
 	auto dialog = belle_sip_request_event_get_dialog(event);
@@ -150,7 +155,7 @@ void SalSubscribeOp::subscribeProcessRequestEventCb(void *userCtx, const belle_s
 
 	if (!op->mDialog && dialog && method == "NOTIFY") {
 		/* case where the dialog is created by the initial NOTIFY because the 200 Ok of the SUBSCRIBE did not arrive.*/
-		if (op->mOwnsDialog) op->setOrUpdateDialog(dialog);
+		if (op->mOwnsDialog && op->mState != State::Terminated) op->setOrUpdateDialog(dialog);
 	}
 
 	if (!op->mDialog) {

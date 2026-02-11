@@ -1034,6 +1034,11 @@ static void subscribe_response(SalOp *op, SalSubscribeStatus status, int will_re
 	LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
 
 	if (lev == NULL) return;
+	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionTerminated) {
+		/* no longer interested in the subscription. Ignore, the NOTIFY will be later rejected with 481. */
+		lWarning() << "Ignored response to SUBSCRIBE, LinphoneEvent is in Terminated state.";
+		return;
+	}
 
 	if (status == SalSubscribeActive) {
 		linphone_event_set_state(lev, LinphoneSubscriptionActive);
@@ -1067,9 +1072,12 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 			linphone_event_set_internal(lev, true);
 		}
 	}
+
 	linphone_event_ref(lev);
 	if ((!out_of_dialog) && (st != SalSubscribeNone)) {
-		linphone_event_set_state(lev, linphone_subscription_state_from_sal(st));
+		if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated) {
+			linphone_event_set_state(lev, linphone_subscription_state_from_sal(st));
+		}
 	}
 
 	/* Take into account that the subscription may have been closed by app already within the callback of

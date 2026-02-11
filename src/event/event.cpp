@@ -35,10 +35,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 Event::Event(const shared_ptr<Core> &core) : CoreAccessor(core) {
 	mEi = linphone_error_info_new();
+	lInfo() << "Created Event [" << this << "]";
 }
 
 Event::~Event() {
-	lInfo() << "Destroying event [" << this << "]";
+	lInfo() << "Destroying Event [" << this << "]";
 
 	if (mEi) linphone_error_info_unref(mEi);
 	try {

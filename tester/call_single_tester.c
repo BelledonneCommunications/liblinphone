@@ -855,25 +855,30 @@ static void simple_call_to_an_account_configured_on_the_core(void) {
 		goto end;
 	}
 
-	const LinphoneAccountParams *marie_dual_proxy_secondary_account_params = linphone_account_get_params(marie_dual_proxy_secondary_account);
+	const LinphoneAccountParams *marie_dual_proxy_secondary_account_params =
+	    linphone_account_get_params(marie_dual_proxy_secondary_account);
 	const LinphoneAddress *marie_dual_proxy_secondary_account_identity =
 	    linphone_account_params_get_identity_address(marie_dual_proxy_secondary_account_params);
 
-	const LinphoneAccountParams *marie_dual_proxy_default_account_params = linphone_account_get_params(marie_dual_proxy_default_account);
+	const LinphoneAccountParams *marie_dual_proxy_default_account_params =
+	    linphone_account_get_params(marie_dual_proxy_default_account);
 	const LinphoneAddress *marie_dual_proxy_default_account_identity =
 	    linphone_account_params_get_identity_address(marie_dual_proxy_default_account_params);
 
-	BC_ASSERT_FALSE(linphone_address_weak_equal(marie_dual_proxy_default_account_identity, marie_dual_proxy_secondary_account_identity));
+	BC_ASSERT_FALSE(linphone_address_weak_equal(marie_dual_proxy_default_account_identity,
+	                                            marie_dual_proxy_secondary_account_identity));
 
 	LinphoneAccount *marie_default_account = linphone_core_get_default_account(marie->lc);
 	const LinphoneAccountParams *marie_default_account_params = linphone_account_get_params(marie_default_account);
 	const LinphoneAddress *marie_default_account_identity =
 	    linphone_account_params_get_identity_address(marie_default_account_params);
 
-	BC_ASSERT_TRUE(linphone_address_weak_equal(marie_dual_proxy_default_account_identity, marie_default_account_identity));
+	BC_ASSERT_TRUE(
+	    linphone_address_weak_equal(marie_dual_proxy_default_account_identity, marie_default_account_identity));
 
 	LinphoneCallParams *params = linphone_core_create_call_params(marie_dual_proxy->lc, NULL);
-	char *marie_dual_proxy_secondary_account_identity_str = linphone_address_as_string(marie_dual_proxy_secondary_account_identity);
+	char *marie_dual_proxy_secondary_account_identity_str =
+	    linphone_address_as_string(marie_dual_proxy_secondary_account_identity);
 	linphone_call_params_set_from_header(params, marie_dual_proxy_secondary_account_identity_str);
 	ms_free(marie_dual_proxy_secondary_account_identity_str);
 
@@ -888,15 +893,16 @@ static void simple_call_to_an_account_configured_on_the_core(void) {
 		const LinphoneAccountParams *marie_call_account_params = linphone_account_get_params(marie_call_account);
 		const LinphoneAddress *marie_call_account_identity =
 		    linphone_account_params_get_identity_address(marie_call_account_params);
-		BC_ASSERT_TRUE(linphone_address_weak_equal(marie_call_account_identity, marie_dual_proxy_secondary_account_identity));
+		BC_ASSERT_TRUE(
+		    linphone_address_weak_equal(marie_call_account_identity, marie_dual_proxy_secondary_account_identity));
 	}
 
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
 	if (marie_call) {
-		const LinphoneAddress *marie_call_remote_contact_address =
-		    linphone_call_get_remote_contact_address(marie_call);
-		BC_ASSERT_TRUE(linphone_address_weak_equal(marie_call_remote_contact_address, marie_dual_proxy_secondary_account_identity));
+		const LinphoneAddress *marie_call_remote_contact_address = linphone_call_get_remote_contact_address(marie_call);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marie_call_remote_contact_address,
+		                                           marie_dual_proxy_secondary_account_identity));
 	}
 	end_call(marie_dual_proxy, marie);
 
@@ -3464,7 +3470,7 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	if (with_losses) {
 		BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallPaused, 1,
 		                               liblinphone_tester_sip_timeout));
-		sal_set_send_error(linphone_core_get_sal(marie->lc), 0); /*to trash 200ok without generating error*/
+		sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
 	}
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 1));
@@ -3547,7 +3553,7 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	if (with_losses) {
 		BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallPaused, 1,
 		                               liblinphone_tester_sip_timeout));
-		sal_set_send_error(linphone_core_get_sal(pauline->lc), 0); /*to trash 200ok without generating error*/
+		sal_set_send_error(linphone_core_get_sal(pauline->lc), 0);
 	}
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1));

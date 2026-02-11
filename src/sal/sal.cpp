@@ -118,7 +118,7 @@ void Sal::processRequestEventCb(void *userCtx, const belle_sip_request_event_t *
 			op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(subscribeTransaction));
 		}
 		if (!op || (op->mState == SalOp::State::Terminated)) {
-			lWarning() << "Receiving request for null or terminated op [" << op << "], ignored";
+			if (!op) lWarning() << "Receiving request for null op, ignored";
 			evh = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Expires");
 			string eventHeaderValue = "";
 			int expires = -1;
