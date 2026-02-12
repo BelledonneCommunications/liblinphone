@@ -451,6 +451,8 @@ bool_t linphone_core_account_strict_matching_enabled(const LinphoneCore *core);
 
 LINPHONE_PUBLIC void linphone_core_enable_account_strict_matching(LinphoneCore *core, bool_t enable);
 
+LINPHONE_PUBLIC char *linphone_core_get_default_local_ringtone(LinphoneCore *lc);
+
 #ifdef __cplusplus
 }
 #endif

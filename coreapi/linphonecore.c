@@ -1577,6 +1577,16 @@ static string get_default_local_ring(LinphoneCore *lc) {
 	return static_cast<PlatformHelpers *>(lc->platform_helper)->getRingResource(LOCAL_RING_WAV);
 }
 
+char *linphone_core_get_default_local_ringtone(LinphoneCore *lc) {
+	return bctbx_strdup(L_STRING_TO_C(get_default_local_ring(lc)));
+}
+
+static void set_default_local_ring(LinphoneCore *lc) {
+	const string local_ring = get_default_local_ring(lc);
+	if (bctbx_file_exist(local_ring.c_str()) == 0) linphone_core_set_ring(lc, local_ring.c_str());
+	else ms_error("Default local ringtone file '%s' does not exist", local_ring.c_str());
+}
+
 static string get_default_onhold_music(LinphoneCore *lc) {
 	if (linphone_core_file_format_supported(lc, "mkv")) {
 		return static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(HOLD_MUSIC_MKV);
@@ -1669,9 +1679,8 @@ static void sound_config_read(LinphoneCore *lc) {
 			if (bctbx_file_exist(tmpbuf) == 0) {
 				linphone_core_set_ring(lc, tmpbuf);
 			} else {
-				string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
-				if (bctbx_file_exist(soundResource.c_str()) == 0) linphone_core_set_ring(lc, soundResource.c_str());
-				else ms_warning("'%s' ring file does not exist", tmpbuf);
+				ms_warning("'%s' ring file does not exist, trying default ringtone", tmpbuf);
+				set_default_local_ring(lc);
 			}
 		} else {
 			linphone_core_set_ring(lc, tmpbuf);
@@ -1682,10 +1691,11 @@ static void sound_config_read(LinphoneCore *lc) {
 		if (!lc->native_ringing_enabled) {
 			ms_warning(
 			    "Native ringing has been disabled but no ringtone has been defined in sound config, using default one");
-			linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
+			set_default_local_ring(lc);
 		}
 #else
-		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
+		ms_warning("No ringtone has been defined in sound config, using default one");
+		set_default_local_ring(lc);
 #endif
 	}
 
@@ -5963,7 +5973,7 @@ void linphone_core_enable_native_ringing(LinphoneCore *core, bool_t enable) {
 	if (enable == FALSE && linphone_core_get_ring(core) == NULL) {
 		ms_warning(
 		    "Native ringing has been disabled but no ringtone has been defined in sound config, using default one");
-		linphone_core_set_ring(core, get_default_local_ring(core).c_str());
+		set_default_local_ring(core);
 	}
 }
 

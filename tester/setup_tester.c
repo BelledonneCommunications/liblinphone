@@ -4435,6 +4435,27 @@ static void migration_from_call_history_db(void) {
 	bctbx_free(tmp_db);
 }
 
+static void local_ringtone_fallback_test(void) {
+	LinphoneCore *lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
+	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
+
+	linphone_config_set_string(linphone_core_get_config(lc), "sound", "local_ring",
+	                           "/path/to/non-existant/ringtone.wav");
+	linphone_core_start(lc);
+	BC_ASSERT_TRUE(linphone_core_get_global_state(lc) == LinphoneGlobalOn);
+	char *default_local_ringtone = linphone_core_get_default_local_ringtone(lc);
+	BC_ASSERT_PTR_NOT_NULL(default_local_ringtone);
+	const char *local_ringtone = linphone_core_get_ring(lc);
+	BC_ASSERT_PTR_NOT_NULL(local_ringtone);
+	if (local_ringtone && default_local_ringtone) {
+		BC_ASSERT_STRING_EQUAL(local_ringtone, default_local_ringtone);
+	}
+	if (default_local_ringtone) bctbx_free((void *)default_local_ringtone);
+	linphone_core_stop(lc);
+	linphone_core_unref(lc);
+}
+
 static test_t setup_tests[] = {
     TEST_NO_TAG("Version check", linphone_version_test),
     TEST_NO_TAG("Version update check", linphone_version_update_test),
@@ -4523,6 +4544,7 @@ static test_t setup_tests[] = {
     TEST_NO_TAG("Friend phone number lookup without plus", friend_phone_number_lookup_without_plus),
     TEST_NO_TAG("Audio devices", audio_devices),
     TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db),
+    TEST_NO_TAG("Local ringtone fallback", local_ringtone_fallback_test),
 };
 
 test_suite_t setup_test_suite = {"Setup",
