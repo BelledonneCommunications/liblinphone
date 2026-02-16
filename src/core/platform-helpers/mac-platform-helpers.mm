@@ -44,37 +44,33 @@ LINPHONE_BEGIN_NAMESPACE
 const string MacPlatformHelpers::Framework = "org.linphone.linphone";
 
 MacPlatformHelpers::MacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core) : GenericPlatformHelpers(core) {
-
-	string cpimPath = getResourceDirPath(Framework, "cpim_grammar.belr");
-	if (!cpimPath.empty()) belr::GrammarLoader::get().addPath(cpimPath);
-	else lError() << "MacPlatformHelpers did not find cpim grammar resource directory...";
-
-	string icsPath = getResourceDirPath(Framework, "ics_grammar.belr");
-	if (!icsPath.empty()) belr::GrammarLoader::get().addPath(icsPath);
-	else lError() << "MacPlatformHelpers did not find ics grammar resource directory...";
-
-	string identityPath = getResourceDirPath(Framework, "identity_grammar.belr");
-	if (!identityPath.empty()) belr::GrammarLoader::get().addPath(identityPath);
-	else lError() << "MacPlatformHelpers did not find identity grammar resource directory...";
-
-	string mwiPath = getResourceDirPath(Framework, "mwi_grammar.belr");
-	if (!mwiPath.empty()) belr::GrammarLoader::get().addPath(mwiPath);
-	else lError() << "MacPlatformHelpers did not find mwi grammar resource directory...";
-
-#ifdef VCARD_ENABLED
-	string vcardPath = getResourceDirPath("org.linphone.belcard", "vcard_grammar.belr");
-	if (!vcardPath.empty()) belr::GrammarLoader::get().addPath(vcardPath);
-	else lInfo() << "MacPlatformHelpers did not find vcard grammar resource directory...";
-#endif
-
-	string sdpPath = getResourceDirPath("org.linphone.belle-sip", "sdp_grammar.belr");
-	if (!sdpPath.empty()) belr::GrammarLoader::get().addPath(sdpPath);
-	else lError() << "MacPlatformHelpers did not find sdp grammar resource directory...";
-
 	lInfo() << "MacPlatformHelpers is fully started";
 }
 
 MacPlatformHelpers::~MacPlatformHelpers() {
+}
+
+void MacPlatformHelpers::addBelrPath(const std::string &framework, const std::string & grammar){
+	string grammarPath = getResourceDirPath(framework, grammar);
+	if (!grammarPath.empty()) belr::GrammarLoader::get().addPath(grammarPath);
+	else lError() << "MacPlatformHelpers did not find [" << grammar << " ] file.";
+}
+
+/*
+ * Because of Framework/XCFrameworks, the grammar files are spread accross multiple frameworks instead of being centralized in a single
+ * directory, as it is for other target operating systems.
+ * Specific code is required then.
+ */
+void MacPlatformHelpers::initializeBelrPaths(){
+	addBelrPath(Framework, "cpim_grammar.belr");
+	addBelrPath(Framework, "ics_grammar.belr");
+	addBelrPath(Framework, "identity_grammar.belr");
+	addBelrPath(Framework, "mwi_grammar.belr");
+#ifdef VCARD_ENABLED
+	addBelrPath("org.linphone.belcard", "vcard_grammar.belr");
+#endif
+	addBelrPath("org.linphone.belle-sip", "sdp_grammar.belr");
+	addBelrPath("org.linphone.belle-sip", "sip_grammar.belr");
 }
 
 // -----------------------------------------------------------------------------

@@ -44,15 +44,19 @@ public:
 	string getPluginsDir() const override;
 	void setHttpProxy(const string &host, int port) override;
 
+	static void initializeBelrPaths();
+
 protected:
 	static const string Framework;
 	void getHttpProxySettings(void);
 	static string toString(CFStringRef str, CFStringEncoding encodingMethod);
 	static string toUTF8String(CFStringRef str);
+
 private:
 	static string getBundleResourceDirPath(const string &framework, const string &resource);
 	static string getResourceDirPath(const string &framework, const string &resource);
 	static string getResourcePath(const string &framework, const string &resource);
+	static void addBelrPath(const std::string &framework, const std::string &grammar);
 };
 
 LINPHONE_END_NAMESPACE

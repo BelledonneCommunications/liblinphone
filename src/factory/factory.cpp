@@ -54,6 +54,7 @@
 #include "address/address.h"
 #include "alert/alert.h"
 #include "auth-info/auth-info.h"
+#include "belr/grammarbuilder.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "conference/participant-info.h"
@@ -66,6 +67,9 @@
 #include "payload-type/payload-type.h"
 #include "signal-information/signal-information.h"
 #include "vcard/vcard.h"
+#ifdef __APPLE__
+#include "core/platform-helpers/mac-platform-helpers.h"
+#endif
 
 #ifdef HAVE_SQLITE
 #include "sqlite3_bctbx_vfs.h"
@@ -110,6 +114,12 @@ Factory::Factory() {
 	sqlite3_bctbx_vfs_register(0);
 #endif
 	mEvfsMasterKey = nullptr;
+#ifdef __APPLE__
+	/* it is necessary to do this when Factory is created, otherwise some factory methods won't work,
+	 * such as createAddress().
+	 */
+	MacPlatformHelpers::initializeBelrPaths();
+#endif
 }
 
 void Factory::_DestroyingCb(void) {
@@ -818,6 +828,7 @@ Factory::~Factory() {
 		bctbx_clean(mEvfsMasterKey->data(), mEvfsMasterKey->size());
 		mEvfsMasterKey = nullptr;
 	}
+	belr::GrammarLoader::get().clear();
 	clean();
 }
 
