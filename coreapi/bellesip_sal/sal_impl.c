@@ -438,13 +438,6 @@ size_t sal_body_handler_get_size(const SalBodyHandler *body_handler) {
 }
 
 void sal_body_handler_set_size(SalBodyHandler *body_handler, size_t size) {
-	belle_sip_header_content_length_t *content_length =
-	    BELLE_SIP_HEADER_CONTENT_LENGTH(sal_body_handler_find_header(body_handler, "Content-Length"));
-	if (content_length == NULL) {
-		content_length = belle_sip_header_content_length_new();
-		belle_sip_body_handler_add_header(BELLE_SIP_BODY_HANDLER(body_handler), BELLE_SIP_HEADER(content_length));
-	}
-	belle_sip_header_content_length_set_content_length(content_length, size);
 	belle_sip_body_handler_set_size(BELLE_SIP_BODY_HANDLER(body_handler), size);
 }
 
