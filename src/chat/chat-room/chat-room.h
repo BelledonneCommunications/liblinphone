@@ -110,9 +110,8 @@ public:
 	                                                  LinphoneSearchDirection direction) const override;
 
 	void markAsRead() override;
-	void enableEphemeral(bool ephem, bool updateDb) override;
+	LinphoneStatus enableEphemeral(long lifetime, bool initiated, bool updateDb) override;
 	bool ephemeralEnabled() const override;
-	void setEphemeralLifetime(long lifetime, bool updateDb) override;
 	long getEphemeralLifetime() const override;
 	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) override;
 	AbstractChatRoom::EphemeralMode getEphemeralMode() const override;

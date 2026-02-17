@@ -186,9 +186,10 @@ public:
 	virtual void sendPendingMessages() {};
 
 	virtual void markAsRead() = 0;
-	virtual void enableEphemeral(bool ephem, bool updateDb) = 0;
+
+	// initiated: true if the caller initiated the change, false otherwise (a reaction to a notify for example).
+	virtual LinphoneStatus enableEphemeral(long lifeTime, bool initiated, bool updateDb) = 0;
 	virtual bool ephemeralEnabled() const = 0;
-	virtual void setEphemeralLifetime(long lifetime, bool updateDb) = 0;
 	virtual long getEphemeralLifetime() const = 0;
 	virtual void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) = 0;
 	virtual AbstractChatRoom::EphemeralMode getEphemeralMode() const = 0;

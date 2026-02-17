@@ -45,7 +45,7 @@ LinphoneChatRoomParams *linphone_chat_room_params_new_with_core(LinphoneCore *co
 	linphone_chat_params_set_encryption_backend(chat_params, LinphoneChatRoomEncryptionBackendNone);
 	linphone_chat_params_enable_rtt(chat_params, FALSE);
 	linphone_chat_params_set_ephemeral_mode(chat_params, LinphoneChatRoomEphemeralModeDeviceManaged);
-	linphone_chat_params_set_ephemeral_lifetime(chat_params, 0);
+	linphone_chat_params_deactivate_ephemeral(chat_params);
 	return params;
 }
 
@@ -127,6 +127,7 @@ void linphone_chat_room_params_set_ephemeral_mode(LinphoneChatRoomParams *params
 	linphone_chat_params_set_ephemeral_mode(chat_params, mode);
 }
 
+// Deprecated
 void linphone_chat_room_params_set_ephemeral_lifetime(LinphoneChatRoomParams *params, long lifetime) {
 	LinphoneChatParams *chat_params = linphone_conference_params_get_chat_params(params);
 	linphone_chat_params_set_ephemeral_lifetime(chat_params, lifetime);

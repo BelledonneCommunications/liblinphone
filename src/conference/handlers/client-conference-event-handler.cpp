@@ -272,8 +272,7 @@ void ClientConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							    AbstractChatRoom::EphemeralMode::AdminManaged);
 							if (!ephemeralLifetime.empty()) {
 								const auto lifetime = std::stol(ephemeralLifetime);
-								cgcr->getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
-								cgcr->enableEphemeral((lifetime != 0), false);
+								cgcr->enableEphemeral(lifetime, false, false);
 								if (!isFullState) {
 									conference->notifyEphemeralLifetimeChanged(creationTime, isFullState, lifetime);
 

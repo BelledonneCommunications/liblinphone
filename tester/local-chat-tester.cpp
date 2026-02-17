@@ -4569,7 +4569,8 @@ static void short_ephemeral_lifetime_messages_test(void) {
 		LinphoneChatRoomEphemeralMode ephemeral_mode = LinphoneChatRoomEphemeralModeAdminManaged;
 		linphone_chat_params_set_ephemeral_mode(marie_chat_params, ephemeral_mode);
 		int ephemeral_lifetime = 1;
-		linphone_chat_params_set_ephemeral_lifetime(marie_chat_params, ephemeral_lifetime);
+		linphone_chat_params_activate_ephemeral(marie_chat_params, ephemeral_lifetime);
+
 		LinphoneChatRoom *marieCr =
 		    linphone_core_create_chat_room_7(marie.getLc(), marie_params, participantsAddresses);
 		bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);

@@ -59,8 +59,11 @@ static void group_chat_room_server_admin_managed_messages_unencrypted() {
 		linphone_chat_room_params_enable_group(params, FALSE);
 		linphone_chat_room_params_enable_encryption(params, FALSE);
 		linphone_chat_room_params_set_ephemeral_mode(params, adminMode);
-		linphone_chat_room_params_set_ephemeral_lifetime(params, 5);
 		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+
+		LinphoneConferenceParams *conferenceParams = static_cast<LinphoneConferenceParams *>(params);
+		LinphoneChatParams *chatParams = linphone_conference_params_get_chat_params(conferenceParams);
+		linphone_chat_params_activate_ephemeral(chatParams, 5);
 
 		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_params(
 		    coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, params);
@@ -155,8 +158,11 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		linphone_chat_room_params_enable_group(params, FALSE);
 		linphone_chat_room_params_enable_encryption(params, FALSE);
 		linphone_chat_room_params_set_ephemeral_mode(params, adminMode);
-		linphone_chat_room_params_set_ephemeral_lifetime(params, 0);
 		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+
+		LinphoneConferenceParams *conferenceParams = static_cast<LinphoneConferenceParams *>(params);
+		LinphoneChatParams *chatParams = linphone_conference_params_get_chat_params(conferenceParams);
+		linphone_chat_params_deactivate_ephemeral(chatParams);
 
 		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_params(
 		    coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, params);
@@ -174,7 +180,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(paulineCr));
 
 		pauline_stat = pauline.getStats();
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
+		linphone_chat_room_activate_ephemeral(marieCr, 10);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyReceived,
 		                             pauline_stat.number_of_NotifyReceived + 1, liblinphone_tester_sip_timeout));
@@ -236,7 +242,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 			marie_stat = marie.getStats();
 			pauline_stat = pauline.getStats();
 
-			linphone_chat_room_set_ephemeral_lifetime(marieCr, 5);
+			linphone_chat_room_activate_ephemeral(marieCr, 5);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
 			                             marie_stat.number_of_LinphoneSubscriptionActive + 1,
@@ -322,7 +328,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 1, int, "%d");
 
 		pauline_stat = pauline.getStats();
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 0);
+		linphone_chat_room_deactivate_ephemeral(marieCr);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralMessageDisabled,
 		                             pauline_stat.number_of_LinphoneChatRoomEphemeralMessageDisabled + 1,
@@ -439,7 +445,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 			ms_message("%s enables ephemeral capabilities with lifetime set to %0d seconds in chatroom %s",
 			           linphone_core_get_identity(marie.getLc()), lifetime, conference_address_str);
 			ms_free(conference_address_str);
-			linphone_chat_room_set_ephemeral_lifetime(marieCr, lifetime);
+			linphone_chat_room_activate_ephemeral(marieCr, lifetime);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
 			                             marie_stat.number_of_LinphoneSubscriptionActive + 1,
@@ -564,7 +570,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 
 			marie_stat = marie.getStats();
 			pauline_stat = pauline.getStats();
-			linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
+			linphone_chat_room_activate_ephemeral(marieCr, 10);
 
 			BC_ASSERT_TRUE(wait_for_list(
 			    coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralLifetimeChanged,
@@ -666,7 +672,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 5, int, "%d");
 
 		pauline_stat = pauline.getStats();
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
+		linphone_chat_room_activate_ephemeral(marieCr, 10);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralLifetimeChanged,
 		                             pauline_stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged + 1,
@@ -688,7 +694,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 
 		pauline_stat = pauline.getStats();
 		// Disable ephemeral
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 0);
+		linphone_chat_room_deactivate_ephemeral(marieCr);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralMessageDisabled,
 		                             pauline_stat.number_of_LinphoneChatRoomEphemeralMessageDisabled + 1,
@@ -745,7 +751,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 
 		pauline_stat = pauline.getStats();
-		linphone_chat_room_enable_ephemeral(marieCr, TRUE);
+		linphone_chat_room_activate_ephemeral_2(marieCr);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralMessageEnabled,
 		                             pauline_stat.number_of_LinphoneChatRoomEphemeralMessageEnabled + 1,
@@ -830,8 +836,11 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 		linphone_chat_room_params_enable_group(params, FALSE);
 		linphone_chat_room_params_enable_encryption(params, FALSE);
 		linphone_chat_room_params_set_ephemeral_mode(params, adminMode);
-		linphone_chat_room_params_set_ephemeral_lifetime(params, 0);
 		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+
+		LinphoneConferenceParams *conferenceParams = static_cast<LinphoneConferenceParams *>(params);
+		LinphoneChatParams *chatParams = linphone_conference_params_get_chat_params(conferenceParams);
+		linphone_chat_params_deactivate_ephemeral(chatParams);
 
 		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_params(
 		    coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, params);
@@ -849,7 +858,7 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 		BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(paulineCr));
 
 		pauline_stat = pauline.getStats();
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
+		linphone_chat_room_activate_ephemeral(marieCr, 10);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyReceived,
 		                             pauline_stat.number_of_NotifyReceived + 1, liblinphone_tester_sip_timeout));
@@ -890,7 +899,7 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 		sendEphemeralMessageInAdminMode(focus, marie, pauline, marieCr, paulineCr, "Hello ", noMsg);
 
 		pauline_stat = pauline.getStats();
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 0);
+		linphone_chat_room_deactivate_ephemeral(marieCr);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyReceived,
 		                             pauline_stat.number_of_NotifyReceived + 1, liblinphone_tester_sip_timeout));
@@ -910,8 +919,7 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 		pauline_stat = pauline.getStats();
 		marie_stat = marie.getStats();
 
-		linphone_chat_room_enable_ephemeral(paulineCr, TRUE);
-		linphone_chat_room_set_ephemeral_lifetime(paulineCr, 5);
+		linphone_chat_room_activate_ephemeral(paulineCr, 5);
 
 		wait_for_list(coresList, NULL, 1, 2000);
 

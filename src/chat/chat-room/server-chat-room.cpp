@@ -496,8 +496,7 @@ void ServerChatRoom::setEphemeralModeForDevice(AbstractChatRoom::EphemeralMode m
 
 void ServerChatRoom::setEphemeralLifetimeForDevice(long lifetime, const shared_ptr<CallSession> &session) {
 	lInfo() << *this << ": New ephemeral time: " << lifetime;
-	getCurrentParams()->getChatParams()->setEphemeralLifetime(lifetime);
-
+	getCurrentParams()->getChatParams()->enableEphemeral(lifetime);
 	const auto device = getConference()->findParticipantDevice(session);
 	if (device) {
 		time_t creationTime = time(nullptr);

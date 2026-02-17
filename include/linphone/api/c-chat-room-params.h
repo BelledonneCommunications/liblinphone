@@ -102,12 +102,12 @@ LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode
 linphone_chat_room_params_get_ephemeral_mode(const LinphoneChatRoomParams *params);
 
 /**
- * Set lifetime (in seconds) for all new ephemral messages in the chat room.
+ * Set lifetime (in seconds) for all new ephemeral messages in the chat room.
  * After the message is read, it will be deleted after "time" seconds.
  * @see linphone_chat_room_params_ephemeral_enabled()
  * @param params The #LinphoneChatRoomParams object. @notnil
  * @param time The ephemeral lifetime, default is disabled (0)
- * @deprecated 20/05/2024. Use linphone_chat_params_set_ephemeral_lifetime() instead.
+ * @deprecated 20/05/2024. Use linphone_chat_params_activate_ephemeral() instead.
  */
 LINPHONE_PUBLIC void linphone_chat_room_params_set_ephemeral_lifetime(LinphoneChatRoomParams *params, long time);
 

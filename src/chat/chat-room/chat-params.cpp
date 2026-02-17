@@ -38,7 +38,7 @@ void ChatParams::setChatDefaults(const std::shared_ptr<Core> &core) {
 	if (cCore) {
 		setEphemeralMode(
 		    static_cast<AbstractChatRoom::EphemeralMode>(linphone_core_chat_room_get_default_ephemeral_mode(cCore)));
-		setEphemeralLifetime(linphone_core_get_default_ephemeral_lifetime(cCore));
+		enableEphemeral(linphone_core_get_default_ephemeral_lifetime(cCore));
 	}
 }
 
@@ -67,11 +67,11 @@ void ChatParams::allowEphemeral(bool ephem) {
 }
 
 bool ChatParams::ephemeralEnabled() const {
-	return mEnableEphemeral;
+	return mEphemeralLifetime > 0;
 }
 
-void ChatParams::enableEphemeral(bool ephem) {
-	mEnableEphemeral = ephem;
+void ChatParams::enableEphemeral(long lifetime) {
+	mEphemeralLifetime = lifetime;
 }
 
 AbstractChatRoom::EphemeralMode ChatParams::getEphemeralMode() const {
@@ -85,10 +85,6 @@ void ChatParams::setEphemeralMode(AbstractChatRoom::EphemeralMode mode) {
 
 long ChatParams::getEphemeralLifetime() const {
 	return mEphemeralLifetime;
-}
-
-void ChatParams::setEphemeralLifetime(long lifetime) {
-	mEphemeralLifetime = lifetime;
 }
 
 void ChatParams::setBackend(ChatParams::Backend backend) {

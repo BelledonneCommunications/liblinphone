@@ -162,18 +162,39 @@ LINPHONE_PUBLIC void linphone_chat_room_receive_chat_message(LinphoneChatRoom *c
 LINPHONE_PUBLIC void linphone_chat_room_mark_as_read(LinphoneChatRoom *chat_room);
 
 /**
- * Enable or disable the ephemeral message feature in the chat room. Works only for flexisip-based chat room.
- * An ephemeral message will automatically disappear from the sender and recipient's chatrooms after a specified
- * timeout configurable with linphone_chat_room_set_ephemeral_lifetime().
- * The timer starts when the message has been displayed at the recipent, which means:
+ * Activate the ephemeral message feature in the chat room with a specified timeout.
+ * Works only for flexisip-based chat room.
+ * An ephemeral message will automatically disappear from the sender and recipient's chatrooms after a set period of
+ * time. The timer starts when the message has been displayed at the recipent, which means:
  * - at recipient side when linphone_chat_room_mark_as_read() is called.
  * - at sender side, when the message enters the state LinphoneChatMessageStateDisplayed (when receiving the displayed
  * IMDN).
  *
  * @param chat_room #LinphoneChatRoom object @notnil
- * @param enable TRUE if the ephemeral message feature is enabled, FALSE otherwise.
+ * @param lifetime The ephemeral lifetime strictly positive. To disable the feature, use
+ * linphone_chat_room_deactivate_ephemeral().
+ * @return 0 if successful, -1 otherwise
  */
-LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral(LinphoneChatRoom *chat_room, bool_t enable);
+LINPHONE_PUBLIC LinphoneStatus linphone_chat_room_activate_ephemeral(LinphoneChatRoom *chat_room,
+                                                                     unsigned int lifetime);
+
+/*
+ * Implemented for convenience. See linphone_chat_room_activate_ephemeral().
+ * Activate ephemeral with the default lifetime set by linphone_core_set_default_ephemeral_lifetime().
+ *
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return 0 if successful, -1 otherwise
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_chat_room_activate_ephemeral_2(LinphoneChatRoom *chat_room);
+
+/**
+ * Disable the ephemeral message feature in the chat room.
+ * See linphone_chat_room_activate_ephemeral() for more details.
+ *
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return 0 if successful, -1 otherwise
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_chat_room_deactivate_ephemeral(LinphoneChatRoom *chat_room);
 
 /**
  * Returns whether or not the ephemeral message feature is enabled in the chat room.
@@ -183,19 +204,9 @@ LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral(LinphoneChatRoom *chat_
 LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled(const LinphoneChatRoom *chat_room);
 
 /**
- * Sets lifetime (in seconds) for all new ephemeral messages in the chat room.
- * After the message is read, it will be deleted after "time" seconds.
- * @see linphone_chat_room_ephemeral_enabled()
- * @param chat_room #LinphoneChatRoom object @notnil
- * @param time The ephemeral lifetime, default is 0 (disabled)
- * @warning A value of "time" equal to 0 disables ephemeral messages
- */
-LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime(LinphoneChatRoom *chat_room, long time);
-
-/**
  * Gets lifetime (in seconds) for all new ephemeral messages in the chat room.
  * After the message is read, it will be deleted after "time" seconds.
- * @see linphone_chat_room_ephemeral_enabled()
+ * @see linphone_chat_room_activate_ephemeral()
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return the ephemeral lifetime (in secoonds)
  */
@@ -874,6 +885,34 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(Li
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage *linphone_chat_room_create_message(LinphoneChatRoom *chat_room,
                                                                                            const char *message);
+
+/**
+ * Enable or disable the ephemeral message feature in the chat room. Works only for flexisip-based chat room.
+ * An ephemeral message will automatically disappear from the sender and recipient's chatrooms after a specified
+ * timeout configurable with linphone_chat_room_set_ephemeral_lifetime().
+ * The timer starts when the message has been displayed at the recipent, which means:
+ * - at recipient side when linphone_chat_room_mark_as_read() is called.
+ * - at sender side, when the message enters the state LinphoneChatMessageStateDisplayed (when receiving the displayed
+ * IMDN).
+ *
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param enable TRUE if the ephemeral message feature is enabled, FALSE otherwise.
+ * @deprecated 20/02/2026. Use linphone_chat_room_activate_ephemeral() or linphone_chat_room_deactivate_ephemeral()
+ * instead.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral(LinphoneChatRoom *chat_room, bool_t enable);
+
+/**
+ * Sets lifetime (in seconds) for all new ephemeral messages in the chat room.
+ * After the message is read, it will be deleted after "time" seconds.
+ * @see linphone_chat_room_ephemeral_enabled()
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param time The ephemeral lifetime, default is 0 (disabled)
+ * @warning A value of "time" equal to 0 disables ephemeral messages
+ * @deprecated 20/02/2026. Use linphone_chat_room_activate_ephemeral() or linphone_chat_room_deactivate_ephemeral()
+ * instead.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime(LinphoneChatRoom *chat_room, long time);
 
 /**
  * @}

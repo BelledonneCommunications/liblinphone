@@ -6576,8 +6576,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 					unsigned int lastNotifyId = d->dbSession.getUnsignedInt(chatRoomRow, 7, 0);
 
 					params->setUtf8Subject(subject);
-					params->getChatParams()->setEphemeralLifetime((long)chatRoomRow.get<double>(11));
-					params->getChatParams()->enableEphemeral(!!chatRoomRow.get<int>(10, 0));
+					params->getChatParams()->enableEphemeral((long)chatRoomRow.get<double>(11));
 					const auto &conferenceAddress = conferenceId.getPeerAddress();
 					params->setConferenceAddress(conferenceAddress);
 

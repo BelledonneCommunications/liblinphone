@@ -207,10 +207,8 @@ static void call_received(SalCallOp *h) {
 		                                   : ConferenceParams::SecurityLevel::None);
 		params->setGroup(!isOneToOne);
 		params->getChatParams()->setEphemeralMode(ephemeralMode);
-		params->getChatParams()->enableEphemeral((ephemeralMode == AbstractChatRoom::EphemeralMode::AdminManaged) &&
-		                                         (parsedEphemeralLifeTime > 0));
+		params->getChatParams()->enableEphemeral(parsedEphemeralLifeTime);
 		params->getChatParams()->setBackend(ChatParams::Backend::FlexisipChat);
-		params->getChatParams()->setEphemeralLifetime(parsedEphemeralLifeTime);
 #else
 		lWarning() << "Unable to add chat capabilities to parameters [" << params
 		           << "] because advanced IM such as group chat is disabled!";

@@ -78,8 +78,28 @@ void linphone_chat_params_set_ephemeral_mode(LinphoneChatParams *params, Linphon
 	ChatParams::toCpp(params)->setEphemeralMode(static_cast<AbstractChatRoom::EphemeralMode>(mode));
 }
 
+// Note: Java wrapper doesn't like long parameters because it can be conflicts with native pointer.
+LinphoneStatus linphone_chat_params_activate_ephemeral(LinphoneChatParams *params, unsigned int lifetime) {
+	if (lifetime > 0) {
+		ChatParams::toCpp(params)->enableEphemeral(lifetime);
+		return 0;
+	} else {
+		lWarning() << "Cannot activate ephemeral in Chat parameters because lifetime is not positive.";
+		return -1;
+	}
+}
+
+void linphone_chat_params_deactivate_ephemeral(LinphoneChatParams *params) {
+	ChatParams::toCpp(params)->enableEphemeral(0);
+}
+
+// Deprecated
 void linphone_chat_params_set_ephemeral_lifetime(LinphoneChatParams *params, long lifetime) {
-	ChatParams::toCpp(params)->setEphemeralLifetime(lifetime);
+	if (lifetime > 0) {
+		linphone_chat_params_activate_ephemeral(params, static_cast<unsigned int>(lifetime));
+	} else {
+		linphone_chat_params_deactivate_ephemeral(params);
+	}
 }
 
 void linphone_chat_params_enable_rtt(LinphoneChatParams *params, bool_t rtt) {
