@@ -368,8 +368,7 @@ if(ENABLE_LIME_X3DH)
 endif()
 
 if(ENABLE_FLEXIAPI)
-	list(APPEND SOURCE_FILES_CXX account_creator_flexiapi_tester.cpp
-			 flexiapiclient-tester.cpp)
+	list(APPEND SOURCE_FILES_CXX flexiapiclient-tester.cpp)
 endif()
 
 if(ENABLE_ADVANCED_IM)

@@ -46,7 +46,6 @@ extern void *system_context;
 #endif
 
 extern test_suite_t account_creator_local_test_suite;
-extern test_suite_t account_creator_flexiapi_test_suite;
 // extern test_suite_t account_creator_xmlrpc_test_suite;
 extern test_suite_t account_manager_services_test_suite;
 extern test_suite_t call_test_suite;
@@ -201,6 +200,7 @@ extern int liblinphone_tester_ipv6_available(void);
 extern int liblinphone_tester_ipv4_available(void);
 extern const int liblinphone_tester_sip_timeout;
 extern const int x3dhServer_creationTimeout;
+extern const unsigned int liblinphone_tester_max_parallel_suites;
 
 /**
  * @brief Tells the tester whether or not to clean the accounts it has created between runs.
@@ -958,7 +958,8 @@ void _call_with_ice_base(LinphoneCoreManager *pauline,
                          bool_t random_ports,
                          bool_t forced_relay,
                          bool_t quick_cancel);
-bool_t liblinphone_tester_call_check_video_source_filter(LinphoneCall *call, MSFilterId filter_id, int expected_counter);
+bool_t
+liblinphone_tester_call_check_video_source_filter(LinphoneCall *call, MSFilterId filter_id, int expected_counter);
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec);
 void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted);
 

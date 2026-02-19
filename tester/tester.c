@@ -110,8 +110,10 @@ const MSAudioDiffParams audio_cmp_params = {10, 200};
  * first. */
 const char *flexisip_tester_dns_server = "fs-test-9.linphone.org";
 // const char *flexisip_tester_dns_server = "fs-test-sandbox-2.linphone.org";
-const char *mysql_username_password_string = "user='belledonne' password='cOmmu2015nicatiOns'";
+// const char *flexisip_tester_dns_server = "fs-test-10.linphone.org";
+//  const char *flexisip_tester_dns_server = "fs-test-sandbox-3.linphone.org";
 
+const char *mysql_username_password_string = "user='belledonne' password='cOmmu2015nicatiOns'";
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char *ccmp_server_url = "http://sip.example.org:3333/xml/";
 const char *test_domain = "sipopen.example.org";
@@ -160,6 +162,7 @@ const char *liblinphone_tester_ipv6_probing_address = "2a01:e00::2";
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;
 unsigned int liblinphone_tester_max_cpu_count = 2;
+const unsigned int liblinphone_tester_max_parallel_suites = 32;
 
 const int liblinphone_tester_sip_timeout = 10000; // in ms, use this value for default SIP operation timeout
 const int x3dhServer_creationTimeout = 20000;     // in ms, use this value for default lime user creation timeout

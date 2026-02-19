@@ -372,7 +372,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	    wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneGlobalOn, 1, liblinphone_tester_sip_timeout));
 
 	std::string url =
-	    linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
+	    linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", "");
 	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NOT_NULL(friendList);
 	if (friendList) {

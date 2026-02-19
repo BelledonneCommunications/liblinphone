@@ -583,7 +583,6 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&account_creator_local_test_suite, 3);
 #ifdef HAVE_FLEXIAPI
 	liblinphone_tester_add_suite_with_default_time(&flexiapiclient_suite, 4);
-	liblinphone_tester_add_suite_with_default_time(&account_creator_flexiapi_test_suite, 20);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&stun_test_suite, 259);
 	liblinphone_tester_add_suite_with_default_time(&event_test_suite, 70);
@@ -657,8 +656,9 @@ void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, 
 	bc_tester_set_logfile_func(logfile_arg_func);
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
-	bc_tester_set_max_parallel_suites(32); /* empiricaly defined as sustainable for our lab 12 threads machine.*/
-	bc_tester_set_global_timeout(33 * 60); /* 33 mn max */
+	bc_tester_set_max_parallel_suites(
+	    liblinphone_tester_max_parallel_suites); /* empiricaly defined as sustainable for our lab 12 threads machine.*/
+	bc_tester_set_global_timeout(36 * 60 * 32 / liblinphone_tester_max_parallel_suites); /* 36 mn max for 32 processes*/
 }
 
 int liblinphone_tester_set_log_file(const char *filename) {

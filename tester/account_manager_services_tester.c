@@ -297,8 +297,8 @@ static void mobile_request_account_creation_request_token_by_push(void) {
 
 	// Request an account creation token to be sent by push
 	LinphoneAccountManagerServicesRequest *request =
-	    linphone_account_manager_services_create_send_account_creation_token_by_push_request(ams, "liblinphone_tester",
-	                                                                                         "param", "prid");
+	    linphone_account_manager_services_create_send_account_creation_token_by_push_request(ams, "apns.dev", "param",
+	                                                                                         "prid");
 	BC_ASSERT_PTR_NOT_NULL(request);
 	linphone_account_manager_services_request_add_callbacks(request, cbs);
 	linphone_account_manager_services_request_submit(request);

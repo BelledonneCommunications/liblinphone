@@ -30,6 +30,29 @@
 #include "linphone/core_utils.h"
 #include "tester_utils.h"
 
+// List coming from dialplan
+const int sPhoneCountryWhitelist[] = {
+    1,   20,  212, 213, 216, 218, 221, 222, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236,
+    240, 242, 243, 244, 246, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 260, 261, 262, 263, 266, 267,
+    268, 269, 27,  290, 299, 30,  31,  32,  33,  34,  351, 352, 353, 354, 356, 357, 36,  370, 371, 373, 376,
+    377, 378, 380, 381, 382, 386, 387, 389, 39,  40,  41,  420, 421, 423, 43,  44,  45,  46,  47,  48,  500,
+    501, 502, 503, 505, 506, 507, 508, 509, 51,  53,  54,  55,  56,  57,  58,  592, 593, 594, 595, 598, 60,
+    61,  62,  63,  64,  65,  66,  670, 673, 674, 676, 678, 679, 680, 682, 683, 685, 686, 687, 688, 689, 691,
+    692, 7,   81,  84,  850, 852, 853, 855, 856, 86,  880, 886, 92,  93,  94,  95,  960, 961, 962, 963, 964,
+    965, 966, 967, 968, 970, 971, 972, 973, 974, 975, 976, 977, 98,  992, 993, 994, 995, 996, 998};
+
+static bool_t check_phone_country(const int country) {
+	size_t index = 0;
+	size_t len = sizeof(sPhoneCountryWhitelist) / sizeof(int);
+	while (index < len) {
+		if (sPhoneCountryWhitelist[index] == country) {
+			return TRUE;
+		}
+		++index;
+	}
+	return FALSE;
+}
+
 static void enable_publish(LinphoneCoreManager *mgr, bool_t enable) {
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mgr->lc);
 	linphone_proxy_config_edit(cfg);
@@ -97,13 +120,13 @@ char *generate_random_e164_phone(void) {
 	const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
 
 	while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan ||
-	       (strcmp("52", linphone_dial_plan_get_country_calling_code(dialPlan)) == 0))
+	       !check_phone_country(atoi(linphone_dial_plan_get_country_calling_code(dialPlan))))
+		//|| (strcmp("52", linphone_dial_plan_get_country_calling_code(dialPlan)) == 0))
 		; // fixme Linphone Mexican's dialplan has 2 ccc
 	belle_sip_object_remove_from_leak_detector((void *)genericDialPlan);
 	belle_sip_object_remove_from_leak_detector(
 	    (void *)dialPlan); // because mostCommon dial plan is a static object freed at the end of the process. This f is
 	                       // only to avoid wrong leak detection.
-
 	return generate_random_e164_phone_from_dial_plan(dialPlan);
 }
 
@@ -714,7 +737,8 @@ static void consolidated_presence_account_publish_disabled(void) {
 	stats marie_stat = marie->stat;
 	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceBusy);
 
-	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, marie_stat.number_of_LinphonePublishOk + 1));
+	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk,
+	                         marie_stat.number_of_LinphonePublishOk + 1));
 
 	marie_account = linphone_core_get_default_account(marie->lc);
 	marie_account_params = linphone_account_get_params(marie_account);
@@ -723,7 +747,8 @@ static void consolidated_presence_account_publish_disabled(void) {
 	marie_stat = marie->stat;
 	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOffline);
 
-	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishCleared, marie_stat.number_of_LinphonePublishCleared + 1));
+	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishCleared,
+	                         marie_stat.number_of_LinphonePublishCleared + 1));
 
 	marie_account = linphone_core_get_default_account(marie->lc);
 	marie_account_params = linphone_account_get_params(marie_account);
@@ -732,7 +757,8 @@ static void consolidated_presence_account_publish_disabled(void) {
 	marie_stat = marie->stat;
 	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOnline);
 
-	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, marie_stat.number_of_LinphonePublishOk + 1));
+	BC_ASSERT_FALSE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk,
+	                         marie_stat.number_of_LinphonePublishOk + 1));
 
 	marie_account = linphone_core_get_default_account(marie->lc);
 	marie_account_params = linphone_account_get_params(marie_account);
@@ -1325,7 +1351,8 @@ static void long_term_presence_with_phone_without_sip(void) {
 		LinphoneCoreManager *marie = NULL;
 		char *identity = NULL;
 
-		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan)
+		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan ||
+		       !check_phone_country(atoi(linphone_dial_plan_get_country_calling_code(dialPlan))))
 			;
 		/*now with have a dialplan*/
 		phone = generate_random_phone_from_dial_plan(dialPlan);
@@ -2432,10 +2459,9 @@ static void notify_friend_capabilities_after_publish(void) {
 	linphone_friend_list_set_rls_uri(mFriendList, "sip:rls@sip.example.org");
 
 	linphone_friend_list_add_friend(mFriendList, mPaulineFriend);
-
 	linphone_friend_list_enable_subscriptions(mFriendList, TRUE);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyPresenceReceived, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyPresenceReceived, 3, 5000));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePresenceActivityVacation, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePresenceActivityTV, 1, 1000));
@@ -2476,7 +2502,8 @@ static void notify_friend_capabilities_with_alias(void) {
 		LinphoneCoreManager *laure = NULL;
 		bctbx_list_t *specs = NULL;
 
-		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan)
+		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan ||
+		       !check_phone_country(atoi(linphone_dial_plan_get_country_calling_code(dialPlan))))
 			;
 
 		char *phoneMarie = generate_random_phone_from_dial_plan(dialPlan);
@@ -2568,7 +2595,8 @@ static void notify_search_result_capabilities_with_alias(void) {
 		LinphoneMagicSearch *magicSearch = NULL;
 		bctbx_list_t *resultList = NULL;
 
-		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan)
+		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan ||
+		       !check_phone_country(atoi(linphone_dial_plan_get_country_calling_code(dialPlan))))
 			;
 		phoneMarie = generate_random_phone_from_dial_plan(dialPlan);
 		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
@@ -2655,7 +2683,8 @@ test_t presence_server_tests[] = {
     TEST_NO_TAG("Disabled presence", subscribe_presence_disabled),
     TEST_NO_TAG("Presence list", test_presence_list),
     TEST_NO_TAG("Presence list without compression", test_presence_list_without_compression),
-    TEST_NO_TAG("Consolidated presence with account with PUBLISH messages disabled", consolidated_presence_account_publish_disabled),
+    TEST_NO_TAG("Consolidated presence with account with PUBLISH messages disabled",
+                consolidated_presence_account_publish_disabled),
     TEST_NO_TAG("Presence list with two SIP addresses for same friend", test_presence_list_same_friend_two_addresses),
     TEST_NO_TAG("Presence list, subscription expiration for unknown contact",
                 test_presence_list_subscription_expire_for_unknown),
