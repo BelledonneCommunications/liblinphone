@@ -3726,7 +3726,7 @@ static void simple_conference_through_sip_conference_scheduler(void) {
 				ret = FALSE;
 			}
 			part_counter++;
-			wait_for_list(coresList, NULL, 0, 100);
+			if (ret == FALSE) wait_for_list(coresList, NULL, 0, 100);
 		} while ((part_counter < 100) && (ret == FALSE));
 		BC_ASSERT_TRUE(ret);
 		BC_ASSERT_EQUAL(bctbx_list_size(participant_device_list), 3, size_t, "%0zu");
@@ -3804,7 +3804,7 @@ static void simple_conference_through_sip_conference_scheduler(void) {
 				ret = FALSE;
 			}
 			part_counter++;
-			wait_for_list(coresList, NULL, 0, 100);
+			if (ret == FALSE) wait_for_list(coresList, NULL, 0, 100);
 		} while ((part_counter < 100) && (ret == FALSE));
 		BC_ASSERT_TRUE(ret);
 		BC_ASSERT_EQUAL(bctbx_list_size(participant_device_list), 3, size_t, "%0zu");

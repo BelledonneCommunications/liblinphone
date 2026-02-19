@@ -289,9 +289,11 @@ static void simple_register_with_custom_refresh_period(void) {
 	linphone_account_params_unref(account_params);
 
 	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &counters->number_of_LinphoneRegistrationOk, 1, 5000));
-	// The timeout of the timer is the upper bound of the refresh window in ms
+	// The timeout for starting the refresh is the upper bound of the refresh window in ms, and
+	// it must succeed within the usual liblinphone_tester_sip_timeout interval.
 	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &counters->number_of_LinphoneRegistrationOk, 2,
-	                              (1000 * max_refresh * expires) / 100));
+	                              (1000 * max_refresh * expires) / 100) +
+	               liblinphone_tester_sip_timeout);
 
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 0, int, "%d");
 
