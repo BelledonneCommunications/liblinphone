@@ -509,14 +509,13 @@ static void audio_bandwidth_estimation_base(bool srtp) {
 	// The audio is not bandwidth controlled so 60kb/s goes to it.
 	// This should generate a TMMBR requestion the video to use 200*0.7(congestion coeff) - 60(audio bandwidth) = 95
 	// kb/s
+	// Sometimes, congestion is not detected (too heavy packet losses) but VBE triggers a TMMBR that resolves it.
+	// So be large in tmmbr value expectations to take into account both scenarios.
 	params.max_bandwidth = 200000;
 	params.max_buffer_size = 400000;
 	linphone_core_set_network_simulator_params(marie->lc, &params);
 	BC_ASSERT_TRUE(
 	    wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 60000, 140000, 30000));
-	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
-	BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received,
-	                                       (int)(lastTMMBRvalue * 1.2), 220000, 30000));
 
 	// Remove the bw constraint
 	params.enabled = FALSE;

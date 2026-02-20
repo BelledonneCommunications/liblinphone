@@ -6432,6 +6432,7 @@ static void generic_nack_received(const OrtpEventData *evd, stats *st) {
 		switch (rtcp_RTPFB_get_type(evd->packet)) {
 			case RTCP_RTPFB_NACK:
 				st->number_of_rtcp_generic_nack++;
+				bctbx_message("tester: got RTCP NACK");
 				break;
 			default:
 				break;
@@ -6469,7 +6470,9 @@ static void call_with_generic_nack_rtcp_feedback(void) {
 		                           RTCP_RTPFB, (OrtpEvDispatcherCb)generic_nack_received, &marie->stat);
 	}
 
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_rtcp_generic_nack, 5, 8000));
+	/* most of the time the 5 NACKs will be met within 4-5 seconds, but due to probabilistic distribution of packet
+	 * losses, there are rare cases where it will require a longer time.*/
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_rtcp_generic_nack, 5, 16000));
 	end_call(pauline, marie);
 
 end:

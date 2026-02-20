@@ -5993,7 +5993,7 @@ test_t secure_group_chat2_tests[] = {
                   "LimeX3DH",
                   "LeaksMemory" /*due to core restart*/)};
 
-test_t secure_group_chat_exhume_tests[] = {
+static test_t secure_group_chat_exhume_tests[] = {
     TEST_ONE_TAG(
         "LIME X3DH exhumed one-to-one chat room 1", exhume_group_chat_lime_x3dh_one_to_one_chat_room_1, "LimeX3DH"),
     TEST_ONE_TAG(
@@ -6004,7 +6004,7 @@ test_t secure_group_chat_exhume_tests[] = {
         "LIME X3DH exhumed one-to-one chat room 4", exhume_group_chat_lime_x3dh_one_to_one_chat_room_4, "LimeX3DH"),
 };
 
-test_t secure_message_tests[] = {
+static test_t secure_message_tests[] = {
     TEST_ONE_TAG("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH message while offline", group_chat_lime_x3dh_send_encrypted_message_offline, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH"),
@@ -6052,7 +6052,7 @@ test_t secure_message_tests[] = {
                  group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_different_gruu,
                  "LimeX3DH")};
 
-test_t secure_message2_tests[] = {
+static test_t secure_message2_tests[] = {
     TEST_ONE_TAG("LIME X3DH verify SAS before message", group_chat_lime_x3dh_verify_sas_before_message, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH reject SAS before message", group_chat_lime_x3dh_reject_sas_before_message, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH message before verify SAS", group_chat_lime_x3dh_message_before_verify_sas, "LimeX3DH"),

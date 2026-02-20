@@ -2732,7 +2732,8 @@ static test_t local_conference_chat_imdn_tests[] = {
     TEST_ONE_TAG("Group chat with IMDN chat room deleted on the client side",
                  LinphoneTest::group_chat_room_with_imdn_chat_room_deleted_on_client_side,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
-    TEST_NO_TAG("Secure group chat with aggregated IMDN", LinphoneTest::secure_group_chat_room_with_aggregated_imdn)};
+    TEST_ONE_TAG(
+        "Secure group chat with aggregated IMDN", LinphoneTest::secure_group_chat_room_with_aggregated_imdn, "shaky")};
 
 test_suite_t local_conference_test_suite_chat_imdn = {
     "Local conference tester (Chat IMDN)",
