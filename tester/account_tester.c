@@ -607,6 +607,23 @@ static void account_no_unnecessary_register_on_push_token_reception(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void account_set_params_with_core_off(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1,
+	                              liblinphone_tester_sip_timeout));
+	linphone_core_stop(marie->lc);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneGlobalOff, 1, 5000));
+
+	LinphoneAccountParams *cloned_params = linphone_account_params_clone(linphone_account_get_params(marie_account));
+	// This is just a change that would require to trigger a register if the core was on
+	linphone_account_params_set_push_notification_allowed(cloned_params, true);
+	linphone_account_set_params(marie_account, cloned_params);
+	linphone_account_params_unref(cloned_params);
+
+	linphone_core_manager_destroy(marie);
+}
+
 static test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
     TEST_NO_TAG("Simple account creation with removal", simple_account_creation_with_removal),
@@ -627,6 +644,7 @@ static test_t account_tests[] = {
     TEST_NO_TAG("Supported tags handled by account (empty list)", supported_tags_handled_by_account_empty_list_test),
     TEST_NO_TAG("Receiving a push token doesn't trigger a new register if push are disabled",
                 account_no_unnecessary_register_on_push_token_reception),
+    TEST_NO_TAG("Trying to set account params after core has been stopped", account_set_params_with_core_off),
 };
 
 test_suite_t account_test_suite = {"Account",

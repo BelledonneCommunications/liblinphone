@@ -636,6 +636,11 @@ LinphoneCore *CorePrivate::getCCore() const {
 }
 
 void CorePrivate::doLater(const std::function<void()> &something) {
+	L_Q();
+	if (!q->getCCore()->sal) {
+		lError() << "Cannot schedule a task with doLater because the Sal is currently not initalized";
+		return;
+	}
 	return belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
 }
 
