@@ -45,13 +45,19 @@ public:
 		ost << "Identity: " << linphone_account_params_get_identity(params) << endl;
 		ost << "Proxy: " << linphone_account_params_get_server_addr(params) << endl;
 
-		bctbx_list_t *routes = linphone_account_params_get_routes_addresses(params);
-		char *route = linphone_address_as_string((LinphoneAddress *)bctbx_list_get_data(routes));
-		if (route != NULL) {
-			ost << "Route: " << route << endl;
+		if (bctbx_list_t *routes = linphone_account_params_get_routes_addresses(params)) {
+			for (bctbx_list_t *it = routes; it != NULL; it = bctbx_list_next(it)) {
+				char *route = linphone_address_as_string((LinphoneAddress *)bctbx_list_get_data(routes));
+				if (route != NULL) {
+					ost << "Route: " << route << endl;
+				}
+				bctbx_free(route);
+			}
+			// linphone_account_params_get_routes_addresses does not require a bctbx_list_free_with_data
+			bctbx_list_free(routes);
+		} else {
+			ost << "Route: no route found for account " << account << endl;
 		}
-		bctbx_free(route);
-		bctbx_list_free_with_data(routes, (bctbx_list_free_func)linphone_address_unref);
 
 		ost << "State: " << linphone_registration_state_to_string(linphone_account_get_state(account)) << endl;
 		setBody(ost.str());
