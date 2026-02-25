@@ -148,7 +148,7 @@ const std::string &ConferenceParams::getSubject() const {
 }
 
 void ConferenceParams::setUtf8Subject(const std::string &subject) {
-	mUtf8Subject = subject;
+	mUtf8Subject = Utils::trim(subject);
 }
 
 void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {

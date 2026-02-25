@@ -255,6 +255,7 @@ static void call_received(SalCallOp *h) {
 			const auto peerAddressWithoutGruu = Address::create(remoteContact->getUriWithoutGruu());
 			chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientChatRoom(to, conferenceId, h, params);
 		}
+		if (!chatRoom) return;
 
 		conference = chatRoom->getConference();
 		if (oneToOneChatRoom == "true") {
