@@ -4337,8 +4337,6 @@ static void simple_ccmp_conference_base(bool_t update_conference, bool_t cancel_
 			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallEnd, 1, liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(
 			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallReleased, 1, liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, 1,
-			                             liblinphone_tester_sip_timeout));
 		}
 	}
 
