@@ -1130,6 +1130,11 @@ void SalCallOp::processRequestEventCb(void *userCtx, const belle_sip_request_eve
 			break;
 		default:
 			lError() << "Unexpected dialog state [" << belle_sip_dialog_state_to_string(dialogState) << "]";
+			if (serverTransaction) {
+				/* The server transaction must be replied. */
+				belle_sip_server_transaction_send_response(serverTransaction,
+				                                           op->createResponseFromRequest(request, 481));
+			}
 			break;
 	}
 
