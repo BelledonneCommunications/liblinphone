@@ -753,7 +753,7 @@ void MediaSessionPrivate::updated(bool isUpdate) {
 bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &finalMd,
                                                const std::shared_ptr<SalMediaDescription> &remoteMd) const {
 	L_Q();
-	if (isEncryptionMandatory()) {
+	if (remoteMd && isEncryptionMandatory()) {
 		const auto negotiatedEncryption = getNegotiatedMediaEncryption();
 		// zrtp-hash attribute is not mandatory, therefore the value returned by SalMediaDescription::hasZrtp() may be
 		// misleading
@@ -2254,11 +2254,11 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 						foundStreamIdx = refMd->findIdxStreamWithContent(content, std::string());
 					}
 				}
-				const auto addStream =
-				    ((foundStreamIdx != -1) ||
-				     (localIsOfferer && !conferenceServerEnabled && (deviceState == ParticipantDevice::State::Joining)) ||
-				     (deviceState == ParticipantDevice::State::Present) ||
-				     (deviceState == ParticipantDevice::State::OnHold));
+				const auto addStream = ((foundStreamIdx != -1) ||
+				                        (localIsOfferer && !conferenceServerEnabled &&
+				                         (deviceState == ParticipantDevice::State::Joining)) ||
+				                        (deviceState == ParticipantDevice::State::Present) ||
+				                        (deviceState == ParticipantDevice::State::OnHold));
 				if (addStream) {
 					SalStreamDescription &newStream = addStreamToMd(md, foundStreamIdx, oldMd);
 					newStream.type = type;

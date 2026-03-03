@@ -1792,7 +1792,10 @@ static int im_encryption_engine_process_outgoing_message_cb(BCTBX_UNUSED(Linphon
 	return -1;
 }
 
-static void group_chat_room_message(bool_t encrypt, bool_t sal_error, bool_t im_encryption_mandatory) {
+static void group_chat_room_message(bool_t encrypt,
+                                    bool_t sal_error,
+                                    bool_t im_encryption_mandatory,
+                                    bool_t set_core_media_encryption) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -1803,6 +1806,17 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error, bool_t im_
 	coresManagerList = bctbx_list_append(coresManagerList, chloe);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
+
+	if (set_core_media_encryption) {
+		bctbx_list_t *it = coresManagerList;
+		while (it) {
+			LinphoneCoreManager *manager = bctbx_list_get_data(it);
+			linphone_core_set_media_encryption_mandatory(manager->lc, TRUE);
+			linphone_core_set_media_encryption(manager->lc, LinphoneMediaEncryptionDTLS);
+			it = bctbx_list_next(it);
+		}
+	}
+
 	participantsAddresses =
 	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses =
@@ -2037,23 +2051,27 @@ end:
 }
 
 static void group_chat_room_send_message(void) {
-	group_chat_room_message(FALSE, FALSE, FALSE);
+	group_chat_room_message(FALSE, FALSE, FALSE, FALSE);
 }
 
 static void group_chat_room_send_message_im_encryption_mandatory(void) {
-	group_chat_room_message(FALSE, FALSE, TRUE);
+	group_chat_room_message(FALSE, FALSE, TRUE, FALSE);
+}
+
+static void group_chat_room_send_message_im_encryption_mandatory_and_core(void) {
+	group_chat_room_message(FALSE, FALSE, TRUE, TRUE);
 }
 
 static void group_chat_room_send_message_encrypted(void) {
-	group_chat_room_message(TRUE, FALSE, FALSE);
+	group_chat_room_message(TRUE, FALSE, FALSE, FALSE);
 }
 
 static void group_chat_room_send_message_encrypted_im_encryption_mandatory(void) {
-	group_chat_room_message(TRUE, FALSE, TRUE);
+	group_chat_room_message(TRUE, FALSE, TRUE, FALSE);
 }
 
 static void group_chat_room_send_message_with_error(void) {
-	group_chat_room_message(FALSE, TRUE, FALSE);
+	group_chat_room_message(FALSE, TRUE, FALSE, FALSE);
 }
 
 static void group_chat_room_invite_multi_register_account(void) {
@@ -3199,11 +3217,14 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 			coresManagerList = bctbx_list_append(coresManagerList, laure);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneSubscriptionActive, 1,
-			     liblinphone_tester_sip_timeout));
+			                             liblinphone_tester_sip_timeout));
 
 			initialLaureStats = laure->stat;
 
-			// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the client turns its network on before the transaction expires, preventing it to move to the Release state on the server side
+			// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the
+			// server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is
+			// offline and the client turns its network on before the transaction expires, preventing it to move to the
+			// Release state on the server side
 			ms_message("%s toggles its network", linphone_core_get_identity(laure->lc));
 			linphone_core_set_network_reachable(laure->lc, FALSE);
 			linphone_core_set_network_reachable(laure->lc, TRUE);
@@ -7119,22 +7140,27 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				    wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateTerminated, 1, 5000));
 
 				stats initialPaulineStats = pauline->stat;
-				// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the client turns its network on before the transaction expires, preventing it to move to the Release state on the server side
+				// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of
+				// the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the
+				// client is offline and the client turns its network on before the transaction expires, preventing it
+				// to move to the Release state on the server side
 				ms_message("%s toggles its network", linphone_core_get_identity(pauline->lc));
 				linphone_core_set_network_reachable(pauline->lc, FALSE);
 				linphone_core_set_network_reachable(pauline->lc, TRUE);
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneSubscriptionActive,
-							     initialPaulineStats.number_of_LinphoneSubscriptionActive + 1,
-							     liblinphone_tester_sip_timeout));
+				                             initialPaulineStats.number_of_LinphoneSubscriptionActive + 1,
+				                             liblinphone_tester_sip_timeout));
 
 				paulineOneToOneCr = linphone_core_get_chat_room(pauline->lc, exhumedConfAddr);
 				int part_counter = 0;
 				do {
 					part_counter++;
 					wait_for_list(coresList, NULL, 0, 100);
-				} while ((part_counter < 100) && (linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr) == 0));
-				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int, "%d");
+				} while ((part_counter < 100) &&
+				         (linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr) == 0));
+				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int,
+				                "%d");
 			} else {
 				// Pauline goes back online
 				ms_message("%s comes back online", linphone_core_get_identity(pauline->lc));
@@ -7917,7 +7943,10 @@ static void group_chat_room_subscription_denied(void) {
 	                             initialPaulineStats.number_of_LinphoneSubscriptionError + 1,
 	                             liblinphone_tester_sip_timeout));
 
-	// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the client turns its network on before the transaction expires, preventing it to move to the Release state on the server side
+	// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the server to
+	// BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is offline and the
+	// client turns its network on before the transaction expires, preventing it to move to the Release state on the
+	// server side
 	ms_message("%s toggles its network", linphone_core_get_identity(pauline->lc));
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
@@ -9840,6 +9869,8 @@ test_t group_chat_tests[] = {
     TEST_ONE_TAG("Add participant", group_chat_room_add_participant, "LeaksMemory"),
     TEST_NO_TAG("Send message", group_chat_room_send_message),
     TEST_NO_TAG("Send message IM encryption mandatory", group_chat_room_send_message_im_encryption_mandatory),
+    TEST_NO_TAG("Send message IM encryption mandatory and core",
+                group_chat_room_send_message_im_encryption_mandatory_and_core),
     TEST_NO_TAG("Send encrypted message", group_chat_room_send_message_encrypted),
     TEST_NO_TAG("Send encrypted message IM encryption mandatory",
                 group_chat_room_send_message_encrypted_im_encryption_mandatory),
