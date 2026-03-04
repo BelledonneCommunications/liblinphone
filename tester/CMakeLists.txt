@@ -135,9 +135,12 @@ set(DB_FILES
 	db/chatroom_conference.db
 	db/chatroom_duplicates.db
 	db/server_chatroom_duplicates.db
-	db/server_1k_chatrooms.db
-	db/server_30k_chatrooms.db
-	db/server_100k_chatrooms.db
+)
+
+set(DB_DOWNLOADED_FILES
+	db/downloads/server_1k_chatrooms.db
+	db/downloads/server_30k_chatrooms.db
+	db/downloads/server_100k_chatrooms.db
 )
 
 set(RC_FILES
@@ -249,6 +252,7 @@ set(OTHER_FILES
 set(IOS_RESOURCES_FILES
 	${OTHER_FILES}
 	${DB_FILES}
+	${DB_DOWNLOADED_FILES}
 	certificates
 	images
 	rcfiles
@@ -439,22 +443,48 @@ set(LINPHONETESTER_RESOURCES
 )
 
 set(nbKChatRooms 1;30;100)
+set(DB_DOWNLOAD_DIRECTORY "downloads")
+set(DB_SRC_DIRECTORY_PATH "${CMAKE_CURRENT_SOURCE_DIR}/db/${DB_DOWNLOAD_DIRECTORY}")
+set(DB_DIRECTORY_PATH "${CMAKE_BINARY_DIR}/db/${DB_DOWNLOAD_DIRECTORY}")
 foreach(K_CHATROOM 1 30 100)
 	set(DB_FILE "server_${K_CHATROOM}k_chatrooms.db")
-	set(DB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/db/${DB_FILE}")
+	set(DB_PATH "${DB_DIRECTORY_PATH}/${DB_FILE}")
+	set(DB_SRC_PATH "${DB_SRC_DIRECTORY_PATH}/${DB_FILE}")
 	set(DB_URL "https://download.linphone.org/files/liblinphone_tester_db/${DB_FILE}")
-	if(EXISTS "${DB_PATH}")
-		message(STATUS "Deleting database ${DB_FILE}")
-		FILE(REMOVE "${DB_FILE}")
+	if(NOT EXISTS "${DB_DIRECTORY_PATH}")
+		FILE(MAKE_DIRECTORY ${DB_DIRECTORY_PATH} RESULT MKDIR_EXIT_CODE)
+		if(NOT ${MKDIR_EXIT_CODE} EQUAL 0)
+			message(FATAL_ERROR "Unable to make directory at ${DB_DIRECTORY_PATH}")
+		endif()
 	endif()
-	message(STATUS "Downloading database ${DB_FILE} from ${DB_URL}")
-	FILE(DOWNLOAD "${DB_URL}" "${DB_PATH}"
-		STATUS DOWNLOAD_STATUS
-	)
-	list(GET DOWNLOAD_STATUS 0 DOWNLOAD_EXIT_CODE)
-	if(NOT ${DOWNLOAD_EXIT_CODE} EQUAL 0)
-		list(GET DOWNLOAD_STATUS 1 DOWNLOAD_ERROR_MESSAGE)
-		message(FATAL_ERROR "${DB_FILE} has not been successfully downloaded (error: ${DOWNLOAD_ERROR_MESSAGE})")
+	if(EXISTS "${DB_PATH}")
+		message(STATUS "${DB_PATH} already exists hence no need to download again the file from ${DB_URL}")
+	else()
+		if(NOT EXISTS "${DB_SRC_DIRECTORY_PATH}")
+			FILE(MAKE_DIRECTORY ${DB_SRC_DIRECTORY_PATH} RESULT MKDIR_SRC_EXIT_CODE)
+			if(NOT ${MKDIR_SRC_EXIT_CODE} EQUAL 0)
+				message(FATAL_ERROR "Unable to make directory at ${DB_SRC_DIRECTORY_PATH}")
+			endif()
+		endif()
+		if(EXISTS "${DB_SRC_PATH}")
+			message(STATUS "Deleting database ${DB_SRC_PATH}")
+			FILE(REMOVE "${DB_SRC_PATH}")
+		endif()
+
+		message(STATUS "Downloading database ${DB_FILE} from ${DB_URL} to ${DB_PATH}")
+		FILE(DOWNLOAD "${DB_URL}" "${DB_PATH}"
+			STATUS DOWNLOAD_STATUS
+		)
+		list(GET DOWNLOAD_STATUS 0 DOWNLOAD_EXIT_CODE)
+		if(NOT ${DOWNLOAD_EXIT_CODE} EQUAL 0)
+			list(GET DOWNLOAD_STATUS 1 DOWNLOAD_ERROR_MESSAGE)
+			message(FATAL_ERROR "${DB_FILE} has not been successfully downloaded (error: ${DOWNLOAD_ERROR_MESSAGE})")
+		endif()
+		# Create link to tester/db in case tests are run without installation
+		FILE(CREATE_LINK ${DB_PATH} ${DB_SRC_PATH} RESULT CREATE_LINK_EXIT_CODE)
+		if(NOT ${CREATE_LINK_EXIT_CODE} EQUAL 0)
+			message(FATAL_ERROR "Unable to create link ${DB_SRC_PATH} that points to ${DB_PATH}")
+		endif()
 	endif()
 endforeach()
 
@@ -593,6 +623,7 @@ if(NOT ANDROID)
 	install(FILES ${CERTIFICATE_CLIENT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/certificates/client")
 	install(FILES ${CERTIFICATE_CN_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/certificates/cn")
 	install(FILES ${DB_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/db")
+	install(FILES ${DB_DOWNLOADED_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/db/${DB_DOWNLOAD_DIRECTORY}")
 	install(FILES ${IMAGE_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/images")
 	install(FILES ${OTHER_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester")
 	install(FILES ${RC_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/rcfiles")

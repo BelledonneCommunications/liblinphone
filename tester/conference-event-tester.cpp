@@ -2877,7 +2877,7 @@ void list_subscribe_with_100_chatrooms_out_of_30k_and_database_reload() {
 void list_subscribe_with_100_chatrooms_from_existing_database_1k() {
 	// Chatroom participant devices in the database are all in the Joining state, therefore the conference server send a
 	// NOTIFY full state for all chatrooms
-	char *dbPath = bc_tester_res("db/server_1k_chatrooms.db");
+	char *dbPath = bc_tester_res("db/downloads/server_1k_chatrooms.db");
 	BC_ASSERT_PTR_NULL(
 	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 1000, 100, false, "sqlite3"));
 	bc_free(dbPath);
@@ -2886,7 +2886,7 @@ void list_subscribe_with_100_chatrooms_from_existing_database_1k() {
 void list_subscribe_with_100_chatrooms_from_existing_database_30k() {
 	// Chatroom participant devices in the database are all in the Joining state, therefore the conference server send a
 	// NOTIFY full state for all chatrooms
-	char *dbPath = bc_tester_res("db/server_30k_chatrooms.db");
+	char *dbPath = bc_tester_res("db/downloads/server_30k_chatrooms.db");
 	BC_ASSERT_PTR_NULL(
 	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 30000, 100, false, "sqlite3"));
 	bc_free(dbPath);
@@ -2916,7 +2916,7 @@ void list_subscribe_with_100_chatrooms_out_of_100k_and_database_reload() {
 void list_subscribe_with_100_chatrooms_from_existing_database_100k() {
 	// Chatroom participant devices in the database are all in the Joining state, therefore the conference server send a
 	// NOTIFY full state for all chatrooms
-	char *dbPath = bc_tester_res("db/server_100k_chatrooms.db");
+	char *dbPath = bc_tester_res("db/downloads/server_100k_chatrooms.db");
 	BC_ASSERT_PTR_NULL(
 	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 100000, 100, false, "sqlite3"));
 	bc_free(dbPath);

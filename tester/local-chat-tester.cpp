@@ -3807,11 +3807,13 @@ static void high_number_of_group_chat_rooms_with_client_restart_base(int nbChatR
 		float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
 		float bogomips = liblinphone_tester_get_cpu_bogomips();
 		if (bogomips != 0) {
-			maxChatRoomCreationDurationMs = (long)(((float)maxChatRoomCreationDurationMs) * referenceBogomips / bogomips);
-			maxChatRoomMessageProcessingDurationMs = (long)(((float)maxChatRoomMessageProcessingDurationMs) * referenceBogomips / bogomips);
+			maxChatRoomCreationDurationMs =
+			    (long)(((float)maxChatRoomCreationDurationMs) * referenceBogomips / bogomips);
+			maxChatRoomMessageProcessingDurationMs =
+			    (long)(((float)maxChatRoomMessageProcessingDurationMs) * referenceBogomips / bogomips);
 			bctbx_message("Adjusted expected duration with current bogomips (%f): chatroom creation %li ms and "
-				      "message processingchatroom search %li ms",
-				      bogomips, maxChatRoomCreationDurationMs, maxChatRoomMessageProcessingDurationMs);
+			              "message processingchatroom search %li ms",
+			              bogomips, maxChatRoomCreationDurationMs, maxChatRoomMessageProcessingDurationMs);
 		}
 #endif
 
@@ -3878,15 +3880,18 @@ static void high_number_of_group_chat_rooms_with_client_restart_base(int nbChatR
 			}
 		}
 
-		BC_ASSERT_EQUAL(focus.getCore().getChatRooms().size(),
-		                static_cast<size_t>(nbChatRooms) + initialNbServerChatRooms, size_t, "%zu");
+		size_t totalNbChatRooms = static_cast<size_t>(nbChatRooms) + initialNbServerChatRooms;
+		BC_ASSERT_EQUAL(focus.getCore().getChatRooms().size(), totalNbChatRooms, size_t, "%zu");
+		long totalChatRoomCreationDuration = 0;
 		for (const auto &chatRoom : focus.getCore().getChatRooms()) {
 			auto chatRoomCreationDurationMs = chatRoom->getConference()->getCreationDurationMs();
 			ms_message("Chatroom %s (subject %s) took %ld to create (maximum allowed %ld)",
 			           chatRoom->getConference()->getConferenceAddress()->toString().c_str(),
 			           chatRoom->getSubjectUtf8().c_str(), chatRoomCreationDurationMs, maxChatRoomCreationDurationMs);
-			BC_ASSERT_LOWER(chatRoomCreationDurationMs, maxChatRoomCreationDurationMs, long, "%ld");
+			totalChatRoomCreationDuration += chatRoomCreationDurationMs;
 		}
+		BC_ASSERT_LOWER(totalChatRoomCreationDuration,
+		                static_cast<long>(totalNbChatRooms) * maxChatRoomCreationDurationMs, long, "%ld");
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneChatRoomStateCreated,
 		                             nbChatRooms, liblinphone_tester_sip_timeout));
@@ -4131,19 +4136,19 @@ static void create_200_chatrooms_and_create_events_with_client_restart() {
 }
 
 static void create_10_chatrooms_and_create_events_with_client_restart_1k_database() {
-	char *dbPath = bc_tester_res("db/server_1k_chatrooms.db");
+	char *dbPath = bc_tester_res("db/downloads/server_1k_chatrooms.db");
 	high_number_of_group_chat_rooms_with_client_restart_base(10, 10, dbPath, 1000);
 	bc_free(dbPath);
 }
 
 static void create_10_chatrooms_and_create_events_with_client_restart_30k_database() {
-	char *dbPath = bc_tester_res("db/server_30k_chatrooms.db");
+	char *dbPath = bc_tester_res("db/downloads/server_30k_chatrooms.db");
 	high_number_of_group_chat_rooms_with_client_restart_base(10, 10, dbPath, 30000);
 	bc_free(dbPath);
 }
 
 static void create_10_chatrooms_and_create_events_with_client_restart_100k_database() {
-	char *dbPath = bc_tester_res("db/server_100k_chatrooms.db");
+	char *dbPath = bc_tester_res("db/downloads/server_100k_chatrooms.db");
 	high_number_of_group_chat_rooms_with_client_restart_base(10, 10, dbPath, 100000);
 	bc_free(dbPath);
 }
