@@ -160,8 +160,10 @@ void CorePrivate::init() {
 		}
 	}
 
-	q->enableConferenceServer(!!linphone_config_get_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", FALSE));
-	q->enableGruuInConferenceAddress(!!linphone_config_get_int(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", TRUE));
+	q->enableConferenceServer(
+	    !!linphone_config_get_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", FALSE));
+	q->enableGruuInConferenceAddress(
+	    !!linphone_config_get_int(linphone_core_get_config(lc), "misc", "keep_gruu_in_conference_address", TRUE));
 
 	if (linphone_factory_is_database_storage_available(linphone_factory_get()) &&
 	    !!linphone_core_database_enabled(lc)) {
@@ -378,6 +380,10 @@ void CorePrivate::createConferenceCleanupTimer(long period) {
 	stopConferenceCleanupTimer();
 	if (period > 0) {
 		auto onConferenceCleanup = [this]() -> bool {
+			// Clean up the database before checking which conferences have expired because calling
+			// Conference::terminate() deletes the conference information from the database and therefore the conference
+			// URI cannot be stored among the expired conference list anymore
+			mainDb->cleanupConferenceInfo(ms_time(NULL));
 			auto it = mConferenceById.begin();
 			while (it != mConferenceById.end()) {
 				auto [id, conference] = (*it);
@@ -391,7 +397,6 @@ void CorePrivate::createConferenceCleanupTimer(long period) {
 					conference->terminate();
 				}
 			};
-			mainDb->cleanupConferenceInfo(ms_time(NULL));
 			return BELLE_SIP_CONTINUE;
 		};
 		mConferenceCleanupTimer =
@@ -2302,16 +2307,22 @@ void Core::deleteConference(const shared_ptr<const Conference> &conference) {
 }
 
 /*
- * This function searches a conference that matches the arguments provided. It is not mandatory for the application to provide every argument, nonetheless the execution time depends on which of the are given.
- * If both the peer and local addresses are provided, then the search can be carried out directly on the conference map mConferenceById as its key is a ConferenceId object. This is the fastest way to look for a conference and compare against a participant list and/or parameters should they be given.
- * If either the peer or the local address is given, then the search will take longer as all items in the map must have their address checked against the provided one. The initial raw search may lead to find more than one conference and the participant list and/or parameters can help to get down to one item only.
- * The slowest way of finding a conference is by not giving neither the local nor the peer address as every conference will be matched against the participant list and/or the parameters
- * If multiple matches occur with the provided arguments, only one will be returned.
+ * This function searches a conference that matches the arguments provided. It is not mandatory for the application to
+ * provide every argument, nonetheless the execution time depends on which of the are given. If both the peer and local
+ * addresses are provided, then the search can be carried out directly on the conference map mConferenceById as its key
+ * is a ConferenceId object. This is the fastest way to look for a conference and compare against a participant list
+ * and/or parameters should they be given. If either the peer or the local address is given, then the search will take
+ * longer as all items in the map must have their address checked against the provided one. The initial raw search may
+ * lead to find more than one conference and the participant list and/or parameters can help to get down to one item
+ * only. The slowest way of finding a conference is by not giving neither the local nor the peer address as every
+ * conference will be matched against the participant list and/or the parameters If multiple matches occur with the
+ * provided arguments, only one will be returned.
  */
 std::shared_ptr<Conference> Core::searchConference(const std::shared_ptr<ConferenceParams> &params,
                                                    const std::shared_ptr<const Address> &localAddress,
                                                    const std::shared_ptr<const Address> &remoteAddress,
-                                                   const std::list<std::shared_ptr<Address>> &participants, bool logIfNotFound) const {
+                                                   const std::list<std::shared_ptr<Address>> &participants,
+                                                   bool logIfNotFound) const {
 	L_D();
 	decltype(d->mConferenceById) resultConferences;
 
@@ -2371,7 +2382,8 @@ std::shared_ptr<Conference> Core::searchConference(const std::shared_ptr<Confere
 		} else {
 			auto resultSize = resultConferences.size();
 			if (resultSize > 1) {
-				lError() << resultSize << " conferences have been found but only one will be return by the search function.";
+				lError() << resultSize
+				         << " conferences have been found but only one will be return by the search function.";
 			}
 			conference = resultConferences.begin()->second;
 		}

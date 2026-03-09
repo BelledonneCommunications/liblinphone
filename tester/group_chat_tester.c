@@ -3192,7 +3192,8 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 	// Marie removes Laure from the chat room
 	LinphoneParticipant *laureParticipant = linphone_chat_room_find_participant(marieCr, laureAddr);
 	BC_ASSERT_PTR_NOT_NULL(laureParticipant);
-	ms_message("%s removes %s to chatroom %s", marieIdentity, laureParticipantAddress, conference_address_str);
+	ms_message("%s removes %s from chatroom %s", marieIdentity, laureParticipantAddress, conference_address_str);
+	int previousLaureChatRoomStateTerminated = laure->stat.number_of_LinphoneChatRoomStateTerminated;
 	linphone_chat_room_remove_participant(marieCr, laureParticipant);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_chat_room_participants_removed,
 	                             initialMarieStats.number_of_chat_room_participants_removed + 1,
@@ -3218,8 +3219,7 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneSubscriptionActive, 1,
 			                             liblinphone_tester_sip_timeout));
-
-			initialLaureStats = laure->stat;
+			previousLaureChatRoomStateTerminated = 0;
 
 			// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the
 			// server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is
@@ -3231,8 +3231,7 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateTerminated,
-		                             initialLaureStats.number_of_LinphoneChatRoomStateTerminated + 1,
-		                             liblinphone_tester_sip_timeout));
+		                             previousLaureChatRoomStateTerminated + 1, liblinphone_tester_sip_timeout));
 	}
 
 	wait_for_list(coresList, 0, 1, 2000);
