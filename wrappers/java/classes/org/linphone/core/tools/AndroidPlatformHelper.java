@@ -1770,6 +1770,35 @@ public class AndroidPlatformHelper {
         }
     }
 
+    public void startServiceAsForegroundIfThereIsNoCall(CoreService service) {
+        Runnable stopForegroundServiceRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mCore != null) {
+                    if (mCore.getCallsNb() == 0 && mServiceRunningInForeground) {
+                        Log.w("[Platform Helper] Stopping foreground service notification");
+                        service.stopForeground(true);
+                    }
+                }
+            }
+        };
+
+        Runnable checkIfNoCallRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mCore != null) {
+                    if (mCore.getCallsNb() == 0 && !mServiceRunningInForeground) {
+                        Log.w("[Platform Helper] Core Service has started but there is no longer a call, starting foreground service anyway and shut it down quickly after");
+                        service.startForeground(false);
+                        Log.w("[Platform Helper] Stopping newly started foreground service in 500ms");
+                        dispatchOnCoreThreadAfter(stopForegroundServiceRunnable, 500);
+                    }
+                }
+            }
+        };
+        dispatchOnCoreThread(checkIfNoCallRunnable);
+    }
+
     private synchronized boolean isAndroidXMediaAvailable() {
         boolean available = false;
         try {

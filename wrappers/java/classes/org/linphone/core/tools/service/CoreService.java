@@ -139,6 +139,7 @@ public class CoreService extends Service {
         }
         if (AndroidPlatformHelper.isReady()) {
             AndroidPlatformHelper.instance().setServiceRunning(true);
+            AndroidPlatformHelper.instance().startServiceAsForegroundIfThereIsNoCall(this);
         }
 
         return START_STICKY;
@@ -197,6 +198,7 @@ public class CoreService extends Service {
     }
 
     private void addCoreListener() {
+        CoreService service = this;
         Runnable coreListenerRunnable = new Runnable() {
             @Override
             public void run() {
@@ -230,6 +232,7 @@ public class CoreService extends Service {
                             }
                         } else {
                             Log.w("[Core Service] No call in Core...");
+                            AndroidPlatformHelper.instance().startServiceAsForegroundIfThereIsNoCall(service);
                         }
                     } else {
                         Log.e("[Core Service] AndroidPlatformHelper instance found but Core is null!");
@@ -306,7 +309,7 @@ public class CoreService extends Service {
         stopForeground(true); // True to remove the notification
     }
 
-    void startForeground(boolean isVideoCall) {
+    public void startForeground(boolean isVideoCall) {
         Log.i("[Core Service] Starting service as foreground");
         showForegroundServiceNotification(isVideoCall);
         mIsInForegroundMode = true;
