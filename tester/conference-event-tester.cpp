@@ -22,7 +22,9 @@
 #include <random>
 #include <string>
 
+#if defined(HAVE_DB_STORAGE) && defined(HAVE_SOCI)
 #include <soci/soci.h>
+#endif // defined(HAVE_DB_STORAGE) && defined(HAVE_SOCI)
 
 #include "bctoolbox/defs.h"
 
@@ -2547,6 +2549,7 @@ void one_to_one_keyword() {
 }
 
 #ifndef _WIN32
+#if defined(HAVE_DB_STORAGE) && defined(HAVE_SOCI)
 std::string generate_random_alphanum_string(size_t length) {
 	const std::string characterSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	std::random_device random_device;
@@ -2921,6 +2924,7 @@ void list_subscribe_with_100_chatrooms_from_existing_database_100k() {
 	    list_subscribe_with_a_lot_of_chatrooms_from_existing_database_base(dbPath, 100000, 100, false, "sqlite3"));
 	bc_free(dbPath);
 }
+#endif // defined(HAVE_DB_STORAGE) && defined(HAVE_SOCI)
 #endif // _WIN32
 
 test_t conference_event_tests[] = {
@@ -2943,6 +2947,7 @@ test_t conference_event_tests[] = {
     TEST_NO_TAG("Send device added notify", send_device_added_notify),
     TEST_NO_TAG("Send device removed notify", send_device_removed_notify),
 #ifndef _WIN32
+#if defined(HAVE_DB_STORAGE) && defined(HAVE_SOCI)
     TEST_ONE_TAG("List subscribe with 100 chatrooms out of 1k (SQLite3)",
                  list_subscribe_with_100_chatrooms_out_of_1k_sqlite3,
                  "Performance"),
@@ -2975,6 +2980,7 @@ test_t conference_event_tests[] = {
     TEST_ONE_TAG("List subscribe with 100 chatrooms from existing database (100k chatrooms)",
                  list_subscribe_with_100_chatrooms_from_existing_database_100k,
                  "Performance"),
+#endif // defined(HAVE_DB_STORAGE) && defined(HAVE_SOCI)
 #endif // _WIN32
     TEST_NO_TAG("one-to-one keyword", one_to_one_keyword)};
 
