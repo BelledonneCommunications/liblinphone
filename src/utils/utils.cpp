@@ -568,21 +568,23 @@ ConferenceInfo::participant_list_t Utils::parseResourceLists(const Content &cont
 	if ((content.getContentType() == ContentType::ResourceLists) &&
 	    ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList)) ||
 	     (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory)))) {
-		std::istringstream data(content.getBodyAsString());
-		std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(
-		    Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate));
-		for (const auto &l : rl->getList()) {
-			for (const auto &entry : l.getEntry()) {
-				Address address(entry.getUri());
-				auto basicAddress = Address::create(address.getUri());
-				ParticipantInfo::participant_params_t params;
-				for (const auto &[name, value] : address.getUriParams()) {
-					params[name] = value;
-					basicAddress->removeUriParam(name);
+		if (!content.isEmpty()) {
+			std::istringstream data(content.getBodyAsString());
+			std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(
+			    Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate));
+			for (const auto &l : rl->getList()) {
+				for (const auto &entry : l.getEntry()) {
+					Address address(entry.getUri());
+					auto basicAddress = Address::create(address.getUri());
+					ParticipantInfo::participant_params_t params;
+					for (const auto &[name, value] : address.getUriParams()) {
+						params[name] = value;
+						basicAddress->removeUriParam(name);
+					}
+					auto participantInfo = ParticipantInfo::create(basicAddress);
+					participantInfo->setParameters(params);
+					resources.push_back(participantInfo);
 				}
-				auto participantInfo = ParticipantInfo::create(basicAddress);
-				participantInfo->setParameters(params);
-				resources.push_back(participantInfo);
 			}
 		}
 		return resources;
