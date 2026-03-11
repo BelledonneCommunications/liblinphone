@@ -3331,6 +3331,9 @@ void MainDbPrivate::updateSchema() {
 		                ") " +
 		                charset;
 	}
+	// ephemeral_enabled is deprecated. Update ephemeral_messages_lifetime from the enable value to keep previous
+	// deactivation.
+	*session << "UPDATE chat_room SET ephemeral_messages_lifetime = 0 WHERE ephemeral_enabled = 0;";
 
 #endif
 }
@@ -4971,33 +4974,19 @@ void MainDb::markChatMessagesAsRead(const ConferenceId &conferenceId) const {
 #endif
 }
 
-void MainDb::updateChatRoomEphemeralEnabled(const ConferenceId &conferenceId, bool ephemeralEnabled) const {
-#ifdef HAVE_DB_STORAGE
-	static const string query = "UPDATE chat_room"
-	                            "  SET ephemeral_enabled = :ephemeralEnabled"
-	                            " WHERE id = :chatRoomId";
-
-	int isEphemeralEnabled = ephemeralEnabled ? 1 : 0;
-
-	L_DB_TRANSACTION {
-		L_D();
-		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::use(isEphemeralEnabled), soci::use(dbChatRoomId);
-		tr.commit();
-	};
-#endif
-}
-
 void MainDb::updateChatRoomEphemeralLifetime(const ConferenceId &conferenceId, long time) const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "UPDATE chat_room"
-	                            "  SET ephemeral_messages_lifetime = :ephemeralLifetime"
-	                            " WHERE id = :chatRoomId";
+	int isEphemeralEnabled = time > 0 ? 1 : 0; // Only useful for backward compatibility
+	static const string query =
+	    "UPDATE chat_room"
+	    "  SET ephemeral_messages_lifetime = :ephemeralLifetime, ephemeral_enabled = :ephemeralEnabled"
+	    " WHERE id = :chatRoomId";
 
 	L_DB_TRANSACTION {
 		L_D();
 		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::use(time), soci::use(dbChatRoomId);
+		*d->dbSession.getBackendSession() << query, soci::use(time), soci::use(isEphemeralEnabled),
+		    soci::use(dbChatRoomId);
 
 		tr.commit();
 	};
@@ -6849,27 +6838,27 @@ void MainDb::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom,
                             bool rewriteAllInformations) {
 #ifdef HAVE_DB_STORAGE
 	if (isInitialized()) {
-	L_DB_TRANSACTION {
-		L_D();
-		if (rewriteAllInformations && (d->selectChatRoomId(chatRoom->getConferenceId()) >= 0)) {
-			auto participants = chatRoom->getParticipants();
-			for (const auto &participant : participants) {
-				deleteChatRoomParticipant(chatRoom, participant->getAddress());
-				for (const auto &device : participant->getDevices()) {
-					deleteChatRoomParticipantDevice(chatRoom, device);
+		L_DB_TRANSACTION {
+			L_D();
+			if (rewriteAllInformations && (d->selectChatRoomId(chatRoom->getConferenceId()) >= 0)) {
+				auto participants = chatRoom->getParticipants();
+				for (const auto &participant : participants) {
+					deleteChatRoomParticipant(chatRoom, participant->getAddress());
+					for (const auto &device : participant->getDevices()) {
+						deleteChatRoomParticipantDevice(chatRoom, device);
+					}
+				}
+				auto me = chatRoom->getMe();
+				if (me) {
+					deleteChatRoomParticipant(chatRoom, me->getAddress());
+					for (const auto &device : me->getDevices()) {
+						deleteChatRoomParticipantDevice(chatRoom, device);
+					}
 				}
 			}
-			auto me = chatRoom->getMe();
-			if (me) {
-				deleteChatRoomParticipant(chatRoom, me->getAddress());
-				for (const auto &device : me->getDevices()) {
-					deleteChatRoomParticipantDevice(chatRoom, device);
-				}
-			}
-		}
-		d->insertChatRoom(chatRoom, notifyId, rewriteAllInformations);
-		tr.commit();
-	};
+			d->insertChatRoom(chatRoom, notifyId, rewriteAllInformations);
+			tr.commit();
+		};
 	}
 #endif
 }
