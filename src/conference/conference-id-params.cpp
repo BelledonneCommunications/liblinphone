@@ -31,7 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 ConferenceIdParams::ConferenceIdParams(const std::shared_ptr<const Core> &core) {
 	if (core) {
-		setKeepGruu(!!linphone_core_gruu_in_conference_address_enabled(core->getCCore()));
+		setKeepGruu(core->gruuInConferenceAddressEnabled());
 	}
 }
 

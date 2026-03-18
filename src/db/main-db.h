@@ -211,6 +211,7 @@ public:
 	// Chat rooms.
 	// ---------------------------------------------------------------------------
 
+	size_t getChatRoomCount() const;
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms();
 	void insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                    unsigned int notifyId = 0,

@@ -134,7 +134,10 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 	} else {
 		// Add the conf-id parameter to the account contact address.
 		// Do not use organizer address directly as it may lack some parameter like gruu
-		auto account = core->lookupKnownAccount(mOrganizer, true);
+		auto account = getAccount();
+		if (!account) {
+			account = core->lookupKnownAccount(mOrganizer, true);
+		}
 		char *contactAddressStr = nullptr;
 		if (account && account->getOp()) {
 			contactAddressStr = sal_address_as_string(account->getOp()->getContactAddress());
@@ -596,6 +599,18 @@ std::pair<bool, std::shared_ptr<Address>> ServerConference::configure(SalCallOp 
 	std::shared_ptr<Address> conferenceAddress;
 	if (createdConference && info) {
 		conferenceAddress = info->getUri();
+		// Add the gr parameter to fulfill the need to have it should the server wish so
+		auto account = getAccount();
+		if (!account) {
+			account = getCore()->lookupKnownAccount(mOrganizer, true);
+		}
+		if (account) {
+			if (auto contactAddress = account->getContactAddress()) {
+				if (contactAddress->hasUriParam("gr")) {
+					conferenceAddress->setUriParam("gr", contactAddress->getUriParamValue("gr"));
+				}
+			}
+		}
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
 	}
 	return std::make_pair(isUpdate, conferenceAddress);
@@ -3200,6 +3215,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				break;
 			case CallSession::State::IncomingReceived: {
 				if (mState == ConferenceInterface::State::Instantiated) {
+					// Exit immediately when creating a conference
 					break;
 				}
 				if (!checkClientCompatibility(cppCall, remoteContactAddress, true)) break;

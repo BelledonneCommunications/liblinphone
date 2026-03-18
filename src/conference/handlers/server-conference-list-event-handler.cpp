@@ -91,12 +91,6 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 		return;
 	}
 
-	ev->accept();
-
-	if (subscriptionState != LinphoneSubscriptionIncomingReceived &&
-	    subscriptionState != LinphoneSubscriptionTerminated)
-		return;
-
 	const auto &participantAddr = ev->getFrom();
 	const auto &deviceAddr = ev->getRemoteContact();
 
@@ -145,6 +139,17 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 				continue;
 			}
 
+			char token[17];
+			belle_sip_random_token(token, sizeof(token));
+
+			// Add entry into the Rlmi content of the notify body
+			Xsd::Rlmi::Resource resource(addr->asStringUriOnly());
+			Xsd::Rlmi::Resource::InstanceSequence instances;
+			Xsd::Rlmi::Instance instance(token, Xsd::Rlmi::State::Value::active);
+			instances.push_back(instance);
+			resource.setInstance(instances);
+			resources.push_back(resource);
+
 			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? ev
 			                                                                                                : nullptr);
 
@@ -154,8 +159,6 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 			auto content = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
 			if (content->isEmpty()) continue;
 
-			char token[17];
-			belle_sip_random_token(token, sizeof(token));
 			/* FIXME:
 			 * the content-id value shall be surrounded with angle-quotes.
 			 * The client fix to handle this is made in 5.4.45.
@@ -164,29 +167,36 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 			content->addHeader("Content-Id", token);
 			content->addHeader("Content-Length", Utils::toString(content->getSize()));
 			contents.push_back(std::move(*content));
-
-			// Add entry into the Rlmi content of the notify body
-			Xsd::Rlmi::Resource resource(addr->asStringUriOnly());
-			Xsd::Rlmi::Resource::InstanceSequence instances;
-			Xsd::Rlmi::Instance instance(token, Xsd::Rlmi::State::Value::active);
-			instances.push_back(instance);
-			resource.setInstance(instances);
-			resources.push_back(resource);
 		}
 	}
 
-	Xsd::Rlmi::List rlmiList("", 0, TRUE);
-	rlmiList.setResource(resources);
-	Xsd::XmlSchema::NamespaceInfomap map;
-	stringstream rlmiBody;
-	Xsd::Rlmi::serializeList(rlmiBody, rlmiList, map);
+	list<Content *> contentsAsPtr;
 
 	Content rlmiContent;
-	rlmiContent.setContentType(ContentType::Rlmi);
-	rlmiContent.setBodyFromUtf8(rlmiBody.str());
+	if (resources.empty()) {
+		lError() << "Unable to accept a subscription for any chatrooms that should be handled by event [" << ev << "] ";
+		ev->deny(LinphoneReasonDeclined);
+		return;
+	} else {
+		// The subscription has been accepted for at least one chatroom
+		ev->accept();
+	Xsd::Rlmi::List rlmiList("", 0, TRUE);
+		rlmiList.setResource(resources);
+		Xsd::XmlSchema::NamespaceInfomap map;
+		stringstream rlmiBody;
+		Xsd::Rlmi::serializeList(rlmiBody, rlmiList, map);
 
-	list<Content *> contentsAsPtr;
-	contentsAsPtr.push_back(&rlmiContent);
+		rlmiContent.setContentType(ContentType::Rlmi);
+		rlmiContent.setBodyFromUtf8(rlmiBody.str());
+
+		contentsAsPtr.push_back(&rlmiContent);
+	}
+
+	if (subscriptionState != LinphoneSubscriptionIncomingReceived &&
+	    subscriptionState != LinphoneSubscriptionTerminated) {
+		return;
+	}
+
 	for (Content &content : contents) {
 		contentsAsPtr.push_back(&content);
 	}
@@ -194,8 +204,12 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 	cbs->setUserData(this);
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
-	auto multipart = Content::create(ContentManager::contentListToMultipart(contentsAsPtr));
-	if (linphone_core_content_encoding_supported(core->getCCore(), "deflate")) multipart->setContentEncoding("deflate");
+	std::shared_ptr<Content> multipart;
+	if (!contentsAsPtr.empty()) {
+		multipart = Content::create(ContentManager::contentListToMultipart(contentsAsPtr));
+		if (linphone_core_content_encoding_supported(core->getCCore(), "deflate"))
+			multipart->setContentEncoding("deflate");
+	}
 	ev->notify(multipart);
 }
 

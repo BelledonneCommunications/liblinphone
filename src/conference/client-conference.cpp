@@ -435,14 +435,12 @@ void ClientConference::acceptSession(const shared_ptr<CallSession> &session) {
 
 void ClientConference::attachCall(const shared_ptr<CallSession> &session) {
 	setMainSession(session);
-	if (getConferenceAddress()) {
-		setState(ConferenceInterface::State::CreationPending);
-		mFullStateReceived = (getLastNotify() != 0);
-		session->addListener(getSharedFromThis());
-		initializeHandlers(this, false);
-	} else {
-		setConferenceAddress(session->getRemoteContactAddress());
-	}
+	setState(ConferenceInterface::State::CreationPending);
+	// Update the conference address so to take into account any change in the URI parameters as soon as possible
+	setConferenceAddress(session->getRemoteContactAddress());
+	mFullStateReceived = (getLastNotify() != 0);
+	session->addListener(getSharedFromThis());
+	initializeHandlers(this, false);
 }
 
 std::shared_ptr<CallSession> ClientConference::getMainSession() const {

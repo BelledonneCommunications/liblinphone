@@ -187,16 +187,16 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
                                         LinphoneAddress *confAddr,
                                         time_t end_time) {
 	if (end_time > 0) {
-		long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus->lc);
-		long max_cleanup_window = 20;
-		bool cleanup_period_too_big = (focus_cleanup_window > max_cleanup_window);
-		if ((focus_cleanup_window > 0) && !cleanup_period_too_big) {
+		long focus_cleanup_period = linphone_core_get_conference_cleanup_period(focus->lc);
+		long max_cleanup_period = 20;
+		bool cleanup_period_too_big = (focus_cleanup_period > max_cleanup_period);
+		if ((focus_cleanup_period > 0) && !cleanup_period_too_big) {
 			// The conference information is only deleted by the cleanup timer. Hence even if the end time went by, the
 			// conference information might not be deleted
-			CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(focus_cleanup_window), [] { return false; });
+			CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(focus_cleanup_period), [] { return false; });
 		}
 
-		// Compute here how much time is left to the conference to automatically account for the cleanup window delay
+		// Compute here how much time is left to the conference to automatically account for the cleanup period delay
 		time_t now = ms_time(NULL);
 		time_t time_left = end_time - now;
 		char *conferenceAddressString = linphone_address_as_string(confAddr);
@@ -214,20 +214,20 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 			if (is_focus && cleanup_period_too_big) {
 				ms_message("Do not check conference information on the focus core because the cleanup period %0ld is "
 				           "larger than the maximum allowed for this check: %0ld",
-				           focus_cleanup_window, max_cleanup_window);
+				           focus_cleanup_period, max_cleanup_period);
 				if (info) {
 					linphone_conference_info_unref(info);
 				}
 				continue;
 			}
 
-			if (is_focus && (focus_cleanup_window > 0)) {
+			if (is_focus && (focus_cleanup_period > 0)) {
 				ms_message("Wait for %ld more seconds before checking the existence of conference information in %s's "
 				           "database for conference %s because the time left is %0ld second(s) and deletion might "
 				           "happen within milliseconds",
-				           focus_cleanup_window, linphone_core_get_identity(mgr->lc), conferenceAddressString,
+				           focus_cleanup_period, linphone_core_get_identity(mgr->lc), conferenceAddressString,
 				           time_left);
-				CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(focus_cleanup_window), [&mgr, &confAddr] {
+				CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds(focus_cleanup_period), [&mgr, &confAddr] {
 					LinphoneConferenceInfo *info =
 					    linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
 					bool is_confernece_info_null = (info == NULL);
@@ -247,15 +247,15 @@ void check_delete_focus_conference_info(std::initializer_list<std::reference_wra
 
 		if (time_left > 0) {
 			time_t wait_time = time_left;
-			if (focus_cleanup_window > 0) {
-				wait_time += focus_cleanup_window;
+			if (focus_cleanup_period > 0) {
+				wait_time += focus_cleanup_period;
 			}
 			ms_message("Waiting for %0ld seconds for the server to delete conference %s. Expected end time %s and now "
 			           "it is %s",
 			           wait_time, conferenceAddressString, Utils::timeToIso8601(end_time).c_str(),
 			           Utils::timeToIso8601(now).c_str());
 			// wait for the conference to end
-			if (focus_cleanup_window > 0) {
+			if (focus_cleanup_period > 0) {
 				CoreManagerAssert(coreMgrs).waitUntil(chrono::seconds((wait_time + 1)), [&focus, &confAddr] {
 					LinphoneConferenceInfo *focus_info =
 					    linphone_core_find_conference_information_from_uri(focus->lc, confAddr);
@@ -841,8 +841,12 @@ void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
 		if (conference_params) {
 			auto security_level = linphone_conference_params_get_security_level(conference_params);
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				auto firstClientConf = dynamic_cast<const LinphonePrivate::ClientConference *>(
-				    Conference::toCpp(linphone_core_search_conference_2(members.begin()->first->lc, confAddr)));
+	auto firstClientCConf = linphone_core_search_conference_2(members.begin()->first->lc, confAddr);
+				BC_ASSERT_PTR_NOT_NULL(firstClientCConf);
+	if (!firstClientCConf) {
+		return;
+	}
+	auto firstClientConf = dynamic_cast<const LinphonePrivate::ClientConference *>(Conference::toCpp(firstClientCConf));
 				BC_ASSERT_PTR_NOT_NULL(firstClientConf);
 				if (firstClientConf) {
 					const auto &firstClientEktManager = firstClientConf->getClientEktManager();
@@ -7465,7 +7469,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
                                       bool_t server_restart,
                                       bool_t client_restart,
                                       bool_t join_after_termination,
-                                      long cleanup_window,
+                                      long cleanup_period,
                                       bool_t use_relay_ice_candidates,
                                       bool_t client_reenter_conference,
                                       bool_t network_drops,
@@ -7549,7 +7553,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
-		linphone_core_set_conference_cleanup_period(focus.getLc(), cleanup_window);
+		linphone_core_set_conference_cleanup_period(focus.getLc(), cleanup_period);
 
 		stats focus_stat = focus.getStats();
 		std::list<LinphoneCoreManager *> participants{laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr(),
@@ -8635,9 +8639,9 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 					const LinphoneErrorInfo *error_info = linphone_call_log_get_error_info(call_log);
 					BC_ASSERT_PTR_NOT_NULL(error_info);
 					if (error_info) {
-						long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus.getLc());
+						long focus_cleanup_period = linphone_core_get_conference_cleanup_period(focus.getLc());
 						LinphoneReason reason =
-						    (focus_cleanup_window <= 0) ? LinphoneReasonForbidden : LinphoneReasonGone;
+						    (focus_cleanup_period <= 0) ? LinphoneReasonForbidden : LinphoneReasonGone;
 						BC_ASSERT_EQUAL(linphone_error_info_get_reason(error_info), reason, int, "%d");
 					}
 					linphone_call_unref(pcall);
@@ -8689,7 +8693,7 @@ void create_conference_with_chat_base(LinphoneConferenceSecurityLevel security_l
 
 void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel security_level,
                                            bool_t enable_chat,
-                                           long cleanup_window,
+                                           long cleanup_period,
                                            [[maybe_unused]] bool_t keep_client_ekt_manager_refs) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -8757,7 +8761,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeClosed);
-		linphone_core_set_conference_cleanup_period(focus.getLc(), cleanup_window);
+		linphone_core_set_conference_cleanup_period(focus.getLc(), cleanup_period);
 
 		int ekt_subscribe_publish_expires = 10;
 		linphone_config_set_int(linphone_core_get_config(focus.getLc()), "sip", "ekt_publish_expires",
@@ -8821,7 +8825,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
 		    fill_member_list(members, participantList, marie.getCMgr(), participants_info);
 
-		long focus_cleanup_window = linphone_core_get_conference_cleanup_period(focus.getLc());
+		long focus_cleanup_period = linphone_core_get_conference_cleanup_period(focus.getLc());
 
 		time_t end_joining_window = -1;
 		if (expiry_after_s >= 0) {
@@ -8842,7 +8846,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 			if (end_joining_window > 0) {
 				time_t time_left = end_joining_window - initial_time - joining_duration;
 				if (time_left <= 0) {
-					ms_message("Attempt #%0d - conference %s is likely to expire before all participants join it",
+					ms_message("Iteration[%0d]: conference %s is likely to expire before all participants join it",
 					           attempt, conference_address_str);
 					// In order to verify the rejoining of conferences, the loop must have at least 2 iterations
 					BC_ASSERT_GREATER_STRICT(attempt, 2, int, "%0d");
@@ -8854,7 +8858,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 				LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 				linphone_call_params_set_media_encryption(new_params, encryption);
 				linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
-				ms_message("Attempt #%0d - %s is entering conference %s", attempt, linphone_core_get_identity(mgr->lc),
+				ms_message("Iteration[%0d]: %s is entering conference %s", attempt, linphone_core_get_identity(mgr->lc),
 				           conference_address_str);
 				linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, nullptr, nullptr);
 				linphone_call_params_unref(new_params);
@@ -9107,7 +9111,7 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 				LinphoneCall *call = linphone_core_get_call_by_remote_address2(mgr->lc, focus.getCMgr()->identity);
 				BC_ASSERT_PTR_NOT_NULL(call);
 				if (call) {
-					ms_message("Attempt #%0d - %s is terminating call to %s", attempt,
+					ms_message("Iteration[%0d]: %s is terminating call to %s", attempt,
 					           linphone_core_get_identity(mgr->lc), conference_address_str);
 					linphone_call_terminate(call);
 				}
@@ -9212,19 +9216,21 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 			                             focus_stat.number_of_LinphoneConferenceStateDeleted + 1,
 			                             liblinphone_tester_sip_timeout));
 
+			// Wait a little bit
+			ms_message("Iteration[%0d]: waiting that the conference information cleanup timer expires", attempt);
+			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+			    .waitUntil(chrono::seconds(2 * focus_cleanup_period), [] { return false; });
+
 			for (auto mgr : conferenceMgrs) {
 				bool info_deleted = false;
-				if (!!linphone_core_conference_server_enabled(mgr->lc) && (focus_cleanup_window > 0) &&
+				if (!!linphone_core_conference_server_enabled(mgr->lc) && (focus_cleanup_period > 0) &&
 				    (end_joining_window > 0)) {
 					time_t now = ms_time(NULL);
 					time_t time_left = end_joining_window - now;
 					if (time_left <= 0) {
-						ms_message("Attempt #%0d - conference information of conference %s was deleted on the server "
+						ms_message("Iteration[%0d]: conference information of conference %s was deleted on the server "
 						           "core %s because the conference expired %ld seconds ago",
 						           attempt, conference_address_str, linphone_core_get_identity(mgr->lc), -time_left);
-						// wait for the cleanup window to be sure the conference information is deleted
-						CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
-						    .waitUntil(chrono::seconds(focus_cleanup_window), [] { return false; });
 						info_deleted = true;
 					}
 				}
@@ -9238,11 +9244,6 @@ void conference_joined_multiple_times_base(LinphoneConferenceSecurityLevel secur
 					linphone_conference_info_unref(info);
 				}
 			}
-
-			// wait a bit longer to detect side effect if any
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(5), [] {
-				return false;
-			});
 		}
 
 		check_delete_focus_conference_info({focus, marie, pauline, michelle, laure, berthe}, conferenceMgrs,

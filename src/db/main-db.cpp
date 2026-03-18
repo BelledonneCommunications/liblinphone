@@ -152,11 +152,11 @@ template <typename T>
 static T getValueFromRow(const soci::row &row, int index, bool &isNull) {
 	isNull = false;
 
-	if (row.get_indicator(size_t(index)) == soci::i_null) {
+	if (row.get_indicator(static_cast<size_t>(index)) == soci::i_null) {
 		isNull = true;
 		return T();
 	}
-	return row.get<T>(size_t(index));
+	return row.get<T>(static_cast<size_t>(index));
 }
 #endif
 
@@ -415,7 +415,7 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom(long long peerSipAd
 
 	const int capabilities =
 	    ChatRoom::CapabilitiesMask({ChatRoom::Capabilities::OneToOne, ChatRoom::Capabilities::Basic});
-	lInfo() << "Insert new chat room in database: (peer=" << peerSipAddressId << ", local=" << localSipAddressId
+	lInfo() << "Insert new basic chat room in database: (peer=" << peerSipAddressId << ", local=" << localSipAddressId
 	        << ", capabilities=" << capabilities << ").";
 	*session << "INSERT INTO chat_room ("
 	            "  peer_sip_address_id, local_sip_address_id, creation_time, last_update_time, capabilities"
@@ -498,7 +498,7 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 					    soci::use(notifyId), soci::use(flags), soci::use(chatRoomId);
 				}
 			} else {
-				lInfo() << "Insert new chat room in database: " << conferenceId << ".";
+				lInfo() << "Insert new " << *chatRoom << " in database";
 				*dbSession.getBackendSession() << "INSERT INTO chat_room ("
 				                                  "  peer_sip_address_id, local_sip_address_id, creation_time,"
 				                                  "  last_update_time, capabilities, subject, flags, last_notify_id, "
@@ -714,6 +714,7 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
 		    soci::use(uid), soci::use(security_level), soci::use(conferenceInfoId);
 	} else {
+		lInfo() << "Insert new " << *conferenceInfo << " in database";
 		*dbSession.getBackendSession()
 		    << "INSERT INTO conference_info (audio, video, chat, ccmp_uri, organizer_sip_address_id, "
 		       "uri_sip_address_id, start_time, earlier_joining_time, expiry_time, duration, subject, description, "
@@ -729,7 +730,6 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		    soci::use(uid), soci::use(security_level);
 
 		conferenceInfoId = dbSession.getLastInsertId();
-		lInfo() << "Insert new " << *conferenceInfo << " in database: id " << conferenceInfoId << ".";
 	}
 
 	const bool isOrganizerAParticipant = conferenceInfo->hasParticipant(organizer);
@@ -5223,7 +5223,7 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 
 			auto fileContent = FileContent::create<FileContent>();
 			fileContent->setFileName(name);
-			fileContent->setFileSize(size_t(size));
+			fileContent->setFileSize(static_cast<size_t>(size));
 			fileContent->setFilePath(path);
 			fileContent->setContentType(contentType);
 			fileContent->setCreationTimestamp(creation);
@@ -5268,7 +5268,7 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 
 			auto fileContent = FileContent::create<FileContent>();
 			fileContent->setFileName(name);
-			fileContent->setFileSize(size_t(size));
+			fileContent->setFileSize(static_cast<size_t>(size));
 			fileContent->setFilePath(path);
 			fileContent->setContentType(contentType);
 			fileContent->setCreationTimestamp(creation);
@@ -6060,7 +6060,7 @@ void MainDb::loadChatMessageContents(const shared_ptr<ChatMessage> &chatMessage)
 				if (session->got_data()) {
 					auto fileContent = FileContent::create<FileContent>();
 					fileContent->setFileName(name);
-					fileContent->setFileSize(size_t(size));
+					fileContent->setFileSize(static_cast<size_t>(size));
 					fileContent->setFilePath(path);
 					fileContent->setFileDuration(duration);
 					fileContent->setCreationTimestamp(chatMessage->getTime());
@@ -6385,6 +6385,23 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 #endif
 }
 
+size_t MainDb::getChatRoomCount() const {
+#ifdef HAVE_DB_STORAGE
+	const string query = "SELECT COUNT(*) FROM chat_room";
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		size_t count;
+		*d->dbSession.getBackendSession() << query, soci::into(count);
+
+		return count;
+	};
+#else
+	return 0;
+#endif
+}
+
 // TODO: the const attribute has been removed because of a compile error when calling selectConferenceInfo:
 // src/db/main-db.cpp:6073:102: error: passing ‘const LinphonePrivate::MainDbPrivate’ as ‘this’ argument discards
 // qualifiers [-fpermissive] 6073 |                                         shared_ptr<ConferenceInfo> confInfo =
@@ -6575,7 +6592,16 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() {
 						soci::row conferenceInfoRow;
 						*session << Statements::get(Statements::SelectConferenceInfoFromId),
 						    soci::into(conferenceInfoRow), soci::use(conferenceInfoId);
-						confInfo = d->selectConferenceInfo(conferenceInfoRow);
+						if (session->got_data()) {
+							confInfo = d->selectConferenceInfo(conferenceInfoRow);
+						} else {
+							lInfo() << "Deleting chatroom [" << *conferenceAddress << "] with database ID set to "
+							        << dbChatRoomId << " because it is linked conference information with database ID "
+							        << conferenceInfoId << " that has already been deleted";
+							d->deleteChatRoom(dbChatRoomId);
+							offset--;
+							continue;
+						}
 					}
 					bool removeHasBeenLeftFlag = false;
 					if (confInfo) {
@@ -7456,7 +7482,10 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceIn
 		soci::session *session = d->dbSession.getBackendSession();
 		*session << Statements::get(Statements::SelectConferenceInfoFromId), soci::into(row),
 		    soci::use(conferenceInfoId);
-		shared_ptr<ConferenceInfo> confInfo = d->selectConferenceInfo(row);
+		shared_ptr<ConferenceInfo> confInfo;
+		if (session->got_data()) {
+			confInfo = d->selectConferenceInfo(row);
+		}
 
 		tr.commit();
 
@@ -7555,7 +7584,7 @@ void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
 			return;
 		}
 		auto timestampType = d->dbSession.timestampType();
-		// Compute the time difference in minutes.
+		// Compute the time difference in seconds.
 		// MySQL provides a dedicated function: TIMESTAMPDIFF
 		// https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html#function_timestampdiff In the case of an
 		// Sqlite3 database, we have to compute the difference in days between two juliandays then convert it to
@@ -7563,7 +7592,7 @@ void MainDb::cleanupConferenceInfo(time_t expiredBeforeThisTime) {
 		const std::string timediffExpression =
 		    (getBackend() == MainDb::Backend::Sqlite3)
 		        ? "(julianday(:maxExpireTime) - julianday(conference_info.expiry_time)) * 24 * 60 * 60"
-		        : "TIMESTAMPDIFF(SECOND, :maxExpireTime, conference_info.expiry_time)";
+		        : "TIMESTAMPDIFF(SECOND, conference_info.expiry_time, :maxExpireTime)";
 		std::string findQuery = "SELECT conference_info.id, uri_sip_address.value FROM conference_info, sip_address AS "
 		                        "uri_sip_address WHERE CAST(" +
 		                        timediffExpression +
@@ -7635,12 +7664,11 @@ void MainDb::deleteConferenceInfo(long long dbConferenceId, bool doCleanup) {
 	L_D();
 	soci::session *session = d->dbSession.getBackendSession();
 	if (doCleanup) {
-		long long peerId;
-		std::string peerIdQuery =
-		    "SELECT uri_sip_address_id FROM conference_info WHERE (conference_info.id = :conferenceInfoId)";
-		*session << peerIdQuery, soci::use(dbConferenceId), soci::into(peerId);
+		long long chatRoomId;
+		std::string chatRoomIdQuery = "SELECT chat_room.id FROM chat_room, conference_info WHERE "
+		                              "(chat_room.conference_info_id = :conferenceInfoId)";
+		*session << chatRoomIdQuery, soci::use(dbConferenceId), soci::into(chatRoomId);
 		if (session->got_data()) {
-			long long chatRoomId = d->selectChatRoomId(peerId);
 			if (chatRoomId >= 0) {
 				d->deleteChatRoom(chatRoomId);
 			}

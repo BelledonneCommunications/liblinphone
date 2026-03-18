@@ -1765,17 +1765,11 @@ static void group_chat_room_with_client_removed_while_stopped_base(const bool_t 
 		}
 
 		setup_mgr_for_conference(michelle.getCMgr(), NULL);
-		if (!!use_remote_event_list_handler) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive,
-			                             initialMichelleStats.number_of_LinphoneSubscriptionActive + 1,
-			                             liblinphone_tester_sip_timeout));
-		} else {
 			BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive,
 			                              initialMichelleStats.number_of_LinphoneSubscriptionActive + 1, 2000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionError,
 			                             initialMichelleStats.number_of_LinphoneSubscriptionError + 1,
 			                             liblinphone_tester_sip_timeout));
-		}
 
 		michelleCr = linphone_core_search_chat_room(michelle.getLc(), NULL, michelleContact, confAddr, NULL);
 		BC_ASSERT_PTR_NOT_NULL(michelleCr);
