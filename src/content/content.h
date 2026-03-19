@@ -26,6 +26,7 @@
 
 #include "belle-sip/object++.hh"
 
+#include "account/mwi/message-waiting-indication.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "content-disposition.h"
 #include "content-type.h"

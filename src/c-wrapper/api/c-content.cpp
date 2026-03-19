@@ -56,6 +56,10 @@ void linphone_content_set_user_data(LinphoneContent *content, void *user_data) {
 	return Content::toCpp(content)->setUserData(user_data);
 }
 
+LinphoneContent *linphone_content_clone(const LinphoneContent *content) {
+	return Content::toCpp(content)->clone()->toC();
+}
+
 // =============================================================================
 
 const char *linphone_content_get_type(const LinphoneContent *content) {

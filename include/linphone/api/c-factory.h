@@ -833,6 +833,16 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *
 linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content);
 
 /**
+ * Creates a #LinphoneMessageWaitingIndication object from a #LinphoneContent.
+ * @param factory the #LinphoneFactory @notnil
+ * @param content #LinphoneContent object. @notnil
+ * @return The parsed message waiting indication if the content contains one, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneMessageWaitingIndication *
+linphone_factory_create_message_waiting_indication_from_content(LinphoneFactory *factory,
+                                                                const LinphoneContent *content);
+
+/**
  * Creates an object #LinphoneConferenceInfo from an Icalendar #LinphoneContent
  * @param factory the #LinphoneFactory @notnil
  * @param address the #LinphoneAddress of the participant @notnil

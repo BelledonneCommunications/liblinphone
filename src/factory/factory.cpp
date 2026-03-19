@@ -894,6 +894,11 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
+std::shared_ptr<Mwi::MessageWaitingIndication>
+Factory::createMessageWaitingIndicationFromContent(const std::shared_ptr<const Content> &content) const {
+	return Mwi::MessageWaitingIndication::parse(*content);
+}
+
 std::shared_ptr<ParticipantInfo> Factory::createParticipantInfo(const std::shared_ptr<const Address> &address) const {
 	return ParticipantInfo::create(address);
 }

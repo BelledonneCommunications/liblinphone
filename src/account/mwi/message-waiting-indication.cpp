@@ -75,6 +75,38 @@ MessageWaitingIndication::getSummary(LinphoneMessageWaitingIndicationContextClas
 	return (found == std::end(mSummaries)) ? nullptr : *found;
 }
 
+uint32_t MessageWaitingIndication::getNbOld() const {
+	uint32_t nbOld = 0;
+	for (const auto &summary : mSummaries) {
+		nbOld += summary->getNbOld();
+	}
+	return nbOld;
+}
+
+uint32_t MessageWaitingIndication::getNbNew() const {
+	uint32_t nbNew = 0;
+	for (const auto &summary : mSummaries) {
+		nbNew += summary->getNbNew();
+	}
+	return nbNew;
+}
+
+uint32_t MessageWaitingIndication::getNbOldUrgent() const {
+	uint32_t nbOldUrgent = 0;
+	for (const auto &summary : mSummaries) {
+		nbOldUrgent += summary->getNbOldUrgent();
+	}
+	return nbOldUrgent;
+}
+
+uint32_t MessageWaitingIndication::getNbNewUrgent() const {
+	uint32_t nbNewUrgent = 0;
+	for (const auto &summary : mSummaries) {
+		nbNewUrgent += summary->getNbNewUrgent();
+	}
+	return nbNewUrgent;
+}
+
 // -----------------------------------------------------------------------------
 
 void MessageWaitingIndication::setMessageWaiting(bool messageWaiting) {

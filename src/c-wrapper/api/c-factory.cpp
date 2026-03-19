@@ -504,6 +504,16 @@ LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_c
 	return conferenceInfo ? linphone_conference_info_ref(conferenceInfo->toC()) : nullptr;
 }
 
+LinphoneMessageWaitingIndication *
+linphone_factory_create_message_waiting_indication_from_content(LinphoneFactory *factory,
+                                                                const LinphoneContent *content) {
+	std::shared_ptr<Mwi::MessageWaitingIndication> messageWaitingIndication =
+	    Factory::toCpp(factory)->createMessageWaitingIndicationFromContent(
+	        Content::toCpp(content)->getSharedFromThis());
+	return messageWaitingIndication ? linphone_message_waiting_indication_ref(messageWaitingIndication->toC())
+	                                : nullptr;
+}
+
 LinphoneParticipantInfo *linphone_factory_create_participant_info(LinphoneFactory *factory, LinphoneAddress *address) {
 	std::shared_ptr<LinphonePrivate::ParticipantInfo> participantInfo =
 	    Factory::toCpp(factory)->createParticipantInfo(Address::toCpp(address)->getSharedFromThis());

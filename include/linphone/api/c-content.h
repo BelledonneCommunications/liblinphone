@@ -62,6 +62,13 @@ LINPHONE_PUBLIC void *linphone_content_get_user_data(const LinphoneContent *cont
 LINPHONE_PUBLIC void linphone_content_set_user_data(LinphoneContent *content, void *user_data);
 
 /**
+ * Instantiate a new message content with values from source.
+ * @param content The #LinphoneContent object to be cloned. @notnil
+ * @return The newly created #LinphoneContent object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneContent *linphone_content_clone(const LinphoneContent *content);
+
+/**
  * Get the mime type of the content data.
  * @param content #LinphoneContent object. @notnil
  * @return The mime type of the content data, for example "application". @notnil

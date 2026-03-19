@@ -69,6 +69,22 @@ linphone_message_waiting_indication_get_summary(const LinphoneMessageWaitingIndi
 	return toC(MessageWaitingIndication::toCpp(mwi)->getSummary(contextClass));
 }
 
+uint32_t linphone_message_waiting_indication_get_nb_old(const LinphoneMessageWaitingIndication *mwi) {
+	return MessageWaitingIndication::toCpp(mwi)->getNbOld();
+}
+
+uint32_t linphone_message_waiting_indication_get_nb_new(const LinphoneMessageWaitingIndication *mwi) {
+	return MessageWaitingIndication::toCpp(mwi)->getNbNew();
+}
+
+uint32_t linphone_message_waiting_indication_get_nb_old_urgent(const LinphoneMessageWaitingIndication *mwi) {
+	return MessageWaitingIndication::toCpp(mwi)->getNbOldUrgent();
+}
+
+uint32_t linphone_message_waiting_indication_get_nb_new_urgent(const LinphoneMessageWaitingIndication *mwi) {
+	return MessageWaitingIndication::toCpp(mwi)->getNbNewUrgent();
+}
+
 LinphoneContent *linphone_message_waiting_indication_to_content(const LinphoneMessageWaitingIndication *mwi) {
 	return linphone_content_ref(MessageWaitingIndication::toCpp(mwi)->toContent()->toC());
 }

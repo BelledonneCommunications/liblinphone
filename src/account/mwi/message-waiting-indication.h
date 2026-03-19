@@ -52,6 +52,11 @@ public:
 	std::shared_ptr<MessageWaitingIndicationSummary>
 	getSummary(LinphoneMessageWaitingIndicationContextClass contextClass) const;
 
+	uint32_t getNbOld() const;
+	uint32_t getNbNew() const;
+	uint32_t getNbOldUrgent() const;
+	uint32_t getNbNewUrgent() const;
+
 	// Setters
 	void setMessageWaiting(bool messageWaiting);
 	void setAccountAddress(std::shared_ptr<Address> accountAddress);

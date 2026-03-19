@@ -242,6 +242,9 @@ public:
 	std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
 	std::shared_ptr<ConferenceInfo> createConferenceInfoFromIcalendarContent(LinphoneContent *content) const;
 
+	std::shared_ptr<Mwi::MessageWaitingIndication>
+	createMessageWaitingIndicationFromContent(const std::shared_ptr<const Content> &content) const;
+
 	std::shared_ptr<ParticipantInfo> createParticipantInfo(const std::shared_ptr<const Address> &address) const;
 
 	LinphoneConferenceSchedulerCbs *createConferenceSchedulerCbs() const;
