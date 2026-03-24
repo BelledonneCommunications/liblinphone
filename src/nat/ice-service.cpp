@@ -761,45 +761,50 @@ void IceService::gatheringFinished() {
 
 /**
  * Choose the preferred IP address to use to contact the STUN server from the list of IP addresses
- * the DNS resolution returned. If a NAT64 address is present, use it, otherwise if an IPv4 address
- * is present, use it, otherwise use an IPv6 address if it is present.
+ * the DNS resolution returned. Choose an address according to the following priorities:
+ * - IPv4
+ * - IPv6 NAT 64
+ * - IPv6 V4 mapped
+ * - IPv6
  */
 const struct addrinfo *IceService::getIcePreferredStunServerAddrinfo(const struct addrinfo *ai) {
-	// Search for NAT64 addrinfo.
-	const struct addrinfo *it = ai;
-	for (it = ai; it != nullptr; it = it->ai_next) {
-		if (it->ai_family == AF_INET6) {
-			struct sockaddr_storage ss;
-			socklen_t sslen = sizeof(ss);
-			memset(&ss, 0, sizeof(ss));
-			bctbx_sockaddr_remove_nat64_mapping(it->ai_addr, (struct sockaddr *)&ss, &sslen);
-			if (ss.ss_family == AF_INET) break;
-		}
-	}
-	const struct addrinfo *preferredAi = it;
-	if (!preferredAi) {
-		// Search for IPv4 addrinfo.
-		for (it = ai; it != nullptr; it = it->ai_next) {
-			char ip_port[128] = {0};
-			bctbx_addrinfo_to_printable_ip_address(it, ip_port, sizeof(ip_port) - 1);
-			if (it->ai_family == AF_INET) break;
-			if (it->ai_family == AF_INET6) {
-				struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)it->ai_addr;
-				if (IN6_IS_ADDR_V4MAPPED(&in6->sin6_addr)) {
-					break;
-				}
+	const struct addrinfo *ipv4 = nullptr;
+	const struct addrinfo *ipv6 = nullptr;
+	const struct addrinfo *ipv6_nat64 = nullptr;
+	const struct addrinfo *ipv6_v4_mapped = nullptr;
+
+	for (const struct addrinfo *it = ai; it != nullptr; it = it->ai_next) {
+		char ip_port[128] = {0};
+		bctbx_addrinfo_to_printable_ip_address(it, ip_port, sizeof(ip_port) - 1);
+		if (it->ai_family == AF_INET) {
+			if (!ipv4) {
+				ipv4 = it;
+			}
+		} else if (bctbx_sockaddr_is_nat64(it->ai_addr)) {
+			if (!ipv6_nat64) {
+				ipv6_nat64 = it;
+			}
+		} else if (bctbx_sockaddr_is_v4_mapped(it->ai_addr)) {
+			if (!ipv6_v4_mapped) {
+				ipv6_v4_mapped = it;
+			}
+		} else if (it->ai_family == AF_INET6) {
+			if (!ipv6) {
+				ipv6 = it;
 			}
 		}
-		preferredAi = it;
 	}
-	if (!preferredAi) {
-		// Search for IPv6 addrinfo.
-		for (it = ai; it != nullptr; it = it->ai_next) {
-			if (it->ai_family == AF_INET6) break;
-		}
-		preferredAi = it;
+
+	if (ipv4) {
+		return ipv4;
+	} else if (ipv6_nat64) {
+		return ipv6_nat64;
+	} else if (ipv6_v4_mapped) {
+		return ipv6_v4_mapped;
+	} else if (ipv6) {
+		return ipv6;
 	}
-	return preferredAi;
+	return nullptr;
 }
 
 void IceService::finishPrepare() {
