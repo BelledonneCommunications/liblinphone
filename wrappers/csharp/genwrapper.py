@@ -119,18 +119,20 @@ class CsharpTranslator:
 			methodDict['takeRef'] = 'false' if method.returnAllocatedObject else 'true'
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
-			methodDict['impl']['gc_keepalive'] = []
+			methodDict['impl']['gc_keepalive'] = ''
 			methodDict['impl']['clean_string_list_ptrs'] = False
 			for arg in method.args:
+				# add GC.KeepAlive() for every argument, to make sure that the native part of each input object remains
+				# alive until the native code is executed and its return value processed.
+				# Otherwise, we can run into crashes, for example with Config.GetString(section, key, default_value)
+				# when the default value argument is returned as it is by the native method.
+				argname = arg.name.translate(self.nameTranslator)
+				methodDict['impl']['gc_keepalive'] += "GC.KeepAlive({0});".format(argname)
 				if arg is not method.args[0]:
 					methodDict['impl']['args'] += ', '
 					methodDict['impl']['c_args'] += ', '
 				if self.is_linphone_type(arg.type, False, False):
 					if isinstance(arg.type, AbsApi.ClassType):
-						argname = arg.name.translate(self.nameTranslator)
-						keepAlive = {}
-						keepAlive['keep_alive'] = "GC.KeepAlive({0});".format(argname)
-						methodDict['impl']['gc_keepalive'].append(keepAlive)
 						methodDict['impl']['c_args'] += argname + " != null ? " + argname + ".nativePtr : IntPtr.Zero"
 					else:
 						methodDict['impl']['c_args'] += '(int)' + arg.name.translate(self.nameTranslator)

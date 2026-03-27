@@ -43,4 +43,11 @@ public class LinphoneWrapper_AddressTester
         core.Start();
         core.Stop();
     }
+    [Fact]
+    public void testConfiguration(){
+        Factory factory = Factory.Instance;
+        Config config = factory.CreateConfig("");
+        String ret = config.GetString("test", "inexistant-key", "the-default-value");
+        Assert.Equal("the-default-value", ret);
+    }
 }
