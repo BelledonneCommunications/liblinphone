@@ -148,7 +148,7 @@ public:
 	void enterBackground();
 	void enterForeground();
 	bool isInBackground() const;
-	void iterate() noexcept;
+	void iterate();
 
 	// ---------------------------------------------------------------------------
 	// C-Core.
@@ -273,7 +273,8 @@ public:
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<ConferenceParams> &params,
 	                                             const std::shared_ptr<const Address> &localAddress,
 	                                             const std::shared_ptr<const Address> &remoteAddress,
-	                                             const std::list<std::shared_ptr<Address>> &participants, bool logIfNotFound = true) const;
+	                                             const std::list<std::shared_ptr<Address>> &participants,
+	                                             bool logIfNotFound = true) const;
 	std::shared_ptr<Conference> searchConference(const std::shared_ptr<const Address> &conferenceAddress) const;
 	std::shared_ptr<Conference> searchConference(const std::string &identifier) const;
 
