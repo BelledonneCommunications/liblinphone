@@ -62,6 +62,7 @@ public:
 	void setPeerAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate = false);
 	void setLocalAddress(const std::shared_ptr<const Address> &addr, bool forceUpdate = false);
 
+	void updateIdentifier() const;
 	const std::string &getIdentifier() const;
 
 	bool isValid() const;

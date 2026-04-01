@@ -54,6 +54,7 @@ ConferenceId::ConferenceId(const ConferenceId &other) {
 	setLocalAddress(other.mLocalAddress, true);
 	mHash = other.mHash;
 	mWeakHash = other.mWeakHash;
+	mIdentifier.clear();
 }
 
 ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
@@ -62,6 +63,7 @@ ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
 	setLocalAddress(other.mLocalAddress, true);
 	mHash = other.mHash;
 	mWeakHash = other.mWeakHash;
+	mIdentifier.clear();
 	return *this;
 }
 
@@ -145,11 +147,15 @@ size_t ConferenceId::getHash() const {
 	return mHash;
 }
 
+void ConferenceId::updateIdentifier() const {
+	const auto &pAddress = mPeerAddress ? reducedAddress(*mPeerAddress).toStringUriOnlyOrdered(false) : "sip:";
+	const auto &lAddress = mLocalAddress ? reducedAddress(*mLocalAddress).toStringUriOnlyOrdered(false) : "sip:";
+	mIdentifier = pAddress + ConferenceId::IdentifierDelimiter + lAddress;
+}
+
 const std::string &ConferenceId::getIdentifier() const {
 	if (mIdentifier.empty()) {
-		const auto &pAddress = mPeerAddress ? reducedAddress(*mPeerAddress).toStringUriOnlyOrdered(false) : "sip:";
-		const auto &lAddress = mLocalAddress ? reducedAddress(*mLocalAddress).toStringUriOnlyOrdered(false) : "sip:";
-		mIdentifier += pAddress + ConferenceId::IdentifierDelimiter + lAddress;
+		updateIdentifier();
 	}
 	return mIdentifier;
 }

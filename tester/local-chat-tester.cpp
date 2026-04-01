@@ -3007,6 +3007,10 @@ static void one_to_one_chatroom_exhumed_while_offline() {
 		                             initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
 
+		char *marie_one_on_one_id = ms_strdup(linphone_chat_room_get_identifier(marieCr));
+		BC_ASSERT_PTR_EQUAL(marieCr, linphone_core_search_chat_room_by_identifier(marie.getLc(), marie_one_on_one_id));
+		char *pauline_one_on_one_id = ms_strdup(linphone_chat_room_get_identifier(paulineCr));
+		BC_ASSERT_PTR_EQUAL(paulineCr, linphone_core_search_chat_room_by_identifier(pauline.getLc(), pauline_one_on_one_id));
 		// Pauline goes offline
 		ms_message("%s goes offline", linphone_core_get_identity(pauline.getLc()));
 		linphone_core_set_network_reachable(pauline.getLc(), FALSE);
@@ -3030,7 +3034,7 @@ static void one_to_one_chatroom_exhumed_while_offline() {
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(2), [] { return false; });
 
 		// Marie deletes the chat room
-		// Pauline cannot now this because she is offline
+		// Pauline cannot know this because she is offline
 		ms_message("%s deletes chatroom %s", linphone_core_get_identity(marie.getLc()), confAddrStr);
 		linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateTerminated,
@@ -3059,6 +3063,10 @@ static void one_to_one_chatroom_exhumed_while_offline() {
 				BC_ASSERT_FALSE(linphone_address_equal(confAddr, exhumedConfAddr));
 			}
 		}
+		const char * new_marie_one_on_one_id = linphone_chat_room_get_identifier(marieCr);
+		BC_ASSERT_STRING_NOT_EQUAL(marie_one_on_one_id, new_marie_one_on_one_id);
+		BC_ASSERT_PTR_EQUAL(marieCr, linphone_core_search_chat_room_by_identifier(marie.getLc(), new_marie_one_on_one_id));
+		ms_free(marie_one_on_one_id);
 
 		BC_ASSERT_EQUAL(marie.getCore().getChatRooms().size(), 1, size_t, "%zu");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 1, int, "%d");
@@ -3088,6 +3096,11 @@ static void one_to_one_chatroom_exhumed_while_offline() {
 		linphone_address_unref(paulineDeviceAddr);
 		BC_ASSERT_PTR_NOT_NULL(newPaulineCr);
 		BC_ASSERT_PTR_EQUAL(newPaulineCr, paulineCr);
+
+		const char * new_pauline_one_on_one_id = linphone_chat_room_get_identifier(paulineCr);
+		BC_ASSERT_STRING_NOT_EQUAL(pauline_one_on_one_id, new_pauline_one_on_one_id);
+		BC_ASSERT_PTR_EQUAL(paulineCr, linphone_core_search_chat_room_by_identifier(pauline.getLc(), new_pauline_one_on_one_id));
+		ms_free(pauline_one_on_one_id);
 
 		// Toggle the network to make sure that Pauline received the BYE from the server. The first attempt of the
 		// server to BYE a device fails because the BYE is answered with a 503 Service Unavailable as the client is
