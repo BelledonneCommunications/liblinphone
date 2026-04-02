@@ -33,7 +33,7 @@
 namespace LinphoneTest {
 
 static void secure_group_chat_room_with_client_restart() {
-	group_chat_room_with_client_restart_base(true);
+	group_chat_room_with_client_restart_base(true, false);
 }
 
 static void secure_group_chat_room_with_invite_error() {

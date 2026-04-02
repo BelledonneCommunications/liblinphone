@@ -1121,7 +1121,11 @@ static void group_chat_room_with_client_deletes_chatroom_after_restart() {
 }
 
 static void group_chat_room_with_client_restart() {
-	group_chat_room_with_client_restart_base(false);
+	group_chat_room_with_client_restart_base(false, false);
+}
+
+static void group_chat_room_with_client_restart_and_focus_changing_contact_address() {
+	group_chat_room_with_client_restart_base(false, true);
 }
 
 static void group_chat_room_with_client_registering_with_short_register_expires() {
@@ -4750,6 +4754,9 @@ static test_t local_conference_chat_basic_tests[] = {
                  "LeaksMemory"), /* beacause of coreMgr restart*/
     TEST_ONE_TAG("Group chat with client restart",
                  LinphoneTest::group_chat_room_with_client_restart,
+                 "LeaksMemory"), /* beacause of coreMgr restart*/
+    TEST_ONE_TAG("Group chat with client restart and focus changing contact address",
+                 LinphoneTest::group_chat_room_with_client_restart_and_focus_changing_contact_address,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
     TEST_ONE_TAG("Group chat room bulk notify to participant",
                  LinphoneTest::group_chat_room_bulk_notify_to_participant,

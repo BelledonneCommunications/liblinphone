@@ -715,7 +715,7 @@ void CallSessionPrivate::init() {
 void CallSessionPrivate::accept(const CallSessionParams *csp) {
 	L_Q();
 	/* Try to be best-effort in giving real local or routable contact address */
-	setContactOp();
+	setContactOp({});
 	if (csp) setParams(new CallSessionParams(*csp));
 	if (mParams) {
 		op->enableCapabilityNegotiation(q->isCapabilityNegotiationEnabled());
@@ -787,7 +787,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation() {
 void CallSessionPrivate::handleIncomingReceivedStateInIncomingNotification() {
 	L_Q();
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
-	setContactOp();
+	setContactOp({});
 	if (notifyRinging && state != CallSession::State::IncomingEarlyMedia)
 		op->notifyRinging(false, linphone_core_get_tag_100rel_support_level(q->getCore()->getCCore()));
 	acceptOrTerminateReplacedSessionInIncomingNotification();
@@ -994,7 +994,7 @@ void CallSessionPrivate::setBroken() {
 	}
 }
 
-void CallSessionPrivate::setContactOp() {
+void CallSessionPrivate::setContactOp(const std::optional<std::shared_ptr<Address>> destination) {
 	L_Q();
 	auto contactInfo = chooseContact();
 	// Do not try to set contact address if it is not valid
@@ -1012,8 +1012,12 @@ void CallSessionPrivate::setContactOp() {
 			// the core. For example, flexisip tchat servers based on SDK 5.3, will create chatroom with username
 			// chatroom-XXXXX which doesn't match any of the account held by the core so the To or From header have the
 			// chatroom address
-			auto guessedConferenceAddress =
-			    Address::create((direction == LinphoneCallIncoming) ? op->getTo() : op->getFrom());
+			std::shared_ptr<Address> guessedConferenceAddress;
+			if (direction == LinphoneCallIncoming) {
+				guessedConferenceAddress = destination ? destination.value() : log->getToAddress();
+			} else {
+				guessedConferenceAddress = log->getFromAddress();
+			}
 			std::shared_ptr<Conference> guessedConference = core->findConference(
 			    ConferenceId(guessedConferenceAddress, guessedConferenceAddress, conferenceIdParams), false);
 			std::shared_ptr<Address> conferenceAddress;
@@ -1167,8 +1171,8 @@ CallSessionPrivate::ContactInfo CallSessionPrivate::chooseContact() const {
 			         << *q->getLocalAddress() << " remote address "
 			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "sip:") << ").";
 		}
-		if (addr && (account->getOp() || (account->getDependency() != nullptr) ||
-		            q->getCore()->conferenceServerEnabled())) {
+		if (addr &&
+		    (account->getOp() || (account->getDependency() != nullptr) || q->getCore()->conferenceServerEnabled())) {
 			/* If using a account, use the contact address as guessed with the REGISTERs */
 			lInfo() << "Contact " << *addr << " has been fixed using account " << *account;
 			result = addr->clone()->toSharedPtr();
@@ -1793,11 +1797,6 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
                              const std::shared_ptr<const Content> content) {
 	L_D();
 	d->subject = subject;
-	/* Try to be best-effort in giving real local or routable contact address */
-	d->setContactOp();
-	const SalAddress *destinationAddress;
-	if (destination) destinationAddress = destination->getImpl();
-	else destinationAddress = d->log->getToAddress()->getImpl();
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
 	d->op->setLocalBodies({});
@@ -1805,12 +1804,19 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 		d->op->addLocalBody(*content);
 	}
 
+	/* Try to be best-effort in giving real local or routable contact address */
+	std::shared_ptr<Address> destinationAddress;
+	if (destination) destinationAddress = destination;
+	else destinationAddress = d->log->getToAddress();
+
+	d->setContactOp(destinationAddress);
+
 	// If a custom Content has been set in the call mParams, create a multipart body for the INVITE
 	for (auto &c : d->mParams->getCustomContents()) {
 		d->op->addLocalBody(*c);
 	}
 
-	int result = d->op->call(d->log->getFromAddress()->getImpl(), destinationAddress, subject);
+	int result = d->op->call(d->log->getFromAddress()->getImpl(), destinationAddress->getImpl(), subject);
 	if (result < 0) {
 		if ((d->state != CallSession::State::Error) && (d->state != CallSession::State::Released)) {
 			// sal_call() may invoke call_failure() and call_released() SAL callbacks synchronously,

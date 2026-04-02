@@ -170,14 +170,14 @@ bool MediaSessionPrivate::tryEnterConference() {
 		if (state == CallSession::State::Paused) {
 			// Resume call as it was added to conference
 			lInfo() << "Media session (local address " << *q->getLocalAddress() << " remote address "
-			        << *q->getRemoteAddress() << ") was added to conference " << *conference->getConferenceAddress()
+			        << *q->getRemoteAddress() << ") was added to " << *conference
 			        << " while the call was being paused. Resuming the session.";
 			q->resume();
 		} else {
 			// Send update to notify that the call enters conference
 			MediaSessionParams *newParams = q->getMediaParams()->clone();
 			lInfo() << "Media session (local address " << *q->getLocalAddress() << " remote address "
-			        << *q->getRemoteAddress() << ") was added to conference " << *conference->getConferenceAddress()
+			        << *q->getRemoteAddress() << ") was added to " << *conference
 			        << " while the call was establishing. Sending update to notify remote participant.";
 			q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
 			delete newParams;
@@ -3771,7 +3771,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification() {
 	L_Q();
 	auto logContext = getLogContextualizer();
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
-	setContactOp();
+	setContactOp({});
 	if (notifyRinging) {
 		bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
 		                                                   "incoming_calls_early_media", false);
@@ -3833,8 +3833,8 @@ LinphoneStatus MediaSessionPrivate::pause() {
 
 		if (conference) {
 			lInfo() << "Removing participant with session " << q << " (local address " << *q->getLocalAddress()
-			        << " remote address " << *q->getRemoteAddress() << ")  from conference "
-			        << *conference->getConferenceAddress();
+			        << " remote address " << *q->getRemoteAddress() << ")  from "
+			        << *conference;
 			// Do not preserve conference after removing the participant
 			conference->removeParticipant(q->getSharedFromThis(), false);
 			return 0;
@@ -4610,7 +4610,7 @@ LinphoneStatus MediaSession::acceptEarlyMedia(const MediaSessionParams *msp) {
 		return -1;
 	}
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
-	d->setContactOp();
+	d->setContactOp({});
 	/* If parameters are passed, update the media description */
 	if (msp) {
 		d->setParams(new MediaSessionParams(*msp));

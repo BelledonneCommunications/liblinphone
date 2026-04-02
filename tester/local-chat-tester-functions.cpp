@@ -227,7 +227,7 @@ static void send_message_on_network_reachable(LinphoneCore *lc, bool_t reachable
 	}
 }
 
-void group_chat_room_with_client_restart_base(bool encrypted) {
+void group_chat_room_with_client_restart_base(bool encrypted, bool change_conference_server_contact_address) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
@@ -334,6 +334,12 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
+		}
+
+		if (change_conference_server_contact_address) {
+			LinphoneAddress *new_contact_address = linphone_address_new("sip:tom.tommy.time@sip.tommy.org");
+			linphone_account_set_contact_address(linphone_core_get_default_account(focus.getLc()), new_contact_address);
+			linphone_address_unref(new_contact_address);
 		}
 
 		focus.registerAsParticipantDevice(michelle2);

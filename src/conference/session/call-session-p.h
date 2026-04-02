@@ -113,7 +113,7 @@ public:
 	setDestAccount(const std::shared_ptr<Account> &account); // Set destProxy and update the proxy of currentParams
 
 	void setBroken();
-	void setContactOp();
+	void setContactOp(const std::optional<std::shared_ptr<Address>> destination);
 
 	virtual void reinviteToRecoverFromConnectionLoss();
 	virtual void repairByNewInvite(bool withReplaces);
