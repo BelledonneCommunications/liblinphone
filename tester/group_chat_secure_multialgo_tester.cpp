@@ -408,7 +408,7 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	Linphone::Tester::ClientCoreManager chloe("chloe_rc", *(LinphonePrivate::Address::toCpp(confFactoryUri)),
 	                                          {lime::CurveId::c25519});
 	std::list<std::reference_wrapper<Linphone::Tester::CoreManager>> allCoreMgrs{marie, pauline, laure, chloe};
-	std::list<std::reference_wrapper<Linphone::Tester::CoreManager>> recipients{pauline, laure, chloe};
+	std::list<std::reference_wrapper<Linphone::Tester::ClientCoreManager>> recipients{pauline, laure, chloe};
 	linphone_address_unref(confFactoryUri);
 	auto marieStats = marie.getStats();
 	auto paulineStats = pauline.getStats();
@@ -469,8 +469,9 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -506,8 +507,9 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -550,8 +552,9 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -592,8 +595,9 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -650,8 +654,9 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -709,9 +714,10 @@ static void group_chat_lime_x3dh_soft_migration(void) {
 	msg = nullptr;
 
 	// Laure and Chloe get it
-	for (Linphone::Tester::CoreManager &client :
-	     std::list<std::reference_wrapper<Linphone::Tester::CoreManager>>{laure, chloe}) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client :
+	     std::list<std::reference_wrapper<Linphone::Tester::ClientCoreManager>>{laure, chloe}) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -762,7 +768,7 @@ static void group_chat_lime_x3dh_multialgo(void) {
 	Linphone::Tester::ClientCoreManager chloe("chloe_rc", *(LinphonePrivate::Address::toCpp(confFactoryUri)),
 	                                          {lime::CurveId::c25519});
 	std::list<std::reference_wrapper<Linphone::Tester::CoreManager>> allCoreMgrs{marie, pauline, laure, chloe};
-	std::list<std::reference_wrapper<Linphone::Tester::CoreManager>> recipients{pauline, laure, chloe};
+	std::list<std::reference_wrapper<Linphone::Tester::ClientCoreManager>> recipients{pauline, laure, chloe};
 	linphone_address_unref(confFactoryUri);
 	auto marieStats = marie.getStats();
 	auto paulineStats = pauline.getStats();
@@ -823,8 +829,9 @@ static void group_chat_lime_x3dh_multialgo(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
@@ -874,8 +881,9 @@ static void group_chat_lime_x3dh_multialgo(void) {
 	msg = nullptr;
 
 	// everyone get it
-	for (Linphone::Tester::CoreManager &client : recipients) {
-		for (auto chatRoom : client.getCore().getChatRooms()) {
+	for (Linphone::Tester::ClientCoreManager &client : recipients) {
+		if (auto cChatRoom = client.searchChatRoom(nullptr, confAddr)) {
+			auto chatRoom = LinphonePrivate::AbstractChatRoom::toCpp(cChatRoom)->getSharedFromThis();
 			BC_ASSERT_TRUE(Linphone::Tester::CoreManagerAssert(allCoreMgrs).wait([chatRoom] {
 				return chatRoom->getUnreadChatMessageCount() == 1;
 			}));
