@@ -1836,17 +1836,28 @@ bool ServerConference::tryAddMeDevice() {
 }
 
 /* This function is used to re-join devices of a participant that has left previously. Its device are still referenced
- * until they 're all left. */
+ * until they're all left. */
 void ServerConference::resumeParticipant(BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
 #ifdef HAVE_ADVANCED_IM
 	if (isChatOnly()) {
-		addParticipantToList(participant->getAddress());
+		// 1. Set all participant devices about to leave to the ScheduledForJoining state
 		for (auto device : participant->getDevices()) {
 			switch (device->getState()) {
 				case ParticipantDevice::State::Leaving:
 				case ParticipantDevice::State::Left:
 				case ParticipantDevice::State::ScheduledForLeaving:
-					setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+					setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining, false);
+					break;
+				default:
+					break;
+			}
+		}
+		// 2. Add the participant back to the list and send a NOTIFY message to all clients
+		addParticipantToList(participant->getAddress());
+		// 3. Initiate an INVITE session to every device
+		for (auto device : participant->getDevices()) {
+			switch (device->getState()) {
+				case ParticipantDevice::State::ScheduledForJoining:
 					updateParticipantDeviceSession(device);
 					break;
 				default:
