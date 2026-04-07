@@ -774,7 +774,7 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		if (rejectSession) {
 			lInfo() << "Device " << *deviceAddress << " is trying to establish a session in " << *this
 			        << ". However it is in state " << Utils::toString(deviceState)
-			        << "therefore the session is likely to be immediately terminated";
+			        << " therefore the session is likely to be immediately terminated";
 		} else {
 			if (deviceSession) {
 				// Search for the matching cached device and update it as well. In fact cache devices are used in the
@@ -1401,10 +1401,10 @@ int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 		 */
 		if (getCore()->conferenceServerEnabled()) {
 			if (device) {
-				const auto &session = device->getSession();
+				auto session = device->getSession();
 				const auto sessionState = session ? session->getState() : CallSession::State::Idle;
-				const auto &callId = device->getCallId();
-				if (device->getState() == ParticipantDevice::State::Joining &&
+				const auto deviceState = device->getState();
+				if (deviceState == ParticipantDevice::State::Joining &&
 				    (sessionState == CallSession::State::OutgoingProgress ||
 				     sessionState == CallSession::State::Connected)) {
 					lInfo() << *this << ": outgoing INVITE " << *session << " already in progress.";
@@ -1415,6 +1415,7 @@ int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 					return -1;
 				}
 				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
+				const auto &callId = device->getCallId();
 				if (!callId.empty()) {
 					call = getCore()->getCallByCallId(callId);
 				} else if (session) {
@@ -1453,6 +1454,9 @@ int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 			const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
 			const string &confId = conferenceAddress->getUriParamValue(Conference::ConfIdParameter);
 			linphone_call_params_set_conference_id(new_params, confId.c_str());
+			// Set the from header as the conference address to allow clients to associate a call session to a
+			// conference.
+			linphone_call_params_set_from_header(new_params, conferenceAddress->toString().c_str());
 
 			std::shared_ptr<CallSession> session = nullptr;
 
@@ -3532,7 +3536,8 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				}
 			} break;
 			case CallSession::State::Error:
-				// If the call session ends up with an error, then reset the device to the ScheduledForJoining state to be retried the next time.
+				// If the call session ends up with an error, then reset the device to the ScheduledForJoining state to
+				// be retried the next time.
 				if (deviceState == ParticipantDevice::State::Joining) {
 					lWarning() << *session << " errored out while " << *device << " is joining " << *this
 					           << ", setting it back to ScheduledForJoining.";

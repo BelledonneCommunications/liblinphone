@@ -835,8 +835,11 @@ bool ClientConferenceEventHandler::subscribe() {
 	const auto &subscribeToHeader = conference->getConferenceAddress();
 	if (!subscribeToHeader) return false; // Unknown peer address
 	try {
+		const int eventSubscribeExpire = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip",
+		                                                         "conference_subscribe_expires", 600);
 		ev = dynamic_pointer_cast<EventSubscribe>(
-		    (new EventSubscribe(getCore(), subscribeToHeader, account, "conference", 600))->toSharedPtr());
+		    (new EventSubscribe(getCore(), subscribeToHeader, account, "conference", eventSubscribeExpire))
+		        ->toSharedPtr());
 		shared_ptr<EventCbs> cbs = EventCbs::create();
 		cbs->setUserData(this);
 		cbs->subscribeStateChangedCb = subscribeStateChangedCb;

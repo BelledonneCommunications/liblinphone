@@ -11,6 +11,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "conference/participant.h"
 #include "core/core.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
@@ -155,6 +156,12 @@ public:
 		start(true);
 	}
 
+	static void deleteAllDevices(std::shared_ptr<LinphonePrivate::Participant> &participant) {
+		if (participant) {
+			participant->clearDevices();
+		}
+	}
+
 	void reStart(bool check_for_proxies = true) {
 		linphone_core_manager_reinit(mMgr.get());
 		mPreStart(false);
@@ -168,10 +175,10 @@ public:
 	void setupMgrForConference(const char *conferenceVersion = nullptr) {
 		setup_mgr_for_conference(mMgr.get(), conferenceVersion);
 	}
-	LinphoneChatRoom* searchChatRoom(const LinphoneAddress *localAddr,
-	                                             const LinphoneAddress *remoteAddr,
-	                                             const bctbx_list_t *participants = nullptr,
-	                                             const LinphoneChatRoomParams *params = nullptr) {
+	LinphoneChatRoom *searchChatRoom(const LinphoneAddress *localAddr,
+	                                 const LinphoneAddress *remoteAddr,
+	                                 const bctbx_list_t *participants = nullptr,
+	                                 const LinphoneChatRoomParams *params = nullptr) {
 		return linphone_core_search_chat_room(mMgr->lc, params, localAddr, remoteAddr, participants);
 	}
 	LinphoneAccount *getDefaultAccount() const {

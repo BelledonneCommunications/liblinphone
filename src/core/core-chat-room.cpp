@@ -259,11 +259,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom(const ConferenceId
 	return chatRoom;
 }
 
-std::shared_ptr<AbstractChatRoom>
-CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
-                            const std::shared_ptr<const Address> &localAddress,
-                            const std::shared_ptr<const Address> &remoteAddress,
-                            const std::list<std::shared_ptr<Address>> &participants, bool logIfNotFound) const {
+std::shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
+                                                              const std::shared_ptr<const Address> &localAddress,
+                                                              const std::shared_ptr<const Address> &remoteAddress,
+                                                              const std::list<std::shared_ptr<Address>> &participants,
+                                                              bool logIfNotFound) const {
 	L_Q();
 
 	const auto &conference = q->searchConference(params, localAddress, remoteAddress, participants, logIfNotFound);
@@ -280,17 +280,23 @@ CorePrivate::searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
 }
 
 /*
- * This function searches a basic chatroom that matches the arguments provided. It is therefore not applicable to conference servers. The application is free to provide the argument it wishes, however the execution time depends on which of the are given.
- * If both the peer and local addresses are provided, then the search can be carried out directly on the basic chatroom map mBasicChatRoomsById as its key is a ConferenceId object. This is the fastest way to look for a basic chatroom and compare against a participant list and/or parameters should they be given.
- * If either the peer or the local address is given, then the search will take longer as all items in the map must have their address checked against the provided one. The initial raw search may lead to find more than one basic chatroom and the participant list and/or parameters can help to get down to one item only.
- * The slowest way of finding a basic chatroom is by not giving neither the local nor the peer address as every basic chatroom will be matched against the participant list and/or the parameters
- * If multiple matches occur with the provided arguments, only one will be returned.
+ * This function searches a basic chatroom that matches the arguments provided. It is therefore not applicable to
+ * conference servers. The application is free to provide the argument it wishes, however the execution time depends on
+ * which of the are given. If both the peer and local addresses are provided, then the search can be carried out
+ * directly on the basic chatroom map mBasicChatRoomsById as its key is a ConferenceId object. This is the fastest way
+ * to look for a basic chatroom and compare against a participant list and/or parameters should they be given. If either
+ * the peer or the local address is given, then the search will take longer as all items in the map must have their
+ * address checked against the provided one. The initial raw search may lead to find more than one basic chatroom and
+ * the participant list and/or parameters can help to get down to one item only. The slowest way of finding a basic
+ * chatroom is by not giving neither the local nor the peer address as every basic chatroom will be matched against the
+ * participant list and/or the parameters If multiple matches occur with the provided arguments, only one will be
+ * returned.
  */
 std::shared_ptr<AbstractChatRoom>
 CorePrivate::searchBasicChatRoom(const std::shared_ptr<ConferenceParams> &params,
-                            const std::shared_ptr<const Address> &localAddress,
-                            const std::shared_ptr<const Address> &remoteAddress,
-                            const std::list<std::shared_ptr<Address>> &participants) const {
+                                 const std::shared_ptr<const Address> &localAddress,
+                                 const std::shared_ptr<const Address> &remoteAddress,
+                                 const std::list<std::shared_ptr<Address>> &participants) const {
 	L_Q();
 	Core::ChatRoomWeakCompareMap resultChatRooms;
 
@@ -350,7 +356,8 @@ CorePrivate::searchBasicChatRoom(const std::shared_ptr<ConferenceParams> &params
 		} else {
 			auto resultSize = resultChatRooms.size();
 			if (resultSize > 1) {
-				lError() << resultSize << " basic chatrooms have been found but only one will be return by the search function.";
+				lError() << resultSize
+				         << " basic chatrooms have been found but only one will be return by the search function.";
 			}
 			chatRoom = resultChatRooms.begin()->second;
 		}
@@ -721,11 +728,11 @@ CorePrivate::findExhumedChatRoomFromPreviousConferenceId(const ConferenceId &con
 #ifdef HAVE_ADVANCED_IM
 	for (const auto &[id, conference] : mConferenceById) {
 		if (auto chatRoom = conference->getChatRoom()) {
-				const list<ConferenceId> &previousIds = chatRoom->getPreviousConferenceIds();
-				auto prevIdIt = find(previousIds.begin(), previousIds.end(), conferenceId);
-				if (prevIdIt != previousIds.cend()) {
-					return chatRoom;
-				}
+			const list<ConferenceId> &previousIds = chatRoom->getPreviousConferenceIds();
+			auto prevIdIt = find(previousIds.begin(), previousIds.end(), conferenceId);
+			if (prevIdIt != previousIds.cend()) {
+				return chatRoom;
+			}
 		}
 	}
 #endif
@@ -935,7 +942,7 @@ void Core::deleteChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	auto core = chatRoom->getCore();
 
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
-	lInfo() << "Trying to delete chat room [" << chatRoom << "] with conference ID " << conferenceId << ".";
+	lInfo() << "Trying to delete " << *chatRoom;
 
 	auto chatRoomInCoreMap = core->findChatRoom(conferenceId, false);
 	if (chatRoomInCoreMap) {
@@ -944,8 +951,7 @@ void Core::deleteChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 		d->mBasicChatRoomsById.erase(conferenceId);
 		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
 	} else {
-		lError() << "Unable to delete chat room [" << chatRoom << "] with conference ID " << conferenceId
-		         << " because it cannot be found.";
+		lError() << "Unable to delete " << *chatRoom << " because it cannot be found.";
 	}
 }
 

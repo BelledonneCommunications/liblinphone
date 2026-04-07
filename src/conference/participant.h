@@ -37,6 +37,12 @@
 
 class ServerConferenceTester;
 
+namespace Linphone {
+namespace Tester {
+class ConfCoreManager;
+} // namespace Tester
+} // namespace Linphone
+
 namespace LinphoneTest {
 class ServerConferenceTester;
 class ClientConference;
@@ -65,7 +71,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ClientConference;
 	friend class ClientConferenceEventHandler;
 	friend class ServerChatRoom;
-	friend class LinphoneTest::ClientConference;
+	friend class Linphone::Tester::ConfCoreManager;
 	friend class ::ServerConferenceTester;
 
 public:

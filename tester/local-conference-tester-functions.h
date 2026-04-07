@@ -68,12 +68,6 @@ public:
 		}
 	}
 
-	static void deleteAllDevices(std::shared_ptr<Participant> &participant) {
-		if (participant) {
-			participant->clearDevices();
-		}
-	}
-
 	static void
 	encrypted_message_sent(BCTBX_UNUSED(LinphoneCore *lc), LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(room);
@@ -157,8 +151,6 @@ public:
 	                                const LinphoneAddress *participantDevice) {
 		auto cr = searchChatRoom(conferenceAddress, conferenceAddress);
 		BC_ASSERT_PTR_NOT_NULL(cr);
-		//	CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested,
-		// participant_registration_subscription_requested, cr, participantDevice)
 		_linphone_chat_room_notify_participant_registration_subscription_requested(cr, participantDevice);
 	}
 

@@ -257,7 +257,6 @@ void linphone_error_info_to_sal(const LinphoneErrorInfo *ei, SalErrorInfo *sei) 
 
 	linphone_error_info_fields_to_sal(ei, sei);
 	if (ei->sub_ei != NULL) {
-
 		linphone_error_info_to_sal(ei->sub_ei, sei->sub_sei);
 	}
 }

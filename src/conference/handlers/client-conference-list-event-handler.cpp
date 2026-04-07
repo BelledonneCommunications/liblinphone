@@ -122,8 +122,10 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 	serializeResourceLists(xmlBody, rl, map);
 	content->setBodyFromUtf8(xmlBody.str());
 
+	const int eventSubscribeExpire = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip",
+	                                                         "conference_subscribe_expires", 600);
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(getCore(), factoryUri, "conference", 600))->toSharedPtr());
+	    (new EventSubscribe(getCore(), factoryUri, "conference", eventSubscribeExpire))->toSharedPtr());
 	const auto &from = account->getContactAddress();
 	evSub->getOp()->setFromAddress(from->getImpl());
 	evSub->setInternal(true);
