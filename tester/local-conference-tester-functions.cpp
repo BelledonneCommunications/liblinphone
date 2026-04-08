@@ -1096,8 +1096,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 								    (role == LinphoneParticipantRoleListener) || !camera_enabled || !video_available;
 							}
 						} catch (std::out_of_range &) {
-							ms_fatal("Unable to find manager with address %s",
-							         linphone_address_as_string(device_address));
+							video_check = false;
 						}
 					} else {
 						audio_direction_check = false;

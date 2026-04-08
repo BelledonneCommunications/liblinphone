@@ -121,12 +121,11 @@ static void group_chat_room_creation_server_base(bool_t server_restart) {
 		// Laure comes back online and its chatroom is expected to be deleted
 		ms_message("%s turns its network on again", linphone_core_get_identity(laure.getLc()));
 		linphone_core_set_network_reachable(laure.getLc(), TRUE);
-		LinphoneAddress *laureDeviceAddress = linphone_address_clone(
-		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure.getLc())));
+		const LinphoneAddress *laureDeviceAddress =
+		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure.getLc()));
 		// Notify chat room that a participant has registered
 		focus.notifyParticipantDeviceRegistration(linphone_chat_room_get_conference_address(marieCr),
 		                                          laureDeviceAddress);
-		linphone_address_unref(laureDeviceAddress);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneSubscriptionTerminated,
 		                             initialLaureStats.number_of_LinphoneSubscriptionTerminated + 1,
@@ -144,12 +143,10 @@ static void group_chat_room_creation_server_base(bool_t server_restart) {
 		linphone_core_set_network_reachable(laure.getLc(), FALSE);
 		linphone_core_set_network_reachable(laure.getLc(), TRUE);
 
-		laureDeviceAddress = linphone_address_clone(
-		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure.getLc())));
+		laureDeviceAddress = linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure.getLc()));
 		// Notify chat room that a participant has registered
 		focus.notifyParticipantDeviceRegistration(linphone_chat_room_get_conference_address(marieCr),
 		                                          laureDeviceAddress);
-		linphone_address_unref(laureDeviceAddress);
 		// Laure has been removed from the chat room, therefore she cannot subscribe anymore
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneChatRoomStateTerminated,
 		                             initialLaureStats.number_of_LinphoneChatRoomStateTerminated + 1,
@@ -2199,12 +2196,24 @@ static void group_chat_room_with_creator_without_groupchat_capability() {
 	}
 }
 
-static void group_chat_room_with_invite_error() {
-	group_chat_room_with_sip_errors_base(true, false, false);
+static void group_chat_room_with_invite_error_organizer() {
+	group_chat_room_with_sip_errors_base(true, false, false, true);
 }
 
-static void group_chat_room_with_subscribe_error() {
-	group_chat_room_with_sip_errors_base(false, true, false);
+static void group_chat_room_with_subscribe_error_organizer() {
+	group_chat_room_with_sip_errors_base(false, true, false, true);
+}
+
+static void group_chat_room_with_invite_error_participant() {
+	group_chat_room_with_sip_errors_base(true, false, false, false);
+}
+
+static void group_chat_room_with_subscribe_error_participant() {
+	group_chat_room_with_sip_errors_base(false, true, false, false);
+}
+
+void group_chat_room_with_focus_shutdown_during_invitation() {
+	group_chat_room_with_focus_shutdown_during_invitation_base(false);
 }
 
 void chat_room_session_state_changed_no_ack(BCTBX_UNUSED(LinphoneChatRoom *cr),
@@ -3373,7 +3382,7 @@ static void one_to_one_chatroom_not_rejoined_after_leaving() {
 		                             initialMarieStats.number_of_LinphoneRegistrationOk + 1,
 		                             liblinphone_tester_sip_timeout));
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
-			linphone_chat_room_notify_participant_device_registration(chatRoom->toC(), deviceAddr);
+			focus.notifyParticipantDeviceRegistration(chatRoom->getConferenceAddress()->toC(), deviceAddr);
 		}
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionOutgoingProgress,
 		                              initialMarieStats.number_of_LinphoneSubscriptionOutgoingProgress + 1, 2000));
@@ -4389,7 +4398,7 @@ static void group_chat_room_with_duplications() {
 		// Notify chat room that a participant has registered
 		bctbx_list_t *devices = NULL;
 		LinphoneAccount *account = linphone_core_get_default_account(laure.getLc());
-		LinphoneAddress *laureDeviceAddress = linphone_account_get_contact_address(account);
+		const LinphoneAddress *laureDeviceAddress = linphone_account_get_contact_address(account);
 		bctbx_list_t *specs = linphone_core_get_linphone_specs_list(laure.getLc());
 		LinphoneParticipantDeviceIdentity *identity =
 		    linphone_factory_create_participant_device_identity(linphone_factory_get(), laureDeviceAddress, "");
@@ -4910,8 +4919,16 @@ static test_t local_conference_chat_advanced_tests[] = {
         "LeaksMemory" /*due to core restart*/)};
 
 static test_t local_conference_chat_error_tests[] = {
-    TEST_NO_TAG("Group chat with INVITE session error", LinphoneTest::group_chat_room_with_invite_error),
-    TEST_NO_TAG("Group chat with SUBSCRIBE session error", LinphoneTest::group_chat_room_with_subscribe_error),
+    TEST_NO_TAG("Group chat with INVITE session error (organizer)",
+                LinphoneTest::group_chat_room_with_invite_error_organizer),
+    TEST_NO_TAG("Group chat with SUBSCRIBE session error (organizer)",
+                LinphoneTest::group_chat_room_with_subscribe_error_organizer),
+    TEST_NO_TAG("Group chat with INVITE session error (participant)",
+                LinphoneTest::group_chat_room_with_invite_error_participant),
+    TEST_NO_TAG("Group chat with SUBSCRIBE session error (participant)",
+                LinphoneTest::group_chat_room_with_subscribe_error_participant),
+    TEST_NO_TAG("Group chat with focus shutdown during invitation",
+                LinphoneTest::group_chat_room_with_focus_shutdown_during_invitation),
     TEST_NO_TAG("Group chat add participant with invalid address",
                 LinphoneTest::group_chat_room_add_participant_with_invalid_address),
     TEST_NO_TAG("Group chat only participant with invalid address",

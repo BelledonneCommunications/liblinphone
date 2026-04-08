@@ -102,7 +102,7 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 	try {
 		rl = Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate);
 	} catch (const exception &) {
-		lError() << "Error while parsing subscribe body for conferences asked by: " << *participantAddr;
+		lError() << "Error while parsing the body of " << *ev << " for conferences asked by: " << *participantAddr;
 		return;
 	}
 
@@ -119,22 +119,29 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (!chatRoom) {
-				lError() << "Received subscribe for unknown chat room: " << conferenceId;
+				lError() << "Received " << *ev << " for unknown chat room: " << conferenceId;
 				continue;
 			}
 
 			shared_ptr<Participant> participant = chatRoom->findParticipant(participantAddr);
 			if (!participant) {
-				lError() << "Received subscribe for unknown participant [" << *participantAddr
-				         << "] in chat room: " << conferenceId;
+				lError() << "Received " << *ev << " for unknown participant [" << *participantAddr << "] in "
+				         << *chatRoom;
 				continue;
 			}
 
 			shared_ptr<ParticipantDevice> device = participant->findDevice(deviceAddr);
-			if (!device || (device->getState() != ParticipantDevice::State::Present &&
-			                device->getState() != ParticipantDevice::State::Joining)) {
-				lError() << "Received subscribe for unknown device [" << *deviceAddr << "] of participant ["
-				         << *participantAddr << "] in chat room: " << conferenceId;
+			if (!device) {
+				lError() << "Received " << *ev << " for unknown device [" << *deviceAddr << "] of " << *participant
+				         << " in " << *chatRoom;
+				continue;
+			}
+
+			auto deviceState = device->getState();
+			if ((deviceState != ParticipantDevice::State::Present) &&
+			    (deviceState != ParticipantDevice::State::Joining)) {
+				lError() << "Cannot process " << *ev << " for " << *device << " of " << *participant << " in "
+				         << *chatRoom << " because the device state is " << Utils::toString(deviceState);
 				continue;
 			}
 
@@ -179,7 +186,7 @@ void ServerConferenceListEventHandler::subscribeReceived(const std::shared_ptr<E
 	} else {
 		// The subscription has been accepted for at least one chatroom
 		ev->accept();
-	Xsd::Rlmi::List rlmiList("", 0, TRUE);
+		Xsd::Rlmi::List rlmiList("", 0, TRUE);
 		rlmiList.setResource(resources);
 		Xsd::XmlSchema::NamespaceInfomap map;
 		stringstream rlmiBody;

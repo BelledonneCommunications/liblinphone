@@ -734,8 +734,7 @@ void ServerConference::confirmJoining(BCTBX_UNUSED(SalCallOp *op)) {
 		device = participant->addDevice(gruu);
 		if (!getCurrentParams()->isGroup()) {
 			if (device->getState() == ParticipantDevice::State::Left) {
-				lInfo() << *this << ": " << *gruu
-				        << " is reconnected to the one to one chatroom.";
+				lInfo() << *this << ": " << *gruu << " is reconnected to the one to one chatroom.";
 				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 			}
 			participant->setAdmin(true);
@@ -1407,11 +1406,11 @@ int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 				if (device->getState() == ParticipantDevice::State::Joining &&
 				    (sessionState == CallSession::State::OutgoingProgress ||
 				     sessionState == CallSession::State::Connected)) {
-					lInfo() << *this << ": outgoing INVITE already in progress.";
+					lInfo() << *this << ": outgoing INVITE " << *session << " already in progress.";
 					return -1;
 				}
 				if (sessionState == CallSession::State::IncomingReceived) {
-					lInfo() << *this << ": incoming INVITE in progress.";
+					lInfo() << *this << ": incoming INVITE " << *session << " in progress.";
 					return -1;
 				}
 				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
@@ -3215,11 +3214,11 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip::"));
 	if (supportsMedia()) {
 		const std::shared_ptr<Address> &remoteAddress = session->getRemoteAddress();
-		const auto &device = findParticipantDevice(session);
-		const auto &deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 		const auto &remoteContactAddress = session->getRemoteContactAddress();
 		auto op = session->getPrivate()->getOp();
 		auto cppCall = getCore()->getCallByCallId(op->getCallId());
+		const auto &device = findParticipantDevice(session);
+		const auto &deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 		switch (state) {
 			case CallSession::State::OutgoingRinging:
 				participantDeviceAlerting(session);
@@ -3469,7 +3468,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 #ifdef HAVE_ADVANCED_IM
 		auto serverGroupChatRoom = dynamic_pointer_cast<ServerChatRoom>(chatRoom);
 		auto initiatorDevice = serverGroupChatRoom->getInitiatorDevice();
-		shared_ptr<ParticipantDevice> device = findInvitedParticipantDevice(session);
+		const auto &device = findInvitedParticipantDevice(session);
 		if (!device) {
 			lInfo() << *this << ": onCallSessionStateChanged on unknown device (maybe not yet).";
 			if ((state == CallSession::State::Released) && (session->getReason() == LinphoneReasonNotAcceptable) &&
@@ -3483,9 +3482,10 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 			}
 			return;
 		}
+		const auto &deviceState = device->getState();
 		switch (state) {
 			case CallSession::State::Connected:
-				if (device->getState() == ParticipantDevice::State::Leaving) {
+				if (deviceState == ParticipantDevice::State::Leaving) {
 					byeDevice(device);
 				} else {
 					if ((session->getDirection() == LinphoneCallOutgoing) &&
@@ -3504,38 +3504,44 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				}
 				break;
 			case CallSession::State::End: {
-				const auto errorInfo = session->getErrorInfo();
-				if (errorInfo != nullptr && linphone_error_info_get_protocol_code(errorInfo) > 299) {
-					if (device->getState() == ParticipantDevice::State::Joining ||
-					    device->getState() == ParticipantDevice::State::Present) {
+				if (const auto errorInfo = session->getErrorInfo();
+				    linphone_error_info_get_protocol_code(errorInfo) > 299) {
+					if (deviceState == ParticipantDevice::State::Joining ||
+					    deviceState == ParticipantDevice::State::Present) {
 						const auto code = linphone_error_info_get_protocol_code(errorInfo);
-						lWarning() << *this << ": Received a BYE from " << *device->getAddress() << " with code "
-						           << code << ", setting it back to ScheduledForJoining.";
+						lWarning() << *this << ": Received a BYE from " << *device << " with code " << code
+						           << ", setting it back to ScheduledForJoining.";
 						setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
 						if (linphone_error_info_get_protocol_code(errorInfo) == 408 && initiatorDevice &&
 						    initiatorDevice == device) {
 							// Recovering if the initiator of the chatroom did not receive the 200Ok or the ACK has been
 							// lost
-							lInfo() << *this << ": Inviting again initiator device [" << device << " - "
-							        << *device->getAddress() << "] because its session was terminated with code "
-							        << code;
+							lInfo() << *this << ": Inviting again initiator " << *device
+							        << " because its session was terminated with code " << code;
 							inviteDevice(device);
 						}
 					}
 				} else {
 					// Do not kick a participant out when the core loses its network
 					if (linphone_core_is_network_reachable(getCore()->getCCore()) &&
-					    (device->getState() == ParticipantDevice::State::Present)) {
-						lInfo() << *this << ": " << *device->getParticipant()->getAddress()
-						        << " is leaving the chatroom.";
+					    (deviceState == ParticipantDevice::State::Present)) {
+						lInfo() << *this << ": " << *device << " is leaving the chatroom.";
 						serverGroupChatRoom->onBye(device);
 					}
 				}
 			} break;
+			case CallSession::State::Error:
+				// If the call session ends up with an error, then reset the device to the ScheduledForJoining state to be retried the next time.
+				if (deviceState == ParticipantDevice::State::Joining) {
+					lWarning() << *session << " errored out while " << *device << " is joining " << *this
+					           << ", setting it back to ScheduledForJoining.";
+					setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+				}
+				break;
 			case CallSession::State::Released:
 				/* Handle the case of participant we've send a BYE. */
-				if (device->getState() == ParticipantDevice::State::Leaving &&
-				    session->getPreviousState() == CallSession::State::End) {
+				if ((deviceState == ParticipantDevice::State::Leaving) &&
+				    (session->getPreviousState() == CallSession::State::End)) {
 					if (session->getReason() == LinphoneReasonNone) {
 						/* We've received a 200 Ok for our BYE, so it is assumed to be left. */
 						setParticipantDeviceState(device, ParticipantDevice::State::Left);
@@ -3759,7 +3765,9 @@ void ServerConference::updateParticipantDeviceSession(const shared_ptr<Participa
 				inviteDevice(device);
 				break;
 			case ParticipantDevice::State::Joining:
-				if (freshlyRegistered) inviteDevice(device);
+				if (freshlyRegistered) {
+					inviteDevice(device);
+				}
 				break;
 			case ParticipantDevice::State::ScheduledForLeaving:
 				byeDevice(device);

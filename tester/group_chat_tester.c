@@ -745,7 +745,6 @@ void check_create_chat_room_client_side(bctbx_list_t *lcs,
 			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreationPending,
 			                             initialStats->number_of_LinphoneChatRoomStateCreationPending + 1,
 			                             liblinphone_tester_sip_timeout));
-
 			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreated,
 			                             initialStats->number_of_LinphoneChatRoomStateCreated + 1,
 			                             liblinphone_tester_sip_timeout));
@@ -7152,7 +7151,6 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				                             liblinphone_tester_sip_timeout));
 
 				paulineOneToOneCr = linphone_core_get_chat_room(pauline->lc, exhumedConfAddr);
-
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomSessionEnd,
 				                             initialPaulineStats.number_of_LinphoneChatRoomSessionEnd + 1,

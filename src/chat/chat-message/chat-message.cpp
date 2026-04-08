@@ -1159,7 +1159,8 @@ LinphoneReason ChatMessagePrivate::receive() {
 		if (direction == ChatMessage::Direction::Outgoing) {
 			toBeStored = true;
 		} else {
-			_linphone_chat_room_notify_chat_message_should_be_stored(chatRoom->toC(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+			_linphone_chat_room_notify_chat_message_should_be_stored(chatRoom->toC(),
+			                                                         L_GET_C_BACK_PTR(q->getSharedFromThis()));
 		}
 
 		if (toBeStored) {
@@ -1951,12 +1952,14 @@ list<ParticipantImdnState> ChatMessage::getParticipantsState() const {
 
 	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
-	list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantStates(eventLog);
-	for (const auto &dbResult : dbResults) {
-		auto isMe = chatRoom->isMe(dbResult.address);
-		auto participant = isMe ? chatRoom->getMe() : chatRoom->findParticipant(dbResult.address);
-		if (participant) {
-			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
+	if (eventLog) {
+		list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantStates(eventLog);
+		for (const auto &dbResult : dbResults) {
+			auto isMe = chatRoom->isMe(dbResult.address);
+			auto participant = isMe ? chatRoom->getMe() : chatRoom->findParticipant(dbResult.address);
+			if (participant) {
+				result.emplace_back(participant, dbResult.state, dbResult.timestamp);
+			}
 		}
 	}
 
