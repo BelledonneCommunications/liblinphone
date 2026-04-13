@@ -1588,7 +1588,7 @@ void group_chat_room_lime_server_message(bool encrypted) {
 	}
 }
 
-void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
+void one_to_one_chat_room_deletion_by_server_client_base(bool encrypted) {
 	Focus focus("chloe_rc");
 	LinphoneChatMessage *msg;
 	{ // to make sure focus is destroyed after clients.
@@ -1660,11 +1660,9 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 			    linphone_core_search_chat_room(focus.getLc(), NULL, NULL, paulinePeerAddr, NULL);
 			BC_ASSERT_PTR_NOT_NULL(focusCr);
 
-			LinphoneParticipant *paulineParticipant = NULL;
 			LinphoneParticipantDevice *paulineDevice = NULL;
-
 			if (focusCr) {
-				paulineParticipant = linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
+				LinphoneParticipant *paulineParticipant = linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
 				BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
 				if (paulineParticipant) {
 					paulineDevice = linphone_participant_find_device(paulineParticipant, paulineLocalAddr);
@@ -1686,16 +1684,17 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 			linphone_core_set_network_simulator_params(focus.getLc(), &simparams);
 
 			linphone_core_delete_chat_room(marie.getLc(), marieCr);
+			if (paulineDevice) {
+				// wait until the participant moves to the Leaving state on the server
+				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&paulineDevice] {
+					return (linphone_participant_device_get_state(paulineDevice) ==
+								  LinphoneParticipantDeviceStateLeaving);
+				}));
+			}
+
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateDeleted,
 			                             marie_stat.number_of_LinphoneConferenceStateDeleted + 1,
 			                             liblinphone_tester_sip_timeout));
-
-			// wait until chatroom is deleted server side
-			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&paulineDevice] {
-				return (paulineDevice) ? (linphone_participant_device_get_state(paulineDevice) ==
-				                          LinphoneParticipantDeviceStateLeaving)
-				                       : false;
-			}));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomSessionReleased, 1,
 			                             liblinphone_tester_sip_timeout));
@@ -2647,6 +2646,234 @@ void chat_rooms_with_deletion_spaced_out_base(bool encrypted) {
 		linphone_proxy_config_done(config);
 
 		bctbx_list_free(coresList);
+	}
+}
+
+void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_restart) {
+	Focus focus("chloe_rc");
+	LinphoneChatMessage *msg;
+	{ // to make sure focus is destroyed after clients.
+		const LinphoneTesterLimeAlgo lime_algo = encrypted ? C25519 : UNSET;
+
+		linphone_core_enable_lime_x3dh(focus.getLc(), true);
+
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), lime_algo);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), lime_algo);
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+
+		stats marie_stat = marie.getStats();
+		stats pauline_stat = pauline.getStats();
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+
+		if (encrypted) {
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
+		}
+
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+
+		// Marie creates a new group chat room
+		const char *initialSubject = "One on one";
+		LinphoneChatRoom *marieCr =
+		    create_chat_room_client_side(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject,
+		                                 encrypted, LinphoneChatRoomEphemeralModeDeviceManaged);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+		char *conference_address_string = linphone_address_as_string(confAddr);
+
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &pauline_stat,
+		                                                                   confAddr, initialSubject, 1, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+		if (paulineCr && marieCr) {
+			// Marie sends the message
+			const char *msg_text = "Hello Paully";
+			msg = _send_message(marieCr, msg_text);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+			                             pauline_stat.number_of_LinphoneMessageReceived + 1,
+			                             liblinphone_tester_sip_timeout));
+			LinphoneChatMessage *paulineLastMsg = pauline.getStats().last_received_chat_message;
+			linphone_chat_message_unref(msg);
+			BC_ASSERT_PTR_NOT_NULL(paulineLastMsg);
+
+			// Check that the message was correctly decrypted if encrypted
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), msg_text);
+			LinphoneAddress *marieAddr = marie.getCMgr()->identity;
+			BC_ASSERT_TRUE(
+			    linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+
+			LinphoneAddress *paulineLocalAddr = linphone_address_clone(linphone_chat_room_get_local_address(paulineCr));
+			LinphoneAddress *paulinePeerAddr = linphone_address_clone(linphone_chat_room_get_peer_address(paulineCr));
+
+			if (!!server_restart) {
+				ms_message("%s restarts its core", linphone_core_get_identity(focus.getLc()));
+				coresList = bctbx_list_remove(coresList, focus.getLc());
+				focus.reStart();
+				coresList = bctbx_list_append(coresList, focus.getLc());
+			}
+
+			// Restart pauline so that she has to send an INVITE and BYE it to exit the chatroom
+			ms_message("%s restarts its core", linphone_core_get_identity(pauline.getLc()));
+			coresList = bctbx_list_remove(coresList, pauline.getLc());
+			pauline.reStart();
+			coresList = bctbx_list_append(coresList, pauline.getLc());
+			paulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, paulineLocalAddr, paulinePeerAddr, NULL);
+			BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+			LinphoneChatRoom *focusCr =
+			    linphone_core_search_chat_room(focus.getLc(), NULL, NULL, paulinePeerAddr, NULL);
+			BC_ASSERT_PTR_NOT_NULL(focusCr);
+
+			if (focusCr) {
+				LinphoneParticipant *paulineParticipant = linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
+				BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
+				if (paulineParticipant) {
+					LinphoneParticipantDevice *paulineDevice = linphone_participant_find_device(paulineParticipant, paulineLocalAddr);
+					BC_ASSERT_PTR_NOT_NULL(paulineDevice);
+				}
+			}
+
+			linphone_address_unref(paulineLocalAddr);
+			linphone_address_unref(paulinePeerAddr);
+
+			pauline_stat = pauline.getStats();
+			stats focus_stat = focus.getStats();
+
+			LinphoneChatRoom *paulineCrReffed = linphone_chat_room_ref(paulineCr);
+
+			ms_message("%s leaves chatroom %s", linphone_core_get_identity(pauline.getLc()), conference_address_string);
+			linphone_chat_room_leave(paulineCr);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateTerminationPending,
+			                             pauline_stat.number_of_LinphoneChatRoomStateTerminationPending + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomSessionConnected,
+						     focus_stat.number_of_LinphoneChatRoomSessionConnected + 1,
+						     liblinphone_tester_sip_timeout));
+
+			BC_ASSERT_EQUAL(pauline.getStats().number_of_LinphoneChatRoomStateTerminated,
+					pauline_stat.number_of_LinphoneChatRoomStateTerminated, int, "%d");
+
+			linphone_core_delete_chat_room(pauline.getLc(), paulineCr);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateDeleted,
+			                             pauline_stat.number_of_LinphoneChatRoomStateDeleted + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateTerminated,
+			                             pauline_stat.number_of_LinphoneChatRoomStateTerminated + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomSessionEnd,
+			                             pauline_stat.number_of_LinphoneChatRoomSessionEnd + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			// wait until chatroom is deleted on Pauline's side
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&pauline] {
+				return pauline.getCore().getChatRooms().size() == 0;
+			}));
+
+			Address marieCoreAddr = marie.getIdentity();
+			participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(marieCoreAddr.toC()));
+
+			pauline_stat = pauline.getStats();
+			// Marie creates a new group chat room
+			const char *initialSubject = "One on one with Marie";
+			paulineCr =
+			    create_chat_room_client_side(coresList, pauline.getCMgr(), &pauline_stat, participantsAddresses, initialSubject,
+							 encrypted, LinphoneChatRoomEphemeralModeDeviceManaged);
+			BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+			const std::initializer_list<std::reference_wrapper<ConfCoreManager>> cores{focus, marie, pauline};
+			for (const ConfCoreManager &core : cores) {
+				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&core, &focus] {
+					auto &chatRooms = core.getCore().getChatRooms();
+					if (chatRooms.size() != 1) {
+						return false;
+					}
+					for (auto chatRoom : chatRooms) {
+						if (chatRoom->getState() != ConferenceInterface::State::Created) {
+							return false;
+						}
+						size_t expectedParticipantNb = (core.getLc() == focus.getLc()) ? 2 : 1;
+						const auto &participants = chatRoom->getParticipants();
+						if (participants.size() != expectedParticipantNb) {
+							return false;
+						}
+						for (const auto &participant : participants) {
+							for (const auto &device : participant->getDevices()) {
+								if (device->getState() != ParticipantDevice::State::Present) {
+									return false;
+								}
+							}
+						}
+					}
+					return true;
+				}));
+			}
+
+			linphone_chat_room_unref(paulineCrReffed);
+			pauline_stat = pauline.getStats();
+			// Marie sends the message
+			msg_text = "Paully, are you back?";
+			msg = _send_message(marieCr, msg_text);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+						     pauline_stat.number_of_LinphoneMessageReceived + 1,
+						     liblinphone_tester_sip_timeout));
+			paulineLastMsg = pauline.getStats().last_received_chat_message;
+			linphone_chat_message_unref(msg);
+			BC_ASSERT_PTR_NOT_NULL(paulineLastMsg);
+			if (paulineLastMsg) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), msg_text);
+			}
+
+			marie_stat = marie.getStats();
+			// Marie sends the message
+			msg_text = "Yes, Mary, I am back in";
+			msg = _send_message(paulineCr, msg_text);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageReceived,
+						     marie_stat.number_of_LinphoneMessageReceived + 1,
+						     liblinphone_tester_sip_timeout));
+			LinphoneChatMessage *marieLastMsg = marie.getStats().last_received_chat_message;
+			linphone_chat_message_unref(msg);
+			BC_ASSERT_PTR_NOT_NULL(marieLastMsg);
+			if (marieLastMsg) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), msg_text);
+			}
+
+			for (auto chatRoom : focus.getCore().getChatRooms()) {
+				for (auto participant : chatRoom->getParticipants()) {
+					//  force deletion by removing devices
+					std::shared_ptr<Address> participantAddress = participant->getAddress();
+					linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
+				}
+			}
+
+			// wait until chatroom is deleted server side
+			BC_ASSERT_TRUE(
+			    CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(120), [&focus] {
+				    return focus.getCore().getChatRooms().size() == 0;
+			    }));
+
+			// wait a bit longer to detect side effect if any
+			CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
+
+			// to avoid creation attempt of a new chatroom
+			auto focus_account = focus.getDefaultAccount();
+			LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(focus_account));
+			linphone_account_params_set_conference_factory_uri(params, NULL);
+			linphone_account_set_params(focus_account, params);
+			linphone_account_params_unref(params);
+
+			bctbx_list_free(coresList);
+			ms_free(conference_address_string);
+
+		}
 	}
 }
 

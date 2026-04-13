@@ -3647,8 +3647,8 @@ static void multidomain_group_chat_room() {
 	}
 }
 
-static void one_to_one_group_chat_room_deletion_by_server_client() {
-	one_to_one_group_chat_room_deletion_by_server_client_base(FALSE);
+static void one_on_one_chat_room_deletion_by_server_client() {
+	one_to_one_chat_room_deletion_by_server_client_base(FALSE);
 }
 
 static void group_chat_room_add_participant_with_invalid_address() {
@@ -4798,6 +4798,14 @@ static void chat_rooms_with_deletion_spaced_out() {
 	chat_rooms_with_deletion_spaced_out_base(false);
 }
 
+void one_on_one_chat_room_deleted_before_200ok(void) {
+	one_on_one_chat_room_deleted_before_200ok_base(false, false);
+}
+
+void one_on_one_chat_room_deleted_before_200ok_with_server_restart(void) {
+	one_on_one_chat_room_deleted_before_200ok_base(false, true);
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_chat_basic_tests[] = {
@@ -4881,8 +4889,8 @@ static test_t local_conference_chat_advanced_tests[] = {
                 LinphoneTest::group_chat_room_with_creator_without_groupchat_capability),
     TEST_NO_TAG("Group chat with creator without groupchat capability in register",
                 LinphoneTest::group_chat_room_with_creator_without_groupchat_capability_in_register),
-    TEST_ONE_TAG("One to one group chat deletion initiated by server and client",
-                 LinphoneTest::one_to_one_group_chat_room_deletion_by_server_client,
+    TEST_ONE_TAG("One on one chat deletion initiated by server and client",
+                 LinphoneTest::one_on_one_chat_room_deletion_by_server_client,
                  "LeaksMemory"), /* because of network up and down */
     TEST_ONE_TAG("Group chat room deletes chatroom after restart",
                  LinphoneTest::group_chat_room_with_client_deletes_chatroom_after_restart,
@@ -4894,6 +4902,8 @@ static test_t local_conference_chat_advanced_tests[] = {
                 LinphoneTest::group_chat_room_with_client_removed_and_reinvinted),
     TEST_NO_TAG("Group chat with client removed and then reinvited after database corruption",
                 LinphoneTest::group_chat_room_with_client_removed_and_reinvinted_after_database_corruption),
+    TEST_ONE_TAG("One on one chat room deleted before 200Ok", LinphoneTest::one_on_one_chat_room_deleted_before_200ok, "LeaksMemory" /*due to core restart*/),
+    TEST_ONE_TAG("One on one chat room deleted before 200Ok with server restart", LinphoneTest::one_on_one_chat_room_deleted_before_200ok_with_server_restart, "LeaksMemory" /*due to core restart*/),
     TEST_ONE_TAG(
         "Group chat with client removed and then reinvited after database corruption and core restart",
         LinphoneTest::group_chat_room_with_client_removed_and_reinvinted_after_database_corruption_and_core_restart,

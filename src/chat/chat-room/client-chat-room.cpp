@@ -192,12 +192,22 @@ bool ClientChatRoom::isReadOnly() const {
 
 void ClientChatRoom::deleteFromDb() {
 	auto ref = getSharedFromThis();
-	if (!hasBeenLeft()) {
-		setDeletionOnTerminationEnabled(true);
-		getConference()->leave();
-		return;
+	auto state = getState();
+	switch (state) {
+		case ConferenceInterface::State::Terminated:
+		case ConferenceInterface::State::Deleted:
+			ChatRoom::deleteFromDb();
+			break;
+		case ConferenceInterface::State::TerminationPending:
+			lError() << "Unable to delete " << *this << " because its termination is already underway. It will be deleted only when the termination process completes";
+			setDeletionOnTerminationEnabled(true);
+			break;
+		default:
+			lInfo() << "Leaving " << *this << " before deleting it from the database";
+			setDeletionOnTerminationEnabled(true);
+			getConference()->leave();
+			break;
 	}
-	ChatRoom::deleteFromDb();
 }
 
 list<shared_ptr<EventLog>> ClientChatRoom::getHistory(int nLast) const {

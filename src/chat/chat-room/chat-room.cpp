@@ -890,6 +890,7 @@ int ChatRoom::getHistorySize(HistoryFilterMask filters) const {
 }
 
 void ChatRoom::deleteFromDb() {
+	lInfo() << "Deleting " << *this << " from the core RAM and the database";
 	// Keep a ref, otherwise the object might be destroyed before we can set the Deleted state
 	shared_ptr<AbstractChatRoom> ref = this->getSharedFromThis();
 	Core::deleteChatRoom(ref);
