@@ -1093,11 +1093,12 @@ bool CallSessionPrivate::reportEvents() const {
 	const auto &contactAddress = q->getContactAddress();
 	const auto localAddress = q->getLocalAddress();
 	const auto serverConferenceGuessedAddress =
-	    (contactAddress && contactAddress->hasUriParam("conf-id")) ? contactAddress : localAddress;
+	    (contactAddress && contactAddress->hasUriParam(Conference::ConfIdParameter)) ? contactAddress : localAddress;
 	const auto &remoteContactAddress = q->getRemoteContactAddress();
 	const auto remoteAddress = q->getRemoteAddress();
 	const auto clientConferenceGuessedAddress =
-	    (remoteContactAddress && remoteContactAddress->hasUriParam("conf-id")) ? remoteContactAddress : remoteAddress;
+	    (remoteContactAddress && remoteContactAddress->hasUriParam(Conference::ConfIdParameter)) ? remoteContactAddress
+	                                                                                              : remoteAddress;
 	const auto &peerAddress = isInConference() ? serverConferenceGuessedAddress : clientConferenceGuessedAddress;
 	const auto conference = q->getCore()->searchConference(nullptr, nullptr, peerAddress, {});
 	ConferenceInterface::State conferenceState =

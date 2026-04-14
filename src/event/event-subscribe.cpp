@@ -86,8 +86,12 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 }
 
 string EventSubscribe::toString() const {
+	const auto &from = getFrom();
+	const auto &to = getTo();
 	std::ostringstream ss;
-	ss << (mDir == LinphoneSubscriptionIncoming ? "Incoming Subscribe" : "Outgoing subscribe") << " of " << mName;
+	ss << (mDir == LinphoneSubscriptionIncoming ? "Incoming" : "Outgoing") << " SUBSCRIBE [" << this
+	   << "] to event package [" << mName << "] (from: " << (from ? from->toString() : std::string("sip:"))
+	   << " to:" << (to ? to->toString() : std::string("sip:")) << ")";
 	return ss.str();
 }
 
@@ -204,7 +208,9 @@ LinphoneSubscriptionState EventSubscribe::getState() const {
 
 void EventSubscribe::setState(LinphoneSubscriptionState state) {
 	if (mSubscriptionState != state) {
-		lInfo() << *this << ": moving to subscription state " << linphone_subscription_state_to_string(state);
+		lInfo() << "Changing state of " << *this << " from  ["
+		        << linphone_subscription_state_to_string(mSubscriptionState) << "] to ["
+		        << linphone_subscription_state_to_string(state) << "]";
 		mSubscriptionState = state;
 		ref();
 		try {

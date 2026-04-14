@@ -80,12 +80,52 @@ static void subscribe_test_declined(void) {
 
 typedef enum RefreshTestType { NoRefresh = 0, AutoRefresh = 1, ManualRefresh = 2 } RefreshTestType;
 
+static void
+linphone_subscription_state_change_take_ref(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	LinphoneCoreManager *mgr = get_manager(lc);
+	switch (state) {
+		case LinphoneSubscriptionIncomingReceived:
+			if (mgr->lev) {
+				linphone_event_unref(mgr->lev);
+				mgr->lev = NULL;
+			}
+			mgr->lev = linphone_event_ref(lev);
+			break;
+		case LinphoneSubscriptionActive:
+			if (mgr->subscribe_policy == AcceptSubscription) {
+				if (mgr->lev) {
+					linphone_event_unref(mgr->lev);
+					mgr->lev = NULL;
+				}
+				mgr->lev = linphone_event_ref(lev);
+			}
+			break;
+		case LinphoneSubscriptionTerminated:
+		case LinphoneSubscriptionError:
+		case LinphoneSubscriptionExpiring:
+			if (mgr->lev && (mgr->lev == lev)) {
+				linphone_event_unref(mgr->lev);
+				mgr->lev = NULL;
+			}
+			break;
+		case LinphoneSubscriptionNone:
+		case LinphoneSubscriptionOutgoingProgress:
+		case LinphoneSubscriptionPending:
+			break;
+	}
+}
+
 static void subscribe_test_with_args(bool_t terminated_by_subscriber,
                                      RefreshTestType refresh_type,
                                      bool_t without_notify,
                                      bool_t ua_restarts) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = refresh_type != NoRefresh ? 4 : 600;
@@ -161,6 +201,11 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber,
 static void subscribe_test_destroy_core_before_event_terminate(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 600;
@@ -228,6 +273,11 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 	linphone_core_manager_start(marie, TRUE);
 
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = refresh_type != NoRefresh ? 4 : 600;
@@ -333,6 +383,12 @@ static void subscribe_test_manually_refreshed(void) {
 static void subscribe_loosing_dialog(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_new("pauline_tcp_rc");
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline1->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 4;
@@ -365,6 +421,11 @@ static void subscribe_loosing_dialog(void) {
 	sal_enable_unconditional_answer(linphone_core_get_sal(pauline1->lc), 1);
 
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	/*let expire the incoming subscribe received by pauline */
 	BC_ASSERT_TRUE(wait_for_list(lcs, NULL, 0, 5000));
@@ -406,6 +467,11 @@ static void subscribe_loosing_dialog_2(void) {
 #else
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 4;
@@ -464,6 +530,11 @@ static void subscribe_loosing_dialog_2(void) {
 static void subscribe_with_io_error(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 4;
@@ -484,6 +555,9 @@ static void subscribe_with_io_error(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 3000));
 
+	// Take a ref to Pauline's current in order to make sure it reaches the Termnated state
+	LinphoneEvent *pauline_lev = linphone_event_ref(pauline->lev);
+
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
 
@@ -496,6 +570,11 @@ static void subscribe_with_io_error(void) {
 	/*marie will retry the subscription*/
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 2, 8000));
 	sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
+
+	// Wait for the first subscribe to expire on Pauline side (it should take 4s in the worst case scenario)
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+	linphone_event_unref(pauline_lev);
 
 	/*and get it accepted again*/
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 2, 10000));
@@ -520,6 +599,11 @@ static void subscribe_with_io_error(void) {
 static void subscribe_not_timely_responded(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 4;
@@ -572,6 +656,11 @@ static void on_notify_response(LinphoneEvent *lev) {
 static void subscribe_terminated_before_receiving_2nd_notify(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	LinphoneEventCbs *lev_cbs = NULL;
@@ -654,10 +743,14 @@ subscribe_received(LinphoneCore *lc, LinphoneEvent *ev, const char *evtype, cons
 static void subscribe_terminated_before_receiving_1st_notify(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 30;
-	LinphoneCoreCbs *cbs;
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
 
 	lcs = bctbx_list_append(lcs, pauline->lc);
@@ -848,6 +941,11 @@ static void out_of_dialog_notify(void) {
 static void subscribe_notify_with_missing_200ok(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneContent *content;
 	LinphoneEvent *lev;
 	int expires = 10;
@@ -896,6 +994,11 @@ static void subscribe_notify_with_missing_200ok(void) {
 static void subscribe_notify_not_handled(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change_take_ref);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	LinphoneEvent *lev;
 	int expires = 10;
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);

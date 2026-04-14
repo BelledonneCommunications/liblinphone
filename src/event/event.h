@@ -129,10 +129,7 @@ private:
 };
 
 inline std::ostream &operator<<(std::ostream &str, const Event &event) {
-	const auto &from = event.getFrom();
-	const auto &to = event.getTo();
-	str << "Event [" << &event << "] (from: " << (from ? from->toString() : std::string("sip:"))
-	    << " to:" << (to ? to->toString() : std::string("sip:")) << ")";
+	str << event.toString();
 	return str;
 }
 

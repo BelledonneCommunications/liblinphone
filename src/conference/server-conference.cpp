@@ -3247,7 +3247,7 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 					const_cast<LinphonePrivate::CallSessionParamsPrivate *>(session->getParams()->getPrivate())
 					    ->setInConference(true);
 					const std::shared_ptr<Address> to = Address::create(op->getTo());
-					session->getPrivate()->setConferenceId(to->getUriParamValue("conf-id"));
+					session->getPrivate()->setConferenceId(to->getUriParamValue(Conference::ConfIdParameter));
 					// The call will not be attached to any participant as the client created the session just to update
 					// a conference. The object call session adds the conference as a listener, but the conference deals
 					// with the session immediately by looking at the SDP. There is no need for it to be notified of
@@ -3685,13 +3685,40 @@ void ServerConference::onParticipantDeviceLeft(BCTBX_UNUSED(const std::shared_pt
 			}
 		}
 
-		// device left, we no longuer need to receive subscription info from it
-		if (device->isSubscribedToConferenceEventPackage()) {
-			lError() << *this << " still subscription pending for [" << device << "], terminating in emergency";
-			// try to terminate subscription if any, but do not wait for anser.
-			auto ev = device->getConferenceSubscribeEvent();
-			ev->clearCallbacksList();
-			ev->terminate();
+		// device left, we no longer need to receive subscription info from it
+		if (auto ev = device->getConferenceSubscribeEvent()) {
+			if (const auto &eventTo = ev->getTo()) {
+				auto eventToWithoutGruu = eventTo->getUriWithoutGruu();
+				auto conferenceAddressWithoutGruu = getConferenceAddress()->getUriWithoutGruu();
+				// Need to compare address string. In fact according to RFC3261
+				// (https://www.rfc-editor.org/rfc/rfc3261#page-153):
+				// -  All other uri-parameters appearing in only one URI are
+				//    ignored when comparing the URIs.
+				// This will cause false positives if the conference factory address is the same as the focus
+				// address. Under such scenario, we end up with a resource-list SUBSCRIBE sent to a factory address
+				// and the chatroom conference address being that very same factory address with a conf-id URI
+				// parameter.
+				if (conferenceAddressWithoutGruu.toStringUriOnlyOrdered() ==
+				    eventToWithoutGruu.toStringUriOnlyOrdered()) {
+					// try to terminate subscription if any, but do not wait for answer.
+					lError() << *this << " has still the " << *ev << " pending for " << *device
+					         << ", terminating in emergency";
+					ev->clearCallbacksList();
+					ev->terminate();
+				} else {
+					lInfo() << "Do not terminate " << *ev << " linked to " << *device
+					        << " because it may be handling multiple chatrooms. Its To address " << eventToWithoutGruu
+					        << " doesn't match " << *this << "'s conference address";
+					// Delete callbacks linked to this conference to avoid having to deal with late SUBSCRIBE or
+					// NOTIFY responses after the device has been removed from the conference
+					auto callbackList = ev->getCallbacksList();
+					for (auto cbs : callbackList) {
+						if (cbs->getUserData() == mEventHandler.get()) {
+							ev->removeCallbacks(cbs);
+						}
+					}
+				}
+			}
 			device->setConferenceSubscribeEvent(nullptr);
 		}
 
@@ -4066,7 +4093,7 @@ void ServerConference::onGlobalStateChanged(BCTBX_UNUSED(LinphoneGlobalState sta
 		// in another domain that the chatroom. In such a scenarion, in fact, the server might be sending out
 		// SIP SUBSCRIBE and therefore the channel should not be destroyed by network changes that occur during
 		// startup
-		lInfo() << "The core has reached the GlobalOn state, therefore try to subscribe participants to " << *this;
+		lDebug() << "The core has reached the GlobalOn state, therefore try to subscribe participants to " << *this;
 		list<shared_ptr<const Address>> participantAddresses;
 		const auto &invitedParticipants = getInvitedParticipants();
 		for (const auto &participant : invitedParticipants) {

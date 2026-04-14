@@ -320,6 +320,8 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted);
 void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted,
                                                              bool corrupt_database,
                                                              bool restart_core_after_corruption);
+void chat_rooms_with_deletion_spaced_out_base(bool encrypted);
+
 void sendEphemeralMessageInAdminMode(Focus &focus,
                                      ClientConference &sender,
                                      ClientConference &recipient,

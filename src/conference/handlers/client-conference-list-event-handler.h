@@ -43,7 +43,7 @@ class ClientConferenceEventHandler;
 class ClientConferenceListEventHandler : public ClientConferenceEventHandlerBase {
 public:
 	ClientConferenceListEventHandler(const std::shared_ptr<Core> &core);
-	virtual ~ClientConferenceListEventHandler() = default;
+	virtual ~ClientConferenceListEventHandler();
 
 	bool subscribe() override;
 	bool subscribe(const std::shared_ptr<Account> &account);

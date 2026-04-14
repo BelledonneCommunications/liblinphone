@@ -111,8 +111,12 @@ EventPublish::~EventPublish() {
 }
 
 string EventPublish::toString() const {
+	const auto &from = getFrom();
+	const auto &to = getTo();
 	std::ostringstream ss;
-	ss << "Publish of " << mName;
+	ss << "PUBLISH [" << this << "] to event package [" << mName
+	   << "] (from: " << (from ? from->toString() : std::string("sip:"))
+	   << " to:" << (to ? to->toString() : std::string("sip:")) << ")";
 	return ss.str();
 }
 
@@ -148,7 +152,7 @@ LinphoneStatus EventPublish::accept() {
 LinphoneStatus EventPublish::deny(LinphoneReason reason) {
 	int err;
 	if (mPublishState != LinphonePublishIncomingReceived && mPublishState != LinphonePublishRefreshing) {
-		lError() << *this << ": cannot deny publish if publish wasn't just received - its state is "
+		lError() << *this << ": cannot deny publish if subscription wasn't just received - its state is "
 		         << linphone_publish_state_to_string(mPublishState) << ".";
 		return -1;
 	}
@@ -172,8 +176,8 @@ LinphonePublishState EventPublish::getState() const {
 
 void EventPublish::setState(LinphonePublishState state) {
 	if (mPublishState != state) {
-		lInfo() << *this << ": moving from [" << linphone_publish_state_to_string(mPublishState)
-		        << "] to publish state [" << linphone_publish_state_to_string(state) << "]";
+		lInfo() << "Changing state of " << *this << " from [" << linphone_publish_state_to_string(mPublishState)
+		        << "] to [" << linphone_publish_state_to_string(state) << "]";
 		mPublishState = state;
 
 		ref();
@@ -237,7 +241,7 @@ void EventPublish::startTimeoutHandling() {
 	if (mExpires > 0) {
 		mTimer = getCore()->createTimer(
 		    [this]() {
-			    lInfo() << *this << ": PUBLISH has expired";
+			    lInfo() << *this << " has expired";
 			    terminate();
 			    return true;
 		    },
@@ -247,7 +251,7 @@ void EventPublish::startTimeoutHandling() {
 
 void EventPublish::stopTimeoutHandling() {
 	if (mTimer) {
-		lInfo() << *this << ": stopTimeoutHandling()";
+		lInfo() << "Stop timeout handling on " << *this;
 		try {
 			getCore()->destroyTimer(mTimer);
 		} catch (...) {

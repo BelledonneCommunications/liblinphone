@@ -44,6 +44,10 @@ static void secure_group_chat_room_with_subscribe_error() {
 	group_chat_room_with_sip_errors_base(false, true, true);
 }
 
+static void secure_chat_rooms_with_deletion_spaced_out() {
+	chat_rooms_with_deletion_spaced_out_base(true);
+}
+
 static void secure_group_chat_room_with_chat_room_deleted_before_server_restart() {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -283,6 +287,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		});
 
 		initialMarieStats = marie.getStats();
+		initialMarie2Stats = marie.getStats();
 		initialMichelleStats = michelle.getStats();
 		msg_text = "Cou cou Marieeee.....";
 		msg = ClientConference::sendTextMsg(michelle2Cr, msg_text);
@@ -298,6 +303,9 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		marieCr = check_creation_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, confAddr,
 		                                               initialSubject, 1, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
+		marie2Cr = check_creation_chat_room_client_side(coresList, marie2.getCMgr(), &initialMarie2Stats, confAddr,
+                                                              initialSubject, 1, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(marie2Cr);
 
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
@@ -1822,6 +1830,10 @@ static test_t local_conference_secure_chat_tests[] = {
     TEST_NO_TAG("Secure group chat with INVITE session error", LinphoneTest::secure_group_chat_room_with_invite_error),
     TEST_NO_TAG("Secure group chat with SUBSCRIBE session error",
                 LinphoneTest::secure_group_chat_room_with_subscribe_error),
+    TEST_TWO_TAGS("Secure chat with deletion spaced out",
+                  LinphoneTest::secure_chat_rooms_with_deletion_spaced_out,
+                  "LimeX3DH",
+                  "LeaksMemory"),
     TEST_ONE_TAG("Secure group chat with chat room deleted before server restart",
                  LinphoneTest::secure_group_chat_room_with_chat_room_deleted_before_server_restart,
                  "LeaksMemory"), /* because of network up and down */

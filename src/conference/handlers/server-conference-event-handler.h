@@ -228,7 +228,6 @@ public:
 	virtual void onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) override;
 
 protected:
-	// TODO: use weak_ptr
 	std::weak_ptr<Conference> conference;
 	ConferenceListener *confListener;
 

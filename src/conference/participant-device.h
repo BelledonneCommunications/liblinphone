@@ -87,7 +87,7 @@ public:
 	explicit ParticipantDevice(std::shared_ptr<Participant> participant,
 	                           const std::shared_ptr<const Address> &gruu,
 	                           const std::string &name = "");
-	virtual ~ParticipantDevice();
+	virtual ~ParticipantDevice() = default;
 	// non clonable object
 	ParticipantDevice *clone() const override {
 		return nullptr;

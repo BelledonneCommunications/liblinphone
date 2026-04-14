@@ -53,6 +53,10 @@ ClientConferenceListEventHandler::ClientConferenceListEventHandler(const std::sh
     : ClientConferenceEventHandlerBase(core) {
 }
 
+ClientConferenceListEventHandler::~ClientConferenceListEventHandler() {
+	unsubscribe();
+}
+
 // -----------------------------------------------------------------------------
 bool ClientConferenceListEventHandler::subscribe() {
 	const auto &accounts = getCore()->getAccounts();

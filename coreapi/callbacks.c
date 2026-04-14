@@ -1105,18 +1105,17 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 	if (!check_core_state(lc, op)) return;
 
 	if (lev == nullptr) {
-		lev = linphone_event_new_subscribe_with_op(lc, op, LinphoneSubscriptionIncoming, eventname);
-		auto cppLev = Event::toCpp(lev)->getSharedFromThis();
-		cppLev->setUnrefWhenTerminated(TRUE);
-		if (strcmp(linphone_event_get_name(lev), "conference") == 0) linphone_event_set_internal(lev, TRUE);
-		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
+		auto ev = EventSubscribe::create<EventSubscribe>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op,
+		                                                 LinphoneSubscriptionIncoming, L_C_TO_STRING(eventname), false);
+		if (ev->getName() == "conference") ev->setInternal(true);
+		ev->setState(LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
-		auto nbRefBeforeCbs = cppLev->getRefCount();
-		linphone_core_notify_subscribe_received(lc, lev, eventname, ct);
-		auto nbRefAfterCbs = cppLev->getRefCount();
-		if ((nbRefAfterCbs <= nbRefBeforeCbs) &&
-		    (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionIncomingReceived)) {
-			linphone_event_terminate(lev);
+		auto nbRefBeforeCbs = ev->getRefCount();
+		linphone_core_notify_subscribe_received(lc, ev->toC(), eventname, ct);
+		auto nbRefAfterCbs = ev->getRefCount();
+		if ((nbRefAfterCbs <= nbRefBeforeCbs) && (ev->getState() == LinphoneSubscriptionIncomingReceived)) {
+			// The application didn't deal with the subscription and it hasn't taken a reference of the event
+			ev->terminate();
 		}
 		if (ct) linphone_content_unref(ct);
 	} else {

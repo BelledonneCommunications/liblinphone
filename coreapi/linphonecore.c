@@ -3024,7 +3024,7 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::getSharedFromThis(lev));
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
-		auto handler = evSub->getProperty("event-handler-private").getValue<ClientConferenceEventHandler *>();
+		auto handler = evSub->getProperty("event-handler-private").getValue<ClientConferenceEventHandlerBase *>();
 		if (handler) {
 			switch (state) {
 				case LinphoneSubscriptionError:

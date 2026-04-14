@@ -3217,7 +3217,7 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 			coresList = bctbx_list_concat(coresList, tmpCoresList);
 			coresManagerList = bctbx_list_append(coresManagerList, laure);
 
-			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneSubscriptionActive, 1,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneSubscriptionError, 1,
 			                             liblinphone_tester_sip_timeout));
 			previousLaureChatRoomStateTerminated = 0;
 

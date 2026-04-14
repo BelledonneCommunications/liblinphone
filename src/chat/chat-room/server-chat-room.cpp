@@ -425,14 +425,18 @@ void ServerChatRoom::dispatchQueuedMessages() {
 			auto &msgQueue = mQueuedMessages[uri];
 
 			if (!msgQueue.empty()) {
-				if (!getCurrentParams()->isGroup() && (device->getState() == ParticipantDevice::State::Left)) {
+				const auto &deviceState = device->getState();
+				if (!getCurrentParams()->isGroup() && (deviceState == ParticipantDevice::State::Left)) {
 					// Happens only with protocol < 1.1
 					lInfo() << "There is a message to transmit to a participant in left state in one to one " << *this
 					        << ", so inviting first.";
 					static_pointer_cast<ServerConference>(getConference())->inviteDevice(device);
 					continue;
 				}
-				if (device->getState() != ParticipantDevice::State::Present) continue;
+				if (deviceState != ParticipantDevice::State::Present) {
+					lInfo() << "Unable to dispatch any messages to " << *device << " because it is in the " << Utils::toString(deviceState) << " state";
+					continue;
+				}
 				size_t nbMessages = msgQueue.size();
 				lInfo() << *this << ": Dispatching " << nbMessages << " queued message(s) for '" << uri << "'";
 				while (!msgQueue.empty()) {

@@ -3080,6 +3080,11 @@ void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr) {
 
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 	char *uuid = NULL;
+	if (mgr->lev) {
+		linphone_event_unref(mgr->lev);
+		mgr->lev = NULL;
+	}
+
 	if (mgr->lc) {
 		if (linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL))
 			uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL));
@@ -3969,7 +3974,6 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 			break;
 		case LinphoneSubscriptionIncomingReceived:
 			counters->number_of_LinphoneSubscriptionIncomingReceived++;
-			mgr->lev = lev;
 			break;
 		case LinphoneSubscriptionOutgoingProgress:
 			counters->number_of_LinphoneSubscriptionOutgoingProgress++;
@@ -3981,7 +3985,6 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 			counters->number_of_LinphoneSubscriptionActive++;
 			if (mgr->subscribe_policy == AcceptSubscription) {
 				if (linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming) {
-					mgr->lev = lev;
 					if (strcmp(linphone_event_get_name(lev), "conference") == 0 ||
 					    strcmp(linphone_event_get_name(lev), "ekt") == 0 ||
 					    strcmp(linphone_event_get_name(lev), "doingnothing") == 0) {
@@ -3994,21 +3997,12 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 			break;
 		case LinphoneSubscriptionTerminated:
 			counters->number_of_LinphoneSubscriptionTerminated++;
-			if (lev == mgr->lev) {
-				mgr->lev = NULL;
-			}
 			break;
 		case LinphoneSubscriptionError:
 			counters->number_of_LinphoneSubscriptionError++;
-			if (lev == mgr->lev) {
-				mgr->lev = NULL;
-			}
 			break;
 		case LinphoneSubscriptionExpiring:
 			counters->number_of_LinphoneSubscriptionExpiring++;
-			if (lev == mgr->lev) {
-				mgr->lev = NULL;
-			}
 			break;
 	}
 	linphone_content_unref(content);

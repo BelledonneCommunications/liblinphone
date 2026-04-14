@@ -191,7 +191,6 @@ static void mwi_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev,
 			break;
 		case LinphoneSubscriptionIncomingReceived:
 			counters->number_of_LinphoneSubscriptionIncomingReceived++;
-			mgr->lev = lev;
 			break;
 		case LinphoneSubscriptionOutgoingProgress:
 			counters->number_of_LinphoneSubscriptionOutgoingProgress++;
@@ -203,7 +202,6 @@ static void mwi_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev,
 			counters->number_of_LinphoneSubscriptionActive++;
 			if (mgr->subscribe_policy == AcceptSubscription) {
 				if (linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming) {
-					mgr->lev = lev;
 					if (strcmp(linphone_event_get_name(lev), "message-summary") == 0) {
 						auto mwi_stream = std::ostringstream();
 						mwi_stream << "Messages-Waiting: yes\r\n"
@@ -223,21 +221,12 @@ static void mwi_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev,
 			break;
 		case LinphoneSubscriptionTerminated:
 			counters->number_of_LinphoneSubscriptionTerminated++;
-			if (lev == mgr->lev) {
-				mgr->lev = NULL;
-			}
 			break;
 		case LinphoneSubscriptionError:
 			counters->number_of_LinphoneSubscriptionError++;
-			if (lev == mgr->lev) {
-				mgr->lev = NULL;
-			}
 			break;
 		case LinphoneSubscriptionExpiring:
 			counters->number_of_LinphoneSubscriptionExpiring++;
-			if (lev == mgr->lev) {
-				mgr->lev = NULL;
-			}
 			break;
 	}
 
