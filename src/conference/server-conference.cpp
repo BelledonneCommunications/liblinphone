@@ -1142,7 +1142,7 @@ void ServerConference::subscribeReceived(const shared_ptr<EventSubscribe> &event
 	const auto &chatRoom = getChatRoom();
 	const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 	if (chatEnabled && device && (deviceState == ParticipantDevice::State::ScheduledForJoining)) {
-		lInfo() << "Inviting device " << *device->getAddress() << " because it was scheduled to join " << *this;
+		lInfo() << "Inviting device " << *device << " because it was scheduled to join " << *this;
 		// Invite device as last time round it was attempted, the INVITE session errored out
 		inviteDevice(device);
 	}
@@ -1386,7 +1386,8 @@ int ServerConference::inviteAddresses(const std::list<std::shared_ptr<Address>> 
 
 	for (const auto &address : addresses) {
 		std::shared_ptr<Call> call = nullptr;
-		const auto &device = findParticipantDevice(address, address);
+
+		const auto &device = findParticipantDevice(nullptr, address);
 
 		/*
 		 * In the case of a conference server, it is enough to look if there is already a participant with the same
@@ -1638,13 +1639,13 @@ shared_ptr<CallSession> ServerConference::makeSession(const std::shared_ptr<Part
 }
 
 void ServerConference::inviteDevice(const shared_ptr<ParticipantDevice> &device) {
-	lInfo() << *this << ": Inviting device '" << *device->getAddress() << "'";
+	lInfo() << *this << ": Inviting device '" << *device << "'";
 	dialOutAddresses({device->getAddress()});
 }
 
 void ServerConference::byeDevice(const std::shared_ptr<ParticipantDevice> &device) {
 	const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
-	lInfo() << *this << ": Asking device '" << *device->getAddress() << "' to leave";
+	lInfo() << *this << ": Asking device '" << *device << "' to leave";
 	setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 	MediaSessionParams csp;
 	csp.enableAudio(mConfParams->audioEnabled());
@@ -3634,11 +3635,10 @@ void ServerConference::setParticipantDeviceState(BCTBX_UNUSED(const shared_ptr<P
 		// If a participant is about to leave and its call session state is End, it will be released during shutdown
 		// event though the participant may not be notified yet as it is offline
 		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn) {
-			auto deviceAddress = device->getAddress();
-			lInfo() << *this << ": Set participant device '" << *deviceAddress << "' state to " << state;
+			lInfo() << *this << ": Set " << *device << " state to " << state;
 			device->setState(state, notify);
 			getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(chatRoom, device);
-			const auto &participant = findParticipant(deviceAddress);
+			const auto &participant = device->getParticipant();
 			switch (state) {
 				case ParticipantDevice::State::ScheduledForLeaving:
 				case ParticipantDevice::State::Leaving:

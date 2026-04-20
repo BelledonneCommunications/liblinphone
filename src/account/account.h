@@ -289,7 +289,7 @@ inline std::ostream &operator<<(std::ostream &ostr, const Account &account) {
 	const auto &params = account.getAccountParams();
 	const auto identity =
 	    (params && params->getIdentityAddress()) ? params->getIdentityAddress()->toString() : std::string("sip:");
-	ostr << "Account [" << (void *)&account << "]  (" << identity << ")";
+	ostr << "Account [" << (void *)&account << "] (" << identity << ")";
 	return ostr;
 }
 

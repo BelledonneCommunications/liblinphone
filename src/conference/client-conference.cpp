@@ -336,6 +336,7 @@ std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared
 		csp.addCustomHeader("Ephemeral-Life-Time", to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
 	}
 
+
 	csp.enableAudio(mConfParams->audioEnabled());
 	csp.enableVideo(mConfParams->videoEnabled());
 	csp.getPrivate()->disableRinging(!supportsMedia());
@@ -1125,7 +1126,7 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 						        << ". Try to create a new session to make sure the server really takes the client out "
 						           "of the chatroom";
 						auto session = createSession();
-						session->startInvite(nullptr, "", nullptr);
+						session->startInvite(nullptr, getUtf8Subject(), nullptr);
 						setMainSession(session);
 					} else {
 						// Go to state TerminationFailed and then back to Created since it has not been terminated
@@ -2387,7 +2388,7 @@ void ClientConference::join(const std::shared_ptr<Address> &) {
 			session = createSession();
 		}
 		if (session) {
-			if (mState != ConferenceInterface::State::TerminationPending) session->startInvite(nullptr, "", nullptr);
+			if (mState != ConferenceInterface::State::TerminationPending) session->startInvite(nullptr, getUtf8Subject(), nullptr);
 			const auto &chatRoom = getChatRoom();
 			if (chatRoom && (mState != ConferenceInterface::State::Created))
 				setState(ConferenceInterface::State::CreationPending);
@@ -2431,7 +2432,7 @@ void ClientConference::leave() {
 		} else if (mState != ConferenceInterface::State::CreationFailed) {
 			// No need to create a session if the creation already failed
 			session = createSession();
-			session->startInvite(nullptr, "", nullptr);
+			session->startInvite(nullptr, getUtf8Subject(), nullptr);
 		}
 		setState(ConferenceInterface::State::TerminationPending);
 		if (!session) {

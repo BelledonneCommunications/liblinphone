@@ -1047,7 +1047,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceBySsrc(uint32_t s
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::shared_ptr<const Address> &pAddr,
                                                                 const std::shared_ptr<const Address> &dAddr) const {
 	for (const auto &participant : mParticipants) {
-		if (pAddr->weakEqual(*participant->getAddress())) {
+		if (!pAddr || pAddr->weakEqual(*participant->getAddress())) {
 			auto device = participant->findDevice(dAddr, false);
 			if (device) {
 				return device;
@@ -1055,8 +1055,12 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::share
 		}
 	}
 
-	lDebug() << "Unable to find participant device in " << *this << " with device address " << *dAddr
-	         << " belonging to participant " << *pAddr;
+	if (pAddr) {
+		lDebug() << "Unable to find participant device in " << *this << " with address " << *dAddr
+		         << " belonging to participant " << *pAddr;
+	} else {
+		lDebug() << "Unable to find participant device in " << *this << " with address " << *dAddr;
+	}
 
 	return nullptr;
 }
