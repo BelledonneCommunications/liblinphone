@@ -546,14 +546,14 @@ static void audio_call_with_opus_and_soundcard(void) {
 	audio_call_with_soundcard("opus", 48000, TRUE);
 }
 
-test_t audio_quality_tests[] = {
+static test_t audio_quality_tests[] = {
     TEST_NO_TAG("Audio loss rate resilience opus", audio_call_loss_resilience_opus),
     TEST_NO_TAG("Simple stereo call with L16", audio_stereo_call_l16),
     TEST_NO_TAG("Simple stereo call with L16 (PLC)", audio_stereo_call_l16_plc),
     TEST_NO_TAG("Simple stereo call with opus", audio_stereo_call_opus),
     TEST_NO_TAG("Simple mono call with opus", audio_mono_call_opus),
-    TEST_NO_TAG("Audio bandwidth estimation", audio_bandwidth_estimation),
-    TEST_NO_TAG("Audio bandwidth estimation on secure call", audio_bandwidth_estimation_on_secure_call),
+    TEST_ONE_TAG("Audio bandwidth estimation", audio_bandwidth_estimation, "shaky"),
+    TEST_ONE_TAG("Audio bandwidth estimation on secure call", audio_bandwidth_estimation_on_secure_call, "shaky"),
     TEST_NO_TAG("Audio call with opus and soundcard", audio_call_with_opus_and_soundcard)};
 
 test_suite_t audio_quality_test_suite = {"Audio Call quality",

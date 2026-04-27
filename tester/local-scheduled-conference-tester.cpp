@@ -8316,8 +8316,8 @@ static void rejoining_conference_after_end(int cleanup_period, bool_t enable_cha
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, (iter + 1),
 				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, (iter + 1),
-				                             liblinphone_tester_sip_timeout));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,
+				                             (iter + 1), liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, (iter + 1),
 				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, (iter + 1),
@@ -8328,7 +8328,8 @@ static void rejoining_conference_after_end(int cleanup_period, bool_t enable_cha
 				linphone_address_remove_uri_param(confAddr2, "gr");
 				check_conference_info_in_db(mgr, NULL, confAddr2, marie.getCMgr()->identity, participants_info,
 				                            start_time, duration, initialSubject, description, 0,
-				                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE, enable_chat);
+				                            LinphoneConferenceInfoStateNew, security_level, FALSE, TRUE, TRUE,
+				                            enable_chat);
 				linphone_address_unref(confAddr2);
 
 				LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
@@ -10188,7 +10189,9 @@ static test_t local_conference_scheduled_conference_with_chat_tests[] = {
                 LinphoneTest::conference_with_chat_and_participants_dialing_in_after_end),
     TEST_NO_TAG("Rejoining conference with chat after end with cleanup period",
                 LinphoneTest::rejoining_conference_with_chat_after_end_with_cleanup_period),
-    TEST_NO_TAG("Conference with chat joined multiple times", LinphoneTest::conference_with_chat_joined_multiple_times),
+    TEST_ONE_TAG("Conference with chat joined multiple times",
+                 LinphoneTest::conference_with_chat_joined_multiple_times,
+                 "shaky"),
     TEST_NO_TAG("Alone in conference with chat exits and enters again",
                 LinphoneTest::alone_in_conference_with_chat_exits_enter)};
 

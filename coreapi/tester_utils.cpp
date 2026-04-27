@@ -242,14 +242,20 @@ char *linphone_core_get_download_path(LinphoneCore *lc) {
 	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDownloadPath().c_str());
 }
 
-size_t linphone_chat_room_get_previouses_conference_ids_count(BCTBX_UNUSED(LinphoneChatRoom *cr)) {
+size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr) {
 #ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> chatRoom = AbstractChatRoom::toCpp(cr)->getSharedFromThis();
-	return static_pointer_cast<ClientChatRoom>(chatRoom)->getPreviousConferenceIds().size();
+	shared_ptr<ClientChatRoom> clientChatRoom = dynamic_pointer_cast<ClientChatRoom>(chatRoom);
+	if (clientChatRoom) {
+		return clientChatRoom->getPreviousConferenceIds().size();
+	} else {
+		lError() << "LinphoneChatRoom [" << cr << "] is not a ClientChatRoom.";
+	}
 #else
+	(void)cr;
 	lError() << "Unable to retrieve previous chat room previous IDs as Advanced IM features have been disabled";
-	return 0;
 #endif // HAVE_ADVANCED_IM
+	return 0;
 }
 
 bool_t linphone_call_check_rtp_sessions(LinphoneCall *call) {
