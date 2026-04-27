@@ -1803,7 +1803,7 @@ void MediaSessionPrivate::fillRtpParameters(SalStreamDescription &stream) const 
 		/* rtcp-mux must be enabled when bundle mode is proposed or we're using DTLS-SRTP.*/
 		cfg.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled() ||
 		               (getNegotiatedMediaEncryption() == LinphoneMediaEncryptionDTLS);
-		cfg.rtcp_cname = getMe()->getAddress()->toString();
+		cfg.rtcp_cname = getMe()->getAddress()->asStringUriOnly();
 
 		if (stream.rtp_port == 0 && !cfg.isBundleOnly()) {
 			stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
@@ -1979,7 +1979,7 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 
 		cfg.replacePayloads(codecs);
-		cfg.rtcp_cname = getMe()->getAddress()->toString();
+		cfg.rtcp_cname = getMe()->getAddress()->asStringUriOnly();
 
 		const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 		if (conference || (q->getRemoteContactAddress() != nullptr &&
@@ -3833,8 +3833,7 @@ LinphoneStatus MediaSessionPrivate::pause() {
 
 		if (conference) {
 			lInfo() << "Removing participant with session " << q << " (local address " << *q->getLocalAddress()
-			        << " remote address " << *q->getRemoteAddress() << ")  from "
-			        << *conference;
+			        << " remote address " << *q->getRemoteAddress() << ")  from " << *conference;
 			// Do not preserve conference after removing the participant
 			conference->removeParticipant(q->getSharedFromThis(), false);
 			return 0;
