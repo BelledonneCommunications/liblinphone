@@ -36,6 +36,7 @@ LINPHONE_BEGIN_NAMESPACE
 Event::Event(const shared_ptr<Core> &core) : CoreAccessor(core) {
 	mEi = linphone_error_info_new();
 	lInfo() << "Created Event [" << this << "]";
+	ref();
 }
 
 Event::~Event() {
@@ -196,9 +197,7 @@ void Event::release() {
 		}
 	} catch (const bad_weak_ptr &) {
 	}
-	if (mUnrefWhenTerminated) {
-		unref();
-	}
+	unref();
 }
 
 LinphonePrivate::SalEventOp *Event::getOp() const {
@@ -211,10 +210,6 @@ int Event::getExpires() const {
 
 void Event::setExpires(int expires) {
 	mExpires = expires;
-}
-
-void Event::setUnrefWhenTerminated(bool unrefWhenTerminated) {
-	mUnrefWhenTerminated = unrefWhenTerminated;
 }
 
 void Event::setManualRefresherMode(bool manual) {

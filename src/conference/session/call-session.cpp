@@ -1007,9 +1007,9 @@ void CallSessionPrivate::setContactOp(const std::optional<std::shared_ptr<Addres
 			const auto conferenceIdParams = core->createConferenceIdParams();
 			std::shared_ptr<Conference> conference = core->findConference(
 			    ConferenceId(contactInfo.mAddress, contactInfo.mAddress, conferenceIdParams), false);
-			// Find server conference based on From or To header as the tchat conference server may give an address to
+			// Find server conference based on From or To header as the conference server may give an address to
 			// the conference that doesn't match the identity address or contact address of any of the accounts held by
-			// the core. For example, flexisip tchat servers based on SDK 5.3, will create chatroom with username
+			// the core. For example, flexisip chat servers based on SDK 5.3 and older will create chatroom with username
 			// chatroom-XXXXX which doesn't match any of the account held by the core so the To or From header have the
 			// chatroom address
 			std::shared_ptr<Address> guessedConferenceAddress;

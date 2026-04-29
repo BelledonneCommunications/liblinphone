@@ -819,5 +819,5 @@ test_suite_t local_conference_test_suite_transferred_conference_basic = {
         sizeof(local_conference_transferred_conference_basic_tests[0]),
     local_conference_transferred_conference_basic_tests,
     0,
-    4 /*cpu_weight : video conference uses more resources */
+    5 /*cpu_weight : video conference uses more resources */
 };

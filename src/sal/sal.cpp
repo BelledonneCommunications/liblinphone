@@ -458,6 +458,9 @@ Sal::Sal(MSFactory *factory) : mFactory(factory), mOfferAnswerEngine(factory) {
 }
 
 Sal::~Sal() {
+	for (auto &[callId, op] : mOpByCallId) {
+		op->resetSal();
+	}
 	belle_sip_object_unref(mUserAgentHeader);
 	belle_sip_object_unref(mProvider);
 	belle_sip_object_unref(mStack);

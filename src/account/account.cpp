@@ -1262,10 +1262,10 @@ int Account::done() {
 
 	if (computePublishParamsHash()) {
 		lInfo() << "Publish params have changed on " << *this;
-
 		if (mPresencePublishEvent) {
 			/*publish is terminated*/
 			mPresencePublishEvent->terminate();
+			mPresencePublishEvent = nullptr;
 		}
 		if (mParams->mPublishEnabled) setSendPublish(true);
 	} else {
@@ -1352,8 +1352,7 @@ shared_ptr<EventPublish> Account::createPublish(const std::string &event, int ex
 		lError() << "Cannot create publish from " << *this << " not attached to any core";
 		return nullptr;
 	}
-	return dynamic_pointer_cast<EventPublish>(
-	    (new EventPublish(getCore(), getSharedFromThis(), nullptr, event, expires))->toSharedPtr());
+	return EventPublish::create<EventPublish>(getCore(), getSharedFromThis(), nullptr, event, expires);
 }
 
 void Account::setPresenceModel(LinphonePresenceModel *presence) {
@@ -1378,8 +1377,9 @@ int Account::sendPublish() {
 			LinphonePublishState state = mPresencePublishEvent->getState();
 			if (state != LinphonePublishOk && state != LinphonePublishOutgoingProgress &&
 			    state != LinphonePublishRefreshing) {
-				lInfo() << "Presence publish state is [" << linphone_publish_state_to_string(state)
+				lInfo() << *mPresencePublishEvent << " state is [" << linphone_publish_state_to_string(state)
 				        << "], destroying it and creating a new one instead";
+				mPresencePublishEvent->terminate();
 				mPresencePublishEvent = nullptr;
 			}
 		}

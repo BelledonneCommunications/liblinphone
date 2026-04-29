@@ -506,6 +506,15 @@ static void simple_conference_base(LinphoneCoreManager *marie,
 	lcs = bctbx_list_append(lcs, laure->lc);
 	if (focus) lcs = bctbx_list_append(lcs, focus->lc);
 
+	// Wait for current account to synchronized with server logs.
+	wait_for_list(lcs, NULL, 0, 2000);
+	linphone_account_clear_call_logs(linphone_core_get_default_account(marie->lc));   // Clean logs
+	linphone_account_clear_call_logs(linphone_core_get_default_account(pauline->lc)); // Clean logs
+	linphone_account_clear_call_logs(linphone_core_get_default_account(laure->lc));   // Clean logs
+	if (focus) {
+		linphone_account_clear_call_logs(linphone_core_get_default_account(focus->lc)); // Clean logs
+	}
+
 	is_remote_conf =
 	    (strcmp(linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "conference_type", "local"),
 	            "remote") == 0);

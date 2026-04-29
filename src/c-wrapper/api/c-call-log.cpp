@@ -275,6 +275,17 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	lc->call_logs = bctbx_list_prepend(lc->call_logs, linphone_call_log_ref(log));
 }
 
+#ifdef HAVE_DB_STORAGE
+static int _compare_call_log(LinphoneCallLog *stored_log, LinphoneCallLog *log) {
+	auto logCpp = CallLog::toCpp(log);
+	auto storedLogCpp = CallLog::toCpp(stored_log);
+	return !(storedLogCpp->getCallId() == logCpp->getCallId() &&
+	         storedLogCpp->getStartTime() == logCpp->getStartTime() &&
+	         storedLogCpp->getFromAddress()->weakEqual(logCpp->getFromAddress()) &&
+	         storedLogCpp->getToAddress()->weakEqual(logCpp->getToAddress()));
+}
+#endif // HAVE_DB_STORAGE
+
 const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	if (!lc) return NULL;
 
@@ -287,21 +298,32 @@ const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return lc->call_logs;
 
+	bctbx_list_t *logs = nullptr;
+	auto list = mainDb->getCallHistory(lc->max_call_logs);
+	if (!list.empty()) {
+		for (auto &log : list) {
+			// If the call log was already held by the core, then use it. It will prevent from losing the error info
+			// linked to it should there be one. In particular, error information of calls made since the last
+			// startup are not destroyed
+			auto old_log = bctbx_list_find_custom(lc->call_logs, (bctbx_compare_func)_compare_call_log, log->toC());
+			LinphoneCallLog *c_log = nullptr;
+			if (old_log) {
+				c_log = (LinphoneCallLog *)old_log->data;
+			} else {
+				c_log = log->toC();
+			}
+			logs = bctbx_list_append(logs, linphone_call_log_ref(c_log));
+		}
+	}
+
 	if (lc->call_logs != NULL) {
-		size_t callLogsDatabaseSize = (size_t)mainDb->getCallHistorySize();
-		if (bctbx_list_size(lc->call_logs) >= callLogsDatabaseSize) return lc->call_logs;
 		// If some call logs were added to the Core before the full history was loaded from database,
 		// clean memory cache and reload everything from database
 		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 		lc->call_logs = NULL;
 	}
 
-	auto list = mainDb->getCallHistory(lc->max_call_logs);
-	if (!list.empty()) {
-		for (auto &log : list) {
-			lc->call_logs = bctbx_list_append(lc->call_logs, linphone_call_log_ref(log->toC()));
-		}
-	}
+	lc->call_logs = logs;
 #endif
 
 	return lc->call_logs;

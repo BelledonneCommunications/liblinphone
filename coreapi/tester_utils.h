@@ -135,7 +135,9 @@ LINPHONE_PUBLIC void _linphone_core_add_callbacks(LinphoneCore *lc, LinphoneCore
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc);
 LINPHONE_PUBLIC bctbx_list_t **linphone_core_get_call_logs_attribute(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log);
+LINPHONE_PUBLIC void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 
+LINPHONE_PUBLIC void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log);
 LINPHONE_PUBLIC const MSList *linphone_core_get_call_history(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_delete_call_history(LinphoneCore *lc);
 LINPHONE_PUBLIC int linphone_core_get_call_history_size(LinphoneCore *lc);

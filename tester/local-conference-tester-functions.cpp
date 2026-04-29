@@ -297,10 +297,16 @@ create_conference_on_server(Focus &focus,
 	std::map<LinphoneCoreManager *, LinphoneCall *> previous_calls;
 	bctbx_list_t *participants_info = NULL;
 	std::list<LinphoneCoreManager *> participants;
-	const bctbx_list_t *organizer_call_logs = NULL;
 	const bctbx_list_t *initial_organizer_call_logs = linphone_core_get_call_logs(organizer.getLc());
-	const bctbx_list_t *focus_call_logs = NULL;
+	size_t initial_organizer_call_logs_size = 0;
+	if (initial_organizer_call_logs) {
+		initial_organizer_call_logs_size = bctbx_list_size(initial_organizer_call_logs);
+	}
 	const bctbx_list_t *initial_focus_call_logs = linphone_core_get_call_logs(focus.getLc());
+	size_t initial_focus_call_logs_size = 0;
+	if (initial_focus_call_logs) {
+		initial_focus_call_logs_size = bctbx_list_size(initial_focus_call_logs);
+	}
 	const LinphoneConferenceInfo *updated_conf_info = NULL;
 	bool focus_organizer_common_payload = have_common_audio_payload(organizer.getCMgr(), focus.getCMgr());
 	bool is_dialout = (start_time < 0);
@@ -661,17 +667,29 @@ create_conference_on_server(Focus &focus,
 	// scheduling the conference. Indeed, by the time the verification below is carried out the client might have
 	// already called the server therefore a genuine and valid call log may have already been created
 	if (!is_dialout) {
-		organizer_call_logs = linphone_core_get_call_logs(organizer.getLc());
+		const bctbx_list_t *organizer_call_logs = linphone_core_get_call_logs(organizer.getLc());
+		size_t organizer_call_logs_size = 0;
+		if (organizer_call_logs) {
+			organizer_call_logs_size = bctbx_list_size(organizer_call_logs);
+		}
+		BC_ASSERT_EQUAL(organizer_call_logs_size, initial_organizer_call_logs_size, size_t, "%zu");
 		if (organizer_call_logs && initial_organizer_call_logs) {
-			BC_ASSERT_EQUAL(bctbx_list_size(organizer_call_logs), bctbx_list_size(initial_organizer_call_logs), size_t,
-			                "%zu");
+			BC_ASSERT_GREATER_STRICT(organizer_call_logs_size, 0, size_t, "%0zu");
+			BC_ASSERT_GREATER_STRICT(initial_organizer_call_logs_size, 0, size_t, "%0zu");
 		} else {
 			BC_ASSERT_PTR_NULL(organizer_call_logs);
 			BC_ASSERT_PTR_NULL(initial_organizer_call_logs);
 		}
-		focus_call_logs = linphone_core_get_call_logs(focus.getLc());
+
+		const bctbx_list_t *focus_call_logs = linphone_core_get_call_logs(focus.getLc());
+		size_t focus_call_logs_size = 0;
+		if (focus_call_logs) {
+			focus_call_logs_size = bctbx_list_size(focus_call_logs);
+		}
+		BC_ASSERT_EQUAL(focus_call_logs_size, initial_focus_call_logs_size, size_t, "%zu");
 		if (focus_call_logs && initial_focus_call_logs) {
-			BC_ASSERT_EQUAL(bctbx_list_size(focus_call_logs), bctbx_list_size(initial_focus_call_logs), size_t, "%zu");
+			BC_ASSERT_GREATER_STRICT(focus_call_logs_size, 0, size_t, "%0zu");
+			BC_ASSERT_GREATER_STRICT(initial_focus_call_logs_size, 0, size_t, "%0zu");
 		} else {
 			BC_ASSERT_PTR_NULL(focus_call_logs);
 			BC_ASSERT_PTR_NULL(initial_focus_call_logs);

@@ -518,11 +518,11 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_impromptu_mismatch_conference, 210);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_basic, 481);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_advanced, 300);
-	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_error, 261);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_error, 650);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_imdn, 315);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_ephemeral_chat, 281);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_secure_chat, 371);
-	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_secure_chat_error, 100);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_secure_chat_error, 500);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_transferred_conference_basic, 100);
 #endif // HAVE_ADVANCED_IM
 	liblinphone_tester_add_suite_with_default_time(&tunnel_test_suite, 0);

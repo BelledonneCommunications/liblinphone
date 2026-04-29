@@ -51,6 +51,10 @@ public:
 	SalOp *ref();
 	void *unref();
 
+	void resetSal() {
+		mRoot = nullptr;
+	}
+
 	Sal *getSal() const {
 		return mRoot;
 	}

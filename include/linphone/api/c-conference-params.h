@@ -367,9 +367,19 @@ LINPHONE_PUBLIC const char *linphone_conference_params_get_description_utf8(cons
  * @param params The #LinphoneConferenceParams object. @notnil
  * @param type Participant list type #LinphoneConferenceParticipantListType. This allows to restrict the access to the
  * conference to a selected set of participants
+ * @note It is only applicable to conference servers
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params,
                                                                           LinphoneConferenceParticipantListType type);
+
+/**
+ * Get the participant list type
+ * @param params The #LinphoneConferenceParams object. @notnil
+ * @return participant list type #LinphoneConferenceParticipantListType.
+ * @note It is only applicable to conference servers
+ */
+LINPHONE_PUBLIC LinphoneConferenceParticipantListType
+linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params);
 
 /**
  * Set the conference as hidden. This means that the contact address will not have any conference releated attribute
@@ -385,14 +395,6 @@ LINPHONE_PUBLIC void linphone_conference_params_set_hidden(LinphoneConferencePar
  * @return whether the conference is hidden or not
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_hidden(const LinphoneConferenceParams *params);
-
-/**
- * Get the participant list type
- * @param params The #LinphoneConferenceParams object. @notnil
- * @return participant list type #LinphoneConferenceParticipantListType.
- */
-LINPHONE_PUBLIC LinphoneConferenceParticipantListType
-linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params);
 
 /**
  * Returns whether the given parameters are valid or not.

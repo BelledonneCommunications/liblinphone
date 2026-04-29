@@ -218,6 +218,11 @@ void SalOp::release() {
 }
 
 int SalOp::sendRequestWithContact(belle_sip_request_t *request, bool addContact) {
+	if (!mRoot) {
+		lError() << "Sal has already been destroyed, cannot send request";
+		return -1;
+	}
+
 	belle_sip_uri_t *nextHopUri = nullptr;
 
 	if (addContact && !belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_contact_t)) {
@@ -506,6 +511,11 @@ void SalOp::addInitialRouteSet(belle_sip_request_t *request, const list<SalAddre
 }
 
 belle_sip_request_t *SalOp::buildRequest(const string &method) {
+	if (!mRoot) {
+		lError() << "Sal has already been destroyed, cannot build request";
+		return nullptr;
+	}
+
 	// Check that the op has a correct to address
 	auto toAddress = getToAddress();
 	if (!toAddress) {

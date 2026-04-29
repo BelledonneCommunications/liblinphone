@@ -79,7 +79,7 @@
 	do {                                                                                                               \
 		std::list<std::shared_ptr<cppType##Cbs>> callbacksCopy = cppObject->getCallbacksList();                        \
 		for (auto &cbs : callbacksCopy) {                                                                              \
-			if (cbs->isActive()) {                                                                                     \
+			if (cbs && cbs->isActive()) {                                                                              \
 				cppObject->setCurrentCallbacks(cbs);                                                                   \
 				auto cb = cbGetter(cbs->toC());                                                                        \
 				if (cb) cb(cppObject->toC(), __VA_ARGS__);                                                             \

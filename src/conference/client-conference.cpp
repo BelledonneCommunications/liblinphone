@@ -68,7 +68,10 @@ ClientConference::~ClientConference() {
 	}
 
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
-	mEventHandler.reset();
+	if (mEventHandler) {
+		mEventHandler->unsubscribe();
+		mEventHandler.reset();
+	}
 #endif // defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
 }
 

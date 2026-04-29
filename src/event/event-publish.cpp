@@ -102,8 +102,7 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
                            const std::shared_ptr<const Address> &resource,
                            const string &event)
     : EventPublish(core, resource, event, -1) {
-	setOneshot(true);
-	setUnrefWhenTerminated(true);
+	setOneShot(true);
 }
 
 EventPublish::~EventPublish() {
@@ -166,8 +165,8 @@ void EventPublish::pause() {
 	if (mOp) mOp->stopRefreshing();
 }
 
-void EventPublish::setOneshot(bool oneshot) {
-	mOneshot = oneshot;
+void EventPublish::setOneShot(bool oneshot) {
+	mOneShot = oneshot;
 }
 
 LinphonePublishState EventPublish::getState() const {
@@ -180,7 +179,7 @@ void EventPublish::setState(LinphonePublishState state) {
 		        << "] to [" << linphone_publish_state_to_string(state) << "]";
 		mPublishState = state;
 
-		ref();
+		auto ref = getSharedFromThis();
 		linphone_core_notify_publish_state_changed(getCore()->getCCore(), this->toC(), state);
 		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, this, linphone_event_cbs_get_publish_state_changed, state);
 		switch (state) {
@@ -189,7 +188,7 @@ void EventPublish::setState(LinphonePublishState state) {
 				release();
 				break;
 			case LinphonePublishOk:
-				if (mOneshot) release();
+				if (mOneShot) release();
 				break;
 			case LinphonePublishCleared:
 			case LinphonePublishError:
@@ -204,7 +203,6 @@ void EventPublish::setState(LinphonePublishState state) {
 				/*nothing special to do*/
 				break;
 		}
-		unref();
 	}
 }
 
@@ -220,7 +218,8 @@ void EventPublish::terminate() {
 	// if event was already terminated (including on error), we should not terminate it again
 	// otherwise it will be unreffed twice.
 	stopTimeoutHandling();
-	if (mPublishState == LinphonePublishError || mPublishState == LinphonePublishCleared) {
+	if ((mOneShot && (mPublishState == LinphonePublishOk)) || mPublishState == LinphonePublishError ||
+	    mPublishState == LinphonePublishCleared) {
 		return;
 	}
 

@@ -240,11 +240,80 @@ static void displaying_payload_type(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void subscribe_replaced(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	// Get C++ and start working from it.
+	auto marieCore = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
+	auto paulineCore = linphone::Object::cPtrToSharedPtr<linphone::Core>(pauline->lc, TRUE);
+
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	auto content = marieCore->createContent();
+	content->setType("application");
+	content->setSubtype("somexml");
+	content->setUtf8Text("<somexml>cxxcxxcxx</somexml>");
+
+	int subscribe_expire = 30;
+	auto paulineIdentity = paulineCore->getDefaultAccount()->getParams()->getIdentityAddress()->clone();
+	auto ev = marieCore->createSubscribe(paulineIdentity, "cxxdodo", subscribe_expire);
+	ev->sendSubscribe(content);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1,
+	                             liblinphone_tester_sip_timeout));
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
+
+	ev->terminate();
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+
+	auto anotherContent = marieCore->createContent();
+	anotherContent->setType("application");
+	anotherContent->setSubtype("somexml");
+	anotherContent->setUtf8Text("<somexml>anothercxxanothercxxanothercxx</somexml>");
+
+	ev = marieCore->subscribe(paulineIdentity, "anothercxxdodo", subscribe_expire, anotherContent);
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 2,
+	                             liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 2,
+	                             liblinphone_tester_sip_timeout));
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 2, liblinphone_tester_sip_timeout));
+
+	ev->terminate();
+	ev = nullptr;
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 2, liblinphone_tester_sip_timeout));
+
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t wrapper_cpp_tests[] = {TEST_NO_TAG("Create account", create_account),
                               TEST_NO_TAG("Account freed after core destroyed", account_freed_after_core_destroyed),
                               TEST_NO_TAG("Create chat room", create_chat_room),
                               TEST_NO_TAG("Create conference", create_conference),
                               TEST_NO_TAG("Various API checks", various_api_checks),
+                              TEST_NO_TAG("Subscribe replaced", subscribe_replaced),
                               TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
 
 test_suite_t wrapper_cpp_test_suite = {"Wrapper Cpp",

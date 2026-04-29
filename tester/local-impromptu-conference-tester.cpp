@@ -1115,7 +1115,7 @@ test_suite_t local_conference_test_suite_impromptu_conference = {
     sizeof(local_conference_impromptu_conference_tests) / sizeof(local_conference_impromptu_conference_tests[0]),
     local_conference_impromptu_conference_tests,
     0,
-    4 /*cpu_weight : video conference uses more resources */
+    5 /*cpu_weight : video conference uses more resources */
 };
 
 test_suite_t local_conference_test_suite_impromptu_mismatch_conference = {
@@ -1128,4 +1128,4 @@ test_suite_t local_conference_test_suite_impromptu_mismatch_conference = {
         sizeof(local_conference_impromptu_mismatch_conference_tests[0]),
     local_conference_impromptu_mismatch_conference_tests,
     0,
-    4};
+    5};

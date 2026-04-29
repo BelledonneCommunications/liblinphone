@@ -84,7 +84,7 @@ LinphoneCall *linphone_call_new_incoming(struct _LinphoneCore *lc,
 
 LINPHONE_PUBLIC LinphoneCallLog *
 linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, const LinphoneAddress *from, const LinphoneAddress *to);
-void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
+LINPHONE_PUBLIC void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 
 LINPHONE_PUBLIC LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 
@@ -619,7 +619,7 @@ void _linphone_core_codec_config_write(LinphoneCore *lc);
 
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc);
 void call_logs_write_to_config_file(LinphoneCore *lc);
-void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log);
+LINPHONE_PUBLIC void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log);
 LINPHONE_PUBLIC const MSList *linphone_core_get_call_history(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_delete_call_history(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log);
@@ -692,20 +692,9 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_subscribe_with_op(LinphoneCore
                                                                     LinphonePrivate::SalSubscribeOp *op,
                                                                     LinphoneSubscriptionDir dir,
                                                                     const char *name);
-LinphoneEvent *_linphone_core_create_publish(
-    LinphoneCore *lc, LinphoneAccount *account, LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 void linphone_event_set_manual_refresher_mode(LinphoneEvent *lev, bool_t manual);
-/**
- * Useful for out of dialog notify
- * */
-LinphoneEvent *linphone_event_new_subscribe_with_out_of_dialog_op(LinphoneCore *lc,
-                                                                  LinphonePrivate::SalSubscribeOp *op,
-                                                                  LinphoneSubscriptionDir dir,
-                                                                  const char *name);
-LinphoneEvent *
-linphone_event_new_publish_with_op(LinphoneCore *lc, LinphonePrivate::SalPublishOp *op, const char *name);
 void linphone_event_set_internal(LinphoneEvent *lev, bool_t internal);
 bool_t linphone_event_is_internal(LinphoneEvent *lev);
 LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);

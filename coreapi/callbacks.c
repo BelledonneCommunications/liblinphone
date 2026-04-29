@@ -1061,41 +1061,47 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
 	LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
 	bool_t out_of_dialog = (lev == NULL);
+	std::shared_ptr<EventSubscribe> ev;
 	if (out_of_dialog) {
 		/*out of dialog notify */
-		lev = linphone_event_new_subscribe_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
-		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
+		ev = EventSubscribe::create<EventSubscribe>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, LinphoneSubscriptionOutgoing,
+		                                            L_C_TO_STRING(eventname), true);
 
 		if (Utils::iequals(eventname, "message-summary")) {
 			lInfo() << "Set out-of-dialog MWI event as internal";
-			linphone_event_set_internal(lev, true);
+			ev->setInternal(true);
+		}
+	} else {
+		ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+		if (!ev) {
+			lError() << "Op [" << op << "] is not associated to an EventSubscribe object";
+			return;
 		}
 	}
 
-	linphone_event_ref(lev);
+	auto subscriptionState = ev->getState();
 	if ((!out_of_dialog) && (st != SalSubscribeNone)) {
-		if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated) {
-			linphone_event_set_state(lev, linphone_subscription_state_from_sal(st));
+		if (subscriptionState != LinphoneSubscriptionTerminated) {
+			ev->setState(linphone_subscription_state_from_sal(st));
 		}
 	}
 
 	/* Take into account that the subscription may have been closed by app already within the callback of
 	 * linphone_event_set_state() */
-	if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated) {
+	if (subscriptionState != LinphoneSubscriptionTerminated) {
 		{
 			LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
-			linphone_core_notify_notify_received(lc, lev, eventname, ct);
-			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_notify_received, ct);
+			linphone_core_notify_notify_received(lc, ev->toC(), eventname, ct);
+			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, ev, linphone_event_cbs_get_notify_received, ct);
 			if (ct) {
 				linphone_content_unref(ct);
 			}
 		}
 		if (out_of_dialog) {
 			/*out of dialog NOTIFY do not create an implicit subscription*/
-			linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
+			ev->setState(LinphoneSubscriptionTerminated);
 		}
 	}
-	linphone_event_unref(lev);
 }
 
 static void subscribe_received(SalSubscribeOp *op, const char *eventname, const SalBodyHandler *body_handler) {
@@ -1138,18 +1144,21 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 	Core::ETagStatus ret = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->eTagHandler(op, body_handler);
 	if (ret == Core::ETagStatus::Error) return;
 
+	std::shared_ptr<EventPublish> event;
 	if (lev == NULL) {
-		lev = linphone_event_new_publish_with_op(lc, op, eventname);
-		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
-		linphone_event_set_publish_state(lev, LinphonePublishIncomingReceived);
+		event = EventPublish::create<EventPublish>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, L_C_TO_STRING(eventname));
+		event->setState(LinphonePublishIncomingReceived);
 	} else {
-		linphone_event_set_publish_state(lev, LinphonePublishRefreshing);
+		event = dynamic_pointer_cast<EventPublish>(Event::toCpp(lev)->getSharedFromThis());
+		if (event) {
+			event->setState(LinphonePublishRefreshing);
+		} else {
+			lError() << "Op [" << op << "] is not associated to an EventPublish object";
+			return;
+		}
 	}
 
-	auto event = Event::toCpp(lev)->getSharedFromThis();
-
-	if (ret == Core::ETagStatus::AddOrUpdateETag)
-		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addOrUpdatePublishByEtag(op, dynamic_pointer_cast<EventPublish>(event));
+	if (ret == Core::ETagStatus::AddOrUpdateETag) L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addOrUpdatePublishByEtag(op, event);
 
 	LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 	Address to(op->getTo());
@@ -1157,7 +1166,7 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 	if (account && linphone_account_params_get_realm(linphone_account_get_params(account))) {
 		op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(account)));
 	}
-	linphone_core_notify_publish_received(lc, lev, eventname, ct);
+	linphone_core_notify_publish_received(lc, event->toC(), eventname, ct);
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, event, linphone_event_cbs_get_publish_received, ct);
 	if (ct) linphone_content_unref(ct);
 }

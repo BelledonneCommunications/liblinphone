@@ -41,7 +41,6 @@ ClientConferenceEventHandlerBase::~ClientConferenceEventHandlerBase() {
 	} catch (const std::bad_weak_ptr &) {
 		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
-
 	unsubscribe();
 }
 

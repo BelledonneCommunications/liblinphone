@@ -61,68 +61,55 @@ int _linphone_event_send_publish(LinphoneEvent *lev, LinphoneContent *body, bool
 	return evPub->sendPublish(cppBody, notify_err);
 }
 
-LinphoneEvent *_linphone_core_create_publish(
-    LinphoneCore *core, LinphoneAccount *account, LinphoneAddress *resource, const char *event, int expires) {
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(core), Account::toCpp(account)->getSharedFromThis(),
-	                         Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event), expires))
-	    ->toC();
-}
-
 LinphoneEvent *
 linphone_core_create_publish(LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires) {
 	CoreLogContextualizer logContextualizer(lc);
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                         L_C_TO_STRING(event), expires))
-	    ->toC();
+	return EventPublish::createCObject<EventPublish>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event), expires);
 }
 
 LinphoneEvent *linphone_core_publish(
     LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires, LinphoneContent *body) {
 	CoreLogContextualizer logContextualizer(lc);
-	int err;
-	auto ev = (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                            L_C_TO_STRING(event), expires));
-	ev->setUnrefWhenTerminated(true);
-	err = _linphone_event_send_publish(ev->toC(), body, FALSE);
-	if (err == -1) {
-		ev->unref();
-		ev = nullptr;
+	auto ev = EventPublish::create<EventPublish>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event), expires);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	if (ev->send(cppBody) == -1) {
+		ev->terminate();
+		return nullptr;
 	}
 	return ev->toC();
 }
 
 LinphoneEvent *linphone_core_create_one_shot_publish(LinphoneCore *lc, LinphoneAddress *resource, const char *event) {
 	CoreLogContextualizer logContextualizer(lc);
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                         L_C_TO_STRING(event)))
-	    ->toC();
+	return EventPublish::createCObject<EventPublish>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event));
 }
 
 LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, LinphoneAddress *resource, const char *event) {
 	CoreLogContextualizer logContextualizer(lc);
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                           L_C_TO_STRING(event)))
-	    ->toC();
-}
-
-LinphoneEvent *
-linphone_core_create_subscribe(LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires) {
-	CoreLogContextualizer logContextualizer(lc);
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                           L_C_TO_STRING(event), expires))
-	    ->toC();
+	return EventSubscribe::createCObject<EventSubscribe>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event));
 }
 
 LinphoneEvent *linphone_core_subscribe(
     LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires, LinphoneContent *body) {
 	CoreLogContextualizer logContextualizer(lc);
-	auto ev = new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                             L_C_TO_STRING(event), expires);
-	ev->setUnrefWhenTerminated(true);
+	auto ev = EventSubscribe::create<EventSubscribe>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event), expires);
 	const auto cppBody =
 	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
 	ev->send(cppBody);
 	return ev->toC();
+}
+
+LinphoneEvent *
+linphone_core_create_subscribe(LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires) {
+	CoreLogContextualizer logContextualizer(lc);
+	return EventSubscribe::createCObject<EventSubscribe>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event), expires);
 }
 
 LinphoneEvent *linphone_core_create_subscribe_2(
@@ -130,9 +117,9 @@ LinphoneEvent *linphone_core_create_subscribe_2(
 	CoreLogContextualizer logContextualizer(lc);
 	LinphoneAccount *account = nullptr;
 	if (cfg) account = linphone_proxy_config_get_account(cfg);
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
-	                           Account::toCpp(account)->getSharedFromThis(), L_C_TO_STRING(event), expires))
-	    ->toC();
+	return EventSubscribe::createCObject<EventSubscribe>(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	    Account::toCpp(account)->getSharedFromThis(), L_C_TO_STRING(event), expires);
 }
 
 // =============================================================================
@@ -561,18 +548,6 @@ LinphoneEvent *linphone_event_new_subscribe_with_op(LinphoneCore *lc,
                                                     const char *name) {
 	return EventSubscribe::createCObject<EventSubscribe>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name),
 	                                                     false);
-}
-
-LinphoneEvent *linphone_event_new_subscribe_with_out_of_dialog_op(LinphoneCore *lc,
-                                                                  SalSubscribeOp *op,
-                                                                  LinphoneSubscriptionDir dir,
-                                                                  const char *name) {
-	return EventSubscribe::createCObject<EventSubscribe>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name),
-	                                                     true);
-}
-
-LinphoneEvent *linphone_event_new_publish_with_op(LinphoneCore *lc, SalPublishOp *op, const char *name) {
-	return EventPublish::createCObject<EventPublish>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, L_C_TO_STRING(name));
 }
 
 #endif /* LINPHONE_EVENT_H_ */

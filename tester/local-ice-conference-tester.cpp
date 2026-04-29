@@ -529,5 +529,5 @@ test_suite_t local_conference_test_suite_scheduled_ice_conference = {
         sizeof(local_conference_scheduled_ice_conference_tests[0]),
     local_conference_scheduled_ice_conference_tests,
     0,
-    4 /*cpu_weight : video conference uses more resources */
+    5 /*cpu_weight : video conference uses more resources */
 };

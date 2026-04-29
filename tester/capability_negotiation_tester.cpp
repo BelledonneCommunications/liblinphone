@@ -822,8 +822,10 @@ static bool_t call_with_params_and_encryption_negotiation_failure_base(LinphoneC
                                                                        LinphoneCallParams *callee_params,
                                                                        bool_t expSdpSuccess) {
 
-	const bctbx_list_t *initLogs = linphone_core_get_call_logs(callee->lc);
-	int initLogsSize = (int)bctbx_list_size(initLogs);
+	wait_for_until(caller->lc, callee->lc, NULL, 5, 2000);
+	linphone_account_clear_call_logs(linphone_core_get_default_account(caller->lc)); // Clean logs
+	linphone_account_clear_call_logs(linphone_core_get_default_account(callee->lc)); // Clean logs
+
 	stats initial_callee = callee->stat;
 	stats initial_caller = callee->stat;
 
@@ -846,18 +848,17 @@ static bool_t call_with_params_and_encryption_negotiation_failure_base(LinphoneC
 		                (initial_callee.number_of_LinphoneCallIncomingReceived), int, "%d");
 
 		const bctbx_list_t *logs = linphone_core_get_call_logs(callee->lc);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(logs), (initLogsSize + 1), int, "%i");
-		// Forward logs pointer to the element desired
-		for (int i = 0; i < initLogsSize; i++)
-			logs = logs->next;
-		if (logs) {
-			const LinphoneErrorInfo *ei;
-			LinphoneCallLog *cl = (LinphoneCallLog *)logs->data;
-			BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
-			ei = linphone_call_log_get_error_info(cl);
-			BC_ASSERT_PTR_NOT_NULL(ei);
-			if (ei) {
-				BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(logs), 1, size_t, "%zu");
+		for (size_t i = 0; i < bctbx_list_size(logs); i++) {
+			LinphoneCallLog *cl = (LinphoneCallLog *)bctbx_list_nth_data(logs, (int)i);
+			if (cl) {
+				const LinphoneErrorInfo *ei;
+				BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
+				ei = linphone_call_log_get_error_info(cl);
+				BC_ASSERT_PTR_NOT_NULL(ei);
+				if (ei) {
+					BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
+				}
 			}
 		}
 

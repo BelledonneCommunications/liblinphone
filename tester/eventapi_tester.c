@@ -890,6 +890,8 @@ static void publish_expired(void) {
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	lcs = bctbx_list_remove(lcs, marie->lc);
+	// Call linphone_event_terminate just to end the PUBLISH and free up the memory
+	linphone_event_terminate(lev);
 	linphone_event_unref(lev);
 	linphone_core_manager_stop(marie);
 	linphone_core_manager_uninit(marie);

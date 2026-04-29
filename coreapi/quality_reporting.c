@@ -434,6 +434,7 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 		STR_REASSIGN(report->qos_analyzer.output_leg, NULL);
 		STR_REASSIGN(report->qos_analyzer.output, NULL);
 	}
+	linphone_event_unref(lev);
 	linphone_address_unref(request_uri);
 	linphone_content_unref(content);
 	if (collector_uri_allocated) ms_free(collector_uri_allocated);

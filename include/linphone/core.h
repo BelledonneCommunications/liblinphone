@@ -5169,6 +5169,7 @@ LINPHONE_PUBLIC bool_t linphone_core_fec_enabled(const LinphoneCore *core);
  * Selects whether the default conference participant list is open or closed
  * @param core A #LinphoneCore object @notnil
  * @param type A #LinphoneConferenceParticipantListType participant list type
+ * @note It is only applicable to conference servers
  */
 LINPHONE_PUBLIC void linphone_core_set_conference_participant_list_type(LinphoneCore *core,
                                                                         LinphoneConferenceParticipantListType type);
@@ -5177,6 +5178,7 @@ LINPHONE_PUBLIC void linphone_core_set_conference_participant_list_type(Linphone
  * Tells whether the default conference participant list is open or closed
  * @param core A #LinphoneCore object @notnil
  * @return A #LinphoneConferenceParticipantListType participant list type
+ * @note It is only applicable to conference servers
  */
 LINPHONE_PUBLIC LinphoneConferenceParticipantListType
 linphone_core_get_conference_participant_list_type(const LinphoneCore *core);

@@ -67,6 +67,12 @@ static void subscribe_forking(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyReceived, 1, liblinphone_tester_sip_timeout));
 
 	linphone_event_terminate(lev);
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphoneSubscriptionTerminated, 1,
+	                             liblinphone_tester_sip_timeout));
 
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);

@@ -96,8 +96,6 @@ public:
 	int getExpires() const;
 	void setExpires(int expires);
 
-	void setUnrefWhenTerminated(bool unrefWhenTerminated);
-
 	virtual void unpublish() = 0;
 
 	void release();
@@ -122,7 +120,6 @@ protected:
 	int mExpires;
 
 	bool mInternal = false;
-	bool mUnrefWhenTerminated = false;
 
 private:
 	mutable LinphoneErrorInfo *mEi = nullptr;

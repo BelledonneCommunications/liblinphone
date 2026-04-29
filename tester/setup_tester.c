@@ -87,8 +87,13 @@ static void _remove_friends_from_list(LinphoneFriendList *list, const char *frie
 
 static void
 _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, LinphoneAddress *addrTo, LinphoneCallDir callDir) {
-	linphone_call_log_unref(linphone_core_create_call_log(lc, addrFrom, addrTo, callDir, 100, time(NULL), time(NULL),
-	                                                      LinphoneCallSuccess, FALSE, 1.0));
+	LinphoneCallLog *cl = linphone_core_create_call_log(lc, addrFrom, addrTo, callDir, 100, time(NULL), time(NULL),
+	                                                    LinphoneCallSuccess, FALSE, 1.0);
+	char call_id[10];
+	belle_sip_random_token(call_id, sizeof(call_id));
+	linphone_call_log_set_call_id(cl, call_id);
+	linphone_core_store_call_log(lc, cl);
+	linphone_call_log_unref(cl);
 }
 
 static LinphoneLdapParams *_create_default_ldap_parameters(LinphoneCoreManager *manager,

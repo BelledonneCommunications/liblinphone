@@ -2439,7 +2439,12 @@ void send_device_added_notify() {
 		linphone_content_unref(notify_content);
 	}
 
+	linphone_event_terminate(lev);
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneSubscriptionTerminated,
+	                              (initial_pauline_stats.number_of_LinphoneSubscriptionTerminated + 1),
+	                              liblinphone_tester_sip_timeout));
 	linphone_event_unref(lev);
+
 	localConf = nullptr;
 	linphone_core_manager_destroy(pauline);
 }
