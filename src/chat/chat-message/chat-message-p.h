@@ -71,6 +71,8 @@ public:
 	void resetStorageId();
 
 	void setDirection(ChatMessage::Direction dir);
+	/* Returns the direction of the message from a protocol (not application) standpoint */
+	ChatMessage::Direction getRawDirection() const;
 
 	void setParticipantState(const std::shared_ptr<Address> &participantAddress,
 	                         ChatMessage::State newState,
@@ -294,7 +296,6 @@ private:
 	SalCustomHeader *salCustomHeaders = nullptr;
 	int currentSendStep = Step::None;
 	int currentRecvStep = Step::None;
-	bool applyModifiers = true;
 	FileTransferChatMessageModifier fileTransferChatMessageModifier;
 
 	// Cache for returned values, used for compatibility with previous C API
@@ -310,8 +311,6 @@ private:
 	std::shared_ptr<Address> mMeAddress;
 	std::shared_ptr<Address> fromAddress;
 	Address authenticatedFromAddress;
-	bool senderAuthenticationEnabled = true;
-	bool unencryptedContentWarning = false;
 	std::shared_ptr<Address> toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
@@ -321,21 +320,23 @@ private:
 	std::string reactionToMessageId;
 	std::shared_ptr<Address> replyingToMessageSender;
 	std::shared_ptr<Address> recipientAddress;
-
-	bool isEphemeral = false;
-	long ephemeralLifetime = 0;
-	time_t ephemeralExpireTime = 0;
-
-	bool mDelayTimerExpired = false;
-
 	std::list<std::shared_ptr<Content>> contents;
 	mutable std::list<std::shared_ptr<ChatMessageReaction>> reactions;
+	std::set<std::shared_ptr<ChatMessageListener>, SharedPtrCompare<ChatMessageListener>> mListeners;
+
+	long ephemeralLifetime = 0;
+	time_t ephemeralExpireTime = 0;
+	bool mDelayTimerExpired = false;
+	bool isEphemeral = false;
 
 	bool encryptionPrevented = false;
 	mutable bool contentsNotLoadedFromDatabase = false;
 	bool isInAggregationQueue = false;
 
-	std::set<std::shared_ptr<ChatMessageListener>, SharedPtrCompare<ChatMessageListener>> mListeners;
+	bool senderAuthenticationEnabled = true;
+	bool unencryptedContentWarning = false;
+	bool applyModifiers = true;
+	bool originallyReceived = false;
 
 	L_DECLARE_PUBLIC(ChatMessage);
 };
