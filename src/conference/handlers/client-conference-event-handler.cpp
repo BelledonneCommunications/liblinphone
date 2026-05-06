@@ -29,6 +29,7 @@
 #include "chat/chat-room/client-chat-room.h"
 #include "conference/client-conference.h"
 #include "conference/conference.h"
+#include "conference/handlers/client-conference-list-event-handler.h"
 #include "conference/participant.h"
 #include "conference/session/media-session.h"
 #include "content/content-manager.h"
@@ -923,6 +924,19 @@ void ClientConferenceEventHandler::invalidateSubscription() {
 		}
 		ev = nullptr;
 	}
+}
+
+LinphoneSubscriptionState ClientConferenceEventHandler::getSubscriptionState() const {
+	auto state = LinphoneSubscriptionNone;
+	if (managedByListEventhandler) {
+		state =
+		    getCore()->getPrivate()->clientListEventHandler->getSubscriptionState(getConferenceId().getLocalAddress());
+	} else {
+		if (ev) {
+			state = ev->getState();
+		}
+	}
+	return state;
 }
 
 // -----------------------------------------------------------------------------

@@ -217,7 +217,7 @@ void ClientConference::init(SalCallOp *op, BCTBX_UNUSED(ConferenceListener *conf
 
 	if (focusSession || conferenceInfo) {
 		ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
-		setConferenceId(conferenceId);
+		setConferenceId(conferenceId, true);
 	}
 
 	setState(ConferenceInterface::State::Instantiated);
@@ -321,34 +321,47 @@ std::shared_ptr<ConferenceInfo> ClientConference::createConferenceInfo() const {
 	return createConferenceInfoWithCustomParticipantList(organizer, getFullParticipantList());
 }
 
+MediaSessionParams *ClientConference::createDefaultMediaParams() const {
+	MediaSessionParams *msp = new MediaSessionParams();
+	msp->initDefault(getCore(), LinphoneCallOutgoing);
+	if (mConfParams->chatEnabled()) {
+		msp->addCustomContactParameter(Conference::TextParameter);
+		if (!mConfParams->isGroup()) {
+			msp->addCustomHeader("One-To-One-Chat-Room", "true");
+		}
+		if (mConfParams->getChatParams()->isEncrypted()) {
+			msp->addCustomHeader("End-To-End-Encrypted", "true");
+		}
+		if (mConfParams->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
+			msp->addCustomHeader("Ephemerable", "true");
+		}
+		msp->addCustomHeader("Ephemeral-Life-Time", to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
+	}
+	if (!!linphone_core_get_add_admin_information_to_contact(getCore()->getCCore())) {
+		msp->addCustomContactParameter(Conference::AdminParameter, Utils::toString(mMe->isAdmin()));
+	}
+
+	// Copy conference capabilities as the application didn't specify any parameter to pass on to the call
+	msp->enableAudio(mConfParams->audioEnabled());
+	msp->enableVideo(mConfParams->videoEnabled());
+	msp->enableRealtimeText(false);
+	msp->getPrivate()->disableRinging(!supportsMedia());
+	msp->getPrivate()->enableToneIndications(supportsMedia());
+
+	return msp;
+}
+
 std::shared_ptr<CallSession> ClientConference::createSessionTo(const std::shared_ptr<const Address> &sessionTo) {
-	MediaSessionParams csp;
-	csp.addCustomHeader("Require", "recipient-list-invite");
-	csp.addCustomContactParameter(Conference::TextParameter);
-	if (!mConfParams->isGroup()) {
-		csp.addCustomHeader("One-To-One-Chat-Room", "true");
-	}
-	if (mConfParams->getChatParams()->isEncrypted()) {
-		csp.addCustomHeader("End-To-End-Encrypted", "true");
-	}
-	if (mConfParams->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
-		csp.addCustomHeader("Ephemerable", "true");
-		csp.addCustomHeader("Ephemeral-Life-Time", to_string(mConfParams->getChatParams()->getEphemeralLifetime()));
-	}
-
-	csp.enableAudio(mConfParams->audioEnabled());
-	csp.enableVideo(mConfParams->videoEnabled());
-	csp.getPrivate()->disableRinging(!supportsMedia());
-	csp.getPrivate()->enableToneIndications(supportsMedia());
-
-	auto chatRoom = getChatRoom();
-	shared_ptr<CallSession> session = mFocus->createSession(*this, &csp, TRUE);
+	auto msp = createDefaultMediaParams();
+	shared_ptr<CallSession> session = mFocus->createSession(*this, msp, TRUE);
 	session->addListener(getSharedFromThis());
 	std::shared_ptr<Address> meCleanedAddress = Address::create(getMe()->getAddress()->getUriWithoutGruu());
 
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, sessionTo);
 	session->initiateOutgoing();
 	session->getPrivate()->createOp();
+
+	delete msp;
 
 	return session;
 }
@@ -465,8 +478,8 @@ std::shared_ptr<CallSession> ClientConference::getMainSession() const {
 	return session;
 }
 
-void ClientConference::setConferenceId(const ConferenceId &conferenceId) {
-	Conference::setConferenceId(conferenceId);
+void ClientConference::setConferenceId(const ConferenceId &conferenceId, bool storeInRAM) {
+	Conference::setConferenceId(conferenceId, storeInRAM);
 
 	// Try to update the to field of the call log if the focus is defined.
 	if (mFocus) {
@@ -988,7 +1001,8 @@ void ClientConference::onFocusCallStateChanged(CallSession::State state, BCTBX_U
 
 					if (!mFinalized) {
 						setConferenceId(ConferenceId(focusContactAddress, getMe()->getAddress(),
-						                             getCore()->createConferenceIdParams()));
+						                             getCore()->createConferenceIdParams()),
+						                true);
 						if (call) {
 							if (focusContactAddress->hasUriParam(Conference::ConfIdParameter)) {
 								call->setConferenceId(
@@ -1636,7 +1650,7 @@ void ClientConference::onConferenceCreated(BCTBX_UNUSED(const std::shared_ptr<Ad
 	const auto &conferenceId = getConferenceId();
 	const ConferenceId newConferenceId(addr, conferenceId.getLocalAddress(), getCore()->createConferenceIdParams());
 	if (!getCore()->getPrivate()->findExhumedChatRoomFromPreviousConferenceId(newConferenceId)) {
-		setConferenceId(newConferenceId);
+		setConferenceId(newConferenceId, true);
 	}
 	setConferenceAddress(addr);
 	lInfo() << *this << " has been created";
@@ -2622,7 +2636,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 			ConferenceId conferenceId(conferenceAddress, meAddress, getCore()->createConferenceIdParams());
 			// Do not change the conference ID yet if exhuming a chatroom
 			if (!isLocalExhume) {
-				setConferenceId(conferenceId);
+				setConferenceId(conferenceId, true);
 			}
 			setConferenceAddress(conferenceAddress);
 
@@ -2636,16 +2650,7 @@ void ClientConference::onCallSessionSetTerminated(const shared_ptr<CallSession> 
 				dialoutParams = mJoiningParams->clone();
 			} else {
 				// No parameters were given to ClientConference::inviteAddresses()
-				dialoutParams = new MediaSessionParams();
-				dialoutParams->initDefault(getCore(), LinphoneCallOutgoing);
-				// Copy conference capabilities as the application didn't specify any parameter to pass on to the call
-				dialoutParams->enableAudio(mConfParams->audioEnabled());
-				dialoutParams->enableVideo(mConfParams->videoEnabled());
-				dialoutParams->enableRealtimeText(false);
-			}
-			if (!!linphone_core_get_add_admin_information_to_contact(getCore()->getCCore())) {
-				// Participant with the focus call is admin
-				dialoutParams->addCustomContactParameter(Conference::AdminParameter, Utils::toString(true));
+				dialoutParams = createDefaultMediaParams();
 			}
 			if (mConfParams->chatEnabled()) {
 				dialoutParams->addCustomHeader("Require", "recipient-list-invite");

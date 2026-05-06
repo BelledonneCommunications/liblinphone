@@ -138,6 +138,7 @@ bool ClientConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 		evSub->addCustomHeader("Accept-Encoding", "deflate");
 	}
 	evSub->setProperty("event-handler-private", this);
+
 	auto ret = evSub->send(content);
 	levs.push_back(evSub);
 	startWaitNotifyTimer();
@@ -187,6 +188,16 @@ void ClientConferenceListEventHandler::unsubscribe(const std::shared_ptr<Account
 		}
 	}
 	stopWaitNotifyTimer();
+}
+
+LinphoneSubscriptionState
+ClientConferenceListEventHandler::getSubscriptionState(const std::shared_ptr<Address> &address) const {
+	auto state = LinphoneSubscriptionNone;
+	auto event = findEvent(address);
+	if (event) {
+		state = event->getState();
+	}
+	return state;
 }
 
 void ClientConferenceListEventHandler::invalidateSubscription() {
@@ -267,6 +278,18 @@ void ClientConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> not
 }
 
 // -----------------------------------------------------------------------------
+
+const std::shared_ptr<EventSubscribe>
+ClientConferenceListEventHandler::findEvent(const std::shared_ptr<Address> &address) const {
+	// Ignore GRUU as the current one may not be the same as the one used to create the chatroom.
+	auto addressWithoutGruu = address->getUriWithoutGruu();
+	auto it = std::find_if(levs.begin(), levs.end(), [&addressWithoutGruu](const auto &lev) {
+		return addressWithoutGruu == Address(lev->getOp()->getFrom()).getUriWithoutGruu();
+	});
+
+	if (it != levs.end()) return *it;
+	return nullptr;
+}
 
 std::shared_ptr<ClientConferenceEventHandler>
 ClientConferenceListEventHandler::findHandler(const ConferenceId &conferenceId) const {

@@ -78,8 +78,20 @@ void ClientChatRoom::onChatRoomCreated(const std::shared_ptr<Address> &remoteCon
 	auto conference = dynamic_pointer_cast<ClientConference>(getConference());
 	conference->onConferenceCreated(remoteContact);
 #if defined(HAVE_ADVANCED_IM) && defined(HAVE_XERCESC)
-	if (remoteContact->hasParam(Conference::IsFocusParameter) &&
-	    !getCore()->getPrivate()->clientListEventHandler->findHandler(getConferenceId())) {
+	bool needToSubscribe = true;
+	auto &clientListHandler = getCore()->getPrivate()->clientListEventHandler;
+	auto handler = clientListHandler->findHandler(getConferenceId());
+	if (handler) {
+		if (handler->getSubscriptionState() == LinphoneSubscriptionError) {
+			lInfo() << "Detach " << *this << " from ClientConferenceListEventHandler [" << clientListHandler.get()
+			        << "] because the subscription errored out";
+			needToSubscribe = true;
+			clientListHandler->removeHandler(handler);
+		} else {
+			needToSubscribe = false;
+		}
+	}
+	if (needToSubscribe && remoteContact->hasParam(Conference::IsFocusParameter)) {
 		mBgTask.start(getCore(), 32); // It will be stopped when receiving the first notify
 		conference->subscribe(false, false);
 	}
@@ -199,7 +211,9 @@ void ClientChatRoom::deleteFromDb() {
 			ChatRoom::deleteFromDb();
 			break;
 		case ConferenceInterface::State::TerminationPending:
-			lError() << "Unable to delete " << *this << " because its termination is already underway. It will be deleted only when the termination process completes";
+			lError() << "Unable to delete " << *this
+			         << " because its termination is already underway. It will be deleted only when the termination "
+			            "process completes";
 			setDeletionOnTerminationEnabled(true);
 			break;
 		default:
@@ -304,7 +318,7 @@ void ClientChatRoom::onExhumedConference(const ConferenceId &oldConfId, const Co
 	focus->clearDevices();
 	focus->addDevice(addr);
 
-	conference->setConferenceId(newConfId);
+	conference->setConferenceId(newConfId, false);
 	getCore()->getPrivate()->updateChatRoomConferenceId(chatRoom, oldConfId);
 
 	conference->resetLastNotify();
@@ -474,11 +488,9 @@ void ClientChatRoom::sendPendingMessages() {
 void ClientChatRoom::sendEphemeralUpdate() {
 	auto conference = static_pointer_cast<ClientConference>(getConference());
 	auto utf8Subject = conference->getUtf8Subject();
+	lInfo() << "Sending an INVITE message because ephemeral settings of " << *conference << " have changed";
 	auto focus = conference->mFocus;
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(focus->getSession());
-	const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
-	lInfo() << "Re-INVITing " << *remoteParticipant << " because ephemeral settings of chat room " << *conference
-	        << " have changed";
 	if (session) {
 		auto csp = session->getMediaParams()->clone();
 		csp->removeCustomHeader("Ephemeral-Life-Time");

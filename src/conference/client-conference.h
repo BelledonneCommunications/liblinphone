@@ -171,7 +171,7 @@ public:
 	void notifyDisplayedSpeaker(uint32_t csrc);
 	void notifyLouderSpeaker(uint32_t ssrc);
 
-	void setConferenceId(const ConferenceId &conferenceId);
+	void setConferenceId(const ConferenceId &conferenceId, bool storeInRAM);
 	void confirmJoining(SalCallOp *op);
 	void attachCall(const std::shared_ptr<CallSession> &session);
 
@@ -212,6 +212,8 @@ private:
 	bool transferToFocus(std::shared_ptr<Call> call);
 	void reset();
 	void endConference();
+
+	MediaSessionParams *createDefaultMediaParams() const;
 
 	void onFocusCallStateChanged(CallSession::State state, const std::string &message);
 	void onPendingCallStateChanged(std::shared_ptr<Call> call, CallSession::State callState);

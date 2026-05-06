@@ -181,7 +181,7 @@ CorePrivate::createClientChatRoom(const std::shared_ptr<const Address> &conferen
 	    (new ClientConference(q->getSharedFromThis(), nullptr, params))->toSharedPtr());
 	conference->initWithFocus(conferenceFactoryUri, nullptr, op, conference.get());
 	if (conferenceId.isValid()) {
-		conference->setConferenceId(conferenceId);
+		conference->setConferenceId(conferenceId, true);
 	}
 	lInfo() << *conference << " with id " << conferenceId
 	        << " and chat only capabilities has been successfully created";

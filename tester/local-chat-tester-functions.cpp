@@ -2250,7 +2250,8 @@ void one_to_one_chat_room_deletion_by_server_client_base(bool encrypted) {
 
 			LinphoneParticipantDevice *paulineDevice = NULL;
 			if (focusCr) {
-				LinphoneParticipant *paulineParticipant = linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
+				LinphoneParticipant *paulineParticipant =
+				    linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
 				BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
 				if (paulineParticipant) {
 					paulineDevice = linphone_participant_find_device(paulineParticipant, paulineLocalAddr);
@@ -2276,7 +2277,7 @@ void one_to_one_chat_room_deletion_by_server_client_base(bool encrypted) {
 				// wait until the participant moves to the Leaving state on the server
 				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&paulineDevice] {
 					return (linphone_participant_device_get_state(paulineDevice) ==
-								  LinphoneParticipantDeviceStateLeaving);
+					        LinphoneParticipantDeviceStateLeaving);
 				}));
 			}
 
@@ -2549,6 +2550,14 @@ void group_chat_room_with_client_removed_and_reinvinted_base(bool encrypted,
 					BC_ASSERT_FALSE(linphone_chat_room_has_been_left(laureCr));
 				}
 			}
+		}
+
+		if (corrupt_database && !restart_core_after_corruption) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneSubscriptionError, 1,
+			                             liblinphone_tester_sip_timeout));
+		} else {
+			BC_ASSERT_FALSE(
+			    wait_for_list(coresList, &laure.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
 		}
 
 		initialMarieStats = marie.getStats();
@@ -3319,10 +3328,12 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 			BC_ASSERT_PTR_NOT_NULL(focusCr);
 
 			if (focusCr) {
-				LinphoneParticipant *paulineParticipant = linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
+				LinphoneParticipant *paulineParticipant =
+				    linphone_chat_room_find_participant(focusCr, paulineLocalAddr);
 				BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
 				if (paulineParticipant) {
-					LinphoneParticipantDevice *paulineDevice = linphone_participant_find_device(paulineParticipant, paulineLocalAddr);
+					LinphoneParticipantDevice *paulineDevice =
+					    linphone_participant_find_device(paulineParticipant, paulineLocalAddr);
 					BC_ASSERT_PTR_NOT_NULL(paulineDevice);
 				}
 			}
@@ -3337,16 +3348,16 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 
 			ms_message("%s leaves chatroom %s", linphone_core_get_identity(pauline.getLc()), conference_address_string);
 			linphone_chat_room_leave(paulineCr);
-			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateTerminationPending,
-			                             pauline_stat.number_of_LinphoneChatRoomStateTerminationPending + 1,
-			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(
+			    coresList, &pauline.getStats().number_of_LinphoneChatRoomStateTerminationPending,
+			    pauline_stat.number_of_LinphoneChatRoomStateTerminationPending + 1, liblinphone_tester_sip_timeout));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomSessionConnected,
-						     focus_stat.number_of_LinphoneChatRoomSessionConnected + 1,
-						     liblinphone_tester_sip_timeout));
+			                             focus_stat.number_of_LinphoneChatRoomSessionConnected + 1,
+			                             liblinphone_tester_sip_timeout));
 
 			BC_ASSERT_EQUAL(pauline.getStats().number_of_LinphoneChatRoomStateTerminated,
-					pauline_stat.number_of_LinphoneChatRoomStateTerminated, int, "%d");
+			                pauline_stat.number_of_LinphoneChatRoomStateTerminated, int, "%d");
 
 			linphone_core_delete_chat_room(pauline.getLc(), paulineCr);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateDeleted,
@@ -3373,8 +3384,8 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 			// Marie creates a new group chat room
 			const char *initialSubject = "One on one with Marie";
 			paulineCr =
-			    create_chat_room_client_side(coresList, pauline.getCMgr(), &pauline_stat, participantsAddresses, initialSubject,
-							 encrypted, LinphoneChatRoomEphemeralModeDeviceManaged);
+			    create_chat_room_client_side(coresList, pauline.getCMgr(), &pauline_stat, participantsAddresses,
+			                                 initialSubject, encrypted, LinphoneChatRoomEphemeralModeDeviceManaged);
 			BC_ASSERT_PTR_NOT_NULL(paulineCr);
 
 			const std::initializer_list<std::reference_wrapper<ConfCoreManager>> cores{focus, marie, pauline};
@@ -3411,8 +3422,8 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 			msg_text = "Paully, are you back?";
 			msg = _send_message(marieCr, msg_text);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
-						     pauline_stat.number_of_LinphoneMessageReceived + 1,
-						     liblinphone_tester_sip_timeout));
+			                             pauline_stat.number_of_LinphoneMessageReceived + 1,
+			                             liblinphone_tester_sip_timeout));
 			paulineLastMsg = pauline.getStats().last_received_chat_message;
 			linphone_chat_message_unref(msg);
 			BC_ASSERT_PTR_NOT_NULL(paulineLastMsg);
@@ -3425,8 +3436,8 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 			msg_text = "Yes, Mary, I am back in";
 			msg = _send_message(paulineCr, msg_text);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageReceived,
-						     marie_stat.number_of_LinphoneMessageReceived + 1,
-						     liblinphone_tester_sip_timeout));
+			                             marie_stat.number_of_LinphoneMessageReceived + 1,
+			                             liblinphone_tester_sip_timeout));
 			LinphoneChatMessage *marieLastMsg = marie.getStats().last_received_chat_message;
 			linphone_chat_message_unref(msg);
 			BC_ASSERT_PTR_NOT_NULL(marieLastMsg);
@@ -3443,10 +3454,9 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 			}
 
 			// wait until chatroom is deleted server side
-			BC_ASSERT_TRUE(
-			    CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(120), [&focus] {
-				    return focus.getCore().getChatRooms().size() == 0;
-			    }));
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(120), [&focus] {
+				return focus.getCore().getChatRooms().size() == 0;
+			}));
 
 			// wait a bit longer to detect side effect if any
 			CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
@@ -3460,7 +3470,6 @@ void one_on_one_chat_room_deleted_before_200ok_base(bool encrypted, bool server_
 
 			bctbx_list_free(coresList);
 			ms_free(conference_address_string);
-
 		}
 	}
 }

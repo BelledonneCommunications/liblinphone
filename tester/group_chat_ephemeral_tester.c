@@ -667,7 +667,7 @@ static void chat_room_ephemeral_settings(void) {
 	chat_room_ephemeral_settings_curve(C448);
 }
 
-static void ephemeral_group_message_test_curve(const int curveId) {
+static void ephemeral_group_message_test_curve(const int curveId, bool_t restart_core_before_ephemeral_activation) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -712,7 +712,7 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 	LinphoneChatRoom *marieCr =
 	    create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE,
 	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
 	// Check that the chat room is correctly created on Pauline and Laure sides and that the participants are added
 	LinphoneChatRoom *paulineCr =
@@ -725,7 +725,6 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 	BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(marieCr));
 
 	// Marie disable ephemeral in the group chat room
-	linphone_chat_room_deactivate_ephemeral(marieCr);
 	LinphoneChatMessage *messageNormal = _send_message(marieCr, "See you later");
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
@@ -736,6 +735,27 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
 	                             liblinphone_tester_sip_timeout));
 
+	if (restart_core_before_ephemeral_activation) {
+		// Restart Marie's core
+		coresList = bctbx_list_remove(coresList, marie->lc);
+		linphone_core_manager_reinit(marie);
+		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
+		set_lime_server_and_curve_list(curveId, tmpCoresManagerList);
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+		bctbx_list_t *tmpInitList = init_core_for_conference(tmpCoresManagerList);
+		start_core_for_conference(tmpCoresManagerList);
+		bctbx_list_free(tmpInitList);
+		bctbx_list_free(tmpCoresManagerList);
+		coresList = bctbx_list_append(coresList, marie->lc);
+
+		// Retrieve chat room
+		const LinphoneAddress *marieDeviceAddr =
+		    linphone_account_get_contact_address(linphone_core_get_default_account(marie->lc));
+		marieCr = linphone_core_search_chat_room(marie->lc, NULL, marieDeviceAddr, confAddr, NULL);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+	}
+
+	initialMarieStats = marie->stat;
 	linphone_chat_room_activate_ephemeral(marieCr, 1);
 
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
@@ -758,7 +778,7 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 
 	// Check that the message has been delivered to Pauline & Laure
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 2,
+	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
 	                             liblinphone_tester_sip_timeout));
 
 	// Pauline marks the message as read, check that the state is not displayed on Marie's side since Laure hasn't read
@@ -766,11 +786,11 @@ static void ephemeral_group_message_test_curve(const int curveId) {
 	linphone_chat_room_mark_as_read(paulineCr);
 	wait_for_list(coresList, NULL, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneMessageDisplayed,
-	                    initialMarieStats.number_of_LinphoneMessageDisplayed + 2, int, "%i");
+	                    initialMarieStats.number_of_LinphoneMessageDisplayed + 1, int, "%i");
 
 	linphone_chat_room_mark_as_read(laureCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed,
-	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 2,
+	                             initialMarieStats.number_of_LinphoneMessageDisplayed + 1,
 	                             liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralTimerStarted,
@@ -833,6 +853,8 @@ end:
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 
+	linphone_address_unref(confAddr);
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
@@ -841,8 +863,13 @@ end:
 }
 
 static void ephemeral_group_message_test(void) {
-	ephemeral_group_message_test_curve(C25519);
-	ephemeral_group_message_test_curve(C448);
+	ephemeral_group_message_test_curve(C25519, FALSE);
+	ephemeral_group_message_test_curve(C448, FALSE);
+}
+
+static void enable_ephemeral_messages_after_restart_test(void) {
+	ephemeral_group_message_test_curve(C25519, TRUE);
+	ephemeral_group_message_test_curve(C448, TRUE);
 }
 
 test_t ephemeral_group_chat_tests[] = {
@@ -862,6 +889,10 @@ test_t ephemeral_group_chat_basic_tests[] = {
     TEST_ONE_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test, "Ephemeral"),
     TEST_ONE_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test, "Ephemeral"),
     TEST_ONE_TAG("Encrypted group chat room ephemeral messages", ephemeral_group_message_test, "Ephemeral"),
+    TEST_TWO_TAGS("Enable ephemeral messages after restart",
+                  enable_ephemeral_messages_after_restart_test,
+                  "Ephemeral",
+                  "LeaksMemory"), /*due to core restart*/
     TEST_TWO_TAGS("Chat room ephemeral settings",
                   chat_room_ephemeral_settings,
                   "Ephemeral",

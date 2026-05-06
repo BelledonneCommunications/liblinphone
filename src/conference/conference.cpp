@@ -1129,9 +1129,11 @@ void Conference::resetLastNotify() {
 	setLastNotify(0);
 }
 
-void Conference::setConferenceId(const ConferenceId &conferenceId) {
+void Conference::setConferenceId(const ConferenceId &conferenceId, bool storeInRAM) {
 	mConferenceId = conferenceId;
-	getCore()->insertConference(getSharedFromThis());
+	if (storeInRAM) {
+		getCore()->insertConference(getSharedFromThis());
+	}
 }
 
 const ConferenceId &Conference::getConferenceId() const {

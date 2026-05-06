@@ -58,7 +58,7 @@ public:
 	void unsubscribe() override;
 
 	void invalidateSubscription() override;
-	void subscriptionActive();
+	LinphoneSubscriptionState getSubscriptionState() const;
 
 	const ConferenceId &getConferenceId() const;
 	std::shared_ptr<Conference> getConference() const;

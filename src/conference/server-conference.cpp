@@ -156,7 +156,7 @@ void ServerConference::init(SalCallOp *op, ConferenceListener *confListener) {
 
 		auto eventLogEnabled = supportsConferenceEventPackage();
 		if (!eventLogEnabled) {
-			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams()));
+			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, core->createConferenceIdParams()), true);
 		}
 
 		if (mMe) {
@@ -611,7 +611,8 @@ std::pair<bool, std::shared_ptr<Address>> ServerConference::configure(SalCallOp 
 				}
 			}
 		}
-		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
+		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()),
+		                true);
 	}
 	return std::make_pair(isUpdate, conferenceAddress);
 }
@@ -1053,7 +1054,8 @@ void ServerConference::finalizeCreation() {
 		}
 #endif // HAVE_ADVANCED_IM
 		const std::shared_ptr<Address> &conferenceAddress = getConferenceAddress();
-		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()));
+		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress, getCore()->createConferenceIdParams()),
+		                true);
 		std::shared_ptr<ConferenceInfo> info = nullptr;
 #ifdef HAVE_DB_STORAGE
 		auto &mainDb = getCore()->getPrivate()->mainDb;
