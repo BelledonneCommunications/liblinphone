@@ -40,6 +40,8 @@ static string const PushConfigRemotePushIntervalKey = "pn-call-remote-push-inter
 
 class PushNotificationConfig : public bellesip::HybridObject<LinphonePushNotificationConfig, PushNotificationConfig> {
 public:
+	static const std::string kDefaultTeamId;
+
 	PushNotificationConfig();
 	// Reconstruct a PushNotificationConfig from a string obtain by calling PushNotificationconfig::asString()
 	PushNotificationConfig(std::string const &serializedConfig);

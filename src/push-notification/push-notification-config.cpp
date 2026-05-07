@@ -21,9 +21,13 @@
 #include "push-notification-config.h"
 #include "address/address.h"
 
+#include <logger/logger.h>
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+const std::string PushNotificationConfig::kDefaultTeamId = "ABCD1234";
 
 PushNotificationConfig::PushNotificationConfig() {
 #ifdef __ANDROID__
@@ -44,7 +48,7 @@ PushNotificationConfig::PushNotificationConfig() {
 	mPushParams[PushConfigMsgSoundKey] = "msg.caf";
 	mPushParams[PushConfigRemotePushIntervalKey] = "";
 
-	mTeamId = "ABCD1234";
+	mTeamId = kDefaultTeamId;
 	mBundleIdentifer = "";
 	mVoipToken = "";
 	mRemoteToken = "";
@@ -213,7 +217,13 @@ void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remot
 		}
 		if (remotePushAllowed) services += "remote";
 
-		mPushParams[PushConfigParamKey] = mTeamId + "." + mBundleIdentifer + "." + services;
+		if (mTeamId.empty()) {
+			lWarning() << "[PushNotificationConfig] generatePushParams:cannot use empty string as TeamId. Using "
+			              "default value: "
+			           << kDefaultTeamId;
+		}
+		mPushParams[PushConfigParamKey] =
+		    (mTeamId.empty() ? kDefaultTeamId : mTeamId) + "." + mBundleIdentifer + "." + services;
 	}
 
 	if (mPushParams[PushConfigPridKey].empty() ||
