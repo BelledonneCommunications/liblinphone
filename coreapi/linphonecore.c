@@ -6715,8 +6715,10 @@ LinphoneStatus linphone_core_set_video_device(LinphoneCore *lc, const char *id) 
 	}
 	if (lc->video_conf.device == NULL)
 		lc->video_conf.device = ms_web_cam_manager_get_default_cam(ms_factory_get_web_cam_manager(lc->factory));
-	if (olddev != NULL && olddev != lc->video_conf.device) {
+	if (lc->previewstream && lc->previewstream->cam != lc->video_conf.device) {
 		relaunch_video_preview(lc);
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->updateVideoDevice();
+	} else if (olddev != NULL && olddev != lc->video_conf.device) {
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->updateVideoDevice();
 	}
 	if (linphone_core_ready(lc) && lc->video_conf.device) {
