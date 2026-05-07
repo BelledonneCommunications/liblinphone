@@ -25,7 +25,7 @@
 #include <unistd.h>
 #endif
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "mediastreamer2/mediastream.h"
 

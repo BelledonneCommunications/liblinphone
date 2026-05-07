@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "account/account.h"
 #include "address/address.h"
@@ -76,6 +76,49 @@ void CallSessionPrivate::notifyReferState() {
 
 void CallSessionPrivate::restorePreviousState() {
 	setState(prevState, prevMessageState);
+}
+
+void CallSessionPrivate::setCallLogStatusOnTermination() {
+	L_Q();
+	switch (linphone_error_info_get_reason(q->getErrorInfo())) {
+		case LinphoneReasonDeclined:
+			if (log->getStatus() != LinphoneCallMissed) // Do not re-change the status of a call if it's already set
+				log->setStatus(LinphoneCallDeclined);
+			break;
+		case LinphoneReasonNotAnswered:
+			if (log->getDirection() == LinphoneCallIncoming) log->setStatus(LinphoneCallMissed);
+			break;
+		case LinphoneReasonUnknown:
+		case LinphoneReasonNone:
+			/* case of CANCEL */
+			if (terminatedFromRemote && (prevState == CallSession::State::IncomingReceived ||
+			                             prevState == CallSession::State::IncomingEarlyMedia)) {
+				log->setStatus(LinphoneCallMissed); // Assuming it is a missed call
+				if (ei && linphone_error_info_get_protocol(ei) != NULL) {
+					int code = linphone_error_info_get_protocol_code(ei);
+					if (strcasecmp(linphone_error_info_get_protocol(ei), "SIP") == 0 &&
+					    ((code >= 200) && (code < 300))) {
+						log->setStatus(LinphoneCallAcceptedElsewhere);
+						// a 487 code clearly indicates a missed call (cancelled by caller).
+					} else {
+						lWarning() << "Unsupported reason header in CANCEL - assuming it is a missed call.";
+					}
+				}
+			}
+			break;
+		case LinphoneReasonDoNotDisturb:
+			if (log->getDirection() == LinphoneCallIncoming) {
+				if (ei) {
+					int code = linphone_error_info_get_protocol_code(ei);
+					if ((code >= 600) && (code < 700)) log->setStatus(LinphoneCallDeclinedElsewhere);
+				}
+			} else {
+				log->setStatus(LinphoneCallDeclined);
+			}
+			break;
+		default:
+			break;
+	}
 }
 
 void CallSessionPrivate::setState(CallSession::State newState, const string &message) {
@@ -155,35 +198,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 			} break;
 			case CallSession::State::End:
 			case CallSession::State::Error:
-				switch (linphone_error_info_get_reason(q->getErrorInfo())) {
-					case LinphoneReasonDeclined:
-						if (log->getStatus() !=
-						    LinphoneCallMissed) // Do not re-change the status of a call if it's already set
-							log->setStatus(LinphoneCallDeclined);
-						break;
-					case LinphoneReasonNotAnswered:
-						if (log->getDirection() == LinphoneCallIncoming) log->setStatus(LinphoneCallMissed);
-						break;
-					case LinphoneReasonNone:
-						if (log->getDirection() == LinphoneCallIncoming) {
-							if (ei) {
-								int code = linphone_error_info_get_protocol_code(ei);
-								if ((code >= 200) && (code < 300)) log->setStatus(LinphoneCallAcceptedElsewhere);
-								else if (code == 487) log->setStatus(LinphoneCallMissed);
-							}
-						}
-						break;
-					case LinphoneReasonDoNotDisturb:
-						if (log->getDirection() == LinphoneCallIncoming) {
-							if (ei) {
-								int code = linphone_error_info_get_protocol_code(ei);
-								if ((code >= 600) && (code < 700)) log->setStatus(LinphoneCallDeclinedElsewhere);
-							}
-						}
-						break;
-					default:
-						break;
-				}
+				setCallLogStatusOnTermination();
 				break;
 			case CallSession::State::Connected:
 				log->setStatus(LinphoneCallSuccess);
@@ -589,23 +604,15 @@ void CallSessionPrivate::replaceOp(SalCallOp *newOp) {
 }
 
 void CallSessionPrivate::terminated() {
-	L_Q();
 	switch (state) {
 		case CallSession::State::End:
 		case CallSession::State::Error:
 			lWarning() << "terminated: already terminated, ignoring";
 			return;
-		case CallSession::State::IncomingReceived:
-		case CallSession::State::IncomingEarlyMedia:
-			if (!op->getReasonErrorInfo()->protocol || strcmp(op->getReasonErrorInfo()->protocol, "") == 0) {
-				lWarning() << "Session [" << q << "] has not been answered by the remote party";
-				linphone_error_info_set(ei, nullptr, LinphoneReasonNotAnswered, 0, "Incoming call cancelled", nullptr);
-				nonOpError = true;
-			}
-			break;
 		default:
 			break;
 	}
+	terminatedFromRemote = true;
 	setState(CallSession::State::End, "Call ended");
 }
 
@@ -1009,9 +1016,9 @@ void CallSessionPrivate::setContactOp(const std::optional<std::shared_ptr<Addres
 			    ConferenceId(contactInfo.mAddress, contactInfo.mAddress, conferenceIdParams), false);
 			// Find server conference based on From or To header as the conference server may give an address to
 			// the conference that doesn't match the identity address or contact address of any of the accounts held by
-			// the core. For example, flexisip chat servers based on SDK 5.3 and older will create chatroom with username
-			// chatroom-XXXXX which doesn't match any of the account held by the core so the To or From header have the
-			// chatroom address
+			// the core. For example, flexisip chat servers based on SDK 5.3 and older will create chatroom with
+			// username chatroom-XXXXX which doesn't match any of the account held by the core so the To or From header
+			// have the chatroom address
 			std::shared_ptr<Address> guessedConferenceAddress;
 			if (direction == LinphoneCallIncoming) {
 				guessedConferenceAddress = destination ? destination.value() : log->getToAddress();
@@ -1098,7 +1105,7 @@ bool CallSessionPrivate::reportEvents() const {
 	const auto remoteAddress = q->getRemoteAddress();
 	const auto clientConferenceGuessedAddress =
 	    (remoteContactAddress && remoteContactAddress->hasUriParam(Conference::ConfIdParameter)) ? remoteContactAddress
-	                                                                                              : remoteAddress;
+	                                                                                             : remoteAddress;
 	const auto &peerAddress = isInConference() ? serverConferenceGuessedAddress : clientConferenceGuessedAddress;
 	const auto conference = q->getCore()->searchConference(nullptr, nullptr, peerAddress, {});
 	ConferenceInterface::State conferenceState =
@@ -1592,7 +1599,7 @@ LinphoneStatus CallSession::decline(const LinphoneErrorInfo *ei) {
 		lError() << "Cannot decline a CallSession that is in state " << Utils::toString(d->state);
 		return -1;
 	}
-	if (ei) {
+	if (ei && linphone_error_info_get_reason(ei) != LinphoneReasonNone) {
 		linphone_error_info_set(d->ei, nullptr, linphone_error_info_get_reason(ei),
 		                        linphone_error_info_get_protocol_code(ei), linphone_error_info_get_phrase(ei), nullptr);
 		linphone_error_info_to_sal(ei, &sei);
