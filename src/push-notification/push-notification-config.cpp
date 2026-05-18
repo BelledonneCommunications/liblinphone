@@ -272,8 +272,54 @@ string PushNotificationConfig::asString(bool withRemoteSpecificParams) const {
 void PushNotificationConfig::readPushParamsFromString(string const &serializedConfig) {
 	std::shared_ptr<Address> pushParamsWrapper = Address::create("sip:dummy;" + serializedConfig);
 	for (auto &param : mPushParams) {
-		string paramValue = pushParamsWrapper->getUriParamValue(param.first);
+		std::string key = param.first;
+		string paramValue = pushParamsWrapper->getUriParamValue(key);
 		if (!paramValue.empty()) param.second = paramValue;
+
+		if (key == PushConfigPridKey) {
+			// pn-prid can be of the form "token:remote", "token:voip", or "token:voip&token:remote"
+			size_t voipPos = paramValue.find(":voip");
+			if (voipPos != string::npos) {
+				mVoipToken = paramValue.substr(0, voipPos);
+			}
+			size_t remotePos = paramValue.find(":remote");
+			if (remotePos != string::npos) {
+				size_t remoteTokenStartPos = 0;
+				if (voipPos != string::npos) {
+					remoteTokenStartPos = paramValue.find("&", voipPos) + 1;
+				}
+				mRemoteToken = paramValue.substr(remoteTokenStartPos, remotePos - remoteTokenStartPos);
+			}
+			if (mVoipToken.empty() && mRemoteToken.empty()) {
+				lError() << "[PushNotificationConfig::readPushParamsFromString]: error when parsing the push parameter "
+				            "string: pn-prid '"
+				         << paramValue << "' could not find push tokens";
+			}
+		} else if (key == PushConfigParamKey) {
+			// According to RFC8599: https://datatracker.ietf.org/doc/html/rfc8599#page-30
+			// pn-param must be of the form "TeamId.BundleID.services
+			// Example: pn-param=DEF123GHIJ.com.example.yourexampleapp.voip
+			size_t firstDotPos = paramValue.find_first_of(".");
+			size_t lastDotPos = paramValue.find_last_of(".");
+			if (firstDotPos == string::npos || firstDotPos == lastDotPos) {
+				lError() << "[PushNotificationConfig::readPushParamsFromString]: error when parsing the push parameter "
+				            "string: pn-param '"
+				         << paramValue << "' should be of the form teamID.bundleIdentifier.services";
+			} else {
+				mTeamId = paramValue.substr(0, firstDotPos);
+				if (mTeamId.empty()) {
+					lError() << "[PushNotificationConfig::readPushParamsFromString]: error when parsing the push "
+					            "parameter string: empty team ID in pn-param '"
+					         << paramValue << "'";
+				}
+				mBundleIdentifer = paramValue.substr(firstDotPos + 1, lastDotPos - firstDotPos - 1);
+				if (mBundleIdentifer.empty()) {
+					lError() << "[PushNotificationConfig::readPushParamsFromString]: error when parsing the push "
+					            "parameter string: empty bundle identifier in pn-param '"
+					         << paramValue << "'";
+				}
+			}
+		}
 	}
 }
 

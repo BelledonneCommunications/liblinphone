@@ -178,6 +178,7 @@ set(RC_FILES
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
+	rcfiles/marie_rc_all_push_enabled
 	rcfiles/marie_tls_rc
 	rcfiles/marie_rc_call_logs_migration
 	rcfiles/marie_rtp_port_range_rc

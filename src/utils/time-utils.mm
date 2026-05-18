@@ -33,7 +33,7 @@ time_t iso8601ToTimeApple(std::string iso8601DateTime) {
 }
 
 std::string timeToIso8601Apple(time_t t) {
-	NSDate* nsDateTime = [NSDate dateWithTimeIntervalSince1970:t];
+	NSDate* nsDateTime = [NSDate dateWithTimeIntervalSince1970:(double)t];
 	NSISO8601DateFormatter* dateFormatter = [[NSISO8601DateFormatter alloc] init];
 	NSString* dateString = [dateFormatter stringFromDate:nsDateTime];
 	return std::string([dateString UTF8String]);

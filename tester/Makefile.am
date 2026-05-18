@@ -46,6 +46,7 @@ RCFILES = \
 					rcfiles/marie_h264_rc\
 					rcfiles/marie_quality_reporting_rc\
 					rcfiles/marie_rc\
+					rcfiles/marie_rc_all_push_enabled\
 					rcfiles/marie2_rc\
 					rcfiles/marie_rc_rtcp_xr\
 					rcfiles/marie_remote_404_rc\

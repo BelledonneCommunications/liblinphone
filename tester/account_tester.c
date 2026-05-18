@@ -624,6 +624,35 @@ static void account_set_params_with_core_off(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void account_params_push_config_loaded(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc_all_push_enabled");
+	LinphoneAccount *account = linphone_core_get_default_account(marie->lc);
+	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+	LinphonePushNotificationConfig *push_config = linphone_account_params_get_push_notification_config(params);
+
+	const char *loaded_push_params =
+	    linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", "");
+	BC_ASSERT_TRUE(strstr(loaded_push_params, "pn-prid=example_voip_token:voip&example_remote_token:remote") != NULL);
+	BC_ASSERT_TRUE(strstr(loaded_push_params, "pn-param=teamid.example.bundle.id.voip&remote") != NULL);
+	BC_ASSERT_TRUE(strstr(loaded_push_params, "pn-provider=example_provider") != NULL);
+
+	BC_ASSERT_TRUE(linphone_core_push_notification_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_account_params_get_remote_push_notification_allowed(params));
+	BC_ASSERT_TRUE(linphone_account_params_get_push_notification_allowed(params));
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_team_id(push_config), "teamid");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_bundle_identifier(push_config), "example.bundle.id");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_remote_token(push_config), "example_remote_token");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_voip_token(push_config), "example_voip_token");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_param(push_config),
+	                       "teamid.example.bundle.id.voip&remote");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_prid(push_config),
+	                       "example_voip_token:voip&example_remote_token:remote");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_provider(push_config), "example_provider");
+
+	linphone_account_params_unref(params);
+	linphone_core_manager_destroy(marie);
+}
+
 static test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
     TEST_NO_TAG("Simple account creation with removal", simple_account_creation_with_removal),
@@ -645,6 +674,7 @@ static test_t account_tests[] = {
     TEST_NO_TAG("Receiving a push token doesn't trigger a new register if push are disabled",
                 account_no_unnecessary_register_on_push_token_reception),
     TEST_NO_TAG("Trying to set account params after core has been stopped", account_set_params_with_core_off),
+    TEST_NO_TAG("Load a config with push parameters set", account_params_push_config_loaded),
 };
 
 test_suite_t account_test_suite = {"Account",
