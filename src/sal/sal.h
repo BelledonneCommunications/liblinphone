@@ -295,6 +295,9 @@ public:
 	void enableReconnectToPrimaryAsap(bool value) {
 		belle_sip_stack_enable_reconnect_to_primary_asap(mStack, value);
 	}
+	void enableVerifyServerCnAgainstSrvTarget(bool value) {
+		belle_sip_stack_enable_verify_server_cn_against_srv_target(mStack, value);
+	}
 
 	const std::list<SalOp *> &getPendingAuths() const {
 		return mPendingAuths;

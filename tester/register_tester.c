@@ -1233,6 +1233,33 @@ static void tls_certificate_failure(void) {
 	}
 }
 
+/* Requires flexisip-tester: _sips._tcp.baddomain.example.org SRV -> badhost.example.org,
+ * whose TLS cert has SAN=badhost.example.org but not baddomain.example.org. */
+static void tls_certificate_srv_target_check(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager *lcm;
+		LinphoneCore *lc;
+		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
+
+		/* Default (RFC 5922): verify against AUS -> must fail. */
+		lcm = linphone_core_manager_new_with_proxies_check("pauline_bad_srv_target_rc", FALSE);
+		lc = lcm->lc;
+		linphone_core_set_root_ca(lc, rootcapath);
+		BC_ASSERT_TRUE(wait_for(lc, lc, &lcm->stat.number_of_LinphoneRegistrationFailed, 1));
+		BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationOk, 0, int, "%d");
+		linphone_core_manager_destroy(lcm);
+
+		/* Option enabled: verify against SRV target -> must succeed. */
+		lcm = linphone_core_manager_new_with_proxies_check("pauline_bad_srv_target_ok_rc", FALSE);
+		lc = lcm->lc;
+		linphone_core_set_root_ca(lc, rootcapath);
+		BC_ASSERT_TRUE(wait_for(lc, lc, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
+		linphone_core_manager_destroy(lcm);
+
+		bc_free(rootcapath);
+	}
+}
+
 static void tls_certificate_subject_check(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager *lcm;
@@ -1805,6 +1832,7 @@ test_t register_tests[] = {
     TEST_ONE_TAG("TLS register with alt. name certificate", tls_alt_name_register, "CRYPTO"),
     TEST_ONE_TAG("TLS register with wildcard certificate", tls_wildcard_register, "CRYPTO"),
     TEST_ONE_TAG("TLS certificate not verified", tls_certificate_failure, "CRYPTO"),
+    TEST_ONE_TAG("TLS certificate against SRV target", tls_certificate_srv_target_check, "CRYPTO"),
     TEST_ONE_TAG("TLS certificate subjects check", tls_certificate_subject_check, "CRYPTO"),
     TEST_ONE_TAG("TLS certificate given by string instead of file", tls_certificate_data, "CRYPTO"),
     TEST_ONE_TAG("TLS with non tls server", tls_with_non_tls_server, "CRYPTO"),

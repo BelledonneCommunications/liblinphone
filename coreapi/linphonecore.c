@@ -1860,6 +1860,8 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	lc->sal->useNoInitialRoute(!!linphone_config_get_int(lc->config, "sip", "use_no_initial_route", 0));
 	lc->sal->useRport(!!linphone_config_get_int(lc->config, "sip", "use_rport", 1));
+	lc->sal->enableVerifyServerCnAgainstSrvTarget(
+	    !!linphone_config_get_int(lc->config, "sip", "verify_server_cn_against_srv_target", 0));
 
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(linphone_config_get_string(lc->config, "sip", "linphone_specs", ""));
 
