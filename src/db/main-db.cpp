@@ -6179,8 +6179,6 @@ void MainDb::enableAllDeliveryNotificationRequired() {
 
 void MainDb::disableDeliveryNotificationRequired(const std::shared_ptr<const EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE
-	shared_ptr<ChatMessage> chatMessage(
-	    static_pointer_cast<const ConferenceChatMessageEvent>(eventLog)->getChatMessage());
 	const long long &eventId = static_cast<MainDbKey &>(eventLog->getPrivate()->dbKey).getPrivate()->storageId;
 
 	L_DB_TRANSACTION {
@@ -6196,8 +6194,6 @@ void MainDb::disableDeliveryNotificationRequired(const std::shared_ptr<const Eve
 
 void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE
-	shared_ptr<ChatMessage> chatMessage(
-	    static_pointer_cast<const ConferenceChatMessageEvent>(eventLog)->getChatMessage());
 	const long long &eventId = static_cast<MainDbKey &>(eventLog->getPrivate()->dbKey).getPrivate()->storageId;
 
 	L_DB_TRANSACTION {
