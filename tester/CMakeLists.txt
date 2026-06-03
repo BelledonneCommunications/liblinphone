@@ -208,6 +208,7 @@ set(RC_FILES
 	rcfiles/pauline_as_friend_rc
 	rcfiles/pauline_bad_srv_target_rc
 	rcfiles/pauline_bad_srv_target_ok_rc
+	rcfiles/pauline_bad_name_in_server_certificate_rc
 	rcfiles/pauline_dtls_srtp_immediate_rc
 	rcfiles/pauline_external_rc
 	rcfiles/pauline_h264_rc

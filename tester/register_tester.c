@@ -1367,6 +1367,22 @@ static void tls_with_non_tls_server(void) {
 	}
 }
 
+static void tls_wrong_name_register(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager *lcm;
+		LinphoneCore *lc;
+		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
+
+		/* the server will gooddmain.example.org will serve a baddomain.example.org certificate, it must fail */
+		lcm = linphone_core_manager_new_with_proxies_check("pauline_bad_name_in_server_certificate_rc", FALSE);
+		lc = lcm->lc;
+		linphone_core_set_root_ca(lc, rootcapath);
+		BC_ASSERT_TRUE(wait_for(lc, lc, &lcm->stat.number_of_LinphoneRegistrationFailed, 1));
+		BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationOk, 0, int, "%d");
+		linphone_core_manager_destroy(lcm);
+		bc_free(rootcapath);
+	}
+}
 static void tls_alt_name_register(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager *lcm;
@@ -1829,6 +1845,7 @@ test_t register_tests[] = {
     TEST_NO_TAG("Register with custom headers", register_with_custom_headers),
     TEST_NO_TAG("TCP register compatibility mode", simple_tcp_register_compatibility_mode),
     TEST_ONE_TAG("TLS register", simple_tls_register, "CRYPTO"),
+    TEST_ONE_TAG("TLS register with server giving wrong name in certificate", tls_wrong_name_register, "CRYPTO"),
     TEST_ONE_TAG("TLS register with alt. name certificate", tls_alt_name_register, "CRYPTO"),
     TEST_ONE_TAG("TLS register with wildcard certificate", tls_wildcard_register, "CRYPTO"),
     TEST_ONE_TAG("TLS certificate not verified", tls_certificate_failure, "CRYPTO"),
