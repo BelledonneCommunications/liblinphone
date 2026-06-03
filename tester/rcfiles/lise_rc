@@ -68,7 +68,7 @@ mic_gain_db=0.000000
 disable_record_on_mute=0
 
 [net]
-stun_server=stun.example.org
+stun_server=stun.example.org:3479
 nat_policy_ref=VgttJBx038GLs0N
 mtu=1300
 

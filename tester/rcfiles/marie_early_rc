@@ -46,7 +46,7 @@ automatically_accept=0
 device=StaticImage: Static picture
 
 [net]
-stun_server=stun.example.org
+stun_server=stun.example.org:3479
 
 [tester]
 test_env=1

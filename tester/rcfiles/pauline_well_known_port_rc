@@ -47,7 +47,7 @@ echocancellation=0 #to not overload cpu in case of VG
 
 [net]
 
-stun_server=stun.example.org
+stun_server=stun.example.org:3479
 
 [misc]
 hide_chat_rooms_from_removed_proxies=0

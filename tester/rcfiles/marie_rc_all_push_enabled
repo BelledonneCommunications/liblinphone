@@ -63,7 +63,7 @@ echocancellation=0 #to not overload cpu in case of VG
 
 [net]
 push_notification=1
-stun_server=stun.example.org
+stun_server=stun.example.org:3479
 
 #leave this section, which is used by "Codec setup" test of "Setup" suite.
 [video_codec_0]

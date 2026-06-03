@@ -29,7 +29,7 @@
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
 
-static const char *stun_address = "stun.example.org";
+static const char *stun_address = "stun.example.org:3479";
 
 typedef struct _CallConfig {
 	bool_t video_enabled;
