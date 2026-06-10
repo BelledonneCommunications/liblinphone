@@ -3495,7 +3495,7 @@ static void real_time_text(bool_t audio_stream_enabled,
                            bool_t ice_enabled,
                            bool_t sql_storage,
                            bool_t do_not_store_rtt_messages_in_sql_storage,
-                           bool_t existing_chat_room) {
+                           bool_t existing_chat_room, bool_t enable_sdp_200_ack) {
 	if (sql_storage && !linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -3505,7 +3505,7 @@ static void real_time_text(bool_t audio_stream_enabled,
 	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCallParams *marie_params = NULL;
+	LinphoneCallParams *params = NULL;
 	LinphoneCall *pauline_call, *marie_call;
 	char *marie_db = bc_tester_file("marie.db");
 	char *pauline_db = bc_tester_file("pauline.db");
@@ -3564,16 +3564,26 @@ static void real_time_text(bool_t audio_stream_enabled,
 	}
 
 	linphone_core_set_realtime_text_keepalive_interval(pauline->lc, 500);
+	if (enable_sdp_200_ack) {
+		linphone_core_enable_sdp_200_ack(marie->lc, TRUE);
+		params = linphone_core_create_call_params(pauline->lc, NULL);
+	} else {
+		params = linphone_core_create_call_params(marie->lc, NULL);
+	}
 
-	marie_params = linphone_core_create_call_params(marie->lc, NULL);
-	linphone_call_params_enable_realtime_text(marie_params, TRUE);
+	linphone_call_params_enable_realtime_text(params, TRUE);
 	if (!audio_stream_enabled) {
-		linphone_call_params_enable_audio(marie_params, FALSE);
+		linphone_call_params_enable_audio(params, FALSE);
 		linphone_core_set_nortp_timeout(marie->lc, 5);
 		linphone_core_set_nortp_timeout(pauline->lc, 5);
 	}
 
-	BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, marie_params));
+
+	if (enable_sdp_200_ack) {
+		BC_ASSERT_TRUE(call_with_params(marie, pauline, NULL, params));
+	} else {
+		BC_ASSERT_TRUE(call_with_params(marie, pauline, params, NULL));
+	}
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	marie_call = linphone_core_get_current_call(marie->lc);
 	if (pauline_call) {
@@ -3645,7 +3655,7 @@ static void real_time_text(bool_t audio_stream_enabled,
 	end:
 		end_call(marie, pauline);
 	}
-	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(params);
 srtp_end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -3656,19 +3666,19 @@ srtp_end:
 }
 
 static void real_time_text_message(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_message_with_existing_basic_chat_room(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE);
 }
 
 static void real_time_text_sql_storage(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE);
 }
 
 static void real_time_text_sql_storage_rtt_disabled(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_conversation(void) {
@@ -3805,15 +3815,20 @@ static void real_time_text_conversation(void) {
 }
 
 static void real_time_text_without_audio(void) {
-	real_time_text(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
+static void real_time_text_without_audio_offer_in_200ok(void) {
+	real_time_text(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE);
+}
+
+
 static void real_time_text_srtp(void) {
-	real_time_text(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_ice(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_lf) {
@@ -4104,11 +4119,11 @@ end:
 }
 
 static void real_time_text_message_different_text_codecs_payload_numbers_sender_side(void) {
-	real_time_text(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_message_different_text_codecs_payload_numbers_receiver_side(void) {
-	real_time_text(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_copy_paste(void) {
@@ -5048,6 +5063,7 @@ static test_t rtt_message_tests[] = {
         "Real Time Text SQL storage with RTT messages not stored", real_time_text_sql_storage_rtt_disabled, "RTT"),
     TEST_ONE_TAG("Real Time Text conversation", real_time_text_conversation, "RTT"),
     TEST_ONE_TAG("Real Time Text without audio", real_time_text_without_audio, "RTT"),
+    TEST_TWO_TAGS("Real Time Text without audio (offer in 200Ok)", real_time_text_without_audio_offer_in_200ok, "RTT", "ICE"),
     TEST_ONE_TAG("Only Real Time Text accepted", only_real_time_text_accepted, "RTT"),
     TEST_ONE_TAG("Real Time Text with srtp", real_time_text_srtp, "RTT"),
     TEST_ONE_TAG("Real Time Text with ice", real_time_text_ice, "RTT"),

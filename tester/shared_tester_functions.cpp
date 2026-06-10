@@ -152,44 +152,46 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 	}
 
 	stats = linphone_call_get_audio_stats(c1);
-	if (linphone_call_stats_get_ice_state(stats) == LinphoneIceStateHostConnection && media_stream_started(ms)) {
-		struct sockaddr_storage remaddr;
-		socklen_t remaddrlen = sizeof(remaddr);
-		char ip[NI_MAXHOST] = {0};
-		int port = 0;
-		std::string expected_addr;
-		AudioStream *astream;
+	if (stats) {
+		if (linphone_call_stats_get_ice_state(stats) == LinphoneIceStateHostConnection && media_stream_started(ms)) {
+			struct sockaddr_storage remaddr;
+			socklen_t remaddrlen = sizeof(remaddr);
+			char ip[NI_MAXHOST] = {0};
+			int port = 0;
+			std::string expected_addr;
+			AudioStream *astream;
 
-		const LinphoneCallParams *cp1 = linphone_call_get_current_params(c1);
-		const LinphoneCallParams *cp2 = linphone_call_get_current_params(c2);
-		if (linphone_call_params_get_update_call_when_ice_completed(cp1) &&
-		    linphone_call_params_get_update_call_when_ice_completed(cp2)) {
-			memset(&remaddr, 0, remaddrlen);
+			const LinphoneCallParams *cp1 = linphone_call_get_current_params(c1);
+			const LinphoneCallParams *cp2 = linphone_call_get_current_params(c2);
+			if (linphone_call_params_get_update_call_when_ice_completed(cp1) &&
+			    linphone_call_params_get_update_call_when_ice_completed(cp2)) {
+				memset(&remaddr, 0, remaddrlen);
 
-			LinphonePrivate::SalCallOp *op = LinphonePrivate::Call::toCpp(c2)->getOp();
-			const std::shared_ptr<SalMediaDescription> &result_desc = op->getFinalMediaDescription();
-			const auto &result_stream = result_desc->getStreamAtIdx(0);
-			if (result_stream.has_value()) {
-				expected_addr = (*result_stream)->getRtpAddress();
-			}
-			if (expected_addr.empty()) {
-				expected_addr = result_desc->getConnectionAddress();
-			}
-			astream = (AudioStream *)linphone_call_get_stream(c1, LinphoneStreamTypeAudio);
-			if ((expected_addr.find(':') == std::string::npos) &&
-			    (astream->ms.sessions.rtp_session->rtp.gs.rem_addr.ss_family == AF_INET6)) {
-				bctbx_sockaddr_ipv6_to_ipv4((struct sockaddr *)&astream->ms.sessions.rtp_session->rtp.gs.rem_addr,
-				                            (struct sockaddr *)&remaddr, &remaddrlen);
-			} else {
-				memcpy(&remaddr, &astream->ms.sessions.rtp_session->rtp.gs.rem_addr,
-				       astream->ms.sessions.rtp_session->rtp.gs.rem_addrlen);
-			}
-			bctbx_sockaddr_to_ip_address((struct sockaddr *)&remaddr, remaddrlen, ip, sizeof(ip), &port);
+				LinphonePrivate::SalCallOp *op = LinphonePrivate::Call::toCpp(c2)->getOp();
+				const std::shared_ptr<SalMediaDescription> &result_desc = op->getFinalMediaDescription();
+				const auto &result_stream = result_desc->getStreamAtIdx(0);
+				if (result_stream.has_value()) {
+					expected_addr = (*result_stream)->getRtpAddress();
+				}
+				if (expected_addr.empty()) {
+					expected_addr = result_desc->getConnectionAddress();
+				}
+				astream = (AudioStream *)linphone_call_get_stream(c1, LinphoneStreamTypeAudio);
+				if ((expected_addr.find(':') == std::string::npos) &&
+				    (astream->ms.sessions.rtp_session->rtp.gs.rem_addr.ss_family == AF_INET6)) {
+					bctbx_sockaddr_ipv6_to_ipv4((struct sockaddr *)&astream->ms.sessions.rtp_session->rtp.gs.rem_addr,
+								    (struct sockaddr *)&remaddr, &remaddrlen);
+				} else {
+					memcpy(&remaddr, &astream->ms.sessions.rtp_session->rtp.gs.rem_addr,
+					       astream->ms.sessions.rtp_session->rtp.gs.rem_addrlen);
+				}
+				bctbx_sockaddr_to_ip_address((struct sockaddr *)&remaddr, remaddrlen, ip, sizeof(ip), &port);
 
-			BC_ASSERT_STRING_EQUAL(ip, expected_addr.c_str());
+				BC_ASSERT_STRING_EQUAL(ip, expected_addr.c_str());
+			}
 		}
+		linphone_call_stats_unref(stats);
 	}
-	linphone_call_stats_unref(stats);
 }
 
 bool_t check_ice(LinphoneCoreManager *caller, LinphoneCoreManager *callee, LinphoneIceState state) {

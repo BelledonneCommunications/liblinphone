@@ -4750,27 +4750,31 @@ void MediaSession::initiateIncoming() {
 	CallSession::initiateIncoming();
 
 	bool isOfferer = d->op->getRemoteMediaDescription() ? false : true;
-	d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
+	// Only create a media description is an offer has been received as minimal checks can be done to ensure that the call can be accepted.
+	// If no SDP has been received (https://datatracker.ietf.org/doc/html/rfc6337#section-3.1.2), it is not possible to know at this stage the capabilities of the session nor which features will be enabled. The local media description will be created and configured once the call has been accepted because the application will have a chance to set the session parameters. Furthermore, if ICE is enabled, a ICE gathering will start based on the default media session parameters and it may lead to having complex code further down the line because the ICE gathering for some streams may be cancelled after accepting the call if the application disabled some capabilities that were enabled by default.
+	if (!isOfferer) {
+		d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
 
-	if (d->natPolicy && d->natPolicy->iceEnabled()) {
-		d->deferIncomingNotification = d->getStreamsGroup().prepare();
-		/*
-		 * If ICE gathering is done, we can update the local media description immediately.
-		 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
-		 */
-		if (d->deferIncomingNotification) {
-			auto incomingNotificationTask = [d]() {
-				/* There is risk that the call can be terminated before this task is executed, for example if
-				 * offer/answer fails.*/
-				if (d->state != State::Idle && d->state != State::PushIncomingReceived) return 0;
-				d->deferIncomingNotification = false;
+		if (d->natPolicy && d->natPolicy->iceEnabled()) {
+			d->deferIncomingNotification = d->getStreamsGroup().prepare();
+			/*
+			 * If ICE gathering is done, we can update the local media description immediately.
+			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
+			 */
+			if (d->deferIncomingNotification) {
+				auto incomingNotificationTask = [d]() {
+					/* There is risk that the call can be terminated before this task is executed, for example if
+					 * offer/answer fails.*/
+					if (d->state != State::Idle && d->state != State::PushIncomingReceived) return 0;
+					d->deferIncomingNotification = false;
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					d->startIncomingNotification();
+					return 0;
+				};
+				d->queueIceGatheringTask(incomingNotificationTask);
+			} else {
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-				d->startIncomingNotification();
-				return 0;
-			};
-			d->queueIceGatheringTask(incomingNotificationTask);
-		} else {
-			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			}
 		}
 	}
 }
