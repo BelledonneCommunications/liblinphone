@@ -542,6 +542,7 @@ void _linphone_chat_room_notify_chat_room_read(LinphoneChatRoom *cr);
 void _linphone_chat_room_notify_new_reaction_received(LinphoneChatRoom *cr,
                                                       LinphoneChatMessage *msg,
                                                       const LinphoneChatMessageReaction *reaction);
+void _linphone_chat_room_notify_full_state_received(LinphoneChatRoom *chat_room);
 void _linphone_chat_room_clear_callbacks(LinphoneChatRoom *cr);
 
 void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);

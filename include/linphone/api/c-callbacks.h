@@ -656,6 +656,12 @@ typedef void (*LinphoneChatRoomCbsNewMessageReactionCb)(LinphoneChatRoom *chat_r
                                                         const LinphoneChatMessageReaction *reaction);
 
 /**
+ * Callback used to notify that the full state of the chatroom has been received
+ * @param chat_room #LinphoneChatRoom object @notnil
+ */
+typedef void (*LinphoneChatRoomCbsFullStateReceivedCb)(LinphoneChatRoom *chat_room);
+
+/**
  * @}
  **/
 

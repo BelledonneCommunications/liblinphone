@@ -3291,6 +3291,9 @@ static void group_chat_room_bulk_notify_to_participant_base(bool_t trigger_full_
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_NotifyFullStateReceived,
 			                             initialPaulineStats.number_of_NotifyFullStateReceived + 1,
 			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomFullStateReceived,
+			                             initialPaulineStats.number_of_LinphoneChatRoomFullStateReceived + 1,
+			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomConferenceJoined,
 			                              initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 2000));
 		} else {

@@ -946,6 +946,10 @@ void _linphone_chat_room_notify_new_reaction_received(LinphoneChatRoom *chat_roo
 	                                  linphone_chat_room_cbs_get_new_message_reaction, message, reaction);
 }
 
+void _linphone_chat_room_notify_full_state_received(LinphoneChatRoom *chat_room) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ChatRoom, AbstractChatRoom::toCpp(chat_room),
+	                                         linphone_chat_room_cbs_get_full_state_received);
+}
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

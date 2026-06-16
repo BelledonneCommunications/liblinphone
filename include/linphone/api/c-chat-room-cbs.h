@@ -596,6 +596,21 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_new_message_reaction(LinphoneCha
                                                                      LinphoneChatRoomCbsNewMessageReactionCb cb);
 
 /**
+ * Get the full state received callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current full state received callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsFullStateReceivedCb
+linphone_chat_room_cbs_get_full_state_received(const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the full state received callback.
+ * @param cbs LinphoneChatRoomCbs object. @notnil
+ * @param cb The new full state received to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_full_state_received(LinphoneChatRoomCbs *cbs,
+                                                                    LinphoneChatRoomCbsFullStateReceivedCb cb);
+/**
  * @}
  */
 

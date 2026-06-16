@@ -1889,6 +1889,7 @@ void ClientConference::onFullStateReceived() {
 	const auto &chatRoom = getChatRoom();
 	if (mConfParams->chatEnabled() && chatRoom) {
 		getCore()->getPrivate()->insertChatRoomWithDb(chatRoom, getLastNotify(), true);
+		_linphone_chat_room_notify_full_state_received(chatRoom->toC());
 	}
 #endif // HAVE_ADVANCED_IM
 
