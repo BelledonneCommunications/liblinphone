@@ -44,7 +44,8 @@
 
 #ifdef HAVE_ADVANCED_IM
 #include <xercesc/util/PlatformUtils.hpp>
-#endif
+#include <xercesc/util/XMLNetAccessor.hpp>
+#endif // HAVE_XERCESC
 
 #include "account/account.h"
 #include "address/address.h"
@@ -713,7 +714,11 @@ Core::Core() : Object(*new CorePrivate) {
 	d->imee.reset();
 #ifdef HAVE_ADVANCED_IM
 	xercesc::XMLPlatformUtils::Initialize();
-#endif
+	if (xercesc::XMLPlatformUtils::fgNetAccessor) {
+		delete xercesc::XMLPlatformUtils::fgNetAccessor;
+		xercesc::XMLPlatformUtils::fgNetAccessor = 0;
+	}
+#endif // HAVE_XERCESC
 }
 
 Core::~Core() {

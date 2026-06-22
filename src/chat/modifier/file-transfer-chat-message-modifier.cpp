@@ -850,9 +850,11 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 		if (currentFileContentToTransfer) {
 			belle_sip_header_content_length_t *content_length_hdr =
 			    BELLE_SIP_HEADER_CONTENT_LENGTH(belle_sip_message_get_header(response, "Content-Length"));
-			currentFileContentToTransfer->setFileSize(
-			    belle_sip_header_content_length_get_content_length(content_length_hdr));
-			lInfo() << "Extracted content length " << currentFileContentToTransfer->getFileSize() << " from header";
+			if (content_length_hdr) {
+				currentFileContentToTransfer->setFileSize(
+				    belle_sip_header_content_length_get_content_length(content_length_hdr));
+				lInfo() << "Extracted content length " << currentFileContentToTransfer->getFileSize() << " from header";
+			}
 		} else {
 			lWarning() << "No file transfer information for message [" << message << "]: creating...";
 			auto content = createFileTransferInformationFromHeaders(response);

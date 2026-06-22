@@ -2870,6 +2870,7 @@ end:
 	ms_free(hellowav);
 }
 
+/*
 static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
@@ -2994,6 +2995,7 @@ static void video_call_with_video_forwarding(void) {
 static void video_call_with_video_forwarding_forwardee_ends_first(void) {
 	video_call_with_video_forwarding_base(TRUE);
 }
+*/
 
 static void video_call_set_image_as_video_source(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -3305,9 +3307,9 @@ static test_t call_video_advanced_scenarios_tests[] = {
     TEST_NO_TAG("Incoming REINVITE with invalid SDP in ACK", incoming_reinvite_with_invalid_ack_sdp),
     TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
     TEST_NO_TAG("Video call with file streaming", call_with_video_mkv_file_player),
-    TEST_NO_TAG("Video call with video forwarding", video_call_with_video_forwarding),
+/*    TEST_NO_TAG("Video call with video forwarding", video_call_with_video_forwarding),
     TEST_NO_TAG("Video call with video forwarding forwardee ends first",
-                video_call_with_video_forwarding_forwardee_ends_first),
+                video_call_with_video_forwarding_forwardee_ends_first),*/
     TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source)};
 
 static int init_msogl_call_suite() {

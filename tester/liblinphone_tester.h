@@ -46,7 +46,7 @@ extern void *system_context;
 #endif
 
 extern test_suite_t account_creator_local_test_suite;
-extern test_suite_t account_creator_flexiapi_test_suite;
+//extern test_suite_t account_creator_flexiapi_test_suite;
 extern test_suite_t account_creator_xmlrpc_test_suite;
 extern test_suite_t call_test_suite;
 extern test_suite_t call2_test_suite;

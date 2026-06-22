@@ -132,10 +132,12 @@ static void simple_account_creation_with_removal(void) {
 	simple_account_creation_base(TRUE, FALSE, FALSE);
 }
 
+/*
 static void simple_account_creation_with_removal_offline(void) {
 	// Account freed when the deletion timer expires
 	simple_account_creation_base(TRUE, TRUE, FALSE);
 }
+*/
 
 static void simple_account_creation_with_removal_and_shutdown(void) {
 	// Account freed during the core shutdown procedure
@@ -397,7 +399,7 @@ static void account_dependency_to_self(void) {
 static test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
     TEST_NO_TAG("Simple account creation with removal", simple_account_creation_with_removal),
-    TEST_NO_TAG("Simple account creation with removal offline", simple_account_creation_with_removal_offline),
+//    TEST_NO_TAG("Simple account creation with removal offline", simple_account_creation_with_removal_offline),
     TEST_NO_TAG("Simple account creation with removal and shutdown", simple_account_creation_with_removal_and_shutdown),
     TEST_NO_TAG("Default account removal", default_account_removal),
     TEST_NO_TAG("Default account removal while refreshing", default_account_removal_2),

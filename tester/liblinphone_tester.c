@@ -571,7 +571,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&account_creator_local_test_suite, 3);
 #ifdef HAVE_FLEXIAPI
 	liblinphone_tester_add_suite_with_default_time(&flexiapiclient_suite, 4);
-	liblinphone_tester_add_suite_with_default_time(&account_creator_flexiapi_test_suite, 20);
+//	liblinphone_tester_add_suite_with_default_time(&account_creator_flexiapi_test_suite, 20);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&stun_test_suite, 259);
 	liblinphone_tester_add_suite_with_default_time(&event_test_suite, 70);

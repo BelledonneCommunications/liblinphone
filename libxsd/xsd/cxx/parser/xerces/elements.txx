@@ -583,6 +583,7 @@ namespace xsd
           sax->setFeature (XMLUni::fgSAX2CoreNameSpaces, true);
           sax->setFeature (XMLUni::fgSAX2CoreNameSpacePrefixes, true);
           sax->setFeature (XMLUni::fgXercesValidationErrorAsFatal, true);
+          sax->setFeature (XMLUni::fgXercesLoadExternalDTD, false);
 
           if (f & flags::dont_validate)
           {
