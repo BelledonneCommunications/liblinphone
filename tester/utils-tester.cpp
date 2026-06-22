@@ -20,14 +20,27 @@
 
 #include <set>
 
+#ifndef _WIN32
+#ifdef HAVE_XERCESC
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLNetAccessor.hpp>
+#endif // HAVE_XERCESC
+#endif // _WIN32
+
 #include "bctoolbox/utils.hh"
 
 #include "address/address.h"
+#include "belle_sip_tester_utils.h"
 #include "conference/conference-id.h"
 #include "liblinphone_tester.h"
 #include "linphone/utils/utils.h"
 #include "tester_utils.h"
 #include "utils/payload-type-handler.h"
+#ifndef _WIN32
+#ifdef HAVE_XERCESC
+#include "xml/resource-lists.h"
+#endif // HAVE_XERCESC
+#endif // _WIN32
 
 // =============================================================================
 
@@ -276,6 +289,98 @@ static void parse_capabilities(void) {
 	BC_ASSERT_TRUE(caps["ephemeral"] == Version(1, 0));
 }
 
+ #ifndef _WIN32
+ #ifdef HAVE_XERCESC
+static void parsing_xml_xxe_prevention() {
+	bellesip::HttpServer httpServer;
+
+	xercesc::XMLPlatformUtils::Initialize();
+	if (xercesc::XMLPlatformUtils::fgNetAccessor) {
+		delete xercesc::XMLPlatformUtils::fgNetAccessor;
+		xercesc::XMLPlatformUtils::fgNetAccessor = 0;
+	}
+
+	int nbGet = 0;
+	httpServer.Get("/resource-list", [&nbGet](BCTBX_UNUSED(const httplib::Request &req), httplib::Response &res) {
+		res.status = 200;
+		nbGet++;
+	});
+
+	std::string body = std::string("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+<!DOCTYPE resource-lists [\n\
+  <!ENTITY baz SYSTEM \"") +
+	                   httpServer.mRootUrl + std::string("/resource-list\">\n\
+]>\n\
+<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\">\n\
+  <list>\n\
+    <display-name>&baz;</display-name>\n\
+    <entry uri=\"sip:foo@foodomain.org\"/>\n\
+  </list>\n\
+</resource-lists>");
+
+	istringstream data(body);
+	try {
+		Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate);
+	} catch (...) {
+	}
+
+	int counter = 0;
+	do {
+		counter++;
+		ms_usleep(100000);
+	} while ((counter < 30) && (nbGet == 0));
+
+	BC_ASSERT_EQUAL(nbGet, 0, int, "%i");
+
+	xercesc::XMLPlatformUtils::Terminate();
+}
+
+static void parsing_xml_blind_xxe_prevention() {
+	bellesip::HttpServer httpServer;
+
+	xercesc::XMLPlatformUtils::Initialize();
+	if (xercesc::XMLPlatformUtils::fgNetAccessor) {
+		delete xercesc::XMLPlatformUtils::fgNetAccessor;
+		xercesc::XMLPlatformUtils::fgNetAccessor = 0;
+	}
+
+	int nbGet = 0;
+	httpServer.Get("/resource-list", [&nbGet](BCTBX_UNUSED(const httplib::Request &req), httplib::Response &res) {
+		res.status = 200;
+		nbGet++;
+	});
+
+	std::string body = std::string("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+<!DOCTYPE resource-lists [\n\
+  <!ENTITY % baz SYSTEM \"") +
+	                   httpServer.mRootUrl + std::string("/resource-list\"> %baz;\n\
+]>\n\
+<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\">\n\
+  <list>\n\
+    <display-name>quux</display-name>\n\
+    <entry uri=\"sip:foo@foodomain.org\"/>\n\
+  </list>\n\
+</resource-lists>");
+
+	istringstream data(body);
+	try {
+		Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate);
+	} catch (...) {
+	}
+
+	int counter = 0;
+	do {
+		counter++;
+		ms_usleep(100000);
+	} while ((counter < 30) && (nbGet == 0));
+
+	BC_ASSERT_EQUAL(nbGet, 0, int, "%i");
+
+	xercesc::XMLPlatformUtils::Terminate();
+}
+#endif // HAVE_XERCESC
+#endif // _WIN32
+
 // clang-format off
 static test_t utils_tests[] = {
     TEST_NO_TAG("split", split),
@@ -286,6 +391,12 @@ static test_t utils_tests[] = {
     TEST_NO_TAG("Address comparisons", address_comparisons),
     TEST_NO_TAG("Address serialization", address_serialization),
     TEST_NO_TAG("Conference ID comparisons", conferenceId_comparisons),
+#ifndef _WIN32
+#ifdef  HAVE_XERCESC
+    TEST_NO_TAG("parsing XML XXE prevention", parsing_xml_xxe_prevention),
+    TEST_NO_TAG("parsing XML blind XXE prevention", parsing_xml_blind_xxe_prevention),
+#endif // HAVE_XERCESC
+#endif // _WIN32
     TEST_NO_TAG("Parse capabilities", parse_capabilities)
 };
 // clang-format on

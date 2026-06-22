@@ -50,6 +50,7 @@
 
 #ifdef HAVE_XERCESC
 #include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLNetAccessor.hpp>
 #endif // HAVE_XERCESC
 
 #include "account/mwi/message-waiting-indication.h"
@@ -838,6 +839,10 @@ Core::Core() : Object(*new CorePrivate) {
 	d->imee.reset();
 #ifdef HAVE_XERCESC
 	xercesc::XMLPlatformUtils::Initialize();
+	if (xercesc::XMLPlatformUtils::fgNetAccessor) {
+		delete xercesc::XMLPlatformUtils::fgNetAccessor;
+		xercesc::XMLPlatformUtils::fgNetAccessor = 0;
+	}
 #endif // HAVE_XERCESC
 }
 

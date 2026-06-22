@@ -215,6 +215,16 @@ namespace xsd
           bits::error_handler_proxy<C> ehp (eh);
           conf->setParameter (XMLUni::fgDOMErrorHandler, &ehp);
 
+          // Use an SGXMLScanner to avoid performing DTD validation
+          // https://xerces.apache.org/xerces-c/program-others-3.html#UseSpecificScanner
+          // https://xerces.apache.org/xerces-c/apiDocs-3/classDOMLSParser.html
+          conf->setParameter(XMLUni::fgXercesScannerName, (void *)XMLUni::fgSGXMLScanner);
+
+          // Disable entity resolver
+          // https://xerces.apache.org/xerces-c/apiDocs-3/classXMLUni.html#a697b85977a09b7ca8d33135d2745b44e
+          conf->setParameter(XMLUni::fgXercesDisableDefaultEntityResolution, true);
+          conf->setParameter(XMLUni::fgXercesEntityResolver, (void *)0);
+
           xercesc::Wrapper4InputSource wrap (&is, false);
 
           XSD_DOM_AUTO_PTR<DOMDocument> doc;
@@ -359,6 +369,16 @@ namespace xsd
           //
           bits::error_handler_proxy<C> ehp (eh);
           conf->setParameter (XMLUni::fgDOMErrorHandler, &ehp);
+
+          // Use an SGXMLScanner to avoid performing DTD validation
+          // https://xerces.apache.org/xerces-c/program-others-3.html#UseSpecificScanner
+          // https://xerces.apache.org/xerces-c/apiDocs-3/classDOMLSParser.html
+          conf->setParameter(XMLUni::fgXercesScannerName, (void *)XMLUni::fgSGXMLScanner);
+
+          // Disable entity resolver
+          // https://xerces.apache.org/xerces-c/apiDocs-3/classXMLUni.html#a697b85977a09b7ca8d33135d2745b44e
+          conf->setParameter(XMLUni::fgXercesDisableDefaultEntityResolution, true);
+          conf->setParameter(XMLUni::fgXercesEntityResolver, (void *)0);
 
           XSD_DOM_AUTO_PTR<DOMDocument> doc;
           try

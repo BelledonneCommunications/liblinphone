@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "http/http-client.h"
 #include "liblinphone_tester.h"
 
@@ -400,7 +399,8 @@ static test_t http_client_tests[] = {
     //{"Challenged request, credentials comes later", challenged_requested_with_late_credentials},
     {"Http request cancelled", http_request_cancelled},
     {"One over two http request cancelled", one_over_two_http_request_cancelled},
-    {"Digest with double challenge", digest_with_double_challenge}};
+    {"Digest with double challenge", digest_with_double_challenge},
+};
 
 test_suite_t http_client_test_suite = {"HTTP Client",
                                        before_suite,
