@@ -80,44 +80,36 @@ void CallSessionPrivate::restorePreviousState() {
 
 void CallSessionPrivate::setCallLogStatusOnTermination() {
 	L_Q();
-	switch (linphone_error_info_get_reason(q->getErrorInfo())) {
-		case LinphoneReasonDeclined:
-			if (log->getStatus() != LinphoneCallMissed) // Do not re-change the status of a call if it's already set
-				log->setStatus(LinphoneCallDeclined);
-			break;
-		case LinphoneReasonNotAnswered:
-			if (log->getDirection() == LinphoneCallIncoming) log->setStatus(LinphoneCallMissed);
-			break;
-		case LinphoneReasonUnknown:
-		case LinphoneReasonNone:
-			/* case of CANCEL */
-			if (terminatedFromRemote && (prevState == CallSession::State::IncomingReceived ||
-			                             prevState == CallSession::State::IncomingEarlyMedia)) {
-				log->setStatus(LinphoneCallMissed); // Assuming it is a missed call
-				if (ei && linphone_error_info_get_protocol(ei) != NULL) {
-					int code = linphone_error_info_get_protocol_code(ei);
-					if (strcasecmp(linphone_error_info_get_protocol(ei), "SIP") == 0 &&
-					    ((code >= 200) && (code < 300))) {
-						log->setStatus(LinphoneCallAcceptedElsewhere);
-						// a 487 code clearly indicates a missed call (cancelled by caller).
-					} else {
-						lWarning() << "Unsupported reason header in CANCEL - assuming it is a missed call.";
-					}
-				}
-			}
-			break;
-		case LinphoneReasonDoNotDisturb:
-			if (log->getDirection() == LinphoneCallIncoming) {
-				if (ei) {
-					int code = linphone_error_info_get_protocol_code(ei);
-					if ((code >= 600) && (code < 700)) log->setStatus(LinphoneCallDeclinedElsewhere);
-				}
+	const LinphoneErrorInfo *lei = q->getErrorInfo();
+	/* Special case for incoming CANCEL */
+	if (terminatedFromRemote &&
+	    (prevState == CallSession::State::IncomingReceived || prevState == CallSession::State::IncomingEarlyMedia)) {
+		log->setStatus(LinphoneCallMissed); // Assuming it is a missed call
+		if (ei && linphone_error_info_get_protocol(ei) != NULL &&
+		    strcasecmp(linphone_error_info_get_protocol(ei), "SIP") == 0) {
+			int code = linphone_error_info_get_protocol_code(ei);
+			if (code >= 200 && code < 300) {
+				log->setStatus(LinphoneCallAcceptedElsewhere);
+			} else if (code == 487) {
+				/* explicit missed call */
+			} else if (code >= 600 && code < 700) {
+				log->setStatus(LinphoneCallDeclinedElsewhere);
 			} else {
-				log->setStatus(LinphoneCallDeclined);
+				lWarning() << "Unsupported reason header in CANCEL - assuming it is a missed call.";
 			}
-			break;
-		default:
-			break;
+		}
+	} else {
+		switch (linphone_error_info_get_reason(lei)) {
+			case LinphoneReasonDeclined:
+				if (log->getStatus() != LinphoneCallMissed) // Do not re-change the status of a call if it's already set
+					log->setStatus(LinphoneCallDeclined);
+				break;
+			case LinphoneReasonDoNotDisturb:
+				log->setStatus(LinphoneCallDeclined);
+				break;
+			default:
+				break;
+		}
 	}
 }
 

@@ -1621,7 +1621,7 @@ static void call_declined_with_reasons(void) {
 				break;
 			case LinphoneReasonDoNotDisturb:
 				caller_end = FALSE;
-				incall_log_status_target = LinphoneCallDeclinedElsewhere;
+				incall_log_status_target = LinphoneCallDeclined;
 				outcall_log_status_target = LinphoneCallDeclined;
 				break;
 			case LinphoneReasonUnauthorized:
