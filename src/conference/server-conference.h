@@ -42,7 +42,7 @@ class LINPHONE_PUBLIC ServerConference : public Conference, public CoreListener 
 	friend ServerChatRoom;
 
 public:
-	static constexpr int sConfIdLength = 32;
+	static constexpr int kConfIdLength = 32;
 
 	ServerConference(const std::shared_ptr<Core> &core,
 	                 std::shared_ptr<CallSessionListener> listener,
@@ -304,6 +304,7 @@ private:
 	                         const std::string method) override;
 	virtual bool sessionParamsAllowThumbnails() const override;
 	void setConferenceTimes(time_t startTime, time_t endTime);
+	std::shared_ptr<Address> prepareConferenceAddress(const std::shared_ptr<Account> &account) const;
 };
 
 LINPHONE_END_NAMESPACE

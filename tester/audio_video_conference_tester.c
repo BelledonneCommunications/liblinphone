@@ -13146,6 +13146,31 @@ void simple_remote_conference_shut_down_focus(void) {
 	linphone_conference_server_destroy(focus);
 }
 
+static void create_conference_with_no_gruu_in_contact(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	linphone_core_remove_supported_tag(marie->lc, "gruu");
+	linphone_core_manager_start(marie, TRUE);
+
+	// Marie creates the conference
+	const char *subject = "Coffee break";
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
+	linphone_conference_params_set_subject(conf_params, subject);
+	LinphoneConference *conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
+	BC_ASSERT_PTR_NOT_NULL(conf);
+	const LinphoneAddress *conf_address = linphone_conference_get_conference_address(conf);
+	BC_ASSERT_PTR_NOT_NULL(conf_address);
+	BC_ASSERT_FALSE(linphone_address_has_uri_param(conf_address, "gr"));
+
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *marie_params = linphone_account_get_params(marie_account);
+	BC_ASSERT_TRUE(
+	    linphone_address_weak_equal(conf_address, linphone_account_params_get_identity_address(marie_params)));
+	BC_ASSERT_FALSE(linphone_address_weak_equal(conf_address, linphone_account_get_contact_address(marie_account)));
+	linphone_conference_unref(conf);
+	destroy_mgr_in_conference(marie);
+}
+
 void eject_from_3_participants_remote_conference(void) {
 	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE, NULL);
 	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE, NULL);
@@ -14563,7 +14588,8 @@ static test_t audio_video_conference_basic_tests[] = {
     TEST_NO_TAG("Simple conference with no conversion to call", simple_conference_not_converted_to_call),
     TEST_NO_TAG("Simple conference with file player", simple_conference_with_file_player),
     TEST_NO_TAG("Simple conference with file player where participants leave",
-                simple_conference_with_file_player_participants_leave)};
+                simple_conference_with_file_player_participants_leave),
+    TEST_NO_TAG("Simple conference no gruu in contact", create_conference_with_no_gruu_in_contact)};
 
 static test_t audio_video_conference_basic2_tests[] = {
     TEST_NO_TAG("Simple CCMP conference with conference update", simple_ccmp_conference_with_conference_update),

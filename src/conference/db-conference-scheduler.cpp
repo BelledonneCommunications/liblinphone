@@ -48,7 +48,7 @@ void DBConferenceScheduler::createOrUpdateConference(
 		const auto &account = getAccount() ? getAccount() : getCore()->getDefaultAccount();
 		const auto &creator = account->getAccountParams()->getIdentityAddress();
 		conferenceAddress = creator->clone()->toSharedPtr();
-		char confId[LinphonePrivate::ServerConference::sConfIdLength];
+		char confId[LinphonePrivate::ServerConference::kConfIdLength];
 		belle_sip_random_token(confId, sizeof(confId));
 		conferenceAddress->setUriParam(Conference::ConfIdParameter, confId);
 	} else {
