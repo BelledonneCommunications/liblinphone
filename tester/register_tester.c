@@ -184,7 +184,8 @@ static void register_with_refresh_for_algo(
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationCleared, 1, int, "%d");
 }
 
-static void register_with_route(LinphoneCoreManager *lcm, const char *domain, const char *route) {
+static void
+register_with_route_and_timeout(LinphoneCoreManager *lcm, const char *domain, const char *route, int timeout_ms) {
 	stats *lcm_counters = &lcm->stat;
 	LinphoneTransports *transport = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_udp_port(transport, LC_SIP_TRANSPORT_RANDOM);
@@ -214,7 +215,7 @@ static void register_with_route(LinphoneCoreManager *lcm, const char *domain, co
 		}
 	}
 
-	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &lcm_counters->number_of_LinphoneRegistrationOk, 1, 200000));
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &lcm_counters->number_of_LinphoneRegistrationOk, 1, timeout_ms));
 
 	linphone_address_unref(from);
 	linphone_address_unref(routeAddress);
@@ -222,6 +223,10 @@ static void register_with_route(LinphoneCoreManager *lcm, const char *domain, co
 	linphone_transports_unref(transport);
 	linphone_core_manager_stop(lcm);
 	BC_ASSERT_EQUAL(lcm_counters->number_of_LinphoneRegistrationCleared, 1, int, "%d");
+}
+
+static void register_with_route(LinphoneCoreManager *lcm, const char *domain, const char *route) {
+	register_with_route_and_timeout(lcm, domain, route, 200000);
 }
 
 static void register_with_refresh(LinphoneCoreManager *lcm, bool_t refresh, const char *domain, const char *route) {
@@ -404,7 +409,7 @@ static void simple_tcp_register(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
-static void simple_udp_register(void) {
+static void udp_register_with_failover(void) {
 	char route[256];
 	LinphoneCoreManager *lcm;
 	sprintf(route, "sip:%s;transport=udp", "sip.buggy.example.org");
@@ -413,12 +418,21 @@ static void simple_udp_register(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
-static void simple_tcp_register2(void) {
+static void tcp_register_with_failover(void) {
 	char route[256];
 	LinphoneCoreManager *lcm;
 	sprintf(route, "sip:%s;transport=tcp", "sip.buggy.example.org");
 	lcm = create_lcm();
 	register_with_route(lcm, "sipopen.example.org", route);
+	linphone_core_manager_destroy(lcm);
+}
+
+static void tcp_register_with_failover_on_503(void) {
+	char route[256];
+	LinphoneCoreManager *lcm;
+	sprintf(route, "sip:%s;transport=tcp", "failover.example.org");
+	lcm = create_lcm();
+	register_with_route_and_timeout(lcm, "sipopen.example.org", route, 13000);
 	linphone_core_manager_destroy(lcm);
 }
 
@@ -1838,10 +1852,12 @@ static void lime_user_creation_after_registration(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-test_t register_tests[] = {
+static test_t register_tests[] = {
     TEST_NO_TAG("Simple register", simple_register), TEST_NO_TAG("Simple register unregister", simple_unregister),
-    TEST_NO_TAG("TCP register", simple_tcp_register), TEST_NO_TAG("TCP register 2", simple_tcp_register2),
-    TEST_NO_TAG("UDP register", simple_udp_register),
+    TEST_NO_TAG("TCP register", simple_tcp_register),
+    TEST_NO_TAG("TCP register with failover", tcp_register_with_failover),
+    TEST_NO_TAG("UDP register with failover", udp_register_with_failover),
+    TEST_NO_TAG("TCP register with failover on 503", tcp_register_with_failover_on_503),
     TEST_NO_TAG("Register with custom headers", register_with_custom_headers),
     TEST_NO_TAG("TCP register compatibility mode", simple_tcp_register_compatibility_mode),
     TEST_ONE_TAG("TLS register", simple_tls_register, "CRYPTO"),
