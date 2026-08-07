@@ -103,7 +103,7 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription &other) {
 SalStreamDescription::SalStreamDescription(const SalMediaDescription *salMediaDesc,
                                            const belle_sdp_session_description_t *sdp,
                                            const belle_sdp_media_description_t *media_desc)
-    : SalStreamDescription() {
+	: SalStreamDescription() {
 	fillStreamDescriptionFromSdp(salMediaDesc, sdp, media_desc);
 }
 
@@ -111,7 +111,7 @@ SalStreamDescription::SalStreamDescription(const SalMediaDescription *salMediaDe
                                            const belle_sdp_session_description_t *sdp,
                                            const belle_sdp_media_description_t *media_desc,
                                            const SalStreamDescription::raw_capability_negotiation_attrs_t &attrs)
-    : SalStreamDescription(salMediaDesc, sdp, media_desc) {
+	: SalStreamDescription(salMediaDesc, sdp, media_desc) {
 	// Create potential configurations
 	fillPotentialConfigurationsFromPotentialCfgGraph(attrs.cfgs);
 }
@@ -186,10 +186,10 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 }
 
 void SalStreamDescription::fillStreamDescriptionFromSdp(
-    const SalMediaDescription *salMediaDesc,
-    const belle_sdp_session_description_t *sdp,
-    const belle_sdp_media_description_t *media_desc,
-    const SalStreamDescription::raw_capability_negotiation_attrs_t &attrs) {
+	const SalMediaDescription *salMediaDesc,
+	const belle_sdp_session_description_t *sdp,
+	const belle_sdp_media_description_t *media_desc,
+	const SalStreamDescription::raw_capability_negotiation_attrs_t &attrs) {
 
 	// Populate stream global parameters and actual configuration
 	fillStreamDescriptionFromSdp(salMediaDesc, sdp, media_desc);
@@ -213,7 +213,7 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(
 }
 
 void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(
-    const PotentialCfgGraph::media_description_config &sdpCfgs) {
+	const PotentialCfgGraph::media_description_config &sdpCfgs) {
 
 	// Iterate over the potential configuration
 	for (const auto &SDPMediaDescriptionCfgPair : sdpCfgs) {
@@ -258,10 +258,12 @@ void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(
 }
 
 const SalStreamDescription::tcap_map_t::value_type &SalStreamDescription::encryptionToTcap(
-    const SalStreamDescription::tcap_map_t &caps, const LinphoneMediaEncryption encEnum, const bool avpf) {
+	const SalStreamDescription::tcap_map_t &caps,
+	const LinphoneMediaEncryption encEnum,
+	const bool avpf) {
 	const auto &it = std::find_if(caps.cbegin(), caps.cend(), [&avpf, &encEnum](const auto &cap) {
 		return (cap.second.compare(sal_media_proto_to_string(
-		            linphone_media_encryption_to_sal_media_proto(encEnum, ((avpf) ? true : false)))) == 0);
+			        linphone_media_encryption_to_sal_media_proto(encEnum, ((avpf) ? true : false)))) == 0);
 	});
 	if (it != caps.end()) {
 		return *it;
@@ -302,11 +304,11 @@ const std::list<LinphoneMediaEncryption> SalStreamDescription::getSupportedEncry
 }
 
 void SalStreamDescription::createPotentialConfigurationAtIdx(
-    const unsigned int &idx,
-    const SalStreamDescription::tcap_map_t &tcaps,
-    const std::list<SalStreamDescription::acap_map_t> &attrList,
-    const bool delete_session_attributes,
-    const bool delete_media_attributes) {
+	const unsigned int &idx,
+	const SalStreamDescription::tcap_map_t &tcaps,
+	const std::list<SalStreamDescription::acap_map_t> &attrList,
+	const bool delete_session_attributes,
+	const bool delete_media_attributes) {
 
 	auto baseCfg = createBasePotentialCfg();
 
@@ -446,12 +448,12 @@ void SalStreamDescription::insertOrMergeConfiguration(const unsigned &idx, const
 			if (existingCfgTcap == newCfgTcap) {
 				existingCfg.mergeAcaps(cfg.getAcapIndexes());
 				lInfo() << "Merging attribute capabiities with the existing one because both have the same transport "
-				           "protocol "
-				        << existingCfgTcap;
+					"protocol "
+					<< existingCfgTcap;
 			} else {
 				lError() << "Unable to merge merging attribute capabiities with the existing configuration as they "
-				            "have different transport protocol indexes - stored configuration "
-				         << existingCfgTcap << " new configuration " << newCfgTcap;
+					"have different transport protocol indexes - stored configuration "
+					<< existingCfgTcap << " new configuration " << newCfgTcap;
 			}
 		}
 	}
@@ -544,10 +546,10 @@ SalStreamDescription::addAcapsToConfiguration(const SalStreamConfiguration &base
 			}
 		} else if (enc == LinphoneMediaEncryptionNone) {
 			lInfo() << "No acap to add to potential configuration for encryption "
-			        << linphone_media_encryption_to_string(enc);
+				<< linphone_media_encryption_to_string(enc);
 		} else {
 			lInfo() << "Adding acaps to potential configuration for encryption "
-			        << linphone_media_encryption_to_string(enc);
+				<< linphone_media_encryption_to_string(enc);
 			std::list<unsigned int> cfgAcaps;
 			for (const auto &attr : attrs) {
 				const auto &capIndex = attr.first;
@@ -678,8 +680,9 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription *salMediaDe
 	} else if (belle_sdp_media_description_get_attribute(media_desc, "inactive")) {
 		dir = SalStreamInactive;
 	} else {
-		dir = ((rtp_port == 0) && (!actualCfg.bundle_only)) ? SalStreamInactive
-		                                                    : salMediaDesc->dir; /*takes default value if not present*/
+		dir = ((rtp_port == 0) && (!actualCfg.bundle_only))
+			      ? SalStreamInactive
+			      : salMediaDesc->dir; /*takes default value if not present*/
 	}
 	actualCfg.dir = dir;
 
@@ -776,7 +779,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription *salMediaDe
 	}
 
 	LinphoneMediaEncryption enc =
-	    sal_media_proto_to_linphone_media_encryption(actualCfg.getProto(), (actualCfg.hasZrtpHash() ? true : false));
+		sal_media_proto_to_linphone_media_encryption(actualCfg.getProto(), (actualCfg.hasZrtpHash() ? true : false));
 	supportedEncryption.push_front(enc);
 
 	addActualConfiguration(actualCfg);
@@ -1170,7 +1173,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 	/* insert zrtp-hash attribute if needed */
 	if ((actualCfg.haveZrtpHash == 1) && (actualCfg.zrtphash[0] != 0)) {
 		belle_sdp_media_description_add_attribute(
-		    media_desc, belle_sdp_attribute_create("zrtp-hash", (const char *)(actualCfg.zrtphash)));
+			media_desc, belle_sdp_attribute_create("zrtp-hash", (const char *)(actualCfg.zrtphash)));
 	}
 
 	switch (actualCfg.dir) {
@@ -1211,7 +1214,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 
 	if (actualCfg.frame_marking_extension_id != 0) {
 		char *value =
-		    bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:framemarking", actualCfg.frame_marking_extension_id);
+			bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:framemarking", actualCfg.frame_marking_extension_id);
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
 		bctbx_free(value);
 	}
@@ -1242,10 +1245,10 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 		if (rtp_port != 0) {
 			if (!ice_pwd.empty())
 				belle_sdp_media_description_add_attribute(
-				    media_desc, belle_sdp_attribute_create("ice-pwd", L_STRING_TO_C(ice_pwd)));
+					media_desc, belle_sdp_attribute_create("ice-pwd", L_STRING_TO_C(ice_pwd)));
 			if (!ice_ufrag.empty())
 				belle_sdp_media_description_add_attribute(
-				    media_desc, belle_sdp_attribute_create("ice-ufrag", L_STRING_TO_C(ice_ufrag)));
+					media_desc, belle_sdp_attribute_create("ice-ufrag", L_STRING_TO_C(ice_ufrag)));
 			addIceCandidatesToSdp(media_desc);
 			addIceRemoteCandidatesToSdp(media_desc);
 		}
@@ -1261,7 +1264,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 		size_t saoff = 0;
 		size_t maoff = 0;
 		const belle_sdp_attribute_t *session_attribute =
-		    belle_sdp_session_description_get_attribute(session_desc, "rtcp-xr");
+			belle_sdp_session_description_get_attribute(session_desc, "rtcp-xr");
 		belle_sdp_attribute_t *media_attribute;
 		if (session_attribute != NULL) {
 			belle_sip_object_marshal((belle_sip_object_t *)session_attribute, sastr, sizeof(sastr), &saoff);
@@ -1326,7 +1329,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 						tcapValue += " " + value;
 					} else {
 						belle_sdp_media_description_add_attribute(
-						    media_desc, belle_sdp_attribute_create("tcap", tcapValue.c_str()));
+							media_desc, belle_sdp_attribute_create("tcap", tcapValue.c_str()));
 						tcapValue = std::to_string(idx) + " " + value;
 					}
 					prevIdx = idx;
@@ -1365,7 +1368,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 				if (!attrName.empty()) {
 					const auto attrValue = std::to_string(cfgIdx) + " " + cfgSdpString;
 					belle_sdp_media_description_add_attribute(
-					    media_desc, belle_sdp_attribute_create(attrName.c_str(), attrValue.c_str()));
+						media_desc, belle_sdp_attribute_create(attrName.c_str(), attrValue.c_str()));
 				}
 			}
 		}
@@ -1384,7 +1387,7 @@ void SalStreamDescription::addDtlsAttributesToMediaDesc(const SalStreamConfigura
 				                                          belle_sdp_attribute_create("setup", setupAttrValue.c_str()));
 			}
 			belle_sdp_media_description_add_attribute(
-			    media_desc, belle_sdp_attribute_create("fingerprint", L_STRING_TO_C(cfg.dtls_fingerprint)));
+				media_desc, belle_sdp_attribute_create("fingerprint", L_STRING_TO_C(cfg.dtls_fingerprint)));
 		}
 	}
 }
@@ -1458,7 +1461,8 @@ void SalStreamDescription::sdpParsePayloadTypes(SalStreamConfiguration &cfg,
 			payload_type_destroy(pt);
 		}
 	}
-	if (mime_params) belle_sip_list_free_with_data(mime_params, belle_sip_object_unref);
+	if (mime_params)
+		belle_sip_list_free_with_data(mime_params, belle_sip_object_unref);
 }
 
 void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration &cfg,
@@ -1504,8 +1508,13 @@ void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_desc
 			char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN] = {0};
 			char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN] = {0};
 			char proto[4] = {0};
-			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d", foundation, &candidate.componentID,
-			                proto, &candidate.priority, addr, &candidate.port, type, raddr, &candidate.rport);
+			int nb = sscanf(value,
+			                SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_FMT " %u %3s %u " SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_FMT
+			                " %d typ " SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_FMT
+			                " raddr " SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_FMT
+			                " rport %d",
+			                foundation, &candidate.componentID, proto, &candidate.priority, addr, &candidate.port, type,
+			                raddr, &candidate.rport);
 			candidate.addr = addr;
 			candidate.raddr = raddr;
 			candidate.foundation = foundation;
@@ -1521,7 +1530,8 @@ void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_desc
 			int offset;
 			const char *ptr = value;
 			const char *endptr = value + strlen(ptr);
-			while (3 == sscanf(ptr, "%u %s %u%n", &componentID, addr, &candidate.port, &offset)) {
+			while (3 == sscanf(ptr, "%u " SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_FMT " %u%n", &componentID, addr,
+			                   &candidate.port, &offset)) {
 				candidate.addr = addr;
 				if (componentID > 0) {
 					SalIceRemoteCandidate remote_candidate;
@@ -1533,7 +1543,7 @@ void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_desc
 						ice_remote_candidates.resize(componentID);
 					}
 					ice_remote_candidates[(std::vector<SalIceRemoteCandidate>::size_type)candidateIdx] =
-					    remote_candidate;
+						remote_candidate;
 				}
 				ptr += offset;
 				if (ptr < endptr) {
@@ -1717,7 +1727,7 @@ void SalStreamDescription::addIceRemoteCandidatesToSdp(belle_sdp_media_descripti
 		const auto &candidate = ice_remote_candidates[i];
 		if ((!candidate.addr.empty()) && (candidate.port != 0)) {
 			iceRemoteCandidateValue += ((i > 0) ? " " : "") + std::to_string(static_cast<unsigned int>(i + 1)) + " " +
-			                           candidate.addr + " " + std::to_string(candidate.port);
+				candidate.addr + " " + std::to_string(candidate.port);
 
 			if (iceRemoteCandidateValue.size() > 1024) {
 				ms_error("Cannot add ICE remote-candidates attribute!");
@@ -1727,7 +1737,7 @@ void SalStreamDescription::addIceRemoteCandidatesToSdp(belle_sdp_media_descripti
 	}
 	if (!iceRemoteCandidateValue.empty())
 		belle_sdp_media_description_add_attribute(
-		    md, belle_sdp_attribute_create("remote-candidates", iceRemoteCandidateValue.c_str()));
+			md, belle_sdp_attribute_create("remote-candidates", iceRemoteCandidateValue.c_str()));
 }
 
 const std::list<LinphoneMediaEncryption> &SalStreamDescription::getSupportedEncryptions() const {
@@ -1743,13 +1753,13 @@ const PotentialCfgGraph::media_description_config::key_type &SalStreamDescriptio
 }
 
 bool SalStreamDescription::hasConfigurationAtIndex(
-    const PotentialCfgGraph::media_description_config::key_type &index) const {
+	const PotentialCfgGraph::media_description_config::key_type &index) const {
 	const auto &elCount = cfgs.count(index);
 	return (elCount != 0);
 }
 
 const SalStreamConfiguration &SalStreamDescription::getConfigurationAtIndex(
-    const PotentialCfgGraph::media_description_config::key_type &index) const {
+	const PotentialCfgGraph::media_description_config::key_type &index) const {
 	try {
 		const auto &cfg = cfgs.at(index);
 		return cfg;
@@ -1774,6 +1784,7 @@ void SalStreamDescription::setZrtpHash(const uint8_t enable, uint8_t *zrtphash) 
 	}
 	cfgs[getChosenConfigurationIndex()].haveZrtpHash = enable;
 }
+
 void SalStreamDescription::setDtls(const SalDtlsRole role, const std::string &fingerprint) {
 	cfgs[getChosenConfigurationIndex()].dtls_role = role;
 	cfgs[getChosenConfigurationIndex()].dtls_fingerprint = fingerprint;
@@ -1836,7 +1847,9 @@ const SalStreamDescription::tcap_map_t &SalStreamDescription::getTcaps() const {
 
 unsigned int SalStreamDescription::getFreeCfgIdx() const {
 	std::list<unsigned int> cfgIndexes;
-	auto addToIndexList = [&cfgIndexes](const auto &cfg) { cfgIndexes.push_back(cfg.first); };
+	auto addToIndexList = [&cfgIndexes](const auto &cfg) {
+		cfgIndexes.push_back(cfg.first);
+	};
 	const auto &streamCfgs = getAllCfgs();
 	std::for_each(streamCfgs.begin(), streamCfgs.end(), addToIndexList);
 
@@ -1881,4 +1894,5 @@ bool SalStreamDescription::hasIceParams() const {
 	// Return true if ice pwd and ufrag as well as candidates are defined
 	return (!ice_ufrag.empty() && !ice_pwd.empty() && hasIceCandidates());
 }
+
 LINPHONE_END_NAMESPACE
