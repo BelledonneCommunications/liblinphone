@@ -5258,6 +5258,134 @@ void one_on_one_chat_room_deleted_before_200ok_with_server_restart(void) {
 	one_on_one_chat_room_deleted_before_200ok_base(false, true);
 }
 
+void one_on_one_chat_room_recovery_after_404(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+
+		stats marie_stat = marie.getStats();
+		stats pauline_stat = pauline.getStats();
+
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+
+		// Marie creates a one to one chat room with Pauline
+		const char *initialSubject = "One on one";
+		LinphoneChatRoom *marieCr =
+		    create_chat_room_client_side(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject,
+		                                 FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+
+		if (marieCr) {
+			LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
+			char *conference_address_string = linphone_address_as_string(confAddr);
+
+			// Check that the chat room is correctly created on Pauline's side
+			LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(
+			    coresList, pauline.getCMgr(), &pauline_stat, confAddr, initialSubject, 1, FALSE);
+			BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+			// Marie sends a first message to verify that the chat room is usable
+			const char *first_msg_text = "Hello Paully";
+			LinphoneChatMessage *msg = ClientConference::sendTextMsg(marieCr, first_msg_text);
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([msg] {
+				return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+			}));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+			                             pauline_stat.number_of_LinphoneMessageReceived + 1,
+			                             liblinphone_tester_sip_timeout));
+			linphone_chat_message_unref(msg);
+
+			// The chat room disappears from the server database. Once it has restarted,
+			// the server has no knowledge of it anymore, therefore it answers 404 Not Found
+			// to any message sent to the conference address.
+			ms_message("%s deletes chatroom %s from its database", linphone_core_get_identity(focus.getLc()),
+			           conference_address_string);
+			auto &focusMainDb = L_GET_PRIVATE_FROM_C_OBJECT(focus.getLc())->mainDb;
+			for (auto chatRoom : focus.getCore().getChatRooms()) {
+				focusMainDb->deleteChatRoom(chatRoom->getConferenceId());
+			}
+
+			ms_message("%s restarts its core", linphone_core_get_identity(focus.getLc()));
+			coresList = bctbx_list_remove(coresList, focus.getLc());
+			focus.reStart();
+			coresList = bctbx_list_append(coresList, focus.getLc());
+			BC_ASSERT_EQUAL(focus.getCore().getChatRooms().size(), 0, size_t, "%zu");
+
+			marie_stat = marie.getStats();
+			pauline_stat = pauline.getStats();
+
+			// Marie sends a message that the server rejects with a 404 Not Found. Being a one to one chat room, it
+			// must be recovered automatically: it is terminated and then exhumed to be created again server side,
+			// and the message is sent once more.
+			const char *recovery_msg_text = "Are you still there?";
+			msg = ClientConference::sendTextMsg(marieCr, recovery_msg_text);
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageNotDelivered,
+			                             marie_stat.number_of_LinphoneMessageNotDelivered + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateTerminated,
+			                             marie_stat.number_of_LinphoneChatRoomStateTerminated + 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated,
+			                             marie_stat.number_of_LinphoneChatRoomStateCreated + 1,
+			                             liblinphone_tester_sip_timeout));
+
+			// Once exhumed, the chat room is known by the server under a new conference address.
+			// RFC 3261 section 19.1.4: Only the conf-id uri parameter tells them apart, since
+			// a URI parameter carried by only one of the two addresses is ignored.
+			const LinphoneAddress *newConfAddr = linphone_chat_room_get_conference_address(marieCr);
+			BC_ASSERT_PTR_NOT_NULL(newConfAddr);
+			if (newConfAddr) {
+				const char *new_conf_id =
+				    linphone_address_get_uri_param(newConfAddr, Conference::ConfIdParameter.c_str());
+				BC_ASSERT_PTR_NOT_NULL(new_conf_id);
+				const char *old_conf_id = linphone_address_get_uri_param(confAddr, Conference::ConfIdParameter.c_str());
+				BC_ASSERT_PTR_NOT_NULL(old_conf_id);
+				if (new_conf_id && old_conf_id) {
+					BC_ASSERT_STRING_NOT_EQUAL(new_conf_id, old_conf_id);
+				}
+			}
+
+			// The message that triggered the recovery is eventually delivered to Pauline
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([msg] {
+				return linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered;
+			}));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+			                             pauline_stat.number_of_LinphoneMessageReceived + 1,
+			                             liblinphone_tester_sip_timeout));
+			LinphoneChatMessage *paulineLastMsg = pauline.getStats().last_received_chat_message;
+			BC_ASSERT_PTR_NOT_NULL(paulineLastMsg);
+			if (paulineLastMsg) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), recovery_msg_text);
+			}
+			linphone_chat_message_unref(msg);
+
+			// The chat room has been recovered in place: no duplicate must have been created on either side
+			const std::initializer_list<std::reference_wrapper<ConfCoreManager>> clients{marie, pauline};
+			for (const ConfCoreManager &client : clients) {
+				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&client] {
+					const auto &chatRooms = client.getCore().getChatRooms();
+					return (chatRooms.size() == 1) &&
+					       (chatRooms.front()->getState() == ConferenceInterface::State::Created);
+				}));
+			}
+			ms_free(conference_address_string);
+			linphone_address_unref(confAddr);
+		}
+		bctbx_list_free(coresList);
+	}
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_chat_basic_tests[] = {
@@ -5395,7 +5523,9 @@ static test_t local_conference_chat_error_tests[] = {
     TEST_ONE_TAG("Group chat with server database corruption",
                  LinphoneTest::group_chat_room_with_server_database_corruption,
                  "LeaksMemory"), /* because of network up and down */
-};
+    TEST_ONE_TAG("One-to-one chat recovery when server answers 404",
+                 LinphoneTest::one_on_one_chat_room_recovery_after_404,
+                 "LeaksMemory")};
 
 test_suite_t local_conference_test_suite_chat_basic = {
     "Local conference tester (Chat Basic)",
