@@ -1265,13 +1265,15 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent(
 					while (cur) {
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-size")) {
 							xmlChar *fileSizeString = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							size_t size = (size_t)strtol((const char *)fileSizeString, nullptr, 10);
-							fileTransferContent->setFileSize(size);
-							xmlFree(fileSizeString);
+							if (fileSizeString) {
+								size_t size = (size_t)strtol((const char *)fileSizeString, nullptr, 10);
+								fileTransferContent->setFileSize(size);
+								xmlFree(fileSizeString);
+							}
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							string unEscapedfileName = unEscapeFileName(std::string((char *)filename));
+							string unEscapedfileName = filename ? unEscapeFileName(std::string((char *)filename)) : "";
 							fileTransferContent->setFileNameUtf8(cleanDownloadFileName(unEscapedfileName));
 							xmlFree(filename);
 						}
@@ -1285,9 +1287,11 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent(
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"playing-length")) {
 							xmlChar *fileDuration = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							int duration = (int)strtod((char *)fileDuration, NULL);
-							fileTransferContent->setFileDuration(duration);
-							xmlFree(fileDuration);
+							if (fileDuration) {
+								int duration = (int)strtod((char *)fileDuration, NULL);
+								fileTransferContent->setFileDuration(duration);
+								xmlFree(fileDuration);
+							}
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
 							xmlChar *fileUrl = xmlGetProp(cur, (const xmlChar *)"url");
