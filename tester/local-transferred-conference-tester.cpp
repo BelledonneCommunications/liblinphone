@@ -791,6 +791,130 @@ static void conference_joined_in_early_media() {
 	}
 }
 
+static void hidden_conference_with_call_busy() {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+
+		// A B2BUA doesn't have a factory address
+		LinphoneAccount *account = linphone_core_get_default_account(focus.getLc());
+		LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_set_conference_factory_address(account_params, NULL);
+		linphone_account_set_params(account, account_params);
+		linphone_account_params_unref(account_params);
+
+		linphone_core_set_media_resource_mode(focus.getLc(), LinphoneMediaResourceModeShared);
+		LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
+		linphone_config_set_int(focus_config, "sound", "conference_mode",
+		                        static_cast<int>(MSConferenceModeRouterFullPacket));
+
+		bctbx_list_t *coresList = NULL;
+		coresList = bctbx_list_append(coresList, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+
+		stats focus_stat = focus.getStats();
+		stats marie_stat = marie.getStats();
+		stats pauline_stat = pauline.getStats();
+
+		// Marie calls the focus
+		LinphoneCallParams *marie_params = linphone_core_create_call_params(marie.getLc(), nullptr);
+		linphone_call_params_enable_video(marie_params, FALSE);
+		ms_message("%s is calling %s", linphone_core_get_identity(marie.getLc()),
+		           linphone_core_get_identity(focus.getLc()));
+		linphone_core_invite_address_with_params_2(marie.getLc(), focus.getIdentity().toC(), marie_params, NULL,
+		                                           nullptr);
+		linphone_call_params_unref(marie_params);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived,
+		                             focus_stat.number_of_LinphoneCallIncomingReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallOutgoingInit,
+		                             marie_stat.number_of_LinphoneCallOutgoingInit + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		// The focus relays the call to Pauline
+		LinphoneCallParams *focus_params = linphone_core_create_call_params(focus.getLc(), nullptr);
+		linphone_call_params_enable_video(focus_params, FALSE);
+		ms_message("%s is calling %s", linphone_core_get_identity(focus.getLc()),
+		           linphone_core_get_identity(pauline.getLc()));
+		linphone_core_invite_address_with_params_2(focus.getLc(), pauline.getIdentity().toC(), focus_params, NULL,
+		                                           nullptr);
+		linphone_call_params_unref(focus_params);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallIncomingReceived,
+		                             pauline_stat.number_of_LinphoneCallIncomingReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallOutgoingInit,
+		                             focus_stat.number_of_LinphoneCallOutgoingInit + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		// The focus creates a conference that is hidden to the participants and adds the calls
+		LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(focus.getLc(), NULL);
+		const char *initialSubject = "B2BUA test conference";
+		linphone_conference_params_enable_local_participant(conf_params, FALSE);
+		linphone_conference_params_enable_one_participant_conference(conf_params, TRUE);
+		linphone_conference_params_set_subject(conf_params, initialSubject);
+		linphone_conference_params_set_hidden(conf_params, TRUE);
+		LinphoneConference *conference = linphone_core_create_conference_with_params(focus.getLc(), conf_params);
+		linphone_conference_params_unref(conf_params);
+
+		const bctbx_list_t *calls = linphone_core_get_calls(focus.getLc());
+		BC_ASSERT_EQUAL(bctbx_list_size(calls), 2, size_t, "%zu");
+		for (const bctbx_list_t *it = calls; it; it = bctbx_list_next(it)) {
+			LinphoneCall *call = (LinphoneCall *)it->data;
+			linphone_conference_add_participant(conference, call);
+		}
+
+		LinphoneAddress *conf_address = linphone_address_clone(linphone_conference_get_conference_address(conference));
+
+		// Pauline decline with reason Busy
+		LinphoneReason reason = LinphoneReasonBusy;
+		LinphoneCall *pauline_call =
+		    linphone_core_get_call_by_remote_address2(pauline.getLc(), focus.getIdentity().toC());
+		BC_ASSERT_PTR_NOT_NULL(pauline_call);
+		if (pauline_call) {
+			ms_message("%s declines the call with reason %s", linphone_core_get_identity(pauline.getLc()),
+			           linphone_reason_to_string(reason));
+			linphone_call_decline(pauline_call, reason);
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallEnd,
+		                             pauline_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallError,
+		                             focus_stat.number_of_LinphoneCallError + 1, liblinphone_tester_sip_timeout));
+
+		// The focus relays Pauline's response
+		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), marie.getIdentity().toC());
+		BC_ASSERT_PTR_NOT_NULL(focus_call);
+		if (focus_call) {
+			SalOp *op = linphone_call_get_op(focus_call);
+			std::string oldFocusMarieOpCallId = op->getCallId();
+			BC_ASSERT_FALSE(oldFocusMarieOpCallId.empty());
+			const char *logCallId = linphone_call_log_get_call_id(linphone_call_get_call_log(focus_call));
+			BC_ASSERT_PTR_NOT_NULL(logCallId);
+			BC_ASSERT_STRING_EQUAL(oldFocusMarieOpCallId.c_str(), logCallId);
+			ms_message("%s declines the call with reason %s", linphone_core_get_identity(focus.getLc()),
+			           linphone_reason_to_string(reason));
+			linphone_call_decline(focus_call, reason);
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateCreated,
+		                             focus_stat.number_of_LinphoneConferenceStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted,
+		                             focus_stat.number_of_LinphoneConferenceStateDeleted + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_PTR_NULL(linphone_core_search_conference_2(focus.getLc(), conf_address));
+
+		linphone_conference_unref(conference);
+		linphone_address_unref(conf_address);
+		bctbx_list_free(coresList);
+	}
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_transferred_conference_basic_tests[] = {
@@ -800,6 +924,7 @@ static test_t local_conference_transferred_conference_basic_tests[] = {
                  LinphoneTest::create_video_transfer_conference_active_speaker_changed,
                  "shaky"),
     TEST_NO_TAG("Conference joined in early media", LinphoneTest::conference_joined_in_early_media),
+    TEST_NO_TAG("Hidden conference with busy call", LinphoneTest::hidden_conference_with_call_busy),
 #ifdef HAVE_EKT_SERVER_PLUGIN
     TEST_ONE_TAG(
         "Create encrypted video conference", LinphoneTest::create_audio_video_encrypted_conference, "End2EndConf"),

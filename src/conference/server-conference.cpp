@@ -3460,7 +3460,8 @@ void ServerConference::onCallSessionStateChanged(const std::shared_ptr<CallSessi
 				        << " remote address " << *remoteAddress << ") from conference " << this << " ("
 				        << conferenceAddressStr << ")";
 				const auto &sessionErrorInfo = session->getErrorInfo();
-				if (sessionErrorInfo && (linphone_error_info_get_reason(sessionErrorInfo) == LinphoneReasonBusy)) {
+				if (!mConfParams->isHidden() && sessionErrorInfo &&
+				    (linphone_error_info_get_reason(sessionErrorInfo) == LinphoneReasonBusy)) {
 					removeParticipantDevice(session);
 				} else {
 					removeParticipant(session, false);
