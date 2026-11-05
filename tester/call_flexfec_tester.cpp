@@ -53,8 +53,7 @@ static void disable_all_audio_codecs(LinphoneCore *lc) {
 	LinphonePayloadType *pt;
 	bctbx_list_t *codecs = linphone_core_get_audio_payload_types(lc);
 	bctbx_list_t *elem;
-	int index = 0;
-	for (elem = codecs; elem != NULL; elem = elem->next, ++index) {
+	for (elem = codecs; elem != NULL; elem = elem->next) {
 		pt = (LinphonePayloadType *)elem->data;
 		linphone_payload_type_enable(pt, FALSE);
 	}

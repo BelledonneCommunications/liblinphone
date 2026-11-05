@@ -1306,9 +1306,8 @@ const char **linphone_config_get_sections_names(LpConfig *lpconfig) {
 bctbx_list_t *linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
 	const bctbx_list_t *sections = lpconfig->sections;
 	bctbx_list_t *sections_names = NULL;
-	int i;
 
-	for (i = 0; sections != NULL; sections = sections->next, i++) {
+	for (; sections != NULL; sections = sections->next) {
 		LpSection *section = (LpSection *)sections->data;
 		sections_names = bctbx_list_append(sections_names, section->name);
 	}
