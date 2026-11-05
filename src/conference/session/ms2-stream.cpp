@@ -316,7 +316,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext &ctx) {
 	const auto &localCfgProto = localDesc.getChosenConfiguration().getProto();
 	const auto mediaEncryption =
 	    (((sessionState == CallSession::State::Resuming) || (sessionState == CallSession::State::Pausing) ||
-	      getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate())
+		  getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate())
 	         ? getMediaSessionPrivate().getNegotiatedMediaEncryption()
 	         : getMediaSessionPrivate().getParams()->getMediaEncryption());
 	const bool addZrtpAttributes = (mediaEncryption == LinphoneMediaEncryptionZRTP) &&
@@ -486,7 +486,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext &ctx) {
 										    acaps.cbegin(), acaps.cend(), [&attrName, &desc](const auto &cap) {
 											    const auto [name, value] = cap.second;
 											    return ((name.compare(attrName) == 0) &&
-											            (value.find(desc.name) != std::string::npos));
+												        (value.find(desc.name) != std::string::npos));
 										    });
 										char attrValue[128];
 										if (desc.params) {
@@ -984,11 +984,13 @@ void MS2Stream::startDtls(const OfferAnswerContext &params) {
 		ms_dtls_srtp_set_peer_fingerprint(
 		    mSessions.dtls_context,
 		    L_STRING_TO_C(params.getRemoteStreamDescription().getChosenConfiguration().dtls_fingerprint));
-		ms_dtls_srtp_set_role(mSessions.dtls_context,
-		                      (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleIsClient)
-		                          ? MSDtlsSrtpRoleIsClient
-		                          : MSDtlsSrtpRoleIsServer); /* Set the role to client */
-		ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
+		/* Then start the engine, it will send the DTLS client Hello */
+		/* Do nothing if the context is already started */
+		/* DTLS auto start upon client hello reception so we may already be running */
+		ms_dtls_srtp_start(mSessions.dtls_context,
+		                   (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleIsClient)
+		                       ? MSDtlsSrtpRoleIsClient
+							   : MSDtlsSrtpRoleIsServer);
 		mDtlsStarted = true;
 		mInternalStats.number_of_dtls_starts++;
 	}
@@ -1716,8 +1718,8 @@ void MS2Stream::updateBandwidthReports() {
 	mStats->setRtcpUploadBandwidth(active ? (float)(media_stream_get_rtcp_up_bw(ms) * 1e-3) : 0.f);
 	mStats->setIpFamilyOfRemote(active
 	                                ? (ortp_stream_is_ipv6(&mSessions.rtp_session->rtp.gs) ? LinphoneAddressFamilyInet6
-	                                                                                       : LinphoneAddressFamilyInet)
-	                                : LinphoneAddressFamilyUnspec);
+									                                                       : LinphoneAddressFamilyInet)
+									: LinphoneAddressFamilyUnspec);
 
 	if (getCCore()->send_call_stats_periodical_updates) {
 		if (active) mStats->update(ms);
